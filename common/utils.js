@@ -795,6 +795,24 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
+async function calculateItsCrossChainGas(options) {
+    const { sourceChain, destinationChain, env, eventType } = options;
+    const baseUrl = env === 'mainnet' ? 'https://api.axelarscan.io/gmp' : 'https://testnet.api.gmp.axelarscan.io';
+    const url = `${baseUrl}/estimateITSFee`;
+
+    const payload = {
+        sourceChain: sourceChain,
+        destinationChain: destinationChain,
+        event: eventType,
+    };
+
+    const gasFee = await httpPost(url, payload);
+    if (gasFee === undefined || gasFee === null) {
+        throw new Error(`Failed to estimate ITS fee: ${gasFee}`);
+    }
+    return gasFee;
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -864,4 +882,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
+    calculateItsCrossChainGas,
 };

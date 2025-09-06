@@ -34,6 +34,7 @@ const {
     validateChain,
     tokenManagerTypes,
     validateLinkType,
+    calculateItsCrossChainGas,
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -319,11 +320,21 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { gasValue, metadata } = options;
+            const { gasValue, metadata, env } = options;
+
+            const submittedGasValue = !gasValue
+                ? await calculateItsCrossChainGas({
+                      sourceChain: chain.axelarId,
+                      destinationChain,
+                      env,
+                      eventType: 'InterchainTransfer',
+                  })
+                : gasValue;
+
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount, gasValue },
+                isValidNumber: { amount, submittedGasValue },
                 isValidCalldata: { metadata },
             });
 
@@ -365,25 +376,34 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 itsDestinationAddress,
                 amountInUnits,
                 metadata,
-                gasValue,
-                { value: scaleGasValue(chain, gasValue), ...gasOptions },
+                submittedGasValue,
+                { value: scaleGasValue(chain, submittedGasValue), ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
         }
 
-        case 'register-token-metadata': {
+        case 'register-token-metadata':
             const [tokenAddress] = args;
-            const { gasValue } = options;
-            validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
+            const { gasValue, env } = options;
 
-            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
-                value: scaleGasValue(chain, gasValue),
+            const submittedGasValue = !gasValue
+                ? await calculateItsCrossChainGas({
+                      sourceChain: chain.axelarId,
+                      destinationChain: 'axelar',
+                      env,
+                      eventType: 'TokenMetadataRegistered',
+                  })
+                : gasValue;
+
+            validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { submittedGasValue } });
+
+            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, submittedGasValue, {
+                value: scaleGasValue(chain, submittedGasValue),
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
             break;
-        }
 
         case 'set-flow-limits': {
             const [tokenIdsArg, flowLimitsArg] = args;
@@ -666,14 +686,23 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'link-token': {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
-            const { gasValue } = options;
+            const { gasValue, env } = options;
             const deploymentSalt = getDeploymentSalt(options);
+
+            const submittedGasValue = !gasValue
+                ? await calculateItsCrossChainGas({
+                      sourceChain: chain.axelarId,
+                      destinationChain,
+                      env,
+                      eventType: 'LinkToken',
+                  })
+                : gasValue;
 
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, type },
                 isValidAddress: { destinationTokenAddress, operator },
-                isValidNumber: { gasValue },
+                isValidNumber: { submittedGasValue },
             });
             validateChain(chains, destinationChain);
 
@@ -705,7 +734,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 destinationTokenAddress,
                 tokenManagerType,
                 linkParams,
-                gasValue,
+                submittedGasValue,
                 gasOptions,
             );
             await handleTx(tx, chain, interchainTokenService, action, 'LinkTokenStarted');
@@ -938,7 +967,7 @@ if (require.main === module) {
         .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value'))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
             main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });
