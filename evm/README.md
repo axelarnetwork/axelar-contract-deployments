@@ -76,65 +76,70 @@ ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
 `proxySalt` is used to derive the same address as a deployment on an existing chain.
 
-## MonadAxelarTransceiver and ERC1967 Proxy Deployment
+## AxelarTransceiver and ERC1967 Proxy Deployment
 
-Note: The `MonadAxelarTransceiver` is a tag used to distinguish the Monad-specific `AxelarTransceiver` contract from other `AxelarTransceiver` contracts in the config. For deployment purpose we use same `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git).
+Note: You can deploy transceiver for any tokens/chains by providing the appropriate  `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script saves the config under the full name of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc)
 
 ### Prerequisites
 
-MonadAxelarTransceiver and ERC1967Proxy are compiled from the example-wormhole-axelar-wsteth repo. Generate build using the following commands:
+AxelarTransceiver and ERC1967Proxy contract are compiled from the example-wormhole-axelar-wsteth repo. Build is generated using the following commands:
 
 ```bash
 git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git
 forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:<$TRANSCEIVER_STRUCTS_ADDRESS>"
 ```
 
-- Note: Pre-linked artifacts will be generated, i.e. TransceiverStructs library will be linked. This step is mandatory to deploy `MonadAxelarTransceiver` contract.
+- Note: Pre-linked artifacts will be generated, i.e. TransceiverStructs library will be linked. This step is mandatory to deploy AxelarTransceiver contract.
 
-### MonadAxelarTransceiver
+### AxelarTransceiver Deployment
 
 Please ensure you have generated pre-linked artifacts.
 
-Set address of deployed `gmpManager` to the `MonadAxelarTransceiver` section in your chain config:
+Set address of deployed `gmpManager` to the transceiver section in your chain config:
 
 ```json
-"MonadAxelarTransceiver": {
+"${TRANSCEIVER_PREFIX}AxelarTransceiver": {
   "gmpManager": "0x..."
 }
 ```
 
-To deploy the MonadAxelarTransceiver contract, run:
+To deploy an AxelarTransceiver contract, run:
 
 ```bash
 ts-node evm/deploy-contract.js \
-  -c MonadAxelarTransceiver \
+  -c AxelarTransceiver \
   -m create \
-  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --transceiverPrefix $TRANSCEIVER_PREFIX
 ```
 
 **Important**:
-- **Use `create`** method to deploy, as deployer of MonadAxelarTransceiver will be used to initialize the contract, avoid using `create2` or `create3`
-- **`--artifactPath` is required** for MonadAxelarTransceiver deployment
-- The GMP Manager address is automatically read from the chain config (`MonadAxelarTransceiver.gmpManager`)
+
+- **Use `create`** method to deploy, as deployer of transceiver will be used to initialize the contract, avoid using `create2` or `create3`
+- **`--artifactPath` is required** for transceiver deployment
+- **`--transceiverPrefix` is required** to differentiate multiple transceivers in config
+- The GMP Manager address is automatically read from the chain config (`${TRANSCEIVER_PREFIX}AxelarTransceiver.gmpManager`) or can be manually provided via `--gmpManager` flag
 - **Library Linking**: Pre-linked artifacts are generated and required libraries are already linked
 
 The deployment script will:
+
 - Validate the gateway, gas service, and GMP manager addresses from the chain configuration
 - Deploy the contract with the correct constructor arguments
 - Store configuration including gateway, gas service, and GMP manager addresses
 - Verify the deployed contract state matches the original constructor arguments
 
-#### Upgrade MonadAxelarTransceiver
+#### Upgrade Transceiver
 
-To upgrade an existing MonadAxelarTransceiver implementation, follow these steps:
+To upgrade an existing transceiver implementation, follow these steps:
 
 ##### Deploy New Implementation (Reuse Existing Proxy)
 
 ```bash
 ts-node evm/deploy-contract.js \
-  -c MonadAxelarTransceiver \
+  -c AxelarTransceiver \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --transceiverPrefix $TRANSCEIVER_PREFIX \
   --reuseProxy
 ```
 
@@ -142,52 +147,51 @@ ts-node evm/deploy-contract.js \
 
 ```bash
 ts-node evm/deploy-contract.js \
-  -c MonadAxelarTransceiver \
+  -c AxelarTransceiver \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --transceiverPrefix $TRANSCEIVER_PREFIX \
   --upgrade
 ```
 
 ### ERC1967Proxy
 
-The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify the contract like this:
+The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify the full contract name like this:
 
 ```bash
 ts-node evm/deploy-contract.js \
   -c ERC1967Proxy \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --forContract MonadAxelarTransceiver
+  --forContract `${TRANSCEIVER_PREFIX}AxelarTransceiver`
 ```
 
 **Important**:
-- **Use `create`** method to deploy for ERC1967Proxy of MonadAxelarTransceiver, as deployer will be used to initialize the contract
-- **`--artifactPath` is required** for ERC1967Proxy deployment 
+
+- **Use `create`** method to deploy for ERC1967Proxy of `${TRANSCEIVER_PREFIX}AxelarTransceiver`, as deployer will be used to initialize the contract
+- **`--artifactPath` is required** for ERC1967Proxy deployment
 - **Default deployment method is `create`** (standard nonce-based deployment)
 - Use `-m create2` or `-m create3` for deterministic deployments if needed
 
 The proxy deployment will:
+
 - Use the implementation address from the specified contract's config
 - Store the proxy address in the target contract's configuration
 - Support custom initialization data via `--proxyData` (defaults to "0x")
 
-### MonadAxelarTransceiver Post-Deployment Operations
+### Transceiver Post-Deployment Operations
 
-After deploying the MonadAxelarTransceiver contract, you can perform post-deployment operations using the `axelar-transceiver.ts` script:
+After deploying a transceiver contract, you can perform post-deployment operations using the `axelar-transceiver.ts` script:
 
 ```bash
 # Initialize the transceiver contract
-ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
 
 # Transfer pauser capability to a new address
-ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
 
 # Set Chain ID mapping
-ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress>  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress> --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
 ```
-
-**Available Operations:**
-- **Initialization**: Calls the `initialize()` function on the MonadAxelarTransceiver contract. The script handles cases where the contract is already initialized gracefully.
-- **Pauser Transfer**: Transfers the pauser capability to a specified address using `transferPauserCapability()`. Requires appropriate permissions.
 
 ## Hyperliquid
 
