@@ -112,9 +112,9 @@ ts-node evm/interchainTokenFactory \
 **Note:** On Stellar, we're deploying a customized pre-deployed token contract that you control directly, in contrast to the ITS-managed token on EVM.
 
 ```bash
-# Note: The custom token example parameters can vary based on your custom token implementation
-stellar contract deploy custom_token.wasm \
-  --source wallet --network <network> -- --admin <admin> --decimal <decimal> --name <name> --symbol <symbol>
+# Create a custom token
+# Note: Custom token implementation can vary based on your requirements.
+ts-node stellar/its create-custom-token <name> <symbol> <decimals>
 ```
 
 **Alternative - Create a Stellar classic asset by setting trustline:**
@@ -123,7 +123,7 @@ stellar contract deploy custom_token.wasm \
 
 ```bash
 # Optional trust limit (defaults to 1000000000 if not specified)
-ts-node stellar/token-utils change-trust [asset-code] [issuer] [limit]
+ts-node stellar/token-utils change-trust <assetCode> <issuer> <limit>
 ```
 
 If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't have a Soroban contract address yet, you can deploy a corresponding Stellar contract to make them accessible within Stellar-based contracts:
