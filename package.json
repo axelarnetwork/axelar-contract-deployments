@@ -12,7 +12,8 @@
     "test": "mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js'",
     "test:evm": "mocha 'evm/test/**/*.js'",
     "test:unit": "mocha -r ts-node/register 'test/**/*.ts'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "safe-chain setup"
   },
   "repository": {
     "type": "git",
@@ -53,6 +54,7 @@
     "xrpl": "4.2.5"
   },
   "devDependencies": {
+    "@aikidosec/safe-chain": "^1.0.18",
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
