@@ -8,7 +8,7 @@
 | **Network**          | **Deployment Status** | **Date**   |
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-09-03 |
-| **Stagenet**         | -                     | TBD        |
+| **Stagenet**         | Deployed              | 2025-09-08 |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
@@ -75,7 +75,7 @@ shasum -a 256 $ARTIFACT_PATH/xrpl_gateway.wasm | grep $CHECKSUM
 3. Make sure your output matches with the following expected output before proceeding.
 
 ```
-9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688  wasm/xrpl_gateway.wasm
+c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a  wasm/xrpl_gateway.wasm
 ```
 
 4. Store `XRPLGateway` contract.
@@ -84,8 +84,8 @@ shasum -a 256 $ARTIFACT_PATH/xrpl_gateway.wasm | grep $CHECKSUM
 ts-node cosmwasm/submit-proposal.js store \
   -c XrplGateway \
   -t "Upload XRPLGateway contract v1.3.2" \
-  -d "Upload XRPLGatway contract v1.3.2" \
-  -a "$ARTIFACT_PATH/xrpl_gateway.wasm" \
+  -d "Upload XRPLGateway contract v1.3.2" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
