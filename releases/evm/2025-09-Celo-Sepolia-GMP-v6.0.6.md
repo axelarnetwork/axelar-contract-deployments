@@ -1,14 +1,14 @@
 # Celo Sepolia testnet GMP v6.0.6
 
-|                | **Owner**                          |
-| -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+|                | **Owner**                                                              |
+| -------------- | ---------------------------------------------------------------------- |
+| **Created By** | @AttissNgo <attiss@interoplabs.io>                                     |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
 
-| **Network**  | **Deployment Status** | **Date** |
-| ------------ | --------------------- | -------- |
-| **Stagenet** | -                     | TBD      |
-| **Testnet**  | -                     | TBD      |
+| **Network**  | **Deployment Status** | **Date**   |
+| ------------ | --------------------- | ---------- |
+| **Stagenet** | Completed             | 2025-09-08 |
+| **Testnet**  | completed             | 2025-09-05 |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.6)
 

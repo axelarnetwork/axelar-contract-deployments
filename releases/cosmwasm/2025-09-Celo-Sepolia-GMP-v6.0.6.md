@@ -5,10 +5,10 @@
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
 | **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
-| **Network**  | **Deployment Status** | **Date** |
-| ------------ | --------------------- | -------- |
-| **Stagenet** | -                     | TBD      |
-| **Testnet**  | -                     | TBD      |
+| **Network**  | **Deployment Status** | **Date**   |
+| ------------ | --------------------- | ---------- |
+| **Stagenet** | Completed             | 2025-09-05 |
+| **Testnet**  | Completed             | 2025-09-05 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
