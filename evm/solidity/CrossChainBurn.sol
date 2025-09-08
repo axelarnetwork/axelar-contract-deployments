@@ -38,37 +38,33 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
 
     event TokenBurnedCrossChain(address indexed account, string sourceChain, string sourceAddress, address token, uint256 amount);
 
-    function burn(address account, uint256 amount) external /*onlyOwner*/ {
+    function burn(address account, uint256 amount) external {
         _burn(account, amount);
     }
 
     // Mint function - only owner can mint
-    function mint(address to, uint256 amount) external /*onlyOwner*/ {
+    function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
 
     function burnFromCrossChain(
         bytes calldata account,
         uint256 amount,
-        DestinationChainAndAddress[] calldata destinationChainsAndAddresses
-    ) external payable /*onlyOwner*/ {
-        for (uint i = 0; i < destinationChainsAndAddresses.length; i++) {
-            string memory destinationChain = destinationChainsAndAddresses[i].destinationChain;
-            string memory destinationAddress = destinationChainsAndAddresses[i].destinationAddress;
+        string calldata destinationChain,
+        string calldata destinationAddress
+    ) external payable onlyOwner {
+        // Burn from other chain
+        // Use encodePacked so it is easier to decode on another chain without abi support
+        bytes memory payload = abi.encodePacked(amount, account);
 
-            // Burn from other chain
-            // Use encodePacked so it is easier to decode on another chain without abi support
-            bytes memory payload = abi.encodePacked(amount, account);
-
-            gasService.payNativeGasForContractCall{ value: msg.value }(
-                address(this),
-                destinationChain,
-                destinationAddress,
-                payload,
-                msg.sender
-            );
-            gateway().callContract(destinationChain, destinationAddress, payload);
-        }
+        gasService.payNativeGasForContractCall{ value: msg.value }(
+            address(this),
+            destinationChain,
+            destinationAddress,
+            payload,
+            msg.sender
+        );
+        gateway().callContract(destinationChain, destinationAddress, payload);
     }
 
     // Functions
@@ -100,21 +96,5 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
      */
     function _stringsEqual(string memory a, string memory b) internal pure returns (bool) {
         return bytes(a).length == bytes(b).length && keccak256(bytes(a)) == keccak256(bytes(b));
-    }
-
-    function _addressToString(address _addr) internal pure returns (string memory) {
-        bytes32 value = bytes32(uint256(uint160(_addr))); // Convert address to bytes32
-        bytes memory alphabet = '0123456789abcdef'; // Hexadecimal alphabet
-
-        bytes memory result = new bytes(42); // 40 characters + '0x'
-        result[0] = '0';
-        result[1] = 'x';
-
-        for (uint i = 0; i < 20; i++) {
-            result[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)]; // High nibble
-            result[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)]; // Low nibble
-        }
-
-        return string(result);
     }
 }

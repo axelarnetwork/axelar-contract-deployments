@@ -1,6 +1,15 @@
+TODO make all commands ts-node instead of node!!!
+
 # CrossChain Burn Demo
 
+
+## Compile
+
+`npx hardhat compile`
+
 ## Token Commands
+
+Note: `safeDeploymentConfig` needs to have unique salt when deploying
 
 ### Deploy Tokens
 ```bash
@@ -8,65 +17,76 @@ node evm/deploy-contract.js \
   --contractName CrossChainBurn \
   --artifactPath "$PWD/artifacts/evm/solidity/" \
   --chainNames "ethereum-sepolia,avalanche" \
-  --salt "salt5" \
+  --salt "salt34" \
   --env testnet \
-  --args '{"name":"CrossChain Token","symbol":"CCT","admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f", "homeChain":"Avalanche"}'
+  --args '{"name":"CrossChain Token34","symbol":"CCT34","admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f", "homeChain":"Avalanche"}'
   ```
-Ex -> https://testnet.snowtrace.io/tx/0x7a84e8943dbd100de19cfb53a276b864a9cec09575a7512542908c5e475b994d?chainid=43113
-Ex -> https://sepolia.etherscan.io/tx/0x70f189d5e620b412a7615be4a3e57f4dad671fad3b76900ba6241ce355c7304a
+Snowtrace token deployment Ex -> https://testnet.snowtrace.io/tx/0x1143c0b49490cf358d7a1bb2643a03c607f82b460df1492030f93986fadb7b5a
+Sepolia token deployment Ex -> https://sepolia.etherscan.io/tx/0x308df36137ff6e84d0a13619b8d391d17232b9fd95b0b502494ca8a17e78cd36
+
+Snowtrace multisig deployment Ex -> https://testnet.snowtrace.io/tx/0xd7a57dfd00ad438253330f7ab51d958485fa1ff78131baf65b73ecca4389e2ae?chainid=43113
 
 
 ### Mint Tokens
 Mint tokens on a specific chain (owner only):
 ```bash
-node evm/demo/index.js mint 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000 --chainNames avalanche --tokenAddress 0x842DE028BE165E6482EC4D694025e617DA6D86e0 --env testnet --yes
+node evm/demo/index.js mint 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000 --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet --yes
 ```
-Ex -> https://testnet.snowtrace.io/tx/0x5fde9624c567d79a9447a8457cdc99c520d9786ba34f653f878287bd09261c33?chainid=43113
+Ex -> https://testnet.snowtrace.io/tx/0x40f7ba75c2ed62519f45940e5ed3de874fd1a2db7920a8c4d97bbea98c1e3e20
 
 
 ### Check Balance
 ```bash
-node evm/demo/index.js balance --chainNames avalanche --tokenAddress 0x842DE028BE165E6482EC4D694025e617DA6D86e0 --env testnet
+node evm/demo/index.js balance --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet
 ```
+
+Expected Response: `Balance of 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f: 1000.0 CCT34`
 
 ## ITS Commands
 
 
 ### Register Token Metadata
 ```bash
-node evm/its.js register-token-metadata 0x8D160E694909AF519FcdeaA87382450C805a455A --chainNames ethereum-sepolia --env testnet --gasValue 100000000000000000 --yes
+node evm/its.js register-token-metadata 0x3f4d2D6727ab6D5cd1dEcEa39930390FfCA3959d --chainNames ethereum-sepolia --env testnet --gasValue 100000000000000000 --yes
 ```
-Ex -> https://testnet.axelarscan.io/gmp/0x9bd787f2ed75d2c48f471a1f051b8174238543ab6e75597440c55313fe0647d2-2
+
+Sepolia Register Token Metadata -> https://testnet.axelarscan.io/gmp/0x6f145714f560fc9c77273a791d176fbcdba96bec17dfbb33c77d6d76ef5a92d5
 
 ```bash
-node evm/its.js register-token-metadata 0x066fA18A236D8c34929Ef3EA185ac5c402a863E5 --chainNames avalanche --env testnet --gasValue 100000000000000000 --yes
+node evm/its.js register-token-metadata 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --chainNames avalanche --env testnet --gasValue 100000000000000000 --yes
 ```
-Ex -> https://testnet.axelarscan.io/gmp/0x485b3391e68b586757eab02cea3141c32ba35da86c39b89501699f22e367c002-2
+
+Snowtrace Register Token Metadata Ex ->https://testnet.axelarscan.io/gmp/0xa9505a1fc623c59487c22d44b7fc89ea1576aa3f68346c469b7990b44d4c4970
 
 ### Register Custom Token
 ```bash
-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0x066fA18A236D8c34929Ef3EA185ac5c402a863E5 --chainNames avalanche --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --rawSalt 0x0000000000000000000000000000000000000000000000000000000000000001 --env testnet --yes
+node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --chainNames avalanche --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --rawSalt 0x043793c09788960d705c545f34bd17c22efc01bde67b409f1c520229bf6d8a29 --env testnet --yes
 ```
-Ex -> https://testnet.snowtrace.io/tx/0xb02fc3aee6f4ea515acc007d713ba10e7f490e9c3e5c3b2adc51405319e42bc2?chainid=43113
+Register Custom Token Ex -> https://testnet.snowtrace.io/tx/0x19e4e35c43d8002f17d85ea0a2d32be8b4e270025069f23f03b3a0af806fd718
 
 ### Link Token
 ```bash
-node evm/interchainTokenFactory.js --action linkToken --chainNames avalanche --destinationChain ethereum-sepolia --destinationTokenAddress 0x8D160E694909AF519FcdeaA87382450C805a455A --tokenManagerType 4 --linkParams 0x --rawSalt 0x0000000000000000000000000000000000000000000000000000000000000001 --gasValue 500000000000000000 --env testnet --yes
+node evm/interchainTokenFactory.js --action linkToken --chainNames avalanche --destinationChain ethereum-sepolia --destinationTokenAddress 0x3f4d2D6727ab6D5cd1dEcEa39930390FfCA3959d --tokenManagerType 4 --linkParams 0x --rawSalt 0x043793c09788960d705c545f34bd17c22efc01bde67b409f1c520229bf6d8a29 --gasValue 500000000000000000 --env testnet --yes
 ```
-Ex -> https://testnet.axelarscan.io/gmp/0x05f35d12d4dcc68abc5ac3594ceba66b674452956cd2e07e90625d60564ccfdb-3
+Link Token Ex -> https://testnet.axelarscan.io/gmp/0xe3bf0db42ccb7143582c3d80f0ecd34791164f594465be2ff182b9dd750891a8
 
 ### Interchain Transfer
 ```bash
-node evm/its.js interchain-transfer ethereum-sepolia 0x3c2bfd2d6ada17dcb2b7d3ff1885ee374bc72e367f7151648d9b55ebb33f9e79 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 123 --chainNames avalanche --gasValue 500000000000000000 --env testnet --yes
+node evm/its.js interchain-transfer ethereum-sepolia 0xdf6334c5d94db1d5b4d8e15a671b6fdb3c194b580abb5f246739b4b40fc739e3 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 123 --chainNames avalanche --gasValue 500000000000000000 --env testnet --yes
 ```
-Ex -> https://testnet.axelarscan.io/gmp/0xea8caadb7e8b66de281235a798d357347efe78ed168a658bcc30185577a1f5c4-3
+Interchain Transfer Ex -> https://testnet.axelarscan.io/gmp/0xc727c9a9a51140b8447bfe0d3ffbcd707cc3c2879bcc5353575c26c7a3274f76
 
+### Setup CrossChain Burn
+
+```bash
+node evm/demo/index.js setup-burn 0x7b921F39dcdBA1B84ed305cFdAFa0857ffc645fc --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet --yes
+```
+
+Setup Burn Tx -> https://testnet.snowtrace.io/tx/0xf240809afae2c61ff24da156ec0052cd9a5323964754ad1e15e29fbeebb63e80
 
 ### Cross-Chain Burn
 ```bash
-node evm/demo/index.js cross-chain-burn 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1 --chainNames avalanche --tokenAddress 0xF7190de34bcE761918cb4a04C3e89625846A9233 --env testnet --yes --destinationChain ethereum-sepolia --destinationChainTokenAddress 0xFBF598747DA9D10d966A16D314bFFc3839556bE1
+node evm/demo/index.js cross-chain-burn 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1 0x7b921F39dcdBA1B84ed305cFdAFa0857ffc645fc --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet --yes --destinationChain ethereum-sepolia --destinationChainTokenAddress 0x3f4d2D6727ab6D5cd1dEcEa39930390FfCA3959d
 ```
-Ex -> https://testnet.axelarscan.io/gmp/0xea8d287f23952c8f772767da4bc456ae73cfc12eac0ea384739aabf5439083f8-1
-
-
+Ex -> https://testnet.axelarscan.io/gmp/0x4eaa1ff0a59b979275c793b2f32a77ee0379f8c37f192ca90a9c41aa55036742
 

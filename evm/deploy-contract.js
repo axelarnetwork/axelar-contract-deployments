@@ -26,6 +26,8 @@ const {
     validateParameters,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
+const SafeModule = require('@safe-global/protocol-kit');
+const Safe = SafeModule?.default || SafeModule.Safe;
 
 async function upgradeMonadAxelarTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions) {
     const proxyAddress = contractConfig.address;
@@ -54,7 +56,7 @@ async function upgradeMonadAxelarTransceiver(contractConfig, contractAbi, wallet
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
  */
-async function getConstructorArgs(contractName, contracts, contractConfig, wallet, options) {
+async function getConstructorArgs(contractName, contracts, contractConfig, wallet, options, chain) {
     // Safety check for undefined contractConfig
     if (!contractConfig) {
         throw new Error(
@@ -192,6 +194,39 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
                 isAddress: { admin, gateway, gasService },
                 isNonEmptyString: { name, symbol, homeChain },
             });
+
+            // Only deploy Safe multisig if this chain is the homeChain
+            if (chain.name === homeChain) {
+                const safeAccountConfig = {
+                    owners: ['0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f', '0xC165CbEc276C26c57F1b1Cbc499109AbeCbA4474'],
+                    threshold: 2,
+                };
+
+                const safeDeploymentConfig = {
+                    saltNonce: Date.now().toString(), 
+                };
+
+                const predictedSafe = {
+                    safeAccountConfig: safeAccountConfig,
+                    safeDeploymentConfig,
+                };
+
+                const protocolKit = await Safe.init({
+                    provider: chain.rpc,
+                    signer: process.env.PRIVATE_KEY,
+                    predictedSafe: predictedSafe,
+                });
+
+                //Create multisig
+                const createSafeTx = await protocolKit.createSafeDeploymentTransaction();
+                const createSafeTxResponse = await wallet.sendTransaction(createSafeTx);
+                await createSafeTxResponse.wait();
+                console.log('Safe deployment tx sent:', createSafeTxResponse.hash);
+
+                //Multisig addr
+                const safeAddress = await protocolKit.getAddress();
+                console.log('Safe address:', safeAddress);
+            }
 
             return [name, symbol, admin, homeChain, gateway, gasService];
         }
@@ -358,7 +393,7 @@ async function processCommand(_axelar, chain, chains, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName === 'MonadAxelarTransceiver' ? 'AxelarTransceiver' : contractName, artifactPath);
-    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options, chain);
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);

@@ -6,6 +6,8 @@ const { getDefaultProvider, Wallet, Contract, utils } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, printWarn, printError, prompt, printWalletInfo, mainProcessor, validateParameters } = require('../utils');
 const { addEvmOptions } = require('../cli-utils');
+const SafeModule = require('@safe-global/protocol-kit');
+const Safe = SafeModule?.default || SafeModule.Safe;
 const CROSSCHAIN_BURN_ABI = require('../../artifacts/evm/solidity/CrossChainBurn.sol/CrosschainBurn.json').abi;
 
 async function processCommand(chain, action, options) {
@@ -41,7 +43,6 @@ async function processCommand(chain, action, options) {
 
             break;
         }
-
         case 'mint': {
             const [to, amount] = args;
             const recipient = to || wallet.address;
@@ -78,8 +79,18 @@ async function processCommand(chain, action, options) {
 
             break;
         }
+        case 'setup-burn': {
+            const [multisigAddress] = args;
+            validateParameters({ isValidAddress: { multisigAddress } });
+            printInfo('Transferring ownership to multisig', multisigAddress);
+            const tx = await token.transferOwnership(multisigAddress);
+            printInfo('Transaction hash', tx.hash);
+            const receipt = await tx.wait();
+            printInfo('Transaction confirmed', `Block ${receipt.blockNumber}`);
+            break;
+        }
         case 'cross-chain-burn': {
-            const [targetAccount, amount] = args;
+            const [targetAccount, amount, multisigAddress] = args;
 
             const account = targetAccount || wallet.address;
 
@@ -88,13 +99,6 @@ async function processCommand(chain, action, options) {
                 isNonEmptyString: { amount },
             });
 
-            
-            // TODO: Refactor token to include whitelisted address to cross-chain burn
-            // const owner = await token.owner();
-            // if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
-            //     printError(`Only the owner (${owner}) can execute cross-chain burns`);
-            //     return;
-            // }
             const decimals = await token.decimals();
             const symbol = await token.symbol();
             const burnAmount = ethers.utils.parseUnits(amount, decimals);
@@ -102,16 +106,9 @@ async function processCommand(chain, action, options) {
             // Convert account address to bytes
             const accountBytes = ethers.utils.arrayify(account);
 
-            // Setup destination
-            const destinationChainsAndAddresses = [
-                {
-                    destinationChain: destinationChain,
-                    destinationAddress: destinationChainTokenAddress,
-                },
-            ];
 
             // Estimate gas for cross-chain call (typically 0.1-1 native token for testnet)
-            const gasPayment = ethers.utils.parseEther('0.5');
+            const gasPayment = ethers.utils.parseEther('0.3');
 
             printInfo('Cross-chain Burn Parameters:');
             printInfo('- Account', account);
@@ -121,20 +118,39 @@ async function processCommand(chain, action, options) {
             printInfo('- Destination Token Address', destinationChainTokenAddress);
             printInfo('- Gas Payment', ethers.utils.formatEther(gasPayment));
 
-            const tx = await token.burnFromCrossChain(accountBytes, burnAmount, destinationChainsAndAddresses, {
-                value: gasPayment,
+            const burnFromCrossChainFunctionCall = token.interface.encodeFunctionData('burnFromCrossChain', [
+                accountBytes,
+                burnAmount,
+                destinationChain,
+                destinationChainTokenAddress
+            ]);
+            // Validate multisig address (owner of token)
+            validateParameters({ isValidAddress: { multisigAddress } });
+
+            // Use current chain RPC
+            const safeRpc = chain.rpc;
+
+            // Owner 1 creates and signs Safe tx
+            const safe1 = await Safe.init({ provider: safeRpc, signer: process.env.PRIVATE_KEY, safeAddress: multisigAddress });
+            const safeTx = await safe1.createTransaction({
+                transactions: [{ to: tokenAddress, data: burnFromCrossChainFunctionCall, value: gasPayment.toString() }],
+                options: {
+                    safeTxGas: 300000, // give Safe execution room (can adjust higher if needed)
+                },
             });
+            const safeTxSignedBy1 = await safe1.signTransaction(safeTx);
 
-            printInfo('Transaction hash', tx.hash);
-            printInfo('Waiting for confirmation...');
+            // Owner 2 adds signature and executes
+            const safe2 = await Safe.init({ provider: safeRpc, signer: process.env.PRIVATE_KEY_SIGNER_TWO, safeAddress: multisigAddress });
+            const safeTxSignedBy2 = await safe2.signTransaction(safeTxSignedBy1);
+            const exec = await safe2.executeTransaction(safeTxSignedBy2);
+            const execReceipt = await exec.transactionResponse.wait();
 
-            const receipt = await tx.wait();
-            printInfo('Transaction confirmed', `Block ${receipt.blockNumber}`);
-
+            printInfo('Transaction hash', exec.hash);
+            printInfo('Transaction confirmed', `Block ${execReceipt.blockNumber}`);
             printInfo('\n=== Cross-chain Burn Initiated ===');
             printInfo('The message has been sent to Axelar.');
             printInfo('It will take 3-5 minutes to be relayed to the destination chain.');
-            printInfo(`Monitor at: https://testnet.axelarscan.io/gmp/${tx.hash}`);
 
             break;
         }
@@ -177,14 +193,24 @@ if (require.main === module) {
             main(cmd.name(), [recipient, amount].filter(Boolean), options);
         });
 
+    // Setup cross-chain burn command
+    program
+        .command('setup-burn')
+        .description('Setup cross-chain burn')
+        .argument('<multisigAddress>', 'Multisig address')
+        .action((multisigAddress, options, cmd) => {
+            main(cmd.name(), [multisigAddress].filter(Boolean), options);
+        });
+
     // Cross-chain burn command
     program
         .command('cross-chain-burn')
         .description('Execute cross-chain burn')
         .argument('[account]', 'Account whose tokens to burn (defaults to wallet address)')
         .argument('<amount>', 'Amount to burn')
-        .action((account, amount, options, cmd) => {
-            main(cmd.name(), [account, amount].filter(Boolean), options);
+        .argument('<multisigAddress>', 'Multisig address')
+        .action((account, amount, multisigAddress, options, cmd) => {
+            main(cmd.name(), [account, amount, multisigAddress].filter(Boolean), options);
         });
 
     // Add options to each command
