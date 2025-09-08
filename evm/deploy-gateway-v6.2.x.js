@@ -511,7 +511,6 @@ async function programHandler() {
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
     program.addOption(new Option('--reuseAuth', 'reuse auth module contract for new implementation deployment'));
-    program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));

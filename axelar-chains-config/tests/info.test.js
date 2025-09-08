@@ -47,4 +47,15 @@ describe('Verify `info/*.json` files', () => {
             }
         });
     });
+
+    it('should have all chain keys properly normalized (lowercase)', () => {
+        jsons.forEach((json) => {
+            if (json.data.chains) {
+                Object.keys(json.data.chains).forEach((chainKey) => {
+                    expect(chainKey).toBe(chainKey.toLowerCase());
+                    expect(chainKey).toMatch(/^[a-z][a-z0-9-]*$/);
+                });
+            }
+        });
+    });
 });

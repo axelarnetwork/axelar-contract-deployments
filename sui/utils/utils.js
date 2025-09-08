@@ -29,7 +29,7 @@ const suiCoinId = '0x2::sui::SUI';
 const moveDir = `${__dirname}/../move`;
 
 const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain);
 
     const weightedSigners = signers
         .map((signer) => ({
