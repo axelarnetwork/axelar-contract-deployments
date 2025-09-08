@@ -19,6 +19,12 @@ function generateWallet(options) {
 }
 
 function getWallet(options) {
+    if (options.privateKeyType === 'hex' || (options.privateKey && /^[0-9A-Fa-f]{64,}$/.test(options.privateKey))) {
+        const entropy = Buffer.from(options.privateKey, 'hex').slice(0, 16);
+        return xrpl.Wallet.fromEntropy(entropy, {
+            algorithm: options.walletKeyType,
+        });
+    }
     return xrpl.Wallet.fromSeed(options.privateKey, {
         algorithm: options.walletKeyType,
     });

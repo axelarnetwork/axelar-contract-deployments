@@ -34,7 +34,7 @@ const addBaseOptions = (program, _options = {}) => {
     program.addOption(
         new Option('--privateKeyType <privateKeyType>', 'private key type')
             .makeOptionMandatory(true)
-            .choices(['seed'])
+            .choices(['seed', 'hex'])
             .default('seed')
             .env('PRIVATE_KEY_TYPE'),
     );
