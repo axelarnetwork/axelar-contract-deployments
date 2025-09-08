@@ -2,8 +2,8 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @nbayindirli <noah@interoplabs.io> |
+| **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |

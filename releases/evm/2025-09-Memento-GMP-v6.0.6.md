@@ -2,8 +2,8 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @nbayindirli <noah@interoplabs.io> |
+| **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
@@ -38,7 +38,7 @@ Update npm dependencies (including contracts)
 npm ci && npm run build
 ```
 
-#### Devnet-Amplifier / Stagenet / Testnet
+### Devnet-Amplifier / Stagenet / Testnet
 
 ```bash
 "$CHAIN": {
@@ -60,7 +60,7 @@ npm ci && npm run build
   }
 ```
 
-#### Mainnet
+### Mainnet
 
 ```bash
 "$CHAIN": {
@@ -82,6 +82,8 @@ npm ci && npm run build
     "contracts": {}
   }
 ```
+
+### Steps
 
 1. Fund the following addresses with native tokens on chain:
 
