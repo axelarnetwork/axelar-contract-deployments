@@ -3763,7 +3763,7 @@
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "http://testnet.rpc.axelarscan.io:80",
+    "rpc": "https://tm.axelar-testnet.lava.build",
     "lcd": "https://rest.axelar-testnet.lava.build",
     "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
