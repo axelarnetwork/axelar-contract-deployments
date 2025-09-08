@@ -785,22 +785,26 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function calculateItsCrossChainGas(options) {
-    const { sourceChain, destinationChain, env, eventType } = options;
-    const baseUrl = env === 'mainnet' ? 'https://api.axelarscan.io/gmp' : 'https://testnet.api.gmp.axelarscan.io';
-    const url = `${baseUrl}/estimateITSFee`;
+async function estimateITSFee(options) {
+    const { chain, destinationChain, env, eventType, gasValue } = options;
 
-    const payload = {
-        sourceChain: sourceChain,
-        destinationChain: destinationChain,
-        event: eventType,
-    };
+    if (gasValue === 'auto') {
+        const baseUrl = loadConfig(env).axelar.gmpAxelarscanApi;
+        const url = `${baseUrl}/estimateITSFee`;
 
-    const gasFee = await httpPost(url, payload);
-    if (gasFee === undefined || gasFee === null) {
-        throw new Error(`Failed to estimate ITS fee: ${gasFee}`);
+        const payload = {
+            sourceChain: chain.axelarId,
+            destinationChain: destinationChain,
+            event: eventType,
+        };
+
+        return await httpPost(url, payload);
+    } else if (isValidNumber(gasValue)) {
+        const { scaleGasValue } = require('../evm/utils');
+        return scaleGasValue(chain, gasValue);
+    } else {
+        throw new Error(`Invalid gasValue: ${gasValue}. Please pass in a --gasValue with a valid number "auto".`);
     }
-    return gasFee;
 }
 
 module.exports = {
@@ -871,5 +875,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
-    calculateItsCrossChainGas,
+    estimateITSFee,
 };

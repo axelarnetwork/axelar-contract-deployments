@@ -19,8 +19,7 @@ const {
     printTokenInfo,
     isTrustedChain,
     encodeITSDestination,
-    scaleGasValue,
-    calculateItsCrossChainGas,
+    estimateITSFee,
 } = require('./utils');
 const { validateChain } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -182,22 +181,21 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { destinationChain, gasValue, env } = options;
+            const { destinationChain, env } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const submittedGasValue = !gasValue
-                ? await calculateItsCrossChainGas({
-                      sourceChain: chain.axelarId,
-                      destinationChain,
-                      env,
-                      eventType: 'InterchainTokenDeployment',
-                  })
-                : gasValue;
+            const gasValue = await estimateITSFee({
+                chain,
+                destinationChain,
+                env,
+                eventType: 'InterchainTokenDeployment',
+                gasValue: options.gasValue,
+            });
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
-                isValidNumber: { submittedGasValue },
+                isValidNumber: { gasValue },
             });
 
             if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
@@ -207,9 +205,9 @@ async function processCommand(_axelar, chain, chains, options) {
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
                 deploymentSalt,
                 destinationChain,
-                submittedGasValue,
+                gasValue,
                 {
-                    value: scaleGasValue(chain, submittedGasValue),
+                    value: gasValue,
                     ...gasOptions,
                 },
             );
@@ -238,21 +236,20 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'deployRemoteCanonicalInterchainToken': {
-            const { tokenAddress, destinationChain, gasValue, env } = options;
+            const { tokenAddress, destinationChain, env } = options;
 
-            const submittedGasValue = !gasValue
-                ? await calculateItsCrossChainGas({
-                      sourceChain: chain.axelarId,
-                      destinationChain,
-                      env,
-                      eventType: 'InterchainTokenDeployment',
-                  })
-                : gasValue;
+            const gasValue = await estimateITSFee({
+                chain,
+                destinationChain,
+                env,
+                eventType: 'InterchainTokenDeployment',
+                gasValue: options.gasValue,
+            });
 
             validateParameters({
                 isValidAddress: { tokenAddress },
                 isNonEmptyString: { destinationChain },
-                isValidNumber: { submittedGasValue },
+                isValidNumber: { gasValue },
             });
 
             validateChain(chains, destinationChain);
@@ -260,8 +257,8 @@ async function processCommand(_axelar, chain, chains, options) {
             const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,
                 destinationChain,
-                submittedGasValue,
-                { value: scaleGasValue(chain, submittedGasValue), ...gasOptions },
+                gasValue,
+                { value: gasValue, ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
@@ -301,16 +298,15 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'linkToken': {
-            const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue, env } = options;
+            const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
 
-            const submittedGasValue = !gasValue
-                ? await calculateItsCrossChainGas({
-                      sourceChain: chain.axelarId,
-                      destinationChain,
-                      env,
-                      eventType: 'LinkToken',
-                  })
-                : gasValue;
+            const gasValue = await estimateITSFee({
+                chain,
+                destinationChain,
+                env,
+                eventType: 'LinkToken',
+                gasValue: options.gasValue,
+            });
 
             const deploymentSalt = getDeploymentSalt(options);
 
@@ -323,7 +319,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             validateParameters({
                 isNonEmptyString: { destinationChain, destinationTokenAddress },
-                isValidNumber: { tokenManagerType, submittedGasValue },
+                isValidNumber: { tokenManagerType, gasValue },
                 isValidBytesArray: { linkParams, itsDestinationTokenAddress },
             });
 
@@ -333,8 +329,8 @@ async function processCommand(_axelar, chain, chains, options) {
                 itsDestinationTokenAddress,
                 tokenManagerType,
                 linkParams,
-                submittedGasValue,
-                { value: scaleGasValue(chain, submittedGasValue), ...gasOptions },
+                gasValue,
+                { value: gasValue, ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
@@ -394,7 +390,7 @@ if (require.main === module) {
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
-    program.addOption(new Option('--gasValue <gasValue>', 'gas value'));
+    program.addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
     program.addOption(new Option('--destinationTokenAddress <destinationTokenAddress>', 'destination token address'));
     program.addOption(new Option('--linkParams <linkParams>', 'parameters to use for linking'));
