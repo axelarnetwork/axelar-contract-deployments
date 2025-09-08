@@ -60,7 +60,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
 
-#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
+### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on all EVM chains
 ```bash

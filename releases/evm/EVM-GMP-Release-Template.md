@@ -36,7 +36,7 @@ Update npm dependencies (including contracts)
 npm ci
 ```
 
-#### Devnet-Amplifier / Stagenet / Testnet
+### Devnet-Amplifier / Stagenet / Testnet
 
 ```bash
 "$CHAIN": {
@@ -59,11 +59,11 @@ npm ci
   }
 ```
 
-#### Live network testing
+### Live network testing
 
 Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solidity?tab=readme-ov-file#live-network-testing) in order to verify that the RPC endpoint is EVM-compatible and the Axelar gateway can be deployed on the external network. It is recommended to run the `RpcCompatibility` and `AxelarGateway` test groups.
 
-#### Mainnet
+### Mainnet
 
 ```bash
 "$CHAIN": {
@@ -85,6 +85,8 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
   "contracts": {}
   }
 ```
+
+### Steps
 
 1. Fund the following addresses with native tokens on chain:
 
@@ -188,9 +190,9 @@ OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
 ```
 
-8. Transfer ownership for contracts
+9. Transfer ownership for contracts
 
-- 8.1 Transfer Operators ownership
+- 9.1 Transfer Operators ownership
 
 | Network              | `OPERATORS_OWNER_ADDRESS`                    |
 | -------------------- | -------------------------------------------- |
@@ -202,7 +204,7 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{
 ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
 ```
 
-- 8.2 Transfer AxelarGateway ownership (mainnet and testnet only)
+- 9.2 Transfer AxelarGateway ownership (mainnet and testnet only)
 
 | Network              | New Owner Address                            |
 | -------------------- | -------------------------------------------- |
@@ -213,7 +215,7 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPE
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
-- 8.3 Transfer AxelarGateway ownership (testnet only)
+- 9.3 Transfer AxelarGateway ownership (testnet only)
 
 ```bash
 ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
