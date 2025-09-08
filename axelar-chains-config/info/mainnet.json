@@ -3394,7 +3394,7 @@
   "axelar": {
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
-    "rpc": "https://tm.axelar.lava.build:443",
+    "rpc": "http://rpc.axelarscan.io:80 ",
     "lcd": "https://rest.axelar.lava.build",
     "grpc": "grpc.axelar.lava.build:443",
     "tokenSymbol": "AXL",
@@ -3810,8 +3810,8 @@
           "address": "axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd",
           "codeId": 35
         },
-        "storeCodeProposalId": "324",
-        "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
+        "storeCodeProposalId": "374",
+        "storeCodeProposalCodeHash": "c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a",
         "lastUploadedCodeId": 35
       },
       "XrplMultisigProver": {
