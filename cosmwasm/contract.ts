@@ -37,13 +37,8 @@ export const ContractMap = new Map<Contract, string>([
 ]);
 
 export async function getContractInfo(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
-    try {
-        const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
-        const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
-        return contract_info;
-    } catch (error) {
-        throw error;
-    }
+    const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
+    JSON.parse(Buffer.from(result).toString('ascii'));
 }
 
 const programHandler = () => {
