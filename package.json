@@ -91,6 +91,13 @@
     "color-name": "1.1.4",
     "is-core-module": "2.13.1",
     "error-ex": "1.3.2",
-    "has-ansi": "5.0.1"
+    "has-ansi": "5.0.1",
+    "debug": "4.4.1",
+    "ansi-styles": "4.3.0",
+    "supports-color": "7.2.0",
+    "wrap-ansi": "7.0.0",
+    "slice-ansi": "4.0.0",
+    "is-arrayish": "0.2.1",
+    "ansi-regex": "5.0.1"
   }
 }
