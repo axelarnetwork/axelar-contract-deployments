@@ -43,7 +43,7 @@ const programHandler = () => {
                     const contract_info: ContractInfo = await getContractInfo(client, options.address);
                     switch (contract_info.contract) {
                         case 'coordinator':
-                            migrateCoordinator(
+                            await migrateCoordinator(
                                 client,
                                 wallet,
                                 options,
@@ -55,8 +55,6 @@ const programHandler = () => {
                             );
                             break;
                     }
-
-                    return;
                 },
             ),
         {},

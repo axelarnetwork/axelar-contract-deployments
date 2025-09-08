@@ -912,7 +912,6 @@ const getInstantiatePermission = (accessType, addresses) => {
 };
 
 const getSubmitProposalParams = (options) => {
-    console.log('Options', options);
     const { title, description, runAs } = options;
 
     return {
