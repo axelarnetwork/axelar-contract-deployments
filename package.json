@@ -86,7 +86,7 @@
     "node": ">=18"
   },
   "overrides": {
-    "strip-ansi": "7.1.0",
+    "strip-ansi": "6.0.1",
     "color-convert": "2.0.1",
     "color-name": "1.1.4",
     "is-core-module": "2.13.1",
