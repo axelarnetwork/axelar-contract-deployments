@@ -84,7 +84,7 @@ c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a  wasm/xrpl_gate
 ts-node cosmwasm/submit-proposal.js store \
   -c XrplGateway \
   -t "Upload XRPLGateway contract v1.3.2" \
-  -d "Upload XRPLGatway contract v1.3.2" \
+  -d "Upload XRPLGateway contract v1.3.2" \
   -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
