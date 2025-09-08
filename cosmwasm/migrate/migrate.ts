@@ -4,7 +4,7 @@ import { Command, Option } from 'commander';
 
 import { loadConfig } from '../../common';
 import { addAmplifierOptions } from '../cli-utils';
-import { Contract, ContractInfo, ContractMap, getContractInfo } from '../contract';
+import { ContractInfo, getContractInfo } from '../contract';
 import { prepareClient, prepareWallet } from '../utils';
 import { migrate as migrateCoordinator } from './coordinator';
 
@@ -21,7 +21,6 @@ const programHandler = () => {
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
             .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
             .option('--dry', 'only generate migration msg')
-            .option('--dummy', 'supply dummy data where applicable')
             .description('Migrate contract')
             .action(async (code_id: string, options: { env: string; mnemonic: string; address: string; deposit: string, fees; dry?; dummy? }) => {
                 const { env } = options;
@@ -39,7 +38,7 @@ const programHandler = () => {
 
                 const contract_info: ContractInfo = await getContractInfo(client, options.address);
                 switch (contract_info.contract) {
-                    case ContractMap.get(Contract.Coordinator):
+                    case 'coordinator':
                         migrateCoordinator(
                             client,
                             wallet,

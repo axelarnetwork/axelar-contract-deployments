@@ -1,6 +1,10 @@
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { ChainEndpoint, SigningCosmWasmClient, queryChainsFromRouter } from './utils';
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
+
+// cosmwasm-stargate imports protobufjs which does not have a default export
+// Therefore, import SigningCosmWasmClient using CommonJS to avoid error TS1192
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+export const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 interface Options {
     env: string;
@@ -18,6 +22,23 @@ interface ChainContracts {
     gateway_address: string;
     verifier_address: string;
 }
+
+export interface ChainEndpoint {
+    name: string;
+    gateway: {
+        address: string;
+    };
+}
+
+export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
+    try {
+        const res: ChainEndpoint[] = await client.queryContractSmart(router_address, { chains: {} });
+        return res;
+    } catch (error) {
+        throw error;
+    }
+}
+
 
 async function constructChainContracts(client: typeof SigningCosmWasmClient, chain_endpoints: ChainEndpoint[]): Promise<ChainContracts[]> {
     interface GatewayConfig {
@@ -64,7 +85,7 @@ async function addMissingProvers(
     }
 }
 
-async function coordinatorToVersion2_0_1(
+async function coordinatorToVersion2_1_0(
     client: typeof SigningCosmWasmClient,
     wallet: DirectSecp256k1HdWallet,
     options: Options,
@@ -75,7 +96,6 @@ async function coordinatorToVersion2_0_1(
 ) {
     const router_address = config.axelar.contracts.Router.address;
     const multisig_address = config.axelar.contracts.Multisig.address;
-    // coordinator_address = options.address ?? config.axelar.contracts.Coordinator.address;
 
     const chain_endpoints = await queryChainsFromRouter(client, router_address);
     let chain_contracts = await constructChainContracts(client, chain_endpoints);
@@ -127,7 +147,7 @@ export async function migrate(
 ) {
     switch (version) {
         case '1.1.0':
-            return coordinatorToVersion2_0_1(client, wallet, options, config, sender_address, coordinator_address, code_id);
+            return coordinatorToVersion2_1_0(client, wallet, options, config, sender_address, coordinator_address, code_id);
         default:
             console.error(`no migration script found for coordinator ${version}`);
     }
