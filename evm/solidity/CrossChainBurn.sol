@@ -77,10 +77,8 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     }
 
     function _execute(bytes32, string calldata sourceChain, string calldata sourceAddress, bytes calldata payload) internal override {
-        // require(_stringsEqual(sourceChain, homeChain));
-        // Allow owner or cross chain admin to burn for another account
         // TODO uncomment
-        // require(_stringsEqual(sourceAddress, Strings.toHexString(uint256(uint160(owner())), 20)) || crossChainAdmins[sourceAddress]);
+        // require(_stringsEqual(sourceChain, homeChain));
 
         // Decodes the encodePacked encoded payload, which should be easy to create from other chains without abi support
         uint256 amount = payload.toUint256(0);
