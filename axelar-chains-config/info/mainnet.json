@@ -106,13 +106,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -235,13 +237,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xc15E449607224DB9ff8e6f7E5DB020C0E18BCff3"
+          "gatewayCaller": "0xc15E449607224DB9ff8e6f7E5DB020C0E18BCff3",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         },
         "AxelarTransceiver": {
           "salt": "AXELAR_TRANSCEIVER v1.1.0",
@@ -373,13 +377,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xE4281aff29bd8812D14D459d58e82Acb907dCF0C"
+          "gatewayCaller": "0xE4281aff29bd8812D14D459d58e82Acb907dCF0C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -498,13 +504,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x8eE852b9099307803bF1616e34b623fA4859bE91"
+          "gatewayCaller": "0x8eE852b9099307803bF1616e34b623fA4859bE91",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -627,13 +635,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x67dF0a5EF66c000335222643adC9f0Ed1928480C"
+          "gatewayCaller": "0x67dF0a5EF66c000335222643adC9f0Ed1928480C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -755,13 +765,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xc15E449607224DB9ff8e6f7E5DB020C0E18BCff3"
+          "gatewayCaller": "0xc15E449607224DB9ff8e6f7E5DB020C0E18BCff3",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -881,13 +893,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x8eE852b9099307803bF1616e34b623fA4859bE91"
+          "gatewayCaller": "0x8eE852b9099307803bF1616e34b623fA4859bE91",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         },
         "AxelarTransceiver": {
           "salt": "AXELAR_TRANSCEIVER v1.1.0",
@@ -1020,13 +1034,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -1150,13 +1166,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -1275,13 +1293,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "confirmations": 3,
@@ -1405,13 +1425,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -1539,13 +1561,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -1668,13 +1692,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "confirmations": 2,
@@ -1799,13 +1825,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "confirmations": 2,
@@ -1928,13 +1956,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -2147,13 +2177,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x04D8634f991117838E15C5358b40735bc3F6C67c"
+          "gatewayCaller": "0x04D8634f991117838E15C5358b40735bc3F6C67c",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "gasOptions": {
@@ -2276,13 +2308,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "staticGasOptions": {
@@ -2386,13 +2420,15 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B"
+          "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "gasOptions": {
@@ -2491,13 +2527,15 @@
           "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -2814,7 +2852,7 @@
         "InterchainTokenService": {
           "address": "CBDBMIOFHGWUFRYH3D3STI2DHBOWGDDBCRKQEUB4RGQEBVG74SEED6C6",
           "deployer": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
-          "wasmHash": "cd078e4d495a61a113a6ba457f5efa4579c5bc41a396779fd82f164aa75e9942",
+          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
           "initializeArgs": {
             "owner": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
             "operator": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
@@ -2826,7 +2864,7 @@
             "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
             "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
           },
-          "version": "1.2.0"
+          "version": "1.4.1"
         },
         "Multicall": {
           "address": "CC5LVKQA73ZVVUBAOCV5INV4TXPMELBFJ6XTQUBJTP4O2LSUKAA7VHLZ",
@@ -2928,13 +2966,15 @@
           "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       }
     },
@@ -3055,13 +3095,15 @@
           "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       }
     },
@@ -3081,6 +3123,9 @@
         "url": "https://hashscan.io/mainnet",
         "api": ""
       },
+      "gasScalingFactor": 10,
+      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+      "htsLibraryAddress": "0x000000000000000000000000000000000094fd08",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -3131,6 +3176,26 @@
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
           "implementation": "0xE622B1D44F5061DB10ABa2594F1A8eb2DC1fC1d4",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0",
+          "proxySalt": "ITS v1.0.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.0",
+          "tokenManagerDeployer": "0x478b2BC902B73D06ff541b411FC6124cA50C6A3C",
+          "interchainTokenDeployer": "0x644afd0e2B68044fE0A160bAb4CaC30f854e141A",
+          "tokenManager": "0x2AE94c771508A4A6Ca8Aa808532665E5668C968B",
+          "tokenHandler": "0x88Ccd3040Eb4D73B155A3552EA49bdA3063AB13B",
+          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.0",
+          "implementation": "0x595cEDA049140D54630FEDCc6Be71F9E2AA85b95"
         }
       }
     },
@@ -3213,13 +3278,15 @@
           "gatewayCaller": "0xD484Ca55aa38bA020a007A2345D9A6Aa2fdfA76B",
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
-          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.1"
         }
       }
     },
@@ -3311,13 +3378,15 @@
           "tokenManager": "0x2be6F57fb0E69D26F8c8FbbebD8403d88fbAc09c",
           "tokenHandler": "0x79aE65Ea16E88D3a7303A7FF019353140B06F39B",
           "implementation": "0x4Aca663c242D31F85b77bf27d5D7dA4cF69fa7bd",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "version": "2.2.0"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
-          "implementation": "0x6977477Bd4C053E1BfD0B6F287060c2A4E5E1aA1"
+          "implementation": "0x6977477Bd4C053E1BfD0B6F287060c2A4E5E1aA1",
+          "version": "2.2.0"
         }
       }
     }
@@ -3341,10 +3410,10 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "271",
-        "storeCodeProposalCodeHash": "fcbd66ffc824fc52383132d7a57617e9bc40dd1521ecad77341726434f801406",
-        "codeId": 24,
-        "lastUploadedCodeId": 4,
+        "storeCodeProposalId": "371",
+        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
+        "codeId": 40,
+        "lastUploadedCodeId": 40,
         "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m"
       },
       "Router": {
@@ -3702,6 +3771,10 @@
         "xrpl": {
           "maxUintBits": 256,
           "maxDecimalsWhenTruncating": 255
+        },
+        "hedera": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
         }
       },
       "AxelarnetGateway": {

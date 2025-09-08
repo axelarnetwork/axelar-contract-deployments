@@ -308,11 +308,11 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
     }
 }
 
-async function main(action: string, args: string[], options: Options): Promise<void[]> {
+async function main(action: string, args: string[], options: Options): Promise<Record<string, unknown>> {
     options.args = args;
     return mainProcessor(options, (_axelar, chain: ChainConfig, _chains, options: Options) =>
         processCommand(_axelar, chain, action, options),
-    );
+    ) as Promise<Record<string, unknown>>;
 }
 
 if (require.main === module) {

@@ -30,7 +30,7 @@ const topUpAccounts = async (wallet, options, addressesToFund, decimals, token) 
     }
 
     for (const address of addressesToFund) {
-        console.log('='.repeat(20));
+        printInfo('='.repeat(20));
         printInfo(`Funding account with ${token ? 'ERC20 tokens' : 'native cryptocurrency'}`, address);
 
         const balance = token ? await token.balanceOf(address) : await wallet.provider.getBalance(address);

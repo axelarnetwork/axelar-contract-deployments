@@ -25,7 +25,9 @@ const {
     getStructs,
     restrictUpgradePolicy,
     broadcastRestrictedUpgradePolicy,
+    broadcastFromTxBuilder,
 } = require('./utils');
+const GatewayCli = require('./gateway');
 
 /**
  * Move Package Directories
@@ -237,7 +239,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     const { minimumRotationDelay, policy, previousSigners } = options;
     const operator = options.operator || keypair.toSuiAddress();
     const signers = await getSigners(keypair, config, chain, options);
-    const domainSeparator = await getDomainSeparator(config, chain, options);
+    const domainSeparator = await getDomainSeparator(config.axelar, chain, options);
 
     validateParameters({
         isNonEmptyString: { previousSigners },
@@ -271,7 +273,25 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     restrictUpgradePolicy(tx, policy, upgradeCap);
 
-    const result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
+    let result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
+
+    const maxRetries = 10;
+    let retry = 0;
+
+    while (result.objectChanges == undefined) {
+        retry++;
+        if (retry > maxRetries) {
+            throw new Error(`failed to fetch object changes for tx ${result.digest}`);
+        }
+
+        result = await client.getTransactionBlock({
+            digest: result.digest,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+            },
+        });
+    }
 
     const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
         `${packageId}::gateway::Gateway`,
@@ -442,6 +462,47 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 }
 
+async function migrate(keypair, client, supportedPackage, config, chain, options) {
+    const { packageName } = supportedPackage;
+
+    validateParameters({
+        // Contract
+        isNonArrayObject: { contractEntry: chain.contracts[packageName] },
+        isNonEmptyString: { contractAddress: chain.contracts[packageName].address },
+        // OwnerCap
+        isNonArrayObject: { ownerEntry: chain.contracts[packageName].objects },
+        isNonEmptyString: { ownerAddress: chain.contracts[packageName].objects.OwnerCap },
+    });
+    const contractConfig = chain.contracts[packageName];
+    const ownerCap = contractConfig.objects.OwnerCap;
+
+    const builder = new TxBuilder(client);
+
+    switch (packageName) {
+        case 'AxelarGateway': {
+            const result = await GatewayCli.migrate(keypair, client, config, chain, contractConfig, null, options);
+            return await broadcast(client, keypair, result.tx, result.message, options);
+        }
+        case 'InterchainTokenService': {
+            const InterchainTokenService = contractConfig.objects.InterchainTokenService;
+
+            if (typeof InterchainTokenService !== 'string') throw new Error(`Cannot find object of specified contract: ${packageName}`);
+
+            await builder.moveCall({
+                target: `${contractConfig.address}::interchain_token_service::migrate`,
+                arguments: [InterchainTokenService, ownerCap],
+            });
+
+            break;
+        }
+        default: {
+            throw new Error(`Post-upgrade migration not supported for ${packageName}`);
+        }
+    }
+
+    if (packageName !== 'AxelarGateway') await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
+}
+
 async function syncPackages(keypair, client, config, chain, options) {
     // Remove the move directory and its contents if it exists
     fs.rmSync(moveDir, { recursive: true, force: true });
@@ -528,6 +589,7 @@ if (require.main === module) {
     // 2nd level commands
     const deployCmd = new Command('deploy').description('Deploy a Sui package');
     const upgradeCmd = new Command('upgrade').description('Upgrade a Sui package');
+    const migrateCmd = new Command('migrate').description('Migrate a Sui package after upgrading');
 
     // 3rd level commands for `deploy`
     const deployContractCmds = supportedPackages.map((supportedPackage) => {
@@ -557,6 +619,22 @@ if (require.main === module) {
             });
     });
 
+    // 3rd level commands for `migrate`
+    const migrateContractCmds = supportedPackages.map((supportedPackage) => {
+        const { packageName } = supportedPackage;
+        return new Command(packageName)
+            .description(`Migrate ${packageName} contract after upgrade`)
+            .command(`${packageName}`)
+            .addOption(new Option('--migrate-data <migrateData>', 'bcs encoded data to pass to the migrate function'))
+            .addOption(new Option('--sender <sender>', 'transaction sender'))
+            .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
+            .addOption(new Option('--offline', 'store tx block for sign'))
+            .addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'))
+            .action((options) => {
+                mainProcessor([supportedPackage], options, migrate);
+            });
+    });
+
     const syncCmd = new Command('sync').description('Sync local Move packages with deployed addresses').action((options) => {
         mainProcessor([], options, syncPackages);
     });
@@ -564,14 +642,19 @@ if (require.main === module) {
     // Add 3rd level commands to 2nd level command `upgrade`
     upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
 
+    // Add 3rd level commands to 2nd level command `migrate`
+    migrateContractCmds.forEach((cmd) => migrateCmd.addCommand(cmd));
+
     // Add base options to all 2nd and 3rd level commands
     addOptionsToCommands(deployCmd, addBaseOptions);
     addOptionsToCommands(upgradeCmd, addBaseOptions);
+    addOptionsToCommands(migrateCmd, addBaseOptions);
     addBaseOptions(syncCmd);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
     program.addCommand(upgradeCmd);
+    program.addCommand(migrateCmd);
     program.addCommand(syncCmd);
 
     program.parse();

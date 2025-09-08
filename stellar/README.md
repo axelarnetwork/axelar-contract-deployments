@@ -253,6 +253,15 @@ ts-node stellar/its.js add-trusted-chains avalanche sui
 ts-node stellar/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+#### Check if Chain is Trusted
+
+```bash
+ts-node stellar/its.js is-trusted-chain <chain>
+
+# Example
+ts-node stellar/its.js is-trusted-chain avalanche
+```
+
 #### Deploy Interchain Token
 
 ```bash
@@ -275,6 +284,24 @@ ts-node stellar/its.js register-canonical-token [token-address]
 
 ```bash
 ts-node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-amount [amount]
+```
+
+#### Register Token Metadata
+
+```bash
+ts-node stellar/its.js register-token-metadata [token-address] --gas-amount [amount]
+```
+
+#### Register Custom Token
+
+```bash
+ts-node stellar/its.js register-custom-token [salt] [token-address] [token-manager-type]
+```
+
+#### Link Token
+
+```bash
+ts-node stellar/its.js link-token [salt] [destination-chain] [destination-token-address] [token-manager-type] --gas-amount [amount] --operator [operator]
 ```
 
 #### Interchain Transfer
@@ -315,6 +342,53 @@ ts-node stellar/its.js remove-flow-limit [token-id]
 # Example
 ts-node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
+
+#### Get Deployed Token Manager
+
+```bash
+ts-node stellar/its.js deployed-token-manager [token-id]
+
+# Example
+ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
+```
+
+#### Create Custom Token
+
+Deploy a custom token contract using the InterchainToken WASM hash. This creates a new token contract instance with specified metadata.
+
+```bash
+ts-node stellar/its.js create-custom-token [name] [symbol] [decimals]
+
+# Example
+ts-node stellar/its.js create-custom-token TEST TEST 7
+```
+
+**Parameters:**
+
+- `<name>`: The name of the token (e.g., "TEST")
+- `<symbol>`: The token symbol (e.g., "TEST")
+- `<decimals>`: Number of decimals for the token (e.g., 7)
+
+**Features:**
+
+- Automatically uses the InterchainToken WASM hash from chain configuration
+- Sets the deploying wallet as the initial minter
+- Uses a dummy token ID for deployment
+- Returns the deployed contract address
+
+#### Create Stellar Classic Asset
+
+Create a Stellar classic asset with trustline
+
+```bash
+ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer] [limit]
+```
+
+**Parameters:**
+
+- `asset-code`: The code of the Stellar asset (e.g., "USDC")
+- `issuer`: The issuer address of the Stellar asset
+- `limit`: Optional trust limit (defaults to 1000000000 if not specified)
 
 ## TTL extension and state archival recovery
 
@@ -420,14 +494,14 @@ Transfer the operatorship of the contract:
 ts-node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```
 
-## Deploy Stellar Asset Contract
+## Create Stellar Asset Contract
 
-The deploy-stellar-asset-contract command allows you to deploy a Stellar asset contract through the Token Utils contract. This creates a smart contract wrapper for an existing Stellar classic asset, enabling it to be used within the Stellar ecosystem. The command validates the asset parameters and returns the deployed contract's address.
+The create-stellar-asset-contract command allows you to deploy a Stellar asset contract through the Token Utils contract. This creates a smart contract wrapper for an existing Stellar classic asset, enabling it to be used within the Stellar ecosystem. The command validates the asset parameters and returns the deployed contract's address.
 
 #### Usage
 
 ```bash
-ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issuer-address]
+ts-node stellar/token-utils.js create-stellar-asset-contract [asset-code] [issuer-address]
 ```
 
 #### Parameters
@@ -438,5 +512,5 @@ ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issue
 #### Example
 
 ```bash
-ts-node stellar/token-utils.js deploy-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
+ts-node stellar/token-utils.js create-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
 ```
