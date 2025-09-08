@@ -128,7 +128,7 @@ async function coordinatorToVersion2_1_0(
         try {
             console.log('Executing migration...');
             await submitProposal(client, wallet, config, migrate_options, proposal);
-            console.log('Migration succeeded');
+            console.log('Migration proposal succeeded');
         } catch (e) {
             console.log("Error:", e);
         }
