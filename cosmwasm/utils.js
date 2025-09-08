@@ -912,7 +912,7 @@ const getInstantiatePermission = (accessType, addresses) => {
 };
 
 const getSubmitProposalParams = (options) => {
-    console.log("Options", options);
+    console.log('Options', options);
     const { title, description, runAs } = options;
 
     return {
@@ -1021,7 +1021,7 @@ const getMigrateContractParams = (config, options) => {
     return {
         ...getSubmitProposalParams(options),
         contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
-        codeId: options.codeId ?? (contractConfig.codeId),
+        codeId: options.codeId ?? contractConfig.codeId,
         msg: Buffer.from(msg),
     };
 };

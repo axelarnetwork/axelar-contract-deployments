@@ -22,38 +22,43 @@ const programHandler = () => {
             .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
             .option('--dry', 'only generate migration msg')
             .description('Migrate contract')
-            .action(async (code_id: string, options: { env: string; mnemonic: string; address: string; deposit: string, fees; dry?; dummy? }) => {
-                const { env } = options;
-                const config = loadConfig(env);
+            .action(
+                async (
+                    code_id: string,
+                    options: { env: string; mnemonic: string; address: string; deposit: string; fees; dry?; dummy? },
+                ) => {
+                    const { env } = options;
+                    const config = loadConfig(env);
 
-                const wallet = await prepareWallet(options);
-                const client = await prepareClient(config, wallet);
-                const accounts = await wallet.getAccounts();
-                if (accounts.length < 1) {
-                    console.log('invalid mnemonic');
+                    const wallet = await prepareWallet(options);
+                    const client = await prepareClient(config, wallet);
+                    const accounts = await wallet.getAccounts();
+                    if (accounts.length < 1) {
+                        console.log('invalid mnemonic');
+                        return;
+                    }
+
+                    const sender_address = accounts[0].address;
+
+                    const contract_info: ContractInfo = await getContractInfo(client, options.address);
+                    switch (contract_info.contract) {
+                        case 'coordinator':
+                            migrateCoordinator(
+                                client,
+                                wallet,
+                                options,
+                                config,
+                                sender_address,
+                                options.address,
+                                contract_info.version,
+                                Number(code_id),
+                            );
+                            break;
+                    }
+
                     return;
-                }
-
-                const sender_address = accounts[0].address;
-
-                const contract_info: ContractInfo = await getContractInfo(client, options.address);
-                switch (contract_info.contract) {
-                    case 'coordinator':
-                        migrateCoordinator(
-                            client,
-                            wallet,
-                            options,
-                            config,
-                            sender_address,
-                            options.address,
-                            contract_info.version,
-                            Number(code_id),
-                        );
-                        break;
-                }
-
-                return;
-            }),
+                },
+            ),
         {},
     );
 

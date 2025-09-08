@@ -1,4 +1,5 @@
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
 
 // cosmwasm-stargate imports protobufjs which does not have a default export
@@ -38,7 +39,6 @@ export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient
         throw error;
     }
 }
-
 
 async function constructChainContracts(client: typeof SigningCosmWasmClient, chain_endpoints: ChainEndpoint[]): Promise<ChainContracts[]> {
     interface GatewayConfig {
@@ -109,20 +109,20 @@ async function coordinatorToVersion2_1_0(
 
     console.log('Migration Msg:', migration_msg);
 
-    let migrate_options = {
-        contractName: "Coordinator",
+    const migrate_options = {
+        contractName: 'Coordinator',
         msg: JSON.stringify(migration_msg),
-        title: "Migrate Coordinator v2.1.0",
-        description: "Migrate Coordinator v2.1.0",
+        title: 'Migrate Coordinator v2.1.0',
+        description: 'Migrate Coordinator v2.1.0',
         runAs: sender_address,
         codeId: code_id,
         deposit: options.deposit,
         fetchCodeId: false,
-        address: coordinator_address
-    }
-    config.contractName = "coordinator";
+        address: coordinator_address,
+    };
+    config.contractName = 'coordinator';
 
-    let proposal = encodeMigrateContractProposal(config, migrate_options);
+    const proposal = encodeMigrateContractProposal(config, migrate_options);
 
     if (!options.dry) {
         try {
@@ -130,7 +130,7 @@ async function coordinatorToVersion2_1_0(
             await submitProposal(client, wallet, config, migrate_options, proposal);
             console.log('Migration proposal succeeded');
         } catch (e) {
-            console.log("Error:", e);
+            console.log('Error:', e);
         }
     }
 }
