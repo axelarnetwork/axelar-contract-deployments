@@ -27,10 +27,10 @@ Create an `.env` config. Local environment variable `CHAIN` should be set to `me
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAINS=memento
+CHAIN=memento
 ```
 
-An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` key.
+An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
 
 Update npm dependencies (including contracts)
 

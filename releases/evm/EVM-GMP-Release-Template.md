@@ -25,7 +25,7 @@ Create an `.env` config. Local environment variable `CHAIN` should be set to `<c
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAINS=<chain name>
+CHAIN=<chain name>
 ```
 
 An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
