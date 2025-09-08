@@ -1,14 +1,14 @@
 # Celo-Sepolia ITS v2.2.0
 
-|                | **Owner**                          |
-| -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+|                | **Owner**                                                              |
+| -------------- | ---------------------------------------------------------------------- |
+| **Created By** | @AttissNgo <attiss@interoplabs.io>                                     |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
 
-| **Network**  | **Deployment Status** | **Date** |
-| ------------ | --------------------- | -------- |
-| **Stagenet** | -                     | TBD      |
-| **Testnet**  | -                     | TBD      |
+| **Network**  | **Deployment Status** | **Date**    |
+| ------------ | --------------------- | ----------- |
+| **Stagenet** | Completed             | 2025-09-08  |
+| **Testnet**  | Completed             | 2025-009-05 |
 
 - [Releases](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
 
