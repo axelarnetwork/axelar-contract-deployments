@@ -12,11 +12,8 @@
 
 # SECURITY: Dependency management requires security team approval
 # All dependency-related files require approval from security team
-**/package.json @axelarnetwork/security @axelarnetwork/protocol
-**/package-lock.json @axelarnetwork/security @axelarnetwork/protocol
-**/npm-shrinkwrap.json @axelarnetwork/security @axelarnetwork/protocol
-**/yarn.lock @axelarnetwork/security @axelarnetwork/protocol
-**/pnpm-lock.yaml @axelarnetwork/security @axelarnetwork/protocol
+**/package.json @axelarnetwork/security
+**/package-lock.json @axelarnetwork/security
 # Rust dependencies
-# **/Cargo.toml @axelarnetwork/security @axelarnetwork/protocol
-# **/Cargo.lock @axelarnetwork/security @axelarnetwork/protocol
+# **/Cargo.toml @axelarnetwork/security
+# **/Cargo.lock @axelarnetwork/security
