@@ -950,7 +950,7 @@ if (require.main === module) {
             mainProcessor(
                 deployRemoteCoin,
                 options,
-                [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain, options],
+                [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain],
                 processCommand,
             );
         });
