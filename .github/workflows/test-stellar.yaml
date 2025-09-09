@@ -191,15 +191,7 @@ jobs:
           ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
           ts-node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
-      ###### Command: ITS - Deploy Remote Canonical Token ######
-
-      - name: Deploy Remote Canonical Tokens
-        run: |
-          ts-node stellar/its.js register-canonical-token ${{ steps.env_vars.outputs.xlmTokenAddress }}
-          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.env_vars.outputs.xlmTokenAddress }}
-
-      ###### Command: ITS - Link Custom Token ######
-
+      ###### Command: ITS - Create a Custom Token ######
       - name: Create a Custom Token
         id: create_custom_token
         run: |
@@ -208,6 +200,13 @@ jobs:
           customTokenAddress=$(echo "$output" | grep "Deployed address:" | awk '{print $3}')
           echo "customTokenAddress=$customTokenAddress" >> $GITHUB_OUTPUT
 
+      ###### Command: ITS - Deploy Remote Canonical Token ######
+      - name: Deploy Remote Canonical Tokens
+        run: |
+          ts-node stellar/its.js register-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }}
+          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }}
+
+      ###### Command: ITS - Custom Token Linking ######
       - name: Register Token Metadata
         run: |
           ts-node stellar/its.js register-token-metadata ${{ steps.create_custom_token.outputs.customTokenAddress }}
