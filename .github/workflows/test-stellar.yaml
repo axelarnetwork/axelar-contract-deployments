@@ -123,7 +123,12 @@ jobs:
           jq '.chains += {
             "remote": {
               "name": "remote",
-              "axelarId": "remote"
+              "axelarId": "remote",
+              "contracts": {
+                "InterchainTokenService": {
+                  "address": "remote_its_address"
+                }
+              }
             }
           }' axelar-chains-config/info/local.json > temp.json
           mv temp.json axelar-chains-config/info/local.json
