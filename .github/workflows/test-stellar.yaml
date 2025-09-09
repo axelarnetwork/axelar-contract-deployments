@@ -204,7 +204,7 @@ jobs:
       - name: Deploy Remote Canonical Tokens
         run: |
           ts-node stellar/its.js register-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }}
-          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }}
+          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }} ${{ steps.env_vars.outputs.destinationChain }}
 
       ###### Command: ITS - Custom Token Linking ######
       - name: Register Token Metadata
