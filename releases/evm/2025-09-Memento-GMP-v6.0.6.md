@@ -28,6 +28,8 @@ Create an `.env` config. Local environment variable `CHAIN` should be set to `me
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 CHAIN=memento
+TESTNET_RPC_URL=<testnet rpc url>
+MAINNET_RPC_URL=<mainnet rpc url>
 ```
 
 An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
@@ -66,7 +68,7 @@ npm ci && npm run build
 "memento": {
     "name": "Memento",
     "axelarId": "memento",
-    "chainId": <CHAIN_ID>,
+    "chainId": <MAINNET_CHAIN_ID>,
     "rpc": "<MAINNET_RPC_URL>",
     "tokenSymbol": "ETH",
     "confirmations": 1,
@@ -75,9 +77,8 @@ npm ci && npm run build
     "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-        "name": "<EXPLORER_NAME>",
-        "url": "<EXPLORER_URL>",
-        "api": "<EXPLORER_API_KEY>"
+        "name": "Memento Explorer",
+        "url": "https://priv-explorer.mementoblockchain.com/"
     },
     "contracts": {}
   }
