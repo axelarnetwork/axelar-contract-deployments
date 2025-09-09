@@ -520,15 +520,7 @@ Deploys a source coin and links it with a destination chain coin. If a `channel`
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
 
-### Deploy Interchain Coin
-
-Deploy an Interchain Coin on Sui
-
-```bash
-node sui/its.js deploy-interchain-coin 0xbe87c936d51a66fda8e976e1575c82531be63ee3956855398d7e680678aa33f1 my_interchain_coin MY_INTERCHAIN_COIN My Interchain Coin MIC 6  --env testnet --signatureScheme ed25519
-```
-
-### Deploy Remote Coin
+### Deploy Remote Interchain Coin
 
 Deploy an Interchain Coin on a destination chain to correspond with a registered coin on the Sui blockchain.
 
