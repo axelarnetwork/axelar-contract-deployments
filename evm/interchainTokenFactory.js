@@ -19,9 +19,8 @@ const {
     printTokenInfo,
     isTrustedChain,
     encodeITSDestination,
-    estimateITSFee,
 } = require('./utils');
-const { validateChain } = require('../common/utils');
+const { validateChain, estimateITSFee } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
