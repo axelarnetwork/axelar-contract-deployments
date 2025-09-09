@@ -72,6 +72,13 @@ const addTopUpOptions = (program: Command): void => {
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 };
 
-export { addEnvOption, addBaseOptions, addOptionsToCommands, addStoreOptions };
-export { addEvmOptions, addTopUpOptions };
+module.exports = {
+    addEnvOption,
+    addBaseOptions,
+    addOptionsToCommands,
+    addStoreOptions,
+    addEvmOptions,
+    addTopUpOptions,
+};
+
 export type { BaseOptions, EvmOptions };

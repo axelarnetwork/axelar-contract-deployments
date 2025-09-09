@@ -20,13 +20,13 @@ const resolveFromRoot = (relativePath: string) => {
 const CHAIN_CONFIG_PATH = resolveFromRoot('axelar-chains-config/info');
 const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName: string) => chainName.split('.')[0]);
 
-export interface BaseOptions {
+interface BaseOptions {
     ignoreChainNames?: boolean;
     ignorePrivateKey?: boolean;
     address?: boolean;
 }
 
-export const addEnvOption = (program: Command, defaultValue?: string): void => {
+const addEnvOption = (program: Command, defaultValue?: string): void => {
     program.addOption(
         new Option('-e, --env <env>', 'environment')
             .choices(CHAIN_ENVIRONMENTS)
@@ -36,7 +36,7 @@ export const addEnvOption = (program: Command, defaultValue?: string): void => {
     );
 };
 
-export const addBaseOptions = (program: Command, options: BaseOptions = {}): Command => {
+const addBaseOptions = (program: Command, options: BaseOptions = {}): Command => {
     addEnvOption(program);
 
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
@@ -67,7 +67,7 @@ export const addBaseOptions = (program: Command, options: BaseOptions = {}): Com
     return program;
 };
 
-export const addOptionsToCommands = <T>(program: Command, optionMethod: (command: Command, options: T) => void, options: T): void => {
+const addOptionsToCommands = <T>(program: Command, optionMethod: (command: Command, options: T) => void, options: T): void => {
     if (program.commands.length > 0) {
         program.commands.forEach((command) => {
             optionMethod(command, options);
@@ -75,7 +75,7 @@ export const addOptionsToCommands = <T>(program: Command, optionMethod: (command
     }
 };
 
-export const addStoreOptions = (program: Command): void => {
+const addStoreOptions = (program: Command): void => {
     program.addOption(
         new Option(
             '-a, --artifact-dir <artifactDir>',
@@ -97,4 +97,14 @@ export const addStoreOptions = (program: Command): void => {
             throw new Error('Either --artifact-dir or --version is required');
         }
     });
+};
+
+export { addEnvOption, addBaseOptions, addOptionsToCommands, addStoreOptions };
+export type { BaseOptions };
+
+module.exports = {
+    addEnvOption,
+    addBaseOptions,
+    addOptionsToCommands,
+    addStoreOptions,
 };
