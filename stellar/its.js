@@ -37,9 +37,8 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
     for (const trustedChain of trustedChains) {
         printInfo(action, trustedChain);
 
-        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
-
         try {
+            const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
             const isTrusted = (
                 await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
             ).value();
@@ -68,6 +67,29 @@ async function addTrustedChains(wallet, config, chain, contract, args, options) 
 
 async function removeTrustedChains(wallet, config, chain, contract, args, options) {
     await manageTrustedChains('remove_trusted_chain', wallet, config, chain, contract, args, options);
+}
+
+async function isTrustedChain(wallet, _config, chain, contract, args, options) {
+    const [trustedChain] = args;
+
+    validateParameters({
+        isNonEmptyString: { trustedChain },
+    });
+
+    try {
+        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
+        const isTrusted = (
+            await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
+        ).value();
+
+        if (isTrusted) {
+            printInfo(`${trustedChain} is a trusted chain`);
+        } else {
+            printInfo(`${trustedChain} is not a trusted chain`);
+        }
+    } catch (error) {
+        printError(`Failed to check trusted chain`, trustedChain, error);
+    }
 }
 
 async function deployInterchainToken(wallet, _config, chain, contract, args, options) {
@@ -423,6 +445,42 @@ async function transferTokenAdmin(wallet, _config, chain, contract, args, option
     printInfo('New admin address', newAdmin);
 }
 
+async function createCustomToken(wallet, _config, chain, _contract, args, options) {
+    const [name, symbol, decimals] = args;
+
+    validateParameters({
+        isNonEmptyString: { name, symbol },
+        isValidNumber: { decimals },
+    });
+
+    const wasmHash = chain.contracts?.InterchainTokenService?.initializeArgs.interchainTokenWasmHash;
+    if (!wasmHash) {
+        throw new Error('interchainTokenWasmHash not found in InterchainTokenService contract configuration');
+    }
+
+    const wasmHashBytes = Buffer.from(wasmHash, 'hex');
+    const initArgs = [
+        nativeToScVal(wallet.publicKey(), { type: 'address' }),
+        nativeToScVal(wallet.publicKey(), { type: 'address' }),
+        nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' }),
+        tokenMetadataToScVal(parseInt(decimals), name, symbol),
+    ];
+
+    const operation = Operation.createCustomContract({
+        wasmHash: wasmHashBytes,
+        address: Address.fromString(wallet.publicKey()),
+        constructorArgs: initArgs,
+    });
+
+    const response = await broadcast(operation, wallet, chain, 'Create Custom Token', options);
+    const deployedAddress = Address.fromScAddress(response.address()).toString();
+
+    printInfo('Custom token deployed successfully');
+    printInfo('Deployed address', deployedAddress);
+
+    return deployedAddress;
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -467,6 +525,13 @@ if (require.main === module) {
         .description(`Remove trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
         .action((trustedChains, options) => {
             mainProcessor(removeTrustedChains, trustedChains, options);
+        });
+
+    program
+        .command('is-trusted-chain <trusted-chain>')
+        .description('Check if a chain is trusted')
+        .action((trustedChain, options) => {
+            mainProcessor(isTrustedChain, [trustedChain], options);
         });
 
     program
@@ -600,6 +665,13 @@ if (require.main === module) {
         .description('Transfer admin of a token contract from token id')
         .action((tokenId, newAdmin, options) => {
             mainProcessor(transferTokenAdmin, [tokenId, newAdmin], options);
+        });
+
+    program
+        .command('create-custom-token <name> <symbol> <decimals>')
+        .description('Deploy a custom token contract using interchain token WASM hash')
+        .action((name, symbol, decimals, options) => {
+            mainProcessor(createCustomToken, [name, symbol, decimals], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
