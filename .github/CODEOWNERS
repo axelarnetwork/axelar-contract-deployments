@@ -1,8 +1,30 @@
 # Lines starting with '#' are comments.
 # Each line is a file pattern followed by one or more owners.
 
+# Default ownership
 * @axelarnetwork/chainintegrations
+
+# Chain-specific protocol code
 ./cosmwasm/* @axelarnetwork/protocol
 ./evm/* @axelarnetwork/protocol
 ./sui/* @axelarnetwork/protocol
 ./stellar/* @axelarnetwork/protocol
+
+# SECURITY: Dependency management requires security team approval
+# All dependency-related files require approval from security team
+package.json @axelarnetwork/security @axelarnetwork/protocol
+package-lock.json @axelarnetwork/security @axelarnetwork/protocol
+**/package.json @axelarnetwork/security @axelarnetwork/protocol
+**/package-lock.json @axelarnetwork/security @axelarnetwork/protocol
+npm-shrinkwrap.json @axelarnetwork/security @axelarnetwork/protocol
+yarn.lock @axelarnetwork/security @axelarnetwork/protocol
+pnpm-lock.yaml @axelarnetwork/security @axelarnetwork/protocol
+# Rust dependencies (Solana project)
+**/Cargo.toml @axelarnetwork/security @axelarnetwork/protocol
+**/Cargo.lock @axelarnetwork/security @axelarnetwork/protocol
+
+# Security-related configuration files
+.github/workflows/*.yml @axelarnetwork/security @axelarnetwork/protocol
+.github/workflows/*.yaml @axelarnetwork/security @axelarnetwork/protocol
+.github/CODEOWNERS @axelarnetwork/security
+.nvmrc @axelarnetwork/security @axelarnetwork/protocol
