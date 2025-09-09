@@ -37,150 +37,178 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 - This rollout upgrades the amplifier coordinator contract from `v1.1.0` to `v2.1.0`, the multisig contract from `v2.1.0` to `v2.3.0`, and the router from `v1.2.0` to `v1.3.0`.
 - State migration is required for all three contracts.
 
-1. Upload new Router contract
+1. Retrieve coordinator address from the appropriate config file for the environment. (ENV: devnet, testnet, stagenet or mainnet)
 
-| Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
-| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/> `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-| mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+   ```bash
+   export COORDINATOR_ADDRESS=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"')
+   ```
 
-```bash
-ts-node cosmwasm/submit-proposal.js store -c Router -t "Upload Router contract v1.3.0" -d "Upload Router contract v1.3.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 1.3.0
-```
+1. Upload new router contract
 
-2. Upgrade Router contract
+    | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
+    | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
+    | devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+    | stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+    | testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+    | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
 
-Provide coordinator address to the router.
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+    -c Router \
+    -t "Upload Router contract v1.3.0" \
+    -d "Upload Router contract v1.3.0" \
+    -r $RUN_AS_ACCOUNT \
+    --deposit $DEPOSIT_VALUE \
+    --instantiateAddresses $INIT_ADDRESSES \
+    --version 1.3.0
+    ```
 
-```bash
-ts-node cosmwasm/submit-proposal.js migrate \
-  -c Router \
-  -t "Migrate Router to v1.3.0" \
-  -d "Router to v1.3.0" \
-  --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
-  --fetchCodeId \
-  --deposit $DEPOSIT_VALUE
-```
+1. Upgrade Router contract
 
-3. Upload new Multisig contract
+   Provide coordinator address to the router.
 
-| Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
-| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/> `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-| mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+   ```bash
+   ts-node cosmwasm/submit-proposal.js migrate \
+     -c Router \
+     -t "Migrate Router to v1.3.0" \
+     -d "Router to v1.3.0" \
+     --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
+     --fetchCodeId \
+     --deposit $DEPOSIT_VALUE
+   ```
 
-```bash
-ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.3.0" -d "Upload Multisig contract v2.3.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.3.0
-```
+1. Upload new Multisig contract
 
-4. Upgrade Multisig contract
+    | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
+    | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
+    | devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+    | stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+    | testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+    | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
 
-Provide coordinator address to the multisig.
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+    -c Multisig \
+    -t "Upload Multisig contract v2.3.0" \
+    -d "Upload Multisig contract v2.3.0" \
+    -r $RUN_AS_ACCOUNT \
+    --deposit $DEPOSIT_VALUE \
+    --instantiateAddresses $INIT_ADDRESSES \
+    --version 2.3.0
+    ```
 
-```bash
-ts-node cosmwasm/submit-proposal.js migrate \
-  -c Multisig \
-  -t "Migrate Multisig to v2.3.0" \
-  -d "Multisig to v2.3.0" \
-  --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
-  --fetchCodeId \
-  --deposit $DEPOSIT_VALUE
-```
+1. Upgrade Multisig contract
 
-5. Upload new Coordinator contract
+   Provide coordinator address to the multisig.
 
-| Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
-| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/> `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-| mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+   ```bash
+   ts-node cosmwasm/submit-proposal.js migrate \
+     -c Multisig \
+     -t "Migrate Multisig to v2.3.0" \
+     -d "Multisig to v2.3.0" \
+     --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
+     --fetchCodeId \
+     --deposit $DEPOSIT_VALUE
+   ```
 
-```bash
-ts-node cosmwasm/submit-proposal.js store -c Coordinator -t "Upload Coordinator contract v2.1.0" -d "Upload Coordinator contract v2.1.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.1.0
-```
+1. Upload new Coordinator contract
 
-6. Migrate to Coordinator v2.1.0 using the contract deployment scripts
+    | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
+    | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
+    | devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+    | stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+    | testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+    | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
 
-```bash
-ts-node cosmwasm/migrate/migrate.ts <code_id> --address $COORDINATOR_ADDRESS -m $MNEMONIC -d $DEPOSIT_VALUE
-```
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+    -c Coordinator \
+    -t "Upload Coordinator contract v2.1.0" \
+    -d "Upload Coordinator contract v2.1.0" \
+    -r $RUN_AS_ACCOUNT \
+    --deposit $DEPOSIT_VALUE \
+    --instantiateAddresses $INIT_ADDRESSES \
+    --version 2.1.0
+    ```
 
-This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
+1. Migrate to Coordinator v2.1.0 using the contract deployment scripts
+
+   ```bash
+   ts-node cosmwasm/migrate/migrate.ts <code_id> \
+   --address $COORDINATOR_ADDRESS \
+   -m $MNEMONIC \
+   -d $DEPOSIT_VALUE
+   ```
+
+   This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
 
 ## Checklist
 
-Verify coordinator contract version
+1. Verify router contract version
 
-Verify router contract version
+   ```bash
+   ts-node cosmwasm/contract.ts info --contract Router -e $ENV
+   ```
+   Expected output
 
-```bash
-ts-node cosmwasm/contract.ts info --contract Router -e $ENV
-```
-Expected output
+   ```bash
+   {contract: 'router', version: '1.3.0'}
+   ```
 
-```bash
-{contract: 'router', version: '1.3.0'}
-```
+1. Verify coordinator address stored on router
 
-Verify coordinator address stored on router
+   ```bash
+   axelard q wasm contract-state raw --ascii $ROUTER_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.coordinator'
+   ```
 
-```bash
-axelard q wasm contract-state raw --ascii $ROUTER_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.coordinator'
-```
+   Expected output
 
-Expected output
+   ```bash
+   $COORDINATOR_ADDRESS
+   ```
 
-```bash
-$COORDINATOR_ADDRESS
-```
+1. Ensure coordinator address match predicted one.
 
-Ensure coordinator address match predicted one.
+   ```bash
+   cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
+   ```
 
-```bash
-cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
-```
+1. Verify multisig contract version
 
-Verify multisig contract version
+   ```bash
+   ts-node cosmwasm/contract.ts info --contract Multisig -e $ENV
+   ```
+   Expected output
 
-```bash
-ts-node cosmwasm/contract.ts info --contract Multisig -e $ENV
-```
-Expected output
+   ```bash
+   {contract: 'multisig', version: '2.3.0'}
+   ```
 
-```bash
-{contract: 'multisig', version: '2.3.0'}
-```
+1. Verify coordinator address stored on multisig
 
-Verify coordinator address stored on multisig
+   ```bash
+   axelard q wasm contract-state raw --ascii $MULTISIG_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.coordinator'
+   ```
 
-```bash
-axelard q wasm contract-state raw --ascii $MULTISIG_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.coordinator'
-```
+   Expected output
 
-Expected output
+   ```bash
+   $COORDINATOR_ADDRESS
+   ```
 
-```bash
-$COORDINATOR_ADDRESS
-```
+1. Ensure coordinator address match predicted one.
 
-Ensure coordinator address match predicted one.
+   ```bash
+   cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
+   ```
 
-```bash
-cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
-```
+1. Verify coordinator contract version
 
-Verify coordinator contract version
+   ```bash
+   ts-node cosmwasm/contract.ts info --contract Coordinator -e $ENV
+   ```
+   Expected output
 
-```bash
-ts-node cosmwasm/contract.ts info --contract Coordinator -e $ENV
-```
-Expected output
-
-```bash
-{contract: 'coordinator', version: '2.1.0'}
-```
+   ```bash
+   {contract: 'coordinator', version: '2.1.0'}
+   ```
