@@ -942,19 +942,6 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
-    const deployInterchainCoinProgram = new Command()
-        .name('deploy-interchain-coin')
-        .command('deploy-interchain-coin <coinPackageId> <coinPackageName> <coinModName> <coinName> <coinSymbol> <coinDecimals>')
-        .description(`Deploy an interchain coin on a remote chain`)
-        .action((coinPackageId, coinPackageName, coinModName, coinName, coinSymbol, coinDecimals, options) => {
-            mainProcessor(
-                deployInterchainCoin,
-                options,
-                [coinPackageId, coinPackageName, coinModName, coinName, coinSymbol, coinDecimals],
-                processCommand,
-            );
-        });
-
     const deployRemoteCoinProgram = new Command()
         .name('deploy-remote-coin')
         .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <tokenId> <destinationChain>')
@@ -1022,7 +1009,6 @@ if (require.main === module) {
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
-    program.addCommand(deployInterchainCoinProgram);
     program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
