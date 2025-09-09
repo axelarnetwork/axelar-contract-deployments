@@ -96,6 +96,10 @@ jobs:
           ITS_HUB_ADDRESS='its_hub_address'
           echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
 
+          # Parse local.json to extract tokenAddress and set as xlmTokenAddress
+          xlmTokenAddress=$(jq -r '.chains.stellar.tokenAddress' ./axelar-chains-config/info/local.json)
+          echo "xlmTokenAddress=$xlmTokenAddress" >> $GITHUB_OUTPUT
+
       ###### ITS Hub Config ######
 
       - name: Set ITS Hub Address
@@ -177,20 +181,51 @@ jobs:
       - name: Remove All Trusted Chains
         run: ts-node stellar/its.js remove-trusted-chains all
 
-      ###### Command: ITS Example ######
+      ###### Command: ITS - Deploy Remote Interchain Token ######
 
       - name: Add Trusted Chains
         run: ts-node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
-      - name: Deploy Test Tokens
+      - name: Deploy Remote Interchain Tokens
         run: |
           ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
           ts-node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
-      - name: Send Token to another chain
+      ###### Command: ITS - Deploy Remote Canonical Token ######
+
+      - name: Deploy Remote Canonical Tokens
+        run: |
+          ts-node stellar/its.js register-canonical-token ${{ steps.env_vars.outputs.xlmTokenAddress }}
+          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.env_vars.outputs.xlmTokenAddress }}
+
+      ###### Command: ITS - Link Custom Token ######
+
+      - name: Create a Custom Token
+        id: create_custom_token
+        run: |
+          output=$(ts-node stellar/its.js create-custom-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }})
+          echo "$output"
+          customTokenAddress=$(echo "$output" | grep "Deployed address:" | awk '{print $3}')
+          echo "customTokenAddress=$customTokenAddress" >> $GITHUB_OUTPUT
+
+      - name: Register Token Metadata
+        run: |
+          ts-node stellar/its.js register-token-metadata ${{ steps.create_custom_token.outputs.customTokenAddress }}
+
+      - name: Register Custom Token
+        run: |
+          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.customTokenAddress }} MINT_BURN_FROM
+
+      - name: Link Token
+        run: |
+          ts-node stellar/its.js link-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} LOCK_UNLOCK --gas-amount 10000000
+
+      ###### Command: ITS - Interchain Transfer ######
+
+      - name: Send Token to another chain (Interchain Transfer)
         run: ts-node stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
 
-      ###### Command: ITS Flow Limit ######
+      ###### Command: ITS - Flow Limit ######
 
       - name: ITS Flow Limit
         run: ts-node stellar/its.js flow-limit ${{ steps.env_vars.outputs.tokenId }}
