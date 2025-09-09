@@ -1,17 +1,22 @@
 'use strict';
 
-require('dotenv').config();
+import * as dotenv from 'dotenv';
 
-const fs = require('fs');
-const { Option } = require('commander');
+dotenv.config();
 
-// A path to the chain configuration files
+import fs from 'fs';
+import { Option, Command } from 'commander';
+
 const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
+const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName: string) => chainName.split('.')[0]);
 
-// A list of available chain environments which are the names of the files in the CHAIN_CONFIG_PATH
-const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName) => chainName.split('.')[0]);
+export interface BaseOptions {
+    ignoreChainNames?: boolean;
+    ignorePrivateKey?: boolean;
+    address?: boolean;
+}
 
-const addEnvOption = (program, defaultValue) => {
+export const addEnvOption = (program: Command, defaultValue?: string): void => {
     program.addOption(
         new Option('-e, --env <env>', 'environment')
             .choices(CHAIN_ENVIRONMENTS)
@@ -21,11 +26,11 @@ const addEnvOption = (program, defaultValue) => {
     );
 };
 
-const addBaseOptions = (program, options = {}) => {
+export const addBaseOptions = (program: Command, options: BaseOptions = {}): Command => {
     addEnvOption(program);
 
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('--parallel', 'run script parallely wrt chains'));
+    program.addOption(new Option('--parallel', 'run script in parallel wrt chains'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     if (!options.ignoreChainNames) {
@@ -52,9 +57,11 @@ const addBaseOptions = (program, options = {}) => {
     return program;
 };
 
-// `optionMethod` is a method such as `addBaseOptions`
-// `options` is an option object for optionMethod
-const addOptionsToCommands = (program, optionMethod, options) => {
+export const addOptionsToCommands = <T>(
+    program: Command,
+    optionMethod: (command: Command, options: T) => void,
+    options: T
+): void => {
     if (program.commands.length > 0) {
         program.commands.forEach((command) => {
             optionMethod(command, options);
@@ -62,7 +69,7 @@ const addOptionsToCommands = (program, optionMethod, options) => {
     }
 };
 
-const addStoreOptions = (program) => {
+export const addStoreOptions = (program: Command): void => {
     program.addOption(
         new Option(
             '-a, --artifact-dir <artifactDir>',
@@ -84,11 +91,4 @@ const addStoreOptions = (program) => {
             throw new Error('Either --artifact-dir or --version is required');
         }
     });
-};
-
-module.exports = {
-    addEnvOption,
-    addBaseOptions,
-    addOptionsToCommands,
-    addStoreOptions,
 };
