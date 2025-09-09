@@ -1,6 +1,7 @@
 const { copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { findPublishedObject, getObjectIdsByObjectTypes, moveDir, getStructs } = require('./utils');
 const { broadcastFromTxBuilder } = require('./sign-utils');
+const { SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 
 async function deployTokenFromInfo(config, symbol, name, decimals) {
     if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
@@ -67,18 +68,11 @@ async function saveTokenDeployment(
     if (saltAddress) contracts[symbol.toUpperCase()].saltAddress = saltAddress;
 }
 
-async function checkIfCoinExists(client, coinPackageId, coinType, coinObjectId) {
+async function checkIfCoinExists(client, coinPackageId, coinType) {
     const structs = await getStructs(client, coinPackageId);
 
     if (!Object.values(structs).includes(coinType)) {
         throw new Error(`Coin type ${coinType} does not exist in package ${coinPackageId}`);
-    }
-
-    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
-    const objectType = coinObject?.data?.type;
-    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
-    if (objectType !== expectedObjectType) {
-        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
     }
 }
 

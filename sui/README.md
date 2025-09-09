@@ -520,6 +520,29 @@ Deploys a source coin and links it with a destination chain coin. If a `channel`
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
 
+### Deploy Interchain Coin
+
+Deploy an Interchain Coin on Sui
+
+```bash
+node sui/its.js deploy-interchain-coin 0xbe87c936d51a66fda8e976e1575c82531be63ee3956855398d7e680678aa33f1 my_interchain_coin MY_INTERCHAIN_COIN My Interchain Coin MIC 6  --env testnet --signatureScheme ed25519
+```
+
+### Deploy Remote Coin
+
+Deploy an Interchain Coin on a destination chain to correspond with a registered coin on the Sui blockchain.
+
+Command:
+```bash
+ts-node sui/its.js deploy-remote-coin <coin-package-id> <coin-package-name> <coin-mod-name> <token-id> <destination-chain> <env> <signature-scheme>
+```
+
+Example: 
+```bash
+node sui/its.js deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 my_custom_coin MY_CUSTOM_COIN 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia --env testnet --signatureScheme ed25519
+```
+Response: `Deploy remote coin: Ec1pnBpwxrv26WdJt5wXifj7N66vQ1zCabqKRgtz3ktK`
+
 ## Treasury Management
 
 ### Remove Treasury Cap

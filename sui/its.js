@@ -561,6 +561,84 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     );
 }
 
+// async function deployInterchainCoin(keypair, client, config, contracts, args, options) {
+//     const { InterchainTokenService: itsConfig } = contracts;
+//     const walletAddress = keypair.toSuiAddress();
+//     // const txBuilder = new TxBuilder(client);
+
+//     // todo update
+//     const [coinPackageId, coinPackageName, coinModName, coinName, coinSymbol, coinDecimals] = args;
+
+//     const deployConfig = { client, keypair, options, walletAddress };
+
+//     // Deploy interchain token
+//     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, coinSymbol, coinName, coinDecimals);
+
+//     // todo update
+//     validateParameters({
+//         isNonEmptyString: { coinPackageName, coinModName },
+//         isHexString: { coinPackageId },
+//     });
+
+//     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+
+//     await checkIfCoinExists(client, coinPackageId, coinType);
+
+//     // const coinManagement = await tx.moveCall({
+//     //     target: `${itsConfig.address}::coin_management::new_locked`,
+//     //     typeArguments: [coinType],
+//     //     arguments: [],
+//     // });
+
+//     const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, coinType);
+
+//     const tx = txBuilder.tx;
+
+//     const coinInfo = await txBuilder.moveCall({
+//         target: `${itsConfig.address}::coin_info::from_info`,
+//         typeArguments: [coinType],
+//         arguments: [coinName, coinSymbol, coinDecimals],
+//     });
+
+//     await txBuilder.moveCall({
+//         // target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
+//         target: `${itsConfig.address}::interchain_token_service::register_coin`,
+//         typeArguments: [coinType],
+//         // arguments: [itsConfig.objects.InterchainTokenService, coinName, coinSymbol, coinDecimals, coinManagement],
+//         arguments: [itsConfig.objects.InterchainTokenService, coinInfo, coinManagement],
+//     });
+
+//     console.log('🚀 Deploying interchain coin...');
+
+//     // const deployReceipt = await client.signAndExecuteTransaction({
+//     //     signer: keypair,
+//     //     transaction: registerCoinTx,
+//     //     options: { showObjectChanges: true, showEvents: true },
+//     // });
+
+//     // const coinRegisteredEvent = deployReceipt.events.find((event) => event.type.includes('CoinRegistered'));
+
+//     // const tokenId = coinRegisteredEvent.parsedJson.token_id.id;
+//     // console.log('🎯 Token ID:', tokenId);
+
+//     if (options.offline) {
+//         const tx = txBuilder.tx;
+//         const sender = options.sender || keypair.toSuiAddress();
+//         tx.setSender(sender);
+//         await saveGeneratedTx(tx, `Interchain transfer for ${tokenId}`, client, options);
+//     } else {
+//         await broadcastFromTxBuilder(
+//             txBuilder,
+//             keypair,
+//             `Deploy interchain coin (${coinSymbol}) with the InterchainTokenService`,
+//             options,
+//             {
+//                 showEvents: true,
+//             },
+//         );
+//     }
+// }
+
 // deploy_remote_coin
 async function deployRemoteCoin(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
@@ -569,27 +647,27 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     const tx = txBuilder.tx;
 
-    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain] = args;
+    const [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain] = args;
 
     validateParameters({
         isNonEmptyString: { coinPackageName, coinModName, destinationChain },
-        isHexString: { coinPackageId, coinObjectId, tokenId },
+        isHexString: { coinPackageId, tokenId },
     });
 
     validateDestinationChain(config.chains, destinationChain);
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
-    await checkIfCoinExists(client, coinPackageId, coinType, coinObjectId);
+    await checkIfCoinExists(client, coinPackageId, coinType);
 
-    const tokenIdObj = txBuilder.moveCall({
+    const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
         arguments: [tokenId],
     });
 
-    const deployRemoteTokenTicket = txBuilder.moveCall({
+    const deployRemoteTokenTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::deploy_remote_interchain_token`,
-        arguments: [suiItsObjectId, tokenIdObj, destinationChain],
+        arguments: [itsConfig.objects.InterchainTokenService, tokenIdObj, destinationChain],
         typeArguments: [coinType],
     });
 
@@ -599,13 +677,13 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     const [gas] = tx.splitCoins(tx.gas, [unitAmountGas]);
 
-    txBuilder.moveCall({
+    await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
-        typeArguments: [SUI_TYPE_ARG],
+        typeArguments: [suiCoinId],
         arguments: [contracts.GasService.objects.GasService, deployRemoteTokenTicket, gas, walletAddress, '0x'],
     });
 
-    txBuilder.moveCall({
+    await txBuilder.moveCall({
         target: `${contracts.AxelarGateway.address}::gateway::send_message`,
         arguments: [contracts.AxelarGateway.objects.Gateway, deployRemoteTokenTicket],
     });
@@ -718,7 +796,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
-    await checkIfCoinExists(client, coinPackageId, coinType, coinObjectId);
+    await checkIfCoinExists(client, coinPackageId, coinType);
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -942,15 +1020,28 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
+    const deployInterchainCoinProgram = new Command()
+        .name('deploy-interchain-coin')
+        .command('deploy-interchain-coin <coinPackageId> <coinPackageName> <coinModName> <coinName> <coinSymbol> <coinDecimals>')
+        .description(`Deploy an interchain coin on a remote chain`)
+        .action((coinPackageId, coinPackageName, coinModName, coinName, coinSymbol, coinDecimals, options) => {
+            mainProcessor(
+                deployInterchainCoin,
+                options,
+                [coinPackageId, coinPackageName, coinModName, coinName, coinSymbol, coinDecimals],
+                processCommand,
+            );
+        });
+
     const deployRemoteCoinProgram = new Command()
         .name('deploy-remote-coin')
-        .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain>')
+        .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <tokenId> <destinationChain>')
         .description(`Deploy an interchain token on a remote chain`)
-        .action((coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, options) => {
+        .action((coinPackageId, coinPackageName, coinModName, tokenId, destinationChain, options) => {
             mainProcessor(
                 deployRemoteCoin,
                 options,
-                [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, options],
+                [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain, options],
                 processCommand,
             );
         });
@@ -1009,6 +1100,7 @@ if (require.main === module) {
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
+    program.addCommand(deployInterchainCoinProgram);
     program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
