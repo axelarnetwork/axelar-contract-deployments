@@ -3179,6 +3179,7 @@
     "grpc": "k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:9090",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://stagenet.api.axelarscan.io",
+    "gmpAxelarscanApi": "https://stagenet.api.gmp.axelarscan.io",
     "gasPrice": "0.007uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "100000000",

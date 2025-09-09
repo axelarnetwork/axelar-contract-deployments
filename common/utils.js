@@ -789,7 +789,18 @@ async function estimateITSFee(options) {
     const { chain, destinationChain, env, eventType, gasValue } = options;
 
     if (gasValue === 'auto') {
-        const baseUrl = loadConfig(env).axelar.gmpAxelarscanApi;
+        let baseUrl;
+        try {
+            baseUrl = loadConfig(env).axelar?.gmpAxelarscanApi;
+        } catch (e) {
+            baseUrl = undefined;
+        }
+
+        // Fallback for env without api
+        if (!baseUrl || env === 'devnet-amplifier') {
+            return 0;
+        }
+
         const url = `${baseUrl}/estimateITSFee`;
 
         const payload = {
@@ -803,7 +814,7 @@ async function estimateITSFee(options) {
         const { scaleGasValue } = require('../evm/utils');
         return scaleGasValue(chain, gasValue);
     } else {
-        throw new Error(`Invalid gasValue: ${gasValue}. Please pass in a --gasValue with a valid number "auto".`);
+        throw new Error(`Invalid gasValue: ${gasValue}. Please pass in a --gasValue with a valid number or "auto".`);
     }
 }
 
