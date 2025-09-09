@@ -124,6 +124,7 @@ jobs:
             "remote": {
               "name": "remote",
               "axelarId": "remote",
+              "chainType": "evm",
               "contracts": {
                 "InterchainTokenService": {
                   "address": "remote_its_address"
