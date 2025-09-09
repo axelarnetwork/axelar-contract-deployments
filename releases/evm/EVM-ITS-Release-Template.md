@@ -63,6 +63,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 ### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on all EVM chains
+
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```

@@ -44,7 +44,7 @@ npm ci && npm run build
 "memento": {
     "name": "Memento",
     "axelarId": "memento",
-    "chainId": 12052024,
+    "chainId": 2129,
     "rpc": "<TESTNET_RPC_URL>",
     "tokenSymbol": "ETH",
     "confirmations": 1,
@@ -53,8 +53,8 @@ npm ci && npm run build
     "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-        "name": "Tracehawk Memento Test Explorer",
-        "url": "https://test-explorer.mementoblockchain.com/"
+        "name": "Memento Testnet Explorer",
+        "url": "https://explorer.memento.zeeve.online/"
     },
     "contracts": {}
   }
@@ -77,7 +77,7 @@ npm ci && npm run build
     "explorer": {
         "name": "<EXPLORER_NAME>",
         "url": "<EXPLORER_URL>",
-        "api": "<EXPLORER_API>"
+        "api": "<EXPLORER_API_KEY>"
     },
     "contracts": {}
   }
@@ -159,7 +159,7 @@ npm ci && npm run build
 
 1. After deploying the Operators contract, register the following operators according to their environment
 
-    | Network              | `operators`                                                                                |
+    | Network              | `operatorAddresses`                                                                                |
     | -------------------- | ------------------------------------------------------------------------------------------ |
     | **Devnet-amplifier** | ?                                                                                          |
     | **Stagenet**         | `0x7054acf1b2d01e33b86235458edf0046cc354293`, `0xf669ed1ebc608c48f58b6e290df566ede7fb1103` |
@@ -167,7 +167,7 @@ npm ci && npm run build
     | **Mainnet**          | `0x0CDeE446bD3c2E0D11568eeDB859Aa7112BE657a`, `0x1a07a2Ee043Dd3922448CD53D20Aae88a67e486E` |
 
     ```bash
-    ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
+    ts-node evm/operators.js --action addOperator --args [operatorAddresses]
     ```
 
 1. Deploy GasService (set the `collector` to `Operators` address from step 6)
@@ -180,7 +180,7 @@ npm ci && npm run build
     | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
     ```bash
-    ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
+    ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "[operatorAddresses]"}'
     ```
 
 1. Transfer ownership for contracts on mainnet and testnet.
@@ -226,7 +226,7 @@ The following checks should be performed after the rollout
 1. Confirm whether the message is approved
 
     ```bash
-    ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
+    ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash [payload-hash]
     ```
 
 ### EVM -> Memento GMP Call
@@ -250,5 +250,5 @@ The following checks should be performed after the rollout
 1. Confirm whether the message is approved
 
     ```bash
-    ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash 0x1234
+    ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
     ```
