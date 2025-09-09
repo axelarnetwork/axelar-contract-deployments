@@ -2,11 +2,22 @@
 
 import { Command, Option } from 'commander';
 import * as dotenv from 'dotenv';
-import fs from 'fs';
+import * as fs from 'fs';
+import * as path from 'path';
 
 dotenv.config();
 
-const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
+// Resolve the path relative to the package root, accounting for both source and dist directories
+const resolveFromRoot = (relativePath: string) => {
+    // Check if we're in dist directory
+    if (__dirname.includes('dist')) {
+        return path.join(__dirname, '../../', relativePath);
+    }
+    // We're in the source directory
+    return path.join(__dirname, '../', relativePath);
+};
+
+const CHAIN_CONFIG_PATH = resolveFromRoot('axelar-chains-config/info');
 const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName: string) => chainName.split('.')[0]);
 
 export interface BaseOptions {
