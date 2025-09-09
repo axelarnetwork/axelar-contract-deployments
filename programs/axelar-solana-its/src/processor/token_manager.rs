@@ -465,6 +465,9 @@ impl<'a> FromAccountInfoSlice<'a> for SetFlowLimitAccounts<'a> {
 impl Validate for SetFlowLimitAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_account.key)?;
+
+        let its_config_account = InterchainTokenService::load(self.its_root_pda)?;
+        assert_valid_its_root_pda(self.its_root_pda, its_config_account.bump)?;
         Ok(())
     }
 }
