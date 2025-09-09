@@ -68,14 +68,15 @@ const programHandler = () => {
                     return;
                 }
 
-                let address: string;
-                if (options.contract) {
-                    address = config.axelar.contracts[options.contract].address;
-                } else {
-                    address = options.address;
-                }
-
                 try {
+                    let address: string;
+
+                    if (options.contract && config.axelar.contracts[options.contract].address) {
+                        address = config.axelar.contracts[options.contract].address;
+                    } else {
+                        address = options.address;
+                    }
+
                     const contract_info: ContractInfo = await getContractInfo(client, address);
                     console.log(contract_info);
                 } catch (error) {
