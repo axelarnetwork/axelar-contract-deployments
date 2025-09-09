@@ -18,5 +18,5 @@
 **/yarn.lock @axelarnetwork/security @axelarnetwork/protocol
 **/pnpm-lock.yaml @axelarnetwork/security @axelarnetwork/protocol
 # Rust dependencies
-**/Cargo.toml @axelarnetwork/security @axelarnetwork/protocol
-**/Cargo.lock @axelarnetwork/security @axelarnetwork/protocol
+# **/Cargo.toml @axelarnetwork/security @axelarnetwork/protocol
+# **/Cargo.lock @axelarnetwork/security @axelarnetwork/protocol
