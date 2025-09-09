@@ -213,7 +213,7 @@ jobs:
 
       - name: Register Custom Token
         run: |
-          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.customTokenAddress }} MINT_BURN_FROM
+          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.create_custom_token.outputs.customTokenAddress }} MINT_BURN_FROM
 
       - name: Link Token
         run: |
