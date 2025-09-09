@@ -14,7 +14,6 @@ axelar-solana-gateway.workspace = true
 async-recursion.workspace = true
 axelar-solana-encoding.workspace = true
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
-bincode.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true
 solana-client.workspace = true

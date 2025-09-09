@@ -39,7 +39,6 @@ use solana_program_test::BanksTransactionResultWithMetadata;
 use solana_sdk::account::Account;
 use solana_sdk::account_info::Account as AccountTrait;
 use solana_sdk::account_info::IntoAccountInfo;
-use solana_sdk::clock::Clock;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::program_pack::Pack as _;
@@ -179,8 +178,6 @@ impl ItsTestContext {
             .unwrap()
             .clone();
 
-        let clock_sysvar = self.solana_chain.get_sysvar::<Clock>().await;
-
         let its_ix_inputs = ItsGmpInstructionInputs::builder()
             .payer(self.solana_chain.fixture.payer.pubkey())
             .incoming_message_pda(incoming_message_pda)
@@ -188,7 +185,6 @@ impl ItsTestContext {
             .message(merkelised_message.leaf.message)
             .payload(payload)
             .token_program(token_program)
-            .timestamp(clock_sysvar.unix_timestamp)
             .mint_opt(maybe_mint)
             .build();
 
@@ -352,7 +348,6 @@ impl ItsTestContext {
     ) {
         let amount = 100;
 
-        let clock_sysvar = self.solana_chain.get_sysvar::<Clock>().await;
         let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
             self.solana_wallet,
             token_account,
@@ -363,7 +358,6 @@ impl ItsTestContext {
             solana_token,
             spl_token_2022::id(),
             0,
-            clock_sysvar.unix_timestamp,
         )
         .unwrap();
 

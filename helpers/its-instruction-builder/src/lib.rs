@@ -9,11 +9,9 @@ use axelar_solana_its::state::token_manager::TokenManager;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::clock::Clock;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::sysvar::clock;
 
 /// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
 ///
@@ -41,14 +39,6 @@ where
             .map_err(|_err| ProgramError::InvalidArgument)?,
     );
 
-    let clock_account = rpc_client
-        .get_account(&clock::id())
-        .await
-        .map_err(|_err| ProgramError::InvalidAccountData)?;
-    let clock: Clock = bincode::deserialize(&clock_account.data)
-        .map_err(|_err| ProgramError::InvalidAccountData)?;
-    let timestamp = clock.unix_timestamp;
-
     let (mint, token_program) =
         try_infer_mint_and_program(&token_manager_pda, &payload, rpc_client).await?;
 
@@ -60,7 +50,6 @@ where
         .payload(payload)
         .token_program(token_program)
         .mint_opt(mint)
-        .timestamp(timestamp)
         .build();
 
     axelar_solana_its::instruction::its_gmp_payload(inputs)

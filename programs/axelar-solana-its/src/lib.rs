@@ -398,55 +398,6 @@ pub fn create_flow_slot_pda(
     )?)
 }
 
-/// Derives the PDA for a `FlowSlot`.
-#[inline]
-#[must_use]
-pub fn find_flow_slot_pda(token_manager_pda: &Pubkey, epoch: u64) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &[
-            seed_prefixes::FLOW_SLOT_SEED,
-            token_manager_pda.as_ref(),
-            &epoch.to_ne_bytes(),
-        ],
-        &crate::id(),
-    )
-}
-
-/// Tries to create the PDA for a `FlowSlot` using the provided bump,
-/// falling back to `find_program_address` if the bump is `None` or invalid.
-///
-/// # Errors
-///
-/// If the bump is invalid.
-pub fn flow_slot_pda(
-    token_manager_pda: &Pubkey,
-    epoch: u64,
-    maybe_bump: Option<u8>,
-) -> Result<(Pubkey, u8), ProgramError> {
-    if let Some(bump) = maybe_bump {
-        create_flow_slot_pda(token_manager_pda, epoch, bump).map(|pubkey| (pubkey, bump))
-    } else {
-        Ok(find_flow_slot_pda(token_manager_pda, epoch))
-    }
-}
-
-pub(crate) fn assert_valid_flow_slot_pda(
-    flow_slot_pda_account: &AccountInfo<'_>,
-    token_manager_pda: &Pubkey,
-    current_flow_epoch: u64,
-    canonical_bump: u8,
-) -> ProgramResult {
-    let expected_flow_slot_pda =
-        create_flow_slot_pda(token_manager_pda, current_flow_epoch, canonical_bump)?;
-
-    if expected_flow_slot_pda.ne(flow_slot_pda_account.key) {
-        msg!("Invalid flow limit slot PDA provided");
-        return Err(ProgramError::InvalidArgument);
-    }
-
-    Ok(())
-}
-
 /// Tries to create the PDA for a `DeploymentApproval` using the provided bump,
 /// falling back to `find_program_address` if the bump is invalid.
 ///

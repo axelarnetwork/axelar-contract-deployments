@@ -1,17 +1,14 @@
 //! State module contains data structures that keep state within the ITS
 //! program.
 
-use core::any::type_name;
-use core::mem::size_of;
-
 use alloy_primitives::{Bytes, FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::pda::BorshPda;
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
+
+use crate::state::flow_limit::FlowState;
 
 /// There are different types of token managers available for developers to
 /// offer different types of integrations to ITS.
@@ -152,8 +149,8 @@ pub struct TokenManager {
     /// The associated token account owned by the token manager.
     pub associated_token_account: Pubkey,
 
-    /// The flow limit for the token manager
-    pub flow_limit: u64,
+    /// The flow limit for the token manager.
+    pub flow_slot: FlowState,
 
     /// The token manager PDA bump seed.
     pub bump: u8,
@@ -174,39 +171,12 @@ impl TokenManager {
             token_id,
             token_address,
             associated_token_account,
-            flow_limit: 0,
+            flow_slot: FlowState::new(0, 0),
             bump,
         }
     }
 }
 
-impl Pack for TokenManager {
-    const LEN: usize = size_of::<Type>()
-        + size_of::<[u8; 32]>()
-        + size_of::<Pubkey>()
-        + size_of::<Pubkey>()
-        + size_of::<u64>()
-        + size_of::<u8>();
-
-    #[allow(clippy::unwrap_used)]
-    fn pack_into_slice(&self, mut dst: &mut [u8]) {
-        self.serialize(&mut dst).unwrap();
-    }
-
-    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
-        let mut mut_src: &[u8] = src;
-        Self::deserialize(&mut mut_src).map_err(|err| {
-            msg!(
-                "Error: failed to deserialize account as {}: {}",
-                type_name::<Self>(),
-                err
-            );
-            ProgramError::InvalidAccountData
-        })
-    }
-}
-
-impl Sealed for TokenManager {}
 impl BorshPda for TokenManager {}
 
 /// Decodes the operator and token address from the given data.

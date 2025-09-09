@@ -4,7 +4,6 @@ use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1Builder;
 use mpl_token_metadata::types::TokenStandard;
 use solana_program_test::tokio;
-use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
@@ -180,7 +179,6 @@ async fn test_valid_token_id_mint_matches_token_address(
 
     // This should succeed because the token_id corresponds to the correct mint
     let transfer_amount = 100;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         token_account,
@@ -191,7 +189,6 @@ async fn test_valid_token_id_mint_matches_token_address(
         solana_token,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     // This should succeed without errors
@@ -299,7 +296,6 @@ async fn test_invalid_token_id_mint_mismatch_rejected(
 
     // Now try to transfer using token_id_a but with mint B (this should fail after the fix)
     let transfer_amount = 100;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let malicious_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         token_account_a, // Using account A (which has tokens)
@@ -310,7 +306,6 @@ async fn test_invalid_token_id_mint_mismatch_rejected(
         solana_token_a, // With mint A (which doesn't match token_id_b's token_manager.token_address)
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     // This should fail with "Mint and token ID don't match" error
@@ -381,7 +376,6 @@ async fn test_lock_unlock_token_id_validation(ctx: &mut ItsTestContext) -> anyho
     // Try to transfer the worthless tokens using the legitimate token_id
     // This should fail because the mint doesn't match the token_manager's token_address
     let transfer_amount = 100;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let malicious_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         worthless_token_account, // Using worthless tokens
@@ -392,7 +386,6 @@ async fn test_lock_unlock_token_id_validation(ctx: &mut ItsTestContext) -> anyho
         worthless_token, // Worthless mint (mismatch!)
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     // This should fail with the validation error

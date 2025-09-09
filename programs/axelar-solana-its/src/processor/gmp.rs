@@ -6,13 +6,11 @@ use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::{self, Itertools};
 use program_utils::{pda::BorshPda, validate_system_account_key};
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
-use solana_program::sysvar::Sysvar;
 
 use crate::processor::interchain_token::{self, DeployInterchainTokenAccounts};
 use crate::processor::interchain_transfer::process_inbound_transfer;
@@ -279,12 +277,8 @@ fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> 
         .map(|account| *account.key)
         .ok_or(ProgramError::InvalidAccountData)?;
 
-    let derived_its_accounts = instruction::derive_its_accounts(
-        payload,
-        token_program,
-        maybe_mint,
-        Some(Clock::get()?.unix_timestamp),
-    )?;
+    let derived_its_accounts =
+        instruction::derive_its_accounts(payload, token_program, maybe_mint)?;
 
     for element in accounts.iter().zip_longest(derived_its_accounts.iter()) {
         match element {

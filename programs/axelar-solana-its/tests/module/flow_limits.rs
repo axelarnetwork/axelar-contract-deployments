@@ -1,6 +1,7 @@
 use alloy_primitives::Bytes;
 use anyhow::anyhow;
 use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
+use axelar_solana_its::state::token_manager::TokenManager;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::SendToHub;
 use solana_program_test::tokio;
@@ -162,6 +163,169 @@ async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext
 
 #[test_context(ItsTestContext)]
 #[tokio::test]
+async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (interchain_token_pda, _) =
+        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &ctx.deployed_interchain_token);
+    let token_program_id = spl_token_2022::id();
+    let flow_limit = 800;
+    let transfer_amount = 401;
+
+    let flow_limit_ix = axelar_solana_its::instruction::set_flow_limit(
+        ctx.solana_wallet,
+        ctx.deployed_interchain_token,
+        flow_limit,
+    )
+    .unwrap();
+
+    let associated_account_address = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
+
+    let create_token_account_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
+
+    ctx.send_solana_tx(&[create_token_account_ix, flow_limit_ix])
+        .await;
+
+    // First transfer, within limit should succeed
+    let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
+        selector: SendToHub::MESSAGE_TYPE_ID.try_into().unwrap(),
+        destination_chain: ctx.solana_chain_name.clone(),
+        payload: GMPPayload::InterchainTransfer(InterchainTransfer {
+            selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into().unwrap(),
+            token_id: ctx.deployed_interchain_token.into(),
+            source_address: [5; 32].into(),
+            destination_address: associated_account_address.to_bytes().into(),
+            amount: transfer_amount.try_into().unwrap(),
+            data: Bytes::new(),
+        })
+        .encode()
+        .into(),
+    })
+    .encode();
+
+    let tx = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
+
+    assert!(tx.result.is_ok(), "First transfer should succeed");
+
+    // Second transfer, (flow_limit/2 + 1), should fail as it now exceeds the flow limit
+    let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
+        selector: SendToHub::MESSAGE_TYPE_ID.try_into().unwrap(),
+        destination_chain: ctx.solana_chain_name.clone(),
+        payload: GMPPayload::InterchainTransfer(InterchainTransfer {
+            selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into().unwrap(),
+            token_id: ctx.deployed_interchain_token.into(),
+            source_address: [5; 32].into(),
+            destination_address: associated_account_address.to_bytes().into(),
+            amount: transfer_amount.try_into().unwrap(),
+            data: Bytes::new(),
+        })
+        .encode()
+        .into(),
+    })
+    .encode();
+
+    let tx = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
+
+    assert_msg_present_in_logs(tx, "Flow limit exceeded");
+
+    let current_timestamp = ctx.solana_chain.get_sysvar::<Clock>().await.unix_timestamp;
+    let current_epoch =
+        axelar_solana_its::state::flow_limit::flow_epoch_with_timestamp(current_timestamp).unwrap();
+
+    // Advance time by more than 6 hours to trigger epoch change
+    let epoch_duration_secs = 6 * 60 * 60; // 6 hours in seconds
+    let time_advance = epoch_duration_secs + 1; // Just past the epoch boundary
+
+    ctx.solana_chain
+        .fixture
+        .forward_time(time_advance as i64)
+        .await;
+
+    // Verify we're in a new epoch
+    let new_timestamp = ctx.solana_chain.get_sysvar::<Clock>().await.unix_timestamp;
+    let new_epoch =
+        axelar_solana_its::state::flow_limit::flow_epoch_with_timestamp(new_timestamp).unwrap();
+    assert_ne!(new_epoch, current_epoch, "Epoch should have advanced");
+
+    // Now the same transfer should succeed because it's a fresh epoch
+    let tx_success = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
+
+    // Verify the transaction succeeded this time
+    assert!(
+        tx_success.result.is_ok(),
+        "Transfer should succeed in new epoch"
+    );
+
+    // Verify the token was minted
+    let destination_raw_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&associated_account_address)
+        .await
+        .unwrap()
+        .unwrap();
+    let destination_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&destination_raw_account.data).unwrap();
+
+    assert_eq!(
+        destination_ata_account.amount,
+        flow_limit + 2,
+        "Transfer amount should match in new epoch"
+    );
+
+    // Verify new flow slot was created for the new epoch
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &ctx.deployed_interchain_token);
+
+    let token_manager_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&token_manager_pda)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let token_manager = TokenManager::try_from_slice(&token_manager_account.data).unwrap();
+    let new_flow_slot = token_manager.flow_slot;
+
+    // Verify the new flow slot tracks the fresh epoch transfer
+    assert_eq!(
+        new_flow_slot.flow_in, transfer_amount,
+        "New epoch flow slot should track the transfer"
+    );
+    assert_eq!(
+        new_flow_slot.flow_out, 0,
+        "New epoch flow slot should have no outgoing flows"
+    );
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
 async fn test_outgoing_interchain_transfer_within_limit(
     ctx: &mut ItsTestContext,
 ) -> anyhow::Result<()> {
@@ -203,8 +367,6 @@ async fn test_outgoing_interchain_transfer_within_limit(
 
     ctx.send_solana_tx(&[mint_ix]).await;
 
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
-
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
@@ -215,7 +377,6 @@ async fn test_outgoing_interchain_transfer_within_limit(
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -287,8 +448,6 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
 
     ctx.send_solana_tx(&[mint_ix]).await;
 
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
-
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
@@ -299,7 +458,6 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )
     .unwrap();
 
@@ -430,20 +588,16 @@ async fn test_flow_slot_initialization_incoming_transfer(
     // Check FlowSlot values on-chain
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &ctx.deployed_interchain_token);
-    let current_timestamp = ctx.solana_chain.get_sysvar::<Clock>().await.unix_timestamp;
-    let current_epoch =
-        axelar_solana_its::state::flow_limit::flow_epoch_with_timestamp(current_timestamp)?;
-    let (flow_slot_pda, _) =
-        axelar_solana_its::find_flow_slot_pda(&token_manager_pda, current_epoch);
 
-    let flow_slot_account = ctx
+    let token_manager_account = ctx
         .solana_chain
-        .try_get_account_no_checks(&flow_slot_pda)
-        .await?
-        .ok_or_else(|| anyhow!("flow slot account not found"))?;
+        .try_get_account_no_checks(&token_manager_pda)
+        .await
+        .unwrap()
+        .unwrap();
 
-    let flow_slot =
-        axelar_solana_its::state::flow_limit::FlowSlot::try_from_slice(&flow_slot_account.data)?;
+    let token_manager = TokenManager::try_from_slice(&token_manager_account.data).unwrap();
+    let flow_slot = token_manager.flow_slot;
 
     // For incoming transfers, flow_in should be set to the total transfer amount
     assert_eq!(
@@ -505,8 +659,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
 
     ctx.send_solana_tx(&[mint_ix]).await;
 
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
-
     // First outgoing transfer - this should create a new flow slot with flow_out=transfer_amount
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
@@ -518,7 +670,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -557,7 +708,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx_2 = ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();
@@ -581,20 +731,16 @@ async fn test_flow_slot_initialization_outgoing_transfer(
     // Check FlowSlot values on-chain
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
-    let current_timestamp = ctx.solana_chain.get_sysvar::<Clock>().await.unix_timestamp;
-    let current_epoch =
-        axelar_solana_its::state::flow_limit::flow_epoch_with_timestamp(current_timestamp)?;
-    let (flow_slot_pda, _) =
-        axelar_solana_its::find_flow_slot_pda(&token_manager_pda, current_epoch);
 
-    let flow_slot_account = ctx
+    let token_manager_account = ctx
         .solana_chain
-        .try_get_account_no_checks(&flow_slot_pda)
-        .await?
-        .ok_or_else(|| anyhow!("flow slot account not found"))?;
+        .try_get_account_no_checks(&token_manager_pda)
+        .await
+        .unwrap()
+        .unwrap();
 
-    let flow_slot =
-        axelar_solana_its::state::flow_limit::FlowSlot::try_from_slice(&flow_slot_account.data)?;
+    let token_manager = TokenManager::try_from_slice(&token_manager_account.data).unwrap();
+    let flow_slot = token_manager.flow_slot;
 
     // For outgoing transfers, flow_out should be set to the total transfer amount
     assert_eq!(
@@ -676,8 +822,6 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
     let token_account = Account::unpack_from_slice(&ata.data).unwrap();
     assert_eq!(token_account.amount, transfer_amount);
 
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
-
     let outgoing_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
@@ -688,7 +832,6 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx = ctx.send_solana_tx(&[outgoing_transfer_ix]).await.unwrap();
@@ -779,7 +922,6 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
     assert_eq!(token_account.amount, incoming_amount);
 
     let outgoing_amount = 600;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
@@ -791,7 +933,6 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -814,7 +955,6 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx_2 = ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();

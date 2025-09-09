@@ -40,7 +40,7 @@ pub(crate) fn set_flow_limit(
     )?;
 
     let mut token_manager = TokenManager::load(accounts.token_manager_pda)?;
-    token_manager.flow_limit = flow_limit;
+    token_manager.flow_slot.flow_limit = flow_limit;
     token_manager.store(
         accounts.flow_limiter,
         accounts.token_manager_pda,

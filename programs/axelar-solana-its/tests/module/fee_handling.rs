@@ -121,7 +121,6 @@ async fn test_canonical_token_with_fee_lock_unlock(ctx: &mut ItsTestContext) -> 
 
     // Test transfer
     let transfer_amount = 1000_u64;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         user_ata,
@@ -132,7 +131,6 @@ async fn test_canonical_token_with_fee_lock_unlock(ctx: &mut ItsTestContext) -> 
         canonical_mint,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let transfer_tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -146,6 +144,7 @@ async fn test_canonical_token_with_fee_lock_unlock(ctx: &mut ItsTestContext) -> 
         .unwrap();
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
     let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let epoch = clock_sysvar.epoch;
     let fee = fee_config
         .calculate_epoch_fee(epoch, transfer_amount)
@@ -263,7 +262,6 @@ async fn test_canonical_token_various_fee_configs(ctx: &mut ItsTestContext) -> a
 
     // Test transfer
     let transfer_amount = 10_000_u64;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         user_ata,
@@ -274,7 +272,6 @@ async fn test_canonical_token_various_fee_configs(ctx: &mut ItsTestContext) -> a
         canonical_mint,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let transfer_tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -288,6 +285,7 @@ async fn test_canonical_token_various_fee_configs(ctx: &mut ItsTestContext) -> a
         .unwrap();
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
     let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let epoch = clock_sysvar.epoch;
     let fee = fee_config
         .calculate_epoch_fee(epoch, transfer_amount)
@@ -402,7 +400,6 @@ async fn test_canonical_token_maximum_fee_cap(ctx: &mut ItsTestContext) -> anyho
         .unwrap();
 
     // Test transfer
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         user_ata,
@@ -413,7 +410,6 @@ async fn test_canonical_token_maximum_fee_cap(ctx: &mut ItsTestContext) -> anyho
         canonical_mint,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let transfer_tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -427,6 +423,7 @@ async fn test_canonical_token_maximum_fee_cap(ctx: &mut ItsTestContext) -> anyho
         .unwrap();
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
     let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let epoch = clock_sysvar.epoch;
     let fee = fee_config.calculate_epoch_fee(epoch, large_amount).unwrap();
 
@@ -626,7 +623,6 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
 
     // Outbound transfer
     let transfer_amount = 3000_u64;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         user_ata,
@@ -637,7 +633,6 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
         solana_custom_token,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let outbound_tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
@@ -651,6 +646,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
         .unwrap();
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
     let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let epoch = clock_sysvar.epoch;
     let outbound_fee = fee_config
         .calculate_epoch_fee(epoch, transfer_amount)
