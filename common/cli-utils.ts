@@ -1,11 +1,10 @@
 'use strict';
 
+import { Command, Option } from 'commander';
 import * as dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
-
-import fs from 'fs';
-import { Option, Command } from 'commander';
 
 const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
 const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName: string) => chainName.split('.')[0]);
@@ -57,11 +56,7 @@ export const addBaseOptions = (program: Command, options: BaseOptions = {}): Com
     return program;
 };
 
-export const addOptionsToCommands = <T>(
-    program: Command,
-    optionMethod: (command: Command, options: T) => void,
-    options: T
-): void => {
+export const addOptionsToCommands = <T>(program: Command, optionMethod: (command: Command, options: T) => void, options: T): void => {
     if (program.commands.length > 0) {
         program.commands.forEach((command) => {
             optionMethod(command, options);

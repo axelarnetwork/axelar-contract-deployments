@@ -1,5 +1,6 @@
-import { Option, Command } from 'commander';
-import { addEnvOption, addBaseOptions, addOptionsToCommands, addStoreOptions, BaseOptions } from '../common/cli-utils';
+import { Command, Option } from 'commander';
+
+import { BaseOptions, addBaseOptions, addEnvOption, addOptionsToCommands, addStoreOptions } from '../common/cli-utils';
 
 interface EvmOptions extends BaseOptions {
     artifactPath?: boolean;
