@@ -20,12 +20,13 @@ const programHandler = () => {
             .addOption(new Option('--fees <fees>', 'fees').default('auto'))
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
             .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
+            .option('--proposal', 'make a proposal rather than a direct migration')
             .option('--dry', 'only generate migration msg')
             .description('Migrate contract')
             .action(
                 async (
                     code_id: string,
-                    options: { env: string; mnemonic: string; address: string; deposit: string; fees; dry?; dummy? },
+                    options: { env: string; mnemonic: string; address: string; deposit: string; fees; dry?; proposal? },
                 ) => {
                     const { env } = options;
                     const config = loadConfig(env);

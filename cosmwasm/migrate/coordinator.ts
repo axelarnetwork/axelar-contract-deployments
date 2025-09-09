@@ -14,7 +14,7 @@ interface Options {
     deposit: string;
     fees;
     dry?;
-    dummy?;
+    proposal?;
 }
 
 interface ChainContracts {
@@ -74,9 +74,9 @@ async function addMissingProvers(
     try {
         for (let i = 0; i < chain_contracts.length; i++) {
             const authorized_provers = await client.queryContractSmart(multisig_address, {
-                authorized_callers: { chain_name: chain_contracts[i].chain_name },
+                authorized_caller: { chain_name: chain_contracts[i].chain_name },
             });
-            chain_contracts[i].prover_address = authorized_provers[0] ?? '';
+            chain_contracts[i].prover_address = authorized_provers ?? '';
         }
 
         return chain_contracts;
@@ -127,8 +127,13 @@ async function coordinatorToVersion2_1_0(
     if (!options.dry) {
         try {
             console.log('Executing migration...');
-            await submitProposal(client, wallet, config, migrate_options, proposal);
-            console.log('Migration proposal succeeded');
+            if (options.proposal) {
+                await submitProposal(client, wallet, config, migrate_options, proposal);
+                console.log('Migration proposal successfully submitted');
+            } else {
+                await client.migrate(sender_address, coordinator_address, Number(code_id), migration_msg, options.fees);
+                console.log('Migration succeeded');
+            }
         } catch (e) {
             console.log('Error:', e);
         }
