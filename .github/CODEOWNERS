@@ -12,8 +12,6 @@
 
 # SECURITY: Dependency management requires security team approval
 # All dependency-related files require approval from security team
-package.json @axelarnetwork/security @axelarnetwork/protocol
-package-lock.json @axelarnetwork/security @axelarnetwork/protocol
 **/package.json @axelarnetwork/security @axelarnetwork/protocol
 **/package-lock.json @axelarnetwork/security @axelarnetwork/protocol
 npm-shrinkwrap.json @axelarnetwork/security @axelarnetwork/protocol
