@@ -82,25 +82,25 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
 "$CHAIN" : {
-  "governanceAddress": "[governance address]",
-  "serviceName": "[service name]",
-  "sourceGatewayAddress": "[external gateway address]",
-  "votingThreshold": "[voting threshold]",
-  "blockExpiry": 10,
-  "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
-  "msgIdFormat": "hex_tx_hash_and_event_index",
-  "addressFormat": "eip55"
+    "governanceAddress": "[governance address]",
+    "serviceName": "[service name]",
+    "sourceGatewayAddress": "[external gateway address]",
+    "votingThreshold": "[voting threshold]",
+    "blockExpiry": 10,
+    "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
+    "msgIdFormat": "hex_tx_hash_and_event_index",
+    "addressFormat": "eip55"
 }
 
 # Add under `config.axelar.contracts.MultisigProver` based on Network
 "$CHAIN" : {
-  "governanceAddress": "[governance address]",
-  "adminAddress": "[admin address]",
-  "signingThreshold": "[signing threshold]",
-  "serviceName": "[service name]",
-  "verifierSetDiffThreshold": 0,
-  "encoder": "abi",
-  "keyType": "ecdsa"
+    "governanceAddress": "[governance address]",
+    "adminAddress": "[admin address]",
+    "signingThreshold": "[signing threshold]",
+    "serviceName": "[service name]",
+    "verifierSetDiffThreshold": 0,
+    "encoder": "abi",
+    "keyType": "ecdsa"
 }
 ```
 
@@ -171,36 +171,36 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
+#### Rewards
+
 1. Create reward pool for voting verifier
 
-### Rewards
+    | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
+    | -------------------- | ---------------- | ------------------------- | ------------------- |
+    | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+    | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+    | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
+    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
-| Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
-| -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
-| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
-
-```bash
-ts-node cosmwasm/submit-proposal.js execute \
--c Rewards \
--t "Create pool for $CHAIN in $CHAIN voting verifier" \
--d "Create pool for $CHAIN in $CHAIN voting verifier" \
---msg "{
-    \"create_pool\": {
-    \"params\": {
-        \"epoch_duration\": \"$EPOCH_DURATION\",
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": \"[rewards per epoch]\"
-    },
-    \"pool_id\": {
-        \"chain_name\": \"$CHAIN\",
-        \"contract\": \"$VOTING_VERIFIER\"
-    }
-    }
-}"
-```
+    ```bash
+    ts-node cosmwasm/submit-proposal.js execute \
+    -c Rewards \
+    -t "Create pool for $CHAIN in $CHAIN voting verifier" \
+    -d "Create pool for $CHAIN in $CHAIN voting verifier" \
+    --msg "{
+        \"create_pool\": {
+            \"params\": {
+                \"epoch_duration\": \"$EPOCH_DURATION\",
+                \"participation_threshold\": [participation threshold],
+                \"rewards_per_epoch\": \"[rewards per epoch]\"
+            },
+            \"pool_id\": {
+                \"chain_name\": \"$CHAIN\",
+                \"contract\": \"$VOTING_VERIFIER\"
+            }
+        }
+    }"
+    ```
 
 1. Create reward pool for multisig
 
@@ -211,15 +211,15 @@ ts-node cosmwasm/submit-proposal.js execute \
     -d "Create pool for $CHAIN in axelar multisig" \
     --msg "{
         \"create_pool\": {
-        \"params\": {
-            \"epoch_duration\": \"$EPOCH_DURATION\",
-            \"participation_threshold\": [participation threshold],
-            \"rewards_per_epoch\": \"[rewards per epoch]\"
-        },
-        \"pool_id\": {
-            \"chain_name\": \"$CHAIN\",
-            \"contract\": \"$MULTISIG\"
-        }
+            \"params\": {
+                \"epoch_duration\": \"$EPOCH_DURATION\",
+                \"participation_threshold\": [participation threshold],
+                \"rewards_per_epoch\": \"[rewards per epoch]\"
+            },
+            \"pool_id\": {
+                \"chain_name\": \"$CHAIN\",
+                \"contract\": \"$MULTISIG\"
+            }
         }
     }"
     ```
@@ -237,9 +237,9 @@ ts-node cosmwasm/submit-proposal.js execute \
 
     ```json
     {
-    "InterchainTokenService": {
-        "address": "$ITS_EDGE_CONTRACT"
-    }
+        "InterchainTokenService": {
+            "address": "$ITS_EDGE_CONTRACT"
+        }
     }
     ```
 
@@ -274,14 +274,14 @@ ts-node cosmwasm/submit-proposal.js execute \
     axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
     # You should see something like this:
     {
-    "data": {
-        "name": \"$CHAIN\",
-        "gateway": {
-        "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-        },
-        "frozen_status": 0,
-        "msg_id_format": "hex_tx_hash_and_event_index"
-    }
+        "data": {
+            "name": \"$CHAIN\",
+            "gateway": {
+            "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+            },
+            "frozen_status": 0,
+            "msg_id_format": "hex_tx_hash_and_event_index"
+        }
     }
     ```
 
@@ -291,7 +291,7 @@ ts-node cosmwasm/submit-proposal.js execute \
     axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
     # Result should look like:
     {
-    "data": true
+        "data": true
     }
     ```
 
