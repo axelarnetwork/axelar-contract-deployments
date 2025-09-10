@@ -39,7 +39,7 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
-const { XRPLClient } = require('../xrpl/utils');
+const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
@@ -136,6 +136,11 @@ const getCodeId = async (client, config, options) => {
     }
 
     throw new Error('Code Id is not defined');
+};
+
+const executeTransaction = async (client, account, contractAddress, message, fee) => {
+    const tx = await client.execute(account.address, contractAddress, message, fee, '');
+    return tx;
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -1493,6 +1498,7 @@ module.exports = {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    executeTransaction,
     uploadContract,
     instantiateContract,
     migrateContract,
