@@ -303,7 +303,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ts-node cosmwasm/query.js rewards $CHAIN
     ```
 
-1. Update `ampd` with the Memento chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+1. Update `ampd` with the Memento chain configuration. Verifiers should use their own Memento RPC node for the `http_url` in production.
 
     | Network              | `http_url`        |
     | -------------------- | ----------------- |

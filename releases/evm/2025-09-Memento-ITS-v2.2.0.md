@@ -27,7 +27,7 @@ Ensure that [Memento GMP](../evm/2025-09-Memento-GMP-v6.0.6.md) is deployed firs
 npm ci
 ```
 
-Create an `.env` config. Local environment variable `CHAIN` should be set to `memento`.
+Create an `.env` config
 
 ```yaml
 PRIVATE_KEY=<deployer private key>
