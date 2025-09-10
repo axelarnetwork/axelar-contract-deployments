@@ -6,6 +6,7 @@ use solana_program::pubkey::Pubkey;
 pub struct InterchainTransfer {
     pub token_id: [u8; 32],
     pub source_address: Pubkey,
+    pub source_token_account: Pubkey,
     pub destination_chain: String,
     pub destination_address: Vec<u8>,
     pub amount: u64,
@@ -19,6 +20,7 @@ pub struct InterchainTransferReceived {
     pub source_chain: String,
     pub source_address: Vec<u8>,
     pub destination_address: Pubkey,
+    pub destination_token_account: Pubkey,
     pub amount: u64,
     pub data_hash: [u8; 32],
 }

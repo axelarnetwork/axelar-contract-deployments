@@ -33,6 +33,7 @@ use spl_token_metadata_interface::state::TokenMetadata;
 
 use super::gmp::{self, GmpAccounts};
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
+use crate::processor::interchain_transfer;
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
@@ -472,13 +473,16 @@ pub(crate) fn deploy_remote_canonical_interchain_token<'a>(
 
 pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
-    let destination_account = next_account_info(accounts_iter)?;
+    let destination_wallet = next_account_info(accounts_iter)?;
+    let destination_ata = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
     let minter = next_account_info(accounts_iter)?;
     let minter_roles_pda = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
+    let system_program = next_account_info(accounts_iter)?;
 
     msg!("Instruction: MintInterchainToken");
     let token_manager = TokenManager::load(token_manager_pda)?;
@@ -492,9 +496,34 @@ pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> 
     if token_manager.token_address.as_ref() != mint.key.as_ref() {
         return Err(ProgramError::InvalidAccountData);
     }
+
+    spl_token_2022::check_spl_token_program_account(token_program.key)?;
+
     if mint.owner != token_program.key {
         return Err(ProgramError::IncorrectProgramId);
     }
+
+    // Check if destination wallet is already a valid token account
+    let use_destination_directly = interchain_transfer::is_valid_token_account(
+        destination_wallet,
+        mint.key,
+        token_program.key,
+    );
+
+    let actual_destination = if use_destination_directly {
+        destination_wallet
+    } else {
+        crate::create_associated_token_account_idempotent(
+            payer,
+            mint,
+            destination_ata,
+            destination_wallet,
+            system_program,
+            token_program,
+        )?;
+
+        destination_ata
+    };
 
     ensure_signer_roles(
         &crate::id(),
@@ -508,14 +537,14 @@ pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> 
         &spl_token_2022::instruction::mint_to(
             token_program.key,
             mint.key,
-            destination_account.key,
+            actual_destination.key,
             token_manager_pda.key,
             &[],
             amount,
         )?,
         &[
             mint.clone(),
-            destination_account.clone(),
+            actual_destination.clone(),
             token_manager_pda.clone(),
             token_program.clone(),
         ],

@@ -382,25 +382,19 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
         &spl_token_2022::id(),
     );
 
-    let create_ata_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &solana_token,
-        &spl_token_2022::id(),
-    );
-
     let initial_balance = 300;
     // As the mint authority was handed over, we need to mint through ITS.
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         solana_token,
-        token_account,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         initial_balance,
     )?;
 
-    ctx.send_solana_tx(&[authority_transfer_ix, create_ata_ix, mint_ix])
+    ctx.send_solana_tx(&[authority_transfer_ix, mint_ix])
         .await
         .unwrap();
 
@@ -511,7 +505,7 @@ async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyh
     ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
     let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        token_account,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -546,13 +540,6 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
         &spl_token_2022::id(),
     );
 
-    let create_ata_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &solana_token,
-        &spl_token_2022::id(),
-    );
-
     let token_manager_pda = axelar_solana_its::find_token_manager_pda(
         &axelar_solana_its::find_its_root_pda().0,
         &token_id,
@@ -575,12 +562,12 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
         initial_balance,
     )?;
 
-    ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
+    ctx.send_solana_tx(&[mint_ix]).await.unwrap();
 
     // Try to transfer from the TokenManager to payer. This should fail after the fix
-    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+    let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_chain.fixture.payer.pubkey(),
-        token_manager_ata,
+        ctx.solana_wallet,
         token_id,
         ctx.solana_chain_name.clone(),
         token_account.to_bytes().to_vec(),
@@ -590,6 +577,7 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
         0,
     )
     .unwrap();
+    transfer_ix.accounts[2].pubkey = token_manager_ata;
 
     assert!(ctx
         .send_solana_tx(&[transfer_ix])
@@ -748,9 +736,10 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     // Mint tokens to bob through ITS
     let mint_amount = 1000;
     let mint_to_bob_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         solana_token,
-        bob_token_account,
+        bob.pubkey(),
         ctx.solana_wallet,
         spl_token_2022::id(),
         mint_amount,
@@ -786,7 +775,7 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     let transfer_amount = 300;
     let interchain_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        bob_token_account,
+        bob.pubkey(),
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -796,7 +785,18 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         0,
     )?;
 
-    let tx = ctx.send_solana_tx(&[interchain_transfer_ix]).await.unwrap();
+    let tx = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[interchain_transfer_ix],
+            &[
+                ctx.solana_chain.fixture.payer.insecure_clone(),
+                bob.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
 
     // Verify the transfer was successful by checking bob's balance
     let bob_account_data = ctx
@@ -913,7 +913,7 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
 
     let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        token_account,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -925,7 +925,7 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
     .unwrap();
 
     // Now inject an arbitrary ATA that does not match the token manager PDA
-    transfer_ix.accounts[4].pubkey = {
+    transfer_ix.accounts[5].pubkey = {
         let attacker_wallet = Keypair::new();
 
         // Fund the attacker wallet (for transaction fees)
@@ -984,20 +984,13 @@ async fn test_source_address_stays_consistent_through_the_transfer(
     let (interchain_token_mint, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
-    // Get user's token account
-    let user_token_account = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_mint,
-        &spl_token_2022::id(),
-    );
-
     // Perform interchain transfer to verify source_address
     let transfer_amount = 50;
     let destination_address = b"0x1234567890123456789012345678901234567890".to_vec();
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        user_token_account, // This should be the source_address
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         destination_address.clone(),
@@ -1035,13 +1028,13 @@ async fn test_source_address_stays_consistent_through_the_transfer(
     // Both event and GMP payload should use the same source address
     // and it should be the user's token account (not token manager ATA or mint)
     assert_eq!(
-        transfer_event.source_address, user_token_account,
+        transfer_event.source_address, ctx.solana_wallet,
         "Event source_address should be the user's token account"
     );
 
     assert_eq!(
         gmp_transfer.source_address.as_ref(),
-        user_token_account.to_bytes(),
+        ctx.solana_wallet.to_bytes(),
         "GMP payload source_address should be the user's token account"
     );
 

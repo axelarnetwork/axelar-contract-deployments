@@ -33,6 +33,7 @@ mod metadata_retrieval;
 mod pause_unpause;
 mod role_management;
 mod token_id_validation;
+mod transfer_destination;
 
 use event_utils::Event;
 use solana_program_test::BanksTransactionResultWithMetadata;
@@ -350,7 +351,7 @@ impl ItsTestContext {
 
         let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
             self.solana_wallet,
-            token_account,
+            self.solana_wallet,
             token_id,
             self.evm_chain_name.clone(),
             self.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -388,7 +389,7 @@ impl ItsTestContext {
             .interchain_transfer(
                 token_id,
                 self.solana_chain_name.clone(),
-                token_account.to_bytes().into(),
+                self.solana_wallet.to_bytes().into(),
                 amount_back.into(),
                 Bytes::new(),
                 0.into(),

@@ -251,9 +251,10 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
 
     let initial_balance = 300;
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         solana_token,
-        token_account,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         initial_balance,
@@ -301,16 +302,28 @@ async fn test_call_contract_with_token(ctx: &mut ItsTestContext) -> anyhow::Resu
         .await?
         .await?;
 
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (mint, _) =
+        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &ctx.deployed_interchain_token);
+    let (token_metadata_account, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
+
     let metadata = Bytes::from(
         [
             0_u32.to_le_bytes().as_slice(), // MetadataVersion.CONTRACT_CALL
             &DataPayload::new(
                 &borsh::to_vec(&memo_instruction).unwrap(),
-                &[SolanaAccountRepr {
-                    pubkey: ctx.counter_pda.to_bytes().into(),
-                    is_signer: false,
-                    is_writable: true,
-                }],
+                &[
+                    SolanaAccountRepr {
+                        pubkey: token_metadata_account.to_bytes().into(),
+                        is_signer: false,
+                        is_writable: false,
+                    },
+                    SolanaAccountRepr {
+                        pubkey: ctx.counter_pda.to_bytes().into(),
+                        is_signer: false,
+                        is_writable: true,
+                    },
+                ],
                 EncodingScheme::AbiEncoding,
             )
             .encode()?,

@@ -1352,7 +1352,7 @@ pub fn link_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn interchain_transfer(
     payer: Pubkey,
-    source_account: Pubkey,
+    wallet: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -1366,13 +1366,15 @@ pub fn interchain_transfer(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let source_ata = get_associated_token_address_with_program_id(&wallet, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
-        AccountMeta::new(source_account, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(wallet, true),
+        AccountMeta::new(source_ata, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new(token_manager_ata, false),
@@ -1411,7 +1413,7 @@ pub fn interchain_transfer(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn call_contract_with_interchain_token(
     payer: Pubkey,
-    source_account: Pubkey,
+    wallet: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -1425,13 +1427,15 @@ pub fn call_contract_with_interchain_token(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let source_ata = get_associated_token_address_with_program_id(&wallet, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
-        AccountMeta::new(source_account, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(wallet, true),
+        AccountMeta::new(source_ata, false),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new(token_manager_ata, false),
@@ -1698,28 +1702,24 @@ fn derive_specific_its_accounts(
             data,
             ..
         } => {
-            let destination_account = Pubkey::new_from_array(
+            let wallet = Pubkey::new_from_array(
                 (*destination_address)
                     .try_into()
                     .map_err(|_err| ProgramError::InvalidInstructionData)?,
             );
 
-            specific_accounts.push(AccountMeta::new(destination_account, false));
+            let destination_ata = get_associated_token_address_with_program_id(
+                &wallet,
+                &mint_account,
+                &token_program,
+            );
+
+            specific_accounts.push(AccountMeta::new(wallet, false));
+            specific_accounts.push(AccountMeta::new(destination_ata, false));
 
             if !data.is_empty() {
                 let execute_data = DataPayload::decode(data)
                     .map_err(|_err| ProgramError::InvalidInstructionData)?;
-                let (metadata_account_key, _) =
-                    mpl_token_metadata::accounts::Metadata::find_pda(&mint_account);
-                let program_ata = get_associated_token_address_with_program_id(
-                    &destination_account,
-                    &mint_account,
-                    &token_program,
-                );
-
-                specific_accounts.push(AccountMeta::new(program_ata, false));
-                specific_accounts.push(AccountMeta::new_readonly(mpl_token_metadata::ID, false));
-                specific_accounts.push(AccountMeta::new(metadata_account_key, false));
                 specific_accounts.extend(execute_data.account_meta().iter().cloned());
             }
         }

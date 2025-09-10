@@ -370,30 +370,12 @@ async fn test_successful_handover_mint_authority(ctx: &mut ItsTestContext) {
         &spl_token_2022::id(),
     );
 
-    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
-        &alice.pubkey(),
-        &alice.pubkey(),
-        &alice_token_mint,
-        &spl_token_2022::id(),
-    );
-
-    ctx.solana_chain
-        .fixture
-        .send_tx_with_custom_signers(
-            &[create_ata_ix],
-            &[
-                &alice.insecure_clone(),
-                &ctx.solana_chain.fixture.payer.insecure_clone(),
-            ],
-        )
-        .await
-        .unwrap();
-
     let mint_amount = 1000u64;
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         alice_token_id,
         alice_token_mint,
-        alice_ata,
+        alice.pubkey(),
         alice.pubkey(),
         spl_token_2022::id(),
         mint_amount,

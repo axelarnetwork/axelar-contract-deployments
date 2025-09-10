@@ -467,7 +467,8 @@ pub fn deployment_approval_pda(
 }
 
 /// Creates an associated token account for the given program address and token
-/// mint, if it doesn't already exist.
+/// mint, if it doesn't already exist. If it exists, it ensures the wallet is the owner of the
+/// given ATA.
 ///
 /// # Errors
 ///

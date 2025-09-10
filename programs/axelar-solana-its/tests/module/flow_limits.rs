@@ -8,7 +8,6 @@ use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
 use solana_sdk::program_pack::Pack as _;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_token_2022::state::Account;
 use test_context::test_context;
 
@@ -41,21 +40,6 @@ async fn test_incoming_interchain_transfer_within_limit(
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
         selector: SendToHub::MESSAGE_TYPE_ID.try_into()?,
         destination_chain: ctx.solana_chain_name.clone(),
@@ -63,7 +47,7 @@ async fn test_incoming_interchain_transfer_within_limit(
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: flow_limit.try_into()?,
             data: Bytes::new(),
         })
@@ -118,21 +102,7 @@ async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext
     )
     .unwrap();
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix, flow_limit_ix])
-        .await;
+    ctx.send_solana_tx(&[flow_limit_ix]).await;
 
     let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
         selector: SendToHub::MESSAGE_TYPE_ID.try_into().unwrap(),
@@ -141,7 +111,7 @@ async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into().unwrap(),
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: (flow_limit + 1).try_into().unwrap(),
             data: Bytes::new(),
         })
@@ -178,21 +148,7 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
     )
     .unwrap();
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix, flow_limit_ix])
-        .await;
+    ctx.send_solana_tx(&[flow_limit_ix]).await;
 
     // First transfer, within limit should succeed
     let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
@@ -202,7 +158,7 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into().unwrap(),
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: transfer_amount.try_into().unwrap(),
             data: Bytes::new(),
         })
@@ -229,7 +185,7 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into().unwrap(),
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: transfer_amount.try_into().unwrap(),
             data: Bytes::new(),
         })
@@ -280,6 +236,12 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
     assert!(
         tx_success.result.is_ok(),
         "Transfer should succeed in new epoch"
+    );
+
+    let associated_account_address = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
     );
 
     // Verify the token was minted
@@ -341,25 +303,11 @@ async fn test_outgoing_interchain_transfer_within_limit(
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         interchain_token_pda,
-        associated_account_address,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         900,
@@ -369,7 +317,7 @@ async fn test_outgoing_interchain_transfer_within_limit(
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -420,26 +368,11 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         interchain_token_pda,
-        associated_account_address,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         900,
@@ -450,7 +383,7 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -485,22 +418,6 @@ async fn test_flow_slot_initialization_incoming_transfer(
     )?;
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
-
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     // First incoming transfer - this should create a new flow slot with flow_in=transfer_amount
     let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
         selector: SendToHub::MESSAGE_TYPE_ID.try_into()?,
@@ -509,7 +426,7 @@ async fn test_flow_slot_initialization_incoming_transfer(
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: transfer_amount.try_into()?,
             data: Bytes::new(),
         })
@@ -555,7 +472,7 @@ async fn test_flow_slot_initialization_incoming_transfer(
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: second_transfer_amount.try_into()?,
             data: Bytes::new(),
         })
@@ -632,26 +549,12 @@ async fn test_flow_slot_initialization_outgoing_transfer(
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     // Mint tokens to transfer
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         interchain_token_pda,
-        associated_account_address,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         flow_limit + 100, // Mint more than flow limit to test multiple transfers
@@ -662,7 +565,7 @@ async fn test_flow_slot_initialization_outgoing_transfer(
     // First outgoing transfer - this should create a new flow slot with flow_out=transfer_amount
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -700,7 +603,7 @@ async fn test_flow_slot_initialization_outgoing_transfer(
     let second_transfer_amount = 100;
     let transfer_ix_2 = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -774,21 +677,6 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     // Simulate an incoming transfer
     let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
         selector: SendToHub::MESSAGE_TYPE_ID.try_into()?,
@@ -797,7 +685,7 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: transfer_amount.try_into()?,
             data: Bytes::new(),
         })
@@ -813,6 +701,11 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
     )
     .await;
 
+    let associated_account_address = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
     let ata = ctx
         .solana_chain
         .try_get_account_no_checks(&associated_account_address)
@@ -824,7 +717,7 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
 
     let outgoing_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         ctx.deployed_interchain_token,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -872,21 +765,6 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
 
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    ctx.send_solana_tx(&[create_token_account_ix]).await;
-
     // Simulate an incoming transfer
     let incoming_amount = 800;
     let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
@@ -896,7 +774,7 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
             selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
             token_id: ctx.deployed_interchain_token.into(),
             source_address: [5; 32].into(),
-            destination_address: associated_account_address.to_bytes().into(),
+            destination_address: ctx.solana_wallet.to_bytes().into(),
             amount: incoming_amount.try_into()?,
             data: Bytes::new(),
         })
@@ -912,6 +790,11 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
     )
     .await;
 
+    let associated_account_address = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
     let ata = ctx
         .solana_chain
         .try_get_account_no_checks(&associated_account_address)
@@ -925,7 +808,7 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         ctx.deployed_interchain_token,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -947,7 +830,7 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
     let additional_amount = 200;
     let transfer_ix_2 = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        associated_account_address,
+        ctx.solana_wallet,
         ctx.deployed_interchain_token,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),

@@ -136,30 +136,18 @@ async fn test_valid_token_id_mint_matches_token_address(
             spl_token_2022::id(),
         )?;
 
-    let token_account = get_associated_token_address_with_program_id(
-        &ctx.solana_wallet,
-        &solana_token,
-        &spl_token_2022::id(),
-    );
-
-    let create_ata_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &solana_token,
-        &spl_token_2022::id(),
-    );
-
     let initial_balance = 300;
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         solana_token,
-        token_account,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         initial_balance,
     )?;
 
-    ctx.send_solana_tx(&[authority_transfer_ix, create_ata_ix, mint_ix])
+    ctx.send_solana_tx(&[authority_transfer_ix, mint_ix])
         .await
         .unwrap();
 
@@ -181,7 +169,7 @@ async fn test_valid_token_id_mint_matches_token_address(
     let transfer_amount = 100;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        token_account,
+        ctx.solana_wallet,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -265,41 +253,26 @@ async fn test_invalid_token_id_mint_mismatch_rejected(
         &spl_token_2022::id(),
     );
 
-    let create_ata_a_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &solana_token_a,
-        &spl_token_2022::id(),
-    );
-
-    let create_ata_b_ix = create_associated_token_account(
-        &ctx.solana_wallet,
-        &ctx.solana_wallet,
-        &solana_token_b,
-        &spl_token_2022::id(),
-    );
-
     // Mint some tokens to account A
     let initial_balance = 300;
     let mint_to_a_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id_a,
         solana_token_a,
-        token_account_a,
+        ctx.solana_wallet,
         ctx.solana_wallet,
         spl_token_2022::id(),
         initial_balance,
     )?;
 
-    ctx.send_solana_tx(&[create_ata_a_ix, create_ata_b_ix, mint_to_a_ix])
-        .await
-        .unwrap();
+    ctx.send_solana_tx(&[mint_to_a_ix]).await.unwrap();
 
     // Now try to transfer using token_id_a but with mint B (this should fail after the fix)
     let transfer_amount = 100;
-    let malicious_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+    let mut malicious_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        token_account_a, // Using account A (which has tokens)
-        token_id_b,      // But using token_id_b (mismatch!)
+        ctx.solana_wallet,
+        token_id_b, // But using token_id_b (mismatch!)
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
         transfer_amount,
@@ -307,6 +280,7 @@ async fn test_invalid_token_id_mint_mismatch_rejected(
         spl_token_2022::id(),
         0,
     )?;
+    malicious_transfer_ix.accounts[2].pubkey = token_account_a;
 
     // This should fail with "Mint and token ID don't match" error
     let result = ctx.send_solana_tx(&[malicious_transfer_ix]).await;
@@ -376,10 +350,10 @@ async fn test_lock_unlock_token_id_validation(ctx: &mut ItsTestContext) -> anyho
     // Try to transfer the worthless tokens using the legitimate token_id
     // This should fail because the mint doesn't match the token_manager's token_address
     let transfer_amount = 100;
-    let malicious_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+    let mut malicious_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        worthless_token_account, // Using worthless tokens
-        token_id,                // But legitimate token_id
+        ctx.solana_wallet,
+        token_id, // But legitimate token_id
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
         transfer_amount,
@@ -387,6 +361,7 @@ async fn test_lock_unlock_token_id_validation(ctx: &mut ItsTestContext) -> anyho
         spl_token_2022::id(),
         0,
     )?;
+    malicious_transfer_ix.accounts[2].pubkey = worthless_token_account;
 
     // This should fail with the validation error
     let result = ctx.send_solana_tx(&[malicious_transfer_ix]).await;

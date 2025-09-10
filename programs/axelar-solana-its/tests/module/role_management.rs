@@ -660,6 +660,7 @@ async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
         .unwrap();
 
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        ctx.solana_wallet,
         token_id,
         token_address,
         ata,

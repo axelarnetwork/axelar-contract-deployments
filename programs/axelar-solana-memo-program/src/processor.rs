@@ -65,7 +65,6 @@ pub fn process_message_from_axelar_with_token<'a>(
     let _token_program = next_account_info(accounts_iter)?;
     let _token_mint = next_account_info(accounts_iter)?;
     let _ata_account = next_account_info(accounts_iter)?;
-    let _mpl_token_metadata_program = next_account_info(accounts_iter)?;
     let mpl_token_metadata_account = next_account_info(accounts_iter)?;
     let instruction_accounts = accounts_iter.as_slice();
     let token_metadata = Metadata::from_bytes(&mpl_token_metadata_account.try_borrow_data()?)?;
