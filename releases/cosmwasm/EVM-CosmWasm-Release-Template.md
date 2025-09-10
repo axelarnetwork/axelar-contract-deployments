@@ -2,8 +2,8 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @[github-username] <user@interoplabs.io> |
+| **Deployment** | @[github-username] <user@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
@@ -25,18 +25,18 @@ These are the instructions for deploying Amplifier contracts for `<ChainName>` c
 
 1. Predict the [External Gateway](../evm/path-to-GMP-release-doc) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
 
-| Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
-| -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+    | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
+    | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
+    | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+    | **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+    | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+    | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
-```bash
-ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
-```
+    ```bash
+    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
+    ```
 
-2. Coordinator contract must be deployed and configured in `$ENV.json`
+1. Coordinator contract must be deployed and configured in `$ENV.json`
 
 ## Deployment
 
@@ -124,239 +124,239 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
-```bash
-ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
-  -n $CHAIN \
-  -s "$SALT" \
-  --fetchCodeId \
-  -t "Instantiate contracts for $CHAIN" \
-  -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
-```
+    ```bash
+    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+    -n $CHAIN \
+    -s "$SALT" \
+    --fetchCodeId \
+    -t "Instantiate contracts for $CHAIN" \
+    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+    ```
 
-2. Wait for proposal to pass and query deployed contract addresses
+1. Wait for proposal to pass and query deployed contract addresses
 
-```bash
-ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
-```
+    ```bash
+    ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
+    ```
 
-3. Set environment variables
+1. Set environment variables
 
-- These variables are network-specific
+    - These variables are network-specific
 
-```bash
-VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
-REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
-ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
-```
+    ```bash
+    VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+    GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
+    MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
+    MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
+    REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
+    ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
+    ```
 
-- Gov proposal environment variables. Update these for each network
+    - Gov proposal environment variables. Update these for each network
 
-| Network              | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
-| -------------------- | ----------------------------------------------- | ------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `1000000uamplifier` |
-| **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `1000000uaxl`       |
-| **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
-| **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `1000000uaxl`       |
+    | Network              | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
+    | -------------------- | ----------------------------------------------- | ------------------- |
+    | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `1000000uamplifier` |
+    | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `1000000uaxl`       |
+    | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
+    | **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `1000000uaxl`       |
 
-```bash
-PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
-REWARD_AMOUNT=[reward amount]
-EPOCH_DURATION=[epoch duration according to the environment]
-```
+    ```bash
+    PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
+    REWARD_AMOUNT=[reward amount]
+    EPOCH_DURATION=[epoch duration according to the environment]
+    ```
 
-- Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
+    - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
 
-- Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
+    - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
-4. Create reward pool for voting verifier
+1. Create reward pool for voting verifier
 
-#### Rewards
+    ### Rewards
 
-| Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
-| -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
-| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+    | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
+    | -------------------- | ---------------- | ------------------------- | ------------------- |
+    | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+    | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+    | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
+    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
-```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Rewards \
-  -t "Create pool for $CHAIN in $CHAIN voting verifier" \
-  -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-  --msg "{
-    \"create_pool\": {
-      \"params\": {
-        \"epoch_duration\": \"$EPOCH_DURATION\",
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": \"[rewards per epoch]\"
-      },
-      \"pool_id\": {
-        \"chain_name\": \"$CHAIN\",
-        \"contract\": \"$VOTING_VERIFIER\"
-      }
+    ```bash
+    ts-node cosmwasm/submit-proposal.js execute \
+    -c Rewards \
+    -t "Create pool for $CHAIN in $CHAIN voting verifier" \
+    -d "Create pool for $CHAIN in $CHAIN voting verifier" \
+    --msg "{
+        \"create_pool\": {
+        \"params\": {
+            \"epoch_duration\": \"$EPOCH_DURATION\",
+            \"participation_threshold\": [participation threshold],
+            \"rewards_per_epoch\": \"[rewards per epoch]\"
+        },
+        \"pool_id\": {
+            \"chain_name\": \"$CHAIN\",
+            \"contract\": \"$VOTING_VERIFIER\"
+        }
+        }
+    }"
+    ```
+
+1. Create reward pool for multisig
+
+    ```bash
+    ts-node cosmwasm/submit-proposal.js execute \
+    -c Rewards \
+    -t "Create pool for $CHAIN in axelar multisig" \
+    -d "Create pool for $CHAIN in axelar multisig" \
+    --msg "{
+        \"create_pool\": {
+        \"params\": {
+            \"epoch_duration\": \"$EPOCH_DURATION\",
+            \"participation_threshold\": [participation threshold],
+            \"rewards_per_epoch\": \"[rewards per epoch]\"
+        },
+        \"pool_id\": {
+            \"chain_name\": \"$CHAIN\",
+            \"contract\": \"$MULTISIG\"
+        }
+        }
+    }"
+    ```
+
+1. Register ITS edge contract on ITS Hub
+
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+
+    | Network              | `ITS_EDGE_CONTRACT`                          |
+    | -------------------- | -------------------------------------------- |
+    | **Devnet-amplifier** | `0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff` |
+    | **Stagenet**         | `0x0FCb262571be50815627C16Eca1f5F3D342FF5a5` |
+    | **Testnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
+    | **Mainnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
+
+    ```json
+    {
+    "InterchainTokenService": {
+        "address": "$ITS_EDGE_CONTRACT"
     }
-  }"
-```
-
-5. Create reward pool for multisig
-
-```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Rewards \
-  -t "Create pool for $CHAIN in axelar multisig" \
-  -d "Create pool for $CHAIN in axelar multisig" \
-  --msg "{
-    \"create_pool\": {
-      \"params\": {
-        \"epoch_duration\": \"$EPOCH_DURATION\",
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": \"[rewards per epoch]\"
-      },
-      \"pool_id\": {
-        \"chain_name\": \"$CHAIN\",
-        \"contract\": \"$MULTISIG\"
-      }
     }
-  }"
-```
+    ```
 
-6. Register ITS edge contract on ITS Hub
+    ```bash
+    ts-node cosmwasm/submit-proposal.js \
+        its-hub-register-chains $CHAIN \
+        -t "Register $CHAIN on ITS Hub" \
+        -d "Register $CHAIN on ITS Hub"
+    ```
 
-Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
-| Network              | `ITS_EDGE_CONTRACT`                          |
-| -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff` |
-| **Stagenet**         | `0x0FCb262571be50815627C16Eca1f5F3D342FF5a5` |
-| **Testnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
-| **Mainnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
+1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
-```json
-{
-  "InterchainTokenService": {
-    "address": "$ITS_EDGE_CONTRACT"
-  }
-}
-```
+    ```bash
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
-```bash
-ts-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub"
-```
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+    ```
 
-- Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
+1. Confirm proposals have passed
 
-7. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+    - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
+    - "Instantiate contracts for `$CHAIN`"
+    - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
+    - "Create pool for `$CHAIN` in axelar multisig"
+    - (optional) "Register `$CHAIN` on ITS Hub"
 
-```bash
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+    - Check Gateway registered at Router
 
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-```
+    ```bash
+    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+    # You should see something like this:
+    {
+    "data": {
+        "name": \"$CHAIN\",
+        "gateway": {
+        "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+        },
+        "frozen_status": 0,
+        "msg_id_format": "hex_tx_hash_and_event_index"
+    }
+    }
+    ```
 
-8. Confirm proposals have passed
+    - Check Multisig Prover authorized on Multisig
 
-- Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
-  - "Instantiate contracts for `$CHAIN`"
-  - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
-  - "Create pool for `$CHAIN` in axelar multisig"
-  - (optional) "Register `$CHAIN` on ITS Hub"
+    ```bash
+    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+    # Result should look like:
+    {
+    "data": true
+    }
+    ```
 
-- Check Gateway registered at Router
+    - Check reward pool to confirm funding worked:
 
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": \"$CHAIN\",
-    "gateway": {
-      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
-```
+    ```bash
+    ts-node cosmwasm/query.js rewards $CHAIN
+    ```
 
-- Check Multisig Prover authorized on Multisig
+1. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
-```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
-```
+    | Network              | `http_url`        |
+    | -------------------- | ----------------- |
+    | **Devnet-amplifier** | [testnet RPC URL] |
+    | **Stagenet**         | [testnet RPC URL] |
+    | **Testnet**          | [testnet RPC URL] |
+    | **Mainnet**          | [mainnet RPC URL] |
 
-- Check reward pool to confirm funding worked:
+    ```bash
+    [[handlers]]
+    chain_name="$CHAIN"
+    cosmwasm_contract="$MULTISIG"
+    type="MultisigSigner"
 
-```bash
-ts-node cosmwasm/query.js rewards $CHAIN
-```
+    [[handlers]]
+    chain_finalization="RPCFinalizedBlock"
+    chain_name="$CHAIN"
+    chain_rpc_url=[http url]
+    cosmwasm_contract="$VOTING_VERIFIER"
+    type="EvmMsgVerifier"
 
-9. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+    [[handlers]]
+    chain_finalization="RPCFinalizedBlock"
+    chain_name="$CHAIN"
+    chain_rpc_url=[http url]
+    cosmwasm_contract="$VOTING_VERIFIER"
+    type="EvmVerifierSetVerifier"
+    ```
 
-| Network              | `http_url`        |
-| -------------------- | ----------------- |
-| **Devnet-amplifier** | [testnet RPC URL] |
-| **Stagenet**         | [testnet RPC URL] |
-| **Testnet**          | [testnet RPC URL] |
-| **Mainnet**          | [mainnet RPC URL] |
+1. Update `ampd` with the `$CHAIN` chain configuration.
 
-```bash
-[[handlers]]
-chain_name="$CHAIN"
-cosmwasm_contract="$MULTISIG"
-type="MultisigSigner"
+    ```bash
+    ampd register-chain-support "[service name]" $CHAIN
+    ```
 
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmMsgVerifier"
+1. Create genesis verifier set
 
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmVerifierSetVerifier"
-```
+    Note that this step can only be run once a sufficient number of verifiers have registered.
 
-10. Update `ampd` with the `$CHAIN` chain configuration.
+    | Network              | `min_num_verifiers` |
+    | -------------------- | ------------------- |
+    | **Devnet-amplifier** | 3                   |
+    | **Stagenet**         | 3                   |
+    | **Testnet**          | 5                   |
+    | **Mainnet**          | 5                   |
 
-```bash
-ampd register-chain-support "[service name]" $CHAIN
-```
+    ```bash
+    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
+    ```
 
-11. Create genesis verifier set
+    Query the multisig prover for active verifier set
 
-Note that this step can only be run once a sufficient number of verifiers have registered.
-
-| Network              | `min_num_verifiers` |
-| -------------------- | ------------------- |
-| **Devnet-amplifier** | 3                   |
-| **Stagenet**         | 3                   |
-| **Testnet**          | 5                   |
-| **Mainnet**          | 5                   |
-
-```bash
-axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
-```
-
-Query the multisig prover for active verifier set
-
-```bash
-axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
-```
+    ```bash
+    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
+    ```
 
 ## Checklist
 
