@@ -173,34 +173,34 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Create reward pool for voting verifier
 
-    ### Rewards
+### Rewards
 
-    | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
-    | -------------------- | ---------------- | ------------------------- | ------------------- |
-    | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
-    | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
-    | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
+| -------------------- | ---------------- | ------------------------- | ------------------- |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for $CHAIN in $CHAIN voting verifier" \
-    -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-    --msg "{
-        \"create_pool\": {
-        \"params\": {
-            \"epoch_duration\": \"$EPOCH_DURATION\",
-            \"participation_threshold\": [participation threshold],
-            \"rewards_per_epoch\": \"[rewards per epoch]\"
-        },
-        \"pool_id\": {
-            \"chain_name\": \"$CHAIN\",
-            \"contract\": \"$VOTING_VERIFIER\"
-        }
-        }
-    }"
-    ```
+```bash
+ts-node cosmwasm/submit-proposal.js execute \
+-c Rewards \
+-t "Create pool for $CHAIN in $CHAIN voting verifier" \
+-d "Create pool for $CHAIN in $CHAIN voting verifier" \
+--msg "{
+    \"create_pool\": {
+    \"params\": {
+        \"epoch_duration\": \"$EPOCH_DURATION\",
+        \"participation_threshold\": [participation threshold],
+        \"rewards_per_epoch\": \"[rewards per epoch]\"
+    },
+    \"pool_id\": {
+        \"chain_name\": \"$CHAIN\",
+        \"contract\": \"$VOTING_VERIFIER\"
+    }
+    }
+}"
+```
 
 1. Create reward pool for multisig
 
