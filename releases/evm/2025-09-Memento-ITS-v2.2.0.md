@@ -45,7 +45,7 @@ CHAIN=memento
 ### Devnet Amplifier
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.2.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
