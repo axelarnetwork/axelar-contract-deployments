@@ -68,7 +68,7 @@ npm ci && npm run build
 "memento": {
     "name": "Memento",
     "axelarId": "memento",
-    "chainId": <MAINNET_CHAIN_ID>,
+    "chainId": 51888,
     "rpc": "<MAINNET_RPC_URL>",
     "tokenSymbol": "ETH",
     "confirmations": 1,
