@@ -394,12 +394,7 @@ fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramR
         proposal_account,
     };
 
-    role_management::processor::propose(
-        &crate::id(),
-        role_management_accounts,
-        Roles::OPERATOR,
-        Roles::OPERATOR,
-    )
+    role_management::processor::propose(&crate::id(), role_management_accounts, Roles::OPERATOR)
 }
 
 fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
@@ -426,12 +421,7 @@ fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramRe
         proposal_account,
     };
 
-    role_management::processor::accept(
-        &crate::id(),
-        role_management_accounts,
-        Roles::OPERATOR,
-        Roles::empty(),
-    )
+    role_management::processor::accept(&crate::id(), role_management_accounts, Roles::OPERATOR)
 }
 
 fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -> ProgramResult {

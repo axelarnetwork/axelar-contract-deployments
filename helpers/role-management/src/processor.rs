@@ -19,14 +19,13 @@ pub fn propose<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleTransferWithProposalAccounts<'_>,
     roles: F,
-    required_payer_roles: F,
 ) -> ProgramResult {
     ensure_signer_roles(
         program_id,
         accounts.resource,
         accounts.payer,
         accounts.payer_roles_account,
-        required_payer_roles,
+        roles,
     )?;
 
     ensure_roles(
@@ -87,7 +86,6 @@ pub fn accept<F: RolesFlags>(
     program_id: &Pubkey,
     accounts: RoleTransferWithProposalAccounts<'_>,
     roles: F,
-    required_payer_roles: F,
 ) -> ProgramResult {
     let proposal_pda_bump = RoleProposal::<F>::load(accounts.proposal_account)?.bump;
     let (derived_proposal_pda, _) = crate::create_roles_proposal_pda(
@@ -113,13 +111,8 @@ pub fn accept<F: RolesFlags>(
     let role_remove_accounts = RoleRemoveAccounts::from(accounts);
     let role_add_accounts = RoleAddAccounts::from(accounts);
 
-    add(program_id, role_add_accounts, roles, required_payer_roles)?;
-    remove(
-        program_id,
-        role_remove_accounts,
-        roles,
-        required_payer_roles,
-    )?;
+    add(program_id, role_add_accounts, roles, F::empty())?;
+    remove(program_id, role_remove_accounts, roles, F::empty())?;
 
     close_pda(accounts.origin_user_account, proposal_account, program_id)?;
 

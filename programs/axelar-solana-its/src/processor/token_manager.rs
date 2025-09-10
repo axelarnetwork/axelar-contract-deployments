@@ -654,12 +654,7 @@ pub(crate) fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) 
         token_manager.bump,
     )?;
 
-    role_management::processor::propose(
-        &crate::id(),
-        role_management_accounts,
-        Roles::OPERATOR,
-        Roles::OPERATOR,
-    )
+    role_management::processor::propose(&crate::id(), role_management_accounts, Roles::OPERATOR)
 }
 
 pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
@@ -697,10 +692,5 @@ pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -
         token_manager.bump,
     )?;
 
-    role_management::processor::accept(
-        &crate::id(),
-        role_management_accounts,
-        Roles::OPERATOR,
-        Roles::empty(),
-    )
+    role_management::processor::accept(&crate::id(), role_management_accounts, Roles::OPERATOR)
 }
