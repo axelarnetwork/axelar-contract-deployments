@@ -162,9 +162,9 @@ npm ci && npm run build
 
 1. After deploying the Operators contract, register the following operators according to their environment
 
-    | Network              | `operatorAddresses`                                                                                |
+    | Network              | `operatorAddresses`                                                                        |
     | -------------------- | ------------------------------------------------------------------------------------------ |
-    | **Devnet-amplifier** | ?                                                                                          |
+    | **Devnet-amplifier** | `0x01c793e1F8185a2527C5a2Ef3b4a3FBCb8982690`, `0xDb32E08fd5d6823E7f0298963E487d5df4e54b1E` |
     | **Stagenet**         | `0x7054acf1b2d01e33b86235458edf0046cc354293`, `0xf669ed1ebc608c48f58b6e290df566ede7fb1103` |
     | **Testnet**          | `0x8f23e84c49624a22e8c252684129910509ade4e2`, `0x3b401fa00191acb03c24ebb7754fe35d34dd1abd` |
     | **Mainnet**          | `0x0CDeE446bD3c2E0D11568eeDB859Aa7112BE657a`, `0x1a07a2Ee043Dd3922448CD53D20Aae88a67e486E` |
