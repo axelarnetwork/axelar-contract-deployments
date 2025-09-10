@@ -30,12 +30,12 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 ### Coordinator v2.1.0
 
 1. The coordinator now stores both the router and multisig contract addresses in its state. This information will be given to the coordinator after it is instantiated using the *RegisterProtocol* message. The service registry address will also be registered using *RegisterProtocol*, where it was previously in the coordinator's instantiate message.
-2. Previously, registering a chain with the coordinator involved specifying only the multisig prover's address. Now, registration must also include the corresponding gateway and voting verifier addresses.
+1. Previously, registering a chain with the coordinator involved specifying only the multisig prover's address. Now, registration must also include the corresponding gateway and voting verifier addresses.
 
 ### Multisig v2.3.0
 
 1. Multisig stores the coordinator address. This address is given when the multisig contract is instantiated. This allows the multisig to give the coordinator permission to execute messages (such as when authorizing callers).
-2. Added the `AuthorizedCaller` endpoint. This allows the authorized caller (prover contract) for any given chain to be queried.
+1. Added the `AuthorizedCaller` endpoint. This allows the authorized caller (prover contract) for any given chain to be queried.
 
 ### Router v1.3.0
 
