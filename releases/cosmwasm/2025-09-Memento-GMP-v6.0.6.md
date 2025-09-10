@@ -310,7 +310,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     | **Devnet-amplifier** | <TESTNET_RPC_URL> |
     | **Stagenet**         | <TESTNET_RPC_URL> |
     | **Testnet**          | <TESTNET_RPC_URL> |
-    | **Mainnet**          | <TESTNET_RPC_URL> |
+    | **Mainnet**          | <MAINNET_RPC_URL> |
 
     ```bash
     [[handlers]]
