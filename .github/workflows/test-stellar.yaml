@@ -97,7 +97,7 @@ jobs:
           ITS_HUB_ADDRESS='its_hub_address'
           echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
 
-          # Parse local.json to extract tokenAddress and set as xlmTokenAddress
+          # Extract XLM token address
           xlmTokenAddress=$(jq -r '.chains.stellar.tokenAddress' ./axelar-chains-config/info/local.json)
           echo "xlmTokenAddress=$xlmTokenAddress" >> $GITHUB_OUTPUT
 
@@ -243,7 +243,7 @@ jobs:
 
       ###### Command: ITS - Interchain Transfer ######
 
-      - name: Send Token to another chain (Interchain Transfer)
+      - name: Send Token to another chain
         run: ts-node stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
 
       ###### Command: ITS - Flow Limit ######
