@@ -71,9 +71,22 @@ const programHandler = () => {
                 try {
                     let address: string;
 
-                    if (options.contract && config.axelar.contracts[options.contract].address) {
-                        address = config.axelar.contracts[options.contract].address;
+                    if (options.contract) {
+                        const contractConfig = config.axelar.contracts[options.contract];
+                        if (!contractConfig) {
+                            console.error(`Contract '${options.contract}' not found in configuration`);
+                            return;
+                        }
+                        if (!contractConfig.address) {
+                            console.error(`No address configured for contract '${options.contract}'`);
+                            return;
+                        }
+                        address = contractConfig.address;
                     } else {
+                        if (!options.address) {
+                            console.error('No address provided');
+                            return;
+                        }
                         address = options.address;
                     }
 
