@@ -58,8 +58,8 @@ const deploy = async (options, config, chain, contractName) => {
 const upgrade = async (options, _, chain, contractName) => {
     const { yes } = options;
 
-    if (!options.version && !options.artifactDir && !options.wasm) {
-        throw new Error('--version or --artifact-dir or --wasm required to upgrade');
+    if (!options.version && !options.artifactDir) {
+        throw new Error('--version or --artifact-dir required to upgrade');
     }
 
     let contractAddress = chain.contracts[contractName]?.address;

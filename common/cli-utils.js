@@ -66,28 +66,22 @@ const addStoreOptions = (program) => {
     program.addOption(
         new Option(
             '-a, --artifact-dir <artifactDir>',
-            'Path to the contract artifact directory to upload (required if --version and --wasm are not used)',
+            'Path to the contract artifact directory to upload (required if --version is not used)',
         ).env('ARTIFACT_DIR'),
-    );
-
-    program.addOption(
-        new Option('-w, --wasm <wasm>', 'Path to the WASM file to upload (required if --artifact-dir and --version are not used)').env(
-            'WASM',
-        ),
     );
 
     program.addOption(
         new Option(
             '-v, --version <contractVersion>',
-            'Specify a released version (X.Y.Z) or a commit hash to upload (required if --artifact-dir and --wasm are not used)',
+            'Specify a released version (X.Y.Z) or a commit hash to upload (required if --artifact-dir is not used)',
         ).env('CONTRACT_VERSION'),
     );
 
     program.hook('preAction', async (thisCommand) => {
         const opts = thisCommand.opts();
 
-        if (!opts.artifactDir && !opts.version && !opts.wasm) {
-            throw new Error('Either --artifact-dir or --version or --wasm is required');
+        if (!opts.artifactDir && !opts.version) {
+            throw new Error('Either --artifact-dir or --version is required');
         }
     });
 };
