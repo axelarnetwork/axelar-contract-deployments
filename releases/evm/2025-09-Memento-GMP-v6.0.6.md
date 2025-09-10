@@ -22,6 +22,8 @@ This is the v6.0.6 deployment of EVM compatible Amplifier Gateway contracts for 
 
 ## Deployment
 
+Ensure that [CosmWasm Memento GMP](../cosmwasm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
+
 Create an `.env` config. Local environment variable `CHAIN` should be set to `memento`.
 
 ```yaml
