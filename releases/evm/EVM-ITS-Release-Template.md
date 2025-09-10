@@ -2,8 +2,8 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @[github-username] <user@interoplabs.io> |
+| **Deployment** | @[github-username] <user@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
@@ -20,7 +20,7 @@ Describe release content here
 
 ## Deployment
 
-Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first. 
+Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first.
 
 ```bash
 # Clone latest main and update deps
@@ -60,9 +60,10 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
 
-#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
+### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on all EVM chains
+
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
