@@ -615,3 +615,97 @@ async fn test_deploy_remote_interchain_token_payer_must_be_signer(
 
     Ok(())
 }
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_approve_revoke_approve_deploy_sequence(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    let destination_chain = "ethereum";
+    let destination_minter = vec![1, 2, 3, 4, 5];
+    let salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
+
+    // First approval
+    let approve_deploy_ix = axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+        ctx.solana_wallet,
+        ctx.solana_wallet,
+        salt,
+        destination_chain.to_string(),
+        destination_minter.clone(),
+    )?;
+
+    ctx.send_solana_tx(&[approve_deploy_ix.clone()])
+        .await
+        .unwrap();
+
+    // Verify the approval account was created
+    let token_id = axelar_solana_its::interchain_token_id(&ctx.solana_wallet, &salt);
+    let (approval_pda, _) = axelar_solana_its::find_deployment_approval_pda(
+        &ctx.solana_wallet,
+        &token_id,
+        destination_chain,
+    );
+
+    let approval_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&approval_pda)
+        .await?
+        .expect("Approval account should exist after first approval");
+
+    assert_eq!(
+        approval_account.owner,
+        axelar_solana_its::id(),
+        "Final approval account has wrong owner"
+    );
+
+    // Attempting to approve again should fail
+    let result_duplicate = ctx.send_solana_tx(&[approve_deploy_ix.clone()]).await;
+    assert!(
+        result_duplicate.is_err(),
+        "Expected duplicate approval to fail"
+    );
+
+    // Now revoke that approval
+    let revoke_deploy_ix = axelar_solana_its::instruction::revoke_deploy_remote_interchain_token(
+        ctx.solana_wallet,
+        ctx.solana_wallet,
+        salt,
+        destination_chain.to_string(),
+    )?;
+
+    ctx.send_solana_tx(&[revoke_deploy_ix.clone()])
+        .await
+        .unwrap();
+
+    // Verify the approval account was deleted
+    let approval_account_after_revoke = ctx
+        .solana_chain
+        .try_get_account_no_checks(&approval_pda)
+        .await?;
+
+    assert!(
+        approval_account_after_revoke.is_none(),
+        "Approval account should be deleted after revocation"
+    );
+
+    // Revoking again should fail
+    let result_revoke_duplicate = ctx.send_solana_tx(&[revoke_deploy_ix]).await;
+    assert!(
+        result_revoke_duplicate.is_err(),
+        "Expected duplicate revoke to fail"
+    );
+
+    // Second approval
+    ctx.send_solana_tx(&[approve_deploy_ix]).await.unwrap();
+
+    // Verify the approval account was recreated
+    let final_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&approval_pda)
+        .await?
+        .expect("Approval account should exist again after second approval");
+
+    assert_eq!(approval_account, final_account);
+
+    Ok(())
+}
