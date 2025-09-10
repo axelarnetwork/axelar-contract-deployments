@@ -33,7 +33,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` ke
 Update npm dependencies (including contracts)
 
 ```bash
-npm ci
+npm ci && npm run build
 ```
 
 ### Devnet-Amplifier / Stagenet / Testnet
@@ -164,7 +164,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 
 1. After deploying the Operators contract, register the following operators according to their environment
 
-    | Network              | `operators`                                                                                |
+    | Network              | `operatorAddresses`                                                                        |
     | -------------------- | ------------------------------------------------------------------------------------------ |
     | **Devnet-amplifier** | `0x01c793e1F8185a2527C5a2Ef3b4a3FBCb8982690`, `0xDb32E08fd5d6823E7f0298963E487d5df4e54b1E` |
     | **Stagenet**         | `0x7054acf1b2d01e33b86235458edf0046cc354293`, `0xf669ed1ebc608c48f58b6e290df566ede7fb1103` |
@@ -172,7 +172,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     | **Mainnet**          | `0x0CDeE446bD3c2E0D11568eeDB859Aa7112BE657a`, `0x1a07a2Ee043Dd3922448CD53D20Aae88a67e486E` |
 
     ```bash
-    ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
+    ts-node evm/operators.js --action addOperator --args [operatorAddresses]
     ```
 
 1. Deploy GasService (set the `AxelarGasService.collector` to `Operators` contract address in config, which you will receive at step 6)
@@ -225,7 +225,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 
 The following checks should be performed after the rollout
 
-### EVM -> EVM GMP call with CHAIN as source
+### [CHAIN] -> EVM GMP call with [CHAIN] as source
 
 1. Send a GMP call
 
@@ -249,7 +249,7 @@ The following checks should be performed after the rollout
     ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash [payload-hash]
     ```
 
-### EVM -> CHAIN GMP call with CHAIN as destination
+### EVM -> [CHAIN] GMP call with [CHAIN] as destination
 
 1. Send a GMP call
 
