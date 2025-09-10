@@ -60,22 +60,24 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Set Memento as trusted chain on remote ITS contracts
 
+### Note: Ensure that Memento is registered on ITS hub
+
 Set Memento as trusted chain on all EVM chains
 
 ```bash
-ts-node evm/its.js set-trusted-chains memento hub -n all
+ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
 Set Memento as trusted chain on Sui
 
 ```bash
-ts-node sui/its.js add-trusted-chains memento
+ts-node sui/its.js add-trusted-chains $CHAIN
 ```
 
 Set Memento as trusted chain on Stellar
 
 ```bash
-ts-node stellar/its.js add-trusted-chains memento
+ts-node stellar/its.js add-trusted-chains $CHAIN
 ```
 
 ## Checklist
@@ -85,47 +87,23 @@ The following checks should be performed after the rollout.
 - Run post-deployment checks.
 
 ```bash
-ts-node evm/its.js checks -n memento -y
+ts-node evm/its.js checks -n $CHAIN -y
 ```
 
 - Verify the token manager proxy contract once an ITS token is deployed on Memento and then mark it as a proxy.
 
-- Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
+- EVM Checklist
 
 ```bash
-# Create a token on chain. Substitute the `wallet` below with the deployer key
-ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [wallet] --name "test" --symbol "TST" --decimals [decimals] --initialSupply 10000 --salt "salt1234"
+# Create a token on Memento
+ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
-# Register token metadata. Ensure GMP call is executed
-ts-node evm/its.js --action registerTokenMetadata --tokenAddress [tokenAddress]
-```
+# Deploy token to a remote chain
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
 
-- Run from one chain to link to the remote token
+# Transfer token to remote chain
+ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 
-```bash
-# Register source token. Record tokenId from output for next steps.
-ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress [tokenAddress] --tokenManagerType 4 --operator [wallet] --salt "salt1234"
-
-# Link to remote token. Ensure GMP call is executed
-ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain chain2 --destinationTokenAddress [remote token address] --tokenManagerType 4 --linkParams "0x" --salt "salt1234"
-```
-
-- Fetch tokenManager address for deployed token on both chains
-
-```bash
-# Record tokenManager address from output for transferMintership
-ts-node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
-```
-
-- Run on both chains
-
-```bash
-# Transfer mintership for each token to the token manager
-ts-node evm/its.js --action transferMintership --tokenAddress [tokenAddress] --minter [tokenManager]
-```
-
-- Interchain Transfer (both ways)
-
-```bash
-ts-node evm/its.js --action interchainTransfer --destinationChain chain2 --tokenId [tokenId] --destinationAddress [recipient] --amount 1 --gasValue 0
+# Transfer token back from remote chain
+ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
 ```

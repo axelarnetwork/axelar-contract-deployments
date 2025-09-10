@@ -45,9 +45,9 @@ npm ci && npm run build
 ### Devnet-Amplifier / Stagenet / Testnet
 
 ```bash
-"memento": {
-    "name": "Memento",
-    "axelarId": "memento",
+"$CHAIN": {
+    "name": "Memento Testnet",
+    "axelarId": "$CHAIN",
     "chainId": 2129,
     "rpc": "<$TESTNET_RPC_URL>",
     "tokenSymbol": "ETH",
@@ -71,9 +71,9 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 ### Mainnet
 
 ```bash
-"memento": {
+"$CHAIN": {
     "name": "Memento",
-    "axelarId": "memento",
+    "axelarId": "$CHAIN",
     "chainId": 51888,
     "rpc": "<$MAINNET_RPC_URL>",
     "tokenSymbol": "ETH",
