@@ -277,7 +277,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         "data": {
             "name": \"$CHAIN\",
             "gateway": {
-            "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+                "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
             },
             "frozen_status": 0,
             "msg_id_format": "hex_tx_hash_and_event_index"
