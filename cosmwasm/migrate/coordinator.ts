@@ -120,7 +120,6 @@ async function coordinatorToVersion2_1_0(
         fetchCodeId: false,
         address: coordinator_address,
     };
-    config.contractName = 'coordinator';
 
     const proposal = encodeMigrateContractProposal(config, migrate_options);
 
