@@ -23,27 +23,29 @@ These are the instructions for deploying Amplifier contracts for the Memento con
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-09-Memento-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+1. Predict the [External Gateway](../evm/2025-09-Memento-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
-| Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
-| -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+    | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
+    | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
+    | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+    | **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+    | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+    | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
-```bash
-ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
-```
+    ```bash
+    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
+    ```
+
+1. Coordinator contract must be deployed and configured in `$ENV.json`
 
 ## Deployment
 
 - Create an `.env` config. `CHAIN` should be set to `memento`.
 
 ```yaml
-MNEMONIC=xyz
-ENV=xyz
-CHAIN=xyz
+MNEMONIC=<cosm wasm deployer key mnemonic>
+ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+CHAIN=memento
 TESTNET_RPC_URL=<testnet rpc url>
 MAINNET_RPC_URL=<mainnet rpc url>
 ```
