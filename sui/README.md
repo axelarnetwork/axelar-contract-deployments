@@ -522,7 +522,7 @@ ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destina
 
 ### Deploy Remote Interchain Coin
 
-Deploy an Interchain Coin on a destination chain to correspond with a registered coin on the Sui blockchain.
+Deploy an interchain coin on a destination chain corresponding with a registered coin on the Sui blockchain.
 
 Command:
 ```bash
