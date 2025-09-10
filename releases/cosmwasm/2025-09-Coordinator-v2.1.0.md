@@ -18,6 +18,15 @@
 
 The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.0 require the router to be upgraded to version v1.3.0, and the multisig to upgraded to v2.3.0. Listed below are the relevant changes made to each contract.
 
+### Contract Version Info
+
+| Contract             |  **Devnet**  | **Testnet** | **Stagenet** | **Mainnet** |
+| -------------------- | ------------ | ----------- | ------------ | ----------- |
+| `Coordinator`        | `1.1.0`      | `1.1.0`     | `1.1.0`      | `1.1.0`     |
+| `Multisig`           | `2.1.0`      | `2.1.0`     | `2.1.0`      | `2.1.0`     |
+| `Router`             | `1.2.0`      | `1.2.0`     | `1.2.0`      | `1.2.0`     |
+
+
 ### Coordinator v2.1.0
 
 1. The coordinator now stores both the router and multisig contract addresses in its state. This information will be given to the coordinator after it is instantiated using the *RegisterProtocol* message. The service registry address will also be registered using *RegisterProtocol*, where it was previously in the coordinator's instantiate message.
