@@ -40,7 +40,7 @@ These are the instructions for deploying Amplifier contracts for the Memento con
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `memento`.
+- Create an `.env` config
 
 ```yaml
 MNEMONIC=<cosm wasm deployer key mnemonic>
@@ -89,7 +89,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     "sourceGatewayAddress": "[external gateway address]",
     "votingThreshold": "[voting threshold]",
     "blockExpiry": 10,
-    "confirmationHeight": 1000000,
+    "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
     "msgIdFormat": "hex_tx_hash_and_event_index",
     "addressFormat": "eip55"
 }
@@ -115,29 +115,35 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
 | **Mainnet**          | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
-`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades
+`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
 
-1. Instantiate `VotingVerifier`
+| Network              | Salt     |
+| -------------------- | -------- |
+| **Devnet-amplifier** | `v1.0.0` |
+| **Stagenet**         | `v1.0.0` |
+| **Testnet**          | `v1.0.0` |
+| **Mainnet**          | `v1.0.0` |
+
+1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+    -n $CHAIN \
+    -s "$SALT" \
+    --fetchCodeId \
+    -t "Instantiate contracts for $CHAIN" \
+    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
     ```
 
-1. Instantiate `Gateway`
+1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
-    ```
-
-1. Instantiate `MultisigProver`
-
-    ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+    ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
     ```
 
 1. Set environment variables
 
-    - Network-specific environment variables: These variables need to be updated by the network.
+    - These variables are network-specific
 
     ```bash
     VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
@@ -165,79 +171,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
 
-### Create proposals
-
-Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-09-Memento-ITS-v2.2.0.md) if possible.
-
-1. Register Gateway at the Router
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Router \
-    -t "Register Gateway for $CHAIN" \
-    -d "Register Gateway address for $CHAIN at Router contract" \
-    --msg "{
-            \"register_chain\": {
-                \"chain\": \"$CHAIN\",
-                \"gateway_address\": \"$GATEWAY\",
-                \"msg_id_format\": \"hex_tx_hash_and_event_index\"
-            }
-        }"
-    ```
-
-    ```bash
-    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-    # You should see something like this:
-    {
-        "data": {
-            "name": \"$CHAIN\",
-            "gateway": {
-                "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-            },
-            "frozen_status": 0,
-            "msg_id_format": "hex_tx_hash_and_event_index"
-        }
-    }
-    ```
-
-1. Register prover contract on coordinator
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Coordinator \
-    -t "Register Multisig Prover for $CHAIN" \
-    -d "Register Multisig Prover address for $CHAIN at Coordinator contract" \
-    --msg "{
-            \"register_prover_contract\": {
-                \"chain_name\": \"$CHAIN\",
-                \"new_prover_addr\": \"$MULTISIG_PROVER\"
-            }
-        }"
-    ```
-
-1. Authorize `$CHAIN` Multisig prover on Multisig
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Multisig \
-    -t "Authorize Multisig Prover for $CHAIN" \
-    -d "Authorize Multisig Prover address for $CHAIN at Multisig contract" \
-    --msg "{
-            \"authorize_callers\": {
-                \"contracts\": {
-                    \"$MULTISIG_PROVER\": \"$CHAIN\"
-                }
-            }
-        }"
-    ```
-
-    ```bash
-    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-    # Result should look like:
-    {
-        "data": true
-    }
-    ```
+    - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/2025-09-Memento-ITS-v2.2.0.md) should also be submitted at this time if possible.
 
 #### Rewards
 
@@ -248,7 +182,7 @@ Create all proposals so that integration is not blocked by voting. Include [ITS 
     | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
     | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
     | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1100000000`        |
+    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
@@ -292,9 +226,9 @@ Create all proposals so that integration is not blocked by voting. Include [ITS 
     }"
     ```
 
-1. Register Memento ITS on ITS Hub
+1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Replace `contracts` in $CHAIN config on `ENV.json` with following:
+    Proceed with this step only if ITS deployment on Memento is confirmed. Add the following to `contracts` in the Memento config within `ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -318,29 +252,65 @@ Create all proposals so that integration is not blocked by voting. Include [ITS 
         -d "Register $CHAIN on ITS Hub"
     ```
 
-1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+    - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
-    Add Rewards:
+1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
     ```bash
     axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+
     axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
     ```
 
-    Check reward pool to confirm funding worked:
+1. Confirm proposals have passed
+
+    - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
+    - "Instantiate contracts for Memento"
+    - "Create pool for Memento in Memento voting verifier"
+    - "Create pool for Memento in axelar multisig"
+    - (optional) "Register Memento on ITS Hub"
+
+    - Check Gateway registered at Router
+
+    ```bash
+    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+    # You should see something like this:
+    {
+        "data": {
+            "name": \"$CHAIN\",
+            "gateway": {
+                "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+            },
+            "frozen_status": 0,
+            "msg_id_format": "hex_tx_hash_and_event_index"
+        }
+    }
+    ```
+
+    - Check Multisig Prover authorized on Multisig
+
+    ```bash
+    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+    # Result should look like:
+    {
+        "data": true
+    }
+    ```
+
+    - Check reward pool to confirm funding worked:
 
     ```bash
     ts-node cosmwasm/query.js rewards $CHAIN
     ```
 
-1. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+1. Update `ampd` with the Memento chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
-    | Network              | `http_url`                    |
-    | -------------------- | ----------------------------- |
-    | **Devnet-amplifier** | <TESTNET_RPC_URL>             |
-    | **Stagenet**         | <TESTNET_RPC_URL>             |
-    | **Testnet**          | <TESTNET_RPC_URL>             |
-    | **Mainnet**          | <MAINNET_RPC_URL>             |
+    | Network              | `http_url`        |
+    | -------------------- | ----------------- |
+    | **Devnet-amplifier** | <TESTNET_RPC_URL> |
+    | **Stagenet**         | <TESTNET_RPC_URL> |
+    | **Testnet**          | <TESTNET_RPC_URL> |
+    | **Mainnet**          | <TESTNET_RPC_URL> |
 
     ```bash
     [[handlers]]
@@ -351,19 +321,19 @@ Create all proposals so that integration is not blocked by voting. Include [ITS 
     [[handlers]]
     chain_finalization="RPCFinalizedBlock"
     chain_name="$CHAIN"
-    chain_rpc_url=[http-url]
+    chain_rpc_url=[http url]
     cosmwasm_contract="$VOTING_VERIFIER"
     type="EvmMsgVerifier"
 
     [[handlers]]
     chain_finalization="RPCFinalizedBlock"
     chain_name="$CHAIN"
-    chain_rpc_url=[http-url]
+    chain_rpc_url=[http url]
     cosmwasm_contract="$VOTING_VERIFIER"
     type="EvmVerifierSetVerifier"
     ```
 
-1. Update ampd with the `$CHAIN` chain configuration.
+1. Update `ampd` with the Memento chain configuration.
 
     ```bash
     ampd register-chain-support "[service name]" $CHAIN
@@ -377,8 +347,8 @@ Create all proposals so that integration is not blocked by voting. Include [ITS 
     | -------------------- | ------------------- |
     | **Devnet-amplifier** | 3                   |
     | **Stagenet**         | 3                   |
-    | **Testnet**          | 5                  |
-    | **Mainnet**          | 5                  |
+    | **Testnet**          | 5                   |
+    | **Mainnet**          | 5                   |
 
     ```bash
     axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
@@ -392,4 +362,4 @@ Create all proposals so that integration is not blocked by voting. Include [ITS 
 
 ## Checklist
 
-The [Memento GMP checklist](../evm/2025-09-Memento-GMP-v6.0.6.md) will test GMP.
+The [GMP checklist for Memento](../evm/2025-09-Memento-GMP-v6.0.6.md) will test GMP calls.
