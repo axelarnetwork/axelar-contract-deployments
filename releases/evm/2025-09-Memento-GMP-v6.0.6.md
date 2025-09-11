@@ -126,7 +126,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
     ```bash
-    ts-node evm/deploy-contract.js -c Create3Deployer -m create2
+    ts-node evm/deploy-contract.js -c Create3Deployer -m create2 -n $CHAIN
     ```
 
 1. Waste nonce, this step should only be performed on `stagenet`, `testnet` and `mainnet`. To generate the same `AmplifierGateway` address as older EVM chains we need to waste 2 nonce on the deployer key.
@@ -148,7 +148,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
     ```bash
-    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay]
+    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] -n $CHAIN
     ```
 
 1. Deploy `Operators`

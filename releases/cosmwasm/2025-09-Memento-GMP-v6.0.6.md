@@ -23,8 +23,6 @@ These are the instructions for deploying Amplifier contracts for the Memento con
 
 ### Pre-requisites
 
-1. Ensure that [EVM Memento GMP](../evm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
-
 1. Predict the [External Gateway](../evm/2025-09-Memento-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
     | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
@@ -126,21 +124,22 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `v1.0.0` |
 | **Mainnet**          | `v1.0.0` |
 
-1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
+1. Instantiate `VotingVerifier`
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
-    -n $CHAIN \
-    -s "$SALT" \
-    --fetchCodeId \
-    -t "Instantiate contracts for $CHAIN" \
-    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin [CONTRACT_ADMIN] -m $MNEMONIC
     ```
 
-1. Wait for proposal to pass and query deployed contract addresses
+1. Instantiate `Gateway`
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+    ```
+
+1. Instantiate `MultisigProver`
+
+    ```bash
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
     ```
 
 1. Set environment variables
