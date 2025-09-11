@@ -7,7 +7,7 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
+| **Devnet Amplifier** | Completed             | 2025-09-10 |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
@@ -23,6 +23,8 @@ These are the instructions for deploying Amplifier contracts for the Memento con
 
 ### Pre-requisites
 
+1. Ensure that [EVM Memento GMP](../evm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
+
 1. Predict the [External Gateway](../evm/2025-09-Memento-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
     | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
@@ -33,7 +35,7 @@ These are the instructions for deploying Amplifier contracts for the Memento con
     | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
     ```bash
-    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
+    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly -n $CHAIN
     ```
 
 1. Coordinator contract must be deployed and configured in `$ENV.json`

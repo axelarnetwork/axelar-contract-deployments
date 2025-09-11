@@ -38,6 +38,8 @@ npm ci && npm run build
 
 ### Devnet-Amplifier / Stagenet / Testnet
 
+Copy the below config templates to `${ENV}.json`:
+
 ```bash
 "$CHAIN": {
     "name": "<chain name>",
@@ -109,7 +111,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     | **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
     ```bash
-    ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
+    ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json -n $CHAIN
     ```
 
 1. Deploy `Create3Deployer`:

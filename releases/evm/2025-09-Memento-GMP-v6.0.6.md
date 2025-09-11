@@ -1,16 +1,16 @@
 # Memento GMP v6.0.6
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                          |
+| -------------- | ---------------------------------- |
 | **Created By** | @nbayindirli <noah@interoplabs.io> |
 | **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** |  **Date**  |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-09-10 |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.6)
 
@@ -22,8 +22,6 @@ This is the v6.0.6 deployment of EVM compatible Amplifier Gateway contracts for 
 
 ## Deployment
 
-Ensure that [CosmWasm Memento GMP](../cosmwasm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
-
 Create an `.env` config. Local environment variable `CHAIN` should be set to `memento`.
 
 ```yaml
@@ -34,7 +32,7 @@ TESTNET_RPC_URL=<testnet rpc url>
 MAINNET_RPC_URL=<mainnet rpc url>
 ```
 
-An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
+An initial chain config needs to be added to `${ENV}.json` file under memento key.
 
 Update npm dependencies (including contracts)
 
@@ -46,10 +44,10 @@ npm ci && npm run build
 
 ```bash
 "$CHAIN": {
-    "name": "Memento Testnet",
+    "name": "Memento",
     "axelarId": "$CHAIN",
     "chainId": 2129,
-    "rpc": "<$TESTNET_RPC_URL>",
+    "rpc": "https://private-rpc.memento.zeeve.online/35awf1GSKkyVgonq2lUn",
     "tokenSymbol": "ETH",
     "confirmations": 1,
     "finality": "finalized",
@@ -113,7 +111,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     | **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
     ```bash
-    ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
+    ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json -n $CHAIN
     ```
 
 1. Deploy `Create3Deployer`:
@@ -134,8 +132,8 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 1. Waste nonce, this step should only be performed on `stagenet`, `testnet` and `mainnet`. To generate the same `AmplifierGateway` address as older EVM chains we need to waste 2 nonce on the deployer key.
 
     ```bash
-    ts-node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0.0001 # burn nonce 0
-    ts-node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0.0001 # burn nonce 1
+    ts-node evm/send-tokens.js -r [deployer-address] --amount 0.0001 # burn nonce 0
+    ts-node evm/send-tokens.js -r [deployer-address] --amount 0.0001 # burn nonce 1
     ```
 
     Note that since we only get one chance with the official deployer key nonce, the entire deployment flow should be run from a test account first.
@@ -234,7 +232,7 @@ The following checks should be performed after the rollout
 1. Send a GMP call
 
     ```bash
-    ts-node evm/gateway.js -n $CHAIN --action callContract --destinationChain [destination-chain] --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
+    ts-node evm/gateway.js -n $CHAIN --action callContract --destinationChain [destination-chain] --destination [deployer-address] --payload 0x1234
     ```
 
 1. Route GMP call via Amplifier
@@ -250,7 +248,7 @@ The following checks should be performed after the rollout
 1. Confirm whether the message is approved
 
     ```bash
-    ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash [payload-hash]
+    ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress [deployer-address] --destination [deployer-address] --payloadHash [payload-hash]
     ```
 
 ### EVM -> Memento GMP call with Memento as destination
@@ -258,7 +256,7 @@ The following checks should be performed after the rollout
 1. Send a GMP call
 
     ```bash
-    ts-node evm/gateway.js -n [destination-chain] --action callContract --destinationChain $CHAIN --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
+    ts-node evm/gateway.js -n [destination-chain] --action callContract --destinationChain $CHAIN --destination [deployer-address] --payload 0x1234
     ```
 
 1. Route GMP call via Amplifier
