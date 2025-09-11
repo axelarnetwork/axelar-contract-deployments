@@ -1437,6 +1437,31 @@
           "address": "0xEf0Bd4b5FBa26eC06D7827f4526Bc70Ee6614a81"
         }
       }
+    },
+    "memento": {
+      "name": "Memento",
+      "axelarId": "memento",
+      "chainId": 2129,
+      "rpc": "<TESTNET_RPC_URL>",
+      "tokenSymbol": "ETH",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Memento Testnet Explorer",
+        "url": "https://explorer.memento.zeeve.online/"
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x0C0e6F34F4a68264842BD347b59E19F85F512B5a",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        }
+      }
     }
   },
   "axelar": {
