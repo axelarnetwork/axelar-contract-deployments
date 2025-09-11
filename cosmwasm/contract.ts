@@ -5,36 +5,14 @@ import { Command, Option } from 'commander';
 import { loadConfig } from '../common';
 import { addAmplifierQueryOptions } from './cli-utils';
 import { prepareClient, prepareDummyWallet } from './utils';
+import { ContractMap } from './types';
 
-// cosmwasm-stargate imports protobufjs which does not have a default export
-// Consequently, import CosmWasmClient using CommonJS to avoid error TS1192
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 export interface ContractInfo {
     contract: string;
     version: string;
 }
-
-export enum Contract {
-    ServiceRegistry,
-    Router,
-    Multisig,
-    Coordinator,
-    Rewards,
-    AxelarnetGateway,
-    InterchainTokenService,
-}
-
-export const ContractMap = new Map<Contract, string>([
-    [Contract.ServiceRegistry, 'ServiceRegistry'],
-    [Contract.Router, 'Router'],
-    [Contract.Multisig, 'Multisig'],
-    [Contract.Coordinator, 'Coordinator'],
-    [Contract.Rewards, 'Rewards'],
-    [Contract.AxelarnetGateway, 'AxelarnetGateway'],
-    [Contract.InterchainTokenService, 'InterchainTokenService'],
-]);
 
 export async function getContractInfo(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
     const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
