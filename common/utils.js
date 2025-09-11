@@ -785,9 +785,7 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(options) {
-    const { chain, destinationChain, env, eventType, gasValue } = options;
-
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue) {
     if (gasValue === 'auto') {
         let baseUrl;
         try {
@@ -811,11 +809,18 @@ async function estimateITSFee(options) {
 
         return await httpPost(url, payload);
     } else if (isValidNumber(gasValue)) {
-        const { scaleGasValue } = require('../evm/utils');
         return scaleGasValue(chain, gasValue);
     } else {
         throw new Error(`Invalid gasValue: ${gasValue}. Please pass in a --gasValue with a valid number or "auto".`);
     }
+}
+
+function scaleGasValue(chain, gasValue) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+    }
+
+    return gasValue;
 }
 
 module.exports = {

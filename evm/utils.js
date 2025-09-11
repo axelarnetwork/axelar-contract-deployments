@@ -1111,13 +1111,7 @@ function detectITSVersion() {
     return ITSPackage.version;
 }
 
-function scaleGasValue(chain, gasValue) {
-    if (typeof chain.gasScalingFactor === 'number') {
-        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
-    }
 
-    return gasValue;
-}
 
 module.exports = {
     ...require('../common/utils'),
@@ -1168,5 +1162,4 @@ module.exports = {
     isTrustedChain,
     detectITSVersion,
     getChains,
-    scaleGasValue,
 };
