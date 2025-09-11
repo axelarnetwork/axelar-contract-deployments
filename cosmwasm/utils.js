@@ -770,7 +770,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const verifierContract = getVerifierContractForChain(chainName);
     const gatewayContractName = getGatewayContractForChain(chainName);
-    const chainCodecContractName = getChainCodecContractForChain(config, chainName);
+    const chainCodecContractName = getChainCodecContractForChain(config.axelar, chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -1262,7 +1262,7 @@ const getChainCodecInstantiateMsg = (config, chainName) => {
             chainId: axelarChainId,
         },
     } = config;
-    const codecConfig = getChainCodecConfigForChain(config, chainName);
+    const codecConfig = getChainCodecConfigForChain(config.axelar, chainName);
 
     if (!codecConfig) {
         throw new Error(`ChainCodec config not found for chain ${chainName}`);
