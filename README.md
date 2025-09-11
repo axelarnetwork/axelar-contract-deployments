@@ -6,6 +6,10 @@ Install dependencies via
 Build the project via
 `npm run build`
 
+## Dependency Management Policy
+
+To reduce supply chain attack risk, we avoid updating non-internal dependencies to the latest version. We prefer to trail behind the latest by a few months. All package dependency updates require security team review and approval.
+
 ## Deployment Instructions
 
 - [EVM](./evm/README.md)
