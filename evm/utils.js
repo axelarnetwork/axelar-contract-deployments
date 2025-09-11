@@ -1111,8 +1111,6 @@ function detectITSVersion() {
     return ITSPackage.version;
 }
 
-
-
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
