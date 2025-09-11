@@ -184,13 +184,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const gasValue = await estimateITSFee({
-                chain,
-                destinationChain,
-                env,
-                eventType: 'InterchainTokenDeployment',
-                gasValue: options.gasValue,
-            });
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue);
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
@@ -237,13 +231,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'deployRemoteCanonicalInterchainToken': {
             const { tokenAddress, destinationChain, env } = options;
 
-            const gasValue = await estimateITSFee({
-                chain,
-                destinationChain,
-                env,
-                eventType: 'InterchainTokenDeployment',
-                gasValue: options.gasValue,
-            });
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue);
 
             validateParameters({
                 isValidAddress: { tokenAddress },
@@ -299,13 +287,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'linkToken': {
             const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
 
-            const gasValue = await estimateITSFee({
-                chain,
-                destinationChain,
-                env,
-                eventType: 'LinkToken',
-                gasValue: options.gasValue,
-            });
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue);
 
             const deploymentSalt = getDeploymentSalt(options);
 
