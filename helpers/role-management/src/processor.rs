@@ -202,13 +202,6 @@ pub fn remove<F: RolesFlags>(
         required_payer_roles,
     )?;
 
-    ensure_proper_account::<F>(
-        program_id,
-        accounts.resource,
-        accounts.origin_user_account,
-        accounts.origin_roles_account,
-    )?;
-
     ensure_roles(
         program_id,
         accounts.resource,
