@@ -1,29 +1,29 @@
-# &lt; ChainName &gt; GMP Amplifier vX.X.X
+# Memento GMP v6.0.6
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @[github-username] <user@interoplabs.io> |
-| **Deployment** | @[github-username] <user@interoplabs.io> |
+| **Created By** | @nbayindirli <noah@interoplabs.io> |
+| **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
-- [VotingVerifier vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) `add link to Voting Verifier release`
-- [Gateway vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) `add link to Gateway release`
-- [MultisigProver vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1) `add link to Multisig Prover release`
+- [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
+- [Gateway v1.1.1](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1)
+- [MultisigProver v1.1.1](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1)
 
 ## Background
 
-These are the instructions for deploying Amplifier contracts for `<ChainName>` connection.
+These are the instructions for deploying Amplifier contracts for the Memento connection.
 
 ### Pre-requisites
 
-1. Predict the [External Gateway](../evm/path-to-GMP-release-doc) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
+1. Predict the [External Gateway](../evm/2025-09-Memento-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
     | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
     | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -45,7 +45,9 @@ These are the instructions for deploying Amplifier contracts for `<ChainName>` c
 ```yaml
 MNEMONIC=<cosm wasm deployer key mnemonic>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAIN=memento
+TESTNET_RPC_URL=<testnet rpc url>
+MAINNET_RPC_URL=<mainnet rpc url>
 ```
 
 | Network              | `deployer address`                              |
@@ -169,7 +171,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
 
-    - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
+    - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/2025-09-Memento-ITS-v2.2.0.md) should also be submitted at this time if possible.
 
 #### Rewards
 
@@ -226,7 +228,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    Proceed with this step only if ITS deployment on Memento is confirmed. Add the following to `contracts` in the Memento config within `ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -263,10 +265,10 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Confirm proposals have passed
 
     - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
-    - "Instantiate contracts for `$CHAIN`"
-    - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
-    - "Create pool for `$CHAIN` in axelar multisig"
-    - (optional) "Register `$CHAIN` on ITS Hub"
+    - "Instantiate contracts for Memento"
+    - "Create pool for Memento in Memento voting verifier"
+    - "Create pool for Memento in axelar multisig"
+    - (optional) "Register Memento on ITS Hub"
 
     - Check Gateway registered at Router
 
@@ -301,14 +303,14 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ts-node cosmwasm/query.js rewards $CHAIN
     ```
 
-1. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+1. Update `ampd` with the Memento chain configuration. Verifiers should use their own Memento RPC node for the `http_url` in production.
 
     | Network              | `http_url`        |
     | -------------------- | ----------------- |
-    | **Devnet-amplifier** | [testnet RPC URL] |
-    | **Stagenet**         | [testnet RPC URL] |
-    | **Testnet**          | [testnet RPC URL] |
-    | **Mainnet**          | [mainnet RPC URL] |
+    | **Devnet-amplifier** | <TESTNET_RPC_URL> |
+    | **Stagenet**         | <TESTNET_RPC_URL> |
+    | **Testnet**          | <TESTNET_RPC_URL> |
+    | **Mainnet**          | <MAINNET_RPC_URL> |
 
     ```bash
     [[handlers]]
@@ -331,7 +333,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     type="EvmVerifierSetVerifier"
     ```
 
-1. Update `ampd` with the `$CHAIN` chain configuration.
+1. Update `ampd` with the Memento chain configuration.
 
     ```bash
     ampd register-chain-support "[service name]" $CHAIN
@@ -360,4 +362,4 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 ## Checklist
 
-The [GMP checklist for $CHAIN](../evm/path-to-GMP-release-doc) will test GMP calls.
+The [GMP checklist for Memento](../evm/2025-09-Memento-GMP-v6.0.6.md) will test GMP calls.
