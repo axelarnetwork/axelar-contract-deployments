@@ -554,7 +554,9 @@ const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'Mult
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(axelar, chain, options, contract = 'ChainCodec') {
+/** Get the domain separator for the given chain. If contract is not provided, it will be inferred from the chain name */
+async function getDomainSeparator(axelar, chain, options, contract = null) {
+    contract = contract || getChainCodecContractForChain(axelar, chain.axelarId);
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -629,6 +631,27 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     }
 
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
+};
+
+const CHAIN_CODEC_PREFIX = 'ChainCodec';
+
+const listChainCodecContractKeys = (contracts) => Object.keys(contracts || {}).filter((k) => k.startsWith(CHAIN_CODEC_PREFIX));
+
+/** Returns the ChainCodec contract name for the given chain name */
+const getChainCodecContractForChain = (axelar, chainName) => {
+    const { contracts } = axelar || {};
+    const codecKeys = listChainCodecContractKeys(contracts);
+    const matches = codecKeys.filter((k) => contracts[k] && contracts[k][chainName]);
+
+    if (matches.length === 0) {
+        throw new Error(`No ChainCodec entry found for chain ${chainName}. Expected one of ${codecKeys.join(', ')}`);
+    }
+
+    if (matches.length > 1) {
+        throw new Error(`Multiple ChainCodec entries found for chain ${chainName}: ${matches.join(', ')}`);
+    }
+
+    return matches[0];
 };
 
 const getMultisigProof = async (axelar, chain, multisigSessionId) => {
@@ -839,6 +862,7 @@ module.exports = {
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
+    getChainCodecContractForChain,
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
@@ -846,6 +870,7 @@ module.exports = {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
+    CHAIN_CODEC_PREFIX,
     itsEdgeContract,
     tryItsEdgeContract,
     parseTrustedChains,
