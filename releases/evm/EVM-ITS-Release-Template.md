@@ -121,7 +121,7 @@ ts-node sui/its-example send-deployment TST $CHAIN [gas-value]
 ts-node sui/its-example send-token TST $CHAIN [destination-address] [gas-value] 1
 
 # Send token back to sui from `<ChainName>`
-ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer stellar [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 ```
 
 - Stellar Checklist
