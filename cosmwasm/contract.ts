@@ -16,8 +16,7 @@ export interface ContractInfo {
 
 export async function getContractInfo(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
     const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
-    const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
-    return contract_info;
+    return JSON.parse(Buffer.from(result).toString('ascii'));
 }
 
 const programHandler = () => {
