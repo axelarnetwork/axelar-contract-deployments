@@ -133,7 +133,7 @@
       "name": "Ethereum",
       "axelarId": "Ethereum",
       "chainId": 1,
-      "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
+      "rpc": "https://ethereum-rpc.publicnode.com",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "chainType": "evm",
