@@ -9,7 +9,7 @@
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-09-03 |
 | **Stagenet**         | Deployed              | 2025-09-08 |
-| **Testnet**          | -                     | TBD        |
+| **Testnet**          | Deployed              | 2025-09-08 |
 | **Mainnet**          | -                     | TBD        |
 
 [Release](https://github.com/commonprefix/axelar-amplifier/releases/tag/xrpl-gateway-v1.3.2)
