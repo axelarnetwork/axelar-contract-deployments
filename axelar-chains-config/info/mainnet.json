@@ -3394,7 +3394,7 @@
   "axelar": {
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
-    "rpc": "http://rpc.axelarscan.io:80 ",
+    "rpc": "https://tm.axelar.lava.build:443",
     "lcd": "https://rest.axelar.lava.build",
     "grpc": "grpc.axelar.lava.build:443",
     "tokenSymbol": "AXL",
