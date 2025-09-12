@@ -1122,6 +1122,11 @@ const submitProposal = async (client, wallet, config, options, content) => {
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
+
+    if (!options.deposit) {
+        throw new Error('deposit must be provided for a valid proposal');
+    }
+
     const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
     const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
 

@@ -76,9 +76,19 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
     }
 }
 
+async function checkIfCoinIsMinted(client, coinObjectId, coinType) {
+    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
+    const objectType = coinObject?.data?.type;
+    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
+    if (objectType !== expectedObjectType) {
+        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
+    }
+}
+
 module.exports = {
     deployTokenFromInfo,
     createLockedCoinManagement,
     saveTokenDeployment,
     checkIfCoinExists,
+    checkIfCoinIsMinted,
 };

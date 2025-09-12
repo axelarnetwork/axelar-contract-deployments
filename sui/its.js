@@ -33,7 +33,7 @@ const chalk = require('chalk');
 const {
     utils: { arrayify, parseUnits },
 } = require('hardhat').ethers;
-const { checkIfCoinExists } = require('./utils/token-utils');
+const { checkIfCoinExists, checkIfCoinIsMinted } = require('./utils/token-utils');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -719,6 +719,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
     await checkIfCoinExists(client, coinPackageId, coinType);
+    await checkIfCoinIsMinted(client, coinObjectId, coinType);
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
