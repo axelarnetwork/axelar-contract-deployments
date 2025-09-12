@@ -1,7 +1,6 @@
-const { copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { copyMovePackage, TxBuilder, SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const { findPublishedObject, getObjectIdsByObjectTypes, moveDir, getStructs } = require('./utils');
 const { broadcastFromTxBuilder } = require('./sign-utils');
-const { SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 
 async function deployTokenFromInfo(config, symbol, name, decimals) {
     if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
