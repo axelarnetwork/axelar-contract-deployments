@@ -171,7 +171,7 @@ ts-node sui/deploy-contract.js deploy ITS
 #### Interchain Transfer
 
 ```bash
-ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 <env> <signature-scheme>
+ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 --env <your-env> --signatureScheme <your-signature-scheme>
 ```
 
 
