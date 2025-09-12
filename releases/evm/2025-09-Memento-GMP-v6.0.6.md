@@ -229,6 +229,8 @@ The following checks should be performed after the rollout
 
 ### Memento -> EVM GMP call with Memento as source
 
+destination-chain: [your-evm-chain]
+
 1. Send a GMP call
 
     ```bash
@@ -253,10 +255,12 @@ The following checks should be performed after the rollout
 
 ### EVM -> Memento GMP call with Memento as destination
 
+source-chain: [your-evm-chain]
+
 1. Send a GMP call
 
     ```bash
-    ts-node evm/gateway.js -n [destination-chain] --action callContract --destinationChain $CHAIN --destination [deployer-address] --payload 0x1234
+    ts-node evm/gateway.js -n [source-chain] --action callContract --destinationChain $CHAIN --destination [deployer-address] --payload 0x1234
     ```
 
 1. Route GMP call via Amplifier
@@ -272,5 +276,5 @@ The following checks should be performed after the rollout
 1. Confirm whether the message is approved
 
     ```bash
-    ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
+    ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [source-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
     ```
