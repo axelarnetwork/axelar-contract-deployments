@@ -1122,7 +1122,6 @@ const submitProposal = async (client, wallet, config, options, content) => {
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-
     const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
     const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
 
