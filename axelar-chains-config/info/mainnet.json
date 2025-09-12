@@ -3808,11 +3808,11 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "address": "axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd",
-          "codeId": 35
+          "codeId": 41
         },
         "storeCodeProposalId": "374",
         "storeCodeProposalCodeHash": "c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a",
-        "lastUploadedCodeId": 35
+        "lastUploadedCodeId": 41
       },
       "XrplMultisigProver": {
         "xrpl": {
