@@ -795,6 +795,44 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue) {
+    if (gasValue === 'auto') {
+        let baseUrl;
+        try {
+            baseUrl = loadConfig(env).axelar?.gmpAxelarscanApi;
+        } catch (e) {
+            baseUrl = undefined;
+        }
+
+        // Fallback for env without api
+        if (!baseUrl || env === 'devnet-amplifier') {
+            return 0;
+        }
+
+        const url = `${baseUrl}/estimateITSFee`;
+
+        const payload = {
+            sourceChain: chain.axelarId,
+            destinationChain: destinationChain,
+            event: eventType,
+        };
+
+        return await httpPost(url, payload);
+    } else if (isValidNumber(gasValue)) {
+        return scaleGasValue(chain, gasValue);
+    } else {
+        throw new Error(`Invalid gasValue: ${gasValue}. Please pass in a --gasValue with a valid number or "auto".`);
+    }
+}
+
+function scaleGasValue(chain, gasValue) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+    }
+
+    return gasValue;
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -864,4 +902,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
+    estimateITSFee,
 };
