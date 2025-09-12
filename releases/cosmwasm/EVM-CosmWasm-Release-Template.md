@@ -33,7 +33,7 @@ These are the instructions for deploying Amplifier contracts for `<ChainName>` c
     | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
     ```bash
-    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
+    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly -n $CHAIN
     ```
 
 1. Coordinator contract must be deployed and configured in `$ENV.json`
