@@ -137,7 +137,7 @@ async function deploy(axelar, chain, chains, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = await getDomainSeparator(axelar, chain, options);
+    const domainSeparator = await getDomainSeparator(axelar, chain, options, 'ChainCodecEvm');
     const minimumRotationDelay = Number(options.minimumRotationDelay);
 
     printInfo(`Deploying gateway implementation contract`);
