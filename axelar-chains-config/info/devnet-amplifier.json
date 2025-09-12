@@ -1438,11 +1438,11 @@
         }
       }
     },
-    "memento-2": {
-      "name": "Memento-2",
-      "axelarId": "memento-2",
+    "memento-5": {
+      "name": "memento-5",
+      "axelarId": "memento-5",
       "chainId": 2129,
-      "rpc": "https://private-rpc.memento.zeeve.online/35awf1GSKkyVgonq2lUn",
+      "rpc": "",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "finality": "1",
@@ -1455,14 +1455,14 @@
       },
       "contracts": {
         "ConstAddressDeployer": {
-          "address": "0x0C0e6F34F4a68264842BD347b59E19F85F512B5a",
+          "address": "0x1D2EA29768Ea2c12aC64E8367Cfae43A3d6AD450",
           "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create",
           "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
         },
         "Create3Deployer": {
-          "address": "0x8d1c27B5749AAF5fAf639ed293CE4c7391c1aBDd",
+          "address": "0x771E161cb819e3F120066B2bE0Cf82aaE547a28D",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -1473,21 +1473,21 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxyDeploymentArgs": [
-            "0x964f080dF91AAe21F365CAAEe0130996233AA8D4",
+            "0x10684425670bBfA326accf06B935075Dd11BD2Dc",
             "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a61233000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000888abf000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000008897f7000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
           ],
-          "initialVerifierSetId": "c17ec9780504fb1a860bc283b23061b8a39da12d6ce8993c9af293354c1b4d62",
-          "address": "0x974ea3BFbb51Fe73a7BB981ae744d5C124898c78",
-          "implementation": "0x964f080dF91AAe21F365CAAEe0130996233AA8D4",
-          "implementationCodehash": "0x7f48cb1e5e71fd9ae993fc49de4e903e9c84490220712854cc70d3e03d215754",
+          "initialVerifierSetId": "c4798856c34359b4b78c1088a484f9f8ca38b8db7767313659d87cbeb7819dda",
+          "address": "0x867FA52bC4E98B70518d97f64eC9e230fa86c704",
+          "implementation": "0x10684425670bBfA326accf06B935075Dd11BD2Dc",
+          "implementationCodehash": "0x784dfa298e002202b27e1de791b773fb7936d45aa2eea8a8e092e14023c03a64",
           "deploymentMethod": "create3",
           "previousSignersRetention": 15,
-          "domainSeparator": "0x0f9176a31d62ae0a59a286fc6d21f06614622e3142bc0410e87c2423af8f1daf",
           "minimumRotationDelay": 0,
           "connectionType": "amplifier",
           "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "AxelarAmplifierGateway"
+          "salt": "AxelarAmplifierGateway",
+          "domainSeparator": "0xca027fdc5e27e970b761445ba41ff6124359a28899b5ad5421629fdaf5fea76a"
         },
         "Operators": {
           "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
@@ -1744,10 +1744,10 @@
           "codeId": 854,
           "address": "axelar1kq5um903jwaza0hl6a20myz60ldenuw202965dydrj372xwg64uqpe6g23"
         },
-        "memento-2": {
+        "memento-5": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0x974ea3BFbb51Fe73a7BB981ae744d5C124898c78",
+          "sourceGatewayAddress": "0x867FA52bC4E98B70518d97f64eC9e230fa86c704",
           "votingThreshold": [
             "6",
             "10"
@@ -1757,7 +1757,7 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 1331,
-          "address": "axelar1ftn472hffmugtke3meuq3k6p32hj3wz72z7hj4xelhvxa7j6ftwqmy8knv"
+          "address": "axelar1m0hky4x3hame5xx5wmuhg679exw29wysc4qzhfzjk6qnnr90ruxsvlrk0m"
         }
       },
       "Gateway": {
@@ -1804,9 +1804,9 @@
           "codeId": 848,
           "address": "axelar1ldaas8zj0u9vmnss09nx7v6j6nvw2ntxwc98m8kpzrv5zezdesxslyl4p2"
         },
-        "memento-2": {
+        "memento-5": {
           "codeId": 1332,
-          "address": "axelar1pp9j56nxq40xsker0a64mq8frqu2jukst3ck03dc9kc0hvhdt4zqgrt3fe"
+          "address": "axelar1x3qf0hxxa66afxhx4g46wx7pxcp8vh6pkwkwt8wwcgnv2r7y8t2scz56vl"
         }
       },
       "XrplMultisigProver": {
@@ -1967,7 +1967,7 @@
           "domainSeparator": "0xaee86494b5f46a55643a2f4320533eb0e0e7305a4b2273f18046bc29197bdce2",
           "address": "axelar19fjnml82lf0getvpltnpht5szs0t6cpmxh9zqpfhp0pqgpygp7rsvfg4j0"
         },
-        "memento-2": {
+        "memento-5": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
@@ -1979,8 +1979,8 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "codeId": 1333,
-          "domainSeparator": "0x0f9176a31d62ae0a59a286fc6d21f06614622e3142bc0410e87c2423af8f1daf",
-          "address": "axelar1jm2qjvwzxx8kmdv4vz7j3fd5ms7zjtctt97m344xyfld0u7wnqvs2dfqvw"
+          "domainSeparator": "0xca027fdc5e27e970b761445ba41ff6124359a28899b5ad5421629fdaf5fea76a",
+          "address": "axelar1x3ls0lvvq22se2wzu4tdkng0s24eeremqy0cayr38n4tljcs5xuq46c80r"
         }
       },
       "XrplVotingVerifier": {
