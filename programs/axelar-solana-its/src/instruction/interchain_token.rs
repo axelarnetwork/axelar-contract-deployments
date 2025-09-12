@@ -4,8 +4,6 @@ use borsh::to_vec;
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
-use spl_associated_token_account::get_associated_token_address_with_program_id;
 
 use super::InterchainTokenServiceInstruction;
 
@@ -14,7 +12,6 @@ use super::InterchainTokenServiceInstruction;
 /// # Errors
 /// If serialization fails.
 pub fn mint(
-    payer: Pubkey,
     token_id: [u8; 32],
     mint: Pubkey,
     to: Pubkey,
@@ -27,22 +24,17 @@ pub fn mint(
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &minter);
     let data = to_vec(&InterchainTokenServiceInstruction::MintInterchainToken { amount })?;
-    let ata = get_associated_token_address_with_program_id(&to, &mint, &token_program);
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
         accounts: vec![
-            AccountMeta::new(payer, true),
             AccountMeta::new(mint, false),
             AccountMeta::new(to, false),
-            AccountMeta::new(ata, false),
             AccountMeta::new_readonly(its_root_pda, false),
             AccountMeta::new_readonly(token_manager_pda, false),
             AccountMeta::new_readonly(minter, true),
             AccountMeta::new_readonly(minter_roles_pda, false),
             AccountMeta::new_readonly(token_program, false),
-            AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new_readonly(spl_associated_token_account::ID, false),
         ],
         data,
     })

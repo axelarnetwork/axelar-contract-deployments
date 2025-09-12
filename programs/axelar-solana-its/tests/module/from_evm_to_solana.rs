@@ -251,10 +251,9 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
 
     let initial_balance = 300;
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
-        ctx.solana_wallet,
         token_id,
         solana_token,
-        ctx.solana_wallet,
+        token_account,
         ctx.solana_wallet,
         spl_token_2022::id(),
         initial_balance,

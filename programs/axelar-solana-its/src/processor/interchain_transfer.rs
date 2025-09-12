@@ -121,24 +121,7 @@ pub(crate) fn process_inbound_transfer<'a>(
     };
 
     // Check if source is already a valid token account for this mint
-    let use_destination_directly = is_valid_token_account(
-        parsed_accounts.destination,
-        parsed_accounts.token_program.key,
-        parsed_accounts.token_mint.key,
-    );
-
-    let transferred_amount = give_token(
-        &parsed_accounts,
-        &token_manager,
-        converted_amount,
-        use_destination_directly,
-    )?;
-
-    let destination_token_account = if use_destination_directly {
-        *parsed_accounts.destination.key
-    } else {
-        *parsed_accounts.destination_ata.key
-    };
+    let transferred_amount = give_token(&parsed_accounts, &token_manager, converted_amount)?;
 
     event::InterchainTransferReceived {
         command_id: command_id(&message.cc_id.chain, &message.cc_id.id),
@@ -146,7 +129,7 @@ pub(crate) fn process_inbound_transfer<'a>(
         source_chain,
         source_address: payload.source_address.to_vec(),
         destination_address: *parsed_accounts.destination.key,
-        destination_token_account,
+        destination_token_account: *parsed_accounts.destination_ata.key,
         amount: transferred_amount,
         data_hash: if payload.data.is_empty() {
             [0; 32]
@@ -260,7 +243,7 @@ pub(crate) fn process_outbound_transfer<'a>(
     signing_pda_bump: u8,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
-    const GMP_ACCOUNTS_IDX: usize = 7;
+    const GMP_ACCOUNTS_IDX: usize = 6;
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
     let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
@@ -296,7 +279,7 @@ pub(crate) fn process_outbound_transfer<'a>(
 
     let transfer_event = event::InterchainTransfer {
         token_id,
-        source_address: *take_token_accounts.wallet.key,
+        source_address: *take_token_accounts.payer.key,
         source_token_account: *take_token_accounts.source_ata.key,
         destination_chain,
         destination_address,
@@ -353,7 +336,6 @@ fn give_token(
     accounts: &GiveTokenAccounts<'_>,
     token_manager: &TokenManager,
     amount: u64,
-    use_destination_directly: bool,
 ) -> Result<u64, ProgramError> {
     token_manager_processor::validate_token_manager_type(
         token_manager.ty,
@@ -361,21 +343,7 @@ fn give_token(
         accounts.token_manager_pda,
     )?;
 
-    if !use_destination_directly {
-        // The `source` is a wallet, let's make sure the ATA exists. This will also ensure the
-        // owner of the token account is the wallet, reverting in case it's not.
-        crate::create_associated_token_account_idempotent(
-            accounts.payer,
-            accounts.token_mint,
-            accounts.destination_ata,
-            accounts.destination,
-            accounts.system_account,
-            accounts.token_program,
-        )?;
-    }
-
-    let transferred_amount =
-        handle_give_token_transfer(accounts, token_manager, amount, use_destination_directly)?;
+    let transferred_amount = handle_give_token_transfer(accounts, token_manager, amount)?;
 
     Ok(transferred_amount)
 }
@@ -417,7 +385,6 @@ fn handle_give_token_transfer(
     accounts: &GiveTokenAccounts<'_>,
     token_manager: &TokenManager,
     amount: u64,
-    use_destination_directly: bool,
 ) -> Result<u64, ProgramError> {
     use token_manager::Type::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
@@ -440,16 +407,11 @@ fn handle_give_token_transfer(
     ];
     let transferred = match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => {
-            let destination_account = if use_destination_directly {
-                accounts.destination
-            } else {
-                accounts.destination_ata
-            };
             mint_to(
                 accounts.its_root_pda,
                 accounts.token_program,
                 accounts.token_mint,
-                destination_account,
+                accounts.destination_ata,
                 accounts.token_manager_pda,
                 token_manager,
                 amount,
@@ -458,14 +420,8 @@ fn handle_give_token_transfer(
         }
         LockUnlock => {
             let decimals = get_mint_decimals(accounts.token_mint)?;
-            let transfer_info = create_give_token_transfer_info(
-                accounts,
-                amount,
-                decimals,
-                None,
-                signer_seeds,
-                use_destination_directly,
-            );
+            let transfer_info =
+                create_give_token_transfer_info(accounts, amount, decimals, None, signer_seeds);
             transfer_to(&transfer_info)?;
 
             amount
@@ -478,7 +434,6 @@ fn handle_give_token_transfer(
                 decimals,
                 Some(fee),
                 signer_seeds,
-                use_destination_directly,
             );
             transfer_with_fee_to(&transfer_info)?;
             amount
@@ -571,7 +526,7 @@ fn create_take_token_transfer_info<'a, 'b>(
         token_program: accounts.token_program,
         token_mint: accounts.token_mint,
         destination: accounts.token_manager_ata,
-        authority: accounts.wallet,
+        authority: accounts.payer,
         source: accounts.source_ata,
         signers_seeds,
         amount,
@@ -586,18 +541,11 @@ fn create_give_token_transfer_info<'a, 'b>(
     decimals: u8,
     fee: Option<u64>,
     signers_seeds: &'b [&[u8]],
-    use_destination_directly: bool,
 ) -> TransferInfo<'a, 'b> {
-    let destination_account = if use_destination_directly {
-        accounts.destination
-    } else {
-        accounts.destination_ata
-    };
-
     TransferInfo {
         token_program: accounts.token_program,
         token_mint: accounts.token_mint,
-        destination: destination_account,
+        destination: accounts.destination_ata,
         authority: accounts.token_manager_pda,
         source: accounts.token_manager_ata,
         signers_seeds,
@@ -730,7 +678,6 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
 #[derive(Debug)]
 pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
-    pub(crate) wallet: &'a AccountInfo<'a>,
     pub(crate) source_ata: &'a AccountInfo<'a>,
     pub(crate) token_mint: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -757,7 +704,6 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
 
         Ok(TakeTokenAccounts {
             payer: next_account_info(accounts_iter)?,
-            wallet: next_account_info(accounts_iter)?,
             source_ata: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -809,8 +755,7 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
         payer_and_payload: &Self::Context,
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
-
-        Ok(GiveTokenAccounts {
+        let mut extracted = GiveTokenAccounts {
             payer: payer_and_payload.0,
             message_payload_pda: payer_and_payload.1,
             system_account: next_account_info(accounts_iter)?,
@@ -824,7 +769,26 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             rent_sysvar: next_account_info(accounts_iter)?,
             destination: next_account_info(accounts_iter)?,
             destination_ata: next_account_info(accounts_iter)?,
-        })
+        };
+
+        if is_valid_token_account(
+            extracted.destination,
+            extracted.token_program.key,
+            extracted.token_mint.key,
+        ) {
+            extracted.destination_ata = extracted.destination;
+        } else {
+            crate::create_associated_token_account_idempotent(
+                extracted.payer,
+                extracted.token_mint,
+                extracted.destination_ata,
+                extracted.destination,
+                extracted.system_account,
+                extracted.token_program,
+            )?;
+        }
+
+        Ok(extracted)
     }
 }
 

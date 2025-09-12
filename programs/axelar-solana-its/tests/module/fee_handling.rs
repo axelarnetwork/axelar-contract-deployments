@@ -123,7 +123,7 @@ async fn test_canonical_token_with_fee_lock_unlock(ctx: &mut ItsTestContext) -> 
     let transfer_amount = 1000_u64;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        ctx.solana_wallet,
+        user_ata,
         canonical_token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -264,7 +264,7 @@ async fn test_canonical_token_various_fee_configs(ctx: &mut ItsTestContext) -> a
     let transfer_amount = 10_000_u64;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        ctx.solana_wallet,
+        user_ata,
         canonical_token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -402,7 +402,7 @@ async fn test_canonical_token_maximum_fee_cap(ctx: &mut ItsTestContext) -> anyho
     // Test transfer
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        ctx.solana_wallet,
+        user_ata,
         canonical_token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -625,7 +625,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
     let transfer_amount = 3000_u64;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
-        ctx.solana_wallet,
+        user_ata,
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -683,7 +683,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
         .interchain_transfer(
             token_id,
             ctx.solana_chain_name.clone(),
-            ctx.solana_wallet.to_bytes().into(),
+            user_ata.to_bytes().into(),
             inbound_transfer_amount.into(),
             vec![].into(),
             0.into(),

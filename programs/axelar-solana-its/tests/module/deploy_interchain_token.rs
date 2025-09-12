@@ -101,6 +101,18 @@ async fn test_deploy_interchain_token_with_minter_but_no_initial_supply(
         &spl_token_2022::id(),
     );
 
+    let create_token_account_ix =
+        spl_associated_token_account::instruction::create_associated_token_account(
+            &ctx.solana_wallet,
+            &ctx.solana_wallet,
+            &interchain_token_pda,
+            &spl_token_2022::id(),
+        );
+
+    ctx.send_solana_tx(&[create_token_account_ix])
+        .await
+        .expect("Failed to create token account");
+
     let token_account_opt = ctx
         .solana_chain
         .try_get_account_no_checks(&payer_ata)
@@ -113,10 +125,9 @@ async fn test_deploy_interchain_token_with_minter_but_no_initial_supply(
 
     let mint_amount = 500u64;
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
-        ctx.solana_wallet,
         token_id,
         interchain_token_pda,
-        ctx.solana_wallet,
+        payer_ata,
         ctx.solana_wallet,
         spl_token_2022::id(),
         mint_amount,
@@ -271,7 +282,6 @@ async fn test_deploy_interchain_token_with_no_minter_but_initial_supply(
     );
 
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
-        ctx.solana_wallet,
         token_id,
         interchain_token_pda,
         payer_ata,
