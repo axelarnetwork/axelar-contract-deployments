@@ -27,7 +27,7 @@ runs:
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
       with:
-        version: nightly
+        version: v1.0.0
 
     - name: Run Forge build
       shell: bash
