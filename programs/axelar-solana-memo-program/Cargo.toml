@@ -12,21 +12,25 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 devnet-amplifier = [
     "axelar-solana-gateway/devnet-amplifier",
+    "axelar-solana-gas-service/devnet-amplifier",
     "axelar-solana-its/devnet-amplifier",
     "program-utils/devnet-amplifier"
 ]
 stagenet = [
     "axelar-solana-gateway/stagenet",
+    "axelar-solana-gas-service/stagenet",
     "axelar-solana-its/stagenet",
     "program-utils/stagenet"
 ]
 testnet = [
     "axelar-solana-gateway/testnet",
+    "axelar-solana-gas-service/testnet",
     "axelar-solana-its/testnet",
     "program-utils/testnet"
 ]
 mainnet = [
     "axelar-solana-gateway/mainnet",
+    "axelar-solana-gas-service/mainnet",
     "axelar-solana-its/mainnet",
     "program-utils/mainnet"
 ]
@@ -35,12 +39,14 @@ default = ["devnet-amplifier"]
 [dependencies]
 axelar-solana-encoding.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 borsh.workspace = true
 hex.workspace = true
 mpl-token-metadata.workspace = true
 program-utils = { workspace = true, default-features = false }
 solana-program.workspace = true
+spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 ethers-core.workspace = true
@@ -54,3 +60,5 @@ pretty_assertions.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
+spl-token.workspace = true
+spl-associated-token-account.workspace = true

@@ -201,6 +201,56 @@ pub enum InterchainTokenServiceInstruction {
         signing_pda_bump: u8,
     },
 
+    /// Transfers interchain tokens from a program PDA.
+    /// This variant is designed for program-initiated transfers and includes
+    /// the source program ID and PDA seeds for proper attribution.
+    ///
+    /// 0. [writable,signer] The address of the payer
+    /// 1. [maybe signer] The address of the owner or delegate of the source account of the
+    ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
+    ///    happens on chain.
+    /// 2. [writable] The source account from which the tokens are being transferred
+    /// 3. [] The mint account (token address)
+    /// 4. [] The token manager account associated with the interchain token
+    /// 5. [writable] The token manager Associated Token Account associated with the mint
+    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 7. [writable] The account tracking the flow of this mint for the current epoch
+    /// 8. [] The GMP gateway root account
+    /// 9. [] The GMP gateway program account
+    /// 10. [writable] The GMP gas configuration account
+    /// 11. [] The GMP gas service program account
+    /// 12. [] The system program account
+    /// 13. [] The ITS root account
+    /// 14. [] The GMP call contract signing account
+    /// 15. [] The ITS program account
+    ProgramInterchainTransfer {
+        /// The token id associated with the token
+        token_id: [u8; 32],
+
+        /// The chain where the tokens are being transferred to.
+        destination_chain: String,
+
+        /// The address on the destination chain to send the tokens to.
+        destination_address: Vec<u8>,
+
+        /// Amount of tokens being transferred.
+        amount: u64,
+
+        /// The gas value to be paid for the deploy transaction
+        gas_value: u64,
+
+        /// The bump from the call contract signing account PDA derivation
+        signing_pda_bump: u8,
+
+        /// The program ID that owns the PDA initiating the transfer
+        /// This will be used as the source address in events
+        source_program_id: Pubkey,
+
+        /// The seeds used to derive the PDA (excluding the bump)
+        /// Empty vector for PDAs with no seeds
+        pda_seeds: Vec<Vec<u8>>,
+    },
+
     /// Deploys an interchain token.
     ///
     /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
@@ -1395,6 +1445,72 @@ pub fn interchain_transfer(
         gas_value,
         signing_pda_bump,
     })?;
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::ProgramInterchainTransfer`] instruction.
+///
+/// This variant is for program-initiated transfers and includes source program attribution.
+///
+/// # Errors
+///
+/// This function will return an error if the instruction data cannot be serialized.
+pub fn program_interchain_transfer(
+    payer: Pubkey,
+    source_account: Pubkey,
+    token_id: [u8; 32],
+    destination_chain: String,
+    destination_address: Vec<u8>,
+    amount: u64,
+    mint: Pubkey,
+    token_program: Pubkey,
+    gas_value: u64,
+    source_program_id: Pubkey,
+    pda_seeds: Vec<Vec<u8>>,
+) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda();
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let token_manager_ata =
+        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let (call_contract_signing_pda, signing_pda_bump) =
+        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
+
+    let accounts = vec![
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new(source_account, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new(token_manager_pda, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
+        AccountMeta::new(gas_config_pda, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(call_contract_signing_pda, false),
+        AccountMeta::new_readonly(crate::ID, false),
+    ];
+
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::ProgramInterchainTransfer {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+            source_program_id,
+            pda_seeds,
+        },
+    )?;
 
     Ok(Instruction {
         program_id: crate::ID,

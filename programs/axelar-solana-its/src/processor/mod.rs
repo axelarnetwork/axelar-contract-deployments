@@ -144,7 +144,7 @@ pub fn process_instruction<'a>(
             amount,
             gas_value,
             signing_pda_bump,
-        } => interchain_transfer::process_outbound_transfer(
+        } => interchain_transfer::process_user_interchain_transfer(
             accounts,
             token_id,
             destination_chain,
@@ -153,6 +153,26 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             None,
+        ),
+        InterchainTokenServiceInstruction::ProgramInterchainTransfer {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+            source_program_id,
+            // TODO Why the seeds?
+            pda_seeds: _,
+        } => interchain_transfer::process_program_interchain_transfer(
+            accounts,
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+            Some(source_program_id),
         ),
         InterchainTokenServiceInstruction::RegisterTokenMetadata {
             gas_value,
@@ -246,7 +266,7 @@ pub fn process_instruction<'a>(
             data,
             gas_value,
             signing_pda_bump,
-        } => interchain_transfer::process_outbound_transfer(
+        } => interchain_transfer::process_user_interchain_transfer(
             accounts,
             token_id,
             destination_chain,

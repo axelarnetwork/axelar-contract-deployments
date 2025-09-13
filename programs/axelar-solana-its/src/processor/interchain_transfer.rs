@@ -258,6 +258,105 @@ fn build_axelar_interchain_token_execute(
     })
 }
 
+/// Processes a regular interchain transfer initiated by a user account.
+///
+/// This function handles transfers where the source address should be the payer
+/// (user account). It validates that the payer is a user account and not a
+/// program or PDA to ensure proper source attribution in the transfer event.
+pub(crate) fn process_user_interchain_transfer<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    token_id: [u8; 32],
+    destination_chain: String,
+    destination_address: Vec<u8>,
+    amount: u64,
+    gas_value: u64,
+    signing_pda_bump: u8,
+    data: Option<Vec<u8>>,
+) -> ProgramResult {
+    // Check that the payer is a user account, not a program or PDA
+    // We get the payer from the first account
+    let payer = next_account_info(&mut accounts.iter())?;
+
+    // User accounts should be owned by the System Program
+    if payer.owner != &solana_program::system_program::ID {
+        msg!(
+            "Payer is not owned by System Program, owner: {}",
+            payer.owner
+        );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if payer.executable {
+        msg!("Payer is executable (program account)");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    process_outbound_transfer(
+        accounts,
+        token_id,
+        destination_chain,
+        destination_address,
+        amount,
+        gas_value,
+        signing_pda_bump,
+        data,
+        *payer.key,
+    )
+}
+
+/// Processes an interchain transfer initiated by a PDA.
+pub(crate) fn process_program_interchain_transfer<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    token_id: [u8; 32],
+    destination_chain: String,
+    destination_address: Vec<u8>,
+    amount: u64,
+    gas_value: u64,
+    signing_pda_bump: u8,
+    source_program_id: Option<Pubkey>,
+    // TODO Seeds
+) -> ProgramResult {
+    let source_id = source_program_id.ok_or_else(|| {
+        msg!("Source program ID is required for program-initiated transfers");
+        ProgramError::InvalidInstructionData
+    })?;
+
+    // The payer should be a PDA owned by the source program
+    let payer = next_account_info(&mut accounts.iter())?;
+    if payer.owner != &source_id {
+        msg!(
+            "Payer account must be owned by the source program. Expected: {}, Got: {}",
+            source_id,
+            payer.owner
+        );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if payer.executable {
+        msg!("PDA should not be executable");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    // Check that the account is off the ed25519 curve (indicating it's a PDA)
+    let payer_bytes = payer.key.to_bytes();
+    if solana_program::ed25519_program::check_id(&payer_bytes.into()) {
+        msg!("Payer must be a PDA, not a regular keypair");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    process_outbound_transfer(
+        accounts,
+        token_id,
+        destination_chain,
+        destination_address,
+        amount,
+        gas_value,
+        signing_pda_bump,
+        None,
+        source_id,
+    )
+}
+
 pub(crate) fn process_outbound_transfer<'a>(
     accounts: &'a [AccountInfo<'a>],
     token_id: [u8; 32],
@@ -267,13 +366,15 @@ pub(crate) fn process_outbound_transfer<'a>(
     gas_value: u64,
     signing_pda_bump: u8,
     data: Option<Vec<u8>>,
+    source_address: Pubkey,
 ) -> ProgramResult {
     const GMP_ACCOUNTS_IDX: usize = 6;
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
     let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
-    msg!("Instruction: OutboundTransfer");
+    msg!("{}", "Instruction: OutboundTransfer");
+
     let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
 
     assert_valid_token_manager_pda(
@@ -304,7 +405,7 @@ pub(crate) fn process_outbound_transfer<'a>(
 
     let transfer_event = event::InterchainTransfer {
         token_id,
-        source_address: *take_token_accounts.payer.key,
+        source_address,
         source_token_account: *take_token_accounts.source_ata.key,
         destination_chain,
         destination_address,
@@ -326,7 +427,7 @@ pub(crate) fn process_outbound_transfer<'a>(
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         token_id: token_id.into(),
-        source_address: transfer_event.source_address.to_bytes().into(),
+        source_address: source_address.to_bytes().into(),
         destination_address: transfer_event.destination_address.into(),
         amount: alloy_primitives::U256::from(amount),
         data: data.unwrap_or_default().into(),

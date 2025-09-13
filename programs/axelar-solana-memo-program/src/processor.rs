@@ -8,7 +8,7 @@ use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_its::executable::{
     AxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
 };
-use borsh::BorshDeserialize;
+use borsh::{self, BorshDeserialize};
 use mpl_token_metadata::accounts::Metadata;
 use program_utils::{check_program_account, pda::ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -23,6 +23,9 @@ use std::str::from_utf8;
 use crate::assert_counter_pda_seeds;
 use crate::instruction::AxelarMemoInstruction;
 use crate::state::Counter;
+
+/// Empty seed for counter PDA derivation
+pub const COUNTER_SEED: &[u8] = b"";
 
 /// Instruction processor
 pub fn process_instruction<'a>(
@@ -161,6 +164,24 @@ pub fn process_native_ix(
                 ]],
             )?;
         }
+        AxelarMemoInstruction::SendInterchainTransfer {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+        } => {
+            msg!("Instruction: SendInterchainTransfer");
+            process_send_interchain_transfer(
+                program_id,
+                accounts,
+                token_id,
+                destination_chain,
+                destination_address,
+                amount,
+                gas_value,
+            )?;
+        }
         AxelarMemoInstruction::Initialize { counter_pda_bump } => {
             msg!("Instruction: Initialize");
             process_initialize_memo_program_counter(program_id, accounts, counter_pda_bump)?;
@@ -213,6 +234,105 @@ fn log_memo(memo: &str) {
     } else {
         msg!("Memo (len {}): {:?}", memo.len(), memo);
     }
+}
+
+/// Process SendInterchainTransfer instruction - initiates an interchain token transfer
+/// from the memo program's PDA
+pub fn process_send_interchain_transfer(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    token_id: [u8; 32],
+    destination_chain: String,
+    destination_address: Vec<u8>,
+    amount: u64,
+    gas_value: u128,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+
+    let counter_pda = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let token_manager_pda = next_account_info(accounts_iter)?;
+    let source_ata = next_account_info(accounts_iter)?;
+    let token_manager_ata = next_account_info(accounts_iter)?;
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+    let gateway_program_account = next_account_info(accounts_iter)?;
+    let gas_service_root_pda = next_account_info(accounts_iter)?;
+    let gas_service_program_account = next_account_info(accounts_iter)?;
+    let token_mint = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
+    let call_contract_signing_account = next_account_info(accounts_iter)?;
+    let its_program_account = next_account_info(accounts_iter)?;
+    let system_program = next_account_info(accounts_iter)?;
+
+    // Verify counter PDA is initialized and get bump
+    let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
+    assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
+    let counter_bump = counter_pda_account.bump;
+
+    // Verify the provided source ATA matches the expected derived address
+    let expected_source_ata =
+        spl_associated_token_account::get_associated_token_address_with_program_id(
+            counter_pda.key,
+            token_mint.key,
+            token_program.key,
+        );
+    if source_ata.key != &expected_source_ata {
+        msg!(
+            "Invalid source ATA. Expected: {}, Got: {}",
+            expected_source_ata,
+            source_ata.key
+        );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    // Use the new ITS program_interchain_transfer function with proper source attribution
+    // Pass the memo program ID as the source so events show the correct originator
+    let transfer_ix = axelar_solana_its::instruction::program_interchain_transfer(
+        *counter_pda.key,          // authority (counter PDA owns tokens and pays fees)
+        *source_ata.key,           // source_account (writable) - counter PDA's ATA
+        token_id,                  // token_id
+        destination_chain.clone(), // destination_chain
+        destination_address,       // destination_address
+        amount,                    // amount
+        *token_mint.key,           // mint (writable)
+        *token_program.key,        // token_program (readonly)
+        gas_value
+            .try_into()
+            .map_err(|_| ProgramError::InvalidInstructionData)?, // gas_value
+        crate::ID,                 // source_program_id - the memo program ID
+        vec![COUNTER_SEED.to_vec()], // pda_seeds - the seeds used for counter PDA (empty seed)
+    )?;
+
+    // Execute the transfer with counter PDA as signer
+    // Note: This means the counter PDA pays transaction fees, not the user
+    // This is a current limitation of the approach
+    invoke_signed(
+        &transfer_ix,
+        &[
+            counter_pda.clone(),                   // 0: authority (counter PDA)
+            source_ata.clone(),                    // 1: source_account (writable)
+            token_mint.clone(),                    // 2: mint (writable)
+            token_manager_pda.clone(),             // 3: token_manager_pda (writable)
+            token_manager_ata.clone(),             // 4: token_manager_ata (writable)
+            token_program.clone(),                 // 5: token_program (readonly)
+            gateway_root_pda.clone(),              // 6: gateway_root_pda (readonly)
+            gateway_program_account.clone(),       // 7: gateway_program_id (readonly)
+            gas_service_root_pda.clone(),          // 8: gas_config_pda (writable)
+            gas_service_program_account.clone(),   // 9: gas_service (readonly)
+            system_program.clone(),                // 10: system_program (readonly)
+            its_root_pda.clone(),                  // 11: its_root_pda (readonly)
+            call_contract_signing_account.clone(), // 12: call_contract_signing_pda (readonly)
+            its_program_account.clone(),           // 13: program_account (readonly)
+        ],
+        &[&[COUNTER_SEED, &[counter_bump]]], // Sign with counter PDA's seeds
+    )?;
+
+    msg!("Interchain transfer initiated from memo program PDA");
+    msg!("Token ID: {:?}", token_id);
+    msg!("Destination chain: {}", destination_chain);
+    msg!("Amount: {}", amount);
+
+    Ok(())
 }
 
 /// This function is used to initialize the program.
