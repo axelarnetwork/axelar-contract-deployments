@@ -114,14 +114,14 @@
         "MonadAxelarTransceiver": {
           "gmpManager": "0xDaeE3A6B4196E3e46015b364F1DAe54CEAE74A91",
           "TransceiverStructs": "0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6",
-          "implementation": "0x247C61b0c81063d417Bbe88E2ef1377B88eC0FBA",
+          "implementation": "0xBEd6c98351204ac71795E7C923f02c22941Db3E0",
           "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "deployer": "0xBedE88C378b2b229880B64eF5f9FF76e84e236Fc",
+          "deployer": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
           "deploymentMethod": "create",
-          "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
-          "address": "0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F",
-          "pauser": "0xBedE88C378b2b229880B64eF5f9FF76e84e236Fc",
+          "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
+          "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
+          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
           "owner": "0x3d6CB9D16FD5ff33511d630FC1E98a8F5f93dD85"
         }
       },
@@ -2934,14 +2934,14 @@
         "MonadAxelarTransceiver": {
           "gmpManager": "0x641a6608e2959c0D7Fe2a5F267DFDA519ED43d98",
           "TransceiverStructs": "0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6",
-          "implementation": "0x247C61b0c81063d417Bbe88E2ef1377B88eC0FBA",
+          "implementation": "0xBEd6c98351204ac71795E7C923f02c22941Db3E0",
           "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
-          "deployer": "0xBedE88C378b2b229880B64eF5f9FF76e84e236Fc",
+          "deployer": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
           "deploymentMethod": "create",
-          "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
-          "address": "0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F",
-          "pauser": "0xBedE88C378b2b229880B64eF5f9FF76e84e236Fc",
+          "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
+          "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
+          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
           "owner": "0xD54096E46E8438d753A749639d11397EF3BA28f5"
         }
       }
