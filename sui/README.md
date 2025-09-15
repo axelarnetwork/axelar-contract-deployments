@@ -171,7 +171,7 @@ ts-node sui/deploy-contract.js deploy ITS
 #### Interchain Transfer
 
 ```bash
-ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 <env> <signature-scheme>
+ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 --env <your-env> --signatureScheme <your-signature-scheme>
 ```
 
 
@@ -519,6 +519,21 @@ Deploys a source coin and links it with a destination chain coin. If a `channel`
 ```bash
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
+
+### Deploy Remote Interchain Coin
+
+Deploy an interchain coin on a destination chain corresponding with a registered coin on the Sui blockchain.
+
+Command:
+```bash
+ts-node sui/its.js deploy-remote-coin <coin-package-id> <coin-package-name> <coin-mod-name> <token-id> <destination-chain> <env> <signature-scheme>
+```
+
+Example: 
+```bash
+ts-node sui/its.js deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 my_custom_coin MY_CUSTOM_COIN 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia --env testnet --signatureScheme ed25519
+```
+Response: `Deploy remote coin: Ec1pnBpwxrv26WdJt5wXifj7N66vQ1zCabqKRgtz3ktK`
 
 ## Treasury Management
 
