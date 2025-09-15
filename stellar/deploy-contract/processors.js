@@ -2,7 +2,7 @@
 
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal } = require('../utils');
+const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, tokenMetadataToScVal } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
@@ -214,14 +214,12 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
                 throw new Error('InterchainToken deployment requires --name, --symbol, and --decimals options');
             }
 
-            const minter = owner;
-            const admin = owner;
             const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
-            const tokenMetadata = require('../utils').tokenMetadataToScVal(parseInt(decimals), name, symbol);
+            const tokenMetadata = tokenMetadataToScVal(parseInt(decimals), name, symbol);
 
             return {
-                minter,
-                admin,
+                minter: owner,
+                admin: owner,
                 tokenId,
                 tokenMetadata,
             };
