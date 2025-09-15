@@ -47,7 +47,7 @@ npm ci && npm run build
     "name": "Memento",
     "axelarId": "$CHAIN",
     "chainId": 2129,
-    "rpc": "https://private-rpc.memento.zeeve.online/35awf1GSKkyVgonq2lUn",
+    "rpc": "<$TESTNET_RPC_URL>",
     "tokenSymbol": "ETH",
     "confirmations": 1,
     "finality": "finalized",
