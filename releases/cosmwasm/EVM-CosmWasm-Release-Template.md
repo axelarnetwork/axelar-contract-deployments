@@ -1,7 +1,7 @@
 # &lt; ChainName &gt; GMP Amplifier vX.X.X
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                                |
+| -------------- | ---------------------------------------- |
 | **Created By** | @[github-username] <user@interoplabs.io> |
 | **Deployment** | @[github-username] <user@interoplabs.io> |
 
@@ -16,6 +16,7 @@
 - [VotingVerifier vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) `add link to Voting Verifier release`
 - [Gateway vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) `add link to Gateway release`
 - [MultisigProver vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1) `add link to Multisig Prover release`
+- [ChainCodec vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/chain-codec-v1.0.0) `add link to ChainCodec release`
 
 ## Background
 
@@ -55,12 +56,13 @@ CHAIN=<chain name>
 | **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 | **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 
-- Confirm `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
+- Confirm `ChainCodec`, `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
 
 ```bash
 VotingVerifier (v1.1.0) -> "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
 Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
 MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
 ```
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
@@ -89,7 +91,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     "blockExpiry": 10,
     "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
     "msgIdFormat": "hex_tx_hash_and_event_index",
-    "addressFormat": "eip55"
 }
 
 # Add under `config.axelar.contracts.MultisigProver` based on Network
@@ -99,9 +100,11 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     "signingThreshold": "[signing threshold]",
     "serviceName": "[service name]",
     "verifierSetDiffThreshold": 0,
-    "encoder": "abi",
     "keyType": "ecdsa"
 }
+
+# Add under `config.axelar.contracts.ChainCodecXyz` where Xyz is the chain type (i.e. `ChainCodecEvm` for an EVM chain) based on Network
+"$CHAIN": {}
 ```
 
 ### Instantiate Amplifier contracts
@@ -122,7 +125,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `v1.0.0` |
 | **Mainnet**          | `v1.0.0` |
 
-1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
+1. Instantiate Gateway, ChainCodec, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
     ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
@@ -130,7 +133,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     -s "$SALT" \
     --fetchCodeId \
     -t "Instantiate contracts for $CHAIN" \
-    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+    -d "Instantiate Gateway, ChainCodec, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
     ```
 
 1. Wait for proposal to pass and query deployed contract addresses
@@ -140,7 +143,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Set environment variables
-
     - These variables are network-specific
 
     ```bash
@@ -151,7 +153,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
     ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
     ```
-
     - Gov proposal environment variables. Update these for each network
 
     | Network              | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
@@ -166,7 +167,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     REWARD_AMOUNT=[reward amount]
     EPOCH_DURATION=[epoch duration according to the environment]
     ```
-
     - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
 
     - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
@@ -226,7 +226,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN`config within`ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -249,7 +249,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         -t "Register $CHAIN on ITS Hub" \
         -d "Register $CHAIN on ITS Hub"
     ```
-
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
 1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
@@ -261,7 +260,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Confirm proposals have passed
-
     - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
     - "Instantiate contracts for `$CHAIN`"
     - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
@@ -284,7 +282,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         }
     }
     ```
-
     - Check Multisig Prover authorized on Multisig
 
     ```bash
@@ -294,7 +291,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         "data": true
     }
     ```
-
     - Check reward pool to confirm funding worked:
 
     ```bash
