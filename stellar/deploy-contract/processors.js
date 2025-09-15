@@ -210,12 +210,17 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
         case 'InterchainToken': {
             const { name, symbol, decimals } = options;
 
-            if (!name || !symbol || decimals === undefined) {
-                throw new Error('InterchainToken deployment requires --name, --symbol, and --decimals options');
+            validateParameters({
+                isNonEmptyString: { name, symbol },
+                isValidNumber: { decimals },
+            });
+
+            if (decimals <= 0 || !Number.isInteger(decimals)) {
+                throw new Error('Decimals must be a positive integer');
             }
 
             const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
-            const tokenMetadata = tokenMetadataToScVal(parseInt(decimals), name, symbol);
+            const tokenMetadata = tokenMetadataToScVal(decimals, name, symbol);
 
             return {
                 minter: owner,
