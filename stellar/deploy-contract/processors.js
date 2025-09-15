@@ -214,12 +214,14 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
                 throw new Error('InterchainToken deployment requires --name, --symbol, and --decimals options');
             }
 
+            const minter = owner;
+            const admin = owner;
             const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
             const tokenMetadata = require('../utils').tokenMetadataToScVal(parseInt(decimals), name, symbol);
 
             return {
-                owner,
-                owner,
+                minter,
+                admin,
                 tokenId,
                 tokenMetadata,
             };
