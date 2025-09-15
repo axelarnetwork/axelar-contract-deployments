@@ -215,9 +215,10 @@ jobs:
       - name: Create a Custom Token
         id: create_custom_token
         run: |
-          output=$(ts-node stellar/its.js create-custom-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }})
+          # Deploy InterchainToken with fixed version 1.1.2 for stability
+          output=$(ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 --name "${{ steps.env_vars.outputs.name }}" --symbol "${{ steps.env_vars.outputs.symbol }}" --decimals ${{ steps.env_vars.outputs.decimal }})
           echo "$output"
-          customTokenAddress=$(echo "$output" | grep "Deployed address:" | awk '{print $3}')
+          customTokenAddress=$(echo "$output" | grep "InterchainToken deployed successfully at address:" | awk '{print $6}')
           echo "customTokenAddress=$customTokenAddress" >> $GITHUB_OUTPUT
 
       ###### Command: ITS - Deploy Remote Canonical Token ######

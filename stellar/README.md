@@ -352,27 +352,28 @@ ts-node stellar/its.js deployed-token-manager [token-id]
 ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
-#### Create Custom Token
+#### Deploy Custom Token Contract
 
-Deploy a custom token contract using the InterchainToken WASM hash. This creates a new token contract instance with specified metadata.
+Deploy a custom token contract using the deploy-contract script. This creates a new token contract instance with specified metadata that you control directly.
 
 ```bash
-ts-node stellar/its.js create-custom-token [name] [symbol] [decimals]
+ts-node stellar/deploy-contract.js deploy InterchainToken --version [version] --name [name] --symbol [symbol] --decimals [decimals]
 
 # Example
-ts-node stellar/its.js create-custom-token TEST TEST 7
+ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 --name "Test Token" --symbol "TEST" --decimals 7
 ```
 
 **Parameters:**
 
-- `<name>`: The name of the token (e.g., "TEST")
-- `<symbol>`: The token symbol (e.g., "TEST")
-- `<decimals>`: Number of decimals for the token (e.g., 7)
+- `--version`: Version of the InterchainToken contract to deploy (e.g., "1.1.2")
+- `--name`: The name of the token (e.g., "Test Token")
+- `--symbol`: The token symbol (e.g., "TEST")
+- `--decimals`: Number of decimals for the token (e.g., 7)
 
 **Features:**
 
-- Automatically uses the InterchainToken WASM hash from chain configuration
-- Sets the deploying wallet as the initial minter
+- Deploys a standalone InterchainToken contract
+- Sets the deploying wallet as the initial minter and admin
 - Uses a dummy token ID for deployment
 - Returns the deployed contract address
 
