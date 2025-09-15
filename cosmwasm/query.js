@@ -200,6 +200,18 @@ async function saveDeployedContracts(client, config, args, options) {
     };
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
 
+    // query chain codec address from prover config
+    const key = Buffer.from('config');
+    const value = await client.queryContractRaw(result.prover, key);
+    const proverConfig = JSON.parse(Buffer.from(value).toString('ascii'));
+    const chainCodec = proverConfig.chain_codec;
+
+    config.axelar.contracts.ChainCodec[chainName] = {
+        ...config.axelar.contracts.ChainCodec[chainName],
+        address: chainCodec,
+    };
+    printInfo(`Updated ChainCodec[${chainName}].address`, chainCodec);
+
     saveConfig(config, options.env);
     printInfo(`Config updated successfully for ${chainName}`);
 }
