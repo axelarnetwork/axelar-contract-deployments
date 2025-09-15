@@ -919,6 +919,132 @@
         "url": "https://suiscan.xyz/testnet"
       }
     },
+    "sui-7": {
+      "name": "Sui-7",
+      "axelarId": "sui-7",
+      "networkType": "testnet",
+      "rpc": "https://sui-testnet-rpc.publicnode.com",
+      "tokenSymbol": "SUI",
+      "chainType": "sui",
+      "finality": "1",
+      "decimals": 9,
+      "approxFinalityWaitTime": 1,
+      "contracts": {
+        "Utils": {
+          "address": "0x809134c925cbf3b71e29761ff1189bed7ff5071420e51a677c11927d1196ed09",
+          "versions": {
+            "0": "0x809134c925cbf3b71e29761ff1189bed7ff5071420e51a677c11927d1196ed09"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {},
+          "objects": {
+            "UpgradeCap": "0x762b14f9b901a70cce383bc536edebd666a2e7cb2047045e9eeb4129ba8a3bbd"
+          }
+        },
+        "VersionControl": {
+          "address": "0xa5ef65cb59e05bfd4b07c913682a860ae287fff558b4080dbffa0f6289e0a9a0",
+          "versions": {
+            "0": "0xa5ef65cb59e05bfd4b07c913682a860ae287fff558b4080dbffa0f6289e0a9a0"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "VersionControl": "0xa5ef65cb59e05bfd4b07c913682a860ae287fff558b4080dbffa0f6289e0a9a0::version_control::VersionControl"
+          },
+          "objects": {
+            "UpgradeCap": "0xf89c9696cc8fb48b03ae422f5c7929e5b0d6a7c6751697e3a6ba52fc034af511"
+          }
+        },
+        "AxelarGateway": {
+          "address": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77",
+          "versions": {
+            "0": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "WeightedSigner": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::weighted_signer::WeightedSigner",
+            "Bytes32": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::bytes32::Bytes32",
+            "WeightedSigners": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::weighted_signers::WeightedSigners",
+            "Signature": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::proof::Signature",
+            "Proof": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::proof::Proof",
+            "Message": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::message::Message",
+            "SignersRotated": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::events::SignersRotated",
+            "ChannelCreated": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::events::ChannelCreated",
+            "ChannelDestroyed": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::events::ChannelDestroyed",
+            "ContractCall": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::events::ContractCall",
+            "MessageApproved": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::events::MessageApproved",
+            "MessageExecuted": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::events::MessageExecuted",
+            "AxelarSigners": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::auth::AxelarSigners",
+            "MessageToSign": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::auth::MessageToSign",
+            "Channel": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::channel::Channel",
+            "ApprovedMessage": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::channel::ApprovedMessage",
+            "OwnerCap": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::owner_cap::OwnerCap",
+            "MessageTicket": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::message_ticket::MessageTicket",
+            "MessageStatus": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::message_status::MessageStatus",
+            "Gateway_v0": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::gateway_v0::Gateway_v0",
+            "CommandType": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::gateway_v0::CommandType",
+            "Gateway": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77::gateway::Gateway"
+          },
+          "objects": {
+            "Gateway": "0xfcd67767f6a724bfac7d8f290bb0f6edec08d20836eb37ae1cc0f0fbbcc04f7f",
+            "UpgradeCap": "0x38ad4e5d9bc90e0fc1d6fb98feb4cc8849dede171ab2ccf54a934f8c49dd4b5a",
+            "Gatewayv0": "0x4ae47ac15bec794b6a52d0b35e60b7ae228f89e876bf2b0d73cd1df51cc0ed43",
+            "OwnerCap": "0xe2b7d6a6c026d3a486a0b922c67e598571a58b93768a4e1edc3dcd0985ac4884"
+          },
+          "domainSeparator": "0xc8897cd041fea2a4ed05b5836236d966c4fe2296a2c93d7762be274e32ebf259",
+          "operator": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "minimumRotationDelay": 0
+        },
+        "RelayerDiscovery": {
+          "address": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13",
+          "versions": {
+            "0": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "Function": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::transaction::Function",
+            "MoveCall": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::transaction::MoveCall",
+            "Transaction": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::transaction::Transaction",
+            "TransactionRegistered": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::events::TransactionRegistered",
+            "TransactionRemoved": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::events::TransactionRemoved",
+            "RelayerDiscovery_v0": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::relayer_discovery_v0::RelayerDiscovery_v0",
+            "OwnerCap": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::owner_cap::OwnerCap",
+            "RelayerDiscovery": "0xc2a5c903936590728ee55642b74801fd0c65257c6a37196037958dc3f78c8b13::discovery::RelayerDiscovery"
+          },
+          "objects": {
+            "RelayerDiscovery": "0xa01d00b90c8be10e060964c1876ff425b0b82646d7090041ddcbdcadeb31eb5b",
+            "RelayerDiscoveryv0": "0x7d44a8d67060cddbfad3e18674004666cea177e83e9403bc5177c2218b5a1f4c",
+            "OwnerCap": "0xda2455f446f43fbb036bfaf47039db5a003266170bab8bc47d3030f5a55bb1e4",
+            "UpgradeCap": "0x792927c7bda0f9096db2e95fe21dfc47b8537d27c7a416abda29e58bf53adc08"
+          }
+        },
+        "Operators": {
+          "address": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d",
+          "versions": {
+            "0": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "OwnerCap": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::OwnerCap",
+            "OperatorCap": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::OperatorCap",
+            "Operators": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::Operators",
+            "Borrow": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::Borrow",
+            "OperatorAdded": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::OperatorAdded",
+            "OperatorRemoved": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::OperatorRemoved",
+            "CapabilityStored": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::CapabilityStored",
+            "CapabilityRemoved": "0x69efb8e6a745c11965a5724314caa35e0f6042a7e07a17ea4fbdb304aa79bd4d::operators::CapabilityRemoved"
+          },
+          "objects": {
+            "Operators": "0xe1de1d3bd5c4059b7aa872a8d207f8660e944d1d19eb48637d9f8ac58c1a787a",
+            "OwnerCap": "0x32f916bb9be7f119441aebd20a71bf6d54ea2fe70dcb0cb4e7b24e27e6d28538",
+            "UpgradeCap": "0x0f74e69e28f5ba384a1d448a29cb53cb9854d1d5f4dfefde5ebfcbdfe510ce11"
+          }
+        }
+      },
+      "explorer": {
+        "name": "Suiscan",
+        "url": "https://suiscan.xyz/testnet"
+      }
+    },
     "xrpl-dev": {
       "name": "XRPL",
       "axelarId": "xrpl-dev",
@@ -1613,6 +1739,21 @@
           "codeId": 854,
           "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5"
         },
+        "sui-7": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xec86df3a4b5eb5dcf910aabd1b7c58339e6ac873353a62139b57db8e185bed77",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
+          "codeId": 854,
+          "address": "axelar1jswasyrz65xzlf7ehfk8mmfnptfjr8cpzf8hxu6zjxrpy9xcnv0qj358yf"
+        },
         "plume-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1719,6 +1860,10 @@
         "hedera-2": {
           "codeId": 848,
           "address": "axelar1ldaas8zj0u9vmnss09nx7v6j6nvw2ntxwc98m8kpzrv5zezdesxslyl4p2"
+        },
+        "sui-7": {
+          "codeId": 848,
+          "address": "axelar1mxkvpe3y4djwxwgdp8gyc0wq78xc5dv0syvh4c3gta0zmeqvgqlq8aydg5"
         }
       },
       "XrplMultisigProver": {
@@ -1816,6 +1961,21 @@
           "codeId": 855,
           "domainSeparator": "0xa5ea3e93481643015f6273d6938484afb463de5c25f980ec72b63d56ebd55d55",
           "address": "axelar175r02r0d2u9lnjthw8jzk3wrmwfkqenxccw4kz6cnez7v4l2yrlqt9smv5"
+        },
+        "sui-7": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xc8897cd041fea2a4ed05b5836236d966c4fe2296a2c93d7762be274e32ebf259",
+          "address": "axelar1s5culyv8rgdx7p5jjkx5upggg2s67grrsn49ujz7mezx57zgyt7stylwek"
         },
         "plume-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
