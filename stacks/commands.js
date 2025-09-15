@@ -8,7 +8,7 @@ const { governanceAddress } = require('../cosmwasm/utils');
 const TRANSFER_OWNERSHIP_CONTRACTS_IMPL = {
     AxelarGasService: 'GasImpl',
     InterchainTokenService: 'InterchainTokenServiceImpl',
-}
+};
 
 async function setOwner(wallet, chain, args) {
     const [contract, governanceAddress] = args;
@@ -47,13 +47,10 @@ async function transferOwnership(wallet, chain, args) {
     printInfo(`Transferring ownership for contract ${contract}, implementation ${contractImplAddress}, address ${contractAddress}`);
 
     const result = await sendContractCallTransaction(
-      contractAddress,
-      'transfer-ownership',
-      [
-        Cl.address(contractImplAddress),
-        Cl.address(ownerAddress),
-      ],
-      wallet
+        contractAddress,
+        'transfer-ownership',
+        [Cl.address(contractImplAddress), Cl.address(ownerAddress)],
+        wallet,
     );
 
     printInfo(`Finished transferring ownership`, result.txid);

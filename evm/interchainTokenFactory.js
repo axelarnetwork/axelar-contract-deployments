@@ -17,9 +17,11 @@ const {
     getGasOptions,
     printWalletInfo,
     printTokenInfo,
-    validateChain,
     isTrustedChain,
+    encodeITSDestination,
+    scaleGasValue,
 } = require('./utils');
+const { validateChain } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
@@ -197,7 +199,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 destinationChain,
                 gasValue,
                 {
-                    value: gasValue,
+                    value: scaleGasValue(chain, gasValue),
                     ...gasOptions,
                 },
             );
@@ -240,7 +242,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 tokenAddress,
                 destinationChain,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: scaleGasValue(chain, gasValue), ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
@@ -288,20 +290,23 @@ async function processCommand(_axelar, chain, chains, options) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
+            const itsDestinationTokenAddress = encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+            printInfo('Human-readable destination token address', destinationTokenAddress);
+
             validateParameters({
-                isNonEmptyString: { destinationChain },
+                isNonEmptyString: { destinationChain, destinationTokenAddress },
                 isValidNumber: { tokenManagerType, gasValue },
-                isValidBytesArray: { linkParams, destinationTokenAddress },
+                isValidBytesArray: { linkParams, itsDestinationTokenAddress },
             });
 
             const tx = await interchainTokenFactory.linkToken(
                 deploymentSalt,
                 destinationChain,
-                destinationTokenAddress,
+                itsDestinationTokenAddress,
                 tokenManagerType,
                 linkParams,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: scaleGasValue(chain, gasValue), ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);

@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify, defaultAbiCoder },
+    utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -113,6 +113,11 @@ function printLog(log) {
 
 const isString = (arg) => {
     return typeof arg === 'string';
+};
+
+const isNonArrayObject = (arg) => {
+    if (!arg) return false;
+    return typeof arg === 'object' && Array.isArray(arg) === false;
 };
 
 const isNonEmptyString = (arg) => {
@@ -356,6 +361,60 @@ function isValidStellarContract(address) {
     return StellarSdk.StrKey.isValidContract(address);
 }
 
+/// Token Manager Types supported by ITS
+/// These are the standardized token manager implementations across all chains
+const tokenManagerTypes = {
+    NATIVE_INTERCHAIN_TOKEN: 0,
+    MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
+
+/**
+ * Validates if a token manager type is supported for link token operations on a specific chain.
+ * Different chains may have different supported token manager types for linking tokens.
+ *
+ * Supported types by chain:
+ * - EVM: All types except INTERCHAIN_TOKEN (MINT_BURN_FROM, LOCK_UNLOCK, LOCK_UNLOCK_FEE, MINT_BURN)
+ * - Stellar: LOCK_UNLOCK, MINT_BURN, MINT_BURN_FROM
+ *
+ * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
+ * @param {string} type - The token manager type string to validate (e.g., 'LOCK_UNLOCK', 'MINT_BURN', 'MINT_BURN_FROM')
+ * @returns {number} The validated token manager type value
+ * @throws {Error} If the token manager type is not valid for the specified chain type
+ */
+const validateLinkType = (chainType, type) => {
+    const tokenManagerType = tokenManagerTypes[type];
+
+    if (tokenManagerType === undefined) {
+        throw new Error(`Invalid token manager type: ${type}. Must be one of: ${Object.keys(tokenManagerTypes).join(', ')}`);
+    }
+
+    const chainRules = {
+        evm: {
+            validate: (type) => ![tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN].includes(type),
+            errorMsg: 'NATIVE_INTERCHAIN_TOKEN is not supported for EVM chains.',
+        },
+        stellar: {
+            validate: (type) =>
+                [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN, tokenManagerTypes.MINT_BURN_FROM].includes(type),
+            errorMsg: 'Only LOCK_UNLOCK, MINT_BURN, and MINT_BURN_FROM are supported for Stellar.',
+        },
+    };
+
+    const rules = chainRules[chainType];
+    if (!rules) {
+        throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
+    }
+
+    if (!rules.validate(tokenManagerType)) {
+        throw new Error(`Invalid token manager type ${type} for chain type ${chainType}: ${rules.errorMsg}`);
+    }
+
+    return tokenManagerType;
+};
+
 /**
  * Basic validatation to check if the provided string *might* be a valid SVM
  * address. One needs to ensure that it's 32 bytes long after decoding.
@@ -372,6 +431,7 @@ function isValidSvmAddressFormat(address) {
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
@@ -383,6 +443,7 @@ const validationFunctions = {
     isValidStellarAccount,
     isValidStellarContract,
     isValidSvmAddressFormat,
+    isHexString,
 };
 
 function validateParameters(parameters) {
@@ -570,10 +631,10 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (axelar, chain, multisigSessionId) => {
+const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(axelar.rpc);
-    const value = await client.queryContractSmart(axelar.contracts.MultisigProver[chain].address, query);
+    const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
@@ -705,6 +766,35 @@ const getProposalConfig = (config, env, key) => {
     }
 };
 
+/**
+ * Validates if a chain is valid in the config.
+ *
+ * @param {Object} chains - The chains object
+ * @param {string} chainName - The chain name to validate
+ * @throws {Error} If the chain is not valid
+ */
+function validateChain(chains, chainName) {
+    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
+    }
+}
+
+/**
+ * Validates if a destination chain is valid (allows empty string).
+ *
+ * @param {Object} chains - The chains object
+ * @param {string} destinationChain - The destination chain to validate
+ */
+function validateDestinationChain(chains, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    validateChain(chains, destinationChain);
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -721,11 +811,13 @@ module.exports = {
     isStringArray,
     isStringLowercase,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isHexString,
     copyObject,
     httpGet,
     httpPost,
@@ -765,6 +857,10 @@ module.exports = {
     asciiToBytes,
     encodeITSDestination,
     getProposalConfig,
+    tokenManagerTypes,
+    validateLinkType,
+    validateChain,
+    validateDestinationChain,
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
