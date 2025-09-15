@@ -63,7 +63,7 @@ That would create the `artifacts` folder with all the compiled contracts, plus t
 
 ```bash
 ts-node cosmwasm/submit-proposal.js store \
-  -c MultisigProver \
+  -c SolanaMultisigProver \
   -t "Upload SolanaMultisigProver contract v0.2.0" \
   -d "Upload SolanaMultisigProver contract v0.2.0" \
   -a "$ARTIFACT_PATH"
