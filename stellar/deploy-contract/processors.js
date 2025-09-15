@@ -44,6 +44,11 @@ const deploy = async (options, config, chain, contractName) => {
 
     printInfo('Contract initialized at address', contractAddress);
 
+    if (contractName === 'InterchainToken') {
+        printInfo('InterchainToken deployed successfully at address', contractAddress);
+        return;
+    }
+
     chain.contracts[contractName] = {
         address: contractAddress,
         deployer: wallet.publicKey(),
@@ -200,6 +205,24 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
 
         case 'TokenUtils': {
             return {};
+        }
+
+        case 'InterchainToken': {
+            const { name, symbol, decimals } = options;
+
+            if (!name || !symbol || decimals === undefined) {
+                throw new Error('InterchainToken deployment requires --name, --symbol, and --decimals options');
+            }
+
+            const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
+            const tokenMetadata = require('../utils').tokenMetadataToScVal(parseInt(decimals), name, symbol);
+
+            return {
+                owner,
+                owner,
+                tokenId,
+                tokenMetadata,
+            };
         }
 
         default:
