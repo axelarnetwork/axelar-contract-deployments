@@ -370,7 +370,7 @@ ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer
 - `issuer`: The issuer address of the Stellar asset
 - `limit`: Optional trust limit (defaults to 1000000000 if not specified)
 
-## TTL extension and stat©e archival recovery
+## TTL extension and state archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
 
