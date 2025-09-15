@@ -354,28 +354,7 @@ ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c3412
 
 #### Deploy Custom Token Contract
 
-Deploy a custom token contract using the deploy-contract script. This creates a new token contract instance with specified metadata that you control directly.
-
-```bash
-ts-node stellar/deploy-contract.js deploy InterchainToken --version [version] --name [name] --symbol [symbol] --decimals [decimals]
-
-# Example
-ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 --name "Test Token" --symbol "TEST" --decimals 7
-```
-
-**Parameters:**
-
-- `--version`: Version of the InterchainToken contract to deploy (e.g., "1.1.2")
-- `--name`: The name of the token (e.g., "Test Token")
-- `--symbol`: The token symbol (e.g., "TEST")
-- `--decimals`: Number of decimals for the token (e.g., 7)
-
-**Features:**
-
-- Deploys a standalone InterchainToken contract
-- Sets the deploying wallet as the initial minter and admin
-- Uses a dummy token ID for deployment
-- Returns the deployed contract address
+For testing purposes, you can deploy a custom InterchainToken contract. See the [link-token documentation](docs/link-token.md) for details or run `ts-node stellar/deploy-contract.js deploy InterchainToken --help` for usage.
 
 #### Create Stellar Classic Asset
 
@@ -391,7 +370,7 @@ ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer
 - `issuer`: The issuer address of the Stellar asset
 - `limit`: Optional trust limit (defaults to 1000000000 if not specified)
 
-## TTL extension and state archival recovery
+## TTL extension and stat©e archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
 

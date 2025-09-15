@@ -109,13 +109,18 @@ ts-node evm/interchainTokenFactory \
 
 **Chain B (Stellar):**
 
-**Note:** On Stellar, we're deploying a customized pre-deployed token contract that you control directly, in contrast to the ITS-managed token on EVM.
+**For Production Use:**
+Use your existing Stellar token contract address. Most users will have their own token already deployed.
 
-**Option 1 - Deploy a custom InterchainToken contract:**
+**For Testing/Demo Purposes Only:**
+
+If you need to create a test token for demonstration, you can either:
+
+**Option 1 - Deploy a test InterchainToken contract:**
 
 ```bash
-# Deploy a custom token contract
-ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 --name "Test Token" --symbol "TEST" --decimals 7
+# For testing only - deploy a custom token contract
+ts-node stellar/deploy-contract.js deploy InterchainToken "Test Token" "TEST" 7 --version 1.1.2
 ```
 
 **Option 2 - Create a Stellar classic asset by setting trustline:**
@@ -123,7 +128,7 @@ ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 --name
 > Stellar Classic Asset Trustline: https://developers.stellar.org/docs/tokens/stellar-asset-contract#interacting-with-classic-stellar-assets
 
 ```bash
-# Optional trust limit (defaults to 1000000000 if not specified)
+# For testing only - create trustline (optional trust limit defaults to 1000000000)
 ts-node stellar/token-utils change-trust <assetCode> <issuer> <limit>
 ```
 
