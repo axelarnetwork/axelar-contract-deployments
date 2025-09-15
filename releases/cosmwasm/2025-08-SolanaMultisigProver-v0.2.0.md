@@ -73,7 +73,7 @@ ts-node cosmwasm/submit-proposal.js store \
 
 ```bash
 ts-node cosmwasm/submit-proposal.js migrate \
-  -c MultisigProver \
+  -c SolanaMultisigProver \
   -t "Migrate SolanaMultisigProver to v0.2.0" \
   -d "Migrate SolanaMultisigProver to v0.2.0" \
   --msg '{}' \
