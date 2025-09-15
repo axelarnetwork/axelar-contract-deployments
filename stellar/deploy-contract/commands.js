@@ -22,9 +22,9 @@ const CONTRACT_DEPLOY_OPTIONS = {
         new Option('--token-manager-version <tokenManagerVersion>', 'version for TokenManager contract').makeOptionMandatory(true),
     ],
     InterchainToken: () => [
-        new Option('--name <name>', 'token name (e.g., "Test Token")').makeOptionMandatory(true),
-        new Option('--symbol <symbol>', 'token symbol (e.g., "TEST")').makeOptionMandatory(true),
-        new Option('--decimals <decimals>', 'token decimals (e.g., 7)').makeOptionMandatory(true).argParser(Number),
+        new Option('--name <name>', 'token name (e.g., "Test Token")').makeOptionMandatory(true).argParser(String),
+        new Option('--symbol <symbol>', 'token symbol (e.g., "TEST")').makeOptionMandatory(true).argParser(String),
+        new Option('--decimals <decimals>', 'token decimals (e.g., 7)').makeOptionMandatory(true).argParser(parseInt),
     ],
 };
 
