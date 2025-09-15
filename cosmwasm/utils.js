@@ -1435,7 +1435,7 @@ const getProverInstantiateMsg = (config, chainName) => {
 };
 
 const getInstantiateChainContractsMessage = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, chainCodecId, verifierCodeId, proverCodeId, admin } = options;
+    const { chainName, salt, gatewayCodeId, chainCodecCodeId, verifierCodeId, proverCodeId, admin } = options;
 
     if (!chainName) {
         throw new Error('Chain name is required');
@@ -1453,7 +1453,7 @@ const getInstantiateChainContractsMessage = async (client, config, options) => {
         chainCodecContractName = getChainCodecContractNameByChainType(config, chainName);
     }
 
-    const chainCodec = chainCodecId || (await getCodeId(client, config, { ...options, contractName: chainCodecContractName }));
+    const chainCodecCode = chainCodecCodeId || (await getCodeId(client, config, { ...options, contractName: chainCodecContractName }));
     const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
     const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
 
@@ -1473,7 +1473,7 @@ const getInstantiateChainContractsMessage = async (client, config, options) => {
                     contract_admin: admin,
                 },
                 chain_codec: {
-                    code_id: Number(chainCodec),
+                    code_id: Number(chainCodecCode),
                     label: `ChainCodec ${chainName}`,
                     msg: chainCodecMsg,
                     contract_admin: admin,
