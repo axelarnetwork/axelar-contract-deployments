@@ -31,9 +31,6 @@
 
     # Address
     solana address
-
-    # Generate a new keypair
-    solana-keygen new
     ```
 
     Depending on whether it's desired to manage different deployer keys per environment, it is possible to output the key file
@@ -55,70 +52,71 @@
 ### Deployment Setup
 
 1. Clone the solana-axelar repo.
-1. Compile the Solana programs.
 
-    > [!IMPORTANT]
-    > For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `solana-axelar` directory by invoking:
-    >
-    > ```sh
-    > cargo xtask update-ids
-    > ```
-    >
-    > The keypair files should be stored securely as they're needed for the initial deployment on other clusters as well.
+2. Compile the Solana programs.
 
-    > [!NOTE]
-    > Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
+> [!IMPORTANT]
+> For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `solana-axelar` directory by invoking:
+>
+> ```sh
+> cargo xtask update-ids
+> ```
+>
+> The keypair files should be stored securely as they're needed for the initial deployment on other clusters as well.
 
-    In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
+> [!NOTE]
+> Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
 
-    Set the `BASE_IMAGE` variable:
+In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
 
-    ```sh
-    export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
-    export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-    ```
+Set the `BASE_IMAGE` variable:
 
-    ```sh
-    # Go to the solana directory within the cloned repo
-    pushd solana-axelar
+```sh
+export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
+export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+```
 
-    # Compile the Solana programs
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
+```sh
+# Go to the solana directory within the cloned repo
+pushd solana-axelar
 
-    # Go back
-    popd
-    ```
+# Compile the Solana programs
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
 
-1. Declare environment variables:
+# Go back
+popd
+```
 
-    ```sh
-    GATEWAY_PROGRAM_KEYPAIR_PATH=<path/to/gateway_program_keypair.json>
-    GATEWAY_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gateway.so"
+3. Declare environment variables:
 
-    GAS_SERVICE_PROGRAM_KEYPAIR_PATH=<path/to/gas_service_program_keypair.json>
-    GAS_SERVICE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gas_service.so"
+```sh
+GATEWAY_PROGRAM_KEYPAIR_PATH=<path/to/gateway_program_keypair.json>
+GATEWAY_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gateway.so"
 
-    GOVERNANCE_PROGRAM_KEYPAIR_PATH=<path/to/governance_program_keypair.json>
-    GOVERNANCE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_governance.so"
+GAS_SERVICE_PROGRAM_KEYPAIR_PATH=<path/to/gas_service_program_keypair.json>
+GAS_SERVICE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gas_service.so"
 
-    MULTICALL_PROGRAM_KEYPAIR_PATH=<path/to/multicall_program_keypair.json>
-    MULTICALL_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_multicall.so"
+GOVERNANCE_PROGRAM_KEYPAIR_PATH=<path/to/governance_program_keypair.json>
+GOVERNANCE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_governance.so"
 
-    ITS_PROGRAM_KEYPAIR_PATH=<path/to/its_program_keypair.json>
-    ITS_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_its.so"
+MULTICALL_PROGRAM_KEYPAIR_PATH=<path/to/multicall_program_keypair.json>
+MULTICALL_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_multicall.so"
 
-    UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
-    ```
+ITS_PROGRAM_KEYPAIR_PATH=<path/to/its_program_keypair.json>
+ITS_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_its.so"
 
-    ```bash
-    set -a
-    source .env
-    set +a
-    ```
+UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
+```
+
+```bash
+set -a
+source .env
+set +a
+```
 
 ### Gateway Deployment
 
