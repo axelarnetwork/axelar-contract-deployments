@@ -210,32 +210,32 @@ jobs:
           ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
           ts-node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
+      ###### Command: ITS - Deploy Remote Canonical Token ######
+
+      - name: Deploy Remote Canonical Tokens
+        run: |
+          ts-node stellar/its.js register-canonical-token ${{ steps.create_custom_token.outputs.custom_token_address }}
+          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.custom_token_address }} ${{ steps.env_vars.outputs.destinationChain }}
+
       ###### Command: ITS - Create a Custom Token ######
 
       - name: Create a Custom Token
         id: create_custom_token
         run: |
           # Deploy InterchainToken with fixed version 1.1.2 for stability
-          ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 --name ${{ steps.env_vars.outputs.name }} --symbol ${{ steps.env_vars.outputs.symbol }} --decimals ${{ steps.env_vars.outputs.decimal }}
-          customTokenAddress=$(jq -r '.chains.stellar.contracts.InterchainToken.address' ./axelar-chains-config/info/local.json)
-          echo "customTokenAddress=$customTokenAddress" >> $GITHUB_OUTPUT
-
-      ###### Command: ITS - Deploy Remote Canonical Token ######
-
-      - name: Deploy Remote Canonical Tokens
-        run: |
-          ts-node stellar/its.js register-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }}
-          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }} ${{ steps.env_vars.outputs.destinationChain }}
+          ts-node stellar/deploy-contract.js deploy InterchainToken "${{ steps.env_vars.outputs.name }}" "${{ steps.env_vars.outputs.symbol }}" ${{ steps.env_vars.outputs.decimal }} --version 1.1.2
+          custom_token_address=$(jq -r '.chains.stellar.contracts.InterchainToken.address' ./axelar-chains-config/info/local.json)
+          echo "custom_token_address=$custom_token_address" >> $GITHUB_OUTPUT
 
       ###### Command: ITS - Custom Token Linking ######
 
       - name: Register Token Metadata
         run: |
-          ts-node stellar/its.js register-token-metadata ${{ steps.create_custom_token.outputs.customTokenAddress }}
+          ts-node stellar/its.js register-token-metadata ${{ steps.create_custom_token.outputs.custom_token_address }}
 
       - name: Register Custom Token
         run: |
-          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.create_custom_token.outputs.customTokenAddress }} MINT_BURN_FROM
+          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.create_custom_token.outputs.custom_token_address }} MINT_BURN_FROM
 
       - name: Link Token
         run: |

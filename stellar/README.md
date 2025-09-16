@@ -352,10 +352,6 @@ ts-node stellar/its.js deployed-token-manager [token-id]
 ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
-#### Deploy Custom Token Contract
-
-For testing purposes, you can deploy a custom InterchainToken contract. See the [link-token documentation](docs/link-token.md) for details or run `ts-node stellar/deploy-contract.js deploy InterchainToken --help` for usage.
-
 #### Create Stellar Classic Asset
 
 Create a Stellar classic asset with trustline

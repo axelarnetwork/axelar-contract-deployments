@@ -85,9 +85,12 @@ The `--operator` parameter specifies an address that controls the token manager 
 
 ### Step 1: Setup Tokens
 
-**Note: This step is for deploying test tokens. If you want to use existing tokens, skip this step and proceed to Step 2.**
+Use your existing token contract addresses. If you need to create test tokens for demonstration purposes, expand the section below.
 
-Deploy Test Tokens on both chains:
+<details>
+<summary><strong>Deploy Test Tokens (for testing/demo only)</strong></summary>
+
+Deploy test tokens on both chains:
 
 **Chain A (EVM):**
 
@@ -109,28 +112,7 @@ ts-node evm/interchainTokenFactory \
 
 **Chain B (Stellar):**
 
-**For Production Use:**
-Use your existing Stellar token contract address. Most users will have their own token already deployed.
-
-**For Testing/Demo Purposes Only:**
-
-If you need to create a test token for demonstration, you can either:
-
-**Option 1 - Deploy a test InterchainToken contract:**
-
-```bash
-# For testing only - deploy a custom token contract
-ts-node stellar/deploy-contract.js deploy InterchainToken "Test Token" "TEST" 7 --version 1.1.2
-```
-
-**Option 2 - Create a Stellar classic asset by setting trustline:**
-
-> Stellar Classic Asset Trustline: https://developers.stellar.org/docs/tokens/stellar-asset-contract#interacting-with-classic-stellar-assets
-
-```bash
-# For testing only - create trustline (optional trust limit defaults to 1000000000)
-ts-node stellar/token-utils change-trust <assetCode> <issuer> <limit>
-```
+Use your existing Stellar token contract address.
 
 If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't have a Soroban contract address yet, you can deploy a corresponding Stellar contract to make them accessible within Stellar-based contracts:
 
@@ -149,6 +131,29 @@ Example:
 ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
 # Result: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 ```
+
+<details>
+<summary><strong>Alternative test token options (for testing/demo only)</strong></summary>
+
+If you need to create a test token for demonstration, you can either:
+
+**Option 1 - Deploy a test InterchainToken contract:**
+
+```bash
+ts-node stellar/deploy-contract.js deploy InterchainToken "Test Token" "TEST" 7 --version 1.1.2
+```
+
+**Option 2 - Create a Stellar classic asset by setting trustline:**
+
+> Stellar Classic Asset Trustline: https://developers.stellar.org/docs/tokens/stellar-asset-contract#interacting-with-classic-stellar-assets
+
+```bash
+ts-node stellar/token-utils change-trust <assetCode> <issuer> <limit>
+```
+
+</details>
+
+</details>
 
 ### Step 2: Register Token Metadata
 
