@@ -87,11 +87,12 @@ const createActionHandler = (contractName, processor) => {
     const config = CONTRACT_CONFIG[contractName];
 
     if (!config?.optionKeys) {
-        return (options) => mainProcessor(options, processor, contractName);
+        return (command) => mainProcessor(command.opts(), processor, contractName);
     }
 
     return (...args) => {
-        const options = args.pop();
+        const command = args.pop();
+        const options = command.opts();
         config.optionKeys.forEach((key, index) => {
             options[key] = args[index];
         });
