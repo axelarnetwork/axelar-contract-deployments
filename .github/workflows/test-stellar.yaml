@@ -216,7 +216,7 @@ jobs:
         id: create_custom_token
         run: |
           # Deploy InterchainToken with fixed version 1.1.2 for stability
-          ts-node stellar/deploy-contract.js deploy InterchainToken --version 1.1.2 ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }}
+          ts-node stellar/deploy-contract deploy InterchainToken --version 1.1.2 ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }}
           custom_token_address=$(jq -r '.chains.stellar.contracts.InterchainToken.address' ./axelar-chains-config/info/local.json)
           echo "custom_token_address=$custom_token_address" >> $GITHUB_OUTPUT
 
