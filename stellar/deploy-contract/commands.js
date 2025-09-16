@@ -87,7 +87,7 @@ const createActionHandler = (contractName, processor) => {
     const config = CONTRACT_CONFIG[contractName];
 
     if (!config?.optionKeys) {
-        return (command) => mainProcessor(command.opts(), processor, contractName);
+        return (options) => mainProcessor(options, processor, contractName);
     }
 
     return (...args) => {
