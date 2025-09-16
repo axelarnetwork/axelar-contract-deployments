@@ -1073,15 +1073,55 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, config, options, content, fee) => {
-    const [account] = client.accounts;
+// Retries sign-and-broadcast on transient RPC socket closures
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3, baseDelayMs = 500) => {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await client.signAndBroadcast(signerAddress, msgs, fee, memo);
+        } catch (error) {
+            lastError = error;
+            const code = error?.cause?.code || error?.code;
+            const message = error?.message || '';
+
+            console.error(`[❌ Proposal Submission] attempt ${attempt + 1} failed:`, {
+                code,
+                message,
+                error,
+            }, 'Retrying execution..... 🔄');
+
+
+            // Confirm err is socket error 
+            const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
+            if (!isTransient || attempt === maxAttempts - 1) {
+                throw error;
+            }
+
+            // Wait for increased amount of time between retries
+            const delayMs = baseDelayMs * Math.pow(2, attempt);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+    }
+
+    throw lastError;
+};
+
+const submitProposal = async (client, wallet, config, options, content) => {
+    const [account] = await wallet.getAccounts();
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
+
 
 const getContractR2Url = (contractName, contractVersion) => {
     const pathName = pascalToKebab(contractName);
