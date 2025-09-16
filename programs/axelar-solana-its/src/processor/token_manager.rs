@@ -17,6 +17,7 @@ use solana_program::program_option::COption;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::instruction::AuthorityType;
@@ -397,6 +398,15 @@ impl Validate for DeployTokenManagerAccounts<'_> {
         check_spl_token_program_account(self.token_program.key)?;
         validate_spl_associated_token_account_key(self.ata_program.key)?;
         validate_rent_key(self.rent_sysvar.key)?;
+        if &get_associated_token_address_with_program_id(
+            &self.token_manager_pda.key,
+            &self.token_mint.key,
+            &self.token_program.key,
+        ) != self.token_manager_ata.key
+        {
+            msg!("Wrong ata account key");
+            return Err(ProgramError::InvalidAccountData);
+        }
         Ok(())
     }
 }
