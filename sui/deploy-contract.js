@@ -485,12 +485,18 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
         }
         case 'InterchainTokenService': {
             const InterchainTokenService = contractConfig.objects.InterchainTokenService;
+            const RelayerDiscovery = chain.contracts.RelayerDiscovery.objects.RelayerDiscovery;
 
             if (typeof InterchainTokenService !== 'string') throw new Error(`Cannot find object of specified contract: ${packageName}`);
 
             await builder.moveCall({
                 target: `${contractConfig.address}::interchain_token_service::migrate`,
                 arguments: [InterchainTokenService, ownerCap],
+            });
+
+            await builder.moveCall({
+                target: `${contractConfig.address}::discovery::register_transaction`,
+                arguments: [InterchainTokenService, RelayerDiscovery],
             });
 
             break;

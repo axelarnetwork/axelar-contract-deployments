@@ -1174,16 +1174,6 @@
             "origin": true
           }
         },
-        "LEG10": {
-          "address": "0x74dfc2bf3638a84b45d5cf8c394380024b7548a93333ffd40a9d13515f16a5da",
-          "typeArgument": "0x74dfc2bf3638a84b45d5cf8c394380024b7548a93333ffd40a9d13515f16a5da::leg10::LEG10",
-          "decimals": "9",
-          "objects": {
-            "TokenId": "0x15048e621fa35d4785b10b5855ddbc5d8cdea12074bd5bf466cd801aa86c10d8",
-            "TreasuryCap": "0x910c6568978a6f2345a7e239d10e74b6decb45563d1f8eb05b0dccaed9d9654e",
-            "Metadata": "0x192745de2bff3ebbb61b95fab5d0021f044ce0ec3bcf7317db45c1e4f5576391"
-          }
-        },
         "LEG20": {
           "address": "0xb2e6087eff5fc46e472c0ededa1fe689f83f6c085a8dbd3645c0e590a331b4f3",
           "typeArgument": "0xb2e6087eff5fc46e472c0ededa1fe689f83f6c085a8dbd3645c0e590a331b4f3::leg20::LEG20",
