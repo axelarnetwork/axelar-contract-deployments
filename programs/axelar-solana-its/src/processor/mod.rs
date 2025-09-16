@@ -328,6 +328,11 @@ fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> Program
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
 
+    if payer.key == destination_user_account.key {
+        msg!("Source and destination accounts are the same");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     msg!("Instruction: TransferOperatorship");
 
     let its_config = InterchainTokenService::load(resource)?;

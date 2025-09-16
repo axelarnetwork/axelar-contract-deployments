@@ -1234,7 +1234,9 @@ async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut Its
 
     // Verify the transaction failed with an error about derived PDA not matching
     // This validates that the fix works and Bob cannot escalate privileges
-    assert!(tx_metadata.find_log("Derived PDA").is_some());
+    assert!(tx_metadata
+        .find_log("Source and destination accounts are the same")
+        .is_some());
 
     // Ensure that Bob still does not have Minter role on TokenA
     let data = ctx
@@ -1456,4 +1458,122 @@ async fn test_fail_double_acceptance_of_role_proposal(ctx: &mut ItsTestContext) 
 
     // Verify the transaction failed because Alice doesn't have the role to transfer anymore
     assert_msg_present_in_logs(tx_metadata, "User doesn't have the required roles");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_propose_operatorship_to_self(ctx: &mut ItsTestContext) {
+    // Attempt to propose operatorship to self
+    let propose_to_self_ix = axelar_solana_its::instruction::propose_operatorship(
+        ctx.solana_wallet,
+        ctx.solana_wallet, // Proposing to self
+    )
+    .unwrap();
+
+    let tx_metadata = ctx.send_solana_tx(&[propose_to_self_ix]).await.unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_transfer_operatorship_to_self(ctx: &mut ItsTestContext) {
+    // Attempt to transfer operatorship to self
+    let transfer_to_self_ix = axelar_solana_its::instruction::transfer_operatorship(
+        ctx.solana_wallet,
+        ctx.solana_wallet, // Transferring to self
+    )
+    .unwrap();
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[transfer_to_self_ix])
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_token_manager_transfer_operatorship_to_self(ctx: &mut ItsTestContext) {
+    let token_id = ctx.deployed_interchain_token;
+
+    // Attempt to transfer token manager operatorship to self
+    let transfer_to_self_ix = axelar_solana_its::instruction::token_manager::transfer_operatorship(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        token_id,
+        ctx.solana_chain.fixture.payer.pubkey(), // Transferring to self
+    )
+    .unwrap();
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[transfer_to_self_ix])
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_transfer_mintership_to_self(ctx: &mut ItsTestContext) {
+    let token_id = ctx.deployed_interchain_token;
+
+    // Attempt to transfer mintership to self
+    let transfer_to_self_ix =
+        axelar_solana_its::instruction::interchain_token::transfer_mintership(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_id,
+            ctx.solana_chain.fixture.payer.pubkey(), // Transferring to self
+        )
+        .unwrap();
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[transfer_to_self_ix])
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_propose_token_manager_operatorship_to_self(ctx: &mut ItsTestContext) {
+    let token_id = ctx.deployed_interchain_token;
+
+    // Attempt to propose token manager operatorship to self
+    let propose_to_self_ix = axelar_solana_its::instruction::token_manager::propose_operatorship(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        token_id,
+        ctx.solana_chain.fixture.payer.pubkey(), // Proposing to self
+    )
+    .unwrap();
+
+    let tx_metadata = ctx.send_solana_tx(&[propose_to_self_ix]).await.unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_propose_mintership_to_self(ctx: &mut ItsTestContext) {
+    let token_id = ctx.deployed_interchain_token;
+
+    // Attempt to propose mintership to self
+    let propose_to_self_ix = axelar_solana_its::instruction::interchain_token::propose_mintership(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        token_id,
+        ctx.solana_chain.fixture.payer.pubkey(), // Proposing to self
+    )
+    .unwrap();
+
+    let tx_metadata = ctx.send_solana_tx(&[propose_to_self_ix]).await.unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
 }

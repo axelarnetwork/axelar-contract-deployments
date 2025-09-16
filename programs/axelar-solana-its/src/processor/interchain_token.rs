@@ -789,6 +789,11 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
 
+    if payer.key == destination_user_account.key {
+        msg!("Source and destination accounts are the same");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     let its_config = InterchainTokenService::load(its_config_account)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 

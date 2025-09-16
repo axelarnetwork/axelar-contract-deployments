@@ -20,6 +20,11 @@ pub fn propose<F: RolesFlags>(
     accounts: RoleTransferWithProposalAccounts<'_>,
     roles: F,
 ) -> ProgramResult {
+    if accounts.origin_user_account.key == accounts.destination_user_account.key {
+        msg!("Source and destination accounts are the same");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     ensure_signer_roles(
         program_id,
         accounts.resource,

@@ -576,6 +576,11 @@ pub(crate) fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>])
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
 
+    if payer.key == destination_user_account.key {
+        msg!("Source and destination accounts are the same");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     let its_config = InterchainTokenService::load(its_config_account)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
@@ -669,6 +674,11 @@ pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -
     let origin_user_account = next_account_info(accounts_iter)?;
     let origin_roles_account = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
+
+    if payer.key == origin_user_account.key {
+        msg!("Source and destination accounts are the same");
+        return Err(ProgramError::InvalidArgument);
+    }
 
     let role_management_accounts = RoleTransferWithProposalAccounts {
         system_account,
