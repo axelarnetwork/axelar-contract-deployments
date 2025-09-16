@@ -146,7 +146,7 @@ jobs:
         run: ts-node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy InterchainTokenService
-        run: ts-node stellar/deploy-contract deploy InterchainTokenService --version ${{ steps.commit_hash.outputs.hash }} --interchain-token-version ${{ steps.commit_hash.outputs.hash }} --token-manager-version ${{ steps.commit_hash.outputs.hash }}
+        run: ts-node stellar/deploy-contract deploy InterchainTokenService ${{ steps.commit_hash.outputs.hash }} ${{ steps.commit_hash.outputs.hash }} --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy AxelarExample
         run: ts-node stellar/deploy-contract deploy AxelarExample --version ${{ steps.commit_hash.outputs.hash }}
