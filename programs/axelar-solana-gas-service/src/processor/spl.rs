@@ -14,18 +14,17 @@ use solana_program::pubkey::Pubkey;
 use crate::state::Config;
 use crate::{assert_valid_config_pda, seed_prefixes};
 
-fn ensure_valid_config_pda_ata(
-    config_pda_ata: &AccountInfo<'_>,
+fn ensure_valid_ata(
+    ata: &AccountInfo<'_>,
     token_program: &AccountInfo<'_>,
     mint: &AccountInfo<'_>,
-    config_pda: &AccountInfo<'_>,
+    wallet: &AccountInfo<'_>,
 ) -> ProgramResult {
-    if config_pda_ata.owner != token_program.key {
+    if ata.owner != token_program.key {
         return Err(ProgramError::IncorrectProgramId);
     }
-    let ata_data =
-        spl_token_2022::state::Account::unpack_from_slice(&config_pda_ata.try_borrow_data()?)?;
-    if ata_data.mint != *mint.key || ata_data.owner != *config_pda.key {
+    let ata_data = spl_token_2022::state::Account::unpack_from_slice(&ata.try_borrow_data()?)?;
+    if ata_data.mint != *mint.key || ata_data.owner != *wallet.key {
         return Err(ProgramError::InvalidAccountData);
     };
     Ok(())
@@ -92,6 +91,10 @@ pub(crate) fn process_pay_spl_for_contract_call(
     let mint = next_account_info(accounts)?;
     let token_program = next_account_info(accounts)?;
 
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     // Ensure config_pda is valid
     ensure_valid_config_pda(config_pda, program_id)?;
 
@@ -99,7 +102,10 @@ pub(crate) fn process_pay_spl_for_contract_call(
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
     // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_config_pda_ata(config_pda_ata, token_program, mint, config_pda)?;
+    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
+
+    // ensure sender_pda is owned by the token program matches expected fields
+    ensure_valid_ata(sender_ata, token_program, mint, sender)?;
 
     let ix = transfer_tokens(
         token_program,
@@ -164,6 +170,10 @@ pub(crate) fn add_spl_gas(
     let mint = next_account_info(accounts)?;
     let token_program = next_account_info(accounts)?;
 
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     // Ensure config_pda is valid
     ensure_valid_config_pda(config_pda, program_id)?;
 
@@ -171,7 +181,10 @@ pub(crate) fn add_spl_gas(
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
     // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_config_pda_ata(config_pda_ata, token_program, mint, config_pda)?;
+    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
+
+    // ensure sender_pda is owned by the token program matches expected fields
+    ensure_valid_ata(sender_ata, token_program, mint, sender)?;
 
     let ix = transfer_tokens(
         token_program,
@@ -248,7 +261,7 @@ pub(crate) fn collect_fees_spl(
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
     // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_config_pda_ata(config_pda_ata, token_program, mint, config_pda)?;
+    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
 
     let ix = transfer_tokens(
         token_program,
@@ -315,7 +328,7 @@ pub(crate) fn refund_spl(
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
     // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_config_pda_ata(config_pda_ata, token_program, mint, config_pda)?;
+    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
 
     let ix = transfer_tokens(
         token_program,
