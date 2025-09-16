@@ -34,11 +34,10 @@ const CONTRACT_CONFIG = {
         optionKeys: ['name', 'symbol', 'decimals'],
     },
     InterchainTokenService: {
-        args: [
-            ['<interchain-token-version>', 'version for InterchainToken contract'],
-            ['<token-manager-version>', 'version for TokenManager contract'],
+        deployOptions: [
+            ['--interchain-token-version <interchainTokenVersion>', 'version for InterchainToken contract', { makeRequired: true }],
+            ['--token-manager-version <tokenManagerVersion>', 'version for TokenManager contract', { makeRequired: true }],
         ],
-        optionKeys: ['interchainTokenVersion', 'tokenManagerVersion'],
         upgradeOptions: [['--migration-data <migrationData>', 'migration data', { default: null, defaultDescription: '()' }]],
     },
 };
@@ -47,6 +46,7 @@ const createOption = ([flag, description, config = {}]) => {
     const option = new Option(flag, description);
     if (config.default !== undefined) option.default(config.default, config.defaultDescription);
     if (config.parser) option.argParser(config.parser);
+    if (config.makeRequired) option.makeOptionMandatory(true);
     return option;
 };
 
@@ -133,7 +133,7 @@ const getUploadContractCommands = () => {
     return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
         const command = new Command(contractName).description(`Upload ${contractName} contract`);
 
-        addOptionsToCommand(command, null);
+        addOptionsToCommand(command, 'uploadOptions');
 
         command.hook('preAction', preActionHook(contractName));
         command.action((options) => mainProcessor(options, upload, contractName));
