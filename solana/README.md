@@ -1,123 +1,126 @@
-# Solana deployments
+# Solana Deployments
 
-## Instalation
+## Installation
 
 1. Ensure you have Rust installed. If you don't:
 
-```sh
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+    ```sh
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
 
-2. Install Solana CLI:
+1. Install Solana CLI:
 
-```sh
-sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.14/install)"
-```
+    ```sh
+    sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.14/install)"
+    ```
 
-3. Install `solana-verify`, for verifiable builds:
+1. Install `solana-verify`, for verifiable builds:
 
-```sh
-cargo install solana-verify
-```
+    ```sh
+    cargo install solana-verify
+    ```
 
-4. Create a new  Solana keypair
+1. Create a new  Solana keypair
 
-```sh
-# Set default cluster
-solana config set --url devnet
+    ```sh
+    # Set default cluster
+    solana config set --url devnet
 
-# Generate a new keypair
-solana-keygen new 
+    # Generate a new keypair
+    solana-keygen new
 
-# Address
-solana address
+    # Address
+    solana address
 
-# Generate a new keypair
-solana-keygen new
+    # Generate a new keypair
+    solana-keygen new
+    ```
 
-```
-Depending on whether it's desired to manage different deployer keys per environment, it is possible to output the key file 
-to a different location and configure it accrodingly for use in subsequent requests with the Solana CLI:
+    Depending on whether it's desired to manage different deployer keys per environment, it is possible to output the key file
+    to a different location and configure it accrodingly for use in subsequent requests with the Solana CLI:
 
-```bash
-solana-keygen new -o /path/to/my/keys/folder/{deployer-{env}.json}
-solana config set --keypair /path/to/my/keys/folder/{deployer-{env}.json}
-```
+    ```bash
+    solana-keygen new -o /path/to/my/keys/folder/{deployer-{env}.json}
+    solana config set --keypair /path/to/my/keys/folder/{deployer-{env}.json}
+    ```
 
-5. Devnet funds can be obtained via [this link](https://faucet.solana.com/) or using the Solana CLI:
+1. Devnet funds can be obtained via [this link](https://faucet.solana.com/) or using the Solana CLI:
 
-```sh
-solana airdrop 2
-```
+    ```sh
+    solana airdrop 2
+    ```
 
 ## Deployments
 
-Setup
+### Deployment Setup
 
 1. Clone the solana-axelar repo.
-2. Compile the Solana programs.
+1. Compile the Solana programs.
 
-> [!IMPORTANT]
-> For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `solana-axelar` directory by invoking:
-> ```sh
-> cargo xtask update-ids
-> ```
-> The keypair files should be stored securely as they're needed for the initial deployment on other clusters as well.
+    > [!IMPORTANT]
+    > For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `solana-axelar` directory by invoking:
+    >
+    > ```sh
+    > cargo xtask update-ids
+    > ```
+    >
+    > The keypair files should be stored securely as they're needed for the initial deployment on other clusters as well.
 
-> [!NOTE]
-> Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
+    > [!NOTE]
+    > Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
 
-In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
+    In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
 
-Set the `BASE_IMAGE` variable:
+    Set the `BASE_IMAGE` variable:
 
-```sh
-export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
-export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-```
+    ```sh
+    export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
+    export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+    ```
 
-```sh
-# Go to the solana directory within the cloned repo
-pushd solana-axelar
+    ```sh
+    # Go to the solana directory within the cloned repo
+    pushd solana-axelar
 
-# Compile the Solana programs
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
+    # Compile the Solana programs
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
 
-# Go back
-popd
-```
+    # Go back
+    popd
+    ```
 
-3. Declare environment variables:
+1. Declare environment variables:
 
-```sh
-GATEWAY_PROGRAM_KEYPAIR_PATH=<path/to/gateway_program_keypair.json>
-GATEWAY_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gateway.so"
+    ```sh
+    GATEWAY_PROGRAM_KEYPAIR_PATH=<path/to/gateway_program_keypair.json>
+    GATEWAY_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gateway.so"
 
-GAS_SERVICE_PROGRAM_KEYPAIR_PATH=<path/to/gas_service_program_keypair.json>
-GAS_SERVICE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gas_service.so"
+    GAS_SERVICE_PROGRAM_KEYPAIR_PATH=<path/to/gas_service_program_keypair.json>
+    GAS_SERVICE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gas_service.so"
 
-GOVERNANCE_PROGRAM_KEYPAIR_PATH=<path/to/governance_program_keypair.json>
-GOVERNANCE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_governance.so"
+    GOVERNANCE_PROGRAM_KEYPAIR_PATH=<path/to/governance_program_keypair.json>
+    GOVERNANCE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_governance.so"
 
-MULTICALL_PROGRAM_KEYPAIR_PATH=<path/to/multicall_program_keypair.json>
-MULTICALL_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_multicall.so"
+    MULTICALL_PROGRAM_KEYPAIR_PATH=<path/to/multicall_program_keypair.json>
+    MULTICALL_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_multicall.so"
 
-ITS_PROGRAM_KEYPAIR_PATH=<path/to/its_program_keypair.json>
-ITS_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_its.so"
+    ITS_PROGRAM_KEYPAIR_PATH=<path/to/its_program_keypair.json>
+    ITS_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_its.so"
 
-UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
-```
-```bash
-set -a
-source .env
-set +a
-```
+    UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
+    ```
 
-### Gateway
+    ```bash
+    set -a
+    source .env
+    set +a
+    ```
+
+### Gateway Deployment
 
 Deploy and verify the gateway program. If `--upgrade-authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
 
@@ -128,7 +131,7 @@ solana program deploy --program-id $GATEWAY_PROGRAM_KEYPAIR_PATH --upgrade-autho
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_gateway
 ```
 
-### Gas Service
+### Gas Service Deployment
 
 Deploy and verify the gas service program (note that verification will only work on mainnet)
 
@@ -138,7 +141,7 @@ solana program deploy --program-id $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --upgrade-a
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_gas_service
 ```
 
-### Governance
+### Governance Deployment
 
 Deploy and verify the governance program (note that verification will only work on mainnet)
 
@@ -148,7 +151,7 @@ solana program deploy --program-id $GOVERNANCE_PROGRAM_KEYPAIR_PATH --upgrade-au
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_governance
 ```
 
-### Multicall
+### Multicall Deployment
 
 Deploy and verify the multicall program (note that verification will only work on mainnet)
 
@@ -158,7 +161,7 @@ solana program deploy --program-id $MULTICALL_PROGRAM_KEYPAIR_PATH --upgrade-aut
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_multicall
 ```
 
-### Interchain Token Service
+### Interchain Token Service Deployment
 
 Deploy and verify the ITS program (note that verification will only work on mainnet)
 
@@ -171,7 +174,6 @@ solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $
 ## Upgrades
 
 To upgrade a program, a similar command is used as for the initial deployment, but with the `--program-id` option instead of `--program-id`. The upgrade should be performed by the authority assigned during the initial deployment.
-
 
 ```sh
 solana program deploy --program-id <PROGRAM_ID_PUBKEY> <PATH_TO_PROGRAM_SO>
@@ -222,6 +224,7 @@ By creating a `.env` file in the root of the project with the `CLUSTER=<URL_OR_M
 ```
 
 The value can be a full RPC URL or a moniker:
+
 - `mainnet-beta`: Solana mainnet
 - `testnet`: Solana testnet
 - `devnet`: Solana devnet
@@ -229,7 +232,7 @@ The value can be a full RPC URL or a moniker:
 
 If none of these options are provided, the value set in the default Solana CLI config file will be used (if available).
 
-### Wallet configuration
+### Wallet Configuration
 
 Similarly to the network configuration, you can specify the wallet to use in a few different ways:
 
@@ -247,7 +250,7 @@ By creating a `.env` file in the root of the project with the `PRIVATE_KEY=<PATH
 
 The value can be a path to a solana keypair JSON file (generated with `solana-keypair new`) or the USB path to a Ledger device (e.g.: usb://ledger).
 
-### Gateway
+### Gateway Contract Interaction
 
 To get help on gateway commands, run:
 
@@ -307,7 +310,7 @@ Execute a cross-chain message that was approved on the Solana gateway:
   --new-nonce <NEW_NONCE>
 ```
 
-#### Transfer Operatorship
+#### Transfer Gateway Operatorship
 
 ```sh
 # Transfer Gateway operatorship
@@ -316,7 +319,7 @@ Execute a cross-chain message that was approved on the Solana gateway:
   --new-operator <NEW_OPERATOR_PUBKEY>
 ```
 
-### Interchain Token Service (ITS)
+### Interchain Token Service (ITS) Contract Interaction
 
 To get help on ITS commands, run:
 
@@ -453,12 +456,13 @@ To get help on ITS commands, run:
   --amount <AMOUNT>
 ```
 
-#### Transfer Operatorship
+#### Transfer ITS Operatorship
 
 ```sh
 # Transfer ITS operatorship
 ./solana-axelar-cli send its transfer-operatorship --to <NEW_OPERATOR_PUBKEY>
 ```
+
 ## Governance
 
 For governance-related commands:
@@ -475,11 +479,11 @@ For gas service commands:
 ./solana-axelar-cli send gas-service --help
 ```
 
-### Offline Signing Workflow
+## Offline Signing Workflow
 
 For security-critical operations or when using hardware wallets, you can use the offline signing workflow:
 
-#### Creating a Durable Nonce Account
+### Creating a Durable Nonce Account
 
 Durable nonces are necessary for offline signing to ensure transactions remain valid across block hashes. To create and manage a durable nonce account:
 
@@ -488,7 +492,7 @@ Durable nonces are necessary for offline signing to ensure transactions remain v
 solana create-nonce-account <NONCE_ACCOUNT_KEYPAIR_PATH> <AMOUNT_SOL> --nonce-authority <AUTHORITY_PUBKEY>
 ```
 
-#### 1. Generate the unsigned transaction
+### 1. Generate the unsigned transaction
 
 ```sh
 ./solana-axelar-cli generate \
@@ -503,17 +507,17 @@ solana create-nonce-account <NONCE_ACCOUNT_KEYPAIR_PATH> <AMOUNT_SOL> --nonce-au
 
 This will generate a file like `./output/gateway-init.unsigned.json` in the default output directory. You can specify a custom output directory with `--output-dir /path/to/directory`.
 
-#### 2. Sign the transaction (on each signing device)
+### 2. Sign the transaction (on each signing device)
 
 ```sh
-./solana-axelar-cli sign <PATH_TO_SIGNER_KEYPAIR> <PATH_TO_UNSIGNED_TX_JSON> 
+./solana-axelar-cli sign <PATH_TO_SIGNER_KEYPAIR> <PATH_TO_UNSIGNED_TX_JSON>
 ```
+
 `PATH_TO_SIGNER_KEYPAIR` can be a local keypair file or a Ledger device.
-```sh
 
 This will generate signature files like `./output/gateway-init.5hW1cNgX6N8RhvHHiX6nAnKbZftG1K3ckNBuJdRSPFPK.partial.sig` where the signer's full public key is included in the filename.
 
-#### 3. Combine all signatures
+### 3. Combine all signatures
 
 ```sh
 ./solana-axelar-cli combine <PATH_TO_UNSIGNED_TX_JSON> <PATH_TO_SIGNATURE_1> <PATH_TO_SIGNATURE_2> [...]
@@ -521,7 +525,7 @@ This will generate signature files like `./output/gateway-init.5hW1cNgX6N8RhvHHi
 
 This will generate a file like `./output/gateway-init.signed.json`.
 
-#### 4. Broadcast the transaction
+### 4. Broadcast the transaction
 
 ```sh
 ./solana-axelar-cli broadcast <PATH_TO_SIGNED_TX_JSON>
