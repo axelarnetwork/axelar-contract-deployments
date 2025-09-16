@@ -22,12 +22,12 @@ const { mainProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const upload = async (client, config, options) => {
+const upload = async (client, config, options, _args, fee) => {
     const { contractName, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
     printInfo('Uploading contract binary');
-    const { checksum, codeId } = await uploadContract(client, config, options);
+    const { checksum, codeId } = await uploadContract(client, options, fee);
 
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
@@ -42,7 +42,7 @@ const upload = async (client, config, options) => {
     }
 };
 
-const instantiate = async (client, config, options) => {
+const instantiate = async (client, config, options, _args, fee) => {
     const { contractName, chainName, yes } = options;
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
@@ -57,19 +57,19 @@ const instantiate = async (client, config, options) => {
     contractConfig.codeId = codeId;
 
     const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
-    const contractAddress = await instantiateContract(client, initMsg, config, options);
+    const contractAddress = await instantiateContract(client, initMsg, config, options, fee);
 
     contractConfig.address = contractAddress;
 
     printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
-const uploadInstantiate = async (client, config, options) => {
-    await upload(client, config, options);
-    await instantiate(client, config, options);
+const uploadInstantiate = async (client, config, options, _args, fee) => {
+    await upload(client, config, options, fee);
+    await instantiate(client, config, options, fee);
 };
 
-const migrate = async (client, config, options) => {
+const migrate = async (client, config, options, _args, fee) => {
     const { yes } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -82,7 +82,7 @@ const migrate = async (client, config, options) => {
 
     contractConfig.codeId = codeId;
 
-    const { transactionHash } = await migrateContract(client, config, options);
+    const { transactionHash } = await migrateContract(client, config, options, fee);
     printInfo('Migration completed. Transaction hash', transactionHash);
 };
 
