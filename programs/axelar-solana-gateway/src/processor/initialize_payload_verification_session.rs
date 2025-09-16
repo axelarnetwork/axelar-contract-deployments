@@ -67,10 +67,6 @@ impl Processor {
             solana_program::msg!("Error: verification session account is not writable");
             return Err(ProgramError::InvalidAccountData);
         }
-        if verification_session_account.lamports() != 0 {
-            solana_program::msg!("Error: verification session account is not initialized");
-            return Err(ProgramError::AccountAlreadyInitialized);
-        }
 
         // Check system program
         if !system_program::check_id(system_program.key) {
