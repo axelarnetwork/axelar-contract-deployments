@@ -30,7 +30,7 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
-    "@axelar-network/axelar-cgp-sui": "0.0.0-snapshot.a8990a0",
+    "@axelar-network/axelar-cgp-sui": "0.0.0-snapshot.a9aee72",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
     "@axelar-network/interchain-token-service": "2.2.0",
     "@axelar-network/interchain-token-service-v2.1.1": "npm:@axelar-network/interchain-token-service@2.1.1",
