@@ -1124,14 +1124,17 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             const code = error?.cause?.code || error?.code;
             const message = error?.message || '';
 
-            console.error(`[❌ Proposal Submission] attempt ${attempt + 1} failed:`, {
-                code,
-                message,
-                error,
-            }, 'Retrying execution..... 🔄');
+            console.error(
+                `[❌ Proposal Submission] attempt ${attempt + 1} failed:`,
+                {
+                    code,
+                    message,
+                    error,
+                },
+                'Retrying execution..... 🔄',
+            );
 
-
-            // Confirm err is socket error 
+            // Confirm err is socket error
             const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
             if (!isTransient || attempt === maxAttempts - 1) {
                 throw error;
@@ -1161,7 +1164,6 @@ const submitProposal = async (client, wallet, config, options, content) => {
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
-
 
 const getContractR2Url = (contractName, contractVersion) => {
     const pathName = pascalToKebab(contractName);
