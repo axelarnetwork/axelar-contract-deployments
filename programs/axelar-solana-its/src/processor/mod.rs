@@ -162,8 +162,6 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             source_program_id,
-            // TODO Why the seeds?
-            pda_seeds: _,
         } => interchain_transfer::process_program_interchain_transfer(
             accounts,
             token_id,

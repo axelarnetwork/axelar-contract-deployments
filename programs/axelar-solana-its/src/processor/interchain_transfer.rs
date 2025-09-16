@@ -373,7 +373,7 @@ pub(crate) fn process_outbound_transfer<'a>(
     let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
-    msg!("{}", "Instruction: OutboundTransfer");
+    msg!("Instruction: OutboundTransfer");
 
     let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
 
