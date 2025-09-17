@@ -205,6 +205,11 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
         case 'InterchainToken': {
             const { name, symbol, decimals } = options;
 
+            validateParameters({
+                isNonEmptyString: { name, symbol },
+                isValidNumber: { decimals },
+            });
+
             const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
             const tokenMetadata = tokenMetadataToScVal(decimals, name, symbol);
 
