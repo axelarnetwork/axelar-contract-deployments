@@ -1226,37 +1226,37 @@
           }
         },
         "Example": {
-          "address": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822",
+          "address": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6",
           "versions": {
-            "0": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822"
+            "0": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6"
           },
           "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
           "structs": {
-            "Singleton": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::its::Singleton",
-            "Executed": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::gmp::Executed",
-            "ExecutedWithToken": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::its::ExecutedWithToken",
-            "MultiMinter": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::operators::MultiMinter",
-            "OwnerCap": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::operators::OwnerCap",
-            "TOKEN": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::token::TOKEN",
-            "TOKEN_A": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::token_a::TOKEN_A",
-            "TOKEN_B": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::token_b::TOKEN_B",
-            "TOKEN_C": "0x97f136f647fb81b74279fc78fc03833e5926095df1eb8b01b633aab8d5ec8822::token_c::TOKEN_C"
+            "Singleton": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::its::Singleton",
+            "Executed": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::gmp::Executed",
+            "ExecutedWithToken": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::its::ExecutedWithToken",
+            "MultiMinter": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::operators::MultiMinter",
+            "OwnerCap": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::operators::OwnerCap",
+            "TOKEN": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token::TOKEN",
+            "TOKEN_A": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token_a::TOKEN_A",
+            "TOKEN_B": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token_b::TOKEN_B",
+            "TOKEN_C": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0xfb3fef9510d78d81e6b8d42dac1d7b089faa753d0b6fe2e6e8fad2b74d018f26",
-            "GmpChannelId": "0x566dd26a62617f2d23d8d06d69588de7f3676ee65bd2fe3dd3ef7fc7394b14ca",
-            "ItsSingleton": "0x3f026335474c34cf30f31c9b3f69ecd5eadc109f7839f9dbfeb09b3b39ac626a",
-            "ItsChannelId": "0x470d4280d9aec9221c73f8141e3efbaecfe215275fa9c9caaef0fc1ae6d9392c"
+            "GmpSingleton": "0x58cc27d42958024a6a35d82818542cc90542256384f09f085e47459dc69e8058",
+            "GmpChannelId": "0x2990962a5421f50a7d0dad558556a4af1ece3cb211d03f5721079a3440877222",
+            "ItsSingleton": "0xd79fc2b676ee3f54bf161c89267a9160a4ec83a4e9528a5a4ebcab963b502701",
+            "ItsChannelId": "0xf424903803c4a86dda1a8ef8c82b6bc957f2da498cca9e2d54bec9ad133af066"
           }
         },
-        "TRE1": {
-          "address": "0x700e57dc52ca9c035e1f4a05f9a330705e24de3394d8ad89fe3cef264c8efdd9",
-          "typeArgument": "0x700e57dc52ca9c035e1f4a05f9a330705e24de3394d8ad89fe3cef264c8efdd9::tre1::TRE1",
+        "RR1": {
+          "address": "0x35a399d8050f20d9dec1cf720b11367fd436f4b6f56d3a120f131493b331e0f2",
+          "typeArgument": "0x35a399d8050f20d9dec1cf720b11367fd436f4b6f56d3a120f131493b331e0f2::rr1::RR1",
           "decimals": "6",
           "objects": {
-            "TreasuryCap": "0x6f9a456a3a9deedf9842ef8a67b7aaaebfa011ceaba8910ff0a9b70f5cb5284c",
-            "Metadata": "0x54b0725b2187f169e05b89bd76bca01af723424c47df9e1ef873c961f4e0465e",
-            "TokenId": "0x5cbfcd264db706851bdf609a8692f86c09db1f213f1190b107b49cf07e7d73f3",
+            "TreasuryCap": "0xf52dfdff3729565e3b2218cfafcb17421d42e99073d0bc128cf1cd247fb016bf",
+            "Metadata": "0x722c0d459e271d961f86176926a79699e786fa44109d6407237bc6123bf00964",
+            "TokenId": "0x0f92d1e2299244e9a9204b954ab97e5405b410d375eaa1bed0849edb2f24d92f",
             "origin": true
           }
         }
