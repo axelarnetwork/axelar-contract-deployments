@@ -162,6 +162,7 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             source_program_id,
+            pda_seeds,
         } => interchain_transfer::process_program_interchain_transfer(
             accounts,
             token_id,
@@ -171,6 +172,7 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             Some(source_program_id),
+            pda_seeds,
         ),
         InterchainTokenServiceInstruction::RegisterTokenMetadata {
             gas_value,

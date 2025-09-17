@@ -314,7 +314,7 @@ pub(crate) fn process_program_interchain_transfer<'a>(
     gas_value: u64,
     signing_pda_bump: u8,
     source_program_id: Option<Pubkey>,
-    // TODO Seeds
+    pda_seeds: Vec<Vec<u8>>,
 ) -> ProgramResult {
     let source_id = source_program_id.ok_or_else(|| {
         msg!("Source program ID is required for program-initiated transfers");
@@ -337,10 +337,17 @@ pub(crate) fn process_program_interchain_transfer<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Check that the account is off the ed25519 curve (indicating it's a PDA)
-    let sender_bytes = sender.key.to_bytes();
-    if solana_program::ed25519_program::check_id(&sender_bytes.into()) {
-        msg!("Sender must be a PDA, not a regular keypair");
+    // Validate that the PDA can be derived using the provided seeds
+    let seeds_refs: Vec<&[u8]> = pda_seeds.iter().map(std::vec::Vec::as_slice).collect();
+    let (expected_pda, _bump) =
+        solana_program::pubkey::Pubkey::find_program_address(&seeds_refs, &source_id);
+
+    if expected_pda != *sender.key {
+        msg!(
+            "PDA derivation mismatch. Expected: {}, Got: {}",
+            expected_pda,
+            sender.key
+        );
         return Err(ProgramError::InvalidAccountData);
     }
 

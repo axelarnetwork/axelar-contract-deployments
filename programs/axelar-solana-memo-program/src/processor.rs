@@ -281,6 +281,8 @@ pub fn process_send_interchain_transfer(
     }
 
     // Pass the memo program ID as the source so events show the memo is the source address
+    // The counter PDA is derived with empty seeds
+    let pda_seeds = vec![];
     let transfer_ix = axelar_solana_its::instruction::program_interchain_transfer(
         *counter_pda.key,
         *source_ata.key,
@@ -294,6 +296,7 @@ pub fn process_send_interchain_transfer(
             .try_into()
             .map_err(|_| ProgramError::InvalidInstructionData)?,
         crate::ID,
+        pda_seeds,
     )?;
 
     invoke_signed(

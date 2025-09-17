@@ -148,3 +148,6 @@ async fn test_memo_program_pda_transfer(ctx: &mut ItsTestContext) {
         alloy_primitives::U256::from(transfer_amount)
     );
 }
+
+// TODO Check that these transfers can't be initiated by non-PDA accounts
+// TODO Check that an inconsistent set of seeds fails

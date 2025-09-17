@@ -245,6 +245,10 @@ pub enum InterchainTokenServiceInstruction {
         /// The program ID that owns the PDA initiating the transfer
         /// This will be used as the source address in events
         source_program_id: Pubkey,
+
+        /// The seeds used to derive the PDA that's initiating the transfer
+        /// This allows the processor to validate the PDA derivation
+        pda_seeds: Vec<Vec<u8>>,
     },
 
     /// Deploys an interchain token.
@@ -1467,6 +1471,7 @@ pub fn program_interchain_transfer(
     token_program: Pubkey,
     gas_value: u64,
     source_program_id: Pubkey,
+    pda_seeds: Vec<Vec<u8>>,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -1503,6 +1508,7 @@ pub fn program_interchain_transfer(
             gas_value,
             signing_pda_bump,
             source_program_id,
+            pda_seeds,
         },
     )?;
 
