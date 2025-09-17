@@ -1142,27 +1142,25 @@
           ]
         },
         "Example": {
-          "address": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6",
+          "address": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017",
           "versions": {
-            "0": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6"
+            "0": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017"
           },
-          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "deployer": "0x4cdab023fcddcf492891b9d72ce7b523c5b465883d02fedd1bbe81f4598cf40b",
           "structs": {
-            "Singleton": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::its::Singleton",
-            "Executed": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::gmp::Executed",
-            "ExecutedWithToken": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::its::ExecutedWithToken",
-            "MultiMinter": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::operators::MultiMinter",
-            "OwnerCap": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::operators::OwnerCap",
-            "TOKEN": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token::TOKEN",
-            "TOKEN_A": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token_a::TOKEN_A",
-            "TOKEN_B": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token_b::TOKEN_B",
-            "TOKEN_C": "0x227dc9a2f44a0389a7f187f93e5ef826bbd026648626747203ad9ded990cbdb6::token_c::TOKEN_C"
+            "Singleton": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::its::Singleton",
+            "Executed": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::gmp::Executed",
+            "ExecutedWithToken": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::its::ExecutedWithToken",
+            "TOKEN": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::token::TOKEN",
+            "TOKEN_A": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::token_a::TOKEN_A",
+            "TOKEN_B": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::token_b::TOKEN_B",
+            "TOKEN_C": "0xeb3f103e9a0bee2c8f301a5c4a4132950d3b77b10afe2772464bbb29eab09017::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0x58cc27d42958024a6a35d82818542cc90542256384f09f085e47459dc69e8058",
-            "GmpChannelId": "0x2990962a5421f50a7d0dad558556a4af1ece3cb211d03f5721079a3440877222",
-            "ItsSingleton": "0xd79fc2b676ee3f54bf161c89267a9160a4ec83a4e9528a5a4ebcab963b502701",
-            "ItsChannelId": "0xf424903803c4a86dda1a8ef8c82b6bc957f2da498cca9e2d54bec9ad133af066"
+            "GmpSingleton": "0xed3c396530dc38e58d84654291a7ade7ec5189f8c86dafaf67a19409331c3843",
+            "GmpChannelId": "0x18a209dbb5ce28d9e3cd48e58f803a4c2732ccece34a18fe3b1b7195b3116eb2",
+            "ItsSingleton": "0xe8b3c728a2c44d203c98d5a1f97166c81f79e00f74cd3962133c2bc99dc55a87",
+            "ItsChannelId": "0xda6261243427535c65d3b52b6edcc2794762d5d9fb9661378f68c0410ad9c270"
           }
         },
         "LEG25": {
@@ -1221,6 +1219,28 @@
           "objects": {
             "TreasuryCap": "0x48f600e3082318f4509b6023e2705eafad51784965150d6b2a8b8c8b61af9fba",
             "Metadata": "0xca85e64ef3e7d1341d92c6b778af47c2af77bca3747bd289d4f6953e3b97f68e"
+          }
+        },
+        "TST": {
+          "address": "0x563a76f80051f4b9516aa0708b6ab08195e37dbb66266c112beac4c0211d60f6",
+          "typeArgument": "0x563a76f80051f4b9516aa0708b6ab08195e37dbb66266c112beac4c0211d60f6::tst::TST",
+          "decimals": "6",
+          "objects": {
+            "TreasuryCap": "0xa640804689b605325bb807a7f2c8656497f5b3cbe3d426d4ca0a8b0edb4fa18f",
+            "Metadata": "0x6034be232b88ed915fced0c739fe816146138007d226033eebebf7f6f14a627d",
+            "TokenId": "0x334e3a13a8d0a8fc8ab5c7828fa4c664821f0a514e2ed447de9d9103352d7873",
+            "origin": true
+          }
+        },
+        "TST1": {
+          "address": "0x020a249bc405befc1f4f6af3a0c3bca5c08e35d0cf1d5bbbaa9dd15481428725",
+          "typeArgument": "0x020a249bc405befc1f4f6af3a0c3bca5c08e35d0cf1d5bbbaa9dd15481428725::tst1::TST1",
+          "decimals": "6",
+          "objects": {
+            "TreasuryCap": "0x83921e7e6a3c8d1b240bca1bc6d0e696824a6c377228150f48b8256d944784ea",
+            "Metadata": "0xb013779d78f19a6c490533a54db5ea3433b1de06d733ef49bc083d772913928e",
+            "TokenId": "0x0fec8e73200b1d35cff548a2eef9caed6a674251e6411882181b61d32196d2e8",
+            "origin": true
           }
         }
       },
