@@ -57,7 +57,7 @@ ae907491891a48851a4e347d4a23a41ad73e8b2fec8664951ed76011b31ee9e1
 
 2. **Build the updated binaries**
 
-In the [programs repository](https://github.com/eigerco/solana-axelar) root, build only the programs you need to upgrade.
+In the [programs repository](https://github.com/eigerco/axelar-amplifier-solana) root, build only the programs you need to upgrade.
 
    ```bash
 solana-verify build --base-image $BASE_IMAGE --library-name <library_name> -- --no-default-features --features $ENV
@@ -78,11 +78,11 @@ solana-verify build --base-image $BASE_IMAGE --library-name <library_name> -- --
 
 
    ```bash
-export PROGRAM_BYTECODE_PATH="solana-axelar/target/deploy/<program_name>.so"
+export PROGRAM_BYTECODE_PATH="axelar-amplifier-solana/target/deploy/<program_name>.so"
 export PROGRAM_ID=<PROGRAM_ID>
 
-export UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
-export COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
+export UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
+export COMMIT_HASH=$(git -C axelar-amplifier-solana rev-parse HEAD)
    ```
 
    **Note**: `PROGRAM_BYTECODE_PATH` and `PROGRAM_ID` needs to be updated for each program that is going to be deployed.
@@ -100,7 +100,7 @@ export COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
 There is a special CLI command that will get the program_id for you:
 
 ```bash
-./solana/solana-axelar-cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_BYTECODE_PATH
+./solana/axelar-amplifier-solana-cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_BYTECODE_PATH
 ```
 
 ## Verify
@@ -111,7 +111,7 @@ Verification is **only possible in mainnet**. If deploying for test environments
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE \
   --commit-hash $COMMIT_HASH \
   --program-id $PROGRAM_ID \
-  https://github.com/eigerco/solana-axelar \
+  https://github.com/eigerco/axelar-amplifier-solana \
   -- --no-default-features --features $ENV
 ```
 
