@@ -33,13 +33,6 @@ pub(crate) fn process_inbound<'a>(
 
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
-
-    let (gateway_accounts, instruction_accounts) = accounts_iter
-        .as_slice()
-        .split_at(PROGRAM_ACCOUNTS_START_INDEX);
-
-    validate_with_gmp_metadata(gateway_accounts, &message)?;
-
     let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
     let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;

@@ -151,3 +151,4 @@ async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
 
 // TODO Check that CPI transfers can't be initiated by non-PDA accounts
 // TODO Check that an inconsistent set of seeds fails
+// TODO Write a scenario for the CpiCallContractWithInterchainToken instruction

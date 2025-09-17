@@ -315,6 +315,7 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
     signing_pda_bump: u8,
     source_program_id: Option<Pubkey>,
     pda_seeds: Vec<Vec<u8>>,
+    data: Option<Vec<u8>>,
 ) -> ProgramResult {
     let source_id = source_program_id.ok_or_else(|| {
         msg!("Source program ID is required for CPI-initiated transfers");
@@ -359,7 +360,7 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
         amount,
         gas_value,
         signing_pda_bump,
-        None,
+        data,
         source_id,
     )
 }
