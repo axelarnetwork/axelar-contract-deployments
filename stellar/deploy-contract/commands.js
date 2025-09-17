@@ -24,7 +24,7 @@ const CONTRACT_DEPLOY_OPTIONS = {
     InterchainToken: () => [
         new Argument('<name>', 'token name (e.g., "Test Token")'),
         new Argument('<symbol>', 'token symbol (e.g., "TEST")'),
-        new Argument('<decimals>', 'token decimals (e.g., 7)').argParser(parseInt),
+        new Argument('<decimals>', 'token decimals (e.g., 7)').argParser(Number),
     ],
 };
 

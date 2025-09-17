@@ -210,10 +210,6 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options, a
                 isNumber: { decimals },
             });
 
-            if (decimals <= 0) {
-                throw new Error('Decimals must be a positive integer');
-            }
-
             const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
             const tokenMetadata = tokenMetadataToScVal(decimals, name, symbol);
 
