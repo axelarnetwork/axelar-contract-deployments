@@ -205,7 +205,7 @@ pub enum InterchainTokenServiceInstruction {
     /// This variant is designed for program-initiated transfers and includes
     /// the source program ID and PDA seeds for proper attribution.
     ///
-    /// 0. [writable,signer] The address of the payer
+    /// 0. [writable,signer] The address of the sender
     /// 1. [maybe signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
@@ -1457,7 +1457,7 @@ pub fn interchain_transfer(
 ///
 /// This function will return an error if the instruction data cannot be serialized.
 pub fn program_interchain_transfer(
-    payer: Pubkey,
+    sender: Pubkey,
     source_account: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
@@ -1478,7 +1478,7 @@ pub fn program_interchain_transfer(
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(sender, true),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),

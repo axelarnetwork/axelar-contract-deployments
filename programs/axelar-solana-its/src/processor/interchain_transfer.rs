@@ -260,8 +260,8 @@ fn build_axelar_interchain_token_execute(
 
 /// Processes a regular interchain transfer initiated by a user account.
 ///
-/// This function handles transfers where the source address should be the payer
-/// (user account). It validates that the payer is a user account and not a
+/// This function handles transfers where the source address should be the sender
+/// (user account). It validates that the sender is a user account and not a
 /// program or PDA to ensure proper source attribution in the transfer event.
 pub(crate) fn process_user_interchain_transfer<'a>(
     accounts: &'a [AccountInfo<'a>],
@@ -273,21 +273,21 @@ pub(crate) fn process_user_interchain_transfer<'a>(
     signing_pda_bump: u8,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
-    // Check that the payer is a user account, not a program or PDA
-    // We get the payer from the first account
-    let payer = next_account_info(&mut accounts.iter())?;
+    // Check that the sender is a user account, not a program or PDA
+    // We get the sender from the first account
+    let sender = next_account_info(&mut accounts.iter())?;
 
     // User accounts should be owned by the System Program
-    if payer.owner != &solana_program::system_program::ID {
+    if sender.owner != &solana_program::system_program::ID {
         msg!(
-            "Payer is not owned by System Program, owner: {}",
-            payer.owner
+            "Sender is not owned by System Program, owner: {}",
+            sender.owner
         );
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if payer.executable {
-        msg!("Payer is executable (program account)");
+    if sender.executable {
+        msg!("Sender is executable (program account)");
         return Err(ProgramError::InvalidAccountData);
     }
 
@@ -300,7 +300,7 @@ pub(crate) fn process_user_interchain_transfer<'a>(
         gas_value,
         signing_pda_bump,
         data,
-        *payer.key,
+        *sender.key,
     )
 }
 
@@ -321,26 +321,26 @@ pub(crate) fn process_program_interchain_transfer<'a>(
         ProgramError::InvalidInstructionData
     })?;
 
-    // The payer should be a PDA owned by the source program
-    let payer = next_account_info(&mut accounts.iter())?;
-    if payer.owner != &source_id {
+    // The sender should be a PDA owned by the source program
+    let sender = next_account_info(&mut accounts.iter())?;
+    if sender.owner != &source_id {
         msg!(
-            "Payer account must be owned by the source program. Expected: {}, Got: {}",
+            "Sender account must be owned by the source program. Expected: {}, Got: {}",
             source_id,
-            payer.owner
+            sender.owner
         );
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if payer.executable {
+    if sender.executable {
         msg!("PDA should not be executable");
         return Err(ProgramError::InvalidAccountData);
     }
 
     // Check that the account is off the ed25519 curve (indicating it's a PDA)
-    let payer_bytes = payer.key.to_bytes();
-    if solana_program::ed25519_program::check_id(&payer_bytes.into()) {
-        msg!("Payer must be a PDA, not a regular keypair");
+    let sender_bytes = sender.key.to_bytes();
+    if solana_program::ed25519_program::check_id(&sender_bytes.into()) {
+        msg!("Sender must be a PDA, not a regular keypair");
         return Err(ProgramError::InvalidAccountData);
     }
 
