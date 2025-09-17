@@ -1128,28 +1128,6 @@
             "OperatorCap": "0xab278aa73ca0fdfa01c00b914aadb7970c043d59026d971a84925a21bc425854",
             "UpgradeCap": "0x01118d5fc834a309444ae0959719b54a39109b4c200ceb85215156fc116197d9"
           },
-          "legacyCoins": [
-            {
-              "TokenId": "0x42e2e579fbeaa38cda83103e88695a893b98ca0d92869dc75b36d8b1a40f2344",
-              "TokenType": "0x2::coin::CoinMetadata<0x4d3403c37cb559df19acf2617908080f1f1a0b3a1954b69c01c6cea327a2f62a::leg26::LEG26>",
-              "symbol": "LEG26"
-            },
-            {
-              "TokenId": "0x5b07984d86943eabc42aa20e030961408e6cc629dae91357a34dd55d476a4836",
-              "TokenType": "0x2::coin::CoinMetadata<0x6581379e55f602c95ebab54f2a0607564bfd340eb76b049ab41e546a99a24143::leg27::LEG27>",
-              "symbol": "LEG27"
-            },
-            {
-              "TokenId": "0xf11ea5b53f0ccfe1e5a8d607c6dcdbb493a35d1e3e9ac5097a2868785ded9882",
-              "TokenType": "0x2::coin::CoinMetadata<0xdf97f3649987375b3e27595c356ded8fe8faccca3eed2dcff5363748a0ea6e2d::leg28::LEG28>",
-              "symbol": "LEG28"
-            },
-            {
-              "TokenId": "0xeda58de3ed2c750142caac4fec4f72676010fc3861804fdc4d5a9d9702929bb2",
-              "TokenType": "0x2::coin::CoinMetadata<0x1acff3f1dc9cd8e34ce0133fb986548c8b638f5959d6b2a3aaf5f57e4eef2b9d::leg25::LEG25>",
-              "symbol": "LEG25"
-            }
-          ],
           "disallowedFunctions": {
             "versions": [
               0,
