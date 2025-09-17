@@ -488,7 +488,7 @@ async fn test_verify_all_signatures_when_session_pda_has_lamports() {
         .send_tx(&[system_instruction::transfer(
             &payer,
             &verification_session_pda,
-            100000000000,
+            100_000_000_000,
         )])
         .await
         .unwrap();

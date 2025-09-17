@@ -4,13 +4,12 @@ use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use borsh::{BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::GMPPayload;
-use program_utils::pda::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 
-use crate::assert_valid_its_root_pda;
-use crate::state::InterchainTokenService;
+use crate::assert_valid_interchain_transfer_execute_pda;
 
 /// The index of the first account that is expected to be passed to the
 /// destination program. The prepended accounts are:
@@ -117,9 +116,6 @@ fn extract_interchain_token_execute_call_data<'a>(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let its_root_config = InterchainTokenService::load(signing_pda_account)?;
-    assert_valid_its_root_pda(signing_pda_account, its_root_config.bump)?;
-
     let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
         .map_err(|_err| ProgramError::InvalidInstructionData)?
     else {
@@ -133,6 +129,15 @@ fn extract_interchain_token_execute_call_data<'a>(
         msg!("The type of the given ITS message doesn't support call data");
         return Err(ProgramError::InvalidInstructionData);
     };
+
+    assert_valid_interchain_transfer_execute_pda(
+        signing_pda_account,
+        &Pubkey::new_from_array(
+            (transfer.destination_address.iter().as_slice())
+                .try_into()
+                .map_err(|_err| ProgramError::InvalidInstructionData)?,
+        ),
+    )?;
 
     let inner_payload = AxelarMessagePayload::decode(transfer.data.as_ref())?;
     if !inner_payload.solana_accounts().eq(program_accounts) {

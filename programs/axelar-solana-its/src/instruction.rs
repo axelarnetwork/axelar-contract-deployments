@@ -1714,6 +1714,9 @@ fn derive_specific_its_accounts(
             specific_accounts.push(AccountMeta::new(destination_ata, false));
 
             if !data.is_empty() {
+                let (its_transfer_execute_pda, _bump) =
+                    crate::find_interchain_transfer_execute_pda(&wallet);
+                specific_accounts.push(AccountMeta::new(its_transfer_execute_pda, false));
                 let execute_data = DataPayload::decode(data)
                     .map_err(|_err| ProgramError::InvalidInstructionData)?;
                 specific_accounts.extend(execute_data.account_meta().iter().cloned());

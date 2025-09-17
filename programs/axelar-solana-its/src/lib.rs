@@ -2,12 +2,15 @@
 use bitflags::bitflags;
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::ensure_single_feature;
+use program_utils::pda::BorshPda;
+use program_utils::pda::ValidPDA;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use state::interchain_transfer_execute::InterchainTransferExecute;
 use state::InterchainTokenService;
 
 mod entrypoint;
@@ -113,6 +116,9 @@ pub mod seed_prefixes {
 
     /// The seed prefix for deriving the deployment approval PDA
     pub const DEPLOYMENT_APPROVAL_SEED: &[u8] = b"deployment-approval";
+
+    /// The seed prefix for deriving the interchain transfer execute signing PDA
+    pub const INTERCHAIN_TRANSFER_EXECUTE_SEED: &[u8] = b"interchain-transfer-execute";
 }
 
 bitflags! {
@@ -464,6 +470,113 @@ pub fn deployment_approval_pda(
             destination_chain,
         ))
     }
+}
+
+/// Tries to create the PDA for a [`InterchainTransferExecute`] using the provided bump,
+/// falling back to `find_program_address` if the bump is `None`.
+///
+/// # Errors
+///
+/// If the bump is invalid.
+pub fn interchain_transfer_execute_pda(
+    destination_program: &Pubkey,
+    maybe_bump: Option<u8>,
+) -> Result<(Pubkey, u8), ProgramError> {
+    if let Some(bump) = maybe_bump {
+        create_interchain_transfer_execute_pda(destination_program, bump)
+            .map(|pubkey| (pubkey, bump))
+    } else {
+        Ok(find_interchain_transfer_execute_pda(destination_program))
+    }
+}
+
+/// Tries to create the PDA for a [`InterchainTransferExecute`] using the provided bump.
+///
+/// # Errors
+///
+/// If the bump is invalid.
+pub fn create_interchain_transfer_execute_pda(
+    destination_program: &Pubkey,
+    bump: u8,
+) -> Result<Pubkey, ProgramError> {
+    Ok(Pubkey::create_program_address(
+        &[
+            seed_prefixes::INTERCHAIN_TRANSFER_EXECUTE_SEED,
+            &destination_program.to_bytes(),
+            &[bump],
+        ],
+        &crate::id(),
+    )?)
+}
+
+/// Derives the PDA for a [`InterchainTransferExecute`].
+#[inline]
+#[must_use]
+pub fn find_interchain_transfer_execute_pda(destination_program: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            seed_prefixes::INTERCHAIN_TRANSFER_EXECUTE_SEED,
+            destination_program.as_ref(),
+        ],
+        &crate::id(),
+    )
+}
+
+/// Either create the interchain_transfer_execute pda or read it, and ensure it is derived properly.
+pub(crate) fn assert_valid_interchain_transfer_execute_pda<'a>(
+    interchain_transfer_execute_pda_account: &AccountInfo<'a>,
+    destination_program: &Pubkey,
+) -> Result<u8, ProgramError> {
+    let bump = if interchain_transfer_execute_pda_account.is_initialized_pda(&crate::id()) {
+        let interchain_transfer_execute =
+            InterchainTransferExecute::load(interchain_transfer_execute_pda_account)?;
+
+        let expected_token_manager_pda = create_interchain_transfer_execute_pda(
+            destination_program,
+            interchain_transfer_execute.bump,
+        )?;
+        if expected_token_manager_pda.ne(interchain_transfer_execute_pda_account.key) {
+            msg!("Invalid InterchainTransferExecute PDA provided");
+            return Err(ProgramError::InvalidArgument);
+        }
+        interchain_transfer_execute.bump
+    } else {
+        let (expected_token_manager_pda, bump) =
+            find_interchain_transfer_execute_pda(destination_program);
+        if expected_token_manager_pda.ne(interchain_transfer_execute_pda_account.key) {
+            msg!("Invalid InterchainTransferExecute PDA provided");
+            return Err(ProgramError::InvalidArgument);
+        }
+        bump
+    };
+
+    Ok(bump)
+}
+
+/// Either create the interchain_transfer_execute pda or read it, and ensure it is derived properly.
+pub(crate) fn initiate_interchain_execute_pda_if_empty<'a>(
+    interchain_transfer_execute_pda_account: &AccountInfo<'a>,
+    payer: &AccountInfo<'a>,
+    system_account: &AccountInfo<'a>,
+    destination_program: &Pubkey,
+    bump: u8,
+) -> Result<(), ProgramError> {
+    if !interchain_transfer_execute_pda_account.is_initialized_pda(&crate::id()) {
+        let interchain_transfer_execute = InterchainTransferExecute::new(bump);
+        interchain_transfer_execute.init(
+            &crate::id(),
+            system_account,
+            payer,
+            interchain_transfer_execute_pda_account,
+            &[
+                seed_prefixes::INTERCHAIN_TRANSFER_EXECUTE_SEED,
+                destination_program.as_ref(),
+                &[bump],
+            ],
+        )?;
+    };
+
+    Ok(())
 }
 
 /// Creates an associated token account for the given program address and token
