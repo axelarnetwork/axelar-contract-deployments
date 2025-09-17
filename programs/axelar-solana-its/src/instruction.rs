@@ -201,8 +201,8 @@ pub enum InterchainTokenServiceInstruction {
         signing_pda_bump: u8,
     },
 
-    /// Transfers interchain tokens from a program PDA.
-    /// This variant is designed for program-initiated transfers and includes
+    /// Transfers interchain tokens via Cross-Program Invocation (CPI) from a program PDA.
+    /// This variant is designed for CPI-initiated transfers and includes
     /// the source program ID and PDA seeds for proper attribution.
     ///
     /// 0. [writable,signer] The address of the sender
@@ -223,7 +223,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 13. [] The ITS root account
     /// 14. [] The GMP call contract signing account
     /// 15. [] The ITS program account
-    ProgramInterchainTransfer {
+    CpiInterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
 
@@ -1453,14 +1453,14 @@ pub fn interchain_transfer(
     })
 }
 
-/// Creates an [`InterchainTokenServiceInstruction::ProgramInterchainTransfer`] instruction.
+/// Creates an [`InterchainTokenServiceInstruction::CpiInterchainTransfer`] instruction.
 ///
-/// This variant is for program-initiated transfers and includes source program attribution.
+/// This variant is for CPI-initiated transfers and includes source program attribution.
 ///
 /// # Errors
 ///
 /// This function will return an error if the instruction data cannot be serialized.
-pub fn program_interchain_transfer(
+pub fn cpi_interchain_transfer(
     sender: Pubkey,
     source_account: Pubkey,
     token_id: [u8; 32],
@@ -1500,7 +1500,7 @@ pub fn program_interchain_transfer(
     ];
 
     let data = to_vec(
-        &InterchainTokenServiceInstruction::ProgramInterchainTransfer {
+        &InterchainTokenServiceInstruction::CpiInterchainTransfer {
             token_id,
             destination_chain,
             destination_address,

@@ -12,7 +12,7 @@ use crate::{BorshPdaAccount, ItsTestContext};
 /// Test that demonstrates the memo program can initiate interchain transfers through its PDA
 #[test_context(ItsTestContext)]
 #[tokio::test]
-async fn test_memo_program_pda_transfer(ctx: &mut ItsTestContext) {
+async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
     let payer = ctx.solana_wallet;
 
     let token_id = ctx.deployed_interchain_token;
@@ -140,7 +140,7 @@ async fn test_memo_program_pda_transfer(ctx: &mut ItsTestContext) {
     assert_eq!(
         source_address,
         &axelar_solana_memo_program::ID.to_bytes(),
-        "Source address should be the memo program ID with ProgramInterchainTransfer"
+        "Source address should be the memo program ID with CpiInterchainTransfer"
     );
 
     assert_eq!(
@@ -149,5 +149,5 @@ async fn test_memo_program_pda_transfer(ctx: &mut ItsTestContext) {
     );
 }
 
-// TODO Check that these transfers can't be initiated by non-PDA accounts
+// TODO Check that CPI transfers can't be initiated by non-PDA accounts
 // TODO Check that an inconsistent set of seeds fails

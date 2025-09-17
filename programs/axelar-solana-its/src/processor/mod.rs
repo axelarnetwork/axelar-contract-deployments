@@ -154,7 +154,7 @@ pub fn process_instruction<'a>(
             signing_pda_bump,
             None,
         ),
-        InterchainTokenServiceInstruction::ProgramInterchainTransfer {
+        InterchainTokenServiceInstruction::CpiInterchainTransfer {
             token_id,
             destination_chain,
             destination_address,
@@ -163,7 +163,7 @@ pub fn process_instruction<'a>(
             signing_pda_bump,
             source_program_id,
             pda_seeds,
-        } => interchain_transfer::process_program_interchain_transfer(
+        } => interchain_transfer::process_cpi_interchain_transfer(
             accounts,
             token_id,
             destination_chain,

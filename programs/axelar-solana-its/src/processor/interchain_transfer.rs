@@ -304,8 +304,8 @@ pub(crate) fn process_user_interchain_transfer<'a>(
     )
 }
 
-/// Processes an interchain transfer initiated by a PDA.
-pub(crate) fn process_program_interchain_transfer<'a>(
+/// Processes an interchain transfer initiated via Cross-Program Invocation (CPI) by a PDA.
+pub(crate) fn process_cpi_interchain_transfer<'a>(
     accounts: &'a [AccountInfo<'a>],
     token_id: [u8; 32],
     destination_chain: String,
@@ -317,7 +317,7 @@ pub(crate) fn process_program_interchain_transfer<'a>(
     pda_seeds: Vec<Vec<u8>>,
 ) -> ProgramResult {
     let source_id = source_program_id.ok_or_else(|| {
-        msg!("Source program ID is required for program-initiated transfers");
+        msg!("Source program ID is required for CPI-initiated transfers");
         ProgramError::InvalidInstructionData
     })?;
 

@@ -283,7 +283,7 @@ pub fn process_send_interchain_transfer(
     // Pass the memo program ID as the source so events show the memo is the source address
     // The counter PDA is derived with empty seeds
     let pda_seeds = vec![];
-    let transfer_ix = axelar_solana_its::instruction::program_interchain_transfer(
+    let transfer_ix = axelar_solana_its::instruction::cpi_interchain_transfer(
         *counter_pda.key,
         *source_ata.key,
         token_id,
