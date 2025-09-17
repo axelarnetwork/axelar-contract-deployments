@@ -1268,6 +1268,23 @@
             "TokenId": "0x0fec8e73200b1d35cff548a2eef9caed6a674251e6411882181b61d32196d2e8",
             "origin": true
           }
+        },
+        "LINK": {
+          "address": "0x5de3156be1df9679b77b594ad6c94c735e47b521cb31b19b4d88079c81a63b94",
+          "typeArgument": "0x5de3156be1df9679b77b594ad6c94c735e47b521cb31b19b4d88079c81a63b94::link::LINK",
+          "decimals": "10",
+          "objects": {
+            "TokenId": "0xd4823f4861334e7050d07fa1dae102a325252a548cac4090efc513a85ebf973c",
+            "TreasuryCap": "0xc55e954fc944cb3730840d3bec6b6359e606b1c7cad06262d4d4ff687414a117",
+            "Metadata": "0xbd38b641b69cc0854ab9ab87ca372834556db51f63971d9aa8c6467105cf0575"
+          },
+          "linkedTokens": [
+            {
+              "destinationChain": "avalanche-fuji",
+              "destinationAddress": "0x3fc29836e84e471a053d2d9e80494a867d670ead"
+            }
+          ],
+          "saltAddress": "0x52cc10727e79b08980670d7a12ca698342d4c855543d735a86088fdc41dd011c"
         }
       },
       "explorer": {
