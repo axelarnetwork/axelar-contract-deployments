@@ -72,7 +72,7 @@ async function execute(keypair, client, chains, chain, args, options) {
         source_chain: sourceChain,
         message_id: messageId,
         source_address: sourceAddress,
-        destination_id: Example.objects.GmpChannelId,
+        destination_id: channelId,
         payload,
     };
 
@@ -110,8 +110,8 @@ if (require.main === module) {
     const executeCommand = new Command()
         .name('execute')
         .description('Execute gmp contract call')
-        .option('--channelId <channelId>', 'Channel id for the destination contract')
         .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
+        .option('--channelId <channelId>', 'Channel id for the destination contract')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, options, [sourceChain, messageId, sourceAddress, payload], processCommand);
         });
