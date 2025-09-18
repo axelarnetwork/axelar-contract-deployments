@@ -207,7 +207,7 @@ pub fn assert_valid_verifier_set_tracker_pda(
         ],
         &crate::ID,
     )
-    .expect("invalid bump for the root pda");
+    .expect("invalid bump for the verifier set tracker pda");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid Verifier Set Root PDA ");
         return Err(ProgramError::IncorrectProgramId);
