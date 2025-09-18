@@ -4,6 +4,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use solana_program::program_error::ProgramError;
 
+// Error codes 0-499 are recoverable, 500+ are irrecoverable
 const IRRECOVERABLE_ERROR: u32 = 500;
 
 /// Errors that may be returned by the Gateway program.
@@ -46,12 +47,14 @@ pub enum GatewayError {
     #[error("Message Payload has already been committed")]
     MessagePayloadAlreadyCommitted,
 
+    // ========== IRRECOVERABLE ERRORS RANGE ==========
+
     /// Used when a signature index is too high.
     #[error("Slot is out of bounds")]
     // --- NOTICE ---
-    // this bumps the error representation to start at 500
-    // Any error after this point is deemed irrecoverable
-    SlotIsOutOfBounds = 500,
+    // This bumps the error representation to the irrecoverable threshold.
+    // Any error after this point is deemed irrecoverable.
+    SlotIsOutOfBounds = IRRECOVERABLE_ERROR,
 
     /// Used when the internal digital signature verification fails.
     #[error("Digital signature verification failed")]
