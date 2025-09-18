@@ -1744,6 +1744,8 @@
           "domainSeparator": "0xde451736aa7e61c58baa7e02a0531c535a0dd8d3b5a04973d99336f34efad68b",
           "address": "axelar1xdg6lezehttusu8zfr5jnshn7d3k2jjzlmr43m6ssmxd048zjv6s4h5unj"
         },
+        "storeCodeProposalId": "82",
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "storeCodeProposalId": "1037",
         "storeCodeProposalCodeHash": "09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6"
       },
