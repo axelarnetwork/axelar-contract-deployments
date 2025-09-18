@@ -1244,6 +1244,30 @@
             "TreasuryCap": "0xab4d366a87eb1761de3fa8b9562b37f576ef09cfa22312b126e82466b0b7cea4",
             "Metadata": "0x58b2262d49d54ae14e7d75f2a6c3eca907758d47a32fcf93fa620769c3af5cf0"
           }
+        },
+        "Example": {
+          "address": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654",
+          "versions": {
+            "0": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "Singleton": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::its::Singleton",
+            "Executed": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::gmp::Executed",
+            "ExecutedWithToken": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::its::ExecutedWithToken",
+            "MultiMinter": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::operators::MultiMinter",
+            "OwnerCap": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::operators::OwnerCap",
+            "TOKEN": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token::TOKEN",
+            "TOKEN_A": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token_a::TOKEN_A",
+            "TOKEN_B": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token_b::TOKEN_B",
+            "TOKEN_C": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token_c::TOKEN_C"
+          },
+          "objects": {
+            "GmpSingleton": "0x43aa1cf0178bc75687da18ec8b8f374245c4ce6522775600c55d42bc25a44402",
+            "GmpChannelId": "0xed446cd5d073775a09517bff223031aa7a179a2762522ee068252a44e8f7d3f2",
+            "ItsSingleton": "0xc339e7f33d85569b7a23cfcef4304cf2902b1255183678392891d6723c69a287",
+            "ItsChannelId": "0x7539de2ccaaaee8ac3238b5331757a86be4430691c7185e5164ebdd51a400afd"
+          }
         }
       },
       "explorer": {
