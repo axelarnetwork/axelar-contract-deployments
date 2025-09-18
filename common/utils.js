@@ -785,13 +785,15 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(chain, destinationChain, env, eventType, gasValue) {
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, gmpAxelarscanApi) {
     if (gasValue === 'auto') {
-        let baseUrl;
-        try {
-            baseUrl = loadConfig(env).axelar?.gmpAxelarscanApi;
-        } catch (e) {
-            baseUrl = undefined;
+        let baseUrl = gmpAxelarscanApi;
+        if (!baseUrl) {
+            try {
+                baseUrl = loadConfig(env).axelar?.gmpAxelarscanApi;
+            } catch (e) {
+                baseUrl = undefined;
+            }
         }
 
         // Fallback for env without api
@@ -807,7 +809,11 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue)
             event: eventType,
         };
 
-        return await httpPost(url, payload);
+        const res = await httpPost(url, payload);
+        if (res.error) {
+            throw new Error(`Error querying gas amount: ${res.error}`);
+        }
+        return res;
     } else if (isValidNumber(gasValue)) {
         return scaleGasValue(chain, gasValue);
     } else {
