@@ -850,9 +850,10 @@
           }
         },
         "InterchainTokenService": {
-          "address": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f",
+          "address": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426",
           "versions": {
-            "0": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f"
+            "0": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f",
+            "1": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426"
           },
           "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
           "structs": {
@@ -861,7 +862,9 @@
             "CoinInfo": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::coin_info::CoinInfo",
             "CoinData": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::coin_data::CoinData",
             "CreatorCap": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::creator_cap::CreatorCap",
+            "TokenManagerType": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::token_manager_type::TokenManagerType",
             "TokenId": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::token_id::TokenId",
+            "UnlinkedTokenId": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::token_id::UnlinkedTokenId",
             "UnregisteredTokenId": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::token_id::UnregisteredTokenId",
             "UnregisteredCoinData": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::unregistered_coin_data::UnregisteredCoinData",
             "CoinRegistered": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::CoinRegistered",
@@ -869,13 +872,20 @@
             "InterchainTokenDeploymentStarted": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::InterchainTokenDeploymentStarted",
             "InterchainTransferReceived": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::InterchainTransferReceived",
             "UnregisteredCoinReceived": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::UnregisteredCoinReceived",
+            "UnlinkedCoinReceived": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::UnlinkedCoinReceived",
+            "UnlinkedCoinRemoved": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::UnlinkedCoinRemoved",
             "TrustedChainAdded": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::TrustedChainAdded",
             "TrustedChainRemoved": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::TrustedChainRemoved",
             "FlowLimitSet": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::FlowLimitSet",
             "DistributorshipTransfered": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::DistributorshipTransfered",
             "OperatorshipTransfered": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::OperatorshipTransfered",
+            "InterchainTokenIdClaimed": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::InterchainTokenIdClaimed",
+            "LinkTokenStarted": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::LinkTokenStarted",
+            "LinkTokenReceived": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::LinkTokenReceived",
+            "CoinMetadataRegistered": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::CoinMetadataRegistered",
             "TrustedChain": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::trusted_chains::TrustedChain",
             "TrustedChains": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::trusted_chains::TrustedChains",
+            "TreasuryCapReclaimer": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::treasury_cap_reclaimer::TreasuryCapReclaimer",
             "InterchainTransferTicket": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::interchain_transfer_ticket::InterchainTransferTicket",
             "InterchainTokenService_v0": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::interchain_token_service_v0::InterchainTokenService_v0",
             "OwnerCap": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::owner_cap::OwnerCap",
