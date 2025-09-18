@@ -48,7 +48,6 @@ pub enum GatewayError {
     MessagePayloadAlreadyCommitted,
 
     // ========== IRRECOVERABLE ERRORS RANGE ==========
-
     /// Used when a signature index is too high.
     #[error("Slot is out of bounds")]
     // --- NOTICE ---
