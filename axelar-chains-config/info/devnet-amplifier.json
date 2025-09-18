@@ -1166,28 +1166,42 @@
               "TokenType": "0x2::coin::CoinMetadata<0x78f997795f984eddc6155b38389d8cf5a40832366c74e9c82ffc51f926b2d23b::tse::TSE>",
               "symbol": "tse"
             }
-          ]
-        },
-        "Example": {
-          "address": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85",
-          "versions": {
-            "0": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85"
-          },
-          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
-          "structs": {
-            "Singleton": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::its::Singleton",
-            "Executed": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::gmp::Executed",
-            "ExecutedWithToken": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::its::ExecutedWithToken",
-            "TOKEN": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token::TOKEN",
-            "TOKEN_A": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token_a::TOKEN_A",
-            "TOKEN_B": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token_b::TOKEN_B",
-            "TOKEN_C": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token_c::TOKEN_C"
-          },
-          "objects": {
-            "GmpSingleton": "0x1cd66aab6e910f4230a17bc7b1152047b4f9c8158a607ee626d500da3dc552c8",
-            "GmpChannelId": "0xb6b06092072c6d9f7268c5908183cf3456429af57fa74a29d26526a698bc2c52",
-            "ItsSingleton": "0x7da3422e0915e7cbbde06f5425ebd370d04928e783188f167646790dc6d7d040",
-            "ItsChannelId": "0xa6019e0956da874271d21fe37cf123e43f1a55c8720ca50bcdf35212be930c88"
+          ],
+          "disallowedFunctions": {
+            "versions": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "functionNames": [
+              "deploy_remote_interchain_token",
+              "send_interchain_transfer",
+              "receive_interchain_transfer",
+              "receive_interchain_transfer_with_data",
+              "receive_deploy_interchain_token",
+              "give_unregistered_coin",
+              "mint_as_distributor",
+              "mint_to_as_distributor",
+              "burn_as_distributor",
+              "add_trusted_chains",
+              "remove_trusted_chains",
+              "set_flow_limit",
+              "set_flow_limit_as_token_operator",
+              "transfer_distributorship",
+              "transfer_operatorship"
+            ]
           }
         },
         "PR2": {
