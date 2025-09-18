@@ -34,7 +34,7 @@
     ```
 
     Depending on whether it's desired to manage different deployer keys per environment, it is possible to output the key file
-    to a different location and configure it accrodingly for use in subsequent requests with the Solana CLI:
+    to a different location and configure it accordingly for use in subsequent requests with the Solana CLI:
 
     ```bash
     solana-keygen new -o /path/to/my/keys/folder/{deployer-{env}.json}
@@ -51,10 +51,6 @@
 
 ### Deployment Setup
 
-1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
-
-2. Compile the Solana programs.
-
 > [!IMPORTANT]
 > For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `axelar-amplifier-solana` directory by invoking:
 >
@@ -67,55 +63,59 @@
 > [!NOTE]
 > Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
 
-In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
+1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-Set the `BASE_IMAGE` variable:
+1. Compile the Solana programs.
 
-```sh
-export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
-export COMMIT_HASH="<latest axelar-amplifier-solana commit hash>"
-export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-```
+    In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
 
-```sh
-# Go to the solana directory within the cloned repo
-cd axelar-amplifier-solana
+    Set the `BASE_IMAGE` variable:
 
-# Compile the Solana programs
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
-solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
+    ```sh
+    export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
+    export COMMIT_HASH="<latest axelar-amplifier-solana commit hash>"
+    export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+    ```
 
-# Go back
-cd ..
-```
+    ```sh
+    # Go to the solana directory within the cloned repo
+    cd axelar-amplifier-solana
 
-3. Declare environment variables:
+    # Compile the Solana programs
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
 
-```sh
-export GATEWAY_PROGRAM_KEYPAIR_PATH="<path/to/gateway_program_keypair.json>"
-export GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gateway.so"
+    # Go back
+    cd ..
+    ```
 
-export GAS_SERVICE_PROGRAM_KEYPAIR_PATH="<path/to/gas_service_program_keypair.json>"
-export GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gas_service.so"
+1. Declare environment variables:
 
-export GOVERNANCE_PROGRAM_KEYPAIR_PATH="<path/to/governance_program_keypair.json>"
-export GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_governance.so"
+    ```sh
+    export GATEWAY_PROGRAM_KEYPAIR_PATH="<path/to/gateway_program_keypair.json>"
+    export GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gateway.so"
 
-export MULTICALL_PROGRAM_KEYPAIR_PATH="<path/to/multicall_program_keypair.json>"
-export MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_multicall.so"
+    export GAS_SERVICE_PROGRAM_KEYPAIR_PATH="<path/to/gas_service_program_keypair.json>"
+    export GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gas_service.so"
 
-export ITS_PROGRAM_KEYPAIR_PATH="<path/to/its_program_keypair.json>"
-export ITS_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_its.so"
+    export GOVERNANCE_PROGRAM_KEYPAIR_PATH="<path/to/governance_program_keypair.json>"
+    export GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_governance.so"
 
-export UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
-```
+    export MULTICALL_PROGRAM_KEYPAIR_PATH="<path/to/multicall_program_keypair.json>"
+    export MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_multicall.so"
 
-```bash
-source .env
-```
+    export ITS_PROGRAM_KEYPAIR_PATH="<path/to/its_program_keypair.json>"
+    export ITS_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_its.so"
+
+    export UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
+    ```
+
+    ```bash
+    source .env
+    ```
 
 ### Gateway Deployment
 
