@@ -1,7 +1,7 @@
 'use strict';
 
-const { Command, Option } = require('commander');
-const { getContractCodePath, SUPPORTED_CONTRACTS, sanitizeMigrationData } = require('../utils');
+const { Command, Option, Argument } = require('commander');
+const { getContractCodePath, SUPPORTED_CONTRACTS, sanitizeMigrationData, addBaseOptions } = require('../utils');
 const { addStoreOptions } = require('../../common/cli-utils');
 const { mainProcessor, upgrade, upload, deploy } = require('./processors');
 
@@ -22,9 +22,9 @@ const CONTRACT_DEPLOY_OPTIONS = {
         new Option('--token-manager-version <tokenManagerVersion>', 'version for TokenManager contract').makeOptionMandatory(true),
     ],
     InterchainToken: () => [
-        new Option('--name <name>', 'token name (e.g., "Test Token")').makeOptionMandatory(true),
-        new Option('--symbol <symbol>', 'token symbol (e.g., "TEST")').makeOptionMandatory(true),
-        new Option('--decimals <decimals>', 'token decimals (e.g., 7)').makeOptionMandatory(true).argParser(Number),
+        new Argument('<name>', 'token name (e.g., "Test Token")'),
+        new Argument('<symbol>', 'token symbol (e.g., "TEST")'),
+        new Argument('<decimals>', 'token decimals (e.g., 7)').argParser(Number),
     ],
 };
 
@@ -36,44 +36,30 @@ const CONTRACT_UPGRADE_OPTIONS = {
 
 const CONTRACT_UPLOAD_OPTIONS = {};
 
-const addDeployOptions = (command) => {
+const addContractOptions = (command, commandType) => {
+    addBaseOptions(command);
     addStoreOptions(command);
 
     const contractName = command.name();
-    const contractDeployOptions = CONTRACT_DEPLOY_OPTIONS[contractName];
+    const contractOptions = {
+        deploy: CONTRACT_DEPLOY_OPTIONS,
+        upgrade: CONTRACT_UPGRADE_OPTIONS,
+        upload: CONTRACT_UPLOAD_OPTIONS,
+    }[commandType];
 
-    if (contractDeployOptions) {
-        const options = contractDeployOptions();
-        // Add the options to the program
-        options.forEach((option) => command.addOption(option));
-    }
-
-    return command;
-};
-
-const addUpgradeOptions = (command) => {
-    addStoreOptions(command);
-
-    const contractName = command.name();
-    const contractUpgradeOptions = CONTRACT_UPGRADE_OPTIONS[contractName];
-
-    if (contractUpgradeOptions) {
-        const options = contractUpgradeOptions();
-        options.forEach((option) => command.addOption(option));
-    }
-
-    return command;
-};
-
-const addUploadOptions = (command) => {
-    addStoreOptions(command);
-
-    const contractName = command.name();
-    const contractUploadOptions = CONTRACT_UPLOAD_OPTIONS[contractName];
-
-    if (contractUploadOptions) {
-        const options = contractUploadOptions();
-        options.forEach((option) => command.addOption(option));
+    if (contractOptions && contractOptions[contractName]) {
+        const items = contractOptions[contractName]();
+        items.forEach((item) => {
+            if (item instanceof Option) {
+                command.addOption(item);
+            } else if (item instanceof Argument) {
+                command.addArgument(item);
+            } else {
+                throw new Error(
+                    `Invalid item type in contract ${commandType} options for ${contractName}: expected Option or Argument, got ${item?.constructor?.name || typeof item}`,
+                );
+            }
+        });
     }
 
     return command;
@@ -88,51 +74,43 @@ function preActionHook(contractName) {
     };
 }
 
-const getDeployContractCommands = () => {
+const createContractCommands = (commandType, processor, preProcessor = null) => {
+    const descriptions = {
+        deploy: 'Deploy',
+        upgrade: 'Upgrade',
+        upload: 'Upload',
+    };
+
     return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName).description(`Deploy ${contractName} contract`);
+        const command = new Command(contractName).description(`${descriptions[commandType]} ${contractName} contract`);
 
-        addDeployOptions(command);
-
+        addContractOptions(command, commandType);
         command.hook('preAction', preActionHook(contractName));
-        command.action((options) => {
-            mainProcessor(options, deploy, contractName);
+
+        command.action((...actionArgs) => {
+            const cmd = actionArgs.pop();
+            const options = cmd.opts();
+            const args = actionArgs;
+
+            if (preProcessor) {
+                preProcessor(options, contractName);
+            }
+
+            mainProcessor(processor, contractName, args, options);
         });
 
         return command;
     });
 };
 
-const getUpgradeContractCommands = () => {
-    return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName).description(`Upgrade ${contractName} contract`);
+const getDeployContractCommands = () => createContractCommands('deploy', deploy);
 
-        addUpgradeOptions(command);
-
-        command.hook('preAction', preActionHook(contractName));
-        command.action((options) => {
-            options.migrationData = sanitizeMigrationData(options.migrationData, options.version, contractName);
-            mainProcessor(options, upgrade, contractName);
-        });
-
-        return command;
+const getUpgradeContractCommands = () =>
+    createContractCommands('upgrade', upgrade, (options, contractName) => {
+        options.migrationData = sanitizeMigrationData(options.migrationData, options.version, contractName);
     });
-};
 
-const getUploadContractCommands = () => {
-    return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName).description(`Upload ${contractName} contract`);
-
-        addUploadOptions(command);
-
-        command.hook('preAction', preActionHook(contractName));
-        command.action((options) => {
-            mainProcessor(options, upload, contractName);
-        });
-
-        return command;
-    });
-};
+const getUploadContractCommands = () => createContractCommands('upload', upload);
 
 module.exports = {
     getDeployContractCommands,
