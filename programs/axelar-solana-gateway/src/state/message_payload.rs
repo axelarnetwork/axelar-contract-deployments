@@ -82,7 +82,7 @@ impl<'a> RefType<'a> for Mut {
 impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
     /// Prefix bytes
     ///
-    /// 1 byte for the bump plus 32 bytes for the payload hash
+    /// 1 byte for the bump plus 1 byte for committed flag plus 32 bytes for the payload hash
     const HEADER_SIZE: usize = size_of::<u8>() + size_of::<u8>() + size_of::<[u8; 32]>();
 
     /// Adds the header prefix space  the given offset.
