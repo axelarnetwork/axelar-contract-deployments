@@ -35,7 +35,9 @@ use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInterna
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_deploy_approval_pda, event, find_its_root_pda, Validate};
+use crate::{
+    assert_its_not_paused, assert_valid_deploy_approval_pda, event, find_its_root_pda, Validate,
+};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
@@ -158,6 +160,7 @@ pub(crate) fn process_deploy<'a>(
     let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &None)?;
     let deploy_salt = crate::interchain_token_deployer_salt(parsed_accounts.payer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
+
     if initial_supply.is_zero() && parsed_accounts.minter.is_none() {
         return Err(ProgramError::InvalidArgument);
     }
@@ -199,8 +202,9 @@ pub(crate) fn process_inbound_deploy<'a>(
     initial_supply: u64,
 ) -> ProgramResult {
     msg!("Instruction: InboundDeploy");
-    let its_root_pda_bump = InterchainTokenService::load(accounts.its_root_pda)?.bump;
-    assert_valid_its_root_pda(accounts.its_root_pda, its_root_pda_bump)?;
+    let its_config = InterchainTokenService::load(accounts.its_root_pda)?;
+    assert_valid_its_root_pda(accounts.its_root_pda, its_config.bump)?;
+    assert_its_not_paused(&its_config)?;
 
     let (interchain_token_pda, interchain_token_pda_bump) =
         crate::find_interchain_token_pda(accounts.its_root_pda.key, &token_id);
