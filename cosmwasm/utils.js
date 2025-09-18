@@ -36,6 +36,7 @@ const {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
+    printError,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -1084,25 +1085,15 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             const code = error?.cause?.code || error?.code;
             const message = error?.message || '';
 
-            console.error(
-                `[❌ Proposal Submission] attempt ${attempt + 1} failed:`,
-                {
-                    code,
-                    message,
-                    error,
-                },
-                'Retrying execution..... 🔄',
-            );
+            printError(`proposal submission attempt ${attempt + 1} failed (code: ${code})${message ? `: ${message}` : ''}`);
+
+            printInfo('Retrying proposal submission..... 🔄');
 
             // Confirm err is socket error
             const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
             if (!isTransient || attempt === maxAttempts - 1) {
                 throw error;
             }
-
-            // Wait for increased amount of time between retries
-            const delayMs = baseDelayMs * Math.pow(2, attempt);
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
     }
 
