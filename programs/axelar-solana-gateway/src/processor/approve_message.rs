@@ -18,8 +18,9 @@ use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus}
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::GatewayConfig;
 use crate::{
-    assert_valid_incoming_message_pda, assert_valid_signature_verification_pda, event_prefixes,
-    get_incoming_message_pda, get_validate_message_signing_pda, seed_prefixes,
+    assert_valid_gateway_root_pda, assert_valid_incoming_message_pda,
+    assert_valid_signature_verification_pda, event_prefixes, get_incoming_message_pda,
+    get_validate_message_signing_pda, seed_prefixes,
 };
 
 impl Processor {
@@ -69,11 +70,11 @@ impl Processor {
         validate_system_account_key(system_program.key)?;
 
         // Check: Gateway Root PDA is initialized.
-        // No need to check the bump because that would already be implied by a valid `verification_session_account`
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
         let gateway_data = gateway_root_pda.try_borrow_data()?;
         let gateway_config =
             GatewayConfig::read(&gateway_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: Verification session PDA is initialized.
         verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
