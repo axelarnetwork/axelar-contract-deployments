@@ -78,11 +78,8 @@ impl Processor {
             return Err(ProgramError::InvalidSeeds);
         }
 
-        // Close the Buffer PDA account and reclaim its lamports
-        **payer.try_borrow_mut_lamports()? = payer
-            .lamports()
-            .saturating_add(message_payload_account.lamports());
-        **message_payload_account.try_borrow_mut_lamports()? = 0;
+        // Close the Buffer PDA account
+        program_utils::pda::close_pda(payer, message_payload_account, &crate::ID)?;
 
         Ok(())
     }
