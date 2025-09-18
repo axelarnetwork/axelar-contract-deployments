@@ -912,6 +912,17 @@
             "ItsSingleton": "0x7da3422e0915e7cbbde06f5425ebd370d04928e783188f167646790dc6d7d040",
             "ItsChannelId": "0xa6019e0956da874271d21fe37cf123e43f1a55c8720ca50bcdf35212be930c88"
           }
+        },
+        "PR2": {
+          "address": "0x6e2824a136cf621bbfd9abaf911212ebd3e210342224780951af4eb0983152eb",
+          "typeArgument": "0x6e2824a136cf621bbfd9abaf911212ebd3e210342224780951af4eb0983152eb::pr2::PR2",
+          "decimals": "6",
+          "objects": {
+            "TreasuryCap": "0x9356821cb1c1a3e18e3af83c2f3c9e091211ba34f6a4dca3d7f66891e0ecd0bc",
+            "Metadata": "0x9c1fa07fd8781beaeae9e879edc94c00fb7e572fe81f3bccc64a38b14757247e",
+            "TokenId": "0xf60bd3441fb78d141a4cbdd240afa5221a9cd7be1da6267beaa08e928a34d2eb",
+            "origin": true
+          }
         }
       },
       "explorer": {
