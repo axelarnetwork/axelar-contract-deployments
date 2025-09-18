@@ -53,10 +53,11 @@ impl Processor {
     ///
     /// This function will panic if:
     /// * Converting `IncomingMessage::LEN` to u64 overflows.
+    #[allow(clippy::too_many_lines)]
     pub fn process_approve_message(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        message: MerkleisedMessage,
+        merkleised_message: MerkleisedMessage,
         payload_merkle_root: [u8; 32],
     ) -> ProgramResult {
         // Accounts
@@ -98,34 +99,38 @@ impl Processor {
         }
 
         // Check: message signing verifier set matches the verification session verifier set
-        if message.leaf.signing_verifier_set
+        if merkleised_message.leaf.signing_verifier_set
             != session.signature_verification.signing_verifier_set_hash
         {
             return Err(GatewayError::InvalidVerificationSessionPDA.into());
         }
 
         // Check: message domain separator matches the gateway's domain separator
-        if message.leaf.domain_separator != gateway_config.domain_separator {
+        if merkleised_message.leaf.domain_separator != gateway_config.domain_separator {
             return Err(GatewayError::InvalidDomainSeparator.into());
         }
 
-        let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
-        let message_hash = message.leaf.message.hash::<SolanaSyscallHasher>();
-        let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
-            .map_err(|_err| GatewayError::InvalidMerkleProof)?;
+        let leaf_hash = merkleised_message.leaf.hash::<SolanaSyscallHasher>();
+        let message_hash = merkleised_message
+            .leaf
+            .message
+            .hash::<SolanaSyscallHasher>();
+        let proof =
+            rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&merkleised_message.proof)
+                .map_err(|_err| GatewayError::InvalidMerkleProof)?;
 
         // Check: leaf node is part of the payload merkle root
         if !proof.verify(
             payload_merkle_root,
-            &[message.leaf.position.into()],
+            &[merkleised_message.leaf.position.into()],
             &[leaf_hash],
-            message.leaf.set_size.into(),
+            merkleised_message.leaf.set_size.into(),
         ) {
             return Err(GatewayError::LeafNodeNotPartOfMerkleRoot.into());
         }
 
         // crate a PDA where we write the message metadata contents
-        let message = message.leaf.message;
+        let message = merkleised_message.leaf.message;
         let cc_id = message.cc_id;
         let command_id = command_id(&cc_id.chain, &cc_id.id);
 

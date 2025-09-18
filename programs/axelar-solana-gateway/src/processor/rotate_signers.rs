@@ -87,7 +87,7 @@ impl Processor {
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
 
         // New verifier set merkle root can be transformed into the payload hash
-        let payload_merkle_root =
+        let rotate_verifier_set_hash =
             axelar_solana_encoding::types::verifier_set::construct_payload_hash::<
                 SolanaSyscallHasher,
             >(
@@ -98,7 +98,7 @@ impl Processor {
         // Check: Verification PDA can be derived from seeds stored into the account
         // data itself.
         assert_valid_signature_verification_pda(
-            &payload_merkle_root,
+            &rotate_verifier_set_hash,
             session.bump,
             verification_session_account.key,
         )?;
