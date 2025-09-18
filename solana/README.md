@@ -113,9 +113,7 @@ export UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
 ```
 
 ```bash
-set -a
 source .env
-set +a
 ```
 
 ### Gateway Deployment
