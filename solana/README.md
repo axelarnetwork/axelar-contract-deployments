@@ -44,7 +44,7 @@
 1. Devnet funds can be obtained via [this link](https://faucet.solana.com/) or using the Solana CLI:
 
     ```sh
-    solana airdrop 2
+    solana airdrop 5
     ```
 
 ## Deployments
