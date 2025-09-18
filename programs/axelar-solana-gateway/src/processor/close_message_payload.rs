@@ -47,36 +47,40 @@ impl Processor {
         // Check: Message Payload account is initialized
         message_payload_account.check_initialized_pda_without_deserialization(&crate::ID)?;
 
-        // Parse the message payload from the account data
-        let mut account_data = message_payload_account.try_borrow_mut_data()?;
-        let message_payload: MutMessagePayload<'_> = (*account_data).try_into()?;
+        // Scope the account data borrow so it's dropped before calling close_pda
+        {
+            // Parse the message payload from the account data
+            let mut account_data = message_payload_account.try_borrow_mut_data()?;
+            let message_payload: MutMessagePayload<'_> = (*account_data).try_into()?;
 
-        // Check: Incoming Message PDA account is initialized and validate it
-        incoming_message_account.check_initialized_pda_without_deserialization(program_id)?;
-        let incoming_message_data = incoming_message_account.try_borrow_data()?;
-        let incoming_message = IncomingMessage::read(&incoming_message_data).ok_or_else(|| {
-            solana_program::msg!("Error: failed to read incoming message account data");
-            ProgramError::InvalidAccountData
-        })?;
+            // Check: Incoming Message PDA account is initialized and validate it
+            incoming_message_account.check_initialized_pda_without_deserialization(program_id)?;
+            let incoming_message_data = incoming_message_account.try_borrow_data()?;
+            let incoming_message =
+                IncomingMessage::read(&incoming_message_data).ok_or_else(|| {
+                    solana_program::msg!("Error: failed to read incoming message account data");
+                    ProgramError::InvalidAccountData
+                })?;
 
-        // Validate the IncomingMessage PDA using the stored bump
-        crate::assert_valid_incoming_message_pda(
-            &command_id,
-            incoming_message.bump,
-            incoming_message_account.key,
-        )?;
+            // Validate the IncomingMessage PDA using the stored bump
+            crate::assert_valid_incoming_message_pda(
+                &command_id,
+                incoming_message.bump,
+                incoming_message_account.key,
+            )?;
 
-        // Check: Buffer PDA can be derived from provided seeds.
-        let incoming_message_pda = *incoming_message_account.key;
-        let message_payload_pda = crate::create_message_payload_pda(
-            incoming_message_pda,
-            *payer.key,
-            *message_payload.bump,
-        )?;
-        if &message_payload_pda != message_payload_account.key {
-            solana_program::msg!("Error: failed to derive message payload account address");
-            return Err(ProgramError::InvalidSeeds);
-        }
+            // Check: Buffer PDA can be derived from provided seeds.
+            let incoming_message_pda = *incoming_message_account.key;
+            let message_payload_pda = crate::create_message_payload_pda(
+                incoming_message_pda,
+                *payer.key,
+                *message_payload.bump,
+            )?;
+            if &message_payload_pda != message_payload_account.key {
+                solana_program::msg!("Error: failed to derive message payload account address");
+                return Err(ProgramError::InvalidSeeds);
+            }
+        } // Account data borrows are dropped here
 
         // Close the Buffer PDA account
         program_utils::pda::close_pda(payer, message_payload_account, &crate::ID)?;
