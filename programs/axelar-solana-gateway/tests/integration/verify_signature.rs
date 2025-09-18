@@ -537,3 +537,54 @@ async fn test_verify_all_signatures_when_session_pda_has_lamports() {
         "session should be valid after all signatures are verified"
     );
 }
+
+#[tokio::test]
+async fn test_fails_when_verifier_submits_signature_twice() {
+    // Setup
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42])
+        .build()
+        .setup()
+        .await;
+
+    let payload = Payload::Messages(Messages(vec![random_message()]));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+    metadata
+        .initialize_payload_verification_session(&execute_data)
+        .await
+        .unwrap();
+    let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
+    let leaf_info = execute_data.signing_verifier_set_leaves.first().unwrap();
+
+    // Create the verify signature instruction
+    let ix = axelar_solana_gateway::instructions::verify_signature(
+        metadata.gateway_root_pda,
+        verifier_set_tracker_pda,
+        execute_data.payload_merkle_root,
+        leaf_info.clone(),
+    )
+    .unwrap();
+
+    // First signature verification should succeed
+    metadata
+        .send_tx(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
+            ix.clone(),
+        ])
+        .await
+        .unwrap();
+
+    // Second signature verification with the same verifier should fail
+    let tx_result = metadata
+        .send_tx(&[
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
+            ix,
+        ])
+        .await
+        .unwrap_err();
+
+    // Should fail with SlotAlreadyVerified error
+    assert!(tx_result
+        .find_log("Slot has been previously verified")
+        .is_some());
+}
