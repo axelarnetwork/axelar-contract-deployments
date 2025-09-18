@@ -26,7 +26,6 @@ mod transfer_operatorship;
 ///
 /// # Errors
 /// - if the ix processing resulted in an error
-#[allow(clippy::todo)]
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
@@ -46,7 +45,6 @@ pub fn process_instruction(
                 destination_address,
                 payload_hash,
                 gas_fee_amount,
-                params,
                 decimals,
                 refund_address,
             } => process_pay_spl_for_contract_call(
@@ -56,7 +54,6 @@ pub fn process_instruction(
                 destination_address,
                 payload_hash,
                 refund_address,
-                &params,
                 gas_fee_amount,
                 decimals,
             ),
@@ -91,7 +88,6 @@ pub fn process_instruction(
                 destination_address,
                 payload_hash,
                 refund_address,
-                params,
                 gas_fee_amount,
             } => process_pay_native_for_contract_call(
                 program_id,
@@ -100,7 +96,6 @@ pub fn process_instruction(
                 destination_address,
                 payload_hash,
                 refund_address,
-                &params,
                 gas_fee_amount,
             ),
             PayWithNativeToken::AddGas {

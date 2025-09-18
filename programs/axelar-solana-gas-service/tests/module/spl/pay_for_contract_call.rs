@@ -55,7 +55,6 @@ async fn test_pay_spl_for_contract_call(#[case] token_program_id: Pubkey) {
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "0x destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let params = b"hello 123321".to_vec();
 
     // Create the instruction for paying gas fees with SPL tokens
     let ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
@@ -67,7 +66,6 @@ async fn test_pay_spl_for_contract_call(#[case] token_program_id: Pubkey) {
         destination_addr.clone(),
         payload_hash,
         refund_address,
-        params.clone(),
         gas_amount,
         &[],
         decimals,
@@ -113,7 +111,6 @@ async fn test_pay_spl_for_contract_call(#[case] token_program_id: Pubkey) {
             destination_address: destination_addr,
             payload_hash,
             refund_address,
-            params,
             gas_fee_amount: gas_amount
         }
     );
@@ -168,7 +165,6 @@ async fn test_pay_spl_for_contract_call_missing_signer(#[case] token_program_id:
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "0x destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let params = b"hello 123321".to_vec();
 
     let mut ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
         &payer.pubkey(),
@@ -179,7 +175,6 @@ async fn test_pay_spl_for_contract_call_missing_signer(#[case] token_program_id:
         destination_addr,
         payload_hash,
         refund_address,
-        params,
         gas_amount,
         &[],
         decimals,
@@ -255,7 +250,6 @@ async fn test_pay_spl_for_contract_call_invalid_sender_ata_wrong_mint(
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "0x destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let params = b"hello 123321".to_vec();
 
     let ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
         &payer.pubkey(),
@@ -266,7 +260,6 @@ async fn test_pay_spl_for_contract_call_invalid_sender_ata_wrong_mint(
         destination_addr,
         payload_hash,
         refund_address,
-        params,
         gas_amount,
         &[],
         decimals,
@@ -331,7 +324,6 @@ async fn test_pay_spl_for_contract_call_invalid_sender_ata_wrong_owner(
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "0x destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let params = b"hello 123321".to_vec();
 
     let ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
         &payer.pubkey(),  // Payer is the signer
@@ -342,7 +334,6 @@ async fn test_pay_spl_for_contract_call_invalid_sender_ata_wrong_owner(
         destination_addr,
         payload_hash,
         refund_address,
-        params,
         gas_amount,
         &[],
         decimals,
@@ -412,7 +403,6 @@ async fn test_pay_spl_for_contract_call_invalid_config_pda_ata_wrong_mint(
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "0x destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let params = b"hello 123321".to_vec();
 
     // Manually construct the instruction to use wrong config_pda_ata
     let mut ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
@@ -424,7 +414,6 @@ async fn test_pay_spl_for_contract_call_invalid_config_pda_ata_wrong_mint(
         destination_addr,
         payload_hash,
         refund_address,
-        params,
         gas_amount,
         &[],
         decimals,
@@ -492,7 +481,6 @@ async fn test_pay_spl_for_contract_call_invalid_config_pda_ata_wrong_owner(
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "0x destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let params = b"hello 123321".to_vec();
 
     let mut ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
         &payer.pubkey(),
@@ -503,7 +491,6 @@ async fn test_pay_spl_for_contract_call_invalid_config_pda_ata_wrong_owner(
         destination_addr,
         payload_hash,
         refund_address,
-        params,
         gas_amount,
         &[],
         decimals,

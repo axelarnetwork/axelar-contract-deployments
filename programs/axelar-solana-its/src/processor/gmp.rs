@@ -246,7 +246,6 @@ fn pay_gas<'a>(
             its_hub_address,
             payload_hash,
             *payer.key,
-            vec![],
             gas_value,
         )?;
 
