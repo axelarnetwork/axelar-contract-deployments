@@ -59,7 +59,7 @@ getting the current Solana devnet governance address:
 
 1. **Build the updated binaries**
 
-    In the [programs repository](https://github.com/eigerco/axelar-amplifier-solana) root, build only the programs you need to upgrade.
+    In the [programs repository](https://github.com/axelarnetwork/axelar-amplifier-solana) root, build only the programs you need to upgrade.
 
    ```bash
     solana-verify build --base-image $BASE_IMAGE --library-name <library_name> -- --no-default-features --features $ENV
@@ -111,7 +111,7 @@ Verification is **only possible in mainnet**. If deploying for test environments
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE \
   --commit-hash $COMMIT_HASH \
   --program-id $PROGRAM_ID \
-  https://github.com/eigerco/axelar-amplifier-solana \
+  https://github.com/axelarnetwork/axelar-amplifier-solana \
   -- --no-default-features --features $ENV
 ```
 

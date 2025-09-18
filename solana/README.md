@@ -134,7 +134,7 @@ Deploy and verify the gas service program (note that verification will only work
 ```sh
 solana program deploy --program-id $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GAS_SERVICE_PROGRAM_PATH
 
-solana-verify verify-from-repo https://github.com/eigerco/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_gas_service
+solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_gas_service
 ```
 
 ### Governance Deployment
@@ -144,7 +144,7 @@ Deploy and verify the governance program (note that verification will only work 
 ```sh
 solana program deploy --program-id $GOVERNANCE_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GOVERNANCE_PROGRAM_PATH
 
-solana-verify verify-from-repo https://github.com/eigerco/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_governance
+solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_governance
 ```
 
 ### Multicall Deployment
@@ -154,7 +154,7 @@ Deploy and verify the multicall program (note that verification will only work o
 ```sh
 solana program deploy --program-id $MULTICALL_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $MULTICALL_PROGRAM_PATH
 
-solana-verify verify-from-repo https://github.com/eigerco/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_multicall
+solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_multicall
 ```
 
 ### Interchain Token Service Deployment
@@ -164,7 +164,7 @@ Deploy and verify the ITS program (note that verification will only work on main
 ```sh
 solana program deploy --program-id $ITS_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $ITS_PROGRAM_PATH
 
-solana-verify verify-from-repo https://github.com/eigerco/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_its
+solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_its
 ```
 
 ## Upgrades
