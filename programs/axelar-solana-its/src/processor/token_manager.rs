@@ -2,8 +2,8 @@
 
 use event_utils::Event as _;
 use program_utils::{
-    pda::{BorshPda, ValidPDA},
-    validate_rent_key, validate_spl_associated_token_account_key, validate_system_account_key,
+    pda::BorshPda, validate_rent_key, validate_spl_associated_token_account_key,
+    validate_system_account_key,
 };
 use role_management::processor::{
     ensure_roles, RoleAddAccounts, RoleRemoveAccounts, RoleTransferWithProposalAccounts,
@@ -11,12 +11,12 @@ use role_management::processor::{
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::check_spl_token_program_account;
 use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
@@ -41,6 +41,12 @@ pub(crate) fn set_flow_limit<'a>(
     )?;
 
     let mut token_manager = TokenManager::load(accounts.token_manager_pda)?;
+    assert_valid_token_manager_pda(
+        accounts.token_manager_pda,
+        accounts.its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
     token_manager.flow_slot.flow_limit = flow_limit;
     token_manager.store(
         accounts.payer,
@@ -84,17 +90,15 @@ impl DeployTokenManagerInternal {
 /// An error occurred when deploying the [`TokenManager`] PDA. The reason can be
 /// derived from the logs.
 pub(crate) fn deploy<'a>(
-    payer: &'a AccountInfo<'a>,
     accounts: &DeployTokenManagerAccounts<'a>,
     deploy_token_manager: &DeployTokenManagerInternal,
     token_manager_pda_bump: u8,
 ) -> ProgramResult {
     msg!("Instruction: TM Deploy");
-    check_accounts(accounts)?;
     validate_mint_extensions(deploy_token_manager.manager_type, accounts.token_mint)?;
 
     crate::create_associated_token_account_idempotent(
-        payer,
+        accounts.payer,
         accounts.token_mint,
         accounts.token_manager_ata,
         accounts.token_manager_pda,
@@ -122,7 +126,7 @@ pub(crate) fn deploy<'a>(
         }
 
         setup_roles(
-            payer,
+            accounts.payer,
             accounts.token_manager_pda,
             operator.key,
             operator_roles_pda,
@@ -132,7 +136,7 @@ pub(crate) fn deploy<'a>(
     }
 
     setup_roles(
-        payer,
+        accounts.payer,
         accounts.token_manager_pda,
         accounts.its_root_pda.key,
         accounts.its_roles_pda,
@@ -150,7 +154,7 @@ pub(crate) fn deploy<'a>(
     token_manager.init(
         &crate::id(),
         accounts.system_account,
-        payer,
+        accounts.payer,
         accounts.token_manager_pda,
         &[
             seed_prefixes::TOKEN_MANAGER_SEED,
@@ -207,39 +211,6 @@ fn setup_roles<'a>(
                 &[user_roles_pda_bump],
             ],
         )?;
-    }
-
-    Ok(())
-}
-
-fn check_accounts(accounts: &DeployTokenManagerAccounts<'_>) -> ProgramResult {
-    if !system_program::check_id(accounts.system_account.key) {
-        msg!("Invalid system account provided");
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
-    if accounts
-        .token_manager_pda
-        .check_uninitialized_pda()
-        .is_err()
-    {
-        msg!("TokenManager PDA is already initialized");
-        return Err(ProgramError::AccountAlreadyInitialized);
-    }
-
-    if spl_token_2022::check_spl_token_program_account(accounts.token_mint.owner).is_err() {
-        msg!("Invalid token mint account provided");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    if accounts.token_program.key != accounts.token_mint.owner {
-        msg!("Mint and program account mismatch");
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
-    if !spl_associated_token_account::check_id(accounts.ata_program.key) {
-        msg!("Invalid associated token account program provided");
-        return Err(ProgramError::IncorrectProgramId);
     }
 
     Ok(())
@@ -311,8 +282,15 @@ pub(crate) fn handover_mint_authority(
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
-    validate_system_account_key(system_account.key)?;
     msg!("Instruction: HandoverMintAuthority");
+
+    validate_system_account_key(system_account.key)?;
+    spl_token_2022::check_spl_token_program_account(token_program.key)?;
+
+    if !payer.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
 
@@ -323,6 +301,10 @@ pub(crate) fn handover_mint_authority(
         &token_id,
         token_manager_config.bump,
     )?;
+
+    if token_program.key != mint.owner {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     if token_manager_config.token_address != *mint.key {
         msg!("TokenManager PDA does not match the provided Mint account");
@@ -379,6 +361,7 @@ pub(crate) fn handover_mint_authority(
 
 #[derive(Debug)]
 pub(crate) struct DeployTokenManagerAccounts<'a> {
+    pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -398,6 +381,16 @@ impl Validate for DeployTokenManagerAccounts<'_> {
         check_spl_token_program_account(self.token_program.key)?;
         validate_spl_associated_token_account_key(self.ata_program.key)?;
         validate_rent_key(self.rent_sysvar.key)?;
+
+        if !self.payer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        if self.token_program.key != self.token_mint.owner {
+            msg!("Mint and program account mismatch");
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
         if &get_associated_token_address_with_program_id(
             self.token_manager_pda.key,
             self.token_mint.key,
@@ -412,18 +405,24 @@ impl Validate for DeployTokenManagerAccounts<'_> {
 }
 
 impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
-    type Context = ();
+    type Context = Option<&'a AccountInfo<'a>>;
 
     fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
-        _context: &Self::Context,
+        maybe_payer: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
         Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
+        let payer = if let Some(payer) = maybe_payer {
+            payer
+        } else {
+            next_account_info(accounts_iter)?
+        };
 
         Ok(Self {
+            payer,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -486,6 +485,7 @@ impl Validate for SetFlowLimitAccounts<'_> {
 
         let its_config_account = InterchainTokenService::load(self.its_root_pda)?;
         assert_valid_its_root_pda(self.its_root_pda, its_config_account.bump)?;
+
         Ok(())
     }
 }
@@ -502,6 +502,7 @@ pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> P
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
 
+    validate_system_account_key(system_account.key)?;
     let its_config = InterchainTokenService::load(its_config_account)?;
     assert_valid_its_root_pda(its_config_account, its_config.bump)?;
     if resource.key == its_config_account.key {
@@ -509,8 +510,13 @@ pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> P
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Ensure resource is a `TokenManager`
-    TokenManager::load(resource)?;
+    let token_manager = TokenManager::load(resource)?;
+    assert_valid_token_manager_pda(
+        resource,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
 
     let role_management_accounts = RoleAddAccounts {
         system_account,
@@ -541,6 +547,7 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
     let origin_user_account = next_account_info(accounts_iter)?;
     let origin_roles_account = next_account_info(accounts_iter)?;
 
+    validate_system_account_key(system_account.key)?;
     let its_config = InterchainTokenService::load(its_config_account)?;
     assert_valid_its_root_pda(its_config_account, its_config.bump)?;
     if resource.key == its_config_account.key {
@@ -548,8 +555,13 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Ensure resource is a `TokenManager`
-    TokenManager::load(resource)?;
+    let token_manager = TokenManager::load(resource)?;
+    assert_valid_token_manager_pda(
+        resource,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
 
     let role_management_accounts = RoleRemoveAccounts {
         system_account,
@@ -593,6 +605,8 @@ pub(crate) fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>])
     let token_manager_account = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
 
     if payer.key == destination_user_account.key {
         msg!("Source and destination accounts are the same");
@@ -655,6 +669,8 @@ pub(crate) fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) 
     let destination_roles_account = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
 
+    validate_system_account_key(system_account.key)?;
+
     let role_management_accounts = RoleTransferWithProposalAccounts {
         system_account,
         payer,
@@ -692,6 +708,8 @@ pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -
     let origin_user_account = next_account_info(accounts_iter)?;
     let origin_roles_account = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
 
     if payer.key == origin_user_account.key {
         msg!("Source and destination accounts are the same");

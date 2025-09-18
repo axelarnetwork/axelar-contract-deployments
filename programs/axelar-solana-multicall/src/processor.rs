@@ -43,7 +43,7 @@ impl Processor {
             let (protocol_accounts, target_programs_accounts) =
                 accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
             let message_payload_account = protocol_accounts
-                .get(1)
+                .get(2)
                 .ok_or(ProgramError::NotEnoughAccountKeys)?;
             let account_data = message_payload_account.try_borrow_data()?;
             let message_payload: ImmutMessagePayload<'_> = (**account_data).try_into()?;

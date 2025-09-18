@@ -95,7 +95,7 @@ pub fn process_message_from_axelar(
 
     // Access the payload from the MessagePayload account.
     // It should be considered safe otherwise `validate_message` would have reverted.
-    let message_payload_account = &protocol_accounts[1];
+    let message_payload_account = &protocol_accounts[2];
     let account_data = message_payload_account.try_borrow_data()?;
     let message_payload: ImmutMessagePayload<'_> = (**account_data).try_into()?;
     let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;

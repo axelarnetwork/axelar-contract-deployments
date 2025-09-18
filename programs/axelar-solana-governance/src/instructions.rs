@@ -1103,6 +1103,7 @@ pub mod builder {
 
         prepend_gateway_accounts_to_ix(
             &mut ix,
+            payer,
             gateway_incoming_message_pda,
             gateway_message_payload_pda,
             message,
@@ -1116,6 +1117,7 @@ pub mod builder {
     /// message verification in GMP flows.
     pub fn prepend_gateway_accounts_to_ix(
         ix: &mut Instruction,
+        payer: Pubkey,
         gw_incoming_message: Pubkey,
         gw_message_payload: Pubkey,
         message: &Message,
@@ -1125,6 +1127,7 @@ pub mod builder {
             axelar_solana_gateway::get_validate_message_signing_pda(crate::id(), command_id);
 
         let mut new_accounts = vec![
+            AccountMeta::new_readonly(payer, false),
             AccountMeta::new(gw_incoming_message, false),
             AccountMeta::new_readonly(gw_message_payload, false),
             AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),

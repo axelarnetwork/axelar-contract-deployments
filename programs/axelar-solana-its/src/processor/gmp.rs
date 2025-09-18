@@ -27,15 +27,12 @@ pub(crate) fn process_inbound<'a>(
     accounts: &'a [AccountInfo<'a>],
     message: Message,
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-
-    let (gateway_accounts, instruction_accounts) = accounts_iter
-        .as_slice()
-        .split_at(PROGRAM_ACCOUNTS_START_INDEX);
+    let (gateway_accounts, instruction_accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
     validate_with_gmp_metadata(gateway_accounts, &message)?;
 
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
     let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
     let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
@@ -84,10 +81,12 @@ pub(crate) fn process_inbound<'a>(
             inner.source_chain,
         ),
         GMPPayload::DeployInterchainToken(deploy) => {
-            let parsed_accounts =
-                DeployInterchainTokenAccounts::from_account_info_slice(instruction_accounts, &())?;
+            let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(
+                instruction_accounts,
+                &Some(payer),
+            )?;
+
             interchain_token::process_inbound_deploy(
-                payer,
                 parsed_accounts,
                 deploy.token_id.0,
                 deploy.name,
@@ -108,7 +107,7 @@ pub(crate) fn process_inbound<'a>(
 #[derive(Debug)]
 pub(crate) struct GmpAccounts<'a> {
     pub(crate) gateway_root_account: &'a AccountInfo<'a>,
-    pub(crate) _gateway_program_id: &'a AccountInfo<'a>,
+    pub(crate) gateway_program_id: &'a AccountInfo<'a>,
     pub(crate) gas_service_config_account: &'a AccountInfo<'a>,
     pub(crate) _gas_service: &'a AccountInfo<'a>,
     pub(crate) system_program: &'a AccountInfo<'a>,
@@ -120,6 +119,8 @@ pub(crate) struct GmpAccounts<'a> {
 impl Validate for GmpAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_program.key)?;
+        axelar_solana_gateway::check_program_account(*self.gateway_program_id.key)?;
+
         Ok(())
     }
 }
@@ -138,7 +139,7 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
 
         Ok(Self {
             gateway_root_account: next_account_info(accounts_iter)?,
-            _gateway_program_id: next_account_info(accounts_iter)?,
+            gateway_program_id: next_account_info(accounts_iter)?,
             gas_service_config_account: next_account_info(accounts_iter)?,
             _gas_service: next_account_info(accounts_iter)?,
             system_program: next_account_info(accounts_iter)?,

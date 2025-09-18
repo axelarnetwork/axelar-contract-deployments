@@ -579,6 +579,32 @@ pub(crate) fn initiate_interchain_execute_pda_if_empty<'a>(
     Ok(())
 }
 
+/// Asserts the given ATA is associated with the given token program, mint and wallet
+///
+/// # Errors
+///
+/// If the ATA does not match address derived from mint, owner, and token program.
+pub fn assert_valid_ata(
+    ata: &Pubkey,
+    token_program: &Pubkey,
+    mint: &Pubkey,
+    owner: &Pubkey,
+) -> ProgramResult {
+    let associated_account_address =
+        spl_associated_token_account::get_associated_token_address_with_program_id(
+            owner,
+            mint,
+            token_program,
+        );
+
+    if *ata != associated_account_address {
+        msg!("Invalid Associated Token Account");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    Ok(())
+}
+
 /// Creates an associated token account for the given program address and token
 /// mint, if it doesn't already exist. If it exists, it ensures the wallet is the owner of the
 /// given ATA.

@@ -13,9 +13,9 @@ use role_management::processor::{
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::{msg, system_program};
 use token_manager::{handover_mint_authority, SetFlowLimitAccounts};
 
 use crate::instruction::InterchainTokenServiceInstruction;
@@ -273,11 +273,10 @@ fn process_initialize(
     let operator = next_account_info(account_info_iter)?;
     let user_roles_account = next_account_info(account_info_iter)?;
 
-    // Check: System Program Account
-    if !system_program::check_id(system_account.key) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
     msg!("Instruction: Initialize");
+
+    // Check: System Program Account
+    validate_system_account_key(system_account.key)?;
 
     // Check: Upgrade Authority
     ensure_upgrade_authority(program_id, payer, program_data_account)?;
@@ -286,6 +285,10 @@ fn process_initialize(
     its_root_pda_account.check_uninitialized_pda()?;
 
     let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda();
+    if its_root_pda != *its_root_pda_account.key {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let its_root_config =
         InterchainTokenService::new(its_root_pda_bump, chain_name, its_hub_address);
     its_root_config.init(
@@ -296,8 +299,12 @@ fn process_initialize(
         &[crate::seed_prefixes::ITS_SEED, &[its_root_pda_bump]],
     )?;
 
-    let (_user_roles_pda, user_roles_pda_bump) =
+    let (user_roles_pda, user_roles_pda_bump) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, operator.key);
+    if user_roles_pda != *user_roles_account.key {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let operator_user_roles = UserRoles::new(Roles::OPERATOR, user_roles_pda_bump);
     let signer_seeds = &[
         role_management::seed_prefixes::USER_ROLES_SEED,
@@ -326,6 +333,8 @@ fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> Program
     let resource = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
 
     if payer.key == destination_user_account.key {
         msg!("Source and destination accounts are the same");
@@ -383,6 +392,8 @@ fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramR
 
     msg!("Instruction: ProposeOperatorship");
 
+    validate_system_account_key(system_account.key)?;
+
     let its_config = InterchainTokenService::load(resource)?;
     assert_valid_its_root_pda(resource, its_config.bump)?;
 
@@ -412,6 +423,8 @@ fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramRe
     let proposal_account = next_account_info(accounts_iter)?;
 
     msg!("Instruction: AcceptOperatorship");
+
+    validate_system_account_key(system_account.key)?;
 
     let role_management_accounts = RoleTransferWithProposalAccounts {
         system_account,

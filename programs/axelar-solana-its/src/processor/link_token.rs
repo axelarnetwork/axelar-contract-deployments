@@ -52,7 +52,8 @@ pub(crate) fn process_inbound<'a>(
         None,
     );
 
-    let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(accounts, &())?;
+    let parsed_accounts =
+        DeployTokenManagerAccounts::from_account_info_slice(accounts, &Some(payer))?;
     let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
 
     assert_valid_its_root_pda(parsed_accounts.its_root_pda, its_root_pda_bump)?;
@@ -61,7 +62,6 @@ pub(crate) fn process_inbound<'a>(
         crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, payload.token_id.as_ref());
 
     crate::processor::token_manager::deploy(
-        payer,
         &parsed_accounts,
         &deploy_token_manager,
         token_manager_pda_bump,
@@ -241,12 +241,16 @@ fn register_token<'a>(
 
     let (registration_accounts, deploy_token_manager_accounts) =
         accounts.split_at(DEPLOY_TOKEN_MANAGER_ACCOUNTS_IDX);
-    let parsed_accounts =
-        DeployTokenManagerAccounts::from_account_info_slice(deploy_token_manager_accounts, &())?;
+
     let (payer, metadata_account) = registration_accounts
         .split_first()
         .ok_or(ProgramError::NotEnoughAccountKeys)?;
+
     let maybe_metadata_account = metadata_account.first();
+    let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(
+        deploy_token_manager_accounts,
+        &Some(payer),
+    )?;
 
     msg!("Instruction: RegisterToken");
 
@@ -295,6 +299,12 @@ fn register_token<'a>(
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
     let (_, token_manager_pda_bump) =
         crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, &token_id);
+    crate::assert_valid_token_manager_pda(
+        parsed_accounts.token_manager_pda,
+        parsed_accounts.its_root_pda.key,
+        &token_id,
+        token_manager_pda_bump,
+    )?;
 
     event::InterchainTokenIdClaimed {
         token_id,
@@ -312,7 +322,6 @@ fn register_token<'a>(
     );
 
     crate::processor::token_manager::deploy(
-        payer,
         &parsed_accounts,
         &deploy_token_manager,
         token_manager_pda_bump,

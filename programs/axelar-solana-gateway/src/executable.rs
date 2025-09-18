@@ -3,7 +3,7 @@
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage};
 use crate::state::message_payload::ImmutMessagePayload;
-use crate::{get_validate_message_signing_pda, BytemuckedPda};
+use crate::{create_message_payload_pda, get_validate_message_signing_pda, BytemuckedPda};
 use axelar_solana_encoding::types::messages::Message;
 use core::str::FromStr;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -24,7 +24,7 @@ pub const AXELAR_EXECUTE: &[u8; 16] = b"axelar-execute__";
 
 /// The index of the first account that is expected to be passed to the
 /// destination program.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 4;
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
 
 /// Perform CPI call to the Axelar Gateway to ensure that the given message is
 /// approved.
@@ -48,11 +48,12 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
     let (relayer_prepended_accs, origin_chain_provided_accs) =
         accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
     let accounts_iter = &mut relayer_prepended_accs.iter();
+    let message_payload_payer = next_account_info(accounts_iter)?;
+    let incoming_message_pda = next_account_info(accounts_iter)?;
 
     let incoming_message_payload_hash;
     let signing_pda_bump = {
         // scope to drop the account borrow after reading the data we want
-        let incoming_message_pda = next_account_info(accounts_iter)?;
 
         // Check: Incoming Message account is owned by the Gateway
         if incoming_message_pda.owner != &crate::ID {
@@ -75,6 +76,15 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
     // Read the raw payload from the MessagePayload PDA account
     let message_payload_account_data = message_payload_account.try_borrow_data()?;
     let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
+    let message_payload_pda = create_message_payload_pda(
+        *incoming_message_pda.key,
+        *message_payload_payer.key,
+        *message_payload.bump,
+    )?;
+
+    if message_payload_pda != *message_payload_account.key {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     // Check: MessagePayload PDA is finalized
     if !message_payload.committed() {
@@ -130,9 +140,11 @@ pub fn validate_with_gmp_metadata(
     message: &Message,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
+    let message_payload_payer = next_account_info(accounts_iter)?;
+    let incoming_message_pda = next_account_info(accounts_iter)?;
+
     let signing_pda_bump = {
         // scope to release the account after reading the data we want
-        let incoming_message_pda = next_account_info(accounts_iter)?;
         let incoming_message_data = incoming_message_pda.try_borrow_data()?;
         let incoming_message = IncomingMessage::read(&incoming_message_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
@@ -148,6 +160,16 @@ pub fn validate_with_gmp_metadata(
     // Read the raw payload from the MessagePayload PDA account
     let message_payload_account_data = message_payload_account.try_borrow_data()?;
     let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
+
+    let message_payload_pda = create_message_payload_pda(
+        *incoming_message_pda.key,
+        *message_payload_payer.key,
+        *message_payload.bump,
+    )?;
+
+    if message_payload_pda != *message_payload_account.key {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     // Check: MessagePayload PDA is finalized
     if !message_payload.committed() {
@@ -176,6 +198,7 @@ fn validate_message_internal(
     signing_pda_derived_bump: u8,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
+    let _message_payload_payer = next_account_info(account_info_iter)?;
     let gateway_incoming_message = next_account_info(account_info_iter)?;
     let _message_payload_pda = next_account_info(account_info_iter)?; // skip this one, we don't need it
     let signing_pda = next_account_info(account_info_iter)?;
@@ -223,6 +246,7 @@ fn validate_message_internal(
 /// - if the `axelar_message_payload` could not be decoded
 /// - if we cannot encode the `AxelarExecutablePayload`
 pub fn construct_axelar_executable_ix(
+    message_payload_payer: Pubkey, // Used to derive the message payload PDA
     message: &Message,
     // The payload of the incoming message, contains encoded accounts and the actual payload
     axelar_message_payload: &[u8],
@@ -239,8 +263,9 @@ pub fn construct_axelar_executable_ix(
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let (signing_pda, _) = get_validate_message_signing_pda(destination_address, command_id);
 
+    // The expected accounts for the `ValidateMessage` ix
     let mut accounts = vec![
-        // The expected accounts for the `ValidateMessage` ix
+        AccountMeta::new_readonly(message_payload_payer, false),
         AccountMeta::new(gateway_incoming_message, false),
         AccountMeta::new_readonly(gateway_message_payload, false),
         AccountMeta::new_readonly(signing_pda, false),

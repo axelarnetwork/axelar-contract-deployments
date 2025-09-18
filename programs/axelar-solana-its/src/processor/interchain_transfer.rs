@@ -702,6 +702,15 @@ pub(crate) struct TakeTokenAccounts<'a> {
 impl Validate for TakeTokenAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_account.key)?;
+        spl_token_2022::check_spl_token_program_account(self.token_program.key)?;
+
+        if !self.payer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        if self.token_mint.owner != self.token_program.key {
+            return Err(ProgramError::InvalidAccountData);
+        }
         Ok(())
     }
 }
@@ -756,6 +765,12 @@ impl Validate for GiveTokenAccounts<'_> {
         validate_system_account_key(self.system_account.key)?;
         validate_spl_associated_token_account_key(self.ata_program.key)?;
         validate_rent_key(self.rent_sysvar.key)?;
+        spl_token_2022::check_spl_token_program_account(self.token_program.key)?;
+
+        if self.token_mint.owner != self.token_program.key {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         Ok(())
     }
 }

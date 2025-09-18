@@ -48,7 +48,7 @@ pub use schedule_time_lock_proposal::ScheduleTimeLockProposalMeta;
 
 /// The index of the first account that is expected to be passed to the
 /// destination program.
-pub const PROGRAM_ACCOUNTS_SPLIT_AT: usize = 4;
+pub const PROGRAM_ACCOUNTS_SPLIT_AT: usize = 5;
 
 /// The index of the root PDA account in the accounts slice.
 const ROOT_PDA_ACCOUNT_INDEX: usize = 1;
@@ -117,6 +117,7 @@ impl ProcessGMPContext {
         ensure_authorized_gmp_command(&governance_config, message)?;
 
         let gw_accounts_iter = &mut gw_accounts.iter();
+        let _message_payload_payer = next_account_info(gw_accounts_iter)?;
         let _gateway_approved_message_pda = next_account_info(gw_accounts_iter)?;
         let payload_account = next_account_info(gw_accounts_iter)?;
 

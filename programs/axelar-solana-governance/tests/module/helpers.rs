@@ -235,6 +235,7 @@ pub(crate) async fn approve_ix_at_gateway(
 
     prepend_gateway_accounts_to_ix(
         &mut gmp_build.ix,
+        sol_integration.fixture.payer.pubkey(),
         incoming_message_pda,
         message_payload_pda,
         &gmp_build.msg_meta,
