@@ -1285,6 +1285,17 @@
             }
           ],
           "saltAddress": "0x52cc10727e79b08980670d7a12ca698342d4c855543d735a86088fdc41dd011c"
+        },
+        "TST3": {
+          "address": "0x94508f07565e2898962cf7f8a6c349debc3e09aa41213af6362e7cdc739b1c11",
+          "typeArgument": "0x94508f07565e2898962cf7f8a6c349debc3e09aa41213af6362e7cdc739b1c11::tst3::TST3",
+          "decimals": "6",
+          "objects": {
+            "TreasuryCap": "0x8866daf527f030ce2a5b8c5411222fdedfcedb39f5160ff69d9722d40743ddf6",
+            "Metadata": "0x855349e31b36622d0bb208dec31b976df8508573f72f2aa303c6200a37da0849",
+            "TokenId": "0x4562e7afd42a5b49de30823a5fdda08dd09d575537a6a6af200703557031d936",
+            "origin": true
+          }
         }
       },
       "explorer": {
