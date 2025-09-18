@@ -28,9 +28,9 @@ use crate::state::InterchainTokenService;
 use crate::{assert_valid_its_root_pda, event, Validate};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
 
-pub(crate) fn set_flow_limit(
-    accounts: &SetFlowLimitAccounts<'_>,
-    flow_limit: u64,
+pub(crate) fn set_flow_limit<'a>(
+    accounts: &SetFlowLimitAccounts<'a>,
+    flow_limit: Option<u64>,
 ) -> ProgramResult {
     ensure_roles(
         &crate::id(),
@@ -43,7 +43,7 @@ pub(crate) fn set_flow_limit(
     let mut token_manager = TokenManager::load(accounts.token_manager_pda)?;
     token_manager.flow_slot.flow_limit = flow_limit;
     token_manager.store(
-        accounts.flow_limiter,
+        accounts.payer,
         accounts.token_manager_pda,
         accounts.system_account,
     )?;
@@ -441,6 +441,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
 
 #[derive(Debug)]
 pub(crate) struct SetFlowLimitAccounts<'a> {
+    pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) flow_limiter: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -450,20 +451,27 @@ pub(crate) struct SetFlowLimitAccounts<'a> {
 }
 
 impl<'a> FromAccountInfoSlice<'a> for SetFlowLimitAccounts<'a> {
-    type Context = ();
+    type Context = bool;
 
     fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
-        _context: &Self::Context,
+        is_flow_limiter_its: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
         Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
+        let payer = next_account_info(accounts_iter)?;
+        let its_root_pda = next_account_info(accounts_iter)?;
 
         Ok(Self {
-            flow_limiter: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
+            payer,
+            flow_limiter: if *is_flow_limiter_its {
+                its_root_pda
+            } else {
+                payer
+            },
+            its_root_pda,
             token_manager_pda: next_account_info(accounts_iter)?,
             its_user_roles_pda: next_account_info(accounts_iter)?,
             token_manager_user_roles_pda: next_account_info(accounts_iter)?,
@@ -562,11 +570,11 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
 
 pub(crate) fn process_set_flow_limit<'a>(
     accounts: &'a [AccountInfo<'a>],
-    flow_limit: u64,
+    flow_limit: Option<u64>,
 ) -> ProgramResult {
     msg!("Instruction: SetTokenManagerFlowLimit");
 
-    let instruction_accounts = SetFlowLimitAccounts::from_account_info_slice(accounts, &())?;
+    let instruction_accounts = SetFlowLimitAccounts::from_account_info_slice(accounts, &false)?;
     if !instruction_accounts.flow_limiter.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }

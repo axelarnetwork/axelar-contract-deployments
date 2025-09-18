@@ -432,7 +432,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 4. [writable] The account holding the roles of the payer on the `TokenManager`
     SetFlowLimit {
         /// The new flow limit.
-        flow_limit: u64,
+        flow_limit: Option<u64>,
     },
 
     /// Transfers operatorship to another account.
@@ -506,7 +506,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 4. [] The PDA account with the user roles on ITS.
     SetTokenManagerFlowLimit {
         /// The new flow limit.
-        flow_limit: u64,
+        flow_limit: Option<u64>,
     },
 
     /// Transfers operatorship to another account.
@@ -1472,7 +1472,7 @@ pub fn call_contract_with_interchain_token(
 pub fn set_flow_limit(
     payer: Pubkey,
     token_id: [u8; 32],
-    flow_limit: u64,
+    flow_limit: Option<u64>,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
@@ -1484,7 +1484,7 @@ pub fn set_flow_limit(
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetFlowLimit { flow_limit })?;
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(its_user_roles_pda, false),

@@ -182,19 +182,18 @@ pub fn process_instruction<'a>(
             signing_pda_bump,
         ),
         InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
-            let mut instruction_accounts =
-                SetFlowLimitAccounts::from_account_info_slice(accounts, &())?;
+            let instruction_accounts =
+                SetFlowLimitAccounts::from_account_info_slice(accounts, &true)?;
 
             msg!("Instruction: SetFlowLimit");
             ensure_signer_roles(
                 &crate::id(),
                 instruction_accounts.its_root_pda,
-                instruction_accounts.flow_limiter,
+                instruction_accounts.payer,
                 instruction_accounts.its_user_roles_pda,
                 Roles::OPERATOR,
             )?;
 
-            instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
             token_manager::set_flow_limit(&instruction_accounts, flow_limit)
         }
         InterchainTokenServiceInstruction::TransferOperatorship => {

@@ -287,10 +287,12 @@ where
             let lamports_needed = Rent::get()?.minimum_balance(serialized_data.len());
             let lamports_diff = lamports_needed.saturating_sub(destination.lamports());
 
-            invoke(
-                &system_instruction::transfer(payer.key, destination.key, lamports_diff),
-                &[payer.clone(), destination.clone(), system_program.clone()],
-            )?;
+            if lamports_diff > 0 {
+                invoke(
+                    &system_instruction::transfer(payer.key, destination.key, lamports_diff),
+                    &[payer.clone(), destination.clone(), system_program.clone()],
+                )?;
+            }
         }
 
         destination.realloc(serialized_data.len(), false)?;

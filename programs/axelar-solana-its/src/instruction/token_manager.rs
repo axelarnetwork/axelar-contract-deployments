@@ -17,7 +17,7 @@ use super::InterchainTokenServiceInstruction;
 pub fn set_flow_limit(
     payer: Pubkey,
     token_id: [u8; 32],
-    flow_limit: u64,
+    flow_limit: Option<u64>,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
@@ -29,7 +29,7 @@ pub fn set_flow_limit(
     let data = to_vec(&InterchainTokenServiceInstruction::SetTokenManagerFlowLimit { flow_limit })?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(token_manager_user_roles_pda, false),

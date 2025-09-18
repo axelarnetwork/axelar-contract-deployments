@@ -171,7 +171,7 @@ impl TokenManager {
             token_id,
             token_address,
             associated_token_account,
-            flow_slot: FlowState::new(0, 0),
+            flow_slot: FlowState::new(None, 0),
             bump,
         }
     }
