@@ -23,7 +23,7 @@ use crate::{
 };
 use crate::{instruction, FromAccountInfoSlice};
 
-pub(crate) fn process_inbound<'a>(
+pub(crate) fn process_execute<'a>(
     accounts: &'a [AccountInfo<'a>],
     message: Message,
 ) -> ProgramResult {

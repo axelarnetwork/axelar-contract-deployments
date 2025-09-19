@@ -60,7 +60,7 @@ use axelar_solana_gateway_test_fixtures::gateway::{
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
-use axelar_solana_its::instruction::ItsGmpInstructionInputs;
+use axelar_solana_its::instruction::ExecuteInstructionInputs;
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ethers::abi::Detokenize;
 use evm_contracts_test_suite::ethers::contract::{ContractCall, EthLogDecode, Event as EvmEvent};
@@ -180,7 +180,7 @@ impl ItsTestContext {
             .unwrap()
             .clone();
 
-        let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        let its_ix_inputs = ExecuteInstructionInputs::builder()
             .payer(self.solana_chain.fixture.payer.pubkey())
             .incoming_message_pda(incoming_message_pda)
             .message_payload_pda(message_payload_pda)
@@ -190,7 +190,7 @@ impl ItsTestContext {
             .mint_opt(maybe_mint)
             .build();
 
-        let instruction = axelar_solana_its::instruction::its_gmp_payload(its_ix_inputs)
+        let instruction = axelar_solana_its::instruction::execute(its_ix_inputs)
             .expect("failed to create instruction");
 
         match self.solana_chain.fixture.send_tx(&[instruction]).await {

@@ -4,7 +4,7 @@ use core::ops::Deref;
 
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::executable::AxelarMessagePayload;
-use axelar_solana_its::instruction::ItsGmpInstructionInputs;
+use axelar_solana_its::instruction::ExecuteInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::GMPPayload;
@@ -13,12 +13,12 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
 
-/// Creates a [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
+/// Creates a [`InterchainTokenServiceInstruction::Execute`] instruction.
 ///
 /// # Errors
 ///
 /// If serialization fails.
-pub async fn build_its_gmp_instruction<C>(
+pub async fn build_execute_instruction<C>(
     payer: Pubkey,
     gateway_incoming_message_pda: Pubkey,
     gateway_message_payload_pda: Pubkey,
@@ -42,7 +42,7 @@ where
     let (mint, token_program) =
         try_infer_mint_and_program(&token_manager_pda, &payload, rpc_client).await?;
 
-    let inputs = ItsGmpInstructionInputs::builder()
+    let inputs = ExecuteInstructionInputs::builder()
         .payer(payer)
         .incoming_message_pda(gateway_incoming_message_pda)
         .message_payload_pda(gateway_message_payload_pda)
@@ -52,7 +52,7 @@ where
         .mint_opt(mint)
         .build();
 
-    axelar_solana_its::instruction::its_gmp_payload(inputs)
+    axelar_solana_its::instruction::execute(inputs)
 }
 
 #[async_recursion::async_recursion]

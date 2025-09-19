@@ -736,22 +736,22 @@ pub enum InterchainTokenServiceInstruction {
     /// 2. [] ITS root pda
     ///
     /// 3..N Accounts depend on the inner ITS instruction.
-    ItsGmpPayload {
+    Execute {
         /// The GMP metadata
         message: Message,
     },
 }
 
-/// Inputs for the [`its_gmp_payload`] function.
+/// Inputs for the [`execute`] function.
 ///
 /// To construct this type, use its builder API.
 ///
 /// # Example
 ///
 /// ```ignore
-/// use axelar_solana_its::instructions::ItsGmpInstructionInputs;
+/// use axelar_solana_its::instructions::ExecuteInstructionInputs;
 ///
-/// let inputs = ItsGmpInstructionInputs::builder()
+/// let inputs = ExecuteInstructionInputs::builder()
 ///   .payer(payer_pubkey)
 ///   .incoming_message_pda(gateway_approved_message_pda)
 ///   .message(message)
@@ -762,7 +762,7 @@ pub enum InterchainTokenServiceInstruction {
 ///   .build();
 /// ```
 #[derive(Debug, Clone, TypedBuilder)]
-pub struct ItsGmpInstructionInputs {
+pub struct ExecuteInstructionInputs {
     /// The payer account.
     pub(crate) payer: Pubkey,
 
@@ -1732,12 +1732,12 @@ pub fn set_flow_limit(
     })
 }
 
-/// Creates an [`InterchainTokenServiceInstruction::ItsGmpPayload`] instruction.
+/// Creates an [`InterchainTokenServiceInstruction::Execute`] instruction.
 ///
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, ProgramError> {
+pub fn execute(inputs: ExecuteInstructionInputs) -> Result<Instruction, ProgramError> {
     let mut accounts = prefix_accounts(
         &inputs.payer,
         &inputs.incoming_message_pda,
@@ -1761,7 +1761,7 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
 
     accounts.append(&mut its_accounts);
 
-    let data = to_vec(&InterchainTokenServiceInstruction::ItsGmpPayload {
+    let data = to_vec(&InterchainTokenServiceInstruction::Execute {
         message: inputs.message,
     })?;
 
