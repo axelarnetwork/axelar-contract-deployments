@@ -1,9 +1,9 @@
 # Solana GMP Amplifier
 
-|                | **Owner**                            |
-| -------------- | ------------------------------------ |
-| **Created By** | @nbayindirli                         |
-| **Deployment** | @nbayindirli                         |
+|                | **Owner**    |
+| -------------- | ------------ |
+| **Created By** | @nbayindirli |
+| **Deployment** | @nbayindirli |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -358,12 +358,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 1. Update ampd with the Solana chain configuration. Verifiers should use their own Solana RPC node for the `http_url` in production.
 
-    | Network              | `http_url`                             |
-    | -------------------- | -------------------------------------- |
-    | **Devnet-amplifier** | `solana devnet rpc` |
-    | **Stagenet**         | `solana devnet rpc` |
-    | **Testnet**          | `solana devnet rpc` |
-    | **Mainnet**          | `solana mainnet rpc`          |
+    | Network              | `http_url`                            |
+    | -------------------- | ------------------------------------- |
+    | **Devnet-amplifier** | `https://api.devnet.solana.com`       |
+    | **Stagenet**         | `https://api.testnet.solana.com`      |
+    | **Testnet**          | `https://api.testnet.solana.com`      |
+    | **Mainnet**          | `https://api.mainnet-beta.solana.com` |
 
     ```bash
     [[handlers]]
