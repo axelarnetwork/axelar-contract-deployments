@@ -213,5 +213,81 @@ async fn test_cpi_transfer_fails_with_non_pda_account(ctx: &mut ItsTestContext) 
     );
 }
 
-// TODO Check that an inconsistent set of seeds fails
+/// Test that CPI transfers fail when inconsistent seeds are provided
+/// This test uses the memo program's special instruction that intentionally provides wrong seeds
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_cpi_transfer_fails_with_inconsistent_seeds(ctx: &mut ItsTestContext) {
+    let payer = ctx.solana_wallet;
+    let token_id = ctx.deployed_interchain_token;
+    
+    let token_mint = axelar_solana_its::find_interchain_token_pda(
+        &axelar_solana_its::find_its_root_pda().0,
+        &token_id,
+    ).0;
+    
+    let token_program = spl_token_2022::id();
+    let (counter_pda, _) = axelar_solana_memo_program::get_counter_pda();
+    
+    let counter_pda_ata = spl_associated_token_account::get_associated_token_address_with_program_id(
+        &counter_pda,
+        &token_mint,
+        &token_program,
+    );
+    
+    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
+        &payer,
+        &counter_pda,
+        &token_mint,
+        &token_program,
+    );
+    ctx.send_solana_tx(&[create_ata_ix]).await.unwrap();
+    
+    let mint_amount = 1000u64;
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        token_id,
+        token_mint,
+        counter_pda_ata,
+        payer,
+        token_program,
+        mint_amount,
+    ).unwrap();
+    ctx.send_solana_tx(&[mint_ix]).await.unwrap();
+    
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let token_manager_pda = axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id).0;
+    let token_manager_ata = get_associated_token_address_with_program_id(
+        &token_manager_pda,
+        &token_mint,
+        &token_program,
+    );
+    let gas_service_root_pda = ctx.solana_gas_utils.config_pda;
+    
+    // Use the special memo instruction that provides wrong seeds
+    let transfer_with_wrong_seeds = axelar_solana_memo_program::instruction::send_interchain_transfer_with_wrong_seeds(
+        &counter_pda,
+        &its_root_pda,
+        &token_manager_pda,
+        &token_manager_ata,
+        &ctx.solana_chain.gateway_root_pda,
+        &gas_service_root_pda,
+        &token_mint,
+        &token_program,
+        token_id,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        100u64,
+        0u128,
+    ).unwrap();
+    
+    let result = ctx.send_solana_tx(&[transfer_with_wrong_seeds]).await;
+    assert!(result.is_err());
+    
+    // This should fail with the PDA derivation validation error
+    assert_msg_present_in_logs(
+        result.unwrap_err(),
+        "PDA derivation mismatch",
+    );
+}
+
 // TODO Write a scenario for the CpiCallContractWithInterchainToken instruction
