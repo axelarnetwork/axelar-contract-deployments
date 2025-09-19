@@ -1193,7 +1193,7 @@
       "name": "Filecoin",
       "axelarId": "filecoin",
       "chainId": 314,
-      "rpc": "https://rpc.ankr.com/filecoin",
+      "rpc": "https://api.chain.love/rpc/v2",
       "tokenSymbol": "FIL",
       "decimals": 18,
       "chainType": "evm",
@@ -1317,8 +1317,8 @@
         "gasLimit": 100000000,
         "maxFeePerGas": 1000000000
       },
-      "finality": "120",
-      "approxFinalityWaitTime": 60,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 5,
       "txTimeout": 180000
     },
     "optimism": {
