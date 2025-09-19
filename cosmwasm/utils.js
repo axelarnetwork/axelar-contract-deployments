@@ -1075,7 +1075,7 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
 };
 
 // Retries sign-and-broadcast on transient RPC socket closures
-const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3, baseDelayMs = 500) => {
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3) => {
     let lastError;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
