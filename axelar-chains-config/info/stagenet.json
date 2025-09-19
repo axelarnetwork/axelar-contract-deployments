@@ -2016,28 +2016,66 @@
               "TokenType": "0x2::coin::CoinMetadata<0x38976ed04ca841cbac7d2703b8faf39c84839efd1fa4b0502a2f425a98bcef21::raytest33x2::RAYTEST33X2>",
               "symbol": "RAYTEST33X2"
             }
-          ]
+          ],
+          "disallowedFunctions": {
+            "versions": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "functionNames": [
+              "deploy_remote_interchain_token",
+              "send_interchain_transfer",
+              "receive_interchain_transfer",
+              "receive_interchain_transfer_with_data",
+              "receive_deploy_interchain_token",
+              "give_unregistered_coin",
+              "mint_as_distributor",
+              "mint_to_as_distributor",
+              "burn_as_distributor",
+              "add_trusted_chains",
+              "remove_trusted_chains",
+              "set_flow_limit",
+              "set_flow_limit_as_token_operator",
+              "transfer_distributorship",
+              "transfer_operatorship"
+            ]
+          }
         },
         "Example": {
-          "address": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08",
+          "address": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd",
           "versions": {
-            "0": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08"
+            "0": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd"
           },
           "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
           "structs": {
-            "Singleton": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::its::Singleton",
-            "Executed": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::gmp::Executed",
-            "ExecutedWithToken": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::its::ExecutedWithToken",
-            "TOKEN": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::token::TOKEN",
-            "TOKEN_A": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::token_a::TOKEN_A",
-            "TOKEN_B": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::token_b::TOKEN_B",
-            "TOKEN_C": "0x2093d3345e2e5b39762af77b17da3b43a6271f8da4b33e35636fcc329b3a4c08::token_c::TOKEN_C"
+            "Singleton": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::its::Singleton",
+            "Executed": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::gmp::Executed",
+            "ExecutedWithToken": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::its::ExecutedWithToken",
+            "MultiMinter": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::operators::MultiMinter",
+            "OwnerCap": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::operators::OwnerCap",
+            "TOKEN": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::token::TOKEN",
+            "TOKEN_A": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::token_a::TOKEN_A",
+            "TOKEN_B": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::token_b::TOKEN_B",
+            "TOKEN_C": "0x9ef07fe781a5d6817caca54d47fec2768f95a3c5a29e7f926f17276c6a0cd2bd::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0x1e603296e4670b17d60cbf00c7b31b9c2bf67a3c47e605d6c515f5bc4c27265f",
-            "GmpChannelId": "0x6566c75855aa7dd585d24256ee329af20fd75a3c8251d9321bd9ca738fb4af97",
-            "ItsSingleton": "0x7ae4806dd0116aa2cc770dfac4695a30da50a22db291adc1956fc2308ea2b0ff",
-            "ItsChannelId": "0x61f17525337ceae5ba6b6d9d72f8e3035e7bca69188cb807aa9893895644746e"
+            "GmpSingleton": "0x5b0596adb366eb6e155bb1f7eb71daa4c543c92b5490e35ed6255567d02d6327",
+            "GmpChannelId": "0x504a627370040d3b7fc8bcb8d47c589f084d4afc701c38c4f711159c48cd0b9b",
+            "ItsSingleton": "0x6820a95d12727c5fde66a5f4a1ca91481733372200a51b1fcdf065cbcc404313",
+            "ItsChannelId": "0xf0b041d8f718ba483e17e340e133dc866f410c2b80bf85899c5e4bda5361209f"
           }
         }
       },
