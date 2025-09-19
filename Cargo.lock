@@ -903,6 +903,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axelar-solana-encoding",
+ "axelar-solana-gas-service",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
  "axelar-solana-its",
@@ -919,6 +920,8 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "spl-associated-token-account 6.0.0",
+ "spl-token 6.0.0",
  "thiserror 1.0.69",
 ]
 

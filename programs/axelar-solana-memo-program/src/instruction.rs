@@ -52,6 +52,38 @@ pub enum AxelarMemoInstruction {
         /// Destination contract address on the destination chain
         destination_address: String,
     },
+
+    /// Send an interchain token transfer initiated by the memo program's PDA.
+    /// The source token account (counter PDA's ATA) is automatically derived and verified.
+    ///
+    /// Accounts expected by this instruction:
+    ///
+    /// 0. [w] Memo counter PDA (the actual token sender)
+    /// 1. [] ITS root PDA
+    /// 2. [] Token Manager PDA
+    /// 3. [w] Source token account (counter PDA's ATA) - verified against derivation
+    /// 4. [w] Token Manager's ATA
+    /// 5. [] Gateway root PDA
+    /// 6. [] Gateway program ID
+    /// 7. [] Gas Service root PDA
+    /// 8. [] Gas Service program ID
+    /// 9. [] Token mint
+    /// 10. [] Token program
+    /// 11. [] Call contract signing PDA
+    /// 12. [] ITS program ID
+    /// 13. [] System program
+    SendInterchainTransfer {
+        /// Token ID for the transfer
+        token_id: [u8; 32],
+        /// Destination chain
+        destination_chain: String,
+        /// Destination address
+        destination_address: Vec<u8>,
+        /// Amount to transfer
+        amount: u64,
+        /// Gas value for the transfer
+        gas_value: u128,
+    },
 }
 
 /// Creates a [`AxelarMemoInstruction::Initialize`] instruction.
@@ -97,6 +129,70 @@ pub fn call_gateway_with_memo(
         AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(*gateway_program_id, false),
     ];
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`AxelarMemoInstruction::SendInterchainTransfer`] instruction.
+/// The source token account (counter PDA's ATA) is automatically derived and verified inside the processor.
+#[allow(clippy::too_many_arguments)]
+pub fn send_interchain_transfer(
+    memo_counter_pda: &Pubkey,
+    its_root_pda: &Pubkey,
+    token_manager_pda: &Pubkey,
+    token_manager_ata: &Pubkey,
+    gateway_root_pda: &Pubkey,
+    gas_service_root_pda: &Pubkey,
+    token_mint: &Pubkey,
+    token_program: &Pubkey,
+    token_id: [u8; 32],
+    destination_chain: String,
+    destination_address: Vec<u8>,
+    amount: u64,
+    gas_value: u128,
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&AxelarMemoInstruction::SendInterchainTransfer {
+        token_id,
+        destination_chain,
+        destination_address,
+        amount,
+        gas_value,
+    })?;
+
+    // Derive the source ATA (counter PDA's token account)
+    let source_ata = spl_associated_token_account::get_associated_token_address_with_program_id(
+        memo_counter_pda,
+        token_mint,
+        token_program,
+    );
+
+    // Additional required accounts for proper ITS instruction
+    let gateway_program = axelar_solana_gateway::id();
+    let gas_service_program = axelar_solana_gas_service::id();
+    let (call_contract_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_its::id());
+    let its_program = axelar_solana_its::id();
+
+    let accounts = vec![
+        AccountMeta::new(*memo_counter_pda, false),
+        AccountMeta::new_readonly(*its_root_pda, false),
+        AccountMeta::new(*token_manager_pda, false),
+        AccountMeta::new(source_ata, false),
+        AccountMeta::new(*token_manager_ata, false),
+        AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(gateway_program, false),
+        AccountMeta::new(*gas_service_root_pda, false),
+        AccountMeta::new_readonly(gas_service_program, false),
+        AccountMeta::new(*token_mint, false),
+        AccountMeta::new_readonly(*token_program, false),
+        AccountMeta::new_readonly(call_contract_signing_pda, false),
+        AccountMeta::new_readonly(its_program, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+    ];
+
     Ok(Instruction {
         program_id: crate::ID,
         accounts,

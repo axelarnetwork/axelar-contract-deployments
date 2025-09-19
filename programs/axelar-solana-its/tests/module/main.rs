@@ -28,6 +28,7 @@ mod from_evm_to_solana;
 mod from_solana_to_evm;
 mod handover_mint_authority;
 mod idempotent_ata_test;
+mod memo_cpi_transfer;
 mod metadata_length_validation;
 mod metadata_retrieval;
 mod pause_unpause;
