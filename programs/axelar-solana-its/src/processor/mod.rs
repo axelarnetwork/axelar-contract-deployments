@@ -526,7 +526,7 @@ fn process_remove_trusted_chain<'a>(
     }
     .emit();
 
-    its_root_config.remove_trusted_chain(chain_name);
+    its_root_config.remove_trusted_chain(chain_name)?;
     its_root_config.store(payer, its_root_pda, system_account)?;
 
     Ok(())

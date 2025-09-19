@@ -5,6 +5,9 @@ use std::collections::HashSet;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::pda::BorshPda;
+use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
+use solana_program::program_error::ProgramError;
 
 pub mod deploy_approval;
 pub mod flow_limit;
@@ -64,8 +67,13 @@ impl InterchainTokenService {
     }
 
     /// Remove a chain from trusted
-    pub fn remove_trusted_chain(&mut self, chain_id: &str) {
-        self.trusted_chains.remove(chain_id);
+    pub fn remove_trusted_chain(&mut self, chain_id: &str) -> ProgramResult {
+        if !self.trusted_chains.remove(chain_id) {
+            msg!("Chain '{}' is not in the trusted chains list", chain_id);
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        Ok(())
     }
 
     /// Checks whether or not a given chain is trusted

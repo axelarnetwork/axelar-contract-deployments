@@ -1577,3 +1577,56 @@ async fn test_fail_propose_mintership_to_self(ctx: &mut ItsTestContext) {
     // Verify the transaction failed with self-transfer error
     assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
 }
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_remove_non_existing_trusted_chain(ctx: &mut ItsTestContext) {
+    let non_existing_chain = "non-existing-chain".to_string();
+
+    // Transfer funds to upgrade authority so they can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &ctx.solana_chain.upgrade_authority.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Attempt to remove a chain that was never added as trusted
+    let remove_trusted_chain_ix = axelar_solana_its::instruction::remove_trusted_chain(
+        ctx.solana_chain.upgrade_authority.pubkey(),
+        non_existing_chain.clone(),
+    )
+    .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[remove_trusted_chain_ix],
+            &[
+                &ctx.solana_chain.upgrade_authority.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with the specific error message
+    assert_msg_present_in_logs(
+        tx_metadata,
+        &format!("Chain '{non_existing_chain}' is not in the trusted chains list"),
+    );
+
+    // Verify the chain is indeed not in the trusted chains list
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+    assert!(!its_root.trusted_chains.contains(&non_existing_chain));
+}
