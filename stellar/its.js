@@ -445,42 +445,6 @@ async function transferTokenAdmin(wallet, _config, chain, contract, args, option
     printInfo('New admin address', newAdmin);
 }
 
-async function createCustomToken(wallet, _config, chain, _contract, args, options) {
-    const [name, symbol, decimals] = args;
-
-    validateParameters({
-        isNonEmptyString: { name, symbol },
-        isValidNumber: { decimals },
-    });
-
-    const wasmHash = chain.contracts?.InterchainTokenService?.initializeArgs.interchainTokenWasmHash;
-    if (!wasmHash) {
-        throw new Error('interchainTokenWasmHash not found in InterchainTokenService contract configuration');
-    }
-
-    const wasmHashBytes = Buffer.from(wasmHash, 'hex');
-    const initArgs = [
-        nativeToScVal(wallet.publicKey(), { type: 'address' }),
-        nativeToScVal(wallet.publicKey(), { type: 'address' }),
-        nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' }),
-        tokenMetadataToScVal(parseInt(decimals), name, symbol),
-    ];
-
-    const operation = Operation.createCustomContract({
-        wasmHash: wasmHashBytes,
-        address: Address.fromString(wallet.publicKey()),
-        constructorArgs: initArgs,
-    });
-
-    const response = await broadcast(operation, wallet, chain, 'Create Custom Token', options);
-    const deployedAddress = Address.fromScAddress(response.address()).toString();
-
-    printInfo('Custom token deployed successfully');
-    printInfo('Deployed address', deployedAddress);
-
-    return deployedAddress;
-}
-
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -665,13 +629,6 @@ if (require.main === module) {
         .description('Transfer admin of a token contract from token id')
         .action((tokenId, newAdmin, options) => {
             mainProcessor(transferTokenAdmin, [tokenId, newAdmin], options);
-        });
-
-    program
-        .command('create-custom-token <name> <symbol> <decimals>')
-        .description('Deploy a custom token contract using interchain token WASM hash')
-        .action((name, symbol, decimals, options) => {
-            mainProcessor(createCustomToken, [name, symbol, decimals], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

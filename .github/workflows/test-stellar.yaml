@@ -215,27 +215,27 @@ jobs:
       - name: Create a Custom Token
         id: create_custom_token
         run: |
-          output=$(ts-node stellar/its.js create-custom-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }})
-          echo "$output"
-          customTokenAddress=$(echo "$output" | grep "Deployed address:" | awk '{print $3}')
-          echo "customTokenAddress=$customTokenAddress" >> $GITHUB_OUTPUT
+          # Deploy InterchainToken with fixed version 1.1.2 for stability
+          # This custom token will be used to test both remote canonical token deployment and token linking
+          ts-node stellar/deploy-contract deploy InterchainToken --version 1.1.2 ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }}
+          custom_token_address=$(jq -r '.chains.stellar.contracts.InterchainToken.address' ./axelar-chains-config/info/local.json)
+          echo "custom_token_address=$custom_token_address" >> $GITHUB_OUTPUT
 
       ###### Command: ITS - Deploy Remote Canonical Token ######
-
       - name: Deploy Remote Canonical Tokens
         run: |
-          ts-node stellar/its.js register-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }}
-          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.customTokenAddress }} ${{ steps.env_vars.outputs.destinationChain }}
+          ts-node stellar/its.js register-canonical-token ${{ steps.create_custom_token.outputs.custom_token_address }}
+          ts-node stellar/its.js deploy-remote-canonical-token ${{ steps.create_custom_token.outputs.custom_token_address }} ${{ steps.env_vars.outputs.destinationChain }}
 
       ###### Command: ITS - Custom Token Linking ######
 
       - name: Register Token Metadata
         run: |
-          ts-node stellar/its.js register-token-metadata ${{ steps.create_custom_token.outputs.customTokenAddress }}
+          ts-node stellar/its.js register-token-metadata ${{ steps.create_custom_token.outputs.custom_token_address }}
 
       - name: Register Custom Token
         run: |
-          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.create_custom_token.outputs.customTokenAddress }} MINT_BURN_FROM
+          ts-node stellar/its.js register-custom-token ${{ steps.env_vars.outputs.salt }} ${{ steps.create_custom_token.outputs.custom_token_address }} MINT_BURN_FROM
 
       - name: Link Token
         run: |
