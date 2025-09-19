@@ -50,8 +50,6 @@ pub enum PayWithSplToken {
         destination_address: String,
         /// A 32-byte hash representing the payload.
         payload_hash: [u8; 32],
-        /// Additional parameters for the contract call.
-        params: Vec<u8>,
         /// The amount of tokens to be paid as gas fees.
         gas_fee_amount: u64,
         /// The decimals for the mint
@@ -114,8 +112,6 @@ pub enum PayWithNativeToken {
         payload_hash: [u8; 32],
         /// Where refunds should be sent.
         refund_address: Pubkey,
-        /// Additional parameters for the contract call.
-        params: Vec<u8>,
         /// The amount of SOL to pay as gas fees.
         gas_fee_amount: u64,
     },
@@ -221,7 +217,6 @@ pub fn pay_native_for_contract_call_instruction(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    params: Vec<u8>,
     gas_fee_amount: u64,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::Native(
@@ -230,7 +225,6 @@ pub fn pay_native_for_contract_call_instruction(
             destination_address,
             payload_hash,
             refund_address,
-            params,
             gas_fee_amount,
         },
     ))?;
@@ -353,7 +347,6 @@ pub fn pay_spl_for_contract_call_instruction(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    params: Vec<u8>,
     gas_fee_amount: u64,
     signer_pubkeys: &[Pubkey],
     decimals: u8,
@@ -364,7 +357,6 @@ pub fn pay_spl_for_contract_call_instruction(
             destination_address,
             payload_hash,
             refund_address,
-            params,
             decimals,
             gas_fee_amount,
         },

@@ -14,7 +14,6 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_instruction;
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) fn process_pay_native_for_contract_call(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
@@ -22,7 +21,6 @@ pub(crate) fn process_pay_native_for_contract_call(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    params: &[u8],
     gas_fee_amount: u64,
 ) -> ProgramResult {
     if gas_fee_amount == 0 {
@@ -52,7 +50,6 @@ pub(crate) fn process_pay_native_for_contract_call(
         &destination_address.into_bytes(),
         &payload_hash,
         &refund_address.to_bytes(),
-        params,
         &gas_fee_amount.to_le_bytes(),
     ]);
 
@@ -200,7 +197,6 @@ mod tests {
         let destination_address = "destination_address".to_owned();
         let payload_hash = [0; 32];
         let refund_address = Pubkey::new_unique();
-        let params = vec![1, 2, 3];
         let gas_fee_amount = 0;
 
         let result = process_pay_native_for_contract_call(
@@ -210,7 +206,6 @@ mod tests {
             destination_address,
             payload_hash,
             refund_address,
-            &params,
             gas_fee_amount,
         );
 

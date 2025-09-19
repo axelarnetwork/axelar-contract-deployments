@@ -73,7 +73,6 @@ pub(crate) fn process_pay_spl_for_contract_call(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    params: &[u8],
     gas_fee_amount: u64,
     decimals: u8,
 ) -> ProgramResult {
@@ -140,7 +139,6 @@ pub(crate) fn process_pay_spl_for_contract_call(
         &destination_address.into_bytes(),
         &payload_hash,
         &refund_address.to_bytes(),
-        params,
         &gas_fee_amount.to_le_bytes(),
     ]);
 
@@ -381,7 +379,6 @@ mod tests {
         let destination_address = "destination_address".to_owned();
         let payload_hash = [0; 32];
         let refund_address = Pubkey::new_unique();
-        let params = vec![];
         let gas_fee_amount = 0;
         let decimals = 0;
 
@@ -392,7 +389,6 @@ mod tests {
             destination_address,
             payload_hash,
             refund_address,
-            &params,
             gas_fee_amount,
             decimals,
         );

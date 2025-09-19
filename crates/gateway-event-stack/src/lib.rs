@@ -414,7 +414,7 @@ mod tests {
             "Program gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G invoke [1]",
             "Program 11111111111111111111111111111111 invoke [2]",
             "Program 11111111111111111111111111111111 success",
-            "Program data: bmF0aXZlIGdhcyBwYWlkIGZvciBjb250cmFjdCBjYWxs uHuSGR4VBBCRNPjze8Y91JXLTJnrh8qv2IxFZAjnrfI= ZXZt MHhkZWFkYmVlZg== /Qd2xw7aQmd/4PP+LMP3Kwouwb8mAfoKYiWkSoTQv5E= AAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=  iBMAAAAAAAA=",
+            "Program data: bmF0aXZlIGdhcyBwYWlkIGZvciBjb250cmFjdCBjYWxs uHuSGR4VBBCRNPjze8Y91JXLTJnrh8qv2IxFZAjnrfI= ZXZt MHhkZWFkYmVlZg== /Qd2xw7aQmd/4PP+LMP3Kwouwb8mAfoKYiWkSoTQv5E= AAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= iBMAAAAAAAA=",
             "Program gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G consumed 7199 of 400000 compute units",
             "Program gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G success",
             "Program mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG invoke [1]",
@@ -442,7 +442,6 @@ mod tests {
                 193, 191, 38, 1, 250, 10, 98, 37, 164, 74, 132, 208, 191, 145,
             ],
             refund_address: "11111112D1oxKts8YPdTJRG5FzxTNpMtWmq8hkVx3".parse().unwrap(),
-            params: vec![],
             gas_fee_amount: 5000,
         };
         let expected = vec![ProgramInvocationState::Succeeded(vec![(
