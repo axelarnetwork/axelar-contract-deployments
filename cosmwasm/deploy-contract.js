@@ -4,21 +4,20 @@ require('../common/cli-utils');
 
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
-const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
+const { printInfo, prompt } = require('../common');
 
 const {
     CONTRACTS,
-    prepareWallet,
-    prepareClient,
     fromHex,
     getSalt,
-    initContractConfig,
     getAmplifierContractConfig,
     getCodeId,
     uploadContract,
     instantiateContract,
     migrateContract,
 } = require('./utils');
+
+const { mainProcessor } = require('./processor');
 
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -85,20 +84,6 @@ const migrate = async (client, wallet, config, options) => {
 
     const { transactionHash } = await migrateContract(client, wallet, config, options);
     printInfo('Migration completed. Transaction hash', transactionHash);
-};
-
-const mainProcessor = async (processor, options) => {
-    const { env } = options;
-    const config = loadConfig(env);
-
-    initContractConfig(config, options);
-
-    const wallet = await prepareWallet(options);
-    const client = await prepareClient(config, wallet);
-
-    await processor(client, wallet, config, options);
-
-    saveConfig(config, env);
 };
 
 const programHandler = () => {
