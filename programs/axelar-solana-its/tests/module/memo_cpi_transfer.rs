@@ -1,4 +1,4 @@
-use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, ProgramInvocationState};
+use axelar_solana_gateway_test_fixtures::{assert_msg_present_in_logs, gateway::{get_gateway_events, ProgramInvocationState}};
 use axelar_solana_its::state::token_manager::Type;
 use axelar_solana_memo_program::get_counter_pda;
 use evm_contracts_test_suite::ethers::signers::Signer as EvmSigner;
@@ -149,6 +149,69 @@ async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
     );
 }
 
-// TODO Check that CPI transfers can't be initiated by non-PDA accounts
+/// Test that CPI transfers fail when initiated by non-PDA accounts
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_cpi_transfer_fails_with_non_pda_account(ctx: &mut ItsTestContext) {
+    let payer = ctx.solana_wallet;
+    let token_id = ctx.deployed_interchain_token;
+    
+    let token_mint = axelar_solana_its::find_interchain_token_pda(
+        &axelar_solana_its::find_its_root_pda().0,
+        &token_id,
+    ).0;
+    
+    let token_program = spl_token_2022::id();
+    
+    // Use the payer's token account instead of a PDA
+    let payer_ata = spl_associated_token_account::get_associated_token_address_with_program_id(
+        &payer,
+        &token_mint,
+        &token_program,
+    );
+    
+    // Create the payer's ATA and mint some tokens to it
+    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
+        &payer,
+        &payer,
+        &token_mint,
+        &token_program,
+    );
+    ctx.send_solana_tx(&[create_ata_ix]).await.unwrap();
+    
+    let mint_amount = 1000u64;
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
+        token_id,
+        token_mint,
+        payer_ata,
+        payer,
+        token_program,
+        mint_amount,
+    ).unwrap();
+    ctx.send_solana_tx(&[mint_ix]).await.unwrap();
+    
+    let cpi_transfer_ix = axelar_solana_its::instruction::cpi_interchain_transfer(
+        payer,
+        payer_ata,
+        token_id,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        100u64,
+        token_mint,
+        token_program,
+        0u64,
+        axelar_solana_memo_program::ID,
+        vec![vec![]],
+    ).unwrap();
+    
+    let result = ctx.send_solana_tx(&[cpi_transfer_ix]).await;
+    assert!(result.is_err());
+    
+    assert_msg_present_in_logs(
+        result.unwrap_err(),
+        "Sender account must be owned by the source program",
+    );
+}
+
 // TODO Check that an inconsistent set of seeds fails
 // TODO Write a scenario for the CpiCallContractWithInterchainToken instruction
