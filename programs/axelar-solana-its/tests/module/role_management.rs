@@ -229,6 +229,66 @@ async fn test_successful_add_and_remove_flow_limiter(ctx: &mut ItsTestContext) {
 
     // Bob should not have the role again
     assert!(!bob_roles.contains(Roles::FLOW_LIMITER));
+
+    let remove_flow_limiter_ix =
+        axelar_solana_its::instruction::token_manager::remove_flow_limiter(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_id,
+            bob.pubkey(),
+        )
+        .unwrap();
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[remove_flow_limiter_ix])
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed because Bob doesn't have the role anymore
+    assert_msg_present_in_logs(tx_metadata, "User doesn't have the required roles");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_remove_flow_limiter_without_role(ctx: &mut ItsTestContext) {
+    let token_id = ctx.deployed_interchain_token;
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+    let bob = Keypair::new();
+
+    // Attempt to remove flow limiter role from Bob when Bob doesn't have the role
+    let remove_flow_limiter_ix =
+        axelar_solana_its::instruction::token_manager::remove_flow_limiter(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_id,
+            bob.pubkey(),
+        )
+        .unwrap();
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[remove_flow_limiter_ix])
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed because Bob doesn't have any roles
+    assert_msg_present_in_logs(tx_metadata, "User roles account not found");
+
+    // Verify Bob indeed doesn't have the flow limiter role
+    let (bob_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &bob.pubkey(),
+    );
+
+    // Account should not exist since Bob never had any roles
+    let account = ctx
+        .solana_chain
+        .fixture
+        .try_get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .unwrap();
+
+    assert!(account.is_none());
 }
 
 #[test_context(ItsTestContext)]
