@@ -1,9 +1,9 @@
-# &lt; ChainName &gt; GMP vX.X.X
+# Memento GMP v6.0.6
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @[github-username] <user@interoplabs.io> |
-| **Deployment** | @[github-username] <user@interoplabs.io> |
+| **Created By** | @nbayindirli <noah@interoplabs.io> |
+| **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
@@ -12,20 +12,26 @@
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
-- [Releases] add link to Github release here
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.6)
 
 ## Background
 
-Describe release content here
+Changes in the release:
+
+This is the v6.0.6 deployment of EVM compatible Amplifier Gateway contracts for Memento.
 
 ## Deployment
 
-Create an `.env` config. Local environment variable `CHAIN` should be set to `<chain name>`.
+Ensure that [CosmWasm Memento GMP](../cosmwasm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
+
+Create an `.env` config. Local environment variable `CHAIN` should be set to `memento`.
 
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAIN=memento
+TESTNET_RPC_URL=<testnet rpc url>
+MAINNET_RPC_URL=<mainnet rpc url>
 ```
 
 An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
@@ -40,22 +46,21 @@ npm ci && npm run build
 
 ```bash
 "$CHAIN": {
-    "name": "<chain name>",
+    "name": "Memento Testnet",
     "axelarId": "$CHAIN",
-    "chainId": <chain id>,
-    "rpc": "<RPC URL>",
-    "tokenSymbol": "<token symbol>",
-    "confirmations": <confirmations>,
-    "finality": "finalized", # if no custom finality mechanism, use "confirmationHeight"
-    "decimals": <decimals>,
-    "approxFinalityWaitTime": <finality wait time>,
+    "chainId": 2129,
+    "rpc": "<$TESTNET_RPC_URL>",
+    "tokenSymbol": "ETH",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-      "name": "<explorer name>",
-      "url": "<explorer URL>",
-      "api": "<explorer API (optional)>"
+        "name": "Memento Testnet Explorer",
+        "url": "https://explorer.memento.zeeve.online/"
     },
-  "contracts": {}
+    "contracts": {}
   }
 ```
 
@@ -67,22 +72,21 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 
 ```bash
 "$CHAIN": {
-    "name": "<chain name",
+    "name": "Memento",
     "axelarId": "$CHAIN",
-    "chainId": <chain id>,
-    "rpc": "<RPC URL>",
-    "tokenSymbol": "<token symbol>",
-    "confirmations": <confirmations>,
-    "finality": "finalized", # if no custom finality mechanism, use "confirmationHeight"
-    "decimals": <decimals>,
-    "approxFinalityWaitTime": <finality wait time>,
+    "chainId": 51888,
+    "rpc": "<$MAINNET_RPC_URL>",
+    "tokenSymbol": "ETH",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-      "name": "<explorer name>",
-      "url": "<explorer URL>",
-      "api": "<explorer API (optional)>"
+        "name": "Memento Explorer",
+        "url": "https://priv-explorer.mementoblockchain.com/"
     },
-  "contracts": {}
+    "contracts": {}
   }
 ```
 
@@ -225,7 +229,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 
 The following checks should be performed after the rollout
 
-### [CHAIN] -> EVM GMP call with [CHAIN] as source
+### Memento -> EVM GMP call with Memento as source
 
 1. Send a GMP call
 
@@ -249,7 +253,7 @@ The following checks should be performed after the rollout
     ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash [payload-hash]
     ```
 
-### EVM -> [CHAIN] GMP call with [CHAIN] as destination
+### EVM -> Memento GMP call with Memento as destination
 
 1. Send a GMP call
 
