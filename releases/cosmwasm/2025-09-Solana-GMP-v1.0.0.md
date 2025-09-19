@@ -5,7 +5,7 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Network**          | **Deployment Status** | **Date**   |
+| **Axelar Env**       | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | 2025-09-18 |
 | **Stagenet**         | -                     | TBD        |
@@ -60,7 +60,7 @@ CHAIN=solana
 ARTIFACT_PATH=../solana/axelar-amplifier/artifacts/
 ```
 
-| Network              | `DEPOSIT_VALUE` |
+| Axelar Env           | `DEPOSIT_VALUE` |
 | -------------------- | --------------- |
 | **Devnet-amplifier** | `100000000`     |
 | **Stagenet**         | `100000000`     |
@@ -69,7 +69,7 @@ ARTIFACT_PATH=../solana/axelar-amplifier/artifacts/
 
 Add `INIT_ADDRESSES` to `.env`.
 
-| Network              | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                |
+| Axelar Env           | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
@@ -124,14 +124,14 @@ RUN_AS_ACCOUNT=
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
 
-| Network              | `governanceAddress`                             | `adminAddress`                                  |
+| Axelar Env           | `governanceAddress`                             | `adminAddress`                                  |
 | -------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
 | **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
 | **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 
-| Network              | `serviceName` | `votingThreshold` | `signingThreshold` |
+| Axelar Env           | `serviceName` | `votingThreshold` | `signingThreshold` |
 | -------------------- | ------------- | ----------------- | ------------------ |
 | **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      |
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
@@ -166,7 +166,7 @@ RUN_AS_ACCOUNT=
 
 ### Instantiate Amplifier contracts
 
-| Network              | `CONTRACT_ADMIN`                                |
+| Axelar Env           | `CONTRACT_ADMIN`                                |
 | -------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
@@ -197,7 +197,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 1. Set environment variables
 
-    - Network-specific environment variables: These variables need to be updated by the network.
+    - Env-specific environment variables: These variables need to be updated by the env.
 
     ```bash
     VOTING_VERIFIER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaVotingVerifier[\"$CHAIN\"].address" | tr -d '"')
@@ -208,9 +208,9 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ROUTER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Router.address" | tr -d '"')
     ```
 
-    - Gov proposal environment variables. Update these for each network
+    - Gov proposal environment variables. Update these for each Axelar env
 
-    | Network              | `PROVER_ADMIN`                                  | `DEPOSIT_VALUE` | `REWARD_AMOUNT`     |
+    | Axelar Env           | `PROVER_ADMIN`                                  | `DEPOSIT_VALUE` | `REWARD_AMOUNT`     |
     | -------------------- | ----------------------------------------------- | --------------- | ------------------- |
     | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `100000000`     | `1000000uamplifier` |
     | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `100000000`     | `1000000uaxl`       |
@@ -306,7 +306,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     - Rewards Table
 
-    | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
+    | Axelar Env           | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
     | -------------------- | ---------------- | ------------------------- | ------------------- |
     | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
     | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
@@ -358,7 +358,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 1. Update ampd with the Solana chain configuration. Verifiers should use their own Solana RPC node for the `http_url` in production.
 
-    | Network              | `http_url`                            |
+    | Axelar Env           | `http_url`                            |
     | -------------------- | ------------------------------------- |
     | **Devnet-amplifier** | `https://api.devnet.solana.com`       |
     | **Stagenet**         | `https://api.testnet.solana.com`      |
