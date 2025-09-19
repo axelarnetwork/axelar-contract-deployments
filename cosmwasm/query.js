@@ -1,10 +1,10 @@
 'use strict';
 
-const { printInfo, printWarn, getChainConfig, itsHubContractAddress, saveConfig } = require('../common');
+const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, _wallet, config, _options, args, _fee) {
+async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
 
     const rewardsContractAddresses = {
@@ -44,7 +44,7 @@ async function getItsChainConfig(client, config, chainName) {
     });
 }
 
-async function tokenConfig(client, _wallet, config, _options, args, _fee) {
+async function tokenConfig(client, config, _options, args, _fee) {
     const [tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -64,7 +64,7 @@ async function tokenConfig(client, _wallet, config, _options, args, _fee) {
     }
 }
 
-async function customTokenMetadata(client, _wallet, config, _options, args, _fee) {
+async function customTokenMetadata(client, config, _options, args, _fee) {
     const [chainName, tokenAddress] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -93,7 +93,7 @@ async function customTokenMetadata(client, _wallet, config, _options, args, _fee
     }
 }
 
-async function tokenInstance(client, _wallet, config, _options, args, _fee) {
+async function tokenInstance(client, config, _options, args, _fee) {
     const [chainName, tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -122,7 +122,7 @@ async function tokenInstance(client, _wallet, config, _options, args, _fee) {
     }
 }
 
-async function itsChainConfig(client, _wallet, config, _options, args, _fee) {
+async function itsChainConfig(client, config, _options, args, _fee) {
     const [chainName] = args;
 
     try {
@@ -133,7 +133,7 @@ async function itsChainConfig(client, _wallet, config, _options, args, _fee) {
     }
 }
 
-async function saveDeployedContracts(client, _wallet, config, _options, args, _fee) {
+async function saveDeployedContracts(client, config, _options, args, _fee) {
     const [chainName] = args;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
@@ -199,7 +199,6 @@ async function saveDeployedContracts(client, _wallet, config, _options, args, _f
     };
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
 
-    saveConfig(config, options.env);
     printInfo(`Config updated successfully for ${chainName}`);
 }
 

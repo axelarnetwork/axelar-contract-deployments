@@ -1,9 +1,8 @@
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { StdFee } from '@cosmjs/stargate';
+import { AccountData, DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { GasPrice, StdFee } from '@cosmjs/stargate';
 
 import { ConfigManager, FullConfig } from '../common/config';
-import { prepareClient, prepareWallet } from './utils';
 
 type Options = {
     env: string;
@@ -17,8 +16,7 @@ type Options = {
 
 export async function mainProcessor<
     Processor extends (
-        client: SigningCosmWasmClient,
-        wallet: DirectSecp256k1HdWallet,
+        client: ClientManager,
         config: FullConfig,
         options: Options,
         args?: string[],
@@ -37,12 +35,36 @@ export async function mainProcessor<
 
     configManager.initContractConfig(options.contractName, options.chainName);
 
-    const wallet = await prepareWallet(options);
-    const client = await prepareClient(configManager.getFullConfig(), wallet);
-
+    const client = await ClientManager.prepareClient(
+        options.mnemonic,
+        configManager.getFullConfig().axelar.rpc,
+        GasPrice.fromString(configManager.getFullConfig().axelar.gasPrice),
+    );
     const fee = configManager.getFee();
 
-    await processor(client, wallet, configManager.getFullConfig(), options, args, fee);
+    await processor(client, configManager.getFullConfig(), options, args, fee);
 
     configManager.saveConfig();
+}
+
+export class ClientManager extends SigningCosmWasmClient {
+    private mnemonic: string;
+
+    static async prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
+        const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+        const clientManager = (await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice: gasPrice })) as ClientManager;
+        clientManager.mnemonic = mnemonic;
+        return clientManager;
+    }
+
+    static async prepareQueryClient(rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
+        const dummyMnemonic = 'test test test test test test test test test test test junk';
+        const clientManager = await ClientManager.prepareClient(dummyMnemonic, rpc, gasPrice);
+        return clientManager;
+    }
+
+    public async getAccounts(): Promise<readonly AccountData[]> {
+        const wallet = await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, { prefix: 'axelar' });
+        return await wallet.getAccounts();
+    }
 }
