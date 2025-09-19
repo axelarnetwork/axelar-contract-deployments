@@ -144,9 +144,6 @@ pub(crate) fn process_inbound_transfer<'a>(
     if !payload.data.is_empty() {
         let program_account = parsed_accounts.destination;
         let system_account = parsed_accounts.system_account;
-        if !program_account.executable {
-            return Err(ProgramError::InvalidInstructionData);
-        }
 
         let destination_payload = AxelarMessagePayload::decode(payload.data.as_ref())?;
         let destination_accounts = destination_payload.account_meta();
@@ -286,11 +283,6 @@ pub(crate) fn process_user_interchain_transfer<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if sender.executable {
-        msg!("Sender is executable (program account)");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
     process_outbound_transfer(
         accounts,
         token_id,
@@ -330,11 +322,6 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
             source_id,
             sender.owner
         );
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    if sender.executable {
-        msg!("PDA should not be executable");
         return Err(ProgramError::InvalidAccountData);
     }
 
