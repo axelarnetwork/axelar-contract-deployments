@@ -937,47 +937,6 @@
             ]
           }
         },
-        "PR2": {
-          "address": "0x6e2824a136cf621bbfd9abaf911212ebd3e210342224780951af4eb0983152eb",
-          "typeArgument": "0x6e2824a136cf621bbfd9abaf911212ebd3e210342224780951af4eb0983152eb::pr2::PR2",
-          "decimals": "6",
-          "objects": {
-            "TreasuryCap": "0x9356821cb1c1a3e18e3af83c2f3c9e091211ba34f6a4dca3d7f66891e0ecd0bc",
-            "Metadata": "0x9c1fa07fd8781beaeae9e879edc94c00fb7e572fe81f3bccc64a38b14757247e",
-            "TokenId": "0xf60bd3441fb78d141a4cbdd240afa5221a9cd7be1da6267beaa08e928a34d2eb",
-            "origin": true
-          }
-        },
-        "LEG30": {
-          "address": "0xcf3ca7d50d0ada62ca0ef87789630677f30c88812af3cf6979fed513d19a30f7",
-          "typeArgument": "0xcf3ca7d50d0ada62ca0ef87789630677f30c88812af3cf6979fed513d19a30f7::leg30::LEG30",
-          "decimals": "9",
-          "objects": {
-            "TokenId": "0x4288ca4e4d1bd44d5e2eb3b8b7c0116dedf81d1654feaad55b19184e7bd5292f",
-            "TreasuryCap": "0xee990f96ac5fb3bfb4061ae917e641e374cd45e86abae4db5dd3808cf741d950",
-            "Metadata": "0x3a56a377bc3c5acf37f230eb9cfde951bbfdfb17630487ed970a4bcd6fddabd9"
-          }
-        },
-        "LEG31": {
-          "address": "0xc9c8a14c3329e823ba5f35693b35d6d42e377ccb63c47131b9380a92a0751b8c",
-          "typeArgument": "0xc9c8a14c3329e823ba5f35693b35d6d42e377ccb63c47131b9380a92a0751b8c::leg31::LEG31",
-          "decimals": "9",
-          "objects": {
-            "TokenId": "0xa6e49a33085e7711df2d06ce5826ed5e6d7e4acd7298bf76a6874882ca6496c0",
-            "TreasuryCap": "0xcbd682edb2d8e4459d6a35b383da949fa03cc8774b481171cea8fa8111567b22",
-            "Metadata": "0x6086eebfe7761b865ecd45267b09a7650d962174c00bbba68672bd41f3407de0"
-          }
-        },
-        "LEG32": {
-          "address": "0x6627117dad9bd51b90e94b945602101538fd6762aff6ebc57e4106a26c796dec",
-          "typeArgument": "0x6627117dad9bd51b90e94b945602101538fd6762aff6ebc57e4106a26c796dec::leg32::LEG32",
-          "decimals": "9",
-          "objects": {
-            "TokenId": "0x0c9499f8637699b98b048c7bffddb18de236e3e8c1573e9567aeecabfd778685",
-            "TreasuryCap": "0xab4d366a87eb1761de3fa8b9562b37f576ef09cfa22312b126e82466b0b7cea4",
-            "Metadata": "0x58b2262d49d54ae14e7d75f2a6c3eca907758d47a32fcf93fa620769c3af5cf0"
-          }
-        },
         "Example": {
           "address": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654",
           "versions": {
@@ -1000,17 +959,6 @@
             "GmpChannelId": "0xed446cd5d073775a09517bff223031aa7a179a2762522ee068252a44e8f7d3f2",
             "ItsSingleton": "0xc339e7f33d85569b7a23cfcef4304cf2902b1255183678392891d6723c69a287",
             "ItsChannelId": "0x7539de2ccaaaee8ac3238b5331757a86be4430691c7185e5164ebdd51a400afd"
-          }
-        },
-        "MB1": {
-          "address": "0x6b94e282852884a48ab4416624bcc233bfc9039ff838385879931caaffe7f14d",
-          "typeArgument": "0x6b94e282852884a48ab4416624bcc233bfc9039ff838385879931caaffe7f14d::mb1::MB1",
-          "decimals": "9",
-          "objects": {
-            "TreasuryCap": "0x191ab7fd965558f96079c00be451c7deed9bbdaa526b69fd1584f02f8e4e9f85",
-            "Metadata": "0x1986ed3909cf98525e3f0ad930e724eea8a7bd16a1c5fa7afb341fd850450338",
-            "TokenId": "0x61c254a5e9fdae70c87363453630b2c4bb85d89d7641cd2252d82cbd047d0eda",
-            "origin": true
           }
         }
       },
