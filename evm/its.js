@@ -688,14 +688,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { env } = options;
             const deploymentSalt = getDeploymentSalt(options);
 
-            const gasValue = await estimateITSFee(
-                chain,
-                destinationChain,
-                env,
-                'LinkToken',
-                options.gasValue,
-                _axelar?.gmpAxelarscanApi,
-            );
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar?.gmpAxelarscanApi);
 
             validateParameters({
                 isValidTokenId: { tokenId },
