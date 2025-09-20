@@ -3896,6 +3896,7 @@
     "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io",
+    "gmpAxelarscanApi": "https://testnet.api.gmp.axelarscan.io",
     "gasPrice": "0.007uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "2000000000",
