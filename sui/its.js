@@ -701,7 +701,8 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
+    const [coinPackageId, coinPackageName, coinModName, initialCoinObjectId, tokenId, destinationChain, destinationAddress, initialAmount] =
+        args;
 
     const walletAddress = keypair.toSuiAddress();
 
@@ -710,16 +711,13 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     validateParameters({
         isNonEmptyString: { coinPackageName, coinModName, destinationChain, destinationAddress },
-        isHexString: { coinPackageId, coinObjectId, tokenId },
-        isValidNumber: { amount },
+        isHexString: { coinPackageId, coinObjectId: initialCoinObjectId, tokenId },
+        isValidNumber: { amount: initialAmount },
     });
 
     validateDestinationChain(config.chains, destinationChain);
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
-
-    await checkIfCoinExists(client, coinPackageId, coinType);
-    await checkIfCoinIsMinted(client, coinObjectId, coinType);
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -730,6 +728,26 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         target: `${contracts.AxelarGateway.address}::channel::new`,
         arguments: [],
     });
+
+    // Use dynamic values for amount and coinObjectId
+    let amount = initialAmount;
+    let coinObjectId = initialCoinObjectId;
+    const ZERO_ID = '0x0000000000000000000000000000000000000000000000000000000000000000';
+    if (coinObjectId === ZERO_ID) {
+        const [mintedAmount, mintedCoinObjectId] = await mintCoins(
+            keypair,
+            client,
+            config,
+            contracts,
+            [coinPackageId, coinPackageName, coinModName, amount, walletAddress],
+            options,
+        );
+        coinObjectId = mintedCoinObjectId;
+        amount = mintedAmount;
+    }
+
+    await checkIfCoinExists(client, coinPackageId, coinType);
+    await checkIfCoinIsMinted(client, coinObjectId, coinType);
 
     const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
 
@@ -809,6 +827,45 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
         printInfo('Allowed functions', allowedFunctions);
         printInfo('Disallowed functions', disabledFunctions);
     }
+}
+
+async function mintCoins(keypair, client, config, contracts, args, options) {
+    const [coinPackageId, coinPackageName, coinModName, amount, receiver] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+
+    await checkIfCoinExists(client, coinPackageId, coinType);
+
+    const { data } = await client.getOwnedObjects({
+        owner: walletAddress,
+        filter: { StructType: `0x2::coin::TreasuryCap<${coinType}>` },
+        options: { showType: true },
+    });
+
+    const treasury = data[0].data?.objectId ?? data[0].objectId;
+
+    const txBuilder = new TxBuilder(client);
+    await txBuilder.moveCall({
+        target: `${coinPackageId}::${coinPackageName}::mint`,
+        arguments: [treasury, amount, receiver],
+    });
+
+    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, config.options);
+
+    const balance = await client.getBalance({
+        owner: walletAddress,
+        coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
+    });
+
+    console.log(`💰 my token balance ${balance.totalBalance}`);
+
+    const coinChanged = response.objectChanges.find((c) => c.type === 'created');
+
+    console.log('New coin object id:', coinChanged.objectId);
+
+    return [balance.totalBalance, coinChanged.objectId];
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -997,6 +1054,14 @@ if (require.main === module) {
             },
         );
 
+    const mintCoinsProgram = new Command()
+        .name('mint-coins')
+        .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <treasury> <amount> <receiver>')
+        .description('Mint coins')
+        .action((coinPackageId, coinPackageName, coinModName, treasury, amount, receiver, options) => {
+            mainProcessor(mintCoins, options, [coinPackageId, coinPackageName, coinModName, treasury, amount, receiver], processCommand);
+        });
+
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
@@ -1015,6 +1080,8 @@ if (require.main === module) {
     program.addCommand(restoreTreasuryCapProgram);
     program.addCommand(checkVersionControlProgram);
     program.addCommand(interchainTransferProgram);
+
+    program.addCommand(mintCoinsProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
