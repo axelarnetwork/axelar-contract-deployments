@@ -3248,7 +3248,7 @@
       }
     },
     "memento-demo": {
-      "name": "Memento Demo",
+      "name": "Memento",
       "axelarId": "memento-demo",
       "chainId": 2129,
       "rpc": "",
