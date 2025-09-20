@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | Completed             | 2025-05-22 |
 | **Stagenet**         | Completed             | 2025-05-29 |
 | **Testnet**          | Completed             | 2025-06-05 |
-| **Mainnet**          | Completed             | 2025-09-15 |
+| **Mainnet**          | Completed             | 2025-09-19 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
