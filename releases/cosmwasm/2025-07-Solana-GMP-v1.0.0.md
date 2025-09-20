@@ -1,4 +1,4 @@
-# Solana GMP Amplifier
+# Solana GMP Amplifier (DRAFT)
 
 |                | **Owner**                            |
 | -------------- | ------------------------------------ |
