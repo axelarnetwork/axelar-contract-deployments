@@ -56,7 +56,7 @@ Create an .env config:
 ```yaml
 MNEMONIC=xyz
 ENV=xyz
-CHAIN=solana
+CHAIN=<solana-custom|solana>
 ARTIFACT_PATH=../solana/axelar-amplifier/artifacts/
 ```
 
@@ -88,36 +88,36 @@ RUN_AS_ACCOUNT=
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
-    -c SolanaVotingVerifier \
-    -t "Upload VotingVerifier contract for Solana" \
-    -d "Upload VotingVerifier contract for Solana integration" \
-    -a "$ARTIFACT_PATH" \
-    --deposit $DEPOSIT_VALUE \
-    --instantiateAddresses $INIT_ADDRESSES
+        -c SolanaVotingVerifier \
+        -t "Upload VotingVerifier contract for Solana" \
+        -d "Upload VotingVerifier contract for Solana integration" \
+        -a "$ARTIFACT_PATH" \
+        --deposit $DEPOSIT_VALUE \
+        --instantiateAddresses $INIT_ADDRESSES
     ```
 
 1. Store Gateway:
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
-    -c SolanaGateway \
-    -t "Upload Gateway contract for Solana" \
-    -d "Upload Gateway contract for Solana integration" \
-    -a "$ARTIFACT_PATH" \
-    --deposit $DEPOSIT_VALUE \
-    --instantiateAddresses $INIT_ADDRESSES
+        -c SolanaGateway \
+        -t "Upload Gateway contract for Solana" \
+        -d "Upload Gateway contract for Solana integration" \
+        -a "$ARTIFACT_PATH" \
+        --deposit $DEPOSIT_VALUE \
+        --instantiateAddresses $INIT_ADDRESSES
     ```
 
 1. Store Multisig Prover:
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
-    -c SolanaMultisigProver \
-    -t "Upload MultisigProver contract for Solana" \
-    -d "Upload MultisigProver contract for Solana integration" \
-    -a "$ARTIFACT_PATH" \
-    --deposit $DEPOSIT_VALUE \
-    --instantiateAddresses $INIT_ADDRESSES
+        -c SolanaMultisigProver \
+        -t "Upload MultisigProver contract for Solana" \
+        -d "Upload MultisigProver contract for Solana integration" \
+        -a "$ARTIFACT_PATH" \
+        --deposit $DEPOSIT_VALUE \
+        --instantiateAddresses $INIT_ADDRESSES
     ```
 
 ## Deployment
@@ -234,11 +234,11 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     -t "Register Gateway for solana" \
     -d "Register Gateway address for solana at Router contract" \
     --msg "{
-        \"register_chain\": {
-        \"chain\": \"$CHAIN\",
-        \"gateway_address\": \"$GATEWAY\",
-        \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
-        }
+            \"register_chain\": {
+                \"chain\": \"$CHAIN\",
+                \"gateway_address\": \"$GATEWAY\",
+                \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
+            }
         }"
     ```
 
@@ -252,13 +252,13 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     # You should see something like this:
     {
     "data": {
-        "name": \"$CHAIN\",
-        "gateway": {
-        "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-        },
-        "frozen_status": 0,
-        "msg_id_format": "base58_solana_tx_signature_and_event_index"
-    }
+            "name": \"$CHAIN\",
+            "gateway": {
+                "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+            },
+            "frozen_status": 0,
+            "msg_id_format": "base58_solana_tx_signature_and_event_index"
+        }
     }
     ```
 
@@ -271,8 +271,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     -d "Register Multisig Prover address for solana at Coordinator contract" \
     --msg "{
         \"register_prover_contract\": {
-        \"chain_name\": \"$CHAIN\",
-        \"new_prover_addr\": \"$MULTISIG_PROVER\"
+            \"chain_name\": \"$CHAIN\",
+            \"new_prover_addr\": \"$MULTISIG_PROVER\"
         }
     }"
     ```
@@ -286,9 +286,9 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     -d "Authorize Multisig Prover address for solana at Multisig contract" \
     --msg "{
         \"authorize_callers\": {
-        \"contracts\": {
-            \"$MULTISIG_PROVER\": \"$CHAIN\"
-        }
+            \"contracts\": {
+                \"$MULTISIG_PROVER\": \"$CHAIN\"
+            }
         }
     }"
     ```
@@ -298,7 +298,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     # Result should look like:
     {
-    "data": true
+        "data": true
     }
     ```
 
@@ -321,15 +321,15 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     --deposit $DEPOSIT_VALUE \
     --msg "{
         \"create_pool\": {
-        \"params\": {
-            \"epoch_duration\": \"<epoch_duration>\",
-            \"participation_threshold\": [<participation_threshold>],
-            \"rewards_per_epoch\": \"<rewards_per_epoch>\"
-        },
-        \"pool_id\": {
-            \"chain_name\": \"$CHAIN\",
-            \"contract\": \"$VOTING_VERIFIER\"
-        }
+            \"params\": {
+                \"epoch_duration\": \"<epoch_duration>\",
+                \"participation_threshold\": [<participation_threshold>],
+                \"rewards_per_epoch\": \"<rewards_per_epoch>\"
+            },
+            \"pool_id\": {
+                \"chain_name\": \"$CHAIN\",
+                \"contract\": \"$VOTING_VERIFIER\"
+            }
         }
     }"
     ```
@@ -343,15 +343,15 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     -d "Create pool for solana in axelar multisig" \
     --msg "{
         \"create_pool\": {
-        \"params\": {
-            \"epoch_duration\": \"<epoch_duration>\",
-            \"participation_threshold\": [<participation_threshold>],
-            \"rewards_per_epoch\": \"<rewards_per_epoch>\"
-        },
-        \"pool_id\": {
-            \"chain_name\": \"$CHAIN\",
-            \"contract\": \"$MULTISIG\"
-        }
+            \"params\": {
+                \"epoch_duration\": \"<epoch_duration>\",
+                \"participation_threshold\": [<participation_threshold>],
+                \"rewards_per_epoch\": \"<rewards_per_epoch>\"
+            },
+            \"pool_id\": {
+                \"chain_name\": \"$CHAIN\",
+                \"contract\": \"$MULTISIG\"
+            }
         }
     }"
     ```
@@ -410,5 +410,5 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 ## Checklist
 
-- Follow the [Solana GMP checklist](../solana/2025-07-GMP-v1.0.0.md)
-- Follow the [Solana ITS checklist](../solana/2025-07-ITS-v1.0.0.md)
+- Follow the [Solana GMP checklist](../solana/2025-09-GMP-v1.0.0.md)
+- Follow the [Solana ITS checklist](../solana/2025-09-ITS-v1.0.0.md)
