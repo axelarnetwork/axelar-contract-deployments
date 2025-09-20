@@ -36,6 +36,7 @@ const {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
+    printError,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -1113,6 +1114,32 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
+// Retries sign-and-broadcast on transient RPC socket closures
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3) => {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await client.signAndBroadcast(signerAddress, msgs, fee, memo);
+        } catch (error) {
+            lastError = error;
+            const code = error?.cause?.code || error?.code;
+            const message = error?.message || '';
+
+            printError(`proposal submission attempt ${attempt + 1} failed (code: ${code})${message ? `: ${message}` : ''}`);
+
+            printInfo('Retrying proposal submission..... 🔄');
+
+            // Confirm err is socket error
+            const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
+            if (!isTransient || attempt === maxAttempts - 1) {
+                throw error;
+            }
+        }
+    }
+
+    throw lastError;
+};
+
 const submitProposal = async (client, wallet, config, options, content) => {
     const [account] = await wallet.getAccounts();
 
@@ -1123,7 +1150,8 @@ const submitProposal = async (client, wallet, config, options, content) => {
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
     const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+
+    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
