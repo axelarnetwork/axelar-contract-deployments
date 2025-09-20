@@ -17,10 +17,10 @@
 1. Install `solana-verify`, for verifiable builds:
 
     ```sh
-    cargo install solana-verify
+    cargo install solana-verify --locked 0.4.4
     ```
 
-1. Create a new  Solana keypair
+1. Create a new Solana keypair
 
     ```sh
     # Set default cluster
@@ -65,16 +65,16 @@
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Compile the Solana programs.
+1. Compile the Solana programs:
 
     In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
 
     Set the `BASE_IMAGE` variable:
 
     ```sh
-    export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
-    export COMMIT_HASH="<latest axelar-amplifier-solana commit hash>"
-    export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+    BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
+    COMMIT_HASH="<latest axelar-amplifier-solana commit hash>"
+    ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     ```
 
     ```sh
@@ -95,22 +95,22 @@
 1. Declare environment variables:
 
     ```sh
-    export GATEWAY_PROGRAM_KEYPAIR_PATH="<path/to/gateway_program_keypair.json>"
-    export GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gateway.so"
+    GATEWAY_PROGRAM_KEYPAIR_PATH="<path/to/gateway_program_keypair.json>"
+    GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gateway.so"
 
-    export GAS_SERVICE_PROGRAM_KEYPAIR_PATH="<path/to/gas_service_program_keypair.json>"
-    export GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gas_service.so"
+    GAS_SERVICE_PROGRAM_KEYPAIR_PATH="<path/to/gas_service_program_keypair.json>"
+    GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gas_service.so"
 
-    export GOVERNANCE_PROGRAM_KEYPAIR_PATH="<path/to/governance_program_keypair.json>"
-    export GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_governance.so"
+    GOVERNANCE_PROGRAM_KEYPAIR_PATH="<path/to/governance_program_keypair.json>"
+    GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_governance.so"
 
-    export MULTICALL_PROGRAM_KEYPAIR_PATH="<path/to/multicall_program_keypair.json>"
-    export MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_multicall.so"
+    MULTICALL_PROGRAM_KEYPAIR_PATH="<path/to/multicall_program_keypair.json>"
+    MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_multicall.so"
 
-    export ITS_PROGRAM_KEYPAIR_PATH="<path/to/its_program_keypair.json>"
-    export ITS_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_its.so"
+    ITS_PROGRAM_KEYPAIR_PATH="<path/to/its_program_keypair.json>"
+    ITS_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_its.so"
 
-    export UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
+    UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
     ```
 
     ```bash
