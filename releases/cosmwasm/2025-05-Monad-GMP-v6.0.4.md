@@ -1,20 +1,20 @@
-# MonadGMP Amplifier v6.0.4
+# Monad GMP v6.0.4
 
 |                | **Owner**                          |
-|----------------|------------------------------------|
+| -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
 | **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
-|----------------------|-----------------------|------------|
+| -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-05-22 |
 | **Stagenet**         | Completed             | 2025-05-29 |
 | **Testnet**          | Completed             | 2025-06-05 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Completed             | 2025-09-19 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
-- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) 
-- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) 
+- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
+- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1)
 - [MultisigProver v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1)
 
 ## Background
@@ -26,7 +26,7 @@ These are the instructions for deploying Amplifier contracts for `Monad` connect
 Predict the [External Gateway](../evm/2025-05-Monad-GMP-v6.0.4.md) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
-|----------------------|------------------------|------------------|----------------------------------------------|
+| -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
@@ -47,7 +47,7 @@ CHAIN=<chain name>
 ```
 
 | Network              | `deployer address`                              |
-|----------------------|-------------------------------------------------|
+| -------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` |
 | **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
@@ -64,14 +64,14 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 - Add config in `$ENV.json` to deploy Amplifier contracts.
 
 | Network              | `governanceAddress`                             | `adminAddress`                                  |
-|----------------------|-------------------------------------------------|-------------------------------------------------|
+| -------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
 | **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
 | **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 
 | Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
-|----------------------|---------------|-------------------|--------------------|----------------------|
+| -------------------- | ------------- | ----------------- | ------------------ | -------------------- |
 | **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
 | **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
@@ -105,7 +105,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 ### Instantiate Amplifier contracts
 
 | Network              | `CONTRACT_ADMIN`                                |
-|----------------------|-------------------------------------------------|
+| -------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
 | **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
@@ -147,7 +147,7 @@ ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router
 - Gov proposal environment variables. Update these for each network
 
 | Network              | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
-|----------------------|-------------------------------------------------|---------------------|
+| -------------------- | ----------------------------------------------- | ------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `1000000uamplifier` |
 | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `1000000uaxl`       |
 | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
@@ -238,11 +238,11 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 #### Rewards
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
-|----------------------|------------------|---------------------------|---------------------|
+| -------------------- | ---------------- | ------------------------- | ------------------- |
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1326`              |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -303,7 +303,7 @@ ts-node cosmwasm/query.js rewards $CHAIN
 11. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`                    |
-|----------------------|-------------------------------|
+| -------------------- | ----------------------------- |
 | **Devnet-amplifier** | https://testnet-rpc.monad.xyz |
 | **Stagenet**         | https://testnet-rpc.monad.xyz |
 | **Testnet**          | https://testnet-rpc.monad.xyz |
@@ -336,7 +336,7 @@ ampd register-chain-support "[service name]" $CHAIN
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
 | Network              | `min_num_verifiers` |
-|----------------------|---------------------|
+| -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
 | **Testnet**          | 5                   |
