@@ -1,17 +1,32 @@
 'use strict';
 
-require('dotenv').config();
+import { Command, Option } from 'commander';
+import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const fs = require('fs');
-const { Option } = require('commander');
+dotenv.config();
 
-// A path to the chain configuration files
-const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
+// Resolve the path relative to the package root, accounting for both source and dist directories
+const resolveFromRoot = (relativePath: string) => {
+    // Check if we're in dist directory
+    if (__dirname.includes('dist')) {
+        return path.join(__dirname, '../../', relativePath);
+    }
+    // We're in the source directory
+    return path.join(__dirname, '../', relativePath);
+};
 
-// A list of available chain environments which are the names of the files in the CHAIN_CONFIG_PATH
-const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName) => chainName.split('.')[0]);
+const CHAIN_CONFIG_PATH = resolveFromRoot('axelar-chains-config/info');
+const CHAIN_ENVIRONMENTS = fs.readdirSync(CHAIN_CONFIG_PATH).map((chainName: string) => chainName.split('.')[0]);
 
-const addEnvOption = (program, defaultValue) => {
+interface BaseOptions {
+    ignoreChainNames?: boolean;
+    ignorePrivateKey?: boolean;
+    address?: boolean;
+}
+
+const addEnvOption = (program: Command, defaultValue?: string): void => {
     program.addOption(
         new Option('-e, --env <env>', 'environment')
             .choices(CHAIN_ENVIRONMENTS)
@@ -21,11 +36,11 @@ const addEnvOption = (program, defaultValue) => {
     );
 };
 
-const addBaseOptions = (program, options = {}) => {
+const addBaseOptions = (program: Command, options: BaseOptions = {}): Command => {
     addEnvOption(program);
 
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('--parallel', 'run script parallely wrt chains'));
+    program.addOption(new Option('--parallel', 'run script in parallel wrt chains'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
 
     if (!options.ignoreChainNames) {
@@ -52,9 +67,7 @@ const addBaseOptions = (program, options = {}) => {
     return program;
 };
 
-// `optionMethod` is a method such as `addBaseOptions`
-// `options` is an option object for optionMethod
-const addOptionsToCommands = (program, optionMethod, options) => {
+const addOptionsToCommands = <T>(program: Command, optionMethod: (command: Command, options: T) => void, options: T): void => {
     if (program.commands.length > 0) {
         program.commands.forEach((command) => {
             optionMethod(command, options);
@@ -62,7 +75,7 @@ const addOptionsToCommands = (program, optionMethod, options) => {
     }
 };
 
-const addStoreOptions = (program) => {
+const addStoreOptions = (program: Command): void => {
     program.addOption(
         new Option(
             '-a, --artifact-dir <artifactDir>',
@@ -85,6 +98,9 @@ const addStoreOptions = (program) => {
         }
     });
 };
+
+export { addEnvOption, addBaseOptions, addOptionsToCommands, addStoreOptions };
+export type { BaseOptions };
 
 module.exports = {
     addEnvOption,
