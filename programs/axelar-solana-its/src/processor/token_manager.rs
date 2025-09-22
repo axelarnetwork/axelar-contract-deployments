@@ -483,8 +483,8 @@ impl Validate for SetFlowLimitAccounts<'_> {
     fn validate(&self) -> Result<(), ProgramError> {
         validate_system_account_key(self.system_account.key)?;
 
-        let its_config_account = InterchainTokenService::load(self.its_root_pda)?;
-        assert_valid_its_root_pda(self.its_root_pda, its_config_account.bump)?;
+        let its_config_pda = InterchainTokenService::load(self.its_root_pda)?;
+        assert_valid_its_root_pda(self.its_root_pda, its_config_pda.bump)?;
 
         Ok(())
     }
@@ -494,7 +494,7 @@ pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> P
     msg!("Instruction: AddTokenManagerFlowLimiter");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -503,9 +503,9 @@ pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> P
     let destination_roles_account = next_account_info(accounts_iter)?;
 
     validate_system_account_key(system_account.key)?;
-    let its_config = InterchainTokenService::load(its_config_account)?;
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
-    if resource.key == its_config_account.key {
+    let its_config = InterchainTokenService::load(its_config_pda)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
+    if resource.key == its_config_pda.key {
         msg!("Resource is not a TokenManager");
         return Err(ProgramError::InvalidAccountData);
     }
@@ -513,7 +513,7 @@ pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> P
     let token_manager = TokenManager::load(resource)?;
     assert_valid_token_manager_pda(
         resource,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -539,7 +539,7 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
     msg!("Instruction: RemoveTokenManagerFlowLimiter");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -548,9 +548,9 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
     let origin_roles_account = next_account_info(accounts_iter)?;
 
     validate_system_account_key(system_account.key)?;
-    let its_config = InterchainTokenService::load(its_config_account)?;
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
-    if resource.key == its_config_account.key {
+    let its_config = InterchainTokenService::load(its_config_pda)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
+    if resource.key == its_config_pda.key {
         msg!("Resource is not a TokenManager");
         return Err(ProgramError::InvalidAccountData);
     }
@@ -558,7 +558,7 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
     let token_manager = TokenManager::load(resource)?;
     assert_valid_token_manager_pda(
         resource,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -598,7 +598,7 @@ pub(crate) fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>])
     msg!("Instruction: TransferTokenManagerOperatorship");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -613,13 +613,13 @@ pub(crate) fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>])
         return Err(ProgramError::InvalidArgument);
     }
 
-    let its_config = InterchainTokenService::load(its_config_account)?;
+    let its_config = InterchainTokenService::load(its_config_pda)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -660,7 +660,7 @@ pub(crate) fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) 
     msg!("Instruction: ProposeTokenManagerOperatorship");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -683,12 +683,12 @@ pub(crate) fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) 
         proposal_account,
     };
 
-    let its_config = InterchainTokenService::load(its_config_account)?;
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    let its_config = InterchainTokenService::load(its_config_pda)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
     let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
         role_management_accounts.resource,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -700,7 +700,7 @@ pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -
     msg!("Instruction: AcceptTokenManagerOperatorship");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -728,12 +728,12 @@ pub(crate) fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -
         proposal_account,
     };
 
-    let its_config = InterchainTokenService::load(its_config_account)?;
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    let its_config = InterchainTokenService::load(its_config_pda)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
     let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
         role_management_accounts.resource,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;

@@ -807,7 +807,7 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
     msg!("Instruction: TransferInterchainTokenMintership");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -822,13 +822,13 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
         return Err(ProgramError::InvalidArgument);
     }
 
-    let its_config = InterchainTokenService::load(its_config_account)?;
+    let its_config = InterchainTokenService::load(its_config_pda)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -870,7 +870,7 @@ pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) ->
     msg!("Instruction: ProposeInterchainTokenMintership");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -881,13 +881,13 @@ pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) ->
 
     validate_system_account_key(system_account.key)?;
 
-    let its_config = InterchainTokenService::load(its_config_account)?;
+    let its_config = InterchainTokenService::load(its_config_pda)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -911,7 +911,7 @@ pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> 
     msg!("Instruction: AcceptInterchainTokenMintership");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_account = next_account_info(accounts_iter)?;
+    let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
@@ -920,14 +920,14 @@ pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> 
     let origin_roles_account = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
 
-    let its_config = InterchainTokenService::load(its_config_account)?;
+    let its_config = InterchainTokenService::load(its_config_pda)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
     validate_system_account_key(system_account.key)?;
-    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_account.key,
+        its_config_pda.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;

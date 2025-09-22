@@ -215,9 +215,9 @@ pub fn remove<F: RolesFlags>(
         roles,
     )?;
 
-    if let Ok(mut destination_user_roles) = UserRoles::load(accounts.origin_roles_account) {
-        destination_user_roles.remove(roles);
-        destination_user_roles.store(
+    if let Ok(mut origin_user_roles) = UserRoles::load(accounts.origin_roles_account) {
+        origin_user_roles.remove(roles);
+        origin_user_roles.store(
             accounts.payer,
             accounts.origin_roles_account,
             accounts.system_account,
