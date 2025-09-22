@@ -633,5 +633,5 @@ if (require.main === module) {
 
     addOptionsToCommands(program, addBaseOptions);
 
-    program.parse();
+    program.parse(); // temp change for testing
 }
