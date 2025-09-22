@@ -6,7 +6,7 @@ use axelar_solana_gateway::executable::{
 };
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_its::executable::{
-    AxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
+    AxelarInterchainTokenExecuteInfo, MaybeAxelarInterchainTokenExecutablePayload,
 };
 use borsh::{self, BorshDeserialize};
 use mpl_token_metadata::accounts::Metadata;
@@ -39,12 +39,17 @@ pub fn process_instruction<'a>(
         return process_message_from_axelar(program_id, accounts, &message);
     }
 
-    if let Some(payload) = input
+    if let Some((execute_info, call_data)) = input
         .try_get_axelar_interchain_token_executable_payload(accounts)
         .transpose()?
     {
         msg!("Instruction: AxelarInterchainTokenExecute");
-        return process_message_from_axelar_with_token(program_id, accounts, &payload);
+        return process_message_from_axelar_with_token(
+            program_id,
+            accounts,
+            &execute_info,
+            call_data,
+        );
     }
 
     msg!("Instruction: Native");
@@ -57,7 +62,8 @@ pub fn process_instruction<'a>(
 pub fn process_message_from_axelar_with_token<'a>(
     program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
-    payload: &AxelarInterchainTokenExecutablePayload,
+    execute_info: &AxelarInterchainTokenExecuteInfo,
+    call_data: Vec<u8>,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let _its_root_pda = next_account_info(accounts_iter)?;
@@ -70,15 +76,15 @@ pub fn process_message_from_axelar_with_token<'a>(
     let token_metadata = Metadata::from_bytes(&mpl_token_metadata_account.try_borrow_data()?)?;
 
     msg!("Processing memo with tokens:");
-    msg!("amount: {}", payload.amount);
+    msg!("amount: {}", execute_info.amount);
     msg!("symbol: {}", token_metadata.symbol);
     msg!("name: {}", token_metadata.name);
     msg!(
         "payload source address: {}",
-        hex::encode(&payload.source_address)
+        hex::encode(&execute_info.source_address)
     );
 
-    let instruction: AxelarMemoInstruction = borsh::from_slice(&payload.data)?;
+    let instruction: AxelarMemoInstruction = borsh::from_slice(&call_data)?;
 
     process_native_ix(program_id, instruction_accounts, instruction)
 }

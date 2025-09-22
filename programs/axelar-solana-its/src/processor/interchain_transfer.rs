@@ -23,7 +23,7 @@ use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::{Account as TokenAccount, Mint};
 
-use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
+use crate::executable::{AxelarInterchainTokenExecuteInfo, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::FlowDirection;
 use crate::state::token_manager::{self, TokenManager};
@@ -234,11 +234,10 @@ fn build_axelar_interchain_token_execute(
     ];
     accounts.append(&mut program_accounts);
 
-    let executable_payload = AxelarInterchainTokenExecutablePayload {
+    let executable_payload = AxelarInterchainTokenExecuteInfo {
         command_id,
         source_chain,
         source_address,
-        data: Vec::new(),
         token_id,
         token,
         amount,

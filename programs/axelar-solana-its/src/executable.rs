@@ -25,7 +25,7 @@ pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
 /// must expect
 #[derive(Debug, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
 #[repr(C)]
-pub struct AxelarInterchainTokenExecutablePayload {
+pub struct AxelarInterchainTokenExecuteInfo {
     /// The unique message id.
     pub command_id: [u8; 32],
 
@@ -34,9 +34,6 @@ pub struct AxelarInterchainTokenExecutablePayload {
 
     /// The source address of the token transfer.
     pub source_address: Vec<u8>,
-
-    /// The program instruction data.
-    pub data: Vec<u8>,
 
     /// The token ID.
     pub token_id: [u8; 32],
@@ -51,53 +48,50 @@ pub struct AxelarInterchainTokenExecutablePayload {
 /// Axelar Interchain Token Executable command prefix
 pub(crate) const AXELAR_INTERCHAIN_TOKEN_EXECUTE: &[u8; 16] = b"axelar-its-exec_";
 
-/// Utility trait to extract the `AxelarInterchainTokenExecutablePayload`
+/// Utility trait to extract the `AxelarInterchainTokenExecuteInfo` and call data
 pub trait MaybeAxelarInterchainTokenExecutablePayload {
-    /// Try to extract the `AxearlExecutablePayload` from the given payload
+    /// Try to extract the `AxelarInterchainTokenExecuteInfo` and associated call data from the given payload and accounts
     ///
     /// # Errors
     ///
     /// - If the data is not coming from `InterchainTokenService`
-    /// - If the data cannot be decoded as a `AxelarInterchainTokenExecutablePayload`
+    /// - If the data cannot be decoded as a `AxelarInterchainTokenExecuteInfo`
     /// - If list of accounts is different than expected
     /// - If the message account data cannot be borrowed
     /// - If the message account data cannot be decoded as a `GMPPayload`
     fn try_get_axelar_interchain_token_executable_payload<'a>(
         &self,
         accounts: &'a [AccountInfo<'a>],
-    ) -> Option<Result<AxelarInterchainTokenExecutablePayload, ProgramError>>;
+    ) -> Option<Result<(AxelarInterchainTokenExecuteInfo, Vec<u8>), ProgramError>>;
 }
 
 impl MaybeAxelarInterchainTokenExecutablePayload for &[u8] {
     fn try_get_axelar_interchain_token_executable_payload<'a>(
         &self,
         accounts: &'a [AccountInfo<'a>],
-    ) -> Option<Result<AxelarInterchainTokenExecutablePayload, ProgramError>> {
+    ) -> Option<Result<(AxelarInterchainTokenExecuteInfo, Vec<u8>), ProgramError>> {
         if !self.starts_with(AXELAR_INTERCHAIN_TOKEN_EXECUTE) {
             return None;
         }
 
         let payload_bytes = self.get(AXELAR_INTERCHAIN_TOKEN_EXECUTE.len()..)?;
-        let mut call_data_without_payload: AxelarInterchainTokenExecutablePayload =
-            match borsh::from_slice(payload_bytes)
-                .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))
-            {
-                Ok(data) => data,
-                Err(err) => return Some(Err(err)),
-            };
-
-        let call_data_payload = match extract_interchain_token_execute_call_data(accounts) {
+        let execute_info: AxelarInterchainTokenExecuteInfo = match borsh::from_slice(payload_bytes)
+            .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))
+        {
             Ok(data) => data,
             Err(err) => return Some(Err(err)),
         };
 
-        call_data_without_payload.data = call_data_payload;
+        let call_data = match extract_interchain_token_execute_call_data(accounts) {
+            Ok(data) => data,
+            Err(err) => return Some(Err(err)),
+        };
 
-        Some(Ok(call_data_without_payload))
+        Some(Ok((execute_info, call_data)))
     }
 }
 
-/// Validates accounts and extract extracts the call data for the [`AxelarInterchainTokenExecutablePayload`]
+/// Validates accounts and extract extracts the call data associated with the [`AxelarInterchainTokenExecuteInfo`]
 fn extract_interchain_token_execute_call_data<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<Vec<u8>, ProgramError> {
