@@ -1652,6 +1652,7 @@ pub fn cpi_call_contract_with_interchain_token(
     source_program_id: Pubkey,
     pda_seeds: Vec<Vec<u8>>,
 ) -> Result<Instruction, ProgramError> {
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let token_manager_ata =
@@ -1664,9 +1665,10 @@ pub fn cpi_call_contract_with_interchain_token(
         AccountMeta::new_readonly(sender, true),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(token_manager_pda, false),
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
