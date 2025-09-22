@@ -135,6 +135,9 @@ impl DeployInterchainToken {
     pub const MESSAGE_TYPE_ID: u8 = 1;
 }
 
+// Value 2 is the MESSAGE_TYPE_DEPLOY_TOKEN_MANAGER, which is now unsupported and therefore
+// skipped.
+
 impl SendToHub {
     pub const MESSAGE_TYPE_ID: u8 = 3;
 }
