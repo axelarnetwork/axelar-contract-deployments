@@ -72,6 +72,7 @@ const CONTRACT_INFO = {
                 'receive_interchain_transfer',
                 'receive_interchain_transfer_with_data',
                 'receive_deploy_interchain_token',
+                'give_unregistered_coin',
                 'mint_as_distributor',
                 'mint_to_as_distributor',
                 'burn_as_distributor',
