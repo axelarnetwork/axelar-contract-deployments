@@ -4,7 +4,7 @@ import { loadConfig, printError, saveConfig } from './utils';
 
 export interface FullConfig {
     axelar: {
-        contracts: Record<string, ContractConfig & { governanceAddress?: string; governanceAccount?: string }>;
+        contracts: Record<string, AxelarContractConfig>;
         rpc: string;
         gasPrice: string;
         gasLimit: string | number;
@@ -17,12 +17,12 @@ export interface FullConfig {
 export interface NonEVMChainConfig {
     name: string;
     axelarId: string;
-    rpc?: string;
+    rpc: string;
     tokenSymbol: string;
     decimals: number;
     confirmations?: number;
     chainType: string;
-    explorer?: ExplorerConfig;
+    explorer: ExplorerConfig;
     finality: string;
     approxFinalityWaitTime: number;
     contracts: Record<string, ContractConfig>;
@@ -46,6 +46,12 @@ export interface ContractConfig {
     storeCodeProposalCodeHash?: string;
     storeCodeProposalId?: string;
     lastUploadedCodeId?: number;
+}
+
+export interface AxelarContractConfig extends ContractConfig {
+    governanceAddress?: string;
+    governanceAccount?: string;
+    [chainName: string]: unknown;
 }
 
 export class ConfigManager {
@@ -95,26 +101,25 @@ export class ConfigManager {
         const { axelar } = this.fullConfig;
         if (!axelar) return errors;
 
+        const requiredFields = ['contracts', 'rpc', 'gasPrice', 'gasLimit', 'govProposalInstantiateAddresses', 'govProposalDepositAmount'];
+        requiredFields.forEach((field) => {
+            if (!axelar[field]) {
+                errors.push(`Missing 'axelar.${field}' in ${this.environment} config`);
+            }
+        });
+
         const validations = [
-            { condition: !axelar.contracts, message: `Missing 'axelar.contracts' section in ${this.environment} config` },
-            { condition: !axelar.rpc, message: `Missing 'axelar.rpc' in ${this.environment} config` },
-            { condition: !axelar.gasPrice, message: `Missing 'axelar.gasPrice' in ${this.environment} config` },
             {
                 condition: axelar.gasPrice && !this.isValidGasPrice(axelar.gasPrice),
                 message: `Invalid 'axelar.gasPrice' format: ${axelar.gasPrice}`,
             },
-            { condition: !axelar.gasLimit, message: `Missing 'axelar.gasLimit' in ${this.environment} config` },
             {
                 condition: axelar.gasLimit && typeof axelar.gasLimit !== 'number' && axelar.gasLimit !== 'auto',
                 message: `Invalid 'axelar.gasLimit' format: ${axelar.gasLimit} - must be a number or 'auto'`,
             },
             {
                 condition: !axelar.govProposalInstantiateAddresses || !Array.isArray(axelar.govProposalInstantiateAddresses),
-                message: `Missing or invalid 'axelar.govProposalInstantiateAddresses' in ${this.environment} config`,
-            },
-            {
-                condition: !axelar.govProposalDepositAmount,
-                message: `Missing 'axelar.govProposalDepositAmount' in ${this.environment} config`,
+                message: `Invalid 'axelar.govProposalInstantiateAddresses' in ${this.environment} config`,
             },
         ];
 
@@ -221,7 +226,6 @@ export class ConfigManager {
         printError(`Found ${errors.length} error(s).\n`);
 
         if (errors.length > 0) {
-            printError('🚨 CRITICAL ERRORS:');
             errors.forEach((error, index) => {
                 printError(`  ${index + 1}. ${error}`);
             });
