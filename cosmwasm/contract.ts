@@ -7,6 +7,7 @@ import { addAmplifierQueryOptions } from './cli-utils';
 import { prepareClient, prepareDummyWallet } from './utils';
 import { ContractMap } from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 export interface ContractInfo {
