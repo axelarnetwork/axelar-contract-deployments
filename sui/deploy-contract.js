@@ -418,7 +418,12 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
-        updateMoveToml(packageDir, packageAddress, moveDir);
+        const versionList = [];
+        for (let version in contractsConfig[name]?.versions) { 
+            versionList.push(Number(version));
+        }
+        const network = options.env === 'mainnet' ? options.env : 'testnet';
+        updateMoveToml(packageDir, packageAddress, moveDir, undefined, versionList.length, network);
     }
 
     const builder = new TxBuilder(client);
@@ -486,13 +491,18 @@ async function syncPackages(keypair, client, config, chain, options) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
+        const versionList = [];
+        for (let version in chain.contracts[packageName]?.versions) { 
+            versionList.push(Number(version));
+        }
+        const network = options.env === 'mainnet' ? options.env : 'testnet';
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
             continue;
         }
 
-        updateMoveToml(packageDir, packageId, moveDir);
+        updateMoveToml(packageDir, packageId, moveDir, undefined, versionList.length, network);
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
