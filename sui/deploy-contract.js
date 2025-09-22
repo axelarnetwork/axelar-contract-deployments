@@ -418,12 +418,8 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
-        const versionList = [];
-        for (let version in contractsConfig[name]?.versions) {
-            versionList.push(Number(version));
-        }
         const network = options.env === 'mainnet' ? options.env : 'testnet';
-        updateMoveToml(packageDir, packageAddress, moveDir, undefined, versionList.length, network);
+        updateMoveToml(packageDir, packageAddress, moveDir, undefined, Object.keys(contractsConfig[name]?.versions || {}).length, network);
     }
 
     const builder = new TxBuilder(client);
