@@ -352,30 +352,6 @@ ts-node stellar/its.js deployed-token-manager [token-id]
 ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
-#### Create Custom Token
-
-Deploy a custom token contract using the InterchainToken WASM hash. This creates a new token contract instance with specified metadata.
-
-```bash
-ts-node stellar/its.js create-custom-token [name] [symbol] [decimals]
-
-# Example
-ts-node stellar/its.js create-custom-token TEST TEST 7
-```
-
-**Parameters:**
-
-- `<name>`: The name of the token (e.g., "TEST")
-- `<symbol>`: The token symbol (e.g., "TEST")
-- `<decimals>`: Number of decimals for the token (e.g., 7)
-
-**Features:**
-
-- Automatically uses the InterchainToken WASM hash from chain configuration
-- Sets the deploying wallet as the initial minter
-- Uses a dummy token ID for deployment
-- Returns the deployed contract address
-
 #### Create Stellar Classic Asset
 
 Create a Stellar classic asset with trustline

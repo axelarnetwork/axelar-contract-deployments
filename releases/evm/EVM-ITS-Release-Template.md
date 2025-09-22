@@ -2,8 +2,8 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @[github-username] <user@interoplabs.io> |
+| **Deployment** | @[github-username] <user@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
@@ -20,7 +20,7 @@ Describe release content here
 
 ## Deployment
 
-Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first. 
+Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first.
 
 ```bash
 # Clone latest main and update deps
@@ -60,9 +60,10 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
 
-#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
+### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on all EVM chains
+
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
@@ -120,7 +121,7 @@ ts-node sui/its-example send-deployment TST $CHAIN [gas-value]
 ts-node sui/its-example send-token TST $CHAIN [destination-address] [gas-value] 1
 
 # Send token back to sui from `<ChainName>`
-ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer sui [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 ```
 
 - Stellar Checklist

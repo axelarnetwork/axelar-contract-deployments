@@ -245,7 +245,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
         case 'AxelarTransceiver': {
             const gateway = await contract.gateway();
             const gasService = await contract.gasService();
-            const gmpManager = await contract.gmpManager();
+            const gmpManager = await contract.nttManager();
             const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
 
             if (gateway !== contractConfig.gateway) {
