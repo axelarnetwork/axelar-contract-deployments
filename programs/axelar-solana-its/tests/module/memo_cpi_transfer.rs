@@ -156,20 +156,14 @@ fn verify_gateway_event_and_source(
 #[tokio::test]
 async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
     let setup = setup_test_environment(ctx).await;
-    
-    // Verify token manager type
     verify_token_manager_type(ctx, &setup.token_manager_pda).await;
-    
-    // Setup counter PDA with tokens
     setup_counter_pda_with_tokens(ctx, &setup, 1000u64).await;
     
-    // Prepare transfer parameters
     let destination_chain = ctx.evm_chain_name.clone();
     let destination_address = ctx.evm_signer.wallet.address().as_bytes().to_vec();
     let transfer_amount = 100u64;
     let gas_value = 0u128;
     
-    // Create the SendInterchainTransfer instruction through memo program
     let send_transfer = axelar_solana_memo_program::instruction::send_interchain_transfer(
         &setup.counter_pda,
         &setup.its_root_pda,
@@ -189,7 +183,6 @@ async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
     
     let tx = ctx.send_solana_tx(&[send_transfer]).await.unwrap();
     
-    // Verify the event and source address
     verify_gateway_event_and_source(
         &tx,
         &axelar_solana_memo_program::ID.to_bytes(),
@@ -218,7 +211,6 @@ async fn test_cpi_transfer_fails_with_non_pda_account(ctx: &mut ItsTestContext) 
         &token_program,
     );
     
-    // Create the payer's ATA and mint some tokens to it
     let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
         &payer,
         &payer,
@@ -266,72 +258,37 @@ async fn test_cpi_transfer_fails_with_non_pda_account(ctx: &mut ItsTestContext) 
 #[test_context(ItsTestContext)]
 #[tokio::test]
 async fn test_cpi_transfer_fails_with_inconsistent_seeds(ctx: &mut ItsTestContext) {
-    let payer = ctx.solana_wallet;
-    let token_id = ctx.deployed_interchain_token;
+    let setup = setup_test_environment(ctx).await;
     
-    let token_mint = axelar_solana_its::find_interchain_token_pda(
-        &axelar_solana_its::find_its_root_pda().0,
-        &token_id,
-    ).0;
+    // Setup counter PDA with tokens
+    setup_counter_pda_with_tokens(ctx, &setup, 1000u64).await;
     
-    let token_program = spl_token_2022::id();
-    let (counter_pda, _) = axelar_solana_memo_program::get_counter_pda();
-    
-    let counter_pda_ata = spl_associated_token_account::get_associated_token_address_with_program_id(
-        &counter_pda,
-        &token_mint,
-        &token_program,
-    );
-    
-    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
-        &payer,
-        &counter_pda,
-        &token_mint,
-        &token_program,
-    );
-    ctx.send_solana_tx(&[create_ata_ix]).await.unwrap();
-    
-    let mint_amount = 1000u64;
-    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
-        token_id,
-        token_mint,
-        counter_pda_ata,
-        payer,
-        token_program,
-        mint_amount,
-    ).unwrap();
-    ctx.send_solana_tx(&[mint_ix]).await.unwrap();
-    
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
-    let token_manager_pda = axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id).0;
-    let token_manager_ata = get_associated_token_address_with_program_id(
-        &token_manager_pda,
-        &token_mint,
-        &token_program,
-    );
-    let gas_service_root_pda = ctx.solana_gas_utils.config_pda;
+    // Prepare transfer parameters
+    let destination_chain = ctx.evm_chain_name.clone();
+    let destination_address = ctx.evm_signer.wallet.address().as_bytes().to_vec();
+    let transfer_amount = 100u64;
+    let gas_value = 0u128;
     
     // Use the special memo instruction that provides wrong seeds
     let transfer_with_wrong_seeds = axelar_solana_memo_program::instruction::send_interchain_transfer_with_wrong_seeds(
-        &counter_pda,
-        &its_root_pda,
-        &token_manager_pda,
-        &token_manager_ata,
-        &ctx.solana_chain.gateway_root_pda,
-        &gas_service_root_pda,
-        &token_mint,
-        &token_program,
-        token_id,
-        ctx.evm_chain_name.clone(),
-        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
-        100u64,
-        0u128,
+        &setup.counter_pda,
+        &setup.its_root_pda,
+        &setup.token_manager_pda,
+        &setup.token_manager_ata,
+        &setup.gateway_root_pda,
+        &setup.gas_service_root_pda,
+        &setup.token_mint,
+        &setup.token_program,
+        setup.token_id,
+        destination_chain,
+        destination_address,
+        transfer_amount,
+        gas_value,
     ).unwrap();
     
     let result = ctx.send_solana_tx(&[transfer_with_wrong_seeds]).await;
     assert!(result.is_err());
     
-    // This should fail with the PDA derivation validation error
     assert_msg_present_in_logs(
         result.unwrap_err(),
         "PDA derivation mismatch",
@@ -344,14 +301,9 @@ async fn test_cpi_transfer_fails_with_inconsistent_seeds(ctx: &mut ItsTestContex
 #[tokio::test]
 async fn test_memo_cpi_call_contract_with_interchain_token(ctx: &mut ItsTestContext) {
     let setup = setup_test_environment(ctx).await;
-    
-    // Verify token manager type
     verify_token_manager_type(ctx, &setup.token_manager_pda).await;
-    
-    // Setup counter PDA with tokens
     setup_counter_pda_with_tokens(ctx, &setup, 1000u64).await;
     
-    // Prepare transfer parameters
     let destination_chain = ctx.evm_chain_name.clone();
     let destination_address = ctx.evm_signer.wallet.address().as_bytes().to_vec();
     let transfer_amount = 100u64;
@@ -380,14 +332,12 @@ async fn test_memo_cpi_call_contract_with_interchain_token(ctx: &mut ItsTestCont
     
     let tx = ctx.send_solana_tx(&[call_contract_transfer]).await.unwrap();
     
-    // Verify the event and source address
     let gmp_payload = verify_gateway_event_and_source(
         &tx,
         &axelar_solana_memo_program::ID.to_bytes(),
         transfer_amount,
     );
     
-    // Additional verification for custom data
     let GMPPayload::SendToHub(hub_message) = gmp_payload else {
         panic!("Expected SendToHub payload");
     };
