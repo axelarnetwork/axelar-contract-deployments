@@ -1,8 +1,7 @@
 //! State module contains data structures that keep state within the ITS
 //! program.
 
-use alloy_primitives::{Bytes, FixedBytes, U256};
-use alloy_sol_types::SolValue;
+use alloy_primitives::U256;
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::pda::BorshPda;
 use solana_program::program_error::ProgramError;
@@ -178,84 +177,3 @@ impl TokenManager {
 }
 
 impl BorshPda for TokenManager {}
-
-/// Decodes the operator and token address from the given data.
-///
-/// The counterpart on EVM is implemented [here](https://github.com/axelarnetwork/interchain-token-service/blob/main/contracts/token-manager/TokenManager.sol#L191).
-///
-/// # Errors
-///
-/// If the data cannot be decoded.
-pub fn decode_params(
-    data: &[u8],
-) -> Result<(Option<Pubkey>, Option<Pubkey>, Pubkey), ProgramError> {
-    let (operator_bytes, mint_authority_bytes, token_address) =
-        <(Bytes, Bytes, FixedBytes<32>)>::abi_decode(data, true)
-            .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-    let token_address = Pubkey::new_from_array(token_address.0);
-
-    let operator = if operator_bytes.is_empty() {
-        None
-    } else {
-        let operator_byte_array: [u8; 32] = operator_bytes
-            .as_ref()
-            .try_into()
-            .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-        Some(Pubkey::new_from_array(operator_byte_array))
-    };
-
-    let mint_authority = if mint_authority_bytes.is_empty() {
-        None
-    } else {
-        let mint_authority_byte_array: [u8; 32] = mint_authority_bytes
-            .as_ref()
-            .try_into()
-            .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-        Some(Pubkey::new_from_array(mint_authority_byte_array))
-    };
-
-    Ok((operator, mint_authority, token_address))
-}
-
-/// Encodes the operator, mint authority, and token address into a byte array.
-///
-/// This encoding scheme is aimed at Solana ITS. If you're sending a
-/// `DeployTokenManager` message to a different chain, please make sure to
-/// encode the data as required by the destination chain.
-#[must_use]
-pub fn encode_params(
-    maybe_operator: Option<Pubkey>,
-    maybe_mint_authority: Option<Pubkey>,
-    token_address: Pubkey,
-) -> Vec<u8> {
-    let operator_bytes = maybe_operator
-        .map(|operator| Bytes::from(operator.to_bytes()))
-        .unwrap_or_default();
-    let mint_authority_bytes = maybe_mint_authority
-        .map(|mint_authority| Bytes::from(mint_authority.to_bytes()))
-        .unwrap_or_default();
-    let token_address_bytes = FixedBytes::<32>::from(token_address.to_bytes());
-    (operator_bytes, mint_authority_bytes, token_address_bytes).abi_encode()
-}
-
-#[cfg(test)]
-mod tests {
-    use solana_program::pubkey::Pubkey;
-
-    #[test]
-    fn test_encode_decode_params_roundtrip() {
-        let operator = Pubkey::new_unique();
-        let mint_authority = Pubkey::new_unique();
-        let token_address = Pubkey::new_unique();
-        let encoded = super::encode_params(Some(operator), Some(mint_authority), token_address);
-        let (decoded_operator, decoded_mint_authority, decoded_token_address) =
-            super::decode_params(&encoded).unwrap();
-
-        assert_eq!(Some(operator), decoded_operator);
-        assert_eq!(Some(mint_authority), decoded_mint_authority);
-        assert_eq!(token_address, decoded_token_address);
-    }
-}

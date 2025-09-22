@@ -176,20 +176,6 @@ pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
 }
 
 /// Tries to create the ITS root PDA using the provided bump, falling back to
-/// `find_program_address` if the bump is `None` or invalid.
-///
-/// # Errors
-///
-/// If the bump is invalid.
-pub fn its_root_pda(maybe_bump: Option<u8>) -> Result<(Pubkey, u8), ProgramError> {
-    if let Some(bump) = maybe_bump {
-        create_its_root_pda(bump).map(|pubkey| (pubkey, bump))
-    } else {
-        Ok(find_its_root_pda())
-    }
-}
-
-/// Tries to create the ITS root PDA using the provided bump, falling back to
 /// `find_program_address` if the bump invalid.
 ///
 /// # Errors
@@ -230,24 +216,6 @@ pub(crate) fn assert_its_not_paused(its_config: &InterchainTokenService) -> Prog
     }
 
     Ok(())
-}
-
-/// Tries to create the PDA for a [`Tokenmanager`] using the provided bump,
-/// falling back to `find_program_address` if the bump is `None` or invalid.
-///
-/// # Errors
-///
-/// If the bump is invalid.
-pub fn token_manager_pda(
-    its_root_pda: &Pubkey,
-    token_id: &[u8; 32],
-    maybe_bump: Option<u8>,
-) -> Result<(Pubkey, u8), ProgramError> {
-    if let Some(bump) = maybe_bump {
-        create_token_manager_pda(its_root_pda, token_id, bump).map(|pubkey| (pubkey, bump))
-    } else {
-        Ok(find_token_manager_pda(its_root_pda, token_id))
-    }
 }
 
 /// Tries to create the PDA for a [`Tokenmanager`] using the provided bump,
@@ -321,26 +289,6 @@ pub(crate) fn assert_valid_deploy_approval_pda(
 }
 
 /// Tries to create the PDA for an `InterchainToken` using the provided bump,
-/// falling back to `find_program_address` if the bump is `None` or invalid.
-///
-/// The Interchain Token PDA is used as the mint account for native Interchain Tokens
-///
-/// # Errors
-///
-/// If the bump is invalid.
-pub fn interchain_token_pda(
-    its_root_pda: &Pubkey,
-    token_id: &[u8],
-    maybe_bump: Option<u8>,
-) -> Result<(Pubkey, u8), ProgramError> {
-    if let Some(bump) = maybe_bump {
-        create_interchain_token_pda(its_root_pda, token_id, bump).map(|pubkey| (pubkey, bump))
-    } else {
-        Ok(find_interchain_token_pda(its_root_pda, token_id))
-    }
-}
-
-/// Tries to create the PDA for an `InterchainToken` using the provided bump,
 /// falling back to `find_program_address` if the bump is invalid.
 ///
 /// The Interchain Token PDA is used as the mint account for native Interchain Tokens
@@ -379,29 +327,6 @@ pub fn find_interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pub
         ],
         &crate::id(),
     )
-}
-
-/// Tries to create the PDA for a `FlowSlot` using the provided bump,
-/// falling back to `find_program_address` if the bump is invalid.
-///
-/// # Errors
-///
-/// If the bump is invalid.
-#[inline]
-pub fn create_flow_slot_pda(
-    token_manager_pda: &Pubkey,
-    epoch: u64,
-    bump: u8,
-) -> Result<Pubkey, ProgramError> {
-    Ok(Pubkey::create_program_address(
-        &[
-            seed_prefixes::FLOW_SLOT_SEED,
-            token_manager_pda.as_ref(),
-            &epoch.to_ne_bytes(),
-            &[bump],
-        ],
-        &crate::id(),
-    )?)
 }
 
 /// Tries to create the PDA for a `DeploymentApproval` using the provided bump,
@@ -469,24 +394,6 @@ pub fn deployment_approval_pda(
             token_id,
             destination_chain,
         ))
-    }
-}
-
-/// Tries to create the PDA for a [`InterchainTransferExecute`] using the provided bump,
-/// falling back to `find_program_address` if the bump is `None`.
-///
-/// # Errors
-///
-/// If the bump is invalid.
-pub fn interchain_transfer_execute_pda(
-    destination_program: &Pubkey,
-    maybe_bump: Option<u8>,
-) -> Result<(Pubkey, u8), ProgramError> {
-    if let Some(bump) = maybe_bump {
-        create_interchain_transfer_execute_pda(destination_program, bump)
-            .map(|pubkey| (pubkey, bump))
-    } else {
-        Ok(find_interchain_transfer_execute_pda(destination_program))
     }
 }
 

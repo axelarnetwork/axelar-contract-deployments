@@ -45,7 +45,6 @@ default = ["devnet-amplifier"]
 
 [dependencies]
 alloy-primitives.workspace = true
-alloy-sol-types.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding.workspace = true
 axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }

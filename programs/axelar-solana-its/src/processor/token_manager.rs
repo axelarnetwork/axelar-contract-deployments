@@ -54,6 +54,16 @@ pub(crate) fn set_flow_limit<'a>(
         accounts.system_account,
     )?;
 
+    // TODO: Current implementation doesn't support Option<T>. When updating the events to be emitted
+    // through CPI, we need to emit this event.
+
+    // event::FlowLimitSet {
+    //     token_id: token_manager.token_id,
+    //     operator: *accounts.flow_limiter.key,
+    //     flow_limit,
+    // }
+    // .emit();
+
     Ok(())
 }
 
