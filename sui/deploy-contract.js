@@ -488,14 +488,20 @@ async function syncPackages(keypair, client, config, chain, options) {
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
         const network = options.env === 'mainnet' ? options.env : 'testnet';
-        updateMoveToml(packageDir, packageId, moveDir, undefined, Object.keys(chain.contracts[packageName]?.versions || {}).length, network);
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
             continue;
         }
 
-        updateMoveToml(packageDir, packageId, moveDir, undefined, versionList.length, network);
+        updateMoveToml(
+            packageDir,
+            packageId,
+            moveDir,
+            undefined,
+            Object.keys(chain.contracts[packageName]?.versions || {}).length,
+            network,
+        );
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
