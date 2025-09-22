@@ -487,11 +487,8 @@ async function syncPackages(keypair, client, config, chain, options) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
-        const versionList = [];
-        for (let version in chain.contracts[packageName]?.versions) {
-            versionList.push(Number(version));
-        }
         const network = options.env === 'mainnet' ? options.env : 'testnet';
+        updateMoveToml(packageDir, packageId, moveDir, undefined, Object.keys(chain.contracts[packageName]?.versions || {}).length, network);
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
