@@ -467,6 +467,11 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
                 arguments: [InterchainTokenService, RelayerDiscovery],
             });
 
+            await builder.moveCall({
+                target: `${contractConfig.address}::discovery::register_transaction`,
+                arguments: [InterchainTokenService, RelayerDiscovery],
+            });
+
             break;
         }
         default: {
