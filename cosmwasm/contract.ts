@@ -4,8 +4,8 @@ import { Command, Option } from 'commander';
 
 import { loadConfig } from '../common';
 import { addAmplifierQueryOptions } from './cli-utils';
-import { prepareClient, prepareDummyWallet } from './utils';
 import { ContractMap } from './types';
+import { prepareClient, prepareDummyWallet } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
