@@ -174,6 +174,8 @@ ts-node sui/deploy-contract.js deploy ITS
 ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 --env <your-env> --signatureScheme <your-signature-scheme>
 ```
 
+- Note: `coin-object-id` can be passed in as `0x0000000000000000000000000000000000000000000000000000000000000000` if you need the function to mint a fresh coin for you to transfer.
+
 
 - Example Command: 
 
