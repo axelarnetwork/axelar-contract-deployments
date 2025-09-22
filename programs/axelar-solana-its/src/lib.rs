@@ -342,12 +342,15 @@ pub fn create_deployment_approval_pda(
     destination_chain: &str,
     bump: u8,
 ) -> Result<Pubkey, ProgramError> {
+    let destination_chain_hash =
+        solana_program::keccak::hashv(&[destination_chain.as_bytes()]).to_bytes();
+
     Ok(Pubkey::create_program_address(
         &[
             seed_prefixes::DEPLOYMENT_APPROVAL_SEED,
             minter.as_ref(),
             token_id,
-            destination_chain.as_bytes(),
+            destination_chain_hash.as_ref(),
             &[bump],
         ],
         &crate::id(),
@@ -362,12 +365,15 @@ pub fn find_deployment_approval_pda(
     token_id: &[u8],
     destination_chain: &str,
 ) -> (Pubkey, u8) {
+    let destination_chain_hash =
+        solana_program::keccak::hashv(&[destination_chain.as_bytes()]).to_bytes();
+
     Pubkey::find_program_address(
         &[
             seed_prefixes::DEPLOYMENT_APPROVAL_SEED,
             minter.as_ref(),
             token_id,
-            destination_chain.as_bytes(),
+            destination_chain_hash.as_ref(),
         ],
         &crate::id(),
     )

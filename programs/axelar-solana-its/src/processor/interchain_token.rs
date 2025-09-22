@@ -713,6 +713,8 @@ pub(crate) fn approve_deploy_remote_interchain_token(
         bump,
     };
 
+    let destination_chain_hash =
+        solana_program::keccak::hashv(&[destination_chain.as_bytes()]).to_bytes();
     approval.init(
         &crate::id(),
         system_account,
@@ -722,7 +724,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
             seed_prefixes::DEPLOYMENT_APPROVAL_SEED,
             payer.key.as_ref(),
             &token_id,
-            destination_chain.as_bytes(),
+            destination_chain_hash.as_ref(),
             &[bump],
         ],
     )?;
