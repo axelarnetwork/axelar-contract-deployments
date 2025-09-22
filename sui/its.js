@@ -730,11 +730,11 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     });
 
     // Use dynamic values for amount and coinObjectId
-    let amount = initialAmount;
     let coinObjectId = initialCoinObjectId;
+    let amount = initialAmount;
     const ZERO_ID = '0x0000000000000000000000000000000000000000000000000000000000000000';
     if (coinObjectId === ZERO_ID) {
-        const [mintedAmount, mintedCoinObjectId] = await mintCoins(
+        const [totalBalance, mintedCoinObjectId] = await mintCoins(
             keypair,
             client,
             config,
@@ -743,7 +743,9 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
             options,
         );
         coinObjectId = mintedCoinObjectId;
-        amount = mintedAmount;
+
+        //if minting coins from scratch during interchain transfer, then send total minted amount in transfer.
+        amount = totalBalance;
     }
 
     await checkIfCoinExists(client, coinPackageId, coinType);
@@ -844,6 +846,10 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
         options: { showType: true },
     });
 
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('TreasuryCap object not found for the specified coin type.');
+    }
+
     const treasury = data[0].data?.objectId ?? data[0].objectId;
 
     const txBuilder = new TxBuilder(client);
@@ -852,7 +858,7 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
         arguments: [treasury, amount, receiver],
     });
 
-    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, config.options);
+    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
 
     const balance = await client.getBalance({
         owner: walletAddress,
