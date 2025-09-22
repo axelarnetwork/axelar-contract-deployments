@@ -58,31 +58,36 @@ impl Processor {
             GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
-        // compute the payload hash
-        let payload_hash = solana_program::keccak::hash(payload).to_bytes();
-
-        // Check: sender is a program
-        if sender.executable {
-            // If so, check that signing PDA is valid
-            let expected_signing_pda =
-                create_call_contract_signing_pda(*sender.key, signing_pda_bump)?;
+        if sender.is_signer {
+            // Direct signer, so not a program, continue
+        } else {
+            // Case of a program, so a valid signing PDA must be provided
+            let Ok(expected_signing_pda) =
+                create_call_contract_signing_pda(*sender.key, signing_pda_bump)
+            else {
+                solana_program::msg!(
+                    "Invalid call: sender must be a direct signer or a valid signing PDA must be provided",
+                );
+                return Err(GatewayError::CallerNotSigner.into());
+            };
 
             if &expected_signing_pda != sender_signing_pda.key {
-                solana_program::msg!("Invalid signing PDA");
+                // Signing PDA mismatch
+                solana_program::msg!("Invalid call: a valid signing PDA must be provided",);
                 return Err(GatewayError::InvalidSigningPDA.into());
             }
 
             if !sender_signing_pda.is_signer {
+                // Signing PDA is correct but not a signer
                 solana_program::msg!("Signing PDA must be a signer");
                 return Err(GatewayError::CallerNotSigner.into());
             }
-        } else {
-            // Otherwise, the sender must be a signer
-            if !sender.is_signer {
-                solana_program::msg!("Sender must be a signer or a program + signing PDA");
-                return Err(GatewayError::CallerNotSigner.into());
-            }
+
+            // A valid signing PDA was provided and it's a signer, continue
         }
+
+        // compute the payload hash
+        let payload_hash = solana_program::keccak::hash(payload).to_bytes();
 
         // Emit an event
         sol_log_data(&[
