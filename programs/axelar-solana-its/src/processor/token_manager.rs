@@ -302,15 +302,23 @@ pub(crate) fn handover_mint_authority(
     }
 
     let its_root_config = InterchainTokenService::load(its_root)?;
-    let token_manager_config = TokenManager::load(token_manager)?;
-
     assert_valid_its_root_pda(its_root, its_root_config.bump)?;
+
+    let token_manager_config = TokenManager::load(token_manager)?;
     assert_valid_token_manager_pda(
         token_manager,
         its_root.key,
         &token_id,
         token_manager_config.bump,
     )?;
+
+    if !matches!(
+        token_manager_config.ty,
+        token_manager::Type::MintBurn | token_manager::Type::MintBurnFrom
+    ) {
+        msg!("Invalid TokenManager type for instruction");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     if token_program.key != mint.owner {
         return Err(ProgramError::InvalidAccountData);

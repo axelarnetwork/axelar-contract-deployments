@@ -10,7 +10,7 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::solana_program::program_pack::Pack;
 use test_context::test_context;
 
-use axelar_solana_gateway_test_fixtures::base::FindLog;
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_its::state::token_manager::{self, TokenManager};
 use axelar_solana_its::Roles;
 use role_management::state::UserRoles;
@@ -20,6 +20,91 @@ use crate::{BorshPdaAccount, ItsTestContext};
 #[test_context(ItsTestContext)]
 #[tokio::test]
 async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContext) {
+    // First, we need to create a legitimate target token with MintBurn type
+    // that Bob will try to exploit
+    let legitimate_user = Keypair::new();
+
+    // Fund legitimate user's account
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &legitimate_user.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Create the target token mint
+    let target_token_mint = ctx
+        .solana_chain
+        .fixture
+        .init_new_mint(legitimate_user.pubkey(), spl_token_2022::id(), 9)
+        .await;
+
+    // Create metadata for the target token
+    let (target_metadata_pda, _) =
+        mpl_token_metadata::accounts::Metadata::find_pda(&target_token_mint);
+    let target_metadata_ix = CreateV1Builder::new()
+        .metadata(target_metadata_pda)
+        .token_standard(TokenStandard::Fungible)
+        .mint(target_token_mint, false)
+        .authority(legitimate_user.pubkey())
+        .update_authority(legitimate_user.pubkey(), true)
+        .payer(legitimate_user.pubkey())
+        .is_mutable(false)
+        .name("Target Token".to_string())
+        .symbol("TARGET".to_string())
+        .uri(String::new())
+        .seller_fee_basis_points(0)
+        .instruction();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[target_metadata_ix],
+            &[
+                &legitimate_user.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Register the target token as MintBurn type
+    let target_salt = solana_sdk::keccak::hash(b"TargetToken").0;
+    let target_register_ix = axelar_solana_its::instruction::register_custom_token(
+        legitimate_user.pubkey(),
+        target_salt,
+        target_token_mint,
+        token_manager::Type::MintBurn, // Using MintBurn type so handover is allowed
+        spl_token_2022::id(),
+        Some(legitimate_user.pubkey()),
+    )
+    .unwrap();
+
+    let target_tx = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[target_register_ix],
+            &[
+                &legitimate_user.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Get the target token_id
+    let target_token_id_event = target_tx
+        .metadata
+        .unwrap()
+        .log_messages
+        .iter()
+        .find_map(|log| axelar_solana_its::event::InterchainTokenIdClaimed::try_from_log(log).ok())
+        .unwrap();
+
+    let target_token_id = target_token_id_event.token_id;
+
     // Bob is a malicious actor
     let bob = Keypair::new();
 
@@ -72,7 +157,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
         bob.pubkey(),
         salt,
         token_b_mint,
-        token_manager::Type::LockUnlock,
+        token_manager::Type::MintBurn, // Bob also uses MintBurn type for his token
         spl_token_2022::id(),
         Some(bob.pubkey()),
     )
@@ -120,12 +205,11 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
 
     assert_eq!(bob_token_manager.token_address, token_b_mint);
 
-    // Step 3: Get the token_id of the target token (TokenTarget - ctx.deployed_interchain_token)
-    let target_token_id = ctx.deployed_interchain_token;
+    // Step 3: Get the token manager PDA for the target token
     let (target_token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &target_token_id);
 
-    // Get the target token mint address
+    // Verify the target token manager was created with MintBurn type
     let target_token_manager_data = ctx
         .solana_chain
         .fixture
@@ -137,7 +221,8 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
         .deserialize::<TokenManager>(&target_token_manager_pda)
         .unwrap();
 
-    let target_token_mint = target_token_manager.token_address;
+    assert_eq!(target_token_manager.token_address, target_token_mint);
+    assert_eq!(target_token_manager.ty, token_manager::Type::MintBurn);
 
     // Step 4 & 5: Bob attempts the exploit by calling TokenManagerHandOverMintAuthority
     // with the target token's token_id but providing his own TokenB mint address
@@ -171,11 +256,9 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
         Err(meta) => meta,
     };
 
-    assert!(
-        tx_metadata
-            .find_log("TokenManager PDA does not match the provided Mint account")
-            .is_some(),
-        "Expected error about TokenManager PDA not matching Mint account"
+    assert_msg_present_in_logs(
+        tx_metadata,
+        "TokenManager PDA does not match the provided Mint account",
     );
 
     // Verify Bob does NOT have minter role on the target token
@@ -213,7 +296,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
         "Bob should still be the mint authority of TokenB"
     );
 
-    // Verify the target token's mint authority is unchanged (should still be the token manager)
+    // Verify the target token's mint authority is unchanged (should still be the legitimate user)
     let target_mint_data = ctx
         .solana_chain
         .fixture
@@ -224,8 +307,8 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
     let target_mint_state = spl_token_2022::state::Mint::unpack(&target_mint_data).unwrap();
     assert_eq!(
         target_mint_state.mint_authority.unwrap(),
-        target_token_manager_pda,
-        "Target token mint authority should still be the token manager"
+        legitimate_user.pubkey(),
+        "Target token mint authority should still be the legitimate user (unchanged)"
     );
 }
 
@@ -280,7 +363,7 @@ async fn test_successful_handover_mint_authority(ctx: &mut ItsTestContext) {
         alice.pubkey(),
         salt,
         alice_token_mint,
-        token_manager::Type::LockUnlock,
+        token_manager::Type::MintBurn,
         spl_token_2022::id(),
         Some(alice.pubkey()),
     )
@@ -425,5 +508,233 @@ async fn test_successful_handover_mint_authority(ctx: &mut ItsTestContext) {
     assert_eq!(
         alice_ata_state.amount, mint_amount,
         "Alice should have the minted tokens"
+    );
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_handover_mint_authority_for_lock_unlock_token(ctx: &mut ItsTestContext) {
+    // Create a user who will try to handover mint authority for a LockUnlock token
+    let user = Keypair::new();
+
+    // Fund user's account
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &user.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Step 1: User creates a new token mint
+    let user_token_mint = ctx
+        .solana_chain
+        .fixture
+        .init_new_mint(user.pubkey(), spl_token_2022::id(), 9)
+        .await;
+
+    // Create metadata for the token
+    let (metadata_pda, _) = mpl_token_metadata::accounts::Metadata::find_pda(&user_token_mint);
+    let metadata_ix = CreateV1Builder::new()
+        .metadata(metadata_pda)
+        .token_standard(TokenStandard::Fungible)
+        .mint(user_token_mint, false)
+        .authority(user.pubkey())
+        .update_authority(user.pubkey(), true)
+        .payer(user.pubkey())
+        .is_mutable(false)
+        .name("Lock Unlock Token".to_string())
+        .symbol("LOCK".to_string())
+        .uri(String::new())
+        .seller_fee_basis_points(0)
+        .instruction();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[metadata_ix],
+            &[
+                &user.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Step 2: Register the token as LockUnlock type
+    let salt = solana_sdk::keccak::hash(b"LockUnlockToken").0;
+    let register_ix = axelar_solana_its::instruction::register_custom_token(
+        user.pubkey(),
+        salt,
+        user_token_mint,
+        token_manager::Type::LockUnlock, // Using LockUnlock type instead of MintBurn
+        spl_token_2022::id(),
+        Some(user.pubkey()),
+    )
+    .unwrap();
+
+    let tx = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[register_ix],
+            &[
+                &user.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Get the token_id from the transaction events
+    let token_id_event = tx
+        .metadata
+        .unwrap()
+        .log_messages
+        .iter()
+        .find_map(|log| axelar_solana_its::event::InterchainTokenIdClaimed::try_from_log(log).ok())
+        .unwrap();
+
+    let token_id = token_id_event.token_id;
+
+    // Verify the TokenManager was created with LockUnlock type
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+
+    let token_manager_data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&token_manager_pda, &axelar_solana_its::id())
+        .await;
+
+    let mut token_manager_account = token_manager_data.clone();
+    let token_manager = token_manager_account
+        .deserialize::<TokenManager>(&token_manager_pda)
+        .unwrap();
+
+    assert_eq!(token_manager.token_address, user_token_mint);
+    assert_eq!(token_manager.ty, token_manager::Type::LockUnlock);
+
+    // Step 3: Attempt to handover mint authority (this should fail)
+    let handover_ix = axelar_solana_its::instruction::token_manager::handover_mint_authority(
+        user.pubkey(),
+        token_id,
+        user_token_mint,
+        spl_token_2022::id(),
+    )
+    .unwrap();
+
+    let tx_result = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[handover_ix],
+            &[
+                &user.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await;
+
+    // Verify the transaction failed with the expected error
+    let tx_metadata = tx_result.unwrap_err();
+    assert_msg_present_in_logs(tx_metadata, "Invalid TokenManager type for instruction");
+
+    // Verify the mint authority is still the user (unchanged)
+    let mint_data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&user_token_mint, &spl_token_2022::id())
+        .await
+        .data;
+
+    let mint_state = spl_token_2022::state::Mint::unpack(&mint_data).unwrap();
+    assert_eq!(
+        mint_state.mint_authority.unwrap(),
+        user.pubkey(),
+        "User should still be the mint authority (handover should have failed)"
+    );
+
+    // Verify user does NOT have minter role
+    let (user_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &user.pubkey(),
+    );
+
+    let user_roles_result = ctx
+        .solana_chain
+        .fixture
+        .try_get_account(&user_roles_pda, &axelar_solana_its::id())
+        .await
+        .unwrap();
+
+    // The user might have operator role from registering the token, but shouldn't have minter role
+    if let Some(account) = user_roles_result {
+        let user_roles = UserRoles::<Roles>::try_from_slice(&account.data).unwrap();
+        assert!(
+            !user_roles.contains(Roles::MINTER),
+            "User should not have minter role since handover failed"
+        );
+    }
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_handover_mint_authority_for_native_interchain_token(ctx: &mut ItsTestContext) {
+    // The deployed_interchain_token from the test context is a NativeInterchainToken
+    let target_token_id = ctx.deployed_interchain_token;
+
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (target_token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &target_token_id);
+
+    // Get the token manager to verify it's NativeInterchainToken type
+    let target_token_manager_data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&target_token_manager_pda, &axelar_solana_its::id())
+        .await;
+
+    let mut target_token_manager_account = target_token_manager_data.clone();
+    let target_token_manager = target_token_manager_account
+        .deserialize::<TokenManager>(&target_token_manager_pda)
+        .unwrap();
+
+    assert_eq!(
+        target_token_manager.ty,
+        token_manager::Type::NativeInterchainToken,
+        "Test assumes deployed token is NativeInterchainToken type"
+    );
+
+    let target_token_mint = target_token_manager.token_address;
+
+    // The deployer (payer) should be the operator of this token
+    // Attempt to handover mint authority (should fail for NativeInterchainToken)
+    let handover_ix = axelar_solana_its::instruction::token_manager::handover_mint_authority(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        target_token_id,
+        target_token_mint,
+        spl_token_2022::id(),
+    )
+    .unwrap();
+
+    let tx_metadata = ctx.send_solana_tx(&[handover_ix]).await.unwrap_err();
+    assert_msg_present_in_logs(tx_metadata, "Invalid TokenManager type for instruction");
+
+    // Verify the mint authority is still the token manager (unchanged)
+    let mint_data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&target_token_mint, &spl_token_2022::id())
+        .await
+        .data;
+
+    let mint_state = spl_token_2022::state::Mint::unpack(&mint_data).unwrap();
+    assert_eq!(
+        mint_state.mint_authority.unwrap(),
+        target_token_manager_pda,
+        "Token manager should still be the mint authority (handover should have failed)"
     );
 }
