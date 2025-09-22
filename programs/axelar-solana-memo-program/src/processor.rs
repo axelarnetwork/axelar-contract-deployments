@@ -487,6 +487,7 @@ pub fn process_send_interchain_transfer_with_wrong_seeds(
 }
 
 /// Process CallContractWithInterchainToken instruction - sends tokens with additional data
+#[allow(clippy::too_many_arguments)]
 pub fn process_call_contract_with_interchain_token(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],

@@ -251,13 +251,15 @@ pub fn send_interchain_transfer_with_wrong_seeds(
     amount: u64,
     gas_value: u128,
 ) -> Result<Instruction, ProgramError> {
-    let data = to_vec(&AxelarMemoInstruction::SendInterchainTransferWithWrongSeeds {
-        token_id,
-        destination_chain,
-        destination_address,
-        amount,
-        gas_value,
-    })?;
+    let data = to_vec(
+        &AxelarMemoInstruction::SendInterchainTransferWithWrongSeeds {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+        },
+    )?;
 
     // Derive the source ATA (counter PDA's token account)
     let source_ata = spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -301,7 +303,6 @@ pub fn send_interchain_transfer_with_wrong_seeds(
 /// This sends tokens along with additional data to call a contract on the destination
 #[allow(clippy::too_many_arguments)]
 pub fn call_contract_with_interchain_token(
-    payer: &Pubkey,
     memo_counter_pda: &Pubkey,
     its_root_pda: &Pubkey,
     token_manager_pda: &Pubkey,
