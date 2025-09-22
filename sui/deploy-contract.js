@@ -419,7 +419,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
         const versionList = [];
-        for (let version in contractsConfig[name]?.versions) { 
+        for (let version in contractsConfig[name]?.versions) {
             versionList.push(Number(version));
         }
         const network = options.env === 'mainnet' ? options.env : 'testnet';
@@ -492,7 +492,7 @@ async function syncPackages(keypair, client, config, chain, options) {
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
         const versionList = [];
-        for (let version in chain.contracts[packageName]?.versions) { 
+        for (let version in chain.contracts[packageName]?.versions) {
             versionList.push(Number(version));
         }
         const network = options.env === 'mainnet' ? options.env : 'testnet';
