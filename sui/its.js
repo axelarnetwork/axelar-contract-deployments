@@ -837,15 +837,15 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
     await checkIfCoinExists(client, coinPackageId, coinType);
-    
+
     const { data } = await client.getOwnedObjects({
         owner: walletAddress,
         filter: { StructType: `0x2::coin::TreasuryCap<${coinType}>` },
         options: { showType: true },
     });
-    
+
     const treasury = data[0].data?.objectId ?? data[0].objectId;
-    
+
     const txBuilder = new TxBuilder(client);
     await txBuilder.moveCall({
         target: `${coinPackageId}::${coinPackageName}::mint`,
@@ -1054,7 +1054,7 @@ if (require.main === module) {
                 );
             },
         );
- 
+
     const mintCoinsProgram = new Command()
         .name('mint-coins')
         .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <amount> <receiver>')
