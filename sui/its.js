@@ -837,15 +837,15 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
     await checkIfCoinExists(client, coinPackageId, coinType);
-
+    
     const { data } = await client.getOwnedObjects({
         owner: walletAddress,
         filter: { StructType: `0x2::coin::TreasuryCap<${coinType}>` },
         options: { showType: true },
     });
-
+    
     const treasury = data[0].data?.objectId ?? data[0].objectId;
-
+    
     const txBuilder = new TxBuilder(client);
     await txBuilder.moveCall({
         target: `${coinPackageId}::${coinPackageName}::mint`,
@@ -1043,6 +1043,7 @@ if (require.main === module) {
             'interchain-transfer <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
         )
         .description('Send interchain transfer from sui to a chain where token is linked')
+        // TODO set coinObjectId default to 0x0000000000000000000000000000000000000000000000000000000000000000 when refactoring script
         .action(
             (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
                 mainProcessor(
@@ -1053,13 +1054,13 @@ if (require.main === module) {
                 );
             },
         );
-
+ 
     const mintCoinsProgram = new Command()
         .name('mint-coins')
-        .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <treasury> <amount> <receiver>')
-        .description('Mint coins')
-        .action((coinPackageId, coinPackageName, coinModName, treasury, amount, receiver, options) => {
-            mainProcessor(mintCoins, options, [coinPackageId, coinPackageName, coinModName, treasury, amount, receiver], processCommand);
+        .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <amount> <receiver>')
+        .description('Mint coins for a given package on sui')
+        .action((coinPackageId, coinPackageName, coinModName, amount, receiver, options) => {
+            mainProcessor(mintCoins, options, [coinPackageId, coinPackageName, coinModName, amount, receiver], processCommand);
         });
 
     program.addCommand(setFlowLimitsProgram);
