@@ -24,7 +24,7 @@ type ProcessorFn = (
     fee?: string | StdFee,
 ) => Promise<void>;
 
-export async function mainProcessor<Processor extends ProcessorFn>(processor: Processor, options: Options, args?: string[]) {
+export async function mainProcessor(processor: ProcessorFn, options: Options, args?: string[]) {
     const { runAs, deposit, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
 
