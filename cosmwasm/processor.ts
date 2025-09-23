@@ -23,6 +23,10 @@ type ProcessorQueryFn = (
     fee?: string | StdFee,
 ) => Promise<void>;
 
+interface ClientManager extends SigningCosmWasmClient {
+    accounts: readonly AccountData[];
+}
+
 function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
     const { runAs, deposit, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
@@ -46,7 +50,7 @@ export async function mainProcessor(processor: ProcessorFn, options: Options, ar
         throw new Error('Mnemonic is required');
     }
 
-    const client = await ClientManager.prepareClient(
+    const client = await prepareClient(
         options.mnemonic,
         configManager.getFullConfig().axelar.rpc,
         GasPrice.fromString(configManager.getFullConfig().axelar.gasPrice),
@@ -63,24 +67,13 @@ export async function mainQueryProcessor(processor: ProcessorQueryFn, options: O
     configManager.saveConfig();
 }
 
-export class ClientManager extends SigningCosmWasmClient {
-    private wallet: DirectSecp256k1HdWallet;
-
-    static async prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
-        try {
-            const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-            const signingClient = await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice: gasPrice });
-            // Create a proper ClientManager instance by copying properties
-            const clientManager = Object.create(ClientManager.prototype);
-            Object.assign(clientManager, signingClient);
-            clientManager.wallet = wallet;
-            return clientManager;
-        } catch (error) {
-            throw new Error(`Failed to prepare client: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    }
-
-    public async getAccounts(): Promise<readonly AccountData[]> {
-        return await this.wallet.getAccounts();
+async function prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
+    try {
+        const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+        const clientManager = (await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice: gasPrice })) as ClientManager;
+        clientManager.accounts = await wallet.getAccounts();
+        return clientManager;
+    } catch (error) {
+        throw new Error(`Failed to prepare client: ${error instanceof Error ? error.message : String(error)}`);
     }
 }

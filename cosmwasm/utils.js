@@ -121,7 +121,7 @@ const uploadContract = async (client, config, options) => {
         axelar: { gasPrice, gasLimit },
     } = config;
 
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
     const wasm = readContractCode(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
@@ -132,7 +132,7 @@ const uploadContract = async (client, config, options) => {
 
 const instantiateContract = async (client, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -161,7 +161,7 @@ const instantiateContract = async (client, initMsg, config, options) => {
 
 const migrateContract = async (client, config, options) => {
     const { msg } = options;
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -1087,7 +1087,7 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
 };
 
 const submitProposal = async (client, config, options, content) => {
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
 
     const {
         axelar: { gasPrice, gasLimit },
