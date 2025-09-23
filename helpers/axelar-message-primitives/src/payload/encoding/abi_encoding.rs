@@ -17,9 +17,6 @@ impl<'payload> DataPayload<'payload> {
     /// - single byte indicating the encoding scheme.
     /// - encoded: The first element is the payload without the accounts.
     /// - encoded: The second element is the list of Solana accounts.
-    ///
-    /// FIXME: this function is very inefficient because it allocates up to 5
-    /// vectors.
     pub(super) fn encode_abi_encoding(&self) -> Result<Vec<u8>, PayloadError> {
         let mut writer_vec = self.encoding_scheme_prefixed_array();
         let gateway_payload = SolanaGatewayPayload {

@@ -16,7 +16,6 @@ use std::borrow::Borrow;
 use std::io::Write;
 
 /// Initialize a PDA by writing borsh serialisable data to the buffer
-// TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
 pub fn init_pda<'a, 'b, T: solana_program::program_pack::Pack>(
     funder_info: &'a AccountInfo<'b>,
     to_create: &'a AccountInfo<'b>,
@@ -174,7 +173,6 @@ pub fn close_pda(
 /// PDA
 pub trait ValidPDA {
     /// Check if the account is an initialized PDA
-    // TODO add constraint that the T: IsInitialized + Pack + BorshSerialize
     fn check_initialized_pda<T: solana_program::program_pack::Pack>(
         &self,
         expected_owner_program_id: &Pubkey,
