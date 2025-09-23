@@ -3887,8 +3887,7 @@
         "codeId": 60,
         "instantiateProposalId": "343",
         "address": "axelar1mla7j6dwvenszzajk64ee7hwlccl09p356mdc2akjwfus2fxdazs0wdmq8"
-      },
-      "undefined": {}
+      }
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
