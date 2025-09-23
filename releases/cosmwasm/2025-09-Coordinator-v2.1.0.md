@@ -136,7 +136,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Verify router contract version
 
    ```bash
-   ts-node cosmwasm/contract.ts info --contract Router -e $ENV
+   ts-node cosmwasm/query.ts contract-info --contractName Router -e $ENV
    ```
    Expected output
 
@@ -165,7 +165,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Verify multisig contract version
 
    ```bash
-   ts-node cosmwasm/contract.ts info --contract Multisig -e $ENV
+   ts-node cosmwasm/query.ts contract-info --contractName Multisig -e $ENV
    ```
    Expected output
 
@@ -194,7 +194,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Verify coordinator contract version
 
    ```bash
-   ts-node cosmwasm/contract.ts info --contract Coordinator -e $ENV
+   ts-node cosmwasm/query.ts contract-info --contractName Coordinator -e $ENV
    ```
    Expected output
 
