@@ -103,7 +103,7 @@ export class ConfigManager {
 
         const requiredFields = ['contracts', 'rpc', 'gasPrice', 'gasLimit', 'govProposalInstantiateAddresses', 'govProposalDepositAmount'];
         requiredFields.forEach((field) => {
-            if (!axelar[field]) {
+            if (axelar[field] === undefined || axelar[field] === null) {
                 errors.push(`Missing 'axelar.${field}' in ${this.environment} config`);
             }
         });
