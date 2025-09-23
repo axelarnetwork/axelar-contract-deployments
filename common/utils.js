@@ -555,8 +555,7 @@ const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'Mult
 };
 
 /** Get the domain separator for the given chain. If contract is not provided, it will be inferred from the chain name */
-async function getDomainSeparator(axelar, chain, options, contract = null) {
-    contract = contract || getChainCodecContractForChain(axelar, chain.axelarId);
+async function getDomainSeparator(axelar, chain, options, contract = 'MultisigProver') {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {

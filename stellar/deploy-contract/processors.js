@@ -108,7 +108,7 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
     switch (contractName) {
         case 'AxelarGateway': {
             const domainSeparator = nativeToScVal(
-                Buffer.from(arrayify(await getDomainSeparator(config.axelar, chain, options, 'ChainCodecStellar'))),
+                Buffer.from(arrayify(await getDomainSeparator(config.axelar, chain, options))),
             );
             const minimumRotationDelay = nativeToScVal(options.minimumRotationDelay);
             const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
