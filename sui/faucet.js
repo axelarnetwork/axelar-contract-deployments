@@ -18,12 +18,18 @@ async function processCommand(config, chain, options) {
         process.exit(0);
     }
 
-    await requestSuiFromFaucetV2({
-        host: getFaucetHost(chain.networkType),
-        recipient,
-    });
+    const faucetHost = chain.faucetUrl || getFaucetHost(chain.networkType);
 
-    printInfo('Funds requested', recipient);
+    try {
+        await requestSuiFromFaucetV2({
+            host: faucetHost,
+            recipient,
+        });
+        printInfo('Funds requested', recipient);
+    } catch (error) {
+        printWarn(`Failed to request funds from faucet at ${faucetHost}: ${error.message}`);
+        throw error;
+    }
 }
 
 async function mainProcessor(options, processor) {
