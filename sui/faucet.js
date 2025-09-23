@@ -24,6 +24,7 @@ async function processCommand(config, chain, options) {
         case 'localnet': {
             /// @deprecated: requestSuiFromFaucetV0
             await requestSuiFromFaucetV0({ host, recipient });
+            break;
         }
         default: {
             await requestSuiFromFaucetV2({ host, recipient });
