@@ -304,15 +304,10 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
     amount: u64,
     gas_value: u64,
     signing_pda_bump: u8,
-    source_program_id: Option<Pubkey>,
+    source_id: Pubkey,
     pda_seeds: Vec<Vec<u8>>,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
-    let source_id = source_program_id.ok_or_else(|| {
-        msg!("Source program ID is required for CPI-initiated transfers");
-        ProgramError::InvalidInstructionData
-    })?;
-
     // The sender should be a PDA owned by the source program
     let sender = next_account_info(&mut accounts.iter())?;
     if sender.owner != &source_id {
