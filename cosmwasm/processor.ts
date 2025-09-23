@@ -1,4 +1,4 @@
-import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { CosmWasmClient, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { AccountData, DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { GasPrice, StdFee } from '@cosmjs/stargate';
 
@@ -14,17 +14,20 @@ type Options = {
     instantiateAddresses?: string[];
 };
 
-type ProcessorFn = (
-    client: ClientManager,
+type ProcessorFn = (client: ClientManager, config: FullConfig, options: Options, args?: string[], fee?: string | StdFee) => Promise<void>;
+type ProcessorQueryFn = (
+    client: CosmWasmClient,
     config: FullConfig,
     options: Options,
     args?: string[],
     fee?: string | StdFee,
 ) => Promise<void>;
 
-export async function mainProcessor(processor: ProcessorFn, options: Options, args?: string[]) {
+
+function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
     const { runAs, deposit, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
+    const fee = configManager.getFee();
 
     options.runAs =
         runAs ||
@@ -34,36 +37,51 @@ export async function mainProcessor(processor: ProcessorFn, options: Options, ar
 
     configManager.initContractConfig(options.contractName, options.chainName);
 
+    return { configManager, fee };
+}
+
+export async function mainProcessor(processor: ProcessorFn, options: Options, args?: string[]) {
+    const { configManager, fee } = prepareProcessor(options);
+
+    if (!options.mnemonic) {
+        throw new Error('Mnemonic is required');
+    }
+
     const client = await ClientManager.prepareClient(
         options.mnemonic,
         configManager.getFullConfig().axelar.rpc,
         GasPrice.fromString(configManager.getFullConfig().axelar.gasPrice),
     );
-    const fee = configManager.getFee();
 
     await processor(client, configManager.getFullConfig(), options, args, fee);
+    configManager.saveConfig();
+}
 
+export async function mainQueryProcessor(processor: ProcessorQueryFn, options: Options, args?: string[]) {
+    const { configManager, fee } = prepareProcessor(options);
+    const client = await CosmWasmClient.connect(configManager.getFullConfig().axelar.rpc);
+    await processor(client, configManager.getFullConfig(), options, args, fee);
     configManager.saveConfig();
 }
 
 export class ClientManager extends SigningCosmWasmClient {
-    private mnemonic: string;
+    private wallet: DirectSecp256k1HdWallet;
 
     static async prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
-        const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-        const clientManager = (await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice: gasPrice })) as ClientManager;
-        clientManager.mnemonic = mnemonic;
-        return clientManager;
-    }
-
-    static async prepareQueryClient(rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
-        const dummyMnemonic = 'test test test test test test test test test test test junk';
-        const clientManager = await ClientManager.prepareClient(dummyMnemonic, rpc, gasPrice);
-        return clientManager;
+        try {
+            const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+            const signingClient = await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice: gasPrice });
+            // Create a proper ClientManager instance by copying properties
+            const clientManager = Object.create(ClientManager.prototype);
+            Object.assign(clientManager, signingClient);
+            clientManager.wallet = wallet;
+            return clientManager;
+        } catch (error) {
+            throw new Error(`Failed to prepare client: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     public async getAccounts(): Promise<readonly AccountData[]> {
-        const wallet = await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, { prefix: 'axelar' });
-        return await wallet.getAccounts();
+        return await this.wallet.getAccounts();
     }
 }

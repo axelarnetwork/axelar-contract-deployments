@@ -3,7 +3,7 @@
 require('../common/cli-utils');
 
 const { printInfo, getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
-const { mainProcessor } = require('./processor');
+const { mainQueryProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
@@ -27,7 +27,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        mainProcessor(processCommand, options);
+        mainQueryProcessor(processCommand, options);
     });
 
     program.parse();

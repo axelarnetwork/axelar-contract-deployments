@@ -49,15 +49,6 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
-const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
-
-const prepareDummyWallet = async () => {
-    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
-};
-
-const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
-    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
-
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -1465,9 +1456,6 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    prepareWallet,
-    prepareDummyWallet,
-    prepareClient,
     fromHex,
     getSalt,
     calculateDomainSeparator,
