@@ -46,6 +46,8 @@ pub mod seed_prefixes {
     pub const INCOMING_MESSAGE_SEED: &[u8] = b"incoming message";
     /// The seed prefix for deriving message payload PDAs
     pub const MESSAGE_PAYLOAD_SEED: &[u8] = b"message-payload";
+    /// The seed prefix for deriving validate message signing PDAs
+    pub const VALIDATE_MESSAGE_SIGNING_SEED: &[u8] = b"gtw-validate-msg";
 }
 
 /// Event discriminators for different types of events
@@ -291,7 +293,10 @@ pub fn get_validate_message_signing_pda(
     destination_address: Pubkey,
     command_id: [u8; 32],
 ) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[command_id.as_ref()], &destination_address)
+    Pubkey::find_program_address(
+        &[seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED, command_id.as_ref()],
+        &destination_address,
+    )
 }
 
 /// Create a new Signing PDA that is used for validating that a message has
@@ -307,7 +312,14 @@ pub fn create_validate_message_signing_pda(
     signing_pda_bump: u8,
     command_id: &[u8; 32],
 ) -> Result<Pubkey, PubkeyError> {
-    Pubkey::create_program_address(&[command_id, &[signing_pda_bump]], destination_address)
+    Pubkey::create_program_address(
+        &[
+            seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED,
+            command_id,
+            &[signing_pda_bump],
+        ],
+        destination_address,
+    )
 }
 
 /// Create a new Signing PDA that is used for `CallContract` call by the source contract to authorize its call
@@ -414,6 +426,17 @@ mod tests {
         let command_id: [u8; 32] = rand::random();
         let (found_pda, bump) = get_incoming_message_pda(&command_id);
         let created_pda = create_incoming_message_pda(command_id, bump).unwrap();
+        assert_eq!(found_pda, created_pda);
+    }
+
+    /// Test that the bump from `get_validate_message_signing_pda` generates the same public key when
+    /// used with the same inputs by `create_validate_message_signing_pda`.
+    #[test]
+    fn test_get_and_create_validate_message_signing_pda_bump_reuse() {
+        let destination_address = Pubkey::new_unique();
+        let command_id: [u8; 32] = rand::random();
+        let (found_pda, bump) = get_validate_message_signing_pda(destination_address, command_id);
+        let created_pda = create_validate_message_signing_pda(&destination_address, bump, &command_id).unwrap();
         assert_eq!(found_pda, created_pda);
     }
 
