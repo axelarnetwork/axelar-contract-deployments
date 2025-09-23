@@ -199,7 +199,6 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         address: result.prover,
     };
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
-
     printInfo(`Config updated successfully for ${chainName}`);
 }
 

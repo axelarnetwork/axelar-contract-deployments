@@ -23,7 +23,6 @@ type ProcessorQueryFn = (
     fee?: string | StdFee,
 ) => Promise<void>;
 
-
 function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
     const { runAs, deposit, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
