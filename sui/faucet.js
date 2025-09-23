@@ -1,6 +1,6 @@
 'use strict';
 
-const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
+const { requestSuiFromFaucetV2, getFaucetHost } = require('@mysten/sui/faucet');
 const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common/utils');
 const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
 const { Command, Option } = require('commander');
@@ -18,7 +18,7 @@ async function processCommand(config, chain, options) {
         process.exit(0);
     }
 
-    await requestSuiFromFaucetV0({
+    await requestSuiFromFaucetV2({
         host: getFaucetHost(chain.networkType),
         recipient,
     });
