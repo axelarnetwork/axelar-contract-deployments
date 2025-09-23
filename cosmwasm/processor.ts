@@ -3,9 +3,9 @@ import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { StdFee } from '@cosmjs/stargate';
 
 import { ConfigManager, FullConfig } from '../common/config';
-import { prepareClient, prepareWallet } from './utils';
+import { prepareClient, prepareDummyWallet, prepareWallet } from './utils';
 
-type Options = {
+export type Options = {
     env: string;
     contractName: string;
     chainName: string;
@@ -36,7 +36,7 @@ export async function mainProcessor(processor: ProcessorFn, options: Options, ar
 
     configManager.initContractConfig(options.contractName, options.chainName);
 
-    const wallet = await prepareWallet(options);
+    const wallet = options.mnemonic ? await prepareWallet(options) : await prepareDummyWallet();
     const client = await prepareClient(configManager.getFullConfig(), wallet);
 
     const fee = configManager.getFee();
