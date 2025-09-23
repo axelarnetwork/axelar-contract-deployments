@@ -47,20 +47,7 @@ const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
-const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
-
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
-
-const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
-
-const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareDummyWallet = async () => {
-    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
-};
-
-const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
-    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -77,20 +64,6 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
-
-const initContractConfig = (config, { contractName, chainName }) => {
-    if (!contractName) {
-        return;
-    }
-
-    config.axelar = config.axelar || {};
-    config.axelar.contracts = config.axelar.contracts || {};
-    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
-
-    if (chainName) {
-        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
-    }
-};
 
 const getAmplifierBaseContractConfig = (config, contractName) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
@@ -143,12 +116,12 @@ const executeTransaction = async (client, account, contractAddress, message, fee
     return tx;
 };
 
-const uploadContract = async (client, wallet, config, options) => {
+const uploadContract = async (client, config, options) => {
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
 
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const wasm = readContractCode(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
@@ -157,9 +130,9 @@ const uploadContract = async (client, wallet, config, options) => {
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, wallet, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -186,9 +159,9 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
     return contractAddress;
 };
 
-const migrateContract = async (client, wallet, config, options) => {
+const migrateContract = async (client, config, options) => {
     const { msg } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -1113,8 +1086,8 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, wallet, config, options, content) => {
-    const [account] = await wallet.getAccounts();
+const submitProposal = async (client, config, options, content) => {
+    const [account] = client.accounts;
 
     const {
         axelar: { gasPrice, gasLimit },
@@ -1483,14 +1456,9 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    governanceAddress,
-    prepareWallet,
-    prepareDummyWallet,
-    prepareClient,
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
