@@ -30,11 +30,10 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The address of payer / sender
     /// 1. [] Program data account
-    /// 2. [] Gateway root account
-    /// 3. [writable] ITS root account
-    /// 4. [] System program account
-    /// 5. [] The account that will become the operator of the ITS
-    /// 6. [writable] The address of the account that will store the roles of the operator account.
+    /// 2. [writable] ITS root account
+    /// 3. [] System program account
+    /// 4. [] The account that will become the operator of the ITS
+    /// 5. [writable] The address of the account that will store the roles of the operator account.
     Initialize {
         /// The name of the chain the ITS is running on.
         chain_name: String,
@@ -49,8 +48,8 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The address of the payer, needs to be the ITS owner.
     /// 1. [] The program data account.
-    /// 2. [] Gateway root account
-    /// 3. [writable] ITS root pda.
+    /// 2. [writable] ITS root pda.
+    /// 3. [] System program account
     SetPauseStatus {
         /// The new pause status.
         paused: bool,
@@ -60,8 +59,8 @@ pub enum InterchainTokenServiceInstruction {
     /// Accounts expected by this instruction:
     ///
     /// 0. [writable,signer] The address of the payer, needs to be the ITS owner.
-    /// 1. [] The program data account.
-    /// 2. [] Gateway root account
+    /// 1. [] The account that holds the payer roles on the ITS root account.
+    /// 2. [] The program data account.
     /// 3. [writable] ITS root pda.
     /// 4. [] The system program account.
     SetTrustedChain {
@@ -74,8 +73,8 @@ pub enum InterchainTokenServiceInstruction {
     /// Accounts expected by this instruction:
     ///
     /// 0. [writable,signer] The address of the payer, needs to be the ITS owner.
-    /// 1. [] The program data account.
-    /// 2. [] Gateway root account
+    /// 1. [] The account that holds the payer roles on the ITS root account.
+    /// 2. [] The program data account.
     /// 3. [writable] ITS root pda.
     /// 4. [] The system program account.
     RemoveTrustedChain {
@@ -104,12 +103,9 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Revokes an approval of a deployment of remote token with a destination minter
     ///
-    /// 0. [writable,signer] The address of the payer, needs to have minter role on the token
-    ///    manager.
-    /// 1. [] The token manager account associated with the token
-    /// 2. [] The account that holds the payer roles on the token manager
-    /// 3. [writable] The account holding the approval of the deployment that should be revoked
-    /// 4. [] The system program account
+    /// 0. [writable,signer] The address of the payer
+    /// 1. [writable] The account holding the approval of the deployment that should be revoked
+    /// 2. [] The system program account
     RevokeDeployRemoteInterchainToken {
         /// The address of the account that deployed the `InterchainToken`
         deployer: Pubkey,
@@ -123,35 +119,31 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The address of the payer
     /// 1. [] The Metaplex metadata account associated with the mint
-    /// 2. [] The GMP gateway root account
-    /// 3. [] The system program account
-    /// 4. [] The ITS root account
-    /// 5. [writable] The token manager account derived from the `token_id` that will be initialized
-    /// 6. [] The mint account (token address) of the original token
-    /// 7. [] The token manager Associated Token Account
-    /// 8. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 9. [] The Associated Token Account program account (`spl_associated_token_account`)
+    /// 2. [] The system program account
+    /// 3. [] The ITS root account
+    /// 4. [writable] The token manager account derived from the `token_id` that will be initialized
+    /// 5. [writable] The mint account (token address) of the original token
+    /// 6. [writable] The token manager Associated Token Account
+    /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 8. [] The Associated Token Account program account (`spl_associated_token_account`)
+    /// 9. [writable] The account that will store the roles of the ITS root account on the token manager
     /// 10. [] The rent sysvar account
-    /// 11. [] The Metaplex metadata program account (`mpl_token_metadata`)
     RegisterCanonicalInterchainToken,
 
     /// Deploys a canonical interchain token on a remote chain.
     ///
     /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
-    /// 1. [] The Metaplex metadata account associated with the mint
-    /// 2. [] The GMP gateway root account
-    /// 3. [] The system program account
-    /// 4. [] The ITS root account
-    /// 5. [writable] The token manager account associated with the interchain token
-    /// 6. [writable] The mint account (token address) to deploy
-    /// 7. [writable] The token manager Associated Token Account associated with the mint
-    /// 8. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 9. [] The Associated Token Account program account (`spl_associated_token_account`)
-    /// 10. [writable] The account holding the roles of the deployer on the ITS root account
-    /// 11. [] The rent sysvar account
-    /// 12. [] Optional account to set as operator on the `TokenManager`.
-    /// 13. [writable] In case an operator is being set, this should be the account holding the roles of
-    ///     the operator on the `TokenManager`
+    /// 1. [] The mint account (token address) to deploy
+    /// 2. [] The Metaplex metadata account associated with the mint
+    /// 3. [] The token manager account associated with the interchain token
+    /// 4. [] The GMP gateway root account
+    /// 5. [] The GMP gateway program account
+    /// 6. [writable] The GMP gas configuration account
+    /// 7. [] The GMP gas service program account
+    /// 8. [] The system program account
+    /// 9. [] The ITS root account
+    /// 10. [] The GMP call contract signing account
+    /// 11. [] The ITS program account
     DeployRemoteCanonicalInterchainToken {
         /// The remote chain where the `InterchainToken` should be deployed.
         destination_chain: String,
@@ -163,24 +155,20 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Transfers interchain tokens.
     ///
-    /// 0. [writable,signer] The address of the payer
-    /// 1. [maybe signer] The address of the owner or delegate of the source account of the
-    ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
-    ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [] The mint account (token address)
-    /// 4. [] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [writable] The account tracking the flow of this mint for the current epoch
-    /// 8. [] The GMP gateway root account
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The GMP gas service program account
-    /// 12. [] The system program account
-    /// 13. [] The ITS root account
-    /// 14. [] The GMP call contract signing account
-    /// 15. [] The ITS program account
+    /// 0. [signer] The address of the payer
+    /// 1. [writable] The source account from which the tokens are being transferred
+    /// 2. [writable] The mint account (token address)
+    /// 3. [writable] The token manager account associated with the interchain token
+    /// 4. [writable] The token manager Associated Token Account associated with the mint
+    /// 5. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 6. [] The GMP gateway root account
+    /// 7. [] The GMP gateway program account
+    /// 8. [writable] The GMP gas configuration account
+    /// 9. [] The GMP gas service program account
+    /// 10. [] The system program account
+    /// 11. [] The ITS root account
+    /// 12. [] The GMP call contract signing account
+    /// 13. [] The ITS program account
     InterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -205,24 +193,20 @@ pub enum InterchainTokenServiceInstruction {
     /// This variant is designed for CPI-initiated transfers and includes
     /// the source program ID and PDA seeds for proper attribution.
     ///
-    /// 0. [writable,signer] The address of the sender
-    /// 1. [maybe signer] The address of the owner or delegate of the source account of the
-    ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
-    ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [] The mint account (token address)
-    /// 4. [] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [writable] The account tracking the flow of this mint for the current epoch
-    /// 8. [] The GMP gateway root account
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The GMP gas service program account
-    /// 12. [] The system program account
-    /// 13. [] The ITS root account
-    /// 14. [] The GMP call contract signing account
-    /// 15. [] The ITS program account
+    /// 0. [signer] The address of the sender
+    /// 1. [writable] The source account from which the tokens are being transferred
+    /// 2. [writable] The mint account (token address)
+    /// 3. [writable] The token manager account associated with the interchain token
+    /// 4. [writable] The token manager Associated Token Account associated with the mint
+    /// 5. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 6. [] The GMP gateway root account
+    /// 7. [] The GMP gateway program account
+    /// 8. [writable] The GMP gas configuration account
+    /// 9. [] The GMP gas service program account
+    /// 10. [] The system program account
+    /// 11. [] The ITS root account
+    /// 12. [] The GMP call contract signing account
+    /// 13. [] The ITS program account
     CpiInterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -254,21 +238,21 @@ pub enum InterchainTokenServiceInstruction {
     /// Deploys an interchain token.
     ///
     /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
-    /// 1. [] The GMP gateway root account
-    /// 2. [] The system program account
-    /// 3. [] The ITS root account
-    /// 4. [writable] The token manager account associated with the interchain token
-    /// 5. [writable] The mint account (token address) to deploy
-    /// 6. [writable] The token manager Associated Token Account associated with the mint
-    /// 7. [] The token program account (`spl_token_2022`)
-    /// 8. [] The Associated Token Account program account (`spl_associated_token_account`)
-    /// 9. [writable] The account holding the roles of the deployer on the ITS root account
-    /// 10. [] The rent sysvar account
-    /// 11. [] The instructions sysvar account
-    /// 12. [] The Metaplex metadata program account (`mpl_token_metadata`)
-    /// 13. [writable] The Metaplex metadata account associated with the mint
-    /// 14. [] The account to set as minter of the token
-    /// 15. [writable] The account holding the roles of the minter account on the `TokenManager`
+    /// 1. [] The system program account
+    /// 2. [] The ITS root account
+    /// 3. [writable] The token manager account associated with the interchain token
+    /// 4. [writable] The mint account (token address) to deploy
+    /// 5. [writable] The token manager Associated Token Account associated with the mint
+    /// 6. [] The token program account (`spl_token_2022`)
+    /// 7. [] The Associated Token Account program account (`spl_associated_token_account`)
+    /// 8. [writable] The account holding the roles of the ITS root account on the token manager
+    /// 9. [] The rent sysvar account
+    /// 10. [] The instructions sysvar account
+    /// 11. [] The Metaplex metadata program account (`mpl_token_metadata`)
+    /// 12. [writable] The Metaplex metadata account associated with the mint
+    /// 13. [writable] The payer's Associated Token Account for the mint
+    /// 14. [] Optional: The account to set as minter of the token
+    /// 15. [writable] Optional: The account holding the roles of the minter account on the `TokenManager`
     DeployInterchainToken {
         /// The salt used to derive the tokenId associated with the token
         salt: [u8; 32],
@@ -291,16 +275,15 @@ pub enum InterchainTokenServiceInstruction {
     /// 0. [writable,signer] The address of the payer
     /// 1. [] The mint account (token address)
     /// 2. [] The Metaplex metadata account associated with the mint
-    /// 3. [] The instructions sysvar account
-    /// 4. [] The Metaplex metadata program account (`mpl_token_metadata`)
-    /// 5. [] The GMP gateway root account
-    /// 6. [] The GMP gateway program account
-    /// 7. [writable] The GMP gas configuration account
-    /// 8. [] The GMP gas service program account
-    /// 9. [] The system program account
-    /// 10. [] The ITS root account
-    /// 11. [] The GMP call contract signing account
-    /// 12. [] The ITS program account
+    /// 3. [] The token manager account associated with the interchain token
+    /// 4. [] The GMP gateway root account
+    /// 5. [] The GMP gateway program account
+    /// 6. [writable] The GMP gas configuration account
+    /// 7. [] The GMP gas service program account
+    /// 8. [] The system program account
+    /// 9. [] The ITS root account
+    /// 10. [] The GMP call contract signing account
+    /// 11. [] The ITS program account
     DeployRemoteInterchainToken {
         /// The salt used to derive the tokenId associated with the token
         salt: [u8; 32],
@@ -320,21 +303,18 @@ pub enum InterchainTokenServiceInstruction {
     /// 0. [writable,signer] The address of the payer
     /// 1. [] The mint account (token address)
     /// 2. [] The Metaplex metadata account associated with the mint
-    /// 3. [] The account of the minter that approved the deployment
-    /// 4. [writable] The account holding the approval for the deployment
-    /// 5. [] The account holding the roles of the minter on the token manager associated with the
-    ///    interchain token
-    /// 6. [] The token manager account associated with the interchain token
-    /// 7. [] The instructions sysvar account
-    /// 8. [] The Metaplex metadata program account (`mpl_token_metadata`)
-    /// 9. [] The GMP gateway root account
-    /// 10. [] The GMP gateway program account
-    /// 11. [writable] The GMP gas configuration account
-    /// 12. [] The GMP gas service program account
-    /// 13. [] The system program account
-    /// 14. [] The ITS root account
-    /// 15. [] The GMP call contract signing account
-    /// 16. [] The ITS program account
+    /// 3. [] The token manager account associated with the interchain token
+    /// 4. [] The account of the minter that approved the deployment
+    /// 5. [writable] The account holding the approval for the deployment
+    /// 6. [] The account holding the roles of the minter on the token manager
+    /// 7. [] The GMP gateway root account
+    /// 8. [] The GMP gateway program account
+    /// 9. [writable] The GMP gas configuration account
+    /// 10. [] The GMP gas service program account
+    /// 11. [] The system program account
+    /// 12. [] The ITS root account
+    /// 13. [] The GMP call contract signing account
+    /// 14. [] The ITS program account
     DeployRemoteInterchainTokenWithMinter {
         /// The salt used to derive the tokenId associated with the token
         salt: [u8; 32],
@@ -356,15 +336,14 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The address of the payer
     /// 1. [] The mint account (token address)
-    /// 2. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 3. [] The GMP gateway root account
-    /// 4. [] The GMP gateway program account
-    /// 5. [writable] The GMP gas configuration account
-    /// 6. [] The GMP gas service program account
-    /// 7. [] The system program account
-    /// 8. [] The ITS root account
-    /// 9. [] The GMP call contract signing account
-    /// 10. [] The ITS program account
+    /// 2. [] The GMP gateway root account
+    /// 3. [] The GMP gateway program account
+    /// 4. [writable] The GMP gas configuration account
+    /// 5. [] The GMP gas service program account
+    /// 6. [] The system program account
+    /// 7. [] The ITS root account
+    /// 8. [] The GMP call contract signing account
+    /// 9. [] The ITS program account
     RegisterTokenMetadata {
         /// The gas value to be paid for the GMP transaction
         gas_value: u64,
@@ -376,19 +355,17 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
     /// 1. [] The Metaplex metadata account associated with the mint
-    /// 2. [] The GMP gateway root account
-    /// 3. [] The system program account
-    /// 4. [] The ITS root account
-    /// 5. [writable] The token manager account associated with the interchain token
-    /// 6. [writable] The mint account (token address) to deploy
-    /// 7. [writable] The token manager Associated Token Account associated with the mint
-    /// 8. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 9. [] The Associated Token Account program account (`spl_associated_token_account`)
-    /// 10. [writable] The account holding the roles of the deployer on the ITS root account
-    /// 11. [] The rent sysvar account
-    /// 12. [] Optional account to set as operator on the `TokenManager`.
-    /// 13. [writable] In case an operator is being set, this should be the account holding the roles of
-    ///     the operator on the `TokenManager`
+    /// 2. [] The system program account
+    /// 3. [] The ITS root account
+    /// 4. [writable] The token manager account associated with the interchain token
+    /// 5. [writable] The mint account (token address) to register
+    /// 6. [writable] The token manager Associated Token Account associated with the mint
+    /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 8. [] The Associated Token Account program account (`spl_associated_token_account`)
+    /// 9. [writable] The account holding the roles of the ITS root account on the token manager
+    /// 10. [] The rent sysvar account
+    /// 11. [] Optional: Account to set as operator on the `TokenManager`
+    /// 12. [writable] Optional: The account holding the roles of the operator on the `TokenManager`
     RegisterCustomToken {
         /// Salt used to derive the `token_id` associated with the token.
         salt: [u8; 32],
@@ -627,32 +604,28 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Proposes operatorship transfer to another account.
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable, signer] Payer account.
+    /// 3. [] PDA for the payer roles on the resource.
+    /// 4. [] PDA for the resource.
+    /// 5. [] Account to transfer operatorship to.
+    /// 6. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    /// 8. [writable] PDA for the proposal
+    /// 7. [writable] PDA for the proposal
     ProposeTokenManagerOperatorship,
 
     /// Accepts operatorship transfer from another account.
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
-    ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable, signer] Payer account.
+    /// 3. [writable] PDA for the payer roles on the resource.
+    /// 4. [] PDA for the resource.
+    /// 5. [] Account that operatorship is being transferred from.
+    /// 6. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
-    /// 8. [writable] PDA for the proposal
+    /// 7. [writable] PDA for the proposal
     AcceptTokenManagerOperatorship,
 
     /// Transfers the mint authority to the token manager allowing it to mint tokens and manage
