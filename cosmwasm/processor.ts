@@ -43,7 +43,7 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
     return { configManager, fee };
 }
 
-export async function mainProcessor(processor: ProcessorFn, options: Options, args?: string[]) {
+export async function mainProcessor(processorFn: ProcessorFn, options: Options, args?: string[]) {
     const { configManager, fee } = prepareProcessor(options);
 
     if (!options.mnemonic) {
@@ -56,14 +56,14 @@ export async function mainProcessor(processor: ProcessorFn, options: Options, ar
         GasPrice.fromString(configManager.getFullConfig().axelar.gasPrice),
     );
 
-    await processor(client, configManager.getFullConfig(), options, args, fee);
+    await processorFn(client, configManager.getFullConfig(), options, args, fee);
     configManager.saveConfig();
 }
 
-export async function mainQueryProcessor(processor: ProcessorQueryFn, options: Options, args?: string[]) {
+export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
     const { configManager, fee } = prepareProcessor(options);
     const client = await CosmWasmClient.connect(configManager.getFullConfig().axelar.rpc);
-    await processor(client, configManager.getFullConfig(), options, args, fee);
+    await processorQueryFn(client, configManager.getFullConfig(), options, args, fee);
     configManager.saveConfig();
 }
 
