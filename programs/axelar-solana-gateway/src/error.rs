@@ -4,8 +4,8 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use solana_program::program_error::ProgramError;
 
-// Error codes 0-499 are recoverable, 500+ are irrecoverable
-const IRRECOVERABLE_ERROR: u32 = 500;
+// Error codes 0-6 are recoverable, 7+ are irrecoverable
+const IRRECOVERABLE_ERROR: u32 = 7;
 
 /// Errors that may be returned by the Gateway program.
 ///
@@ -15,7 +15,7 @@ const IRRECOVERABLE_ERROR: u32 = 500;
 ///
 /// Because of this the errors are categorized as follows:
 /// "Already completed" errors (codes 0-6): Action has already been completed by another actor. Relayer can interpret as "assume that this action completed successfully".
-/// Irrecoverable errors (codes 500+): Action cannot be completed with the provided arguments.
+/// Irrecoverable errors (codes 7+): Action cannot be completed with the provided arguments.
 #[repr(u32)]
 #[derive(Clone, Debug, Eq, thiserror::Error, FromPrimitive, ToPrimitive, PartialEq)]
 pub enum GatewayError {
@@ -184,7 +184,7 @@ mod tests {
         assert_eq!(errors_to_proceed.len(), 7);
         assert_eq!(errors_to_not_proceed.len(), 23);
 
-        // Errors that should cause the relayer to proceed (error numbers < 500)
+        // Errors that should cause the relayer to proceed (error numbers < 7)
         for error in errors_to_proceed {
             assert!(
                 error.should_relayer_proceed(),
@@ -194,7 +194,7 @@ mod tests {
             );
         }
 
-        // Errors that should NOT cause the relayer to proceed (error numbers >= 500)
+        // Errors that should NOT cause the relayer to proceed (error numbers >= 7)
         for error in errors_to_not_proceed {
             assert!(
                 !error.should_relayer_proceed(),
