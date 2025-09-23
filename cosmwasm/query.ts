@@ -15,17 +15,13 @@ export async function getContractInfo(client: SigningCosmWasmClient, contract_ad
 
 async function contractInfo(client: SigningCosmWasmClient, wallet: DirectSecp256k1HdWallet, config: FullConfig, options: Options) {
     try {
-        if (options.contractName) {
-            const address = config?.axelar?.contracts[options.contractName]?.address;
-            if (!address) {
-                throw new Error(`No address configured for contract '${options.contractName}'`);
-            }
-
-            const contract_info: ContractInfo = await getContractInfo(client, address);
-            console.log(contract_info);
-        } else {
-            throw new Error(`No contract named '${options.contractName}' was found`);
+        const address = config?.axelar?.contracts[options.contractName]?.address;
+        if (!address) {
+            throw new Error(`No address configured for contract '${options.contractName}'`);
         }
+
+        const contract_info: ContractInfo = await getContractInfo(client, address);
+        console.log(contract_info);
     } catch (error) {
         console.error(error);
     }
