@@ -3,7 +3,6 @@ use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1Builder;
 use mpl_token_metadata::types::TokenStandard;
 use solana_program_test::tokio;
-use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::Instruction;
 use test_context::test_context;
 
@@ -147,10 +146,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_metadata(
         Some(ctx.solana_wallet),
     )?;
 
-    // Add compute budget instruction to handle complex deployment
-    let compute_budget_ix = ComputeBudgetInstruction::set_compute_unit_limit(400_000);
-
-    ctx.send_solana_tx(&[compute_budget_ix, deploy_local_ix])
+    ctx.send_solana_tx(&[deploy_local_ix])
         .await
         .expect("InterchainToken deployment failed");
 
