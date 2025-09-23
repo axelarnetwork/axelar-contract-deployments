@@ -110,12 +110,16 @@ export class ConfigManager {
 
         const validations = [
             {
-                condition: axelar.gasPrice && !this.isValidGasPrice(axelar.gasPrice),
-                message: `Invalid 'axelar.gasPrice' format: ${axelar.gasPrice}`,
+                condition: !axelar.gasPrice || axelar.gasPrice.trim() === '' || !this.isValidGasPrice(axelar.gasPrice),
+                message: `Invalid 'axelar.gasPrice' format: ${axelar.gasPrice} - must be a non-empty valid gas price`,
             },
             {
-                condition: axelar.gasLimit && typeof axelar.gasLimit !== 'number' && axelar.gasLimit !== 'auto',
-                message: `Invalid 'axelar.gasLimit' format: ${axelar.gasLimit} - must be a number or 'auto'`,
+                condition:
+                    !axelar.gasLimit ||
+                    (typeof axelar.gasLimit !== 'number' &&
+                        axelar.gasLimit !== 'auto' &&
+                        (typeof axelar.gasLimit !== 'string' || axelar.gasLimit.trim() === '' || !this.isValidNumber(axelar.gasLimit))),
+                message: `Invalid 'axelar.gasLimit' format: ${axelar.gasLimit} - must be a number, 'auto', or a valid string number`,
             },
             {
                 condition: !axelar.govProposalInstantiateAddresses || !Array.isArray(axelar.govProposalInstantiateAddresses),
@@ -292,6 +296,11 @@ export class ConfigManager {
     public getFee(): string | StdFee {
         const { gasPrice, gasLimit } = this.fullConfig.axelar;
 
-        return gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit as number, GasPrice.fromString(gasPrice));
+        if (gasLimit === 'auto') {
+            return 'auto';
+        }
+
+        const numericGasLimit = typeof gasLimit === 'string' ? Number(gasLimit) : gasLimit;
+        return calculateFee(numericGasLimit, GasPrice.fromString(gasPrice));
     }
 }

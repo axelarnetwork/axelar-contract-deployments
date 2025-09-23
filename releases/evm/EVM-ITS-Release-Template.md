@@ -107,32 +107,3 @@ ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient
 # Transfer token back from remote chain
 ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
 ```
-
-- Sui Checklist
-
-```bash
-# Deploy Token on sui
-ts-node sui/its-example deploy-token --origin TST "Test Token" 6
-
-# Send Token Deployment to `<ChainName>`
-ts-node sui/its-example send-deployment TST $CHAIN [gas-value]
-
-# Send Token to `<ChainName>`
-ts-node sui/its-example send-token TST $CHAIN [destination-address] [gas-value] 1
-
-# Send token back to sui from `<ChainName>`
-ts-node evm/its.js interchain-transfer sui [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
-```
-
-- Stellar Checklist
-
-```bash
-# Deploy token to a stellar from `<ChainName>`
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain stellar --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
-
-# Transfer token to stellar
-ts-node evm/its.js interchain-transfer stellar [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
-
-# Transfer token back from stellar
-ts-node stellar/its.js interchain-transfer [token-id] $CHAIN [destination-address] 1 --gas-amount [gas-amount]
-```
