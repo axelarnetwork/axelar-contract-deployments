@@ -41,7 +41,7 @@ export async function mainProcessor(processor: ProcessorFn, options: Options, ar
 
     const fee = configManager.getFee();
 
-    await processor(client, wallet, configManager.getFullConfig(), options, args, fee);
+    await processorFn(client, wallet, configManager.getFullConfig(), options, args, fee);
 
     configManager.saveConfig();
 }
