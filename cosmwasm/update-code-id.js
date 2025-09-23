@@ -2,8 +2,9 @@
 
 require('../common/cli-utils');
 
-const { printInfo, getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
+const { getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
 const { mainProcessor } = require('./processor');
+const { printInfo } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
