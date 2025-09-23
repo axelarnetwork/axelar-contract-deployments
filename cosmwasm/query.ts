@@ -1,4 +1,4 @@
-import { CosmWasmClient, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command } from 'commander';
 
 import { FullConfig } from '../common/config';
