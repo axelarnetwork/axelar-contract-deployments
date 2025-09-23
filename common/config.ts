@@ -1,40 +1,43 @@
-import { StdFee } from '@cosmjs/stargate';
-import { GasPrice, calculateFee } from '@cosmjs/stargate';
+import { GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
 
-import { loadConfig, saveConfig } from '.';
+import { loadConfig, printError, saveConfig } from './utils';
 
 export interface FullConfig {
     axelar: {
-        contracts: {
-            [key: string]: ContractConfig & {
-                governanceAddress?: string;
-                governanceAccount?: string;
-            };
-        };
+        contracts: Record<string, AxelarContractConfig>;
         rpc: string;
         gasPrice: string;
         gasLimit: string | number;
         govProposalInstantiateAddresses: string[];
         govProposalDepositAmount: string;
     };
-    chains: {
-        [chainName: string]: ChainConfig;
-    };
-    [key: string]: unknown;
+    chains: Record<string, ChainConfig>;
 }
 
-export interface ChainConfig {
+export interface NonEVMChainConfig {
     name: string;
     axelarId: string;
-    chainId: number;
     rpc: string;
     tokenSymbol: string;
     decimals: number;
     confirmations?: number;
     chainType: string;
-    contracts: {
-        [key: string]: ContractConfig;
-    };
+    explorer: ExplorerConfig;
+    finality: string;
+    approxFinalityWaitTime: number;
+    contracts: Record<string, ContractConfig>;
+}
+
+export type ChainConfig = NonEVMChainConfig | EVMChainConfig;
+
+export interface EVMChainConfig extends NonEVMChainConfig {
+    chainId: number;
+}
+
+export interface ExplorerConfig {
+    name?: string;
+    url?: string;
+    api?: string;
 }
 
 export interface ContractConfig {
@@ -43,7 +46,12 @@ export interface ContractConfig {
     storeCodeProposalCodeHash?: string;
     storeCodeProposalId?: string;
     lastUploadedCodeId?: number;
-    [key: string]: unknown;
+}
+
+export interface AxelarContractConfig extends ContractConfig {
+    governanceAddress?: string;
+    governanceAccount?: string;
+    [chainName: string]: unknown;
 }
 
 export class ConfigManager {
@@ -56,42 +64,201 @@ export class ConfigManager {
         if (fullConfig) {
             this.fullConfig = fullConfig;
         } else {
-            this.fullConfig = loadConfig(this.environment);
+            const loadedConfig = loadConfig(this.environment);
+            if (!loadedConfig) {
+                throw new Error(`Failed to load configuration for environment: ${this.environment}`);
+            }
+            this.fullConfig = loadedConfig;
         }
 
         this.validateConfig();
     }
 
     private validateConfig(): void {
-        if (!this.fullConfig.axelar) {
-            throw new Error(`Missing 'axelar' section in ${this.environment} config`);
+        const errors: string[] = [...this.validateBasicStructure(), ...this.validateAxelarConfig(), ...this.validateChainConfigs()];
+
+        if (errors.length > 0) {
+            this.printValidationReport(errors);
+            throw new Error(`Configuration validation failed with ${errors.length} error(s). See details above.`);
+        }
+    }
+
+    private validateBasicStructure(): string[] {
+        const errors: string[] = [];
+        const { axelar, chains } = this.fullConfig;
+
+        if (!axelar) errors.push(`Missing 'axelar' section in ${this.environment} config`);
+        if (!chains)
+            errors.push(`Missing 'chains' section in ${this.environment} config. Please ensure the config file has a 'chains' property.`);
+        else if (typeof chains !== 'object' || chains === null)
+            errors.push(`'chains' section in ${this.environment} config must be an object`);
+
+        return errors;
+    }
+
+    private validateAxelarConfig(): string[] {
+        const errors: string[] = [];
+        const { axelar } = this.fullConfig;
+        if (!axelar) return errors;
+
+        const requiredFields = ['contracts', 'rpc', 'gasPrice', 'gasLimit', 'govProposalInstantiateAddresses', 'govProposalDepositAmount'];
+        requiredFields.forEach((field) => {
+            if (axelar[field] === undefined || axelar[field] === null) {
+                errors.push(`Missing 'axelar.${field}' in ${this.environment} config`);
+            }
+        });
+
+        const validations = [
+            {
+                condition: axelar.gasPrice && !this.isValidGasPrice(axelar.gasPrice),
+                message: `Invalid 'axelar.gasPrice' format: ${axelar.gasPrice}`,
+            },
+            {
+                condition: axelar.gasLimit && typeof axelar.gasLimit !== 'number' && axelar.gasLimit !== 'auto',
+                message: `Invalid 'axelar.gasLimit' format: ${axelar.gasLimit} - must be a number or 'auto'`,
+            },
+            {
+                condition: !axelar.govProposalInstantiateAddresses || !Array.isArray(axelar.govProposalInstantiateAddresses),
+                message: `Invalid 'axelar.govProposalInstantiateAddresses' in ${this.environment} config`,
+            },
+        ];
+
+        validations.forEach(({ condition, message }) => condition && errors.push(message));
+        return errors;
+    }
+
+    private validateChainConfigs(): string[] {
+        const errors: string[] = [];
+        if (!this.fullConfig.chains) return errors;
+
+        Object.entries(this.fullConfig.chains).forEach(([chainName, chainConfig]) => {
+            errors.push(...this.validateSingleChain(chainName, chainConfig));
+        });
+
+        return errors;
+    }
+
+    private validateSingleChain(chainName: string, chainConfig: ChainConfig): string[] {
+        const errors: string[] = [];
+        const requiredFields = [
+            'name',
+            'axelarId',
+            'rpc',
+            'tokenSymbol',
+            'decimals',
+            'chainType',
+            'explorer',
+            'finality',
+            'approxFinalityWaitTime',
+            'contracts',
+        ];
+        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'stacks', 'hedera'];
+
+        requiredFields.forEach((field) => {
+            if (chainConfig[field] === undefined || chainConfig[field] === null) {
+                errors.push(`Chain '${chainName}': Missing required field '${field}'`);
+            }
+        });
+
+        if (chainConfig.chainType === 'evm') {
+            const evmConfig = chainConfig as EVMChainConfig;
+            if (!evmConfig.chainId || !Number.isInteger(evmConfig.chainId) || evmConfig.chainId <= 0) {
+                errors.push(`Chain '${chainName}': Missing or invalid chainId '${evmConfig.chainId}' - must be a positive integer`);
+            }
         }
 
-        if (!this.fullConfig.axelar.contracts) {
-            throw new Error(`Missing 'axelar.contracts' section in ${this.environment} config`);
+        const typeValidations = [
+            { condition: typeof chainConfig.tokenSymbol !== 'string', message: `Chain '${chainName}': tokenSymbol must be a string` },
+            {
+                condition: !Number.isInteger(chainConfig.decimals) || chainConfig.decimals < 0 || chainConfig.decimals > 18,
+                message: `Chain '${chainName}': Invalid decimals '${chainConfig.decimals}' - must be an integer between 0 and 18`,
+            },
+            {
+                condition: chainConfig.chainType && !validChainTypes.includes(chainConfig.chainType),
+                message: `Chain '${chainName}': Invalid chainType '${chainConfig.chainType}' - must be one of: ${validChainTypes.join(', ')}`,
+            },
+            {
+                condition: chainConfig.finality && typeof chainConfig.finality !== 'string',
+                message: `Chain '${chainName}': Finality must be a string`,
+            },
+            {
+                condition: chainConfig.finality && chainConfig.finality !== 'finalized' && !this.isValidNumber(chainConfig.finality),
+                message: `Chain '${chainName}': Invalid finality value '${chainConfig.finality}' - must be 'finalized' or a number`,
+            },
+            {
+                condition:
+                    chainConfig.approxFinalityWaitTime !== undefined &&
+                    (typeof chainConfig.approxFinalityWaitTime !== 'number' || chainConfig.approxFinalityWaitTime < 0),
+                message: `Chain '${chainName}': approxFinalityWaitTime must be a non-negative number`,
+            },
+        ];
+
+        typeValidations.forEach(({ condition, message }) => condition && errors.push(message));
+
+        if (chainConfig.contracts) {
+            Object.entries(chainConfig.contracts).forEach(([contractName, contractConfig]) => {
+                errors.push(...this.validateContractConfig(chainName, contractName, contractConfig));
+            });
         }
 
-        if (!this.fullConfig.chains) {
-            throw new Error(
-                `Missing 'chains' section in ${this.environment} config. Please ensure the config file has a 'chains' property.`,
-            );
+        return errors;
+    }
+
+    private validateContractConfig(chainName: string, contractName: string, contractConfig: ContractConfig): string[] {
+        const errors: string[] = [];
+        const contractValidations = [
+            {
+                condition: contractConfig.address && !this.isValidAddress(contractConfig.address),
+                message: `Chain '${chainName}': Contract '${contractName}' has invalid address format: ${contractConfig.address}`,
+            },
+            {
+                condition: contractConfig.codeId && (!Number.isInteger(contractConfig.codeId) || contractConfig.codeId <= 0),
+                message: `Chain '${chainName}': Contract '${contractName}' has invalid codeId '${contractConfig.codeId}' - must be a positive integer`,
+            },
+        ];
+
+        contractValidations.forEach(({ condition, message }) => condition && errors.push(message));
+        return errors;
+    }
+
+    private printValidationReport(errors: string[]): void {
+        printError(`\n❌ Configuration Validation Report for ${this.environment.toUpperCase()}`);
+        printError(`Found ${errors.length} error(s).\n`);
+
+        if (errors.length > 0) {
+            errors.forEach((error, index) => {
+                printError(`  ${index + 1}. ${error}`);
+            });
         }
 
-        if (typeof this.fullConfig.chains !== 'object' || this.fullConfig.chains === null) {
-            throw new Error(`'chains' section in ${this.environment} config must be an object`);
+        printError('📋 SUMMARY:');
+        printError(`  Total Errors: ${errors.length}`);
+        printError(`  Configuration Status: ${errors.length > 0 ? 'INVALID' : 'VALID'}`);
+        printError('');
+    }
+
+    private isValidGasPrice(price: string): boolean {
+        const numericOnlyPattern = /^\d+$/;
+        const withDenominationPattern = /^\d+(\.\d+)?[a-zA-Z]+$/;
+
+        if (numericOnlyPattern.test(price)) {
+            return parseInt(price) > 0;
         }
 
-        if (!this.fullConfig.axelar.rpc) {
-            throw new Error(`Missing 'axelar.rpc' in ${this.environment} config`);
+        if (withDenominationPattern.test(price)) {
+            const match = price.match(/^\d+(\.\d+)?/);
+            return match ? parseFloat(match[0]) > 0 : false;
         }
 
-        if (!this.fullConfig.axelar.gasPrice) {
-            throw new Error(`Missing 'axelar.gasPrice' in ${this.environment} config`);
-        }
+        return false;
+    }
 
-        if (!this.fullConfig.axelar.gasLimit) {
-            throw new Error(`Missing 'axelar.gasLimit' in ${this.environment} config`);
-        }
+    private isValidNumber(str: string): boolean {
+        return !isNaN(Number(str)) && isFinite(Number(str));
+    }
+
+    private isValidAddress(address: string): boolean {
+        return typeof address === 'string' && address.length > 0;
     }
 
     public initContractConfig(contractName: string, chainName: string) {
@@ -100,7 +267,9 @@ export class ConfigManager {
         }
 
         if (chainName) {
-            this.fullConfig.axelar.contracts[contractName][chainName] = this.fullConfig.axelar.contracts[contractName][chainName] || {};
+            if (!this.fullConfig.axelar.contracts[contractName][chainName]) {
+                this.fullConfig.axelar.contracts[contractName][chainName] = {};
+            }
         }
     }
 

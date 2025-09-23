@@ -1,6 +1,7 @@
 'use strict';
 
 const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
+const { mainProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
