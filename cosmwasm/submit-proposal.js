@@ -39,6 +39,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
+const { mainProcessor } = require('./processor');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
