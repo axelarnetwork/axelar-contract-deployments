@@ -1,6 +1,6 @@
 'use strict';
 
-const { printInfo, printWarn, getChainConfig, itsHubContractAddress, saveConfig } = require('../common');
+const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
 const { mainProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
@@ -199,8 +199,6 @@ async function saveDeployedContracts(client, _wallet, config, _options, args, _f
         address: result.prover,
     };
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
-
-    saveConfig(config, options.env);
     printInfo(`Config updated successfully for ${chainName}`);
 }
 
