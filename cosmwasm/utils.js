@@ -1467,7 +1467,6 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    governanceAddress,
     prepareWallet,
     prepareDummyWallet,
     prepareClient,
