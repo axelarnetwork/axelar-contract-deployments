@@ -29,7 +29,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
     pub(super) fn decode_borsh(
         raw_payload: &'payload [u8],
     ) -> Result<(&'payload [u8], Vec<SolanaAccountRepr>), PayloadError> {
-        // Borsh stores the length of a serialized vector (the payload in this case)as a
+        // Borsh stores the length of a serialized vector (the payload in this case) as a
         // little-endian u32.
         let payload_length = raw_payload
             .get(..4)

@@ -362,7 +362,7 @@ impl SolanaAxelarIntegrationMetadata {
     }
 
     /// Get the gateway root config data
-    pub async fn gateway_confg(&mut self, gateway_root_pda: Pubkey) -> GatewayConfig {
+    pub async fn gateway_config(&mut self, gateway_root_pda: Pubkey) -> GatewayConfig {
         let gateway_root_pda_account = self
             .get_account(&gateway_root_pda, &axelar_solana_gateway::id())
             .await;

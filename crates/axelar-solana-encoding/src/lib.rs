@@ -46,7 +46,7 @@ pub mod types;
 /// - Verifier Set has too many items in it
 /// - Verifier Set has no items in it
 /// - Payload messages have too many items in it
-/// - Payload messages has no items in t
+/// - Payload messages has no items in it
 pub fn encode(
     signing_verifier_set: &VerifierSet,
     signers_with_signatures: &BTreeMap<PublicKey, Signature>,

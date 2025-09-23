@@ -28,7 +28,7 @@ impl U256 {
         Self { value: cast }
     }
 
-    /// const method for initting u256
+    /// const method for initializing u256
     pub const fn from_u64(i: u64) -> Self {
         let mut new_self = Self::ZERO;
         new_self.value[0] = i;

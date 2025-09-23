@@ -72,7 +72,7 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
         .unwrap();
 
     // Assert -- config derived correctly
-    let root_pda_data = metadata.gateway_confg(gateway_config_pda).await;
+    let root_pda_data = metadata.gateway_config(gateway_config_pda).await;
     assert!(cmp_config(&metadata, &root_pda_data));
 
     // Assert -- block timestamp updated

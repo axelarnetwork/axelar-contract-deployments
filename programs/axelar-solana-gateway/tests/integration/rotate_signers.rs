@@ -81,7 +81,7 @@ async fn successfully_rotates_signers() {
     assert_eq!(emitted_event, &expected_event);
 
     // - signers have been updated
-    let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
+    let root_pda_data = metadata.gateway_config(metadata.gateway_root_pda).await;
     assert_eq!(root_pda_data.current_epoch, new_epoch.clone());
     // assert that the signer tracker pda has been initialized
     let verifier_set_tracker_data = metadata
@@ -288,7 +288,7 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     assert_eq!(emitted_event, &expected_event);
 
     // - signers have been updated
-    let root_pda_data = metadata.gateway_confg(metadata.gateway_root_pda).await;
+    let root_pda_data = metadata.gateway_config(metadata.gateway_root_pda).await;
     assert_eq!(root_pda_data.current_epoch, new_epoch.clone());
     let vs_tracker = metadata.verifier_set_tracker(new_vs_tracker_pda).await;
     assert_eq!(

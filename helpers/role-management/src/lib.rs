@@ -105,6 +105,7 @@ pub fn roles_proposal_pda(
             )
         })
 }
+
 /// Tries to create the PDA for `RolesProposal` using the provided bump,
 /// falling back to `find_program_address` if the bump is invalid.
 #[inline]

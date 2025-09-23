@@ -124,7 +124,7 @@ sol! {
     /// for Payload consumption.
     ///
     /// This is the expected data type that will be used to represent Solana
-    /// accounts in the serilaized payload format.
+    /// accounts in the serialized payload format.
     ///
     /// Utility methods are provided to encode and decode the representation.
     #[derive(Debug, PartialEq, Eq)]
@@ -162,6 +162,7 @@ impl<'a> From<&'a AccountMeta> for SolanaAccountRepr {
         }
     }
 }
+
 impl From<AccountMeta> for SolanaAccountRepr {
     fn from(value: AccountMeta) -> Self {
         SolanaAccountRepr {
@@ -171,6 +172,7 @@ impl From<AccountMeta> for SolanaAccountRepr {
         }
     }
 }
+
 impl From<SolanaAccountRepr> for AccountMeta {
     fn from(value: SolanaAccountRepr) -> Self {
         let pubkey_bytes: [u8; 32] = value.pubkey.into();
