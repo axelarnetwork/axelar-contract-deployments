@@ -228,6 +228,51 @@ pub(crate) fn collect_fees_spl(
     amount: u64,
     decimals: u8,
 ) -> ProgramResult {
+    send_spl(program_id, accounts, amount, decimals)?;
+
+    Ok(())
+}
+
+pub(crate) fn refund_spl(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    tx_hash: [u8; 64],
+    log_index: u64,
+    fees: u64,
+    decimals: u8,
+) -> ProgramResult {
+    send_spl(program_id, accounts, fees, decimals)?;
+
+    let accounts_iter = &mut accounts.iter();
+    let _operator = next_account_info(accounts_iter)?;
+    let receiver_account = next_account_info(accounts_iter)?;
+    let config_pda = next_account_info(accounts_iter)?;
+    let config_pda_ata = next_account_info(accounts_iter)?;
+    let mint = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
+
+    // Emit an event
+    sol_log_data(&[
+        event_prefixes::SPL_GAS_REFUNDED,
+        &tx_hash,
+        &config_pda.key.to_bytes(),
+        &config_pda_ata.key.to_bytes(),
+        &mint.key.to_bytes(),
+        &token_program.key.to_bytes(),
+        &log_index.to_le_bytes(),
+        &receiver_account.key.to_bytes(),
+        &fees.to_le_bytes(),
+    ]);
+
+    Ok(())
+}
+
+fn send_spl(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    amount: u64,
+    decimals: u8,
+) -> ProgramResult {
     if amount == 0 {
         msg!("Gas fee amount cannot be zero");
         return Err(ProgramError::InvalidInstructionData);
@@ -283,86 +328,6 @@ pub(crate) fn collect_fees_spl(
         ],
         &[&[seed_prefixes::CONFIG_SEED, &[config.bump]]],
     )?;
-
-    Ok(())
-}
-
-pub(crate) fn refund_spl(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
-    tx_hash: [u8; 64],
-    log_index: u64,
-    fees: u64,
-    decimals: u8,
-) -> ProgramResult {
-    if fees == 0 {
-        msg!("Gas fee amount cannot be zero");
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    let accounts = &mut accounts.iter();
-    let operator = next_account_info(accounts)?;
-    let receiver_account = next_account_info(accounts)?;
-    let config_pda = next_account_info(accounts)?;
-    let config_pda_ata = next_account_info(accounts)?;
-    let mint = next_account_info(accounts)?;
-    let token_program = next_account_info(accounts)?;
-
-    // Ensure config_pda is valid
-    ensure_valid_config_pda(config_pda, program_id)?;
-    let data = config_pda.try_borrow_data()?;
-    let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    // Check: Operator matches
-    if operator.key != &config.operator {
-        return Err(ProgramError::InvalidAccountOwner);
-    }
-
-    // Check: Operator is signer
-    if !operator.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    // valid token program
-    spl_token_2022::check_spl_token_program_account(token_program.key)?;
-
-    // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
-
-    let ix = transfer_tokens(
-        token_program,
-        config_pda_ata,
-        mint,
-        receiver_account,
-        config_pda,
-        &[],
-        fees,
-        decimals,
-    )?;
-
-    invoke_signed(
-        &ix,
-        &[
-            config_pda.clone(),
-            mint.clone(),
-            config_pda_ata.clone(),
-            receiver_account.clone(),
-            token_program.clone(),
-        ],
-        &[&[seed_prefixes::CONFIG_SEED, &[config.bump]]],
-    )?;
-
-    // Emit an event
-    sol_log_data(&[
-        event_prefixes::SPL_GAS_REFUNDED,
-        &tx_hash,
-        &config_pda.key.to_bytes(),
-        &config_pda_ata.key.to_bytes(),
-        &mint.key.to_bytes(),
-        &token_program.key.to_bytes(),
-        &log_index.to_le_bytes(),
-        &receiver_account.key.to_bytes(),
-        &fees.to_le_bytes(),
-    ]);
 
     Ok(())
 }

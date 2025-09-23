@@ -291,8 +291,8 @@ pub fn collect_native_fees_instruction(
 
     let accounts = vec![
         AccountMeta::new_readonly(*operator, true),
-        AccountMeta::new(config_pda, false),
         AccountMeta::new(*receiver, false),
+        AccountMeta::new(config_pda, false),
     ];
 
     Ok(Instruction {

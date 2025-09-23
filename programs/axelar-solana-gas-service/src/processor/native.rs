@@ -113,6 +113,39 @@ pub(crate) fn collect_fees_native(
     accounts: &[AccountInfo<'_>],
     amount: u64,
 ) -> ProgramResult {
+    send_native(program_id, accounts, amount)?;
+
+    Ok(())
+}
+
+pub(crate) fn refund_native(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    tx_hash: [u8; 64],
+    log_index: u64,
+    fees: u64,
+) -> ProgramResult {
+    send_native(program_id, accounts, fees)?;
+
+    let accounts = &mut accounts.iter();
+    let _operator = next_account_info(accounts)?;
+    let receiver = next_account_info(accounts)?;
+    let config_pda = next_account_info(accounts)?;
+
+    // Emit an event
+    sol_log_data(&[
+        event_prefixes::NATIVE_GAS_REFUNDED,
+        &tx_hash,
+        &config_pda.key.to_bytes(),
+        &log_index.to_le_bytes(),
+        &receiver.key.to_bytes(),
+        &fees.to_le_bytes(),
+    ]);
+
+    Ok(())
+}
+
+fn send_native(program_id: &Pubkey, accounts: &[AccountInfo<'_>], amount: u64) -> ProgramResult {
     if amount == 0 {
         msg!("Gas fee amount cannot be zero");
         return Err(ProgramError::InvalidInstructionData);
@@ -120,8 +153,8 @@ pub(crate) fn collect_fees_native(
 
     let accounts = &mut accounts.iter();
     let operator = next_account_info(accounts)?;
-    let config_pda = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
+    let config_pda = next_account_info(accounts)?;
 
     {
         // Check: Valid Config PDA
@@ -139,48 +172,6 @@ pub(crate) fn collect_fees_native(
     }
 
     transfer_lamports(config_pda, receiver, amount)?;
-
-    Ok(())
-}
-
-pub(crate) fn refund_native(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
-    tx_hash: [u8; 64],
-    log_index: u64,
-    fees: u64,
-) -> ProgramResult {
-    let accounts = &mut accounts.iter();
-    let operator = next_account_info(accounts)?;
-    let receiver = next_account_info(accounts)?;
-    let config_pda = next_account_info(accounts)?;
-
-    {
-        // Check: Valid Config PDA
-        let config = try_load_config(program_id, config_pda)?;
-
-        // Check: Operator matches
-        if operator.key != &config.operator {
-            return Err(ProgramError::InvalidAccountOwner);
-        }
-    }
-
-    // Check: Operator is signer
-    if !operator.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    transfer_lamports(config_pda, receiver, fees)?;
-
-    // Emit an event
-    sol_log_data(&[
-        event_prefixes::NATIVE_GAS_REFUNDED,
-        &tx_hash,
-        &config_pda.key.to_bytes(),
-        &log_index.to_le_bytes(),
-        &receiver.key.to_bytes(),
-        &fees.to_le_bytes(),
-    ]);
 
     Ok(())
 }
