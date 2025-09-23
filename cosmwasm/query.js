@@ -1,6 +1,6 @@
 'use strict';
 
-const { prepareDummyWallet, prepareClient, initContractConfig } = require('./utils');
+const { prepareDummyWallet, prepareClient, initContractConfig, getChainCodecContractNameByChainType } = require('./utils');
 const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress, saveConfig } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
@@ -206,11 +206,21 @@ async function saveDeployedContracts(client, config, args, options) {
     const proverConfig = JSON.parse(Buffer.from(value).toString('ascii'));
     const chainCodec = proverConfig.chain_codec;
 
-    config.axelar.contracts.ChainCodec[chainName] = {
-        ...config.axelar.contracts.ChainCodec[chainName],
-        address: chainCodec,
-    };
-    printInfo(`Updated ChainCodec[${chainName}].address`, chainCodec);
+    // Determine the ChainCodecXyz contract name by chain type
+    try {
+        const codecContractName = getChainCodecContractNameByChainType(config, chainName);
+
+        if (!config.axelar.contracts[codecContractName]) {
+            config.axelar.contracts[codecContractName] = {};
+        }
+        config.axelar.contracts[codecContractName] = {
+            ...config.axelar.contracts[codecContractName],
+            address: chainCodec,
+        };
+        printInfo(`Updated ${codecContractName}.address`, chainCodec);
+    } catch (error) {
+        printWarn(error.message);
+    }
 
     saveConfig(config, options.env);
     printInfo(`Config updated successfully for ${chainName}`);
