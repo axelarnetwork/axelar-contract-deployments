@@ -215,6 +215,18 @@ license-files = []
 crate = "evm-contracts-test-suite"
 expression = "MIT"
 license-files = []
+[[licenses.clarify]]
+crate = "dummy-axelar-solana-event-cpi"
+expression = "MIT"
+license-files = []
+[[licenses.clarify]]
+crate = "event-cpi"
+expression = "MIT"
+license-files = []
+[[licenses.clarify]]
+crate = "event-cpi-macros"
+expression = "MIT"
+license-files = []
 
 [[licenses.clarify]]
 # The package spec the clarification applies to

@@ -1,0 +1,14 @@
+[package]
+name = "event-cpi"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[dependencies]
+borsh.workspace = true
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+bs58 = "0.5"
+sha2 = "0.10.9"
