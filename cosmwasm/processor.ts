@@ -24,7 +24,7 @@ type ProcessorFn = (
     fee?: string | StdFee,
 ) => Promise<void>;
 
-export async function mainProcessor(processor: ProcessorFn, options: Options, args?: string[]) {
+export async function mainProcessor(processorFn: ProcessorFn, options: Options, args?: string[]) {
     const { runAs, deposit, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
 
@@ -41,7 +41,7 @@ export async function mainProcessor(processor: ProcessorFn, options: Options, ar
 
     const fee = configManager.getFee();
 
-    await processor(client, wallet, configManager.getFullConfig(), options, args, fee);
+    await processorFn(client, wallet, configManager.getFullConfig(), options, args, fee);
 
     configManager.saveConfig();
 }
