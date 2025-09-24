@@ -1490,15 +1490,15 @@ const CONTRACTS = {
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
     },
     ChainCodecEvm: {
-        scope: CONTRACT_SCOPE_CHAIN,
+        scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeChainCodecInstantiateMsg,
     },
     ChainCodecSui: {
-        scope: CONTRACT_SCOPE_CHAIN,
+        scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeChainCodecInstantiateMsg,
     },
     ChainCodecStellar: {
-        scope: CONTRACT_SCOPE_CHAIN,
+        scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeChainCodecInstantiateMsg,
     },
     XrplVotingVerifier: {
