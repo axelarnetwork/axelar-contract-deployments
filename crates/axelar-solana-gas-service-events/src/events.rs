@@ -4,7 +4,7 @@ use solana_program::pubkey::Pubkey;
 
 use event_utils::{read_array, read_string, read_u64, EventParseError};
 
-/// Even emitted by the Axelar Solana Gas service
+/// Event emitted by the Axelar Solana Gas service
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum GasServiceEvent {
     /// Event when SOL was used to pay for a contract call

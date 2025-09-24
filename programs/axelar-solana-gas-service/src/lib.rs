@@ -74,7 +74,7 @@ pub fn assert_valid_config_pda(bump: u8, expected_pubkey: &Pubkey) -> Result<(),
     if &derived_pubkey == expected_pubkey {
         Ok(())
     } else {
-        msg!("Error: Invalid Config PDA ");
+        msg!("Error: Invalid Config PDA");
         Err(ProgramError::IncorrectProgramId)
     }
 }

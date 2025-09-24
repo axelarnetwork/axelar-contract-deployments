@@ -144,10 +144,10 @@ pub enum PayWithNativeToken {
         destination_address: String,
         /// A 32-byte hash representing the payload.
         payload_hash: [u8; 32],
-        /// Where refunds should be sent.
-        refund_address: Pubkey,
         /// The amount of SOL to pay as gas fees.
         gas_fee_amount: u64,
+        /// Where refunds should be sent.
+        refund_address: Pubkey,
     },
 
     /// Add more native SOL gas to an existing transaction.
@@ -258,8 +258,8 @@ pub fn pay_native_for_contract_call_instruction(
             destination_chain,
             destination_address,
             payload_hash,
-            refund_address,
             gas_fee_amount,
+            refund_address,
         },
     ))?;
     let (config_pda, _bump) = crate::get_config_pda();

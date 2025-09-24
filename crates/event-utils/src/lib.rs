@@ -24,7 +24,7 @@ pub trait Event {
     /// Emits the event data using `sol_log_data`
     fn emit(&self);
 
-    /// Tries to parses an event of this type from a log message string.
+    /// Tries to parse an event of this type from a log message string.
     ///
     /// # Errors
     ///
