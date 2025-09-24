@@ -19,7 +19,13 @@ async function migrate(
 ): Promise<void> {
     const sender_address = client.accounts[0].address;
     const contract_address = options.address ?? config.axelar.contracts[options.contractName]?.address;
+    if (args.length === 0 || args[0] === undefined) {
+        throw new Error('code_id argument is required');
+    }
     const code_id = Number(args[0]);
+    if (isNaN(code_id)) {
+        throw new Error('code_id must be a valid number');
+    }
 
     const contract_info = await getContractInfo(client, contract_address);
     switch (contract_info.contract) {
