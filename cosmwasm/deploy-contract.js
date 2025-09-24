@@ -22,18 +22,18 @@ const { mainProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const upload = async (client, wallet, config, options) => {
+const upload = async (client, config, options) => {
     const { contractName, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
     printInfo('Uploading contract binary');
-    const { checksum, codeId } = await uploadContract(client, wallet, config, options);
+    const { checksum, codeId } = await uploadContract(client, config, options);
 
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
 
     if (instantiate2) {
-        const [account] = await wallet.getAccounts();
+        const [account] = client.accounts;
         const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
 
         contractConfig.address = address;
@@ -42,7 +42,7 @@ const upload = async (client, wallet, config, options) => {
     }
 };
 
-const instantiate = async (client, wallet, config, options) => {
+const instantiate = async (client, config, options) => {
     const { contractName, chainName, yes } = options;
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
@@ -57,19 +57,19 @@ const instantiate = async (client, wallet, config, options) => {
     contractConfig.codeId = codeId;
 
     const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
-    const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
+    const contractAddress = await instantiateContract(client, initMsg, config, options);
 
     contractConfig.address = contractAddress;
 
     printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
-const uploadInstantiate = async (client, wallet, config, options) => {
-    await upload(client, wallet, config, options);
-    await instantiate(client, wallet, config, options);
+const uploadInstantiate = async (client, config, options) => {
+    await upload(client, config, options);
+    await instantiate(client, config, options);
 };
 
-const migrate = async (client, wallet, config, options) => {
+const migrate = async (client, config, options) => {
     const { yes } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -82,7 +82,7 @@ const migrate = async (client, wallet, config, options) => {
 
     contractConfig.codeId = codeId;
 
-    const { transactionHash } = await migrateContract(client, wallet, config, options);
+    const { transactionHash } = await migrateContract(client, config, options);
     printInfo('Migration completed. Transaction hash', transactionHash);
 };
 

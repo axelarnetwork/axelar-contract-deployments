@@ -49,17 +49,6 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
-const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
-
-const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareDummyWallet = async () => {
-    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
-};
-
-const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
-    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
-
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -127,12 +116,12 @@ const executeTransaction = async (client, account, contractAddress, message, fee
     return tx;
 };
 
-const uploadContract = async (client, wallet, config, options) => {
+const uploadContract = async (client, config, options) => {
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
 
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const wasm = readContractCode(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
@@ -141,9 +130,9 @@ const uploadContract = async (client, wallet, config, options) => {
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, wallet, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -170,9 +159,9 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
     return contractAddress;
 };
 
-const migrateContract = async (client, wallet, config, options) => {
+const migrateContract = async (client, config, options) => {
     const { msg } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -1097,8 +1086,8 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, wallet, config, options, content) => {
-    const [account] = await wallet.getAccounts();
+const submitProposal = async (client, config, options, content) => {
+    const [account] = client.accounts;
 
     const {
         axelar: { gasPrice, gasLimit },
@@ -1467,9 +1456,6 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    prepareWallet,
-    prepareDummyWallet,
-    prepareClient,
     fromHex,
     getSalt,
     calculateDomainSeparator,

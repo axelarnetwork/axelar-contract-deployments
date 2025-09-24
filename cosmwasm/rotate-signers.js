@@ -17,8 +17,8 @@ const getVerifierSetStatus = async (config, chain, client, verifierStatus) => {
     return client.queryContractSmart(config.axelar.contracts.VotingVerifier[chain].address, { verifier_set_status: verifierStatus });
 };
 
-const updateVerifierSet = async (client, wallet, config, _options, [chain], fee) => {
-    const [account] = await wallet.getAccounts();
+const updateVerifierSet = async (client, config, _options, [chain], fee) => {
+    const [account] = client.accounts;
 
     const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain, client);
     printInfo('Current verifier set', currentVerifierSet);
@@ -37,8 +37,8 @@ const updateVerifierSet = async (client, wallet, config, _options, [chain], fee)
     printInfo('Mutisig session ID', multisigSessionId);
 };
 
-const confirmVerifierRotation = async (client, wallet, config, _options, [chain, txHash], fee) => {
-    const [account] = await wallet.getAccounts();
+const confirmVerifierRotation = async (client, config, _options, [chain, txHash], fee) => {
+    const [account] = client.accounts;
 
     const nextVerifierSet = (await getNextVerifierSet(config, chain, client)).verifier_set;
     printInfo('Next verifier set', nextVerifierSet);

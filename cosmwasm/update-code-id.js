@@ -3,12 +3,12 @@
 require('../common/cli-utils');
 
 const { getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
-const { mainProcessor } = require('./processor');
+const { mainQueryProcessor } = require('./processor');
 const { printInfo } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const processCommand = async (client, _wallet, config, options) => {
+const processCommand = async (client, config, options, _args, _fee) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     printInfo('Old code id', contractConfig.codeId);
@@ -28,7 +28,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        mainProcessor(processCommand, options);
+        mainQueryProcessor(processCommand, options);
     });
 
     program.parse();
