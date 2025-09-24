@@ -116,30 +116,18 @@ const executeTransaction = async (client, account, contractAddress, message, fee
     return tx;
 };
 
-const uploadContract = async (client, config, options) => {
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-
+const uploadContract = async (client, options, uploadFee) => {
     const [account] = client.accounts;
     const wasm = readContractCode(options);
-
-    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options, initFee) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
     const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-
     const contractLabel = getLabel(options);
 
     const { contractAddress } = instantiate2
@@ -159,15 +147,10 @@ const instantiateContract = async (client, initMsg, config, options) => {
     return contractAddress;
 };
 
-const migrateContract = async (client, config, options) => {
+const migrateContract = async (client, config, options, migrateFee) => {
     const { msg } = options;
     const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
@@ -1086,16 +1069,11 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, config, options, content) => {
+const submitProposal = async (client, config, options, content, fee) => {
     const [account] = client.accounts;
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
     const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
