@@ -48,19 +48,6 @@ pub fn user_roles_pda(
         })
 }
 
-/// Tries to create the PDA for `UserRoles` using the provided bump,
-/// falling back to `find_program_address` if the bump is invalid.
-#[inline]
-#[must_use]
-pub fn create_user_roles_pda(
-    program_id: &Pubkey,
-    resource: &Pubkey,
-    user: &Pubkey,
-    bump: u8,
-) -> (Pubkey, u8) {
-    user_roles_pda(program_id, resource, user, Some(bump))
-}
-
 /// Derives the PDA for a `UserRoles` account.
 #[inline]
 #[must_use]

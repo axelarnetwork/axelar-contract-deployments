@@ -29,8 +29,8 @@ pub struct OperatorProposalExecuted {
     /// The target address represented as a 32-byte array. It represents the
     /// [`solana_program::pubkey::Pubkey`].
     target_address: [u8; 32],
-    /// The call data required to execute the target program. The rkyv
-    /// encoded [`crate::proposal::ExecuteProposalCallData`].
+    /// The call data required to execute the target program.
+    /// See [`crate::proposal::ExecuteProposalCallData`].
     call_data: Vec<u8>,
     /// This field represents how many native tokens (lamports) are being
     /// sent to the target program. It's a little-endian U256 value.
