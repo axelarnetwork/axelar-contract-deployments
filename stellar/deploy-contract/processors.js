@@ -8,7 +8,6 @@ const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
 const { ethers } = require('hardhat');
 const { readFileSync } = require('fs');
-const { getChainCodecContractForChain } = require('../../cosmwasm/utils');
 const {
     utils: { arrayify, id },
 } = ethers;

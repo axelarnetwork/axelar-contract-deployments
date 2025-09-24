@@ -26,7 +26,6 @@ const {
     getChainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
-    getChainCodecContractForChain,
     validateParameters,
     tryItsEdgeContract,
 } = require('../common');
@@ -1389,12 +1388,7 @@ const getInstantiateChainContractsMessage = async (client, config, options) => {
     }
 
     const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
-    let chainCodecContractName;
-    try {
-        chainCodecContractName = getChainCodecContractForChain(config.axelar, chainName);
-    } catch (_) {
-        chainCodecContractName = getChainCodecContractNameByChainType(config, chainName);
-    }
+    const chainCodecContractName = getChainCodecContractNameByChainType(config, chainName);
 
     const chainCodecCode = chainCodecCodeId || (await getCodeId(client, config, { ...options, contractName: chainCodecContractName }));
     const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
@@ -1600,6 +1594,5 @@ module.exports = {
     validateItsChainChange,
     getChainCodecAddressForChain,
     getChainCodecConfigForChain,
-    getChainCodecContractForChain,
     getChainCodecContractNameByChainType,
 };
