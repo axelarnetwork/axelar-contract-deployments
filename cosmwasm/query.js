@@ -202,24 +202,28 @@ async function saveDeployedContracts(client, config, args, options) {
 
     // query chain codec address from prover config
     const key = Buffer.from('config');
-    const value = await client.queryContractRaw(result.prover, key);
-    const proverConfig = JSON.parse(Buffer.from(value).toString('ascii'));
-    const chainCodec = proverConfig.chain_codec;
-
-    // Determine the ChainCodecXyz contract name by chain type
     try {
-        const codecContractName = getChainCodecContractNameByChainType(config, chainName);
+        const value = await client.queryContractRaw(result.prover, key);
+        const proverConfig = JSON.parse(Buffer.from(value).toString('ascii'));
+        const chainCodec = proverConfig.chain_codec;
 
-        if (!config.axelar.contracts[codecContractName]) {
-            config.axelar.contracts[codecContractName] = {};
+        // Determine the ChainCodecXyz contract name by chain type
+        try {
+            const codecContractName = getChainCodecContractNameByChainType(config, chainName);
+
+            if (!config.axelar.contracts[codecContractName]) {
+                config.axelar.contracts[codecContractName] = {};
+            }
+            config.axelar.contracts[codecContractName] = {
+                ...config.axelar.contracts[codecContractName],
+                address: chainCodec,
+            };
+            printInfo(`Updated ${codecContractName}.address`, chainCodec);
+        } catch (error) {
+            printWarn(error.message);
         }
-        config.axelar.contracts[codecContractName] = {
-            ...config.axelar.contracts[codecContractName],
-            address: chainCodec,
-        };
-        printInfo(`Updated ${codecContractName}.address`, chainCodec);
     } catch (error) {
-        printWarn(error.message);
+        printWarn(`Failed to fetch chain codec address for ${chainName}`, error?.message || String(error));
     }
 
     saveConfig(config, options.env);
