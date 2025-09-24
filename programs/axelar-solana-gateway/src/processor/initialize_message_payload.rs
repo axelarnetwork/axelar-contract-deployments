@@ -3,7 +3,10 @@ use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
 
 use super::Processor;
-use program_utils::{pda::{init_pda_raw, BytemuckedPda, ValidPDA}, validate_system_account_key};
+use program_utils::{
+    pda::{init_pda_raw, BytemuckedPda, ValidPDA},
+    validate_system_account_key,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
