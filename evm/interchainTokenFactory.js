@@ -19,7 +19,6 @@ const {
     printTokenInfo,
     isTrustedChain,
     encodeITSDestination,
-    scaleGasValue,
     loadConfig,
 } = require('./utils');
 const { validateChain, estimateITSFee, addOptionsToCommands } = require('../common');
@@ -41,7 +40,6 @@ const IInterchainTokenServiceV211 = getContractJSON(
 
 async function processCommand(_axelar, chain, chains, action, options) {
     const { privateKey, address, yes, args } = options;
-    const config = loadConfig(options.env);
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenFactory';
@@ -88,12 +86,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        // TODO: review
         case 'interchain-token-deploy-salt': {
             const [deployer] = args;
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            validateParameters({ isValidAddress: { deployer }, isValidString: { salt } });
+            validateParameters({ isValidAddress: { deployer }, isValidString: { deploymentSalt } });
 
             const interchainTokenDeploySalt = await interchainTokenFactory.interchainTokenDeploySalt(deployer, deploymentSalt);
 
@@ -169,12 +168,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
-        case 'deployRemoteInterchainToken': {
-            const { destinationChain, env } = options;
+        case 'deploy-remote-interchain-token': {
+            // const { destinationChain, env } = options;
+            const [destinationChain, manualGasValue] = args;
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue, _axelar);
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', manualGasValue, _axelar);
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
@@ -218,10 +218,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
-        case 'deployRemoteCanonicalInterchainToken': {
-            const { tokenAddress, destinationChain, env } = options;
+        case 'deploy-remote-canonical-interchain-token': {
+            const [tokenAddress, destinationChain, manualGasValue] = args;
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue, _axelar);
+            const { /*gasValue,*/ env } = options;
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', manualGasValue, _axelar);
 
             validateParameters({
                 isValidAddress: { tokenAddress },
@@ -274,10 +275,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
-        case 'linkToken': {
-            const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
+        case 'link-token': {
+            const [destinationChain, destinationTokenAddress, tokenManagerType, linkParams, manualGasValue] = args;
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
+            // const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
+            const { env } = options;
+
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', manualGasValue, _axelar);
 
             const deploymentSalt = getDeploymentSalt(options);
 
@@ -317,10 +321,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
     }
 }
 
-// async function main(options) {
-//     await mainProcessor(options, processCommand);
-// }
-
 async function main(action, args, options) {
     options.args = args;
     return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
@@ -331,46 +331,93 @@ if (require.main === module) {
 
     program.name('InterchainTokenFactory').description('Script to perform interchain token factory commands');
 
-    // program.addOption(
-    //     new Option('--action <action>', 'interchain token factory action')
-    //         .choices([
-    //             'contractId',
-    //             'interchainTokenDeploySalt',
-    //             'canonicalinterchainTokenDeploySalt',
-    //             'interchainTokenId',
-    //             'canonicalInterchainTokenId',
-    //             'interchainTokenAddress',
-    //             'deployInterchainToken',
-    //             'deployRemoteInterchainToken',
-    //             'registerCanonicalInterchainToken',
-    //             'deployRemoteCanonicalInterchainToken',
-    //             'registerCustomToken',
-    //             'linkToken',
-    //         ])
-    //         .makeOptionMandatory(true),
-    // );
+    program
+        .command('contract-id')
+        .description('Get contract ID')
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
+        });
 
-    program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
-    program.addOption(new Option('--sender <sender>', 'TokenManager deployer address'));
-    program.addOption(new Option('--deployer <deployer>', 'deployer address'));
-    program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address'));
-    program.addOption(new Option('--name <name>', 'token name'));
-    program.addOption(new Option('--symbol <symbol>', 'token symbol'));
-    program.addOption(new Option('--decimals <decimals>', 'token decimals'));
-    program.addOption(new Option('--minter <minter>', 'token minter').default(AddressZero));
-    program.addOption(new Option('--operator <operator>', 'token manager operator').default(AddressZero));
-    program.addOption(new Option('--tokenManagerType <tokenManagerType>', 'token manager type'));
-    program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
-    program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
-    program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
-    program.addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'));
-    program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
-    program.addOption(new Option('--destinationTokenAddress <destinationTokenAddress>', 'destination token address'));
-    program.addOption(new Option('--linkParams <linkParams>', 'parameters to use for linking'));
+    program
+        .command('interchain-token-deploy-salt <deployer>')
+        .description('Get interchain token deploy')
+        .action((deployer, options, cmd) => {
+            main(cmd.name(), [deployer], options);
+        });
 
-    program.action((options) => {
-        main(options);
-    });
+    // node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet --yes
+    program
+        .command('canonical-interchain-token-deploy-salt <tokenAddress>')
+        .description('Get canonical interchain token deploy salt')
+        .action((tokenAddress, options, cmd) => {
+            main(cmd.name(), [tokenAddress], options);
+        });
+
+    // node evm/interchainTokenFactory.js canonical-interchain-token-id 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet --yes
+    program
+        .command('canonical-interchain-token-id <tokenAddress>')
+        .description('Get canonical interchain token id')
+        .action((tokenAddress, options, cmd) => {
+            main(cmd.name(), [tokenAddress], options);
+        });
+
+    // node evm/interchainTokenFactory.js interchain-token-id 0x312dba807EAE77f01EF3dd21E885052f8F617c5B 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82 --chainNames avalanche --env testnet --yes --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+    program
+        .command('interchain-token-id <deployer>')
+        .description('Get interchain token id')
+        .action((deployer, options, cmd) => {
+            main(cmd.name(), [deployer], options);
+        });
+
+    program
+        .command('deploy-interchain-token <name> <symbol> <decimals> <initialSupply> <minter>')
+        .description('Deploy interchain token')
+        .action((name, symbol, decimals, initialSupply, minter, options, cmd) => {
+            main(cmd.name(), [name, symbol, decimals, initialSupply, minter], options);
+        });
+
+    //  node evm/interchainTokenFactory.js deploy-remote-interchain-token 0x01bc86881a7ce41ac90eaa6eca5e0e63d9a5a218bdafd9996aa2d5aea947ff39 Avalanche 10000000000000000  --chainNames ethereum-sepolia  --env testnet --yes
+    // the salt was what i had passed into deployInterchainToken() on etherscan
+    program
+        .command('deploy-remote-interchain-token <salt> <destinationChain> <gasValue>')
+        .description('Deploy remote interchain token')
+        .action((salt, destinationChain, gasValue, options, cmd) => {
+            main(cmd.name(), [salt, destinationChain, gasValue], options);
+        });
+
+    //  node evm/interchainTokenFactory.js register-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b --chainNames ethereum-sepolia --env testnet --yes
+    program
+        .command('register-canonical-interchain-token <tokenAddress>')
+        .description('Register canonical interchain token')
+        .action((tokenAddress, options, cmd) => {
+            main(cmd.name(), [tokenAddress], options);
+        });
+
+    // node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche 100000000000 --chainNames ethereum-sepolia --env testnet --yes
+    program
+        .command('deploy-remote-canonical-interchain-token <tokenAddress> <destinationChain> <gasValue>')
+        .description('Deploy remote canonical interchain token')
+        .action((tokenAddress, destinationChain, gasValue, options, cmd) => {
+            main(cmd.name(), [tokenAddress, destinationChain, gasValue], options);
+        });
+
+    //  node evm/interchainTokenFactory.js register-custom-token  0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+    program
+        .command('register-custom-token <tokenAddress> <tokenManagerType> <operator>')
+        .description('Register custom token')
+        .action((tokenAddress, tokenManagerType, operator, options, cmd) => {
+            main(cmd.name(), [tokenAddress, tokenManagerType, operator], options);
+        });
+
+    // node evm/interchainTokenFactory.js link-token Avalanche 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000000  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+    program
+        .command('link-token <destinationChain> <destinationTokenAddress> <tokenManagerType> <linkParams> <gasValue>')
+        .description('Link token to token on destination chain')
+        .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue, options, cmd) => {
+            main(cmd.name(), [destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue], options);
+        });
+
+    addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
 
     program.parse();
 }
