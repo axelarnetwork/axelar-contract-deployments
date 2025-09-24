@@ -5,7 +5,7 @@ import { Command, Option } from 'commander';
 
 import { FullConfig } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
-import { ClientManager, Options, mainProcessor } from '../processor';
+import { ClientManager, mainProcessor } from '../processor';
 import { ContractInfo, getContractInfo } from '../query';
 import { migrate as migrateCoordinator } from './coordinator';
 import { MigrationOptions } from './types';
@@ -18,10 +18,10 @@ async function migrate(
     fee: string | StdFee,
 ): Promise<void> {
     const sender_address = client.accounts[0].address;
-    const contract_address = config.axelar.contracts[options.contractName]?.address;
+    const contract_address = options.address ?? config.axelar.contracts[options.contractName]?.address;
     const code_id = Number(args[0]);
 
-    const contract_info: ContractInfo = await getContractInfo(client, contract_address);
+    const contract_info = await getContractInfo(client, contract_address);
     switch (contract_info.contract) {
         case 'coordinator':
             await migrateCoordinator(client, options, config, sender_address, contract_address, contract_info.version, code_id);
