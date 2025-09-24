@@ -21,11 +21,10 @@ pub enum GatewayInstruction {
     ///
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Gateway `ExecuteData` PDA account
-    /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
-    ///    `ExecuteData`)
-    /// 3..N [WRITE] Gateway `ApprovedCommand` PDA accounts. All commands needs to
-    ///         be `ApproveMessages`.
+    /// 1. [WRITE, SIGNER] Payer account
+    /// 2. [] Verification Session PDA account (should be valid)
+    /// 3. [WRITE] Incoming Message PDA account
+    /// 4. [] System Program account
     ApproveMessage {
         /// The message that's to be approved
         message: MerkleisedMessage,
@@ -35,14 +34,16 @@ pub enum GatewayInstruction {
 
     /// Rotate signers for the Gateway Root Config PDA account.
     ///
+    /// Accounts expected by this instruction:
     /// 0. [WRITE] Gateway Root Config PDA account
-    /// 1. [] Verificatoin Session PDA account (should be valid)
-    /// 2. [] The current verefier set tracker PDA (the one that signed the
+    /// 1. [] Verification Session PDA account (should be valid)
+    /// 2. [] The current verifier set tracker PDA (the one that signed the
     ///    verification payload)
     /// 3. [WRITE] The new verifier set tracker PDA (the one that needs to be
     ///    instantiated)
-    /// 4. [WRITE, SIGNER] The payer for creating a new PAD
+    /// 4. [WRITE, SIGNER] The payer for creating a new PDA
     /// 5. [] The system program
+    /// 6. [SIGNER] (Optional) Operator account
     RotateSigners {
         /// The merkle root of the new verifier set
         new_verifier_set_merkle_root: [u8; 32],

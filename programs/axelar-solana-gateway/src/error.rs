@@ -4,7 +4,8 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use solana_program::program_error::ProgramError;
 
-const IRRECOVERABLE_ERROR: u32 = 12;
+// Error codes 0-6 are recoverable, 7+ are irrecoverable
+const IRRECOVERABLE_ERROR: u32 = 7;
 
 /// Errors that may be returned by the Gateway program.
 ///
@@ -12,9 +13,9 @@ const IRRECOVERABLE_ERROR: u32 = 12;
 /// This is because while some errors can be interpreted as "the argument / account / ix combo is unsuccessful",
 /// some other errors can be interpreted as "this action has already been executed".
 ///
-/// Because of this the errors are following the error numbers as follows:
-/// Range: 0..12  | Action has already been completed by another actor. Relayer can interpret as "assume that this action completed successfully".
-/// Range: 13..xx | Action cannot be completed with the provided arguments
+/// Because of this the errors are categorized as follows:
+/// "Already completed" errors (codes 0-6): Action has already been completed by another actor. Relayer can interpret as "assume that this action completed successfully".
+/// Irrecoverable errors (codes 7+): Action cannot be completed with the provided arguments.
 #[repr(u32)]
 #[derive(Clone, Debug, Eq, thiserror::Error, FromPrimitive, ToPrimitive, PartialEq)]
 pub enum GatewayError {
@@ -38,9 +39,21 @@ pub enum GatewayError {
     #[error("Verifier set tracker PDA already initialized")]
     VerifierSetTrackerAlreadyInitialised,
 
+    /// Message Payload PDA was already initialized.
+    #[error("Message Payload PDA was already initialized")]
+    MessagePayloadAlreadyInitialized,
+
+    /// Message Payload has already been committed.
+    #[error("Message Payload has already been committed")]
+    MessagePayloadAlreadyCommitted,
+
+    // ========== IRRECOVERABLE ERRORS RANGE ==========
     /// Used when a signature index is too high.
     #[error("Slot is out of bounds")]
-    SlotIsOutOfBounds,
+    // --- NOTICE ---
+    // This bumps the error representation to the irrecoverable threshold.
+    // Any error after this point is deemed irrecoverable.
+    SlotIsOutOfBounds = IRRECOVERABLE_ERROR,
 
     /// Used when the internal digital signature verification fails.
     #[error("Digital signature verification failed")]
@@ -58,19 +71,8 @@ pub enum GatewayError {
     #[error("Invalid destination address")]
     InvalidDestinationAddress,
 
-    /// Message Payload PDA was already initialized.
-    #[error("Message Payload PDA was already initialized")]
-    MessagePayloadAlreadyInitialized,
-
-    /// Message Payload has already been committed.
-    #[error("Message Payload has already been committed")]
-    MessagePayloadAlreadyCommitted,
-
     /// Error indicating an underflow occurred during epoch calculation.
     #[error("Epoch calculation resulted in an underflow")]
-    // --- NOTICE ---
-    // this bumps the error representation to start at 500
-    // Any error after this point is deemed irrecoverable
     EpochCalculationOverflow,
 
     /// Error indicating the provided verifier set is too old.
@@ -179,10 +181,10 @@ mod tests {
             .collect_vec();
 
         // confidence check that we derived the errors correctly
-        assert_eq!(errors_to_proceed.len(), 12);
-        assert_eq!(errors_to_not_proceed.len(), 18);
+        assert_eq!(errors_to_proceed.len(), 7);
+        assert_eq!(errors_to_not_proceed.len(), 23);
 
-        // Errors that should cause the relayer to proceed (error numbers < 500)
+        // Errors that should cause the relayer to proceed (error numbers < 7)
         for error in errors_to_proceed {
             assert!(
                 error.should_relayer_proceed(),
@@ -192,7 +194,7 @@ mod tests {
             );
         }
 
-        // Errors that should NOT cause the relayer to proceed (error numbers >= 500)
+        // Errors that should NOT cause the relayer to proceed (error numbers >= 7)
         for error in errors_to_not_proceed {
             assert!(
                 !error.should_relayer_proceed(),
