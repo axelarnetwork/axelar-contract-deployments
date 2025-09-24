@@ -12,9 +12,9 @@ export async function getContractInfo(client: CosmWasmClient, contract_address: 
     return contract_info;
 }
 
-async function contractInfo(client: CosmWasmClient, config: FullConfig, options: Options) {
+async function contractInfo(client: CosmWasmClient, config: FullConfig, options: Options): Promise<void> {
     try {
-        const address = config?.axelar?.contracts[options.contractName]?.address;
+        const address = config.axelar.contracts[options.contractName]?.address;
         if (!address) {
             throw new Error(`No address configured for contract '${options.contractName}'`);
         }
