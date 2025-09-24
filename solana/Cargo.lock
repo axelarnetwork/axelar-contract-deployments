@@ -581,42 +581,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
-name = "axelar-amplifier-solana-cli"
-version = "0.1.0"
-dependencies = [
- "axelar-executable",
- "axelar-solana-encoding",
- "axelar-solana-gas-service",
- "axelar-solana-gateway",
- "axelar-solana-governance",
- "axelar-solana-its",
- "axelar-solana-memo-program",
- "axelar-wasm-std",
- "base64 0.22.1",
- "bincode 2.0.1",
- "borsh 1.5.7",
- "clap 3.2.25",
- "cosmrs",
- "cosmwasm-std",
- "dotenvy",
- "eyre",
- "gateway-event-stack",
- "hex",
- "its-instruction-builder",
- "k256",
- "serde",
- "serde_json",
- "solana-clap-v3-utils",
- "solana-cli-config",
- "solana-client",
- "solana-sdk",
- "solana-transaction-status",
- "spl-token 6.0.0",
- "spl-token-2022 6.0.0",
- "tokio",
-]
-
-[[package]]
 name = "axelar-executable"
 version = "0.1.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?rev=3896176#38961762ed0dba80875697203548f5d744976eaf"
@@ -1343,6 +1307,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
 dependencies = [
  "os_str_bytes",
+]
+
+[[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "axelar-executable",
+ "axelar-solana-encoding",
+ "axelar-solana-gas-service",
+ "axelar-solana-gateway",
+ "axelar-solana-governance",
+ "axelar-solana-its",
+ "axelar-solana-memo-program",
+ "axelar-wasm-std",
+ "base64 0.22.1",
+ "bincode 2.0.1",
+ "borsh 1.5.7",
+ "clap 3.2.25",
+ "cosmrs",
+ "cosmwasm-std",
+ "dotenvy",
+ "eyre",
+ "gateway-event-stack",
+ "hex",
+ "its-instruction-builder",
+ "k256",
+ "serde",
+ "serde_json",
+ "solana-clap-v3-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-sdk",
+ "solana-transaction-status",
+ "spl-token 6.0.0",
+ "spl-token-2022 6.0.0",
+ "tokio",
 ]
 
 [[package]]

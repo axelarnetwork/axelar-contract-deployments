@@ -1,27 +1,44 @@
 # Solana Program Upgrade Doc [current date]
 
-This guide is for **upgrading Solana programs** as part of the GMP/ITS v1.0.0 initial release ([1](./2025-07-GMP-v1.0.0.md), [2](./2025-07-ITS-v1.0.0.md) respectively). It assumes that:
+This guide is for **upgrading Solana programs** as part of the GMP/ITS v1.0.0 initial release ([1](./2025-09-GMP-v1.0.0.md), [2](./2025-09-ITS-v1.0.0.md) respectively). It assumes that:
 
-- Programs are already deployed with known program IDs.
+- Programs are already deployed with known PDAs.
 - The upgrade authority keypair is available.
 - You're upgrading using the same verifiable build process `solana-verify`.
 
 ## Program Upgrade Tracking
 
-| Program     | Env                | From version | To version | From hash | To hash | Done? |
-| ----------- | ------------------ | ------------ | ---------- | --------- | ------- | ----- |
-| Gateway     | `devnet-amplifier` |              |            |           |         |       |
-| ITS         | `devnet-amplifier` |              |            |           |         |       |
-| Gas Service | `devnet-amplifier` |              |            |           |         |       |
-| Governance  | `devnet-amplifier` |              |            |           |         |       |
-| Multicall   | `devnet-amplifier` |              |            |           |         |       |
+| **Axelar Env**       | **Program**     | **From Version** | **To Version** | **From Hash** | **To Hash** | **Done?** |
+| -------------------- | --------------- | ---------------- | -------------- | ------------- | ----------- | --------- |
+| **Devnet Amplifier** | Gateway         |                  |                |               |             |           |
+| **Devnet Amplifier** | ITS             |                  |                |               |             |           |
+| **Devnet Amplifier** | Gas Service     |                  |                |               |             |           |
+| **Devnet Amplifier** | Governance      |                  |                |               |             |           |
+| **Devnet Amplifier** | Multicall       |                  |                |               |             |           |
 
-Where `Env` can be:
+| **Axelar Env**       | **Program**     | **From Version** | **To Version** | **From Hash** | **To Hash** | **Done?** |
+| -------------------- | --------------- | ---------------- | -------------- | ------------- | ----------- | --------- |
+| **Stagenet**         | Gateway         |                  |                |               |             |           |
+| **Stagenet**         | ITS             |                  |                |               |             |           |
+| **Stagenet**         | Gas Service     |                  |                |               |             |           |
+| **Stagenet**         | Governance      |                  |                |               |             |           |
+| **Stagenet**         | Multicall       |                  |                |               |             |           |
 
-- devnet-amplifier
-- stagenet
-- testnet
-- mainnet
+| **Axelar Env**       | **Program**     | **From Version** | **To Version** | **From Hash** | **To Hash** | **Done?** |
+| -------------------- | --------------- | ---------------- | -------------- | ------------- | ----------- | --------- |
+| **Testnet**          | Gateway         |                  |                |               |             |           |
+| **Testnet**          | ITS             |                  |                |               |             |           |
+| **Testnet**          | Gas Service     |                  |                |               |             |           |
+| **Testnet**          | Governance      |                  |                |               |             |           |
+| **Testnet**          | Multicall       |                  |                |               |             |           |
+
+| **Axelar Env**       | **Program**     | **From Version** | **To Version** | **From Hash** | **To Hash** | **Done?** |
+| -------------------- | --------------- | ---------------- | -------------- | ------------- | ----------- | --------- |
+| **Mainnet**          | Gateway         |                  |                |               |             |           |
+| **Mainnet**          | ITS             |                  |                |               |             |           |
+| **Mainnet**          | Gas Service     |                  |                |               |             |           |
+| **Mainnet**          | Governance      |                  |                |               |             |           |
+| **Mainnet**          | Multicall       |                  |                |               |             |           |
 
 Note: Current deployed contract hashes can be obtained with the following sequence of commands. In example,
 getting the current Solana devnet governance address:
@@ -29,8 +46,12 @@ getting the current Solana devnet governance address:
 1. We first calculate the buffer account address from the program address
 
     ```bash
-    ❯ solana program show govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9
+    solana program show govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9
+    ```
 
+    Output:
+
+    ```sh
     Program Id: govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9
     Owner: BPFLoaderUpgradeab1e11111111111111111111111
     ProgramData Address: Dx7fpgZQWpSi6RD1p1wXcrdm5a7dRVEWL6YSHNMtN2ZT
@@ -43,7 +64,12 @@ getting the current Solana devnet governance address:
 1. We calculate the hash of the bytecode with the obtained buffer account address from `1`
 
     ```bash
-    ❯ solana-verify get-buffer-hash Dx7fpgZQWpSi6RD1p1wXcrdm5a7dRVEWL6YSHNMtN2ZT
+    solana-verify get-buffer-hash Dx7fpgZQWpSi6RD1p1wXcrdm5a7dRVEWL6YSHNMtN2ZT
+    ```
+
+    Output:
+
+    ```sh
     ae907491891a48851a4e347d4a23a41ad73e8b2fec8664951ed76011b31ee9e1
     ```
 
@@ -52,9 +78,11 @@ getting the current Solana devnet governance address:
 1. **Build environment**
 
    ```bash
-   export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
-   export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-   export CHAIN_ID=<chain-id>
+   BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
+   COMMIT_HASH="<latest axelar-amplifier-solana commit hash>"
+   ENV=<devnet-custom|devnet-amplifier|stagenet|testnet|mainnet>
+   CLUSTER=<devnet|testnet|mainnet-beta>
+   CHAIN=<solana-custom|solana>
    ```
 
 1. **Build the updated binaries**
@@ -78,29 +106,26 @@ getting the current Solana devnet governance address:
 1. **Declare environment variables**
 
    ```bash
-    export PROGRAM_BYTECODE_PATH="axelar-amplifier-solana/target/deploy/<program_name>.so"
-    export PROGRAM_ID=<PROGRAM_ID>
+    PROGRAM_PDA=<program PDA>
+    PROGRAM_PATH="axelar-amplifier-solana/target/deploy/<program_name>.so"
 
-    export UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
-    export COMMIT_HASH=$(git -C axelar-amplifier-solana rev-parse HEAD)
+    UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
    ```
 
-   **Note**: `PROGRAM_BYTECODE_PATH` and `PROGRAM_ID` needs to be updated for each program that is going to be deployed.
+   **Note**: `PROGRAM_PDA` and `PROGRAM_PATH` need to be updated for each program that will be upgraded.
 
-1. **Set solana CLI on the convenient cluster**
+1. **Set Solana CLI to the relevant cluster**
 
    ```bash
-   solana config set --url <mainnet|devnet>
+   solana config set --url $CLUSTER
    ```
-
-   Note: We deploy all Axelar test environments in devnet
 
 1. **Upgrade Programs**
 
     There is a special CLI command that will get the program_id for you:
 
     ```bash
-    ./solana/axelar-amplifier-solana-cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_BYTECODE_PATH
+    ./solana/cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_PATH
     ```
 
 ## Verify
@@ -109,13 +134,13 @@ Verification is **only possible in mainnet**. If deploying for test environments
 
 ```bash
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE \
-  --commit-hash $COMMIT_HASH \
-  --program-id $PROGRAM_ID \
-  https://github.com/axelarnetwork/axelar-amplifier-solana \
-  -- --no-default-features --features $ENV
+    --commit-hash $COMMIT_HASH \
+    --program-id $PROGRAM_PDA \
+    https://github.com/axelarnetwork/axelar-amplifier-solana \
+    -- --no-default-features --features $ENV
 ```
 
 ## Post-Upgrade Checklist
 
-- [ ] Re-run `GMP` test transaction (see final section in original deployment docs ([1](./2025-07-GMP-v1.0.0.md), [2](./2025-07-ITS-v1.0.0.md)).
+- [ ] Re-run `GMP` test transaction (see final section in original deployment docs ([1](./2025-09-GMP-v1.0.0.md), [2](./2025-09-ITS-v1.0.0.md)).
 - [ ] Run the [e2e repository](https://github.com/eigerco/axelar-solana-e2e) pipeline.

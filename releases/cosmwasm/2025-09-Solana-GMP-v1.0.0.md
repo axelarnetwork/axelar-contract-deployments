@@ -7,12 +7,12 @@
 
 | **Axelar Env**       | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | 2025-09-18 |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Devnet Amplifier** | Completed             | 2025-09-18 |
+| **Stagenet**         | Pending               | TBD        |
+| **Testnet**          | Pending               | TBD        |
+| **Mainnet**          | Pending               | TBD        |
 
-- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier/tree/v0.1.0)
+- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
   - SolanaVotingVerifier: `52af1024c7548a724ec97728a1748bd1ce4ccb80bfb5c2a0ed7e57ee5ce5275c`
   - SolanaGateway: `31572a174679ebbf31ac63fdfb99d7a99199d873b4558d61b8cfdf5800174fee`
@@ -33,7 +33,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git
+    git clone --recurse-submodules https://github.com/axelarnetwork/axelar-amplifier.git
     cd axelar-amplifier
     git checkout solana-cosmwasm
     ```
@@ -91,9 +91,7 @@ RUN_AS_ACCOUNT=
         -c SolanaVotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
-        --deposit $DEPOSIT_VALUE \
-        --instantiateAddresses $INIT_ADDRESSES
+        -a "$ARTIFACT_PATH"
     ```
 
 1. Store Gateway:
@@ -103,9 +101,7 @@ RUN_AS_ACCOUNT=
         -c SolanaGateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
-        --deposit $DEPOSIT_VALUE \
-        --instantiateAddresses $INIT_ADDRESSES
+        -a "$ARTIFACT_PATH"
     ```
 
 1. Store Multisig Prover:
@@ -115,9 +111,7 @@ RUN_AS_ACCOUNT=
         -c SolanaMultisigProver \
         -t "Upload MultisigProver contract for Solana" \
         -d "Upload MultisigProver contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
-        --deposit $DEPOSIT_VALUE \
-        --instantiateAddresses $INIT_ADDRESSES
+        -a "$ARTIFACT_PATH"
     ```
 
 ## Deployment

@@ -1,5 +1,5 @@
 [package]
-name = "axelar-amplifier-solana-cli"
+name = "cli"
 version = "0.1.0"
 edition = "2024"
 

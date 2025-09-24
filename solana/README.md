@@ -169,10 +169,10 @@ solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier
 
 ## Upgrades
 
-To upgrade a program, a similar command is used as for the initial deployment, but with the `--program-id` option instead of `--program-id`. The upgrade should be performed by the authority assigned during the initial deployment.
+To upgrade a program, the same command is used as for the initial deployment, but with `--program-id` option set to the address of the program instead of the program's keypair path. The upgrade should be performed by the authority assigned during the initial deployment.
 
 ```sh
-solana program deploy --program-id <PROGRAM_ID_PUBKEY> <PATH_TO_PROGRAM_SO>
+solana program deploy --program-id <PROGRAM_PDA> <PROGRAM_PATH>
 ```
 
 For upgrades with offline signing, recovery of failed deployments, and other information about Solana program deployment, please check the [official docs](https://solana.com/docs/programs/deploying).
@@ -185,10 +185,10 @@ Solana contracts can be interacted with using the provided CLI. The CLI supports
 
 ### CLI Usage
 
-The Solana Axelar CLI (`axelar-amplifier-solana-cli`) provides several commands for interacting with the deployed contracts. The basic usage is:
+The Solana Axelar CLI (`cli`) provides several commands for interacting with the deployed contracts. The basic usage is:
 
 ```sh
-./axelar-amplifier-solana-cli <COMMAND> [OPTIONS] [SUBCOMMAND]
+./cli <COMMAND> [OPTIONS] [SUBCOMMAND]
 ```
 
 Main commands:
@@ -216,7 +216,7 @@ export CLUSTER=<URL_OR_MONIKER>
 By creating a `.env` file in the root of the project with the `CLUSTER=<URL_OR_MONIKER>` entry or, on every command:
 
 ```sh
-./axelar-amplifier-solana-cli --url <URL_OR_MONIKER> <COMMAND> [OPTIONS]
+./cli --url <URL_OR_MONIKER> <COMMAND> [OPTIONS]
 ```
 
 The value can be a full RPC URL or a moniker:
@@ -241,7 +241,7 @@ export PRIVATE_KEY=<PATH_TO_KEYPAIR>
 By creating a `.env` file in the root of the project with the `PRIVATE_KEY=<PATH_TO_KEYPAIR>` entry or, on every use of the `send` command:
 
 ```sh
-./axelar-amplifier-solana-cli send --fee-payer <PATH_TO_KEYPAIR> [OPTIONS]
+./cli send --fee-payer <PATH_TO_KEYPAIR> [OPTIONS]
 ```
 
 The value can be a path to a solana keypair JSON file (generated with `solana-keypair new`) or the USB path to a Ledger device (e.g.: usb://ledger).
@@ -251,14 +251,14 @@ The value can be a path to a solana keypair JSON file (generated with `solana-ke
 To get help on gateway commands, run:
 
 ```sh
-./axelar-amplifier-solana-cli send --help
-./axelar-amplifier-solana-cli send gateway --help
+./cli send --help
+./cli send gateway --help
 ```
 
 #### Initialize Gateway
 
 ```sh
-./axelar-amplifier-solana-cli --url --env devnet-amplifier send gateway init \
+./cli --url devnet-amplifier send gateway init \
   --previous-signers-retention 15 \
   --minimum-rotation-delay 15 \
   --operator E9yYxCfQmP1UFP8LHLqRQ68LaYmFKD56Gm568tKwtWjA
@@ -269,7 +269,7 @@ To get help on gateway commands, run:
 Send a message to another chain:
 
 ```sh
-./axelar-amplifier-solana-cli send gateway call-contract \
+./cli send gateway call-contract \
   --destination-chain <DESTINATION_CHAIN_NAME> \
   --destination-address <DESTINATION_ADDRESS> \
   --payload <MESSAGE_PAYLOAD_HEX>
@@ -280,7 +280,7 @@ Send a message to another chain:
 Submit a proof constructed on Amplifier to the Solana gateway contract:
 
 ```sh
-./axelar-amplifier-solana-cli send gateway submit-proof \
+./cli send gateway submit-proof \
   --multisig-session-id <MULTISIG_SESSION_ID>
 ```
 
@@ -289,7 +289,7 @@ Submit a proof constructed on Amplifier to the Solana gateway contract:
 Execute a cross-chain message that was approved on the Solana gateway:
 
 ```sh
-./axelar-amplifier-solana-cli send gateway execute \
+./cli send gateway execute \
   --source-chain <SOURCE_CHAIN_NAME> \
   --message-id <MESSAGE_ID> \
   --source-address <SOURCE_ADDRESS> \
@@ -300,7 +300,7 @@ Execute a cross-chain message that was approved on the Solana gateway:
 #### Rotate Signers
 
 ```sh
-./axelar-amplifier-solana-cli send gateway rotate \
+./cli send gateway rotate \
   --signer <SIGNER_PRIVATE_KEY_HEX> \
   --nonce <CURRENT_NONCE> \
   --new-nonce <NEW_NONCE>
@@ -310,7 +310,7 @@ Execute a cross-chain message that was approved on the Solana gateway:
 
 ```sh
 # Transfer Gateway operatorship
-./axelar-amplifier-solana-cli send gateway transfer-operatorship \
+./cli send gateway transfer-operatorship \
   --upgrade-authority <CURRENT_AUTHORITY_PUBKEY> \
   --new-operator <NEW_OPERATOR_PUBKEY>
 ```
@@ -320,29 +320,29 @@ Execute a cross-chain message that was approved on the Solana gateway:
 To get help on ITS commands, run:
 
 ```sh
-./axelar-amplifier-solana-cli send its --help
+./cli send its --help
 ```
 
 #### Initialize ITS
 
 ```sh
-./axelar-amplifier-solana-cli send its init --operator <OPERATOR_PUBKEY>
+./cli send its init --operator <OPERATOR_PUBKEY>
 ```
 
 #### Set/Remove Trusted Chain
 
 ```sh
 # Add a trusted chain
-./axelar-amplifier-solana-cli send its set-trusted-chain <CHAIN_NAME>
+./cli send its set-trusted-chain <CHAIN_NAME>
 
 # Remove a trusted chain
-./axelar-amplifier-solana-cli send its remove-trusted-chain <CHAIN_NAME>
+./cli send its remove-trusted-chain <CHAIN_NAME>
 ```
 
 #### Deploy Interchain Token
 
 ```sh
-./axelar-amplifier-solana-cli send its deploy-interchain-token \
+./cli send its deploy-interchain-token \
   --salt <SALT_STRING> \
   --name <TOKEN_NAME> \
   --symbol <TOKEN_SYMBOL> \
@@ -353,7 +353,7 @@ To get help on ITS commands, run:
 #### Deploy Remote Interchain Token
 
 ```sh
-./axelar-amplifier-solana-cli send its deploy-remote-interchain-token \
+./cli send its deploy-remote-interchain-token \
   --salt <SALT_STRING> \
   --destination-chain <DESTINATION_CHAIN_NAME> \
   --gas-value <GAS_VALUE>
@@ -362,7 +362,7 @@ To get help on ITS commands, run:
 #### Register Canonical Token
 
 ```sh
-./axelar-amplifier-solana-cli send its register-canonical-interchain-token \
+./cli send its register-canonical-interchain-token \
   --mint <MINT_ADDRESS> \
   --token-program <TOKEN_PROGRAM>
 ```
@@ -370,7 +370,7 @@ To get help on ITS commands, run:
 #### Deploy Remote Canonical Token
 
 ```sh
-./axelar-amplifier-solana-cli send its deploy-remote-canonical-interchain-token \
+./cli send its deploy-remote-canonical-interchain-token \
   --mint <MINT_ADDRESS> \
   --destination-chain <DESTINATION_CHAIN_NAME> \
   --gas-value <GAS_VALUE>
@@ -379,7 +379,7 @@ To get help on ITS commands, run:
 #### Interchain Transfer
 
 ```sh
-./axelar-amplifier-solana-cli send its interchain-transfer \
+./cli send its interchain-transfer \
   --source-account <SOURCE_ACCOUNT_ADDRESS> \
   --token-id <TOKEN_ID_HEX> \
   --destination-chain <DESTINATION_CHAIN_NAME> \
@@ -393,7 +393,7 @@ To get help on ITS commands, run:
 #### Call Contract With Interchain Token
 
 ```sh
-./axelar-amplifier-solana-cli send its call-contract-with-interchain-token \
+./cli send its call-contract-with-interchain-token \
   --source-account <SOURCE_ACCOUNT_ADDRESS> \
   --token-id <TOKEN_ID_HEX> \
   --destination-chain <DESTINATION_CHAIN_NAME> \
@@ -408,7 +408,7 @@ To get help on ITS commands, run:
 #### Set Flow Limit
 
 ```sh
-./axelar-amplifier-solana-cli send its set-flow-limit \
+./cli send its set-flow-limit \
   --token-id <TOKEN_ID_HEX> \
   --flow-limit <FLOW_LIMIT>
 ```
@@ -417,25 +417,25 @@ To get help on ITS commands, run:
 
 ```sh
 # Check if ITS is paused
-./axelar-amplifier-solana-cli send its paused
+./cli send its paused
 
 # Pause ITS
-./axelar-amplifier-solana-cli send its pause
+./cli send its pause
 
 # Unpause ITS
-./axelar-amplifier-solana-cli send its unpause
+./cli send its unpause
 ```
 
 #### TokenManager Operations
 
 ```sh
 # Set flow limit on a token manager
-./axelar-amplifier-solana-cli send its token-manager set-flow-limit \
+./cli send its token-manager set-flow-limit \
   --token-id <TOKEN_ID_HEX> \
   --flow-limit <FLOW_LIMIT>
 
 # Add flow limiter to a token manager
-./axelar-amplifier-solana-cli send its token-manager add-flow-limiter \
+./cli send its token-manager add-flow-limiter \
   --token-id <TOKEN_ID_HEX> \
   --flow-limiter <FLOW_LIMITER_PUBKEY>
 ```
@@ -444,7 +444,7 @@ To get help on ITS commands, run:
 
 ```sh
 # Mint interchain tokens
-./axelar-amplifier-solana-cli send its interchain-token mint \
+./cli send its interchain-token mint \
   --token-id <TOKEN_ID_HEX> \
   --mint <MINT_ADDRESS> \
   --to <DESTINATION_ACCOUNT> \
@@ -456,7 +456,7 @@ To get help on ITS commands, run:
 
 ```sh
 # Transfer ITS operatorship
-./axelar-amplifier-solana-cli send its transfer-operatorship --to <NEW_OPERATOR_PUBKEY>
+./cli send its transfer-operatorship --to <NEW_OPERATOR_PUBKEY>
 ```
 
 ## Governance
@@ -464,7 +464,7 @@ To get help on ITS commands, run:
 For governance-related commands:
 
 ```sh
-./axelar-amplifier-solana-cli send governance --help
+./cli send governance --help
 ```
 
 ## Gas Service
@@ -472,7 +472,7 @@ For governance-related commands:
 For gas service commands:
 
 ```sh
-./axelar-amplifier-solana-cli send gas-service --help
+./cli send gas-service --help
 ```
 
 ## Offline Signing Workflow
@@ -491,7 +491,7 @@ solana create-nonce-account <NONCE_ACCOUNT_KEYPAIR_PATH> <AMOUNT_SOL> --nonce-au
 ### 1. Generate the unsigned transaction
 
 ```sh
-./axelar-amplifier-solana-cli generate \
+./cli generate \
   --fee-payer <FEE_PAYER_PUBKEY> \
   --nonce-account <NONCE_ACCOUNT_PUBKEY> \
   --nonce-authority <NONCE_AUTHORITY_PUBKEY> \
@@ -506,7 +506,7 @@ This will generate a file like `./output/gateway-init.unsigned.json` in the defa
 ### 2. Sign the transaction (on each signing device)
 
 ```sh
-./axelar-amplifier-solana-cli sign <PATH_TO_SIGNER_KEYPAIR> <PATH_TO_UNSIGNED_TX_JSON>
+./cli sign <PATH_TO_SIGNER_KEYPAIR> <PATH_TO_UNSIGNED_TX_JSON>
 ```
 
 `PATH_TO_SIGNER_KEYPAIR` can be a local keypair file or a Ledger device.
@@ -516,7 +516,7 @@ This will generate signature files like `./output/gateway-init.5hW1cNgX6N8RhvHHi
 ### 3. Combine all signatures
 
 ```sh
-./axelar-amplifier-solana-cli combine <PATH_TO_UNSIGNED_TX_JSON> <PATH_TO_SIGNATURE_1> <PATH_TO_SIGNATURE_2> [...]
+./cli combine <PATH_TO_UNSIGNED_TX_JSON> <PATH_TO_SIGNATURE_1> <PATH_TO_SIGNATURE_2> [...]
 ```
 
 This will generate a file like `./output/gateway-init.signed.json`.
@@ -524,5 +524,5 @@ This will generate a file like `./output/gateway-init.signed.json`.
 ### 4. Broadcast the transaction
 
 ```sh
-./axelar-amplifier-solana-cli broadcast <PATH_TO_SIGNED_TX_JSON>
+./cli broadcast <PATH_TO_SIGNED_TX_JSON>
 ```
