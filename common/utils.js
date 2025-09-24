@@ -786,39 +786,28 @@ function validateDestinationChain(chains, destinationChain) {
 }
 
 async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, gmpAxelarscanApi) {
-    if (gasValue === 'auto') {
-        let baseUrl = gmpAxelarscanApi;
-        if (!baseUrl) {
-            try {
-                baseUrl = loadConfig(env).axelar?.gmpAxelarscanApi;
-            } catch (e) {
-                baseUrl = undefined;
-            }
-        }
-
-        // Fallback for env without api
-        if (!baseUrl || env === 'devnet-amplifier') {
-            return 0;
-        }
-
-        const url = `${baseUrl}/estimateITSFee`;
-
-        const payload = {
-            sourceChain: chain.axelarId,
-            destinationChain: destinationChain,
-            event: eventType,
-        };
-
-        const res = await httpPost(url, payload);
-        if (res.error) {
-            throw new Error(`Error querying gas amount: ${res.error}`);
-        }
-        return res;
-    } else if (isValidNumber(gasValue)) {
-        return scaleGasValue(chain, gasValue);
-    } else {
-        throw new Error(`Invalid gasValue: ${gasValue}. Please pass in a --gasValue with a valid number or "auto".`);
+    if (!gmpAxelarscanApi || env === 'devnet-amplifier') {
+        printInfo('Using default ITS fee: 0');
+        return 0;
     }
+
+    if (isValidNumber(gasValue)) {
+        return scaleGasValue(chain, gasValue);
+    }
+
+    const url = `${gmpAxelarscanApi}/estimateITSFee`;
+
+    const payload = {
+        sourceChain: chain.axelarId,
+        destinationChain: destinationChain,
+        event: eventType,
+    };
+
+    const res = await httpPost(url, payload);
+    if (res.error) {
+        throw new Error(`Error querying gas amount: ${res.error}`);
+    }
+    return res;
 }
 
 function scaleGasValue(chain, gasValue) {
