@@ -786,7 +786,6 @@ function validateDestinationChain(chains, destinationChain) {
 }
 
 async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
-
     if (env === 'devnet-amplifier') {
         printInfo('Using default ITS fee: 0');
         return 0;
