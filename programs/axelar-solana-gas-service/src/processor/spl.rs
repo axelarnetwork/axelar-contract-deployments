@@ -14,17 +14,18 @@ use solana_program::pubkey::Pubkey;
 use crate::state::Config;
 use crate::{assert_valid_config_pda, seed_prefixes};
 
-fn ensure_valid_ata(
-    ata: &AccountInfo<'_>,
+fn ensure_valid_token_account(
+    token_account: &AccountInfo<'_>,
     token_program: &AccountInfo<'_>,
     mint: &AccountInfo<'_>,
     wallet: &AccountInfo<'_>,
 ) -> ProgramResult {
-    if ata.owner != token_program.key {
+    if token_account.owner != token_program.key {
         return Err(ProgramError::IncorrectProgramId);
     }
-    let ata_data = spl_token_2022::state::Account::unpack_from_slice(&ata.try_borrow_data()?)?;
-    if ata_data.mint != *mint.key || ata_data.owner != *wallet.key {
+    let token_account_data =
+        spl_token_2022::state::Account::unpack_from_slice(&token_account.try_borrow_data()?)?;
+    if token_account_data.mint != *mint.key || token_account_data.owner != *wallet.key {
         return Err(ProgramError::InvalidAccountData);
     };
     Ok(())
@@ -41,9 +42,9 @@ fn ensure_valid_config_pda(config_pda: &AccountInfo<'_>, program_id: &Pubkey) ->
 #[allow(clippy::too_many_arguments)]
 fn transfer_tokens(
     token_program: &AccountInfo<'_>,
-    sender_ata: &AccountInfo<'_>,
+    sender_token_account: &AccountInfo<'_>,
     mint: &AccountInfo<'_>,
-    receiver_ata: &AccountInfo<'_>,
+    receiver_token_account: &AccountInfo<'_>,
     sender_authority: &AccountInfo<'_>,
     signer_pubkeys: &[AccountInfo<'_>],
     amount: u64,
@@ -51,9 +52,9 @@ fn transfer_tokens(
 ) -> Result<Instruction, ProgramError> {
     spl_token_2022::instruction::transfer_checked(
         token_program.key,
-        sender_ata.key,
+        sender_token_account.key,
         mint.key,
-        receiver_ata.key,
+        receiver_token_account.key,
         sender_authority.key,
         signer_pubkeys
             .iter()
@@ -84,9 +85,9 @@ pub(crate) fn process_pay_spl_for_contract_call(
     let (accounts, signer_pubkeys) = accounts.split_at(6);
     let accounts = &mut accounts.iter();
     let sender = next_account_info(accounts)?;
-    let sender_ata = next_account_info(accounts)?;
+    let sender_token_account = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
-    let config_pda_ata = next_account_info(accounts)?;
+    let config_pda_token_account = next_account_info(accounts)?;
     let mint = next_account_info(accounts)?;
     let token_program = next_account_info(accounts)?;
 
@@ -100,17 +101,17 @@ pub(crate) fn process_pay_spl_for_contract_call(
     // valid token program
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
-    // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
+    // ensure config_pda_token_account is owned by the Token Program and matches expected fields
+    ensure_valid_token_account(config_pda_token_account, token_program, mint, config_pda)?;
 
     // ensure sender_pda is owned by the token program matches expected fields
-    ensure_valid_ata(sender_ata, token_program, mint, sender)?;
+    ensure_valid_token_account(sender_token_account, token_program, mint, sender)?;
 
     let ix = transfer_tokens(
         token_program,
-        sender_ata,
+        sender_token_account,
         mint,
-        config_pda_ata,
+        config_pda_token_account,
         sender,
         signer_pubkeys,
         gas_fee_amount,
@@ -122,8 +123,8 @@ pub(crate) fn process_pay_spl_for_contract_call(
         &[
             sender.clone(),
             mint.clone(),
-            sender_ata.clone(),
-            config_pda_ata.clone(),
+            sender_token_account.clone(),
+            config_pda_token_account.clone(),
             token_program.clone(),
         ],
     )?;
@@ -132,7 +133,7 @@ pub(crate) fn process_pay_spl_for_contract_call(
     sol_log_data(&[
         event_prefixes::SPL_PAID_FOR_CONTRACT_CALL,
         &config_pda.key.to_bytes(),
-        &config_pda_ata.key.to_bytes(),
+        &config_pda_token_account.key.to_bytes(),
         &mint.key.to_bytes(),
         &token_program.key.to_bytes(),
         &destination_chain.into_bytes(),
@@ -162,9 +163,9 @@ pub(crate) fn add_spl_gas(
     let (accounts, signer_pubkeys) = accounts.split_at(6);
     let accounts = &mut accounts.iter();
     let sender = next_account_info(accounts)?;
-    let sender_ata = next_account_info(accounts)?;
+    let sender_token_account = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
-    let config_pda_ata = next_account_info(accounts)?;
+    let config_pda_token_account = next_account_info(accounts)?;
     let mint = next_account_info(accounts)?;
     let token_program = next_account_info(accounts)?;
 
@@ -178,17 +179,17 @@ pub(crate) fn add_spl_gas(
     // valid token program
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
-    // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
+    // ensure config_pda_token_account is owned by the Token Program and matches expected fields
+    ensure_valid_token_account(config_pda_token_account, token_program, mint, config_pda)?;
 
     // ensure sender_pda is owned by the token program matches expected fields
-    ensure_valid_ata(sender_ata, token_program, mint, sender)?;
+    ensure_valid_token_account(sender_token_account, token_program, mint, sender)?;
 
     let ix = transfer_tokens(
         token_program,
-        sender_ata,
+        sender_token_account,
         mint,
-        config_pda_ata,
+        config_pda_token_account,
         sender,
         signer_pubkeys,
         gas_fee_amount,
@@ -200,8 +201,8 @@ pub(crate) fn add_spl_gas(
         &[
             sender.clone(),
             mint.clone(),
-            sender_ata.clone(),
-            config_pda_ata.clone(),
+            sender_token_account.clone(),
+            config_pda_token_account.clone(),
             token_program.clone(),
         ],
     )?;
@@ -210,7 +211,7 @@ pub(crate) fn add_spl_gas(
     sol_log_data(&[
         event_prefixes::SPL_GAS_ADDED,
         &config_pda.key.to_bytes(),
-        &config_pda_ata.key.to_bytes(),
+        &config_pda_token_account.key.to_bytes(),
         &mint.key.to_bytes(),
         &token_program.key.to_bytes(),
         &tx_hash,
@@ -245,9 +246,9 @@ pub(crate) fn refund_spl(
 
     let accounts_iter = &mut accounts.iter();
     let _operator = next_account_info(accounts_iter)?;
-    let receiver_account = next_account_info(accounts_iter)?;
+    let receiver_token_account = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
-    let config_pda_ata = next_account_info(accounts_iter)?;
+    let config_pda_token_account = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
 
@@ -256,11 +257,11 @@ pub(crate) fn refund_spl(
         event_prefixes::SPL_GAS_REFUNDED,
         &tx_hash,
         &config_pda.key.to_bytes(),
-        &config_pda_ata.key.to_bytes(),
+        &config_pda_token_account.key.to_bytes(),
         &mint.key.to_bytes(),
         &token_program.key.to_bytes(),
         &log_index.to_le_bytes(),
-        &receiver_account.key.to_bytes(),
+        &receiver_token_account.key.to_bytes(),
         &fees.to_le_bytes(),
     ]);
 
@@ -280,9 +281,9 @@ fn send_spl(
 
     let accounts = &mut accounts.iter();
     let operator = next_account_info(accounts)?;
-    let receiver_account = next_account_info(accounts)?;
+    let receiver_token_account = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
-    let config_pda_ata = next_account_info(accounts)?;
+    let config_pda_token_account = next_account_info(accounts)?;
     let mint = next_account_info(accounts)?;
     let token_program = next_account_info(accounts)?;
 
@@ -303,14 +304,14 @@ fn send_spl(
     // valid token program
     spl_token_2022::check_spl_token_program_account(token_program.key)?;
 
-    // ensure config_pda_ata is owned by the Token Program and matches expected fields
-    ensure_valid_ata(config_pda_ata, token_program, mint, config_pda)?;
+    // ensure config_pda_token_account is owned by the Token Program and matches expected fields
+    ensure_valid_token_account(config_pda_token_account, token_program, mint, config_pda)?;
 
     let ix = transfer_tokens(
         token_program,
-        config_pda_ata,
+        config_pda_token_account,
         mint,
-        receiver_account,
+        receiver_token_account,
         config_pda,
         &[],
         amount,
@@ -322,8 +323,8 @@ fn send_spl(
         &[
             config_pda.clone(),
             mint.clone(),
-            config_pda_ata.clone(),
-            receiver_account.clone(),
+            config_pda_token_account.clone(),
+            receiver_token_account.clone(),
             token_program.clone(),
         ],
         &[&[seed_prefixes::CONFIG_SEED, &[config.bump]]],
