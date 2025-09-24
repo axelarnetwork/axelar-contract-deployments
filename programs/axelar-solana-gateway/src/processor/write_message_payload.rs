@@ -43,7 +43,7 @@ impl Processor {
         }
 
         // Check: Gateway root PDA
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        gateway_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
 
         // Check: Message Payload account is initialized
         message_payload_account.check_initialized_pda_without_deserialization(&crate::ID)?;
