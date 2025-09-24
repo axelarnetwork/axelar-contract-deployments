@@ -129,7 +129,7 @@ impl Processor {
             return Err(GatewayError::LeafNodeNotPartOfMerkleRoot.into());
         }
 
-        // crate a PDA where we write the message metadata contents
+        // create a PDA where we write the message metadata contents
         let message = merkleised_message.leaf.message;
         let cc_id = message.cc_id;
         let command_id = command_id(&cc_id.chain, &cc_id.id);

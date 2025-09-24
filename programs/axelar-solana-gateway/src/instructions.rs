@@ -449,7 +449,7 @@ pub fn verify_signature(
     })
 }
 
-/// Creates a [`GatewayInstructon::ValidateMessage`] instruction.
+/// Creates a [`GatewayInstruction::ValidateMessage`] instruction.
 ///
 /// # Errors
 ///

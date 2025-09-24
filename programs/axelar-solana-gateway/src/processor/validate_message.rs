@@ -71,7 +71,7 @@ impl Processor {
         let destination_address = Pubkey::from_str(&message.destination_address)
             .map_err(|_err| GatewayError::InvalidDestinationAddress)?;
 
-        // check that caller ir valid signing PDA
+        // check that caller is valid signing PDA
         let expected_signing_pda = create_validate_message_signing_pda(
             &destination_address,
             incoming_message.signing_pda_bump,

@@ -145,7 +145,7 @@ pub enum GatewayError {
 }
 
 impl GatewayError {
-    /// This is a utility function for the relayer when it's exepcting the error for an unsuccessful transaction.
+    /// This is a utility function for the relayer when it's expecting the error for an unsuccessful transaction.
     #[must_use]
     pub fn should_relayer_proceed(&self) -> bool {
         let Some(error_num) = self.to_u32() else {

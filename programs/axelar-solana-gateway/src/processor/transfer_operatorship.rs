@@ -55,7 +55,7 @@ impl Processor {
             return Err(GatewayError::InvalidProgramDataDerivation.into());
         }
 
-        // Check: the programda state is valid
+        // Check: the programdata state is valid
         let loader_state = programdata_account
             .data
             .borrow()
@@ -87,7 +87,7 @@ impl Processor {
             return Err(GatewayError::InvalidOperatorOrAuthorityAccount.into());
         }
 
-        // Update the opreatorship field
+        // Update the operator field
         gateway_config.operator = *new_operator.key;
 
         // Emit an event

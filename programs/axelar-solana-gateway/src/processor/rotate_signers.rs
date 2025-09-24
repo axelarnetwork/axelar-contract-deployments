@@ -127,19 +127,19 @@ impl Processor {
         // Check: Current verifier set isn't expired
         gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)?;
 
-        // Check: new new verifier set PDA must be uninitialised
+        // Check: the new verifier set PDA must be uninitialised
         new_empty_verifier_set
             .check_uninitialized_pda()
             .map_err(|_err| GatewayError::VerifierSetTrackerAlreadyInitialised)?;
 
         // we always enforce the delay unless unless the operator has been provided and
-        // its also the Gateway opreator
+        // its also the Gateway operator
         // reference: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L98-L101
         let enforce_rotation_delay = operator.map_or(true, |operator| {
             let operator_matches = *operator.key == gateway_config.operator;
-            let operator_is_sigener = operator.is_signer;
+            let operator_is_signer = operator.is_signer;
             // if the operator matches and is also the signer - disable rotation delay
-            !(operator_matches && operator_is_sigener)
+            !(operator_matches && operator_is_signer)
         });
         let is_latest = gateway_config.current_epoch == verifier_set_tracker.epoch;
         // Check: proof is signed by latest verifiers
@@ -199,7 +199,7 @@ fn rotate_signers<'a>(
         .checked_add(U256::ONE)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    // Initialize thethe new verifier set tracker PDA account
+    // Initialize the new verifier set tracker PDA account
     let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
     program_utils::pda::init_pda_raw(
         payer,

@@ -49,7 +49,7 @@ impl IncomingMessage {
 impl BytemuckedPda for IncomingMessage {}
 
 /// If this is marked as `Approved`, the command can be used for CPI
-/// [`GatewayInstructon::ValidateMessage`] instruction.
+/// [`GatewayInstruction::ValidateMessage`] instruction.
 ///
 /// This maps to [these lines in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L636-L648)
 #[repr(C)]
@@ -64,22 +64,23 @@ impl MessageStatus {
     pub const fn is_approved(&self) -> bool {
         self.0 == 0
     }
+
     /// Bit pattern: any non-zero -> Executed
     ///
-    /// [`GatewayInstructon::ValidateMessage`] has been called and the command
+    /// [`GatewayInstruction::ValidateMessage`] has been called and the command
     /// has been executed by the destination program.
     #[must_use]
     pub const fn is_executed(&self) -> bool {
         self.0 != 0
     }
 
-    /// Creates a `MessageStatus` value which can be interpted as "approved".
+    /// Creates a `MessageStatus` value which can be interpreted as "approved".
     #[must_use]
     pub const fn approved() -> Self {
         Self(0)
     }
 
-    /// Creates a `MessageStatus` value which can be interpted as "executed".
+    /// Creates a `MessageStatus` value which can be interpreted as "executed".
     #[must_use]
     pub const fn executed() -> Self {
         Self(1) // any non-zero value would also work
@@ -99,7 +100,7 @@ impl MessageStatus {
 /// [^url]: `https://docs.rs/bytemuck/latest/bytemuck/trait.Pod.html#safety`
 unsafe impl Pod for MessageStatus {}
 
-/// Consruct a new Command ID.
+/// Construct a new Command ID.
 /// The command id is used as a key for a message -- to prevent replay attacks.
 /// It points to the storage slot that holds all metadata for a message.
 ///
