@@ -23,7 +23,7 @@ type ProcessorQueryFn = (
     fee?: string | StdFee,
 ) => Promise<void>;
 
-interface ClientManager extends SigningCosmWasmClient {
+export interface ClientManager extends SigningCosmWasmClient {
     accounts: readonly AccountData[];
 }
 
