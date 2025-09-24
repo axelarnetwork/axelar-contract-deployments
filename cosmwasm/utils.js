@@ -47,8 +47,6 @@ const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
-const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
-
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
 const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
@@ -77,20 +75,6 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
-
-const initContractConfig = (config, { contractName, chainName }) => {
-    if (!contractName) {
-        return;
-    }
-
-    config.axelar = config.axelar || {};
-    config.axelar.contracts = config.axelar.contracts || {};
-    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
-
-    if (chainName) {
-        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
-    }
-};
 
 const getAmplifierBaseContractConfig = (config, contractName) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
@@ -1483,14 +1467,12 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    governanceAddress,
     prepareWallet,
     prepareDummyWallet,
     prepareClient,
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,

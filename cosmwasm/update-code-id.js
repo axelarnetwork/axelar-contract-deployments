@@ -2,21 +2,13 @@
 
 require('../common/cli-utils');
 
-const { printInfo, loadConfig, saveConfig } = require('../common');
-const { prepareWallet, prepareClient, initContractConfig, getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
-
+const { getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
+const { mainProcessor } = require('./processor');
+const { printInfo } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const processCommand = async (options) => {
-    const { env } = options;
-    const config = loadConfig(env);
-
-    initContractConfig(config, options);
-
-    const wallet = await prepareWallet(options);
-    const client = await prepareClient(config, wallet);
-
+const processCommand = async (client, _wallet, config, options) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     printInfo('Old code id', contractConfig.codeId);
@@ -24,8 +16,6 @@ const processCommand = async (options) => {
     contractConfig.codeId = await fetchCodeIdFromContract(client, contractConfig);
 
     printInfo('New code id', contractConfig.codeId);
-
-    saveConfig(config, env);
 };
 
 const programHandler = () => {
@@ -38,7 +28,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        processCommand(options);
+        mainProcessor(processCommand, options);
     });
 
     program.parse();

@@ -8,11 +8,8 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const {
     CONTRACTS,
-    prepareWallet,
-    prepareClient,
     fromHex,
     getSalt,
-    initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
@@ -26,20 +23,10 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
-    governanceAddress,
     getInstantiateChainContractsMessage,
     validateItsChainChange,
 } = require('./utils');
-const {
-    saveConfig,
-    loadConfig,
-    printInfo,
-    prompt,
-    getChainConfig,
-    itsEdgeContract,
-    readContractCode,
-    getProposalConfig,
-} = require('../common');
+const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -52,6 +39,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
+const { mainProcessor } = require('./processor');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -287,33 +275,6 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
         salt: options.salt,
         proposalId,
     };
-};
-
-function addGovProposalDefaults(options, config, env) {
-    const { runAs, deposit, instantiateAddresses } = options;
-
-    if (!runAs) options.runAs = env == 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
-
-    if (!deposit) options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
-
-    if (!instantiateAddresses) options.instantiateAddresses = getProposalConfig(config, env, 'govProposalInstantiateAddresses');
-
-    return options;
-}
-
-const mainProcessor = async (processor, options) => {
-    const { env } = options;
-    const config = loadConfig(env);
-    addGovProposalDefaults(options, config, env);
-
-    initContractConfig(config, options);
-
-    const wallet = await prepareWallet(options);
-    const client = await prepareClient(config, wallet);
-
-    await processor(client, wallet, config, options);
-
-    saveConfig(config, env);
 };
 
 const programHandler = () => {
