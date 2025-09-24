@@ -3,7 +3,7 @@
 
 use std::borrow::Cow;
 
-use axelar_message_primitives::{DataPayload, DestinationProgramId};
+use axelar_message_primitives::DataPayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
@@ -1853,8 +1853,8 @@ fn prefix_accounts(
     message: &Message,
 ) -> Vec<AccountMeta> {
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let destination_program = DestinationProgramId(crate::ID);
-    let (gateway_approved_message_signing_pda, _) = destination_program.signing_pda(&command_id);
+    let (gateway_approved_message_signing_pda, _) =
+        axelar_solana_gateway::get_validate_message_signing_pda(crate::ID, command_id);
 
     vec![
         AccountMeta::new(*payer, true),

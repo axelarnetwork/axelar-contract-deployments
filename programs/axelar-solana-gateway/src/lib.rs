@@ -294,7 +294,10 @@ pub fn get_validate_message_signing_pda(
     command_id: [u8; 32],
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED, command_id.as_ref()],
+        &[
+            seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED,
+            command_id.as_ref(),
+        ],
         &destination_address,
     )
 }
@@ -436,7 +439,8 @@ mod tests {
         let destination_address = Pubkey::new_unique();
         let command_id: [u8; 32] = rand::random();
         let (found_pda, bump) = get_validate_message_signing_pda(destination_address, command_id);
-        let created_pda = create_validate_message_signing_pda(&destination_address, bump, &command_id).unwrap();
+        let created_pda =
+            create_validate_message_signing_pda(&destination_address, bump, &command_id).unwrap();
         assert_eq!(found_pda, created_pda);
     }
 

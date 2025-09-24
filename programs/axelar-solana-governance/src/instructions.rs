@@ -150,6 +150,7 @@ pub mod builder {
     use axelar_solana_encoding::types::messages::Message;
     use axelar_solana_gateway::state::incoming_message::command_id;
     use borsh::to_vec;
+    use core::str::FromStr;
     use governance_gmp::alloy_primitives::Uint;
     use governance_gmp::{GovernanceCommand, GovernanceCommandPayload};
     use program_utils::{checked_from_u256_le_bytes_to_u64, from_u64_to_u256_le_bytes};
@@ -1123,8 +1124,13 @@ pub mod builder {
         message: &Message,
     ) {
         let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
+        let destination_address = Pubkey::from_str(&message.destination_address)
+            .expect("Invalid destination address in message");
         let (gateway_approved_message_signing_pda, _) =
-            axelar_solana_gateway::get_validate_message_signing_pda(crate::id(), command_id);
+            axelar_solana_gateway::get_validate_message_signing_pda(
+                destination_address,
+                command_id,
+            );
 
         let mut new_accounts = vec![
             AccountMeta::new_readonly(payer, false),
