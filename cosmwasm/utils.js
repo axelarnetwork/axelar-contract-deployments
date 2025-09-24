@@ -117,7 +117,7 @@ const executeTransaction = async (client, account, contractAddress, message, fee
 };
 
 const uploadContract = async (client, options, uploadFee) => {
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
     const wasm = readContractCode(options);
 
     // uploading through stargate doesn't support defining instantiate permissions
@@ -126,7 +126,7 @@ const uploadContract = async (client, options, uploadFee) => {
 
 const instantiateContract = async (client, initMsg, config, options, initFee) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
     const contractLabel = getLabel(options);
 
@@ -149,7 +149,7 @@ const instantiateContract = async (client, initMsg, config, options, initFee) =>
 
 const migrateContract = async (client, config, options, migrateFee) => {
     const { msg } = options;
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
@@ -1070,7 +1070,7 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
 };
 
 const submitProposal = async (client, config, options, content, fee) => {
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
