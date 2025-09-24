@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::str::FromStr;
+use std::{collections::HashMap, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use eyre::OptionExt;
@@ -292,8 +292,8 @@ fn workspace_crates_by_category(
         .filter(|item| !item.starts_with('[') && !item.contains("proc-macro")) // filters "[dev-dependencies]" and "(proc-macro)"
         .tuples()
         .group_by(|(_, _, path)| path.contains("programs"));
-    let mut solana_programs = vec![];
-    let mut auxiliary_crates = vec![];
+    let mut solana_programs = HashMap::new();
+    let mut auxiliary_crates = HashMap::new();
     for (is_solana_program, group) in &all_crate_data {
         for (crate_name, _crate_version, crate_path) in group {
             let crate_path = crate_path
@@ -304,11 +304,14 @@ fn workspace_crates_by_category(
                 .ok_or_eyre("expected suffix not there")?;
             let crate_path = PathBuf::from_str(crate_path)?;
             if is_solana_program {
-                solana_programs.push((crate_name, crate_path))
+                solana_programs.insert(crate_name, crate_path);
             } else {
-                auxiliary_crates.push((crate_name, crate_path))
+                auxiliary_crates.insert(crate_name, crate_path);
             }
         }
     }
-    Ok((solana_programs, auxiliary_crates))
+    Ok((
+        solana_programs.into_iter().collect(),
+        auxiliary_crates.into_iter().collect(),
+    ))
 }
