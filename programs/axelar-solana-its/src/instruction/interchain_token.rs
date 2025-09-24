@@ -96,8 +96,13 @@ pub fn propose_mintership(
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &proposer);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
-    let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &proposer, &to);
+    let (proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &crate::id(),
+        &token_manager_pda,
+        &proposer,
+        &to,
+        crate::Roles::MINTER,
+    );
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
@@ -143,6 +148,7 @@ pub fn accept_mintership(
         &token_manager_pda,
         &from,
         &accepter,
+        crate::Roles::MINTER,
     );
 
     let accounts = vec![

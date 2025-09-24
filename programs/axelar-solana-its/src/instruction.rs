@@ -1802,8 +1802,13 @@ pub fn propose_operatorship(
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &proposer);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &to);
-    let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &its_root_pda, &proposer, &to);
+    let (proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &crate::id(),
+        &its_root_pda,
+        &proposer,
+        &to,
+        crate::Roles::OPERATOR,
+    );
 
     let accounts = vec![
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
@@ -1845,6 +1850,7 @@ pub fn accept_operatorship(
         &its_root_pda,
         &from,
         &role_receiver,
+        crate::Roles::OPERATOR,
     );
 
     let accounts = vec![
