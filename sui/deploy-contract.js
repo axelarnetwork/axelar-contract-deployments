@@ -419,7 +419,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
         const version = Object.keys(contractsConfig[name]?.versions || {}).length - 1;
-        const legacyPackageId = (version > 0) ? contractsConfig[name]?.versions["0"] : undefined;
+        const legacyPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
 
         let network;
         switch (options.env) {
@@ -433,16 +433,8 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
                 network = 'testnet';
             }
         }
-        
-        updateMoveToml(
-            packageDir,
-            packageAddress,
-            moveDir,
-            undefined,
-            version,
-            network,
-            legacyPackageId,
-        );
+
+        updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, legacyPackageId);
     }
 
     const builder = new TxBuilder(client);
@@ -510,7 +502,7 @@ async function syncPackages(keypair, client, config, chain, options) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
-        
+
         let network;
         switch (options.env) {
             case 'devnet':
@@ -530,17 +522,9 @@ async function syncPackages(keypair, client, config, chain, options) {
         }
 
         const version = Object.keys(chain.contracts[packageName]?.versions || {}).length - 1;
-        const legacyPackageId = (version > 0) ? chain.contracts[packageName]?.versions["0"] : undefined;
+        const legacyPackageId = version > 0 ? chain.contracts[packageName]?.versions['0'] : undefined;
 
-        updateMoveToml(
-            packageDir,
-            packageId,
-            moveDir,
-            undefined,
-            version,
-            network,
-            legacyPackageId,
-        );
+        updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, legacyPackageId);
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
