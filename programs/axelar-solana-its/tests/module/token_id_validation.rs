@@ -411,6 +411,7 @@ async fn test_self_remote_deployment_rejected(ctx: &mut ItsTestContext) -> anyho
     let salt = solana_sdk::keccak::hash(b"SelfDeployTest").0;
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "Self Deploy Test Token".to_owned(),
         "SDT".to_owned(),

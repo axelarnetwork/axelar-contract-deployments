@@ -17,6 +17,7 @@ async fn test_deploy_remote_interchain_token_with_valid_metadata(
     let salt = solana_sdk::keccak::hash(b"ValidMetadataToken").0;
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "Valid Metadata Token".to_owned(),
         "VMT".to_owned(),
@@ -137,6 +138,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_metadata(
     // Now deploy a local interchain token
     let salt = solana_sdk::keccak::hash(b"MismatchedMetadataToken").0;
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         "Mismatched Token".to_owned(),
@@ -385,6 +387,7 @@ async fn test_deploy_remote_without_minter_with_mismatched_metadata(
     let salt = solana_sdk::keccak::hash(b"NoMinterMismatchedToken").0;
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "No Minter Token".to_owned(),
         "NMT".to_owned(),
@@ -461,6 +464,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_token_manager(
     let salt1 = solana_sdk::keccak::hash(b"FirstToken").0;
     let deploy_local_ix1 = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt1,
         "First Token".to_owned(),
         "FIRST".to_owned(),
@@ -475,6 +479,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_token_manager(
 
     let salt2 = solana_sdk::keccak::hash(b"SecondToken").0;
     let deploy_local_ix2 = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt2,
         "Second Token".to_owned(),

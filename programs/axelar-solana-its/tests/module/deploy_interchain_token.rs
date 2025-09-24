@@ -27,6 +27,7 @@ async fn test_deploy_interchain_token_with_no_minter_and_no_initial_supply(
 
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "No Supply No Minter Token".to_owned(),
         "NSMT".to_owned(),
@@ -63,6 +64,7 @@ async fn test_deploy_interchain_token_with_minter_but_no_initial_supply(
     let initial_supply = 0u64;
 
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         "Zero Supply Token".to_owned(),
@@ -165,6 +167,7 @@ async fn test_deploy_interchain_token_with_large_initial_supply(
 
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "Large Supply Token".to_owned(),
         "LST".to_owned(),
@@ -229,6 +232,7 @@ async fn test_deploy_interchain_token_with_no_minter_but_initial_supply(
     let initial_supply = 1000u64;
 
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         "Fixed Supply Token".to_owned(),
@@ -325,6 +329,7 @@ async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow
     // Bob deploys TokenB
     let token_b_salt = [1u8; 32];
     let deploy_token_b_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        bob.pubkey(),
         bob.pubkey(),
         token_b_salt,
         "Token B".to_string(),
@@ -468,6 +473,7 @@ async fn test_prevent_deploy_approval_created_by_anyone(
     // Alice deploys TokenA
     let token_a_salt = [1u8; 32];
     let deploy_token_a_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        alice.pubkey(),
         alice.pubkey(),
         token_a_salt,
         "Token A".to_string(),
@@ -707,5 +713,58 @@ async fn test_approve_revoke_approve_deploy_sequence(
 
     assert_eq!(approval_account, final_account);
 
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_deploy_interchain_token_authority_with_data_works(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    let salt = solana_sdk::keccak::hash(b"DataOnAuthority").0;
+    let initial_supply = 1_000_000_000u64;
+
+    // Transfer some lamports to the payer to ensure it has enough balance
+    let payer = Keypair::new();
+    let ix = system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &payer.pubkey(),
+        1_000_000_000,
+    );
+
+    ctx.send_solana_tx(&[ix]).await.unwrap();
+
+    // Get wallet account state and modify its data for the test
+    // updating its data field.
+    let authority_acc = ctx.solana_chain.payer.pubkey();
+    let mut authority_acc = ctx
+        .solana_chain
+        .get_account(&authority_acc, &system_program::id())
+        .await;
+    authority_acc.data = vec![1];
+    ctx.solana_chain
+        .set_account_state(&ctx.solana_wallet, authority_acc);
+
+    let deploy_interchain_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        payer.pubkey(),
+        ctx.solana_wallet,
+        salt,
+        "Awesome Token".to_owned(),
+        "AWS".to_owned(),
+        9,
+        initial_supply,
+        Some(ctx.solana_wallet),
+    )?;
+
+    ctx.send_solana_tx_with(
+        &payer,
+        &[deploy_interchain_ix],
+        &[
+            payer.insecure_clone(),
+            ctx.solana_chain.payer.insecure_clone(),
+        ],
+    )
+    .await
+    .expect("InterchainToken deployment failed");
     Ok(())
 }

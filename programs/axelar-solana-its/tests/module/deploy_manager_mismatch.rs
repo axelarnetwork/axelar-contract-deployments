@@ -15,6 +15,7 @@ async fn deploy_interchain_token_for_user(
 ) -> anyhow::Result<[u8; 32]> {
     let deploy_token_ix = axelar_solana_its::instruction::deploy_interchain_token(
         user.pubkey(),
+        user.pubkey(),
         salt,
         name.to_owned(),
         symbol.to_owned(),

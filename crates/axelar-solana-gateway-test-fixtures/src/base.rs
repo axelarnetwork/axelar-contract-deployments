@@ -218,7 +218,7 @@ impl TestFixture {
         ixs: &[Instruction],
         signing_keypairs: &T,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
-        self.send_tx_with_custom_signers_and_signature(ixs, signing_keypairs)
+        self.send_tx_with_custom(&self.payer.pubkey(), ixs, signing_keypairs)
             .await
             .map(|x| x.1)
             .map_err(|x| x.1)
@@ -233,13 +233,14 @@ impl TestFixture {
         (Vec<Signature>, BanksTransactionResultWithMetadata),
         (Vec<Signature>, BanksTransactionResultWithMetadata),
     > {
-        self.send_tx_with_custom_signers_and_signature(ixs, &[&self.payer.insecure_clone()])
+        self.send_tx_with_custom(&self.payer.pubkey(), ixs, &[&self.payer.insecure_clone()])
             .await
     }
 
     /// Send a new transaction while also providing the signers to use
-    pub async fn send_tx_with_custom_signers_and_signature<T: Signers + ?Sized>(
+    pub async fn send_tx_with_custom<T: Signers + ?Sized>(
         &mut self,
+        payer: &Pubkey,
         ixs: &[Instruction],
         signing_keypairs: &T,
     ) -> Result<
@@ -250,12 +251,7 @@ impl TestFixture {
         let hash = self.refresh_blockhash().await;
 
         // build the transaction
-        let tx = Transaction::new_signed_with_payer(
-            ixs,
-            Some(&self.payer.pubkey()),
-            signing_keypairs,
-            hash,
-        );
+        let tx = Transaction::new_signed_with_payer(ixs, Some(payer), signing_keypairs, hash);
         let signatures = tx.signatures.clone();
 
         // now branch on which node mode we are in

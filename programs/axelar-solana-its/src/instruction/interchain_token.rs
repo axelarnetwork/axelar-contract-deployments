@@ -48,6 +48,7 @@ pub fn mint(
 /// If serialization fails.
 pub fn transfer_mintership(
     payer: Pubkey,
+    sender: Pubkey,
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
@@ -55,14 +56,15 @@ pub fn transfer_mintership(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (sender_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &sender);
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new(sender, true),
+        AccountMeta::new(sender_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
@@ -84,23 +86,25 @@ pub fn transfer_mintership(
 /// If serialization fails.
 pub fn propose_mintership(
     payer: Pubkey,
+    proposer: Pubkey,
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (origin_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &proposer);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
     let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &payer, &to);
+        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &proposer, &to);
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new(proposer, true),
+        AccountMeta::new_readonly(origin_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
@@ -124,23 +128,29 @@ pub fn propose_mintership(
 /// If serialization fails.
 pub fn accept_mintership(
     payer: Pubkey,
+    accepter: Pubkey,
     token_id: [u8; 32],
     from: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (accepter_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &accepter);
     let (origin_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &from);
-    let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &from, &payer);
+    let (proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &crate::id(),
+        &token_manager_pda,
+        &from,
+        &accepter,
+    );
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new(accepter, true),
+        AccountMeta::new(accepter_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new(from, false),
         AccountMeta::new(origin_roles_pda, false),

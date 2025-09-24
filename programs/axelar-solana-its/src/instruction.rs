@@ -1094,6 +1094,7 @@ pub fn deploy_remote_canonical_interchain_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn deploy_interchain_token(
     payer: Pubkey,
+    deployer: Pubkey,
     salt: [u8; 32],
     name: String,
     symbol: String,
@@ -1102,7 +1103,7 @@ pub fn deploy_interchain_token(
     minter: Option<Pubkey>,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let token_id = crate::interchain_token_id(&payer, &salt);
+    let token_id = crate::interchain_token_id(&deployer, &salt);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (mint, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let token_manager_ata = get_associated_token_address_with_program_id(
@@ -1110,14 +1111,15 @@ pub fn deploy_interchain_token(
         &mint,
         &spl_token_2022::ID,
     );
-    let payer_ata =
-        get_associated_token_address_with_program_id(&payer, &mint, &spl_token_2022::ID);
+    let deployer_ata =
+        get_associated_token_address_with_program_id(&deployer, &mint, &spl_token_2022::ID);
     let (its_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
 
     let mut accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new(deployer, true),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1130,7 +1132,7 @@ pub fn deploy_interchain_token(
         AccountMeta::new_readonly(sysvar::instructions::ID, false),
         AccountMeta::new_readonly(mpl_token_metadata::ID, false),
         AccountMeta::new(metadata_account_key, false),
-        AccountMeta::new(payer_ata, false),
+        AccountMeta::new(deployer_ata, false),
     ];
 
     if let Some(minter) = minter {
@@ -1755,17 +1757,22 @@ pub fn execute(inputs: ExecuteInstructionInputs) -> Result<Instruction, ProgramE
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
+pub fn transfer_operatorship(
+    payer: Pubkey,
+    sender: Pubkey,
+    to: Pubkey,
+) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (sender_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &sender);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &to);
 
     let accounts = vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new(sender, true),
+        AccountMeta::new(sender_roles_pda, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
@@ -1785,19 +1792,24 @@ pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, P
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
+pub fn propose_operatorship(
+    payer: Pubkey,
+    proposer: Pubkey,
+    to: Pubkey,
+) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (proposer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &proposer);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &to);
     let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &its_root_pda, &payer, &to);
+        role_management::find_roles_proposal_pda(&crate::id(), &its_root_pda, &proposer, &to);
 
     let accounts = vec![
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(proposer, false),
+        AccountMeta::new_readonly(proposer_roles_pda, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new_readonly(destination_roles_pda, false),
@@ -1818,19 +1830,28 @@ pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, Pr
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, ProgramError> {
+pub fn accept_operatorship(
+    payer: Pubkey,
+    role_receiver: Pubkey,
+    from: Pubkey,
+) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (role_receiver_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &role_receiver);
     let (origin_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &from);
-    let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &its_root_pda, &from, &payer);
+    let (proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &crate::id(),
+        &its_root_pda,
+        &from,
+        &role_receiver,
+    );
 
     let accounts = vec![
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new(role_receiver, true),
+        AccountMeta::new(role_receiver_roles_pda, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(from, false),
         AccountMeta::new(origin_roles_pda, false),

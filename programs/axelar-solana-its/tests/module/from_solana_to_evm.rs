@@ -969,6 +969,7 @@ async fn test_source_address_stays_consistent_through_the_transfer(
     let salt = solana_sdk::keccak::hash(b"SourceAddressTestToken").0;
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "Source Test Token".to_owned(),
         "STT".to_owned(),

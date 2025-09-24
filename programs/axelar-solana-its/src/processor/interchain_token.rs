@@ -46,6 +46,7 @@ use crate::{
 #[derive(Debug)]
 pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
+    pub(crate) deployer: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -58,7 +59,7 @@ pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) sysvar_instructions: &'a AccountInfo<'a>,
     pub(crate) mpl_token_metadata_program: &'a AccountInfo<'a>,
     pub(crate) mpl_token_metadata_account: &'a AccountInfo<'a>,
-    pub(crate) payer_ata: &'a AccountInfo<'a>,
+    pub(crate) deployer_ata: &'a AccountInfo<'a>,
     pub(crate) minter: Option<&'a AccountInfo<'a>>,
     pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
 }
@@ -73,12 +74,12 @@ impl Validate for DeployInterchainTokenAccounts<'_> {
         spl_token_2022::check_program_account(self.token_program.key)?;
 
         // If it's a cross-chain message, payer_ata is not set (i.e., is set to program id)
-        if *self.payer_ata.key != crate::id() {
+        if *self.deployer_ata.key != crate::id() {
             crate::assert_valid_ata(
-                self.payer_ata.key,
+                self.deployer_ata.key,
                 self.token_program.key,
                 self.token_mint.key,
-                self.payer.key,
+                self.deployer.key,
             )?;
         }
 
@@ -103,14 +104,18 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
         Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
-        let payer = if let Some(payer) = maybe_payer {
-            payer
+        let (payer, deployer) = if let Some(payer) = maybe_payer {
+            (*payer, *payer)
         } else {
-            next_account_info(accounts_iter)?
+            (
+                next_account_info(accounts_iter)?,
+                next_account_info(accounts_iter)?,
+            )
         };
 
         Ok(Self {
             payer,
+            deployer,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -123,7 +128,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
             sysvar_instructions: next_account_info(accounts_iter)?,
             mpl_token_metadata_program: next_account_info(accounts_iter)?,
             mpl_token_metadata_account: next_account_info(accounts_iter)?,
-            payer_ata: next_account_info(accounts_iter)?,
+            deployer_ata: next_account_info(accounts_iter)?,
             minter: next_account_info(accounts_iter).ok(),
             minter_roles_pda: next_account_info(accounts_iter).ok(),
         })
@@ -158,7 +163,7 @@ pub(crate) fn process_deploy<'a>(
     initial_supply: u64,
 ) -> ProgramResult {
     let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &None)?;
-    let deploy_salt = crate::interchain_token_deployer_salt(parsed_accounts.payer.key, &salt);
+    let deploy_salt = crate::interchain_token_deployer_salt(parsed_accounts.deployer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
     if initial_supply.is_zero() && parsed_accounts.minter.is_none() {
@@ -174,7 +179,7 @@ pub(crate) fn process_deploy<'a>(
 
     event::InterchainTokenIdClaimed {
         token_id,
-        deployer: *parsed_accounts.payer.key,
+        deployer: *parsed_accounts.deployer.key,
         salt: deploy_salt,
     }
     .emit();
@@ -599,8 +604,8 @@ fn setup_mint<'a>(
         crate::create_associated_token_account_idempotent(
             accounts.payer,
             accounts.token_mint,
-            accounts.payer_ata,
-            accounts.payer,
+            accounts.deployer_ata,
+            accounts.deployer,
             accounts.system_account,
             accounts.token_program,
         )?;
@@ -609,15 +614,16 @@ fn setup_mint<'a>(
             &spl_token_2022::instruction::mint_to(
                 accounts.token_program.key,
                 accounts.token_mint.key,
-                accounts.payer_ata.key,
+                accounts.deployer_ata.key,
                 accounts.token_manager_pda.key,
                 &[],
                 initial_supply,
             )?,
             &[
                 accounts.payer.clone(),
+                accounts.deployer.clone(),
                 accounts.token_mint.clone(),
-                accounts.payer_ata.clone(),
+                accounts.deployer_ata.clone(),
                 accounts.token_manager_pda.clone(),
                 accounts.token_program.clone(),
             ],
@@ -812,14 +818,15 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
     let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
-    let payer_roles_account = next_account_info(accounts_iter)?;
+    let sender_user_account = next_account_info(accounts_iter)?;
+    let sender_roles_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
 
     validate_system_account_key(system_account.key)?;
 
-    if payer.key == destination_user_account.key {
+    if sender_user_account.key == destination_user_account.key {
         msg!("Source and destination accounts are the same");
         return Err(ProgramError::InvalidArgument);
     }
@@ -838,19 +845,21 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
     let role_add_accounts = RoleAddAccounts {
         system_account,
         payer,
-        payer_roles_account,
+        authority_user_account: sender_user_account,
+        authority_roles_account: sender_roles_account,
         resource: token_manager_account,
-        destination_user_account,
-        destination_roles_account,
+        target_user_account: destination_user_account,
+        target_roles_account: destination_roles_account,
     };
 
     let role_remove_accounts = RoleRemoveAccounts {
         system_account,
         payer,
-        payer_roles_account,
+        authority_user_account: sender_user_account,
+        authority_roles_account: sender_roles_account,
         resource: token_manager_account,
-        origin_user_account: payer,
-        origin_roles_account: payer_roles_account,
+        target_user_account: sender_user_account,
+        target_roles_account: sender_roles_account,
     };
 
     role_management::processor::add(
@@ -875,7 +884,8 @@ pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) ->
     let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
-    let payer_roles_account = next_account_info(accounts_iter)?;
+    let origin_user_account = next_account_info(accounts_iter)?;
+    let origin_roles_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
@@ -897,12 +907,11 @@ pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) ->
     let role_management_accounts = RoleTransferWithProposalAccounts {
         system_account,
         payer,
-        payer_roles_account,
+        origin_user_account,
+        origin_roles_account,
         resource: token_manager_account,
         destination_user_account,
         destination_roles_account,
-        origin_user_account: payer,
-        origin_roles_account: payer_roles_account,
         proposal_account,
     };
 
@@ -916,7 +925,8 @@ pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> 
     let its_config_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
-    let payer_roles_account = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
     let origin_user_account = next_account_info(accounts_iter)?;
     let origin_roles_account = next_account_info(accounts_iter)?;
@@ -937,10 +947,9 @@ pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> 
     let role_management_accounts = RoleTransferWithProposalAccounts {
         system_account,
         payer,
-        payer_roles_account,
         resource: token_manager_account,
-        destination_user_account: payer,
-        destination_roles_account: payer_roles_account,
+        destination_user_account,
+        destination_roles_account,
         origin_user_account,
         origin_roles_account,
         proposal_account,

@@ -51,13 +51,14 @@ pub fn set_flow_limit(
 /// If serialization fails.
 pub fn add_flow_limiter(
     payer: Pubkey,
+    adder: Pubkey,
     token_id: [u8; 32],
     flow_limiter: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (adder_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &adder);
     let (flow_limiter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
 
@@ -65,7 +66,8 @@ pub fn add_flow_limiter(
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new(adder, true),
+        AccountMeta::new_readonly(adder_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(flow_limiter, false),
         AccountMeta::new(flow_limiter_roles_pda, false),
@@ -87,13 +89,14 @@ pub fn add_flow_limiter(
 /// If serialization fails.
 pub fn remove_flow_limiter(
     payer: Pubkey,
+    remover: Pubkey,
     token_id: [u8; 32],
     flow_limiter: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (remover_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &remover);
     let (flow_limiter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
 
@@ -101,7 +104,8 @@ pub fn remove_flow_limiter(
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new(remover, true),
+        AccountMeta::new_readonly(remover_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(flow_limiter, false),
         AccountMeta::new(flow_limiter_roles_pda, false),
@@ -123,6 +127,7 @@ pub fn remove_flow_limiter(
 /// If serialization fails.
 pub fn transfer_operatorship(
     payer: Pubkey,
+    sender: Pubkey,
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
@@ -130,14 +135,15 @@ pub fn transfer_operatorship(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (sender_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &sender);
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new(sender, true),
+        AccountMeta::new(sender_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
@@ -159,23 +165,25 @@ pub fn transfer_operatorship(
 /// If serialization fails.
 pub fn propose_operatorship(
     payer: Pubkey,
+    proposer: Pubkey,
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (proposer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &proposer);
     let (destination_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
     let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &payer, &to);
+        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &proposer, &to);
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new(proposer, true),
+        AccountMeta::new_readonly(proposer_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(to, false),
         AccountMeta::new(destination_roles_pda, false),
@@ -198,23 +206,29 @@ pub fn propose_operatorship(
 /// If serialization fails.
 pub fn accept_operatorship(
     payer: Pubkey,
+    accepter: Pubkey,
     token_id: [u8; 32],
     from: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (accepter_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &accepter);
     let (origin_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &from);
-    let (proposal_pda, _) =
-        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &from, &payer);
+    let (proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &crate::id(),
+        &token_manager_pda,
+        &from,
+        &accepter,
+    );
 
     let accounts = vec![
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new(accepter, true),
+        AccountMeta::new(accepter_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(from, false),
         AccountMeta::new(origin_roles_pda, false),

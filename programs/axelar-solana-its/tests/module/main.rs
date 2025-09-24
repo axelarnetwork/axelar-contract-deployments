@@ -45,6 +45,7 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::system_instruction;
 use test_context::AsyncTestContext;
@@ -205,6 +206,20 @@ impl ItsTestContext {
         self.solana_chain.fixture.send_tx(ixs).await
     }
 
+    pub async fn send_solana_tx_with(
+        &mut self,
+        payer: &Keypair,
+        ixs: &[Instruction],
+        signers: &[Keypair],
+    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        self.solana_chain
+            .fixture
+            .send_tx_with_custom(&payer.pubkey(), ixs, signers)
+            .await
+            .map(|x| x.1)
+            .map_err(|x| x.1)
+    }
+
     async fn relay_to_evm(&mut self, payload: &[u8]) {
         let payload = route_its_hub(
             GMPPayload::decode(payload).unwrap(),
@@ -274,6 +289,7 @@ impl ItsTestContext {
     async fn deploy_interchain_token(&mut self) {
         let salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
         let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
+            self.solana_wallet,
             self.solana_wallet,
             salt,
             "Test Token".to_owned(),

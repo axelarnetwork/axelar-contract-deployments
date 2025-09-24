@@ -26,6 +26,7 @@ async fn test_metadata_retrieval_with_metaplex_fallback(
     let salt = solana_sdk::keccak::hash(b"MetaplexFallbackToken").0;
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "Metaplex Fallback Token".to_owned(),
         "MFT".to_owned(),

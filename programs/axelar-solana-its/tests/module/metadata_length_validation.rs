@@ -15,6 +15,7 @@ async fn test_local_deployment_rejects_long_name(ctx: &mut ItsTestContext) -> an
 
     let deploy_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         long_name,
         valid_symbol.to_string(),
@@ -39,6 +40,7 @@ async fn test_local_deployment_rejects_long_symbol(ctx: &mut ItsTestContext) -> 
     let long_symbol = "ABCDEFGHIJK";
 
     let deploy_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         valid_name.to_string(),
@@ -68,6 +70,7 @@ async fn test_local_deployment_rejects_long_name_and_symbol(
 
     let deploy_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         long_name.to_string(),
         long_symbol.to_string(),
@@ -95,6 +98,7 @@ async fn test_local_deployment_succeeds_with_valid_lengths(
     let valid_symbol = "VALID";
 
     let deploy_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         valid_name.to_string(),
@@ -133,6 +137,7 @@ async fn test_local_deployment_succeeds_with_max_lengths(
     let max_symbol = "B".repeat(10);
 
     let deploy_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         max_name.clone(),

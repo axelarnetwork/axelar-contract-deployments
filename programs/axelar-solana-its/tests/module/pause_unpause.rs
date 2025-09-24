@@ -273,6 +273,7 @@ async fn test_local_deploy_interchain_token_fails_when_paused(ctx: &mut ItsTestC
 
     let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         token_name.to_owned(),
         token_symbol.to_owned(),
