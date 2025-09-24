@@ -125,7 +125,7 @@ getting the current Solana devnet governance address:
     There is a special CLI command that will get the program_id for you:
 
     ```bash
-    ./solana/cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_PATH
+    solana/cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_PATH
     ```
 
 ## Verify
