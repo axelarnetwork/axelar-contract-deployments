@@ -2,7 +2,7 @@
 
 import { Command, Option } from 'commander';
 
-import { loadConfig, saveConfig, printInfo, printError } from '../common';
+import { loadConfig, saveConfig, printInfo, printError, printWarn } from '../common';
 import { addEnvOption } from '../common/cli-utils';
 import { exit } from 'process';
 
@@ -26,90 +26,49 @@ const programHandler = () => {
                         stellar: 'ChainCodecStellar',
                     };
 
-                    const encoderMapping: Record<string, 'ChainCodecEvm' | 'ChainCodecSui' | 'ChainCodecStellar'> = {
-                        abi: 'ChainCodecEvm',
-                        bcs: 'ChainCodecSui',
-                        stellar_xdr: 'ChainCodecStellar',
-                    };
-                    const addressFormatMapping: Record<string, 'ChainCodecEvm' | 'ChainCodecSui' | 'ChainCodecStellar'> = {
-                        eip55: 'ChainCodecEvm',
-                        sui: 'ChainCodecSui',
-                        stellar: 'ChainCodecStellar',
-                    };
-
                     const chains = config?.chains || {};
-                    const multisigProverByChain = config?.axelar?.contracts?.MultisigProver || {};
-                    const votingVerifierByChain = config?.axelar?.contracts?.VotingVerifier || {};
 
-                    let updates = 0;
+                    const chainTypes = Object.values(chains).map(chainConfig => {
+                        return (chainConfig as { chainType: string })?.chainType;
+                    });
 
                     for (const [chainName, chainConfig] of Object.entries(chains)) {
-                        const chainType: string | undefined = (chainConfig as { chainType: string })?.chainType;
-                        const codecContractName = chainType ? codecMapping[chainType] : undefined;
+                        const chainType = (chainConfig as { chainType: string })?.chainType;
+                        if (!chainType) {
+                            // Unsupported or unspecified chain type
+                            printWarn(`Missing chain type for chain ${chainName}; skipping ChainCodec entry`);
+                            continue;
+                        }
+
+                        const codecContractName = codecMapping[chainType];
                         if (!codecContractName) {
-                            // Unsupported or unspecified chain type; skip quietly
+                            // Unsupported or unspecified chain type
+                            printInfo(`Unsupported chain type: ${chainType}; skipping ChainCodec entry`);
                             continue;
                         }
 
-                        const multisigProver = multisigProverByChain?.[chainName];
-                        const votingVerifier = votingVerifierByChain?.[chainName];
+                        // add ChainCodec for each chain type
+                        config.axelar.contracts[codecContractName] = config.axelar.contracts[codecContractName] || {};
 
-                        if (!multisigProver != !votingVerifier) {
-                            printError(`Only one of MultisigProver and VotingVerifier found for ${chainName}; either both or none are required`);
-                            exit(1);
-                        }
+                        // remove addressFormat and encoder from MultisigProver and VotingVerifier config
+                        const votingVerifier = config.axelar.contracts.VotingVerifier[chainName];
+                        const multisigProver = config.axelar.contracts.MultisigProver[chainName];
 
-                        if (!multisigProver) {
-                            // nothing to migrate for this chain
-                            continue;
-                        }
-
-                        // validate chain type against encoder and address format
-                        if (encoderMapping[multisigProver.encoder] !== codecContractName) {
-                            printError(`Encoder ${multisigProver.encoder} for ${chainName} does not match chain type ${chainType}`);
-                            exit(1);
-                        }
-                        if (addressFormatMapping[votingVerifier.addressFormat] !== codecContractName) {
-                            printError(`Address format ${votingVerifier.addressFormat} for ${chainName} does not match chain type ${chainType}`);
-                            exit(1);
-                        }
-
-                        const domainSeparator: string | undefined = multisigProver.domainSeparator;
-                        if (!domainSeparator) {
-                            printError(`Missing domainSeparator in MultisigProver for ${chainName}; skipping codec entry`);
-                            exit(1);
-                        }
-
-                        // add entry to the appropriate ChainCodec* section
-                        if (!config.axelar.contracts[codecContractName]) {
-                            config.axelar.contracts[codecContractName] = {};
-                        }
-                        if (domainSeparator) {
-                            const codecSection = config.axelar.contracts[codecContractName];
-                            codecSection[chainName] = {
-                                ...codecSection[chainName],
-                                domainSeparator,
-                            };
-                        }
-                        updates += 1;
-                        printInfo(`Prepared ${codecContractName}[${chainName}]`);
-
-                        // clean up MultisigProver fields now handled by ChainCodec
-                        if ('domainSeparator' in multisigProver) {
-                            delete multisigProver.domainSeparator;
-                        }
-                        if ('encoder' in multisigProver) {
-                            delete multisigProver.encoder;
-                        }
-
-                        // clean up VotingVerifier addressFormat (now handled by ChainCodec)
-                        if ('addressFormat' in votingVerifier) {
+                        if (votingVerifier) {
                             delete votingVerifier.addressFormat;
+                        } else {
+                            printInfo(`Missing VotingVerifier config for chain ${chainName}`);
+                        }
+
+                        if (multisigProver) {
+                            delete multisigProver.encoder;
+                        } else {
+                            printInfo(`Missing MultisigProver config for chain ${chainName}`);
                         }
                     }
 
                     saveConfig(config, env);
-                    printInfo(`Chain codec preparation complete. Updated entries: ${updates}`);
+                    printInfo(`Chain codec preparation complete`);
                 } catch (error) {
                     console.error(error);
                 }
