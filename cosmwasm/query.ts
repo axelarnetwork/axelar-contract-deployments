@@ -39,7 +39,7 @@ async function rewards(client, config, _options, args, _fee) {
     }
 }
 
-async function getItsChainConfig(client, config, chainName) {
+export async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
 
     if (!chainConfig) {
@@ -298,7 +298,3 @@ const programHandler = () => {
 if (require.main === module) {
     programHandler();
 }
-
-module.exports = {
-    getItsChainConfig,
-};
