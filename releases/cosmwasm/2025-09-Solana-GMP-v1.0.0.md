@@ -33,7 +33,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/axelarnetwork/axelar-amplifier.git
+    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git
     cd axelar-amplifier
     git checkout solana-cosmwasm
     ```
