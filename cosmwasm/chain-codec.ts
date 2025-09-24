@@ -1,10 +1,9 @@
 'use strict';
 
-import { Command, Option } from 'commander';
+import { Command } from 'commander';
 
-import { loadConfig, saveConfig, printInfo, printError, printWarn } from '../common';
+import { loadConfig, saveConfig, printInfo, printWarn } from '../common';
 import { addEnvOption } from '../common/cli-utils';
-import { exit } from 'process';
 
 const programHandler = () => {
     const program = new Command();
