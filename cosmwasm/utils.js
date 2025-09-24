@@ -1319,7 +1319,6 @@ const getProverInstantiateMsg = (config, chainName) => {
         signingThreshold,
         serviceName,
         verifierSetDiffThreshold,
-        encoder,
         keyType,
         domainSeparator,
         sigVerifierAddress,
@@ -1343,10 +1342,6 @@ const getProverInstantiateMsg = (config, chainName) => {
 
     if (!isNumber(verifierSetDiffThreshold)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
-    }
-
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
     }
 
     if (!isString(keyType)) {
