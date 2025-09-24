@@ -418,7 +418,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
-        const version = Object.keys(contractsConfig[name]?.versions || {}).length - 1;
+        const version = Math.max(0, Object.keys(contractsConfig[name]?.versions || {}).length - 1);
         const legacyPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
 
         let network;
@@ -521,7 +521,7 @@ async function syncPackages(keypair, client, config, chain, options) {
             continue;
         }
 
-        const version = Object.keys(chain.contracts[packageName]?.versions || {}).length - 1;
+        const version = Math.max(0, Object.keys(chain.contracts[packageName]?.versions || {}).length - 1);
         const legacyPackageId = version > 0 ? chain.contracts[packageName]?.versions['0'] : undefined;
 
         updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, legacyPackageId);
