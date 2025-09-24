@@ -1,6 +1,7 @@
 'use strict';
 
 const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
+const { mainQueryProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
@@ -198,7 +199,6 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         address: result.prover,
     };
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
-
     printInfo(`Config updated successfully for ${chainName}`);
 }
 
@@ -211,42 +211,42 @@ const programHandler = () => {
         .command('rewards <chainName>')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((chainName, options) => {
-            mainProcessor(rewards, options, [chainName]);
+            mainQueryProcessor(rewards, options, [chainName]);
         });
 
     const tokenConfigCmd = program
         .command('token-config <tokenId>')
         .description('Query token config from ITS Hub')
         .action((tokenId, options) => {
-            mainProcessor(tokenConfig, options, [tokenId]);
+            mainQueryProcessor(tokenConfig, options, [tokenId]);
         });
 
     const customTokenMetadataCmd = program
         .command('custom-token-metadata <chainName> <tokenAddress>')
         .description('Query custom token metadata by chain name and token address')
         .action((chainName, tokenAddress, options) => {
-            mainProcessor(customTokenMetadata, options, [chainName, tokenAddress]);
+            mainQueryProcessor(customTokenMetadata, options, [chainName, tokenAddress]);
         });
 
     const tokenInstanceCmd = program
         .command('token-instance <chainName> <tokenId>')
         .description('Query token instance by chain name and token ID')
         .action((chainName, tokenId, options) => {
-            mainProcessor(tokenInstance, options, [chainName, tokenId]);
+            mainQueryProcessor(tokenInstance, options, [chainName, tokenId]);
         });
 
     const itsChainConfigCmd = program
         .command('its-chain-config <chainName>')
         .description('Query ITS chain configuration for a specific chain')
         .action((chainName, options) => {
-            mainProcessor(itsChainConfig, options, [chainName]);
+            mainQueryProcessor(itsChainConfig, options, [chainName]);
         });
 
     const saveDeployedContractsCmd = program
         .command('save-deployed-contracts <chainName>')
         .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
         .action((chainName, options) => {
-            mainProcessor(saveDeployedContracts, options, [chainName]);
+            mainQueryProcessor(saveDeployedContracts, options, [chainName]);
         });
 
     addAmplifierQueryOptions(rewardsCmd);

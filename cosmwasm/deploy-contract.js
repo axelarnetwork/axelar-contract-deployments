@@ -33,7 +33,7 @@ const upload = async (client, config, options, _args, fee) => {
     contractBaseConfig.lastUploadedCodeId = codeId;
 
     if (instantiate2) {
-        const [account] = await client.getAccounts();
+        const [account] = client.accounts;
         const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
 
         contractConfig.address = address;

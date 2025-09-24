@@ -18,7 +18,7 @@ const getVerifierSetStatus = async (config, chain, client, verifierStatus) => {
 };
 
 const updateVerifierSet = async (client, config, _options, [chain], fee) => {
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
 
     const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain, client);
     printInfo('Current verifier set', currentVerifierSet);
@@ -38,7 +38,7 @@ const updateVerifierSet = async (client, config, _options, [chain], fee) => {
 };
 
 const confirmVerifierRotation = async (client, config, _options, [chain, txHash], fee) => {
-    const [account] = await client.getAccounts();
+    const [account] = client.accounts;
 
     const nextVerifierSet = (await getNextVerifierSet(config, chain, client)).verifier_set;
     printInfo('Next verifier set', nextVerifierSet);
