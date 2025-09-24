@@ -65,8 +65,8 @@ const instantiate = async (client, config, options, _args, fee) => {
 };
 
 const uploadInstantiate = async (client, config, options, _args, fee) => {
-    await upload(client, config, options, fee);
-    await instantiate(client, config, options, fee);
+    await upload(client, config, options, _args, fee);
+    await instantiate(client, config, options, _args, fee);
 };
 
 const migrate = async (client, config, options, _args, fee) => {
