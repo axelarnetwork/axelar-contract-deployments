@@ -1,12 +1,33 @@
 'use strict';
 
+import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
-import { loadConfig } from '../../common';
+import { FullConfig } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
-import { ContractInfo, getContractInfo } from '../contract';
-import { prepareClient, prepareWallet } from '../utils';
+import { ClientManager, Options, mainProcessor } from '../processor';
+import { ContractInfo, getContractInfo } from '../query';
 import { migrate as migrateCoordinator } from './coordinator';
+import { MigrationOptions } from './types';
+
+async function migrate(
+    client: ClientManager,
+    config: FullConfig,
+    options: MigrationOptions,
+    args: string[],
+    fee: string | StdFee,
+): Promise<void> {
+    const sender_address = client.accounts[0].address;
+    const contract_address = config.axelar.contracts[options.contractName]?.address;
+    const code_id = Number(args[0]);
+
+    const contract_info: ContractInfo = await getContractInfo(client, contract_address);
+    switch (contract_info.contract) {
+        case 'coordinator':
+            await migrateCoordinator(client, options, config, sender_address, contract_address, contract_info.version, code_id);
+            break;
+    }
+}
 
 const programHandler = () => {
     const program = new Command();
@@ -23,41 +44,9 @@ const programHandler = () => {
             .option('--proposal', 'make a proposal rather than a direct migration')
             .option('--dry', 'only generate migration msg')
             .description('Migrate contract')
-            .action(
-                async (
-                    code_id: string,
-                    options: { env: string; mnemonic: string; address: string; deposit: string; fees; dry?; proposal? },
-                ) => {
-                    const { env } = options;
-                    const config = loadConfig(env);
-
-                    const wallet = await prepareWallet(options);
-                    const client = await prepareClient(config, wallet);
-                    const accounts = await wallet.getAccounts();
-                    if (accounts.length < 1) {
-                        console.log('invalid mnemonic');
-                        return;
-                    }
-
-                    const sender_address = accounts[0].address;
-
-                    const contract_info: ContractInfo = await getContractInfo(client, options.address);
-                    switch (contract_info.contract) {
-                        case 'coordinator':
-                            await migrateCoordinator(
-                                client,
-                                wallet,
-                                options,
-                                config,
-                                sender_address,
-                                options.address,
-                                contract_info.version,
-                                Number(code_id),
-                            );
-                            break;
-                    }
-                },
-            ),
+            .action((code_id: string, options: MigrationOptions) => {
+                mainProcessor(migrate, options, [code_id]);
+            }),
         {},
     );
 

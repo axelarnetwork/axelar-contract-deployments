@@ -16,7 +16,7 @@
 
 ## Background
 
-The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.0 require the router to be upgraded to version v1.3.0, and the multisig to upgraded to v2.3.0. Listed below are the relevant changes made to each contract.
+The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.0 require the router to be upgraded to version v1.3.0, and the multisig to be upgraded to v2.3.0. Listed below are the relevant changes made to each contract.
 
 ### Contract Version Info
 
@@ -52,7 +52,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    export COORDINATOR_ADDRESS=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"')
    ```
 
-1. Upload new router contract
+1. Upload the new router, multisig and coordinator contracts
 
     | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
     | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
@@ -63,16 +63,38 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
-    -c Router \
-    -t "Upload Router contract v1.3.0" \
-    -d "Upload Router contract v1.3.0" \
-    -r $RUN_AS_ACCOUNT \
-    --deposit $DEPOSIT_VALUE \
-    --instantiateAddresses $INIT_ADDRESSES \
-    --version 1.3.0
+      -c Router \
+      -t "Upload Router contract v1.3.0" \
+      -d "Upload Router contract v1.3.0" \
+      -r $RUN_AS_ACCOUNT \
+      --deposit $DEPOSIT_VALUE \
+      --instantiateAddresses $INIT_ADDRESSES \
+      --version 1.3.0
     ```
 
-1. Upgrade Router contract
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+      -c Multisig \
+      -t "Upload Multisig contract v2.3.0" \
+      -d "Upload Multisig contract v2.3.0" \
+      -r $RUN_AS_ACCOUNT \
+      --deposit $DEPOSIT_VALUE \
+      --instantiateAddresses $INIT_ADDRESSES \
+      --version 2.3.0
+    ```
+
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+      -c Coordinator \
+      -t "Upload Coordinator contract v2.1.0" \
+      -d "Upload Coordinator contract v2.1.0" \
+      -r $RUN_AS_ACCOUNT \
+      --deposit $DEPOSIT_VALUE \
+      --instantiateAddresses $INIT_ADDRESSES \
+      --version 2.1.0
+    ```
+
+1. Upgrade the router and multisig before upgrading the coordinator
 
    Provide coordinator address to the router.
 
@@ -86,28 +108,6 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
      --deposit $DEPOSIT_VALUE
    ```
 
-1. Upload new Multisig contract
-
-    | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
-    | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
-    | devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-    | stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-    | testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-    | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-    -c Multisig \
-    -t "Upload Multisig contract v2.3.0" \
-    -d "Upload Multisig contract v2.3.0" \
-    -r $RUN_AS_ACCOUNT \
-    --deposit $DEPOSIT_VALUE \
-    --instantiateAddresses $INIT_ADDRESSES \
-    --version 2.3.0
-    ```
-
-1. Upgrade Multisig contract
-
    Provide coordinator address to the multisig.
 
    ```bash
@@ -120,33 +120,13 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
      --deposit $DEPOSIT_VALUE
    ```
 
-1. Upload new Coordinator contract
-
-    | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
-    | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
-    | devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-    | stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-    | testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-    | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-    -c Coordinator \
-    -t "Upload Coordinator contract v2.1.0" \
-    -d "Upload Coordinator contract v2.1.0" \
-    -r $RUN_AS_ACCOUNT \
-    --deposit $DEPOSIT_VALUE \
-    --instantiateAddresses $INIT_ADDRESSES \
-    --version 2.1.0
-    ```
-
 1. Migrate to Coordinator v2.1.0 using the contract deployment scripts
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts <code_id> \
-   --address $COORDINATOR_ADDRESS \
-   -m $MNEMONIC \
-   -d $DEPOSIT_VALUE
+   ts-node cosmwasm/migrate/migrate.ts <coordinator_code_id> \
+      --address $COORDINATOR_ADDRESS \
+      -m $MNEMONIC \
+      -d $DEPOSIT_VALUE
    ```
 
    This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
@@ -156,7 +136,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Verify router contract version
 
    ```bash
-   ts-node cosmwasm/contract.ts info --contract Router -e $ENV
+   ts-node cosmwasm/query.ts contract-info --contractName Router -e $ENV
    ```
    Expected output
 
@@ -164,7 +144,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    {contract: 'router', version: '1.3.0'}
    ```
 
-1. Verify coordinator address stored on router
+1. Verify the coordinator address is stored on the router
 
    ```bash
    axelard q wasm contract-state raw --ascii $ROUTER_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.coordinator'
@@ -176,7 +156,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    $COORDINATOR_ADDRESS
    ```
 
-1. Ensure coordinator address match predicted one.
+1. Ensure the coordinator address matches the predicted one.
 
    ```bash
    cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
@@ -185,7 +165,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Verify multisig contract version
 
    ```bash
-   ts-node cosmwasm/contract.ts info --contract Multisig -e $ENV
+   ts-node cosmwasm/query.ts contract-info --contractName Multisig -e $ENV
    ```
    Expected output
 
@@ -193,7 +173,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    {contract: 'multisig', version: '2.3.0'}
    ```
 
-1. Verify coordinator address stored on multisig
+1. Verify the coordinator address is stored on the multisig
 
    ```bash
    axelard q wasm contract-state raw --ascii $MULTISIG_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.coordinator'
@@ -205,7 +185,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    $COORDINATOR_ADDRESS
    ```
 
-1. Ensure coordinator address match predicted one.
+1. Ensure the coordinator address matches the predicted one.
 
    ```bash
    cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
@@ -214,7 +194,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Verify coordinator contract version
 
    ```bash
-   ts-node cosmwasm/contract.ts info --contract Coordinator -e $ENV
+   ts-node cosmwasm/query.ts contract-info --contractName Coordinator -e $ENV
    ```
    Expected output
 

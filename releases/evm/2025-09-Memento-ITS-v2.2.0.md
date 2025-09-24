@@ -1,26 +1,26 @@
-# &lt; ChainName &gt; GMP vX.X.X
+# Memento ITS v2.2.0
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @[github-username] <user@interoplabs.io> |
-| **Deployment** | @[github-username] <user@interoplabs.io> |
+| **Created By** | @nbayindirli <noah@interoplabs.io> |
+| **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
-- [Releases] add link to Github release here
+[Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
 
 ## Background
 
-Describe release content here
+- This is the Memento ITS release.
 
 ## Deployment
 
-Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first.
+Ensure that [Memento GMP](../evm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
 
 ```bash
 # Clone latest main and update deps
@@ -32,7 +32,7 @@ Create an `.env` config
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAIN=memento
 ```
 
 | Network              | `deployer address`                           |
@@ -45,36 +45,36 @@ CHAIN=<chain name>
 ### Devnet Amplifier
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.2.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.2.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
+## Set Memento as trusted chain on remote ITS contracts
 
-### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
+### Note: Ensure that Memento is registered on ITS hub
 
-Set `<ChainName>` as trusted chain on all EVM chains
+Set Memento as trusted chain on all EVM chains
 
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
-Set `<ChainName>` as trusted chain on Sui
+Set Memento as trusted chain on Sui
 
 ```bash
 ts-node sui/its.js add-trusted-chains $CHAIN
 ```
 
-Set `<ChainName>` as trusted chain on Stellar
+Set Memento as trusted chain on Stellar
 
 ```bash
 ts-node stellar/its.js add-trusted-chains $CHAIN
@@ -90,12 +90,12 @@ The following checks should be performed after the rollout.
 ts-node evm/its.js checks -n $CHAIN -y
 ```
 
-- Verify the token manager proxy contract once an ITS token is deployed on `<ChainName>` and then mark it as a proxy.
+- Verify the token manager proxy contract once an ITS token is deployed on Memento and then mark it as a proxy.
 
 - EVM Checklist
 
 ```bash
-# Create a token on `<ChainName>`
+# Create a token on Memento
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain

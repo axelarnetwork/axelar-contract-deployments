@@ -19,7 +19,6 @@ const {
     readMovePackageName,
     getSingletonChannelId,
     getItsChannelId,
-    getSquidChannelId,
     checkSuiVersionMatch,
     moveDir,
     getStructs,
@@ -53,7 +52,6 @@ const PACKAGE_DIRS = [
     'abi',
     'governance',
     'interchain_token_service',
-    'squid',
     'interchain_token',
 ];
 
@@ -71,7 +69,6 @@ const PACKAGE_CONFIGS = {
         Example: postDeployExample,
         Operators: postDeployOperators,
         InterchainTokenService: postDeployIts,
-        Squid: postDeploySquid,
         Utils: postDeployUtils,
         Abi: postDeployAbi,
         VersionControl: postDeployVersionControl,
@@ -363,34 +360,6 @@ async function postDeployIts(published, keypair, client, config, chain, options)
     await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
-async function postDeploySquid(published, keypair, client, config, chain, options) {
-    const { policy } = options;
-    const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
-
-    const [squidObjectId, ownerCapObjectId, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${published.packageId}::squid::Squid`,
-        `${published.packageId}::owner_cap::OwnerCap`,
-        `${suiPackageAddress}::package::UpgradeCap`,
-    ]);
-    const channelId = await getSquidChannelId(client, squidObjectId);
-    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
-
-    const tx = new Transaction();
-
-    restrictUpgradePolicy(tx, policy, upgradeCap);
-
-    tx.moveCall({
-        target: `${published.packageId}::discovery::register_transaction`,
-        arguments: [
-            tx.object(squidObjectId),
-            tx.object(chain.contracts.InterchainTokenService.objects.InterchainTokenService),
-            tx.object(relayerDiscovery),
-        ],
-    });
-
-    await broadcast(client, keypair, tx, 'Registered Transaction', options);
-}
-
 async function deploy(keypair, client, supportedContract, config, chain, options) {
     const { packageDir, packageName } = supportedContract;
 
@@ -485,12 +454,18 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
         }
         case 'InterchainTokenService': {
             const InterchainTokenService = contractConfig.objects.InterchainTokenService;
+            const RelayerDiscovery = chain.contracts.RelayerDiscovery.objects.RelayerDiscovery;
 
             if (typeof InterchainTokenService !== 'string') throw new Error(`Cannot find object of specified contract: ${packageName}`);
 
             await builder.moveCall({
                 target: `${contractConfig.address}::interchain_token_service::migrate`,
                 arguments: [InterchainTokenService, ownerCap],
+            });
+
+            await builder.moveCall({
+                target: `${contractConfig.address}::discovery::register_transaction`,
+                arguments: [InterchainTokenService, RelayerDiscovery],
             });
 
             break;

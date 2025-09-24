@@ -1,21 +1,10 @@
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
+import { MigrationOptions } from './types';
 
 // cosmwasm-stargate imports protobufjs which does not have a default export
 // Therefore, import SigningCosmWasmClient using CommonJS to avoid error TS1192
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 export const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-
-interface Options {
-    env: string;
-    mnemonic: string;
-    address: string;
-    deposit: string;
-    fees;
-    dry?;
-    proposal?;
-}
 
 interface ChainContracts {
     chain_name: string;
@@ -87,8 +76,7 @@ async function addMissingProvers(
 
 async function coordinatorToVersion2_1_0(
     client: typeof SigningCosmWasmClient,
-    wallet: DirectSecp256k1HdWallet,
-    options: Options,
+    options: MigrationOptions,
     config,
     sender_address: string,
     coordinator_address: string,
@@ -127,7 +115,7 @@ async function coordinatorToVersion2_1_0(
         try {
             console.log('Executing migration...');
             if (options.proposal) {
-                await submitProposal(client, wallet, config, migrate_options, proposal);
+                await submitProposal(client, config, migrate_options, proposal);
                 console.log('Migration proposal successfully submitted');
             } else {
                 await client.migrate(sender_address, coordinator_address, Number(code_id), migration_msg, options.fees);
@@ -141,8 +129,7 @@ async function coordinatorToVersion2_1_0(
 
 export async function migrate(
     client: typeof SigningCosmWasmClient,
-    wallet: DirectSecp256k1HdWallet,
-    options: Options,
+    options: MigrationOptions,
     config,
     sender_address: string,
     coordinator_address: string,
@@ -151,7 +138,7 @@ export async function migrate(
 ) {
     switch (version) {
         case '1.1.0':
-            return coordinatorToVersion2_1_0(client, wallet, options, config, sender_address, coordinator_address, code_id);
+            return coordinatorToVersion2_1_0(client, options, config, sender_address, coordinator_address, code_id);
         default:
             console.error(`no migration script found for coordinator ${version}`);
     }

@@ -126,12 +126,6 @@ const getItsChannelId = async (client, itsObjectId) => {
     return '0x' + channelId;
 };
 
-const getSquidChannelId = async (client, squidObjectId) => {
-    const bcsBytes = await getBcsBytesByObjectId(client, squidObjectId);
-    const data = bcsStructs.squid.Squid.parse(bcsBytes);
-    return '0x' + data.channel.id;
-};
-
 const getSigners = async (keypair, config, chain, options) => {
     if (options.signers === 'wallet') {
         const pubKey = keypair.getPublicKey().toRawBytes();
@@ -366,7 +360,6 @@ module.exports = {
     getObjectIdsByObjectTypes,
     getSingletonChannelId,
     getItsChannelId,
-    getSquidChannelId,
     getSigners,
     getBagContentId,
     moveDir,
