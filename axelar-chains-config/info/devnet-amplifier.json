@@ -850,9 +850,10 @@
           }
         },
         "InterchainTokenService": {
-          "address": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f",
+          "address": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426",
           "versions": {
-            "0": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f"
+            "0": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f",
+            "1": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426"
           },
           "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
           "structs": {
@@ -861,7 +862,9 @@
             "CoinInfo": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::coin_info::CoinInfo",
             "CoinData": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::coin_data::CoinData",
             "CreatorCap": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::creator_cap::CreatorCap",
+            "TokenManagerType": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::token_manager_type::TokenManagerType",
             "TokenId": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::token_id::TokenId",
+            "UnlinkedTokenId": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::token_id::UnlinkedTokenId",
             "UnregisteredTokenId": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::token_id::UnregisteredTokenId",
             "UnregisteredCoinData": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::unregistered_coin_data::UnregisteredCoinData",
             "CoinRegistered": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::CoinRegistered",
@@ -869,13 +872,20 @@
             "InterchainTokenDeploymentStarted": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::InterchainTokenDeploymentStarted",
             "InterchainTransferReceived": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::InterchainTransferReceived",
             "UnregisteredCoinReceived": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::UnregisteredCoinReceived",
+            "UnlinkedCoinReceived": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::UnlinkedCoinReceived",
+            "UnlinkedCoinRemoved": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::UnlinkedCoinRemoved",
             "TrustedChainAdded": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::TrustedChainAdded",
             "TrustedChainRemoved": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::TrustedChainRemoved",
             "FlowLimitSet": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::FlowLimitSet",
             "DistributorshipTransfered": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::DistributorshipTransfered",
             "OperatorshipTransfered": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::events::OperatorshipTransfered",
+            "InterchainTokenIdClaimed": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::InterchainTokenIdClaimed",
+            "LinkTokenStarted": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::LinkTokenStarted",
+            "LinkTokenReceived": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::LinkTokenReceived",
+            "CoinMetadataRegistered": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::events::CoinMetadataRegistered",
             "TrustedChain": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::trusted_chains::TrustedChain",
             "TrustedChains": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::trusted_chains::TrustedChains",
+            "TreasuryCapReclaimer": "0x5f710b3807efa0a2dfc14632fde4539a8833513d0afcb9b992200143c3bc8426::treasury_cap_reclaimer::TreasuryCapReclaimer",
             "InterchainTransferTicket": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::interchain_transfer_ticket::InterchainTransferTicket",
             "InterchainTokenService_v0": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::interchain_token_service_v0::InterchainTokenService_v0",
             "OwnerCap": "0x361b728d45c287afadf388ed69c234678022940db880e4b4a2ba5ad09b348a2f::owner_cap::OwnerCap",
@@ -889,28 +899,66 @@
             "OwnerCap": "0x2edbff9dc43d4dca2e16dec1b9e75c8798fc16f672b828ce5a6f8547e4723ba9",
             "OperatorCap": "0x5594de29942c6e950f0eaf5909241514168ab7bb4182de65b7a51881137dab0c",
             "UpgradeCap": "0x17efb7a7a5b9d13976edb665cb071132c5391a987adb119f1ab51b26ccd1c23b"
+          },
+          "disallowedFunctions": {
+            "versions": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "functionNames": [
+              "deploy_remote_interchain_token",
+              "send_interchain_transfer",
+              "receive_interchain_transfer",
+              "receive_interchain_transfer_with_data",
+              "receive_deploy_interchain_token",
+              "give_unregistered_coin",
+              "mint_as_distributor",
+              "mint_to_as_distributor",
+              "burn_as_distributor",
+              "add_trusted_chains",
+              "remove_trusted_chains",
+              "set_flow_limit",
+              "set_flow_limit_as_token_operator",
+              "transfer_distributorship",
+              "transfer_operatorship"
+            ]
           }
         },
         "Example": {
-          "address": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85",
+          "address": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654",
           "versions": {
-            "0": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85"
+            "0": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654"
           },
           "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
           "structs": {
-            "Singleton": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::its::Singleton",
-            "Executed": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::gmp::Executed",
-            "ExecutedWithToken": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::its::ExecutedWithToken",
-            "TOKEN": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token::TOKEN",
-            "TOKEN_A": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token_a::TOKEN_A",
-            "TOKEN_B": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token_b::TOKEN_B",
-            "TOKEN_C": "0x481f5417b6b34ec378d4d922808651a7cc0be9e317c40b4b22b8a85a8e46df85::token_c::TOKEN_C"
+            "Singleton": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::its::Singleton",
+            "Executed": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::gmp::Executed",
+            "ExecutedWithToken": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::its::ExecutedWithToken",
+            "MultiMinter": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::operators::MultiMinter",
+            "OwnerCap": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::operators::OwnerCap",
+            "TOKEN": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token::TOKEN",
+            "TOKEN_A": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token_a::TOKEN_A",
+            "TOKEN_B": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token_b::TOKEN_B",
+            "TOKEN_C": "0x814e16e7c9d8b91a4ca74cdf6ed3a331247fd10ff4d6506004e1bdbd0234c654::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0x1cd66aab6e910f4230a17bc7b1152047b4f9c8158a607ee626d500da3dc552c8",
-            "GmpChannelId": "0xb6b06092072c6d9f7268c5908183cf3456429af57fa74a29d26526a698bc2c52",
-            "ItsSingleton": "0x7da3422e0915e7cbbde06f5425ebd370d04928e783188f167646790dc6d7d040",
-            "ItsChannelId": "0xa6019e0956da874271d21fe37cf123e43f1a55c8720ca50bcdf35212be930c88"
+            "GmpSingleton": "0x43aa1cf0178bc75687da18ec8b8f374245c4ce6522775600c55d42bc25a44402",
+            "GmpChannelId": "0xed446cd5d073775a09517bff223031aa7a179a2762522ee068252a44e8f7d3f2",
+            "ItsSingleton": "0xc339e7f33d85569b7a23cfcef4304cf2902b1255183678392891d6723c69a287",
+            "ItsChannelId": "0x7539de2ccaaaee8ac3238b5331757a86be4430691c7185e5164ebdd51a400afd"
           }
         }
       },
@@ -1342,101 +1390,6 @@
         }
       },
       "initialContractsDeployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
-    },
-    "hedera-2": {
-      "name": "Hedera",
-      "axelarId": "hedera-2",
-      "chainId": 296,
-      "rpc": "https://testnet.hashio.io/api",
-      "tokenSymbol": "HBAR",
-      "decimals": 8,
-      "confirmations": 1,
-      "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
-      "htsLibraryAddress": "0x0000000000000000000000000000000000628e00",
-      "chainType": "evm",
-      "explorer": {
-        "name": "HashScan",
-        "url": "https://hashscan.io/testnet",
-        "api": ""
-      },
-      "gasScalingFactor": 10,
-      "gasOptions": {
-        "gasLimit": 8000000
-      },
-      "timeout": 50000,
-      "contracts": {
-        "ConstAddressDeployer": {
-          "address": "0x7401bB1768B0F176944E9979db28119378C7CFF8",
-          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create",
-          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
-        },
-        "Create3Deployer": {
-          "address": "0x8410e93c44fF3702d7a37F78c41d6aef5655ffC9",
-          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
-          "salt": "Create3Deployer"
-        },
-        "AxelarGateway": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxyDeploymentArgs": [
-            "0xcAc970E7F05AC1cC821526cE3b5F0a1c2D8d5767",
-            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a61233000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000831723000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "9919c4d61365be6c6d1efdf972305ec9c3668444d35554db8ef180a742888298",
-          "address": "0xaa9bA4a879c042Cb08965567F04e5456327c0C55",
-          "implementation": "0xcAc970E7F05AC1cC821526cE3b5F0a1c2D8d5767",
-          "implementationCodehash": "0x29eb3a50760698b5251b1bd42e80fa1e0266a72226768e8f605aba47ce7a39f5",
-          "deploymentMethod": "create3",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0xaee86494b5f46a55643a2f4320533eb0e0e7305a4b2273f18046bc29197bdce2",
-          "minimumRotationDelay": 0,
-          "connectionType": "amplifier",
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "AxelarAmplifierGateway"
-        },
-        "Operators": {
-          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
-          "address": "0xFe52cB696C387f85b8eebaD5f7B5eaD34300c549",
-          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "salt": "Operators"
-        },
-        "AxelarGasService": {
-          "collector": "0xFe52cB696C387f85b8eebaD5f7B5eaD34300c549",
-          "salt": "AxelarGasService",
-          "address": "0xc421Ac0479de15cF8e488Da5F07f40F40B643cF9",
-          "implementation": "0xfc94EC931Fa14326faA309d7d116148a821668d5",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        },
-        "InterchainTokenService": {
-          "salt": "ITS v2.1.0 devnet-amplifier hedera-2",
-          "deployer": "0x8d5AF9D897a80afCAf854202ACf6d2641378ba6C",
-          "proxySalt": "ITS v2.1.0 devnet-amplifier hedera-2",
-          "tokenManagerDeployer": "0xFe99EF8287AB661723F3b403A1B2d90D65aB402F",
-          "interchainTokenDeployer": "0x12A8e86998464eB00A3a54E711A6e88185389Ae9",
-          "tokenManager": "0x03719A288f502C5bCB6e91137F0163c1cb2E136E",
-          "tokenHandler": "0x2BB19397047b81F5c7FCeACfe233Da343dF457c5",
-          "implementation": "0xD06a438Ae92c666dd297B62cAf845c40ecD6b95a",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x37489C4fB89a89133008244B3B30F216ccd62eA6"
-        },
-        "InterchainTokenFactory": {
-          "deployer": "0x8d5AF9D897a80afCAf854202ACf6d2641378ba6C",
-          "salt": "ITS Factory v2.1.0 devnet-amplifier hedera-2",
-          "implementation": "0x1618b6933213dfc347f7769dEAe6cB92dF21d246",
-          "address": "0xEf0Bd4b5FBa26eC06D7827f4526Bc70Ee6614a81"
-        }
-      }
     }
   },
   "axelar": {
@@ -1527,10 +1480,6 @@
         "solana-2": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 255
-        },
-        "hedera-2": {
-          "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 6
         },
         "storeCodeProposalId": "989",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
@@ -1659,22 +1608,7 @@
           "address": "axelar1uypvvkd820cs4t6y47hqszawegwyrxaxr9ehpla74e98g0rezr5sw9lj4z"
         },
         "storeCodeProposalId": "78",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
-        "hedera-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "serviceName": "validators",
-          "sourceGatewayAddress": "0xaa9bA4a879c042Cb08965567F04e5456327c0C55",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 854,
-          "address": "axelar1kq5um903jwaza0hl6a20myz60ldenuw202965dydrj372xwg64uqpe6g23"
-        }
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
       },
       "Gateway": {
         "avalanche-fuji": {
@@ -1715,10 +1649,6 @@
         "stacks": {
           "codeId": 1396,
           "address": "axelar1r5aggjq5d5np83ejq5ynt7ah30y9srk84es3xatnyc9k4nmq7grsc7qnda"
-        },
-        "hedera-2": {
-          "codeId": 848,
-          "address": "axelar1ldaas8zj0u9vmnss09nx7v6j6nvw2ntxwc98m8kpzrv5zezdesxslyl4p2"
         }
       },
       "XrplMultisigProver": {
@@ -1753,7 +1683,7 @@
           "codeId": 855,
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
         },
-        "lastUploadedCodeId": 855,
+        "lastUploadedCodeId": 1446,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1843,9 +1773,9 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
           "keyType": "ecdsa",
-          "codeId": 855,
-          "domainSeparator": "0xd9d7fdc2c95115b28769eb237330c7eefa879ebab0fab16e19064bd71e109f60",
-          "address": "axelar1drccpywtcuf7hm7xyper9ktlpmtjlq37v5ps8ax59lel4csv0xdq3gyaaj"
+          "domainSeparator": "0x25175689654ca91a6e0a80f7716bb966a67bb1162c9b89889eed7cfc4f03a6af",
+          "codeId": 1446,
+          "address": "axelar109wjfgdx63num4xyvzhrt2djuvd7zdu3zv4m0hcjvt55r0mvhszssxl8gg"
         },
         "berachain": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1862,23 +1792,8 @@
           "domainSeparator": "0xde451736aa7e61c58baa7e02a0531c535a0dd8d3b5a04973d99336f34efad68b",
           "address": "axelar1xdg6lezehttusu8zfr5jnshn7d3k2jjzlmr43m6ssmxd048zjv6s4h5unj"
         },
-        "storeCodeProposalId": "82",
-        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
-        "hedera-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
-          "serviceName": "validators",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 855,
-          "domainSeparator": "0xaee86494b5f46a55643a2f4320533eb0e0e7305a4b2273f18046bc29197bdce2",
-          "address": "axelar19fjnml82lf0getvpltnpht5szs0t6cpmxh9zqpfhp0pqgpygp7rsvfg4j0"
-        }
+        "storeCodeProposalId": "1037",
+        "storeCodeProposalCodeHash": "09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6"
       },
       "XrplVotingVerifier": {
         "xrpl-dev": {

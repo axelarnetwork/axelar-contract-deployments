@@ -4,7 +4,6 @@ import { Command, Option } from 'commander';
 
 import { loadConfig, saveConfig, printInfo, printError } from '../common';
 import { addEnvOption } from '../common/cli-utils';
-import { prepareClient, prepareDummyWallet } from './utils';
 import { exit } from 'process';
 
 const programHandler = () => {

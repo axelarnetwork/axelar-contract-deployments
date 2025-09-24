@@ -1,11 +1,12 @@
 'use strict';
 
-const { prepareDummyWallet, prepareClient, initContractConfig, getChainCodecContractNameByChainType } = require('./utils');
-const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress, saveConfig } = require('../common');
+const { getChainCodecContractNameByChainType } = require('./utils');
+const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
+const { mainQueryProcessor } = require('./processor');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, args, options) {
+async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
 
     const rewardsContractAddresses = {
@@ -45,7 +46,7 @@ async function getItsChainConfig(client, config, chainName) {
     });
 }
 
-async function tokenConfig(client, config, args, _options) {
+async function tokenConfig(client, config, _options, args, _fee) {
     const [tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -65,7 +66,7 @@ async function tokenConfig(client, config, args, _options) {
     }
 }
 
-async function customTokenMetadata(client, config, args, options) {
+async function customTokenMetadata(client, config, _options, args, _fee) {
     const [chainName, tokenAddress] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -94,7 +95,7 @@ async function customTokenMetadata(client, config, args, options) {
     }
 }
 
-async function tokenInstance(client, config, args, options) {
+async function tokenInstance(client, config, _options, args, _fee) {
     const [chainName, tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -123,7 +124,7 @@ async function tokenInstance(client, config, args, options) {
     }
 }
 
-async function itsChainConfig(client, config, args, options) {
+async function itsChainConfig(client, config, _options, args, _fee) {
     const [chainName] = args;
 
     try {
@@ -134,7 +135,7 @@ async function itsChainConfig(client, config, args, options) {
     }
 }
 
-async function saveDeployedContracts(client, config, args, options) {
+async function saveDeployedContracts(client, config, _options, args, _fee) {
     const [chainName] = args;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
@@ -225,22 +226,8 @@ async function saveDeployedContracts(client, config, args, options) {
     } catch (error) {
         printWarn(`Failed to fetch chain codec address for ${chainName}`, error?.message || String(error));
     }
-
-    saveConfig(config, options.env);
     printInfo(`Config updated successfully for ${chainName}`);
 }
-
-const mainProcessor = async (processor, args, options) => {
-    const { env } = options;
-    const config = loadConfig(env);
-
-    initContractConfig(config, options);
-
-    const wallet = await prepareDummyWallet(options);
-    const client = await prepareClient(config, wallet);
-
-    await processor(client, config, args, options);
-};
 
 const programHandler = () => {
     const program = new Command();
@@ -251,42 +238,42 @@ const programHandler = () => {
         .command('rewards <chainName>')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((chainName, options) => {
-            mainProcessor(rewards, [chainName], options);
+            mainQueryProcessor(rewards, options, [chainName]);
         });
 
     const tokenConfigCmd = program
         .command('token-config <tokenId>')
         .description('Query token config from ITS Hub')
         .action((tokenId, options) => {
-            mainProcessor(tokenConfig, [tokenId], options);
+            mainQueryProcessor(tokenConfig, options, [tokenId]);
         });
 
     const customTokenMetadataCmd = program
         .command('custom-token-metadata <chainName> <tokenAddress>')
         .description('Query custom token metadata by chain name and token address')
         .action((chainName, tokenAddress, options) => {
-            mainProcessor(customTokenMetadata, [chainName, tokenAddress], options);
+            mainQueryProcessor(customTokenMetadata, options, [chainName, tokenAddress]);
         });
 
     const tokenInstanceCmd = program
         .command('token-instance <chainName> <tokenId>')
         .description('Query token instance by chain name and token ID')
         .action((chainName, tokenId, options) => {
-            mainProcessor(tokenInstance, [chainName, tokenId], options);
+            mainQueryProcessor(tokenInstance, options, [chainName, tokenId]);
         });
 
     const itsChainConfigCmd = program
         .command('its-chain-config <chainName>')
         .description('Query ITS chain configuration for a specific chain')
         .action((chainName, options) => {
-            mainProcessor(itsChainConfig, [chainName], options);
+            mainQueryProcessor(itsChainConfig, options, [chainName]);
         });
 
     const saveDeployedContractsCmd = program
         .command('save-deployed-contracts <chainName>')
         .description('Query and save deployed Gateway, VotingVerifier, ChainCodec and MultisigProver contracts via Coordinator')
         .action((chainName, options) => {
-            mainProcessor(saveDeployedContracts, [chainName], options);
+            mainQueryProcessor(saveDeployedContracts, options, [chainName]);
         });
 
     addAmplifierQueryOptions(rewardsCmd);

@@ -757,16 +757,6 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
     }
 }
 
-const getProposalConfig = (config, env, key) => {
-    try {
-        const value = config.axelar?.[key];
-        if (value === undefined) throw new Error(`Key "${key}" not found in config for ${env}`);
-        return value;
-    } catch (error) {
-        throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
-    }
-};
-
 /**
  * Validates if a chain is valid in the config.
  *
@@ -857,7 +847,6 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
-    getProposalConfig,
     tokenManagerTypes,
     validateLinkType,
     validateChain,
