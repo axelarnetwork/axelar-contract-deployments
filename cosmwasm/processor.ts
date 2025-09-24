@@ -4,7 +4,7 @@ import { GasPrice, StdFee } from '@cosmjs/stargate';
 
 import { ConfigManager, FullConfig } from '../common/config';
 
-type Options = {
+export type Options = {
     env: string;
     contractName: string;
     chainName: string;
