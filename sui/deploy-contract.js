@@ -418,8 +418,31 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
-        const network = options.env === 'mainnet' ? options.env : 'testnet';
-        updateMoveToml(packageDir, packageAddress, moveDir, undefined, Object.keys(contractsConfig[name]?.versions || {}).length, network);
+        const version = Object.keys(contractsConfig[name]?.versions || {}).length - 1;
+        const legacyPackageId = (version > 0) ? contractsConfig[name]?.versions["0"] : undefined;
+
+        let network;
+        switch (options.env) {
+            case 'devnet':
+            case 'testnet':
+            case 'mainnet': {
+                network = options.env;
+                break;
+            }
+            default: {
+                network = 'testnet';
+            }
+        }
+        
+        updateMoveToml(
+            packageDir,
+            packageAddress,
+            moveDir,
+            undefined,
+            version,
+            network,
+            legacyPackageId,
+        );
     }
 
     const builder = new TxBuilder(client);
@@ -487,20 +510,36 @@ async function syncPackages(keypair, client, config, chain, options) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
-        const network = options.env === 'mainnet' ? options.env : 'testnet';
+        
+        let network;
+        switch (options.env) {
+            case 'devnet':
+            case 'testnet':
+            case 'mainnet': {
+                network = options.env;
+                break;
+            }
+            default: {
+                network = 'testnet';
+            }
+        }
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
             continue;
         }
 
+        const version = Object.keys(chain.contracts[packageName]?.versions || {}).length - 1;
+        const legacyPackageId = (version > 0) ? chain.contracts[packageName]?.versions["0"] : undefined;
+
         updateMoveToml(
             packageDir,
             packageId,
             moveDir,
             undefined,
-            Object.keys(chain.contracts[packageName]?.versions || {}).length,
+            version,
             network,
+            legacyPackageId,
         );
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
