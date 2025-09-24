@@ -785,8 +785,9 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, gmpAxelarscanApi) {
-    if (!gmpAxelarscanApi || env === 'devnet-amplifier') {
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
+
+    if (env === 'devnet-amplifier') {
         printInfo('Using default ITS fee: 0');
         return 0;
     }
@@ -795,7 +796,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         return scaleGasValue(chain, gasValue);
     }
 
-    const url = `${gmpAxelarscanApi}/estimateITSFee`;
+    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
@@ -804,6 +805,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     };
 
     const res = await httpPost(url, payload);
+
     if (res.error) {
         throw new Error(`Error querying gas amount: ${res.error}`);
     }

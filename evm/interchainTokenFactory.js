@@ -190,7 +190,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 env,
                 'InterchainTokenDeployment',
                 options.gasValue,
-                _axelar?.gmpAxelarscanApi,
+                _axelar,
             );
 
             validateParameters({
@@ -244,7 +244,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 env,
                 'InterchainTokenDeployment',
                 options.gasValue,
-                _axelar?.gmpAxelarscanApi,
+                _axelar,
             );
 
             validateParameters({
@@ -301,7 +301,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'linkToken': {
             const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar?.gmpAxelarscanApi);
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             const deploymentSalt = getDeploymentSalt(options);
 

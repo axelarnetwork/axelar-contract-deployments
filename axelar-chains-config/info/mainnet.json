@@ -3468,7 +3468,6 @@
     "grpc": "grpc.axelar.lava.build:443",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://api.axelarscan.io",
-    "gmpAxelarscanApi": "https://api.gmp.axelarscan.io",
     "gasPrice": "0.007uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "2000000000",
