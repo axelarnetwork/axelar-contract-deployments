@@ -7,8 +7,6 @@ import { addEnvOption } from '../common/cli-utils';
 import { prepareClient, prepareDummyWallet } from './utils';
 import { exit } from 'process';
 
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-
 const programHandler = () => {
     const program = new Command();
 
@@ -47,7 +45,7 @@ const programHandler = () => {
                     let updates = 0;
 
                     for (const [chainName, chainConfig] of Object.entries(chains)) {
-                        const chainType: string | undefined = (chainConfig as any)?.chainType;
+                        const chainType: string | undefined = (chainConfig as { chainType: string })?.chainType;
                         const codecContractName = chainType ? codecMapping[chainType] : undefined;
                         if (!codecContractName) {
                             // Unsupported or unspecified chain type; skip quietly
