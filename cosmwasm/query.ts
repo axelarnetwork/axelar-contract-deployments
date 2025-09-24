@@ -4,7 +4,11 @@ import { Command } from 'commander';
 import { FullConfig } from '../common/config';
 import { addAmplifierQueryContractOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
-import { ContractInfo } from './types';
+
+export interface ContractInfo {
+    contract: string;
+    version: string;
+}
 
 export async function getContractInfo(client: CosmWasmClient, contract_address: string): Promise<ContractInfo> {
     const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
