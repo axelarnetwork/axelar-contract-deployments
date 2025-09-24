@@ -8,11 +8,8 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const {
     CONTRACTS,
-    prepareWallet,
-    prepareClient,
     fromHex,
     getSalt,
-    initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
@@ -26,20 +23,10 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
-    governanceAddress,
     getInstantiateChainContractsMessage,
     validateItsChainChange,
 } = require('./utils');
-const {
-    saveConfig,
-    loadConfig,
-    printInfo,
-    prompt,
-    getChainConfig,
-    itsEdgeContract,
-    readContractCode,
-    getProposalConfig,
-} = require('../common');
+const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -52,6 +39,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
+const { mainProcessor } = require('./processor');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -81,14 +69,14 @@ const confirmProposalSubmission = (options, proposal, proposalType) => {
     return true;
 };
 
-const callSubmitProposal = async (client, wallet, config, options, proposal) => {
-    const proposalId = await submitProposal(client, wallet, config, options, proposal);
+const callSubmitProposal = async (client, config, options, proposal) => {
+    const proposalId = await submitProposal(client, config, options, proposal);
     printInfo('Proposal submitted', proposalId);
 
     return proposalId;
 };
 
-const storeCode = async (client, wallet, config, options) => {
+const storeCode = async (client, config, options, _args, _fee) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
@@ -98,13 +86,13 @@ const storeCode = async (client, wallet, config, options) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
-const storeInstantiate = async (client, wallet, config, options) => {
+const storeInstantiate = async (client, config, options, _args, _fee) => {
     const { contractName, instantiate2 } = options;
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
 
@@ -119,13 +107,13 @@ const storeInstantiate = async (client, wallet, config, options) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal);
 
     contractConfig.storeInstantiateProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
-const instantiate = async (client, wallet, config, options) => {
+const instantiate = async (client, config, options, _args, _fee) => {
     const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -161,13 +149,13 @@ const instantiate = async (client, wallet, config, options) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal);
 
     contractConfig.instantiateProposalId = proposalId;
     if (instantiate2) contractConfig.address = contractAddress;
 };
 
-const execute = async (client, wallet, config, options) => {
+const execute = async (client, config, options, _args, _fee) => {
     const { chainName } = options;
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
@@ -176,10 +164,10 @@ const execute = async (client, wallet, config, options) => {
         return;
     }
 
-    return callSubmitProposal(client, wallet, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal);
 };
 
-const registerItsChain = async (client, wallet, config, options) => {
+const registerItsChain = async (client, config, options, _args, _fee) => {
     if (options.itsEdgeContract && options.chains.length > 1) {
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
@@ -215,19 +203,19 @@ const registerItsChain = async (client, wallet, config, options) => {
 
     const operation = options.update ? 'update' : 'register';
 
-    return execute(client, wallet, config, {
+    return execute(client, config, {
         ...options,
         contractName: 'InterchainTokenService',
         msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
     });
 };
 
-const registerProtocol = async (client, wallet, config, options) => {
+const registerProtocol = async (client, config, options, _args, _fee) => {
     const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
     const router = config.axelar?.contracts?.Router?.address;
     const multisig = config.axelar?.contracts?.Multisig?.address;
 
-    return execute(client, wallet, config, {
+    return execute(client, config, {
         ...options,
         contractName: 'Coordinator',
         msg: JSON.stringify({
@@ -240,17 +228,17 @@ const registerProtocol = async (client, wallet, config, options) => {
     });
 };
 
-const paramChange = async (client, wallet, config, options) => {
+const paramChange = async (client, config, options, _args, _fee) => {
     const proposal = encodeParameterChangeProposal(options);
 
     if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
         return;
     }
 
-    return callSubmitProposal(client, wallet, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal);
 };
 
-const migrate = async (client, wallet, config, options) => {
+const migrate = async (client, config, options, _args, _fee) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
     contractConfig.codeId = await getCodeId(client, config, options);
 
@@ -260,10 +248,10 @@ const migrate = async (client, wallet, config, options) => {
         return;
     }
 
-    return callSubmitProposal(client, wallet, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal);
 };
 
-const instantiateChainContracts = async (client, wallet, config, options) => {
+const instantiateChainContracts = async (client, config, options, _args, _fee) => {
     const { chainName } = options;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
@@ -273,7 +261,7 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
 
     const message = await getInstantiateChainContractsMessage(client, config, options);
 
-    const proposalId = await execute(client, wallet, config, {
+    const proposalId = await execute(client, config, {
         ...options,
         contractName: 'Coordinator',
         msg: JSON.stringify(message),
@@ -287,33 +275,6 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
         salt: options.salt,
         proposalId,
     };
-};
-
-function addGovProposalDefaults(options, config, env) {
-    const { runAs, deposit, instantiateAddresses } = options;
-
-    if (!runAs) options.runAs = env == 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
-
-    if (!deposit) options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
-
-    if (!instantiateAddresses) options.instantiateAddresses = getProposalConfig(config, env, 'govProposalInstantiateAddresses');
-
-    return options;
-}
-
-const mainProcessor = async (processor, options) => {
-    const { env } = options;
-    const config = loadConfig(env);
-    addGovProposalDefaults(options, config, env);
-
-    initContractConfig(config, options);
-
-    const wallet = await prepareWallet(options);
-    const client = await prepareClient(config, wallet);
-
-    await processor(client, wallet, config, options);
-
-    saveConfig(config, env);
 };
 
 const programHandler = () => {

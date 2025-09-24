@@ -4,7 +4,6 @@ import { Command, Option } from 'commander';
 
 import { loadConfig } from '../common';
 import { addAmplifierQueryOptions } from './cli-utils';
-import { prepareClient, prepareDummyWallet } from './utils';
 
 // cosmwasm-stargate imports protobufjs which does not have a default export
 // Consequently, import CosmWasmClient using CommonJS to avoid error TS1192
@@ -57,8 +56,7 @@ const programHandler = () => {
                 const { env } = options;
                 const config = loadConfig(env);
 
-                const wallet = await prepareDummyWallet();
-                const client = await prepareClient(config, wallet);
+                const client = await CosmWasmClient.connect(config.axelar.rpc);
 
                 if (options.contract && options.address) {
                     console.log('cannot specify both --contract and --address');
