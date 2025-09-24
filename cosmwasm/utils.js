@@ -971,13 +971,17 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config.chains, chainName);
+    let contractConfig;
+    let chainConfig;
+    if (!options.address || !options.codeId) {
+        contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+        chainConfig = getChainConfig(config.chains, chainName);
+    }
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
-        codeId: contractConfig.codeId,
+        contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+        codeId: options.codeId ?? contractConfig.codeId,
         msg: Buffer.from(msg),
     };
 };

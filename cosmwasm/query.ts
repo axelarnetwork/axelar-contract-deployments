@@ -1,9 +1,17 @@
 'use strict';
 
-const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
-const { mainQueryProcessor } = require('./processor');
-const { Command } = require('commander');
-const { addAmplifierQueryOptions } = require('./cli-utils');
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { Command } from 'commander';
+
+import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../common';
+import { FullConfig } from '../common/config';
+import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
+import { Options, mainQueryProcessor } from './processor';
+
+export interface ContractInfo {
+    contract: string;
+    version: string;
+}
 
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
@@ -31,7 +39,7 @@ async function rewards(client, config, _options, args, _fee) {
     }
 }
 
-async function getItsChainConfig(client, config, chainName) {
+export async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
 
     if (!chainConfig) {
@@ -202,6 +210,26 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     printInfo(`Config updated successfully for ${chainName}`);
 }
 
+export async function getContractInfo(client: CosmWasmClient, contract_address: string): Promise<ContractInfo> {
+    const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
+    const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
+    return contract_info;
+}
+
+async function contractInfo(client: CosmWasmClient, config: FullConfig, options: Options): Promise<void> {
+    try {
+        const address = config.axelar.contracts[options.contractName]?.address;
+        if (!address) {
+            throw new Error(`No address configured for contract '${options.contractName}'`);
+        }
+
+        const contract_info: ContractInfo = await getContractInfo(client, address);
+        console.log(contract_info);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -249,12 +277,20 @@ const programHandler = () => {
             mainQueryProcessor(saveDeployedContracts, options, [chainName]);
         });
 
+    const contractInfoCmd = program
+        .command('contract-info')
+        .description('Query contract info')
+        .action((options: Options) => {
+            mainQueryProcessor(contractInfo, options, []);
+        });
+
     addAmplifierQueryOptions(rewardsCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
     addAmplifierQueryOptions(customTokenMetadataCmd);
     addAmplifierQueryOptions(tokenInstanceCmd);
     addAmplifierQueryOptions(itsChainConfigCmd);
     addAmplifierQueryOptions(saveDeployedContractsCmd);
+    addAmplifierQueryContractOptions(contractInfoCmd);
 
     program.parse();
 };
@@ -262,7 +298,3 @@ const programHandler = () => {
 if (require.main === module) {
     programHandler();
 }
-
-module.exports = {
-    getItsChainConfig,
-};

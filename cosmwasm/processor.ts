@@ -4,7 +4,7 @@ import { GasPrice, StdFee } from '@cosmjs/stargate';
 
 import { ConfigManager, FullConfig } from '../common/config';
 
-type Options = {
+export type Options = {
     env: string;
     contractName: string;
     chainName: string;
@@ -23,7 +23,7 @@ type ProcessorQueryFn = (
     fee?: string | StdFee,
 ) => Promise<void>;
 
-interface ClientManager extends SigningCosmWasmClient {
+export interface ClientManager extends SigningCosmWasmClient {
     accounts: readonly AccountData[];
 }
 
