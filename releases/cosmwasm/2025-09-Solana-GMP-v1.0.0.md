@@ -91,7 +91,8 @@ RUN_AS_ACCOUNT=
         -c SolanaVotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -a "$ARTIFACT_PATH"
+        -a "$ARTIFACT_PATH" \
+        -m $MNEMONIC
     ```
 
 1. Store Gateway:
@@ -101,7 +102,8 @@ RUN_AS_ACCOUNT=
         -c SolanaGateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
-        -a "$ARTIFACT_PATH"
+        -a "$ARTIFACT_PATH" \
+        -m $MNEMONIC
     ```
 
 1. Store Multisig Prover:
@@ -111,7 +113,8 @@ RUN_AS_ACCOUNT=
         -c SolanaMultisigProver \
         -t "Upload MultisigProver contract for Solana" \
         -d "Upload MultisigProver contract for Solana integration" \
-        -a "$ARTIFACT_PATH"
+        -a "$ARTIFACT_PATH" \
+        -m $MNEMONIC
     ```
 
 ## Deployment
