@@ -7,12 +7,11 @@ use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::events::{GatewayEvent, VerifierSetRotatedEvent};
+use axelar_solana_gateway::events::VerifierSetRotatedEvent;
 use axelar_solana_gateway::get_verifier_set_tracker_pda;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
-    get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
-    GetGatewayError, ProgramInvocationState,
+    make_messages, make_verifier_set, random_bytes, random_message, GetGatewayError,
 };
 use axelar_solana_gateway_test_fixtures::{assert_event_cpi, SolanaAxelarIntegration};
 use solana_program_test::tokio;
@@ -36,10 +35,7 @@ async fn successfully_rotates_signers() {
         &metadata.domain_separator,
     )
     .unwrap();
-    let MerkleisedPayload::VerifierSetRotation {
-        new_verifier_set_merkle_root,
-    } = execute_data.payload_items
-    else {
+    let MerkleisedPayload::VerifierSetRotation { .. } = execute_data.payload_items else {
         unreachable!()
     };
     let verification_session_account = metadata
@@ -78,7 +74,7 @@ async fn successfully_rotates_signers() {
     assert_event_cpi(&expected_event, &inner_ixs);
 
     // Now execute the transaction
-    let tx_result = metadata
+    metadata
         .rotate_signers(
             &metadata.signers.clone(),
             &new_verifier_set.verifier_set(),
@@ -260,16 +256,6 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     .unwrap();
     let (new_vs_tracker_pda, new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
-    let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        metadata.gateway_root_pda,
-        signing_session_pda,
-        metadata.signers.verifier_set_tracker().0,
-        new_vs_tracker_pda,
-        metadata.payer.pubkey(),
-        Some(metadata.operator.pubkey()),
-        new_verifier_set_hash,
-    )
-    .unwrap();
 
     // First simulate to check events
     let simulation_result = metadata

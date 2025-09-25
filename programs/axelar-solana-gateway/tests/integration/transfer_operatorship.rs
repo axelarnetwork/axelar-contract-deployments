@@ -1,11 +1,10 @@
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::events::{GatewayEvent, OperatorshipTransferredEvent};
+use axelar_solana_gateway::events::OperatorshipTransferredEvent;
 use axelar_solana_gateway::instructions::GatewayInstruction;
 use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
-use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, ProgramInvocationState};
 use axelar_solana_gateway_test_fixtures::{
-    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+    assert_event_cpi, SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
 use num_traits::ToPrimitive as _;
 use program_utils::pda::BytemuckedPda;
@@ -45,6 +44,36 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
         new_operator.pubkey(),
     )
     .unwrap();
+
+    // Simulate transaction
+
+    let simulation_result = fixture
+        .simulate_tx_with_custom_signers(
+            &[ix.clone()],
+            &[&operator, &fixture.payer.insecure_clone()],
+        )
+        .await
+        .unwrap();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(inner_ixs.len() > 0);
+
+    let expected_event = OperatorshipTransferredEvent {
+        new_operator: new_operator.pubkey(),
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Execute the transaction
+
     let tx = fixture
         .send_tx_with_custom_signers(&[ix], &[&operator, &fixture.payer.insecure_clone()])
         .await
@@ -52,18 +81,7 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
 
     // Assert
     assert!(tx.result.is_ok());
-    // - expected events
-    let emitted_events = get_gateway_events(&tx).pop().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::OperatorshipTransferred(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    let expected_event = OperatorshipTransferredEvent {
-        new_operator: new_operator.pubkey(),
-    };
-    assert_eq!(emitted_event, &expected_event);
+
     // - command PDAs get updated
     let altered_config_acc = fixture
         .get_account(&gateway_root_pda, &axelar_solana_gateway::ID)
@@ -105,6 +123,39 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
         new_operator.pubkey(),
     )
     .unwrap();
+
+    // Simulate transaction
+
+    let simulation_result = fixture
+        .simulate_tx_with_custom_signers(
+            &[ix.clone()],
+            &[
+                &upgrade_authority.insecure_clone(),
+                &fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(inner_ixs.len() > 0);
+
+    let expected_event = OperatorshipTransferredEvent {
+        new_operator: new_operator.pubkey(),
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Execute the transaction
+
     let tx = fixture
         .send_tx_with_custom_signers(
             &[ix],
@@ -118,18 +169,7 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
 
     // Assert
     assert!(tx.result.is_ok());
-    // - expected events
-    let emitted_events = get_gateway_events(&tx).pop().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::OperatorshipTransferred(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    let expected_event = OperatorshipTransferredEvent {
-        new_operator: new_operator.pubkey(),
-    };
-    assert_eq!(emitted_event, &expected_event);
+
     // - command PDAs get updated
     let altered_config_acc = fixture
         .get_account(&gateway_root_pda, &axelar_solana_gateway::ID)
@@ -256,11 +296,19 @@ async fn fail_if_invalid_program_id() {
         &bpf_loader_upgradeable::id(),
     )
     .unwrap();
+
+    let (event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gateway::ID,
+    );
+
     let accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new_readonly(upgrade_authority.pubkey(), true),
         AccountMeta::new_readonly(programdata_pubkey, false),
         AccountMeta::new_readonly(new_operator, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship).unwrap();
@@ -315,6 +363,12 @@ async fn fail_if_stranger_dose_not_sing_anything() {
         &bpf_loader_upgradeable::id(),
     )
     .unwrap();
+
+    let (event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gateway::ID,
+    );
+
     let accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new_readonly(stranger_danger.pubkey(), false), /* the `false` flag is the
@@ -323,6 +377,8 @@ async fn fail_if_stranger_dose_not_sing_anything() {
                                                                      * on he "client" side */
         AccountMeta::new_readonly(programdata_pubkey, false),
         AccountMeta::new_readonly(new_operator, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship).unwrap();
