@@ -67,7 +67,7 @@ const addTopUpOptions = (program: Command): void => {
     program.addOption(
         new Option('--addresses <addresses>', 'comma separated list of addresses to top up')
             .default([])
-            .argParser((addresses: string) => addresses.split(',').map((address) => address.trim())),
+            .argParser((addresses: string): string[] => addresses.split(',').map((address) => address.trim())),
     );
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 };
