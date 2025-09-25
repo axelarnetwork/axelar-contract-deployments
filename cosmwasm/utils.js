@@ -1093,8 +1093,6 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             printInfo('Retrying proposal submission..... 🔄');
         }
     }
-
-    throw lastError;
 };
 
 const submitProposal = async (client, config, options, content, fee) => {
