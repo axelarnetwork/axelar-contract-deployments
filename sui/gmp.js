@@ -58,8 +58,6 @@ async function sendCommand(keypair, client, chains, chain, args, options) {
 async function execute(keypair, client, chains, chain, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
-    const { Example } = chain.contracts;
-
     const channelId = options.channelId || chain.contracts.Example.objects.GmpChannelId;
 
     if (!channelId) {
@@ -72,7 +70,7 @@ async function execute(keypair, client, chains, chain, args, options) {
         source_chain: sourceChain,
         message_id: messageId,
         source_address: sourceAddress,
-        destination_id: Example.objects.GmpChannelId,
+        destination_id: channelId,
         payload,
     };
 
