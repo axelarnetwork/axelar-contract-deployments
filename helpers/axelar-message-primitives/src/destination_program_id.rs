@@ -19,6 +19,7 @@ impl DestinationProgramId {
     /// validating that a message is being executed - this is reference to
     /// gateway.validateMessage.
     pub fn signing_pda(&self, command_id: &[u8; 32]) -> (Pubkey, u8) {
+        // This corresponds to `axelar_solana_gateway::seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED`
         Pubkey::find_program_address(&[b"gtw-validate-msg", command_id], &self.0)
     }
 }
