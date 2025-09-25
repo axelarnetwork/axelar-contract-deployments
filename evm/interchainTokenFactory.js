@@ -90,7 +90,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            validateParameters({ isValidAddress: { deployer }, isValidString: { deploymentSalt } });
+            validateParameters({ isValidAddress: { deployer } });
 
             const interchainTokenDeploySalt = await interchainTokenFactory.interchainTokenDeploySalt(deployer, deploymentSalt);
 
@@ -336,6 +336,7 @@ if (require.main === module) {
             main(cmd.name(), [], options);
         });
 
+    // ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
     program
         .command('interchain-token-deploy-salt <deployer>')
         .description('Get interchain token deploy')
@@ -343,7 +344,7 @@ if (require.main === module) {
             main(cmd.name(), [deployer], options);
         });
 
-    // node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet --yes
+    // ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet --yes
     program
         .command('canonical-interchain-token-deploy-salt <tokenAddress>')
         .description('Get canonical interchain token deploy salt')
@@ -351,7 +352,7 @@ if (require.main === module) {
             main(cmd.name(), [tokenAddress], options);
         });
 
-    // node evm/interchainTokenFactory.js canonical-interchain-token-id 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet --yes
+    // ts-node evm/interchainTokenFactory.js canonical-interchain-token-id 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet --yes
     program
         .command('canonical-interchain-token-id <tokenAddress>')
         .description('Get canonical interchain token id')
@@ -359,7 +360,7 @@ if (require.main === module) {
             main(cmd.name(), [tokenAddress], options);
         });
 
-    // node evm/interchainTokenFactory.js interchain-token-id 0x312dba807EAE77f01EF3dd21E885052f8F617c5B 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82 --chainNames avalanche --env testnet --yes --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+    // ts-node evm/interchainTokenFactory.js interchain-token-id 0x312dba807EAE77f01EF3dd21E885052f8F617c5B 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82 --chainNames avalanche --env testnet --yes --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
     program
         .command('interchain-token-id <deployer>')
         .description('Get interchain token id')
@@ -367,6 +368,7 @@ if (require.main === module) {
             main(cmd.name(), [deployer], options);
         });
 
+    //ts-node node evm/interchainTokenFactory.js deploy-interchain-token btest11 btest11 18 12345 0x312dba807EAE77f01EF3dd21E885052f8F617c5B  --chainNames ethereum-sepolia --env testnet --yes --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e44a
     program
         .command('deploy-interchain-token <name> <symbol> <decimals> <initialSupply> <minter>')
         .description('Deploy interchain token')
@@ -374,8 +376,7 @@ if (require.main === module) {
             main(cmd.name(), [name, symbol, decimals, initialSupply, minter], options);
         });
 
-    //  node evm/interchainTokenFactory.js deploy-remote-interchain-token 0x01bc86881a7ce41ac90eaa6eca5e0e63d9a5a218bdafd9996aa2d5aea947ff39 Avalanche 10000000000000000  --chainNames ethereum-sepolia  --env testnet --yes
-    // the salt was what i had passed into deployInterchainToken() on etherscan
+    //  ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token 0x01bc86881a7ce41ac90eaa6eca5e0e63d9a5a218bdafd9996aa2d5aea947ff39 Avalanche 10000000000000000  --chainNames ethereum-sepolia  --env testnet --yes
     program
         .command('deploy-remote-interchain-token <salt> <destinationChain> <gasValue>')
         .description('Deploy remote interchain token')
@@ -383,7 +384,7 @@ if (require.main === module) {
             main(cmd.name(), [salt, destinationChain, gasValue], options);
         });
 
-    //  node evm/interchainTokenFactory.js register-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b --chainNames ethereum-sepolia --env testnet --yes
+    //  ts-node evm/interchainTokenFactory.js register-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b --chainNames ethereum-sepolia --env testnet --yes
     program
         .command('register-canonical-interchain-token <tokenAddress>')
         .description('Register canonical interchain token')
@@ -391,7 +392,7 @@ if (require.main === module) {
             main(cmd.name(), [tokenAddress], options);
         });
 
-    // node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche 100000000000 --chainNames ethereum-sepolia --env testnet --yes
+    // ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche 100000000000 --chainNames ethereum-sepolia --env testnet --yes
     program
         .command('deploy-remote-canonical-interchain-token <tokenAddress> <destinationChain> <gasValue>')
         .description('Deploy remote canonical interchain token')
@@ -399,7 +400,7 @@ if (require.main === module) {
             main(cmd.name(), [tokenAddress, destinationChain, gasValue], options);
         });
 
-    //  node evm/interchainTokenFactory.js register-custom-token  0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+    //  ts-node evm/interchainTokenFactory.js register-custom-token  0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
     program
         .command('register-custom-token <tokenAddress> <tokenManagerType> <operator>')
         .description('Register custom token')
@@ -407,7 +408,7 @@ if (require.main === module) {
             main(cmd.name(), [tokenAddress, tokenManagerType, operator], options);
         });
 
-    // node evm/interchainTokenFactory.js link-token Avalanche 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000000  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+    // ts-node evm/interchainTokenFactory.js link-token Avalanche 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000000  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
     program
         .command('link-token <destinationChain> <destinationTokenAddress> <tokenManagerType> <linkParams> <gasValue>')
         .description('Link token to token on destination chain')
