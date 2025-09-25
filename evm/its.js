@@ -462,7 +462,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 }
             }
 
-            const multicall = await interchainTokenService.multicall(data);
+            const multicall = await interchainTokenService.multicall(data, gasOptions);
             await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressSet', 'TrustedChainSet');
 
             break;
@@ -488,7 +488,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 }
             }
 
-            const multicall = await interchainTokenService.multicall(data);
+            const multicall = await interchainTokenService.multicall(data, gasOptions);
             await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressRemoved', 'TrustedChainRemoved');
 
             break;
