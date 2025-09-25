@@ -1,0 +1,147 @@
+{
+  "chains": {
+    "flow": {
+      "name": "Flow",
+      "axelarId": "flow",
+      "chainId": 545,
+      "rpc": "https://testnet.evm.nodes.onflow.org",
+      "tokenSymbol": "FLOW",
+      "decimals": 18,
+      "chainType": "evm",
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0xE73Dfa9DA4A8AdCa4cE8E4483dBa606Aee7bd839",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x698aC8280dBcb7cbBe4C1FFc2b00000c3C23Cd18",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {}
+      },
+      "explorer": {
+        "name": "Flowscan",
+        "url": "https://evm-testnet.flowscan.io/",
+        "api": "https://evm-testnet.flowscan.io/api"
+      },
+      "gasOptions": {
+        "gasLimit": 8000000
+      },
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1
+    }
+  },
+  "axelar": {
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "lastUploadedCodeId": 4,
+        "address": "axelar1kxnt7c625dc9ajw6su72j0f3hrcme2m0u38nlafa4ftpsvqjkmjquqnfvc",
+        "codeId": 4
+      },
+      "Router": {
+        "adminAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "lastUploadedCodeId": 2,
+        "address": "axelar1w9j02anvgvlv9q55j2r0hdegp67z298htuyy6vrv4sfepjd548vqgdu55h",
+        "codeId": 2
+      },
+      "Multisig": {
+        "adminAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "blockExpiry": 10,
+        "lastUploadedCodeId": 6,
+        "address": "axelar1pfd29f44vrve2nzv4zpg2nmz9ferg6272eqq3yertgv09cssm3dqht3y5g",
+        "codeId": 6
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "lastUploadedCodeId": 1,
+        "address": "axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e",
+        "codeId": 1
+      },
+      "Rewards": {
+        "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "rewardsDenom": "uattiss",
+        "lastUploadedCodeId": 5,
+        "address": "axelar1kgwz42efrkn243ggg90fs2tf5a0ly47zx6xk42z785wc2pq25txscnv33t",
+        "codeId": 5
+      },
+      "AxelarnetGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "lastUploadedCodeId": 3,
+        "address": "axelar1te2zx5dkn42me3v7awsdy570el0m5gkmmqzc4hrh84g3n0utvv8s4v5wzm",
+        "codeId": 3
+      },
+      "InterchainTokenService": {
+        "operatorAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "adminAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+        "lastUploadedCodeId": 7,
+        "address": "axelar1w3mzgr23cfzyuxy5pmhhamexewjfhtzvwr0z8s9y2ae22gw3nllsn83jz6",
+        "codeId": 7
+      },
+      "VotingVerifier": {
+        "flow": {
+          "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB3f4df88D23e71FFAf487731ea7780D287E5B195",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55"
+        },
+        "lastUploadedCodeId": 12
+      },
+      "Gateway": {
+        "flow": {},
+        "lastUploadedCodeId": 13
+      },
+      "MultisigProver": {
+        "flow": {
+          "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+          "adminAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa"
+        },
+        "lastUploadedCodeId": 14
+      },
+      "ItsAbiTranslator": {
+        "lastUploadedCodeId": 8,
+        "address": "axelar1qqje0atgrm7p6296suwlyfkf8jx7y3glqgy39ntuyq5lvxg5f3xsjmg0cm",
+        "codeId": 8
+      }
+    },
+    "id": "axelar",
+    "axelarId": "axelar",
+    "chainId": "devnet-attiss",
+    "rpc": "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:1317",
+    "grpc": "k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:9090",
+    "tokenSymbol": "ATTISS",
+    "gasPrice": "0.00005uattiss",
+    "gasLimit": 5000000,
+    "govProposalDepositAmount": "100000000",
+    "govProposalInstantiateAddresses": [
+      "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5"
+    ]
+  }
+}
