@@ -4,8 +4,8 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use solana_program::program_error::ProgramError;
 
-// Error codes 0-6 are recoverable, 7+ are irrecoverable
-const IRRECOVERABLE_ERROR: u32 = 7;
+// Error codes 0-6 are recoverable, 6+ are irrecoverable
+const IRRECOVERABLE_ERROR: u32 = 6;
 
 /// Errors that may be returned by the Gateway program.
 ///
@@ -169,10 +169,8 @@ mod tests {
 
     #[test]
     fn test_should_relayer_proceed() {
-        let errors_to_proceed = (0..IRRECOVERABLE_ERROR)
-            .map_while(GatewayError::from_u32)
-            .collect_vec();
-        let errors_to_not_proceed = (IRRECOVERABLE_ERROR..u32::MAX)
+        let errors_to_proceed = (0..6).map_while(GatewayError::from_u32).collect_vec();
+        let errors_to_not_proceed = (6..u32::MAX)
             .map_while(GatewayError::from_u32)
             .collect_vec();
 
@@ -180,7 +178,7 @@ mod tests {
         assert_eq!(errors_to_proceed.len(), 6);
         assert_eq!(errors_to_not_proceed.len(), 23);
 
-        // Errors that should cause the relayer to proceed (error numbers < 7)
+        // Errors that should cause the relayer to proceed (error numbers < 6)
         for error in errors_to_proceed {
             assert!(
                 error.should_relayer_proceed(),
@@ -190,7 +188,7 @@ mod tests {
             );
         }
 
-        // Errors that should NOT cause the relayer to proceed (error numbers >= 7)
+        // Errors that should NOT cause the relayer to proceed (error numbers >= 6)
         for error in errors_to_not_proceed {
             assert!(
                 !error.should_relayer_proceed(),
