@@ -415,24 +415,24 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     validateParameters({ isNonEmptyString: { packageName } });
 
     const packageDependencies = getLocalDependencies(packageDir, moveDir);
+    
+    let network;
+    switch (options.env) {
+        case 'devnet':
+        case 'testnet':
+        case 'mainnet': {
+            network = options.env;
+            break;
+        }
+        default: {
+            network = 'testnet';
+        }
+    }
 
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
         const version = Math.max(0, Object.keys(contractsConfig[name]?.versions || {}).length - 1);
         const legacyPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
-
-        let network;
-        switch (options.env) {
-            case 'devnet':
-            case 'testnet':
-            case 'mainnet': {
-                network = options.env;
-                break;
-            }
-            default: {
-                network = 'testnet';
-            }
-        }
 
         updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, legacyPackageId);
     }
@@ -443,7 +443,11 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     if (!options.offline) {
         // The new upgraded package takes a bit of time to register, so we wait.
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        chain.contracts[packageName].structs = await getStructs(client, result.packageId);
+
+        // Update the toml and lock file so running the sync command is not required
+        contractConfig.structs = await getStructs(client, result.packageId);
+        const version = Math.max(0, Object.keys(contractConfig.versions || {}).length - 1);
+        updateMoveToml(packageDir, result.packageId, moveDir, undefined, version, network, contractConfig.versions['0']);
     }
 }
 
