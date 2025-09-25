@@ -631,10 +631,10 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (axelar, chain, multisigSessionId) => {
+const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(axelar.rpc);
-    const value = await client.queryContractSmart(axelar.contracts.MultisigProver[chain].address, query);
+    const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
@@ -756,16 +756,6 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
     }
 }
 
-const getProposalConfig = (config, env, key) => {
-    try {
-        const value = config.axelar?.[key];
-        if (value === undefined) throw new Error(`Key "${key}" not found in config for ${env}`);
-        return value;
-    } catch (error) {
-        throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
-    }
-};
-
 /**
  * Validates if a chain is valid in the config.
  *
@@ -793,6 +783,61 @@ function validateDestinationChain(chains, destinationChain) {
     }
 
     validateChain(chains, destinationChain);
+}
+
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
+    if (env === 'devnet-amplifier') {
+        return 0;
+    }
+
+    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
+        throw new Error(`Invalid gas value: ${gasValue}`);
+    }
+
+    if (isValidNumber(gasValue)) {
+        return scaleGasValue(chain, gasValue);
+    }
+
+    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+
+    const payload = {
+        sourceChain: chain.axelarId,
+        destinationChain: destinationChain,
+        event: eventType,
+    };
+
+    const res = await httpPost(url, payload);
+
+    if (res.error) {
+        throw new Error(`Error querying gas amount: ${res.error}`);
+    }
+    return res;
+}
+
+/**
+ * Scales a gas value up to 18 decimals when required.
+ *
+ * Hedera uses a lower decimal precision for gas/fees, while EVM ecosystems
+ * standardize on 18 decimals. For EVM interactions we need to scale Hedera
+ * values up so that on-chain math uses the same 18-decimal base. Chains that
+ * require scaling should set `gasScalingFactor` to the number of missing
+ * decimals to reach 18.
+ *
+ * Example: if a chain uses 8 decimals, set `gasScalingFactor = 10` so
+ * `gasValue * 10^10` yields an 18-decimal value.
+ *
+ * When `gasScalingFactor` is not a number, no scaling is applied.
+ *
+ * @param {Object} chain - Chain config, may include `gasScalingFactor`.
+ * @param {string|number|BigNumber} gasValue - Raw gas value to scale.
+ * @returns {BigNumber|*} Scaled gas if factor provided; original otherwise.
+ */
+function scaleGasValue(chain, gasValue) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+    }
+
+    return gasValue;
 }
 
 module.exports = {
@@ -856,7 +901,6 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
-    getProposalConfig,
     tokenManagerTypes,
     validateLinkType,
     validateChain,
@@ -864,4 +908,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
+    estimateITSFee,
 };
