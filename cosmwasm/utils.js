@@ -1100,16 +1100,10 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     throw lastError;
 };
 
-const submitProposal = async (client, wallet, config, options, content) => {
-    const [account] = await wallet.getAccounts();
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+const submitProposal = async (client, config, options, content, fee) => {
+    const [account] = client.accounts;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
-
-    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
