@@ -1390,7 +1390,22 @@
         }
       },
       "initialContractsDeployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
-    }
+    },
+    "solana-5": {
+            "name": "Solana Devnet Amplifier",
+            "axelarId": "solana-5",
+            "rpc": "https://api.devnet.solana.com",
+            "chainType": "svm",
+            "decimals": 9,
+            "finality": "31",
+            "approxFinalityWaitTime": 1,
+            "tokenSymbol": "SOL",
+            "explorer": {
+                "name": "Solana devnet Explorer",
+                "url": "https://explorer.solana.com/?cluster=devnet"
+            },
+            "contracts": {}
+        }
   },
   "axelar": {
     "contracts": {
