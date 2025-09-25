@@ -84,7 +84,7 @@ INIT_ADDRESSES=
 RUN_AS_ACCOUNT=
 ```
 
-1. Store Voting Verifier:
+1. Store SolanaVotingVerifier:
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
@@ -92,10 +92,11 @@ RUN_AS_ACCOUNT=
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
         -a "$ARTIFACT_PATH" \
+        --chainName $CHAIN \
         -m $MNEMONIC
     ```
 
-1. Store Gateway:
+1. Store SolanaGateway:
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
@@ -103,10 +104,11 @@ RUN_AS_ACCOUNT=
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
         -a "$ARTIFACT_PATH" \
+        --chainName $CHAIN \
         -m $MNEMONIC
     ```
 
-1. Store Multisig Prover:
+1. Store SolanaMultisigProver:
 
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
@@ -114,6 +116,7 @@ RUN_AS_ACCOUNT=
         -t "Upload MultisigProver contract for Solana" \
         -d "Upload MultisigProver contract for Solana integration" \
         -a "$ARTIFACT_PATH" \
+        --chainName $CHAIN \
         -m $MNEMONIC
     ```
 
@@ -161,7 +164,9 @@ RUN_AS_ACCOUNT=
 }
 ```
 
-### Instantiate Amplifier contracts
+- Return to 'Initialization Steps' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
+
+### Instantiate Amplifier Contracts
 
 | Axelar Env           | `CONTRACT_ADMIN`                                |
 | -------------------- | ----------------------------------------------- |
@@ -177,19 +182,19 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Instantiate `SolanaVotingVerifier`
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaVotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaVotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
     ```
 
 1. Instantiate `SolanaGateway`
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaGateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaGateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
     ```
 
 1. Instantiate `SolanaMultisigProver`
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaMultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaMultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
     ```
 
 1. Set environment variables
