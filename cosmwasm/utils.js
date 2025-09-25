@@ -1084,13 +1084,13 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             const code = error?.cause?.code || error?.code;
             const message = error?.message || '';
 
-            printInfo('Retrying proposal submission..... 🔄');
-
             // Confirm err is socket error
             const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
             if (!isTransient || attempt === maxAttempts - 1) {
                 throw error;
             }
+
+            printInfo('Retrying proposal submission..... 🔄');
         }
     }
 
