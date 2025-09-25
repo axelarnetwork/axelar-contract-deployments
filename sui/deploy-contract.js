@@ -415,7 +415,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     validateParameters({ isNonEmptyString: { packageName } });
 
     const packageDependencies = getLocalDependencies(packageDir, moveDir);
-    
+
     let network;
     switch (options.env) {
         case 'devnet':
