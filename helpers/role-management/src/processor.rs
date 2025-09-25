@@ -45,6 +45,7 @@ pub fn propose<F: RolesFlags>(
         accounts.resource.key,
         accounts.origin_user_account.key,
         accounts.destination_user_account.key,
+        roles,
     );
 
     if proposal_pda != *accounts.proposal_account.key {
@@ -57,6 +58,8 @@ pub fn propose<F: RolesFlags>(
         bump: proposal_pda_bump,
     };
 
+    let roles_bytes = borsh::to_vec(&roles.bits())
+        .expect("No obvious reason why serializing bits should fail. It's a bug.");
     proposal.init(
         program_id,
         accounts.system_account,
@@ -67,6 +70,7 @@ pub fn propose<F: RolesFlags>(
             accounts.resource.key.as_ref(),
             accounts.origin_user_account.key.as_ref(),
             accounts.destination_user_account.key.as_ref(),
+            &roles_bytes,
             &[proposal_pda_bump],
         ],
     )?;
@@ -84,12 +88,14 @@ pub fn accept<F: RolesFlags>(
     accounts: RoleTransferWithProposalAccounts<'_>,
     roles: F,
 ) -> ProgramResult {
-    let proposal_pda_bump = RoleProposal::<F>::load(accounts.proposal_account)?.bump;
+    let proposal = RoleProposal::<F>::load(accounts.proposal_account)?;
+    let proposal_pda_bump = proposal.bump;
     let (derived_proposal_pda, _) = crate::create_roles_proposal_pda(
         program_id,
         accounts.resource.key,
         accounts.origin_user_account.key,
         accounts.destination_user_account.key,
+        proposal.roles,
         proposal_pda_bump,
     );
 
@@ -98,7 +104,6 @@ pub fn accept<F: RolesFlags>(
         return Err(ProgramError::InvalidArgument);
     }
 
-    let proposal = RoleProposal::<F>::load(accounts.proposal_account)?;
     if !proposal.roles.contains(roles) {
         msg!("Trying to accept a role that hasn't been proposed");
         return Err(ProgramError::InvalidArgument);

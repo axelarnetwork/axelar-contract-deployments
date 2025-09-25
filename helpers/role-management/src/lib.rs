@@ -58,13 +58,16 @@ pub fn find_user_roles_pda(program_id: &Pubkey, resource: &Pubkey, user: &Pubkey
 /// Tries to create the PDA for `RolesProposal` using the provided bump,
 /// falling back to `find_program_address` if the bump is `None` or invalid.
 #[must_use]
-pub fn roles_proposal_pda(
+pub fn roles_proposal_pda<F: crate::state::RolesFlags>(
     program_id: &Pubkey,
     resource: &Pubkey,
     from: &Pubkey,
     to: &Pubkey,
+    roles: F,
     maybe_bump: Option<u8>,
 ) -> (Pubkey, u8) {
+    let roles_bytes = borsh::to_vec(&roles.bits())
+        .expect("No obvious reason why serializing bits should fail. It's a bug.");
     maybe_bump
         .and_then(|bump| {
             Pubkey::create_program_address(
@@ -73,6 +76,7 @@ pub fn roles_proposal_pda(
                     resource.as_ref(),
                     from.as_ref(),
                     to.as_ref(),
+                    &roles_bytes,
                     &[bump],
                 ],
                 program_id,
@@ -87,6 +91,7 @@ pub fn roles_proposal_pda(
                     resource.as_ref(),
                     from.as_ref(),
                     to.as_ref(),
+                    &roles_bytes,
                 ],
                 program_id,
             )
@@ -97,24 +102,26 @@ pub fn roles_proposal_pda(
 /// falling back to `find_program_address` if the bump is invalid.
 #[inline]
 #[must_use]
-pub fn create_roles_proposal_pda(
+pub fn create_roles_proposal_pda<F: crate::state::RolesFlags>(
     program_id: &Pubkey,
     resource: &Pubkey,
     from: &Pubkey,
     to: &Pubkey,
+    roles: F,
     bump: u8,
 ) -> (Pubkey, u8) {
-    roles_proposal_pda(program_id, resource, from, to, Some(bump))
+    roles_proposal_pda(program_id, resource, from, to, roles, Some(bump))
 }
 
 /// Derives the PDA for a `RolesProposal` account.
 #[inline]
 #[must_use]
-pub fn find_roles_proposal_pda(
+pub fn find_roles_proposal_pda<F: crate::state::RolesFlags>(
     program_id: &Pubkey,
     resource: &Pubkey,
     from: &Pubkey,
     to: &Pubkey,
+    roles: F,
 ) -> (Pubkey, u8) {
-    roles_proposal_pda(program_id, resource, from, to, None)
+    roles_proposal_pda(program_id, resource, from, to, roles, None)
 }

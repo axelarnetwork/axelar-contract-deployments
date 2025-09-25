@@ -1780,3 +1780,241 @@ async fn test_successful_operator_transfer_with_data_at_authority(ctx: &mut ItsT
     .await
     .unwrap();
 }
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_simultaneous_role_proposals_different_roles(ctx: &mut ItsTestContext) {
+    let token_id = ctx.deployed_interchain_token;
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+
+    let alice = Keypair::new();
+    let bob = Keypair::new();
+
+    // Fund accounts
+    ctx.send_solana_tx(&[
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &alice.pubkey(),
+            u32::MAX.into(),
+        ),
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &bob.pubkey(),
+            u32::MAX.into(),
+        ),
+    ])
+    .await
+    .unwrap();
+
+    // The payer currently has both MINTER and OPERATOR roles
+    let (payer_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &ctx.solana_chain.fixture.payer.pubkey(),
+    );
+
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&payer_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let payer_roles = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+
+    assert!(payer_roles.contains(Roles::MINTER));
+    assert!(payer_roles.contains(Roles::OPERATOR));
+
+    // Propose MINTER role to Alice
+    let propose_mintership_ix =
+        axelar_solana_its::instruction::interchain_token::propose_mintership(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_id,
+            alice.pubkey(),
+        )
+        .unwrap();
+
+    ctx.send_solana_tx(&[propose_mintership_ix]).await.unwrap();
+
+    // Propose OPERATOR role to Alice
+    let propose_operatorship_ix =
+        axelar_solana_its::instruction::token_manager::propose_operatorship(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_id,
+            alice.pubkey(),
+        )
+        .unwrap();
+
+    ctx.send_solana_tx(&[propose_operatorship_ix])
+        .await
+        .unwrap();
+
+    // Verify both proposals exist by checking their PDAs
+    let (minter_proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &alice.pubkey(),
+        axelar_solana_its::Roles::MINTER,
+    );
+
+    let (operator_proposal_pda, _) = role_management::find_roles_proposal_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &alice.pubkey(),
+        axelar_solana_its::Roles::OPERATOR,
+    );
+
+    // Verify the proposals have different PDAs (collision check)
+    assert_ne!(minter_proposal_pda, operator_proposal_pda);
+
+    // Verify both proposal accounts exist and have correct data
+    let minter_proposal_data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&minter_proposal_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let minter_proposal =
+        role_management::state::RoleProposal::<axelar_solana_its::Roles>::try_from_slice(
+            &minter_proposal_data,
+        )
+        .unwrap();
+    assert!(minter_proposal
+        .roles
+        .contains(axelar_solana_its::Roles::MINTER));
+
+    let operator_proposal_data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&operator_proposal_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let operator_proposal =
+        role_management::state::RoleProposal::<axelar_solana_its::Roles>::try_from_slice(
+            &operator_proposal_data,
+        )
+        .unwrap();
+    assert!(operator_proposal
+        .roles
+        .contains(axelar_solana_its::Roles::OPERATOR));
+
+    // Alice can accept both proposals independently
+    let accept_mintership_ix = axelar_solana_its::instruction::interchain_token::accept_mintership(
+        alice.pubkey(),
+        alice.pubkey(),
+        token_id,
+        ctx.solana_chain.fixture.payer.pubkey(),
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_mintership_ix],
+            &[
+                &alice.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify Alice now has MINTER role but NOT OPERATOR role yet
+    let (alice_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &alice.pubkey(),
+    );
+
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let alice_roles_after_minter = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+
+    assert!(
+        alice_roles_after_minter.contains(Roles::MINTER),
+        "Alice should have MINTER role after accepting mintership"
+    );
+    assert!(
+        !alice_roles_after_minter.contains(Roles::OPERATOR),
+        "Alice should NOT have OPERATOR role yet"
+    );
+
+    // Verify payer has lost MINTER but still has OPERATOR
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&payer_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let payer_roles_after_minter = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+
+    assert!(
+        !payer_roles_after_minter.contains(Roles::MINTER),
+        "Payer should have lost MINTER role"
+    );
+    assert!(
+        payer_roles_after_minter.contains(Roles::OPERATOR),
+        "Payer should still have OPERATOR role"
+    );
+
+    // Now accept the operatorship proposal
+    let accept_operatorship_ix =
+        axelar_solana_its::instruction::token_manager::accept_operatorship(
+            alice.pubkey(),
+            alice.pubkey(),
+            token_id,
+            ctx.solana_chain.fixture.payer.pubkey(),
+        )
+        .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_operatorship_ix],
+            &[
+                &alice.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify Alice now has both roles
+    let (alice_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &alice.pubkey(),
+    );
+
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let alice_roles = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+
+    assert!(alice_roles.contains(Roles::MINTER));
+    assert!(alice_roles.contains(Roles::OPERATOR));
+
+    // Verify payer no longer has these roles
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&payer_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let updated_payer_roles = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+
+    assert!(!updated_payer_roles.contains(Roles::MINTER));
+    assert!(!updated_payer_roles.contains(Roles::OPERATOR));
+}
