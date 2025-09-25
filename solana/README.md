@@ -17,7 +17,7 @@
 1. Install `solana-verify`, for verifiable builds:
 
     ```sh
-    cargo install solana-verify --locked 0.4.4
+    cargo install solana-verify
     ```
 
 1. Create a new Solana keypair
