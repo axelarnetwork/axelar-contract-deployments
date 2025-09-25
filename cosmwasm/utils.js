@@ -36,7 +36,6 @@ const {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
-    printError,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -1084,8 +1083,6 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             lastError = error;
             const code = error?.cause?.code || error?.code;
             const message = error?.message || '';
-
-            printError(`proposal submission attempt ${attempt + 1} failed (code: ${code})${message ? `: ${message}` : ''}`);
 
             printInfo('Retrying proposal submission..... 🔄');
 
