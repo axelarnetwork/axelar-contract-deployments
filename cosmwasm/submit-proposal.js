@@ -203,11 +203,17 @@ const registerItsChain = async (client, config, options, _args, fee) => {
 
     const operation = options.update ? 'update' : 'register';
 
-    return execute(client, config, {
-        ...options,
-        contractName: 'InterchainTokenService',
-        msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
-    }, undefined, fee);
+    return execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'InterchainTokenService',
+            msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
+        },
+        undefined,
+        fee,
+    );
 };
 
 const registerProtocol = async (client, config, options, _args, fee) => {
@@ -215,17 +221,23 @@ const registerProtocol = async (client, config, options, _args, fee) => {
     const router = config.axelar?.contracts?.Router?.address;
     const multisig = config.axelar?.contracts?.Multisig?.address;
 
-    return execute(client, config, {
-        ...options,
-        contractName: 'Coordinator',
-        msg: JSON.stringify({
-            register_protocol: {
-                service_registry_address: serviceRegistry,
-                router_address: router,
-                multisig_address: multisig,
-            },
-        }),
-    }, undefined, fee);
+    return execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'Coordinator',
+            msg: JSON.stringify({
+                register_protocol: {
+                    service_registry_address: serviceRegistry,
+                    router_address: router,
+                    multisig_address: multisig,
+                },
+            }),
+        },
+        undefined,
+        fee,
+    );
 };
 
 const paramChange = async (client, config, options, _args, fee) => {
@@ -261,11 +273,17 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
 
     const message = await getInstantiateChainContractsMessage(client, config, options);
 
-    const proposalId = await execute(client, config, {
-        ...options,
-        contractName: 'Coordinator',
-        msg: JSON.stringify(message),
-    }, undefined, fee);
+    const proposalId = await execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'Coordinator',
+            msg: JSON.stringify(message),
+        },
+        undefined,
+        fee,
+    );
 
     if (!config.axelar.contracts.Coordinator.deployments) {
         config.axelar.contracts.Coordinator.deployments = {};
