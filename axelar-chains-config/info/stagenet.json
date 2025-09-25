@@ -824,7 +824,7 @@
       "name": "Polygon-Sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://polygon-amoy.drpc.org",
+      "rpc": "https://rpc-amoy.polygon.technology/",
       "tokenSymbol": "MATIC",
       "decimals": 18,
       "confirmations": 2,
