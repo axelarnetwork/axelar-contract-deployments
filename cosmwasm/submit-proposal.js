@@ -235,7 +235,7 @@ const paramChange = async (client, config, options, _args, fee) => {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposa, fee);
+    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
 const migrate = async (client, config, options, _args, fee) => {
