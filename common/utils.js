@@ -790,7 +790,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         return 0;
     }
 
-    if(gasValue != 'auto' && !isValidNumber(gasValue)) {
+    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
         throw new Error(`Invalid gas value: ${gasValue}`);
     }
 
