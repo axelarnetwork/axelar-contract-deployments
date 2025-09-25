@@ -37,7 +37,7 @@ pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
 /// 1. `gateway_message_payload` - `MessagePayload` PDA
 /// 2. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_program_id` - Gateway Prorgam ID
+/// 3. `gateway_program_id` - Gateway Program ID
 /// N. accounts required by the `DataPayload` constructor
 ///
 /// # Errors
@@ -128,7 +128,7 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
 /// 1. `gateway_message_payload` - `MessagePayload` PDA
 /// 2. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_program_id` - Gateway Prorgam ID
+/// 3. `gateway_program_id` - Gateway Program ID
 /// N. accounts required by the inner instruction (part of the payload).
 ///
 /// # Errors
@@ -238,7 +238,7 @@ fn validate_message_internal(
 /// 2. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
 /// 3. `gateway_root_pda` - Gateway Root PDA
-/// 4. `gateway_program_id` - Gateway Prorgam ID
+/// 4. `gateway_program_id` - Gateway Program ID
 /// N... - The accounts provided in the `axelar_message_payload`
 ///
 /// # Errors
@@ -285,7 +285,7 @@ pub fn construct_axelar_executable_ix(
 /// We prefix a byte slice with the literal contents of `AXELAR_EXECUTE` followed
 /// by the borsh-serialized Message.
 ///
-/// This two-step approach is needed because borsh demonstrated to exaust a Solana
+/// This two-step approach is needed because borsh demonstrated to exhaust a Solana
 /// program's memory when trying to deserialize the alternative form (Tag, Message)
 /// for an absent tag.
 fn serialize_message(message: &Message) -> Result<Vec<u8>, ProgramError> {

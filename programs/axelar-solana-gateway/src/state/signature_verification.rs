@@ -42,7 +42,7 @@ pub struct SignatureVerification {
     /// Upon the first successful signature validation, we set the hash of the
     /// signing verifier set.
     /// This data is later used when rotating signers to figure out which
-    /// verifier set was the one that actually .
+    /// verifier set was the one that actually performed the validation.
     pub signing_verifier_set_hash: VerifierSetHash,
 }
 
@@ -189,6 +189,7 @@ impl SignatureVerification {
             self.accumulated_threshold = u128::MAX;
         }
     }
+
     #[inline]
     fn mark_slot_done(&mut self, signature_node: &VerifierSetLeaf) -> Result<(), GatewayError> {
         let signature_slots = self.signature_slots.view_bits_mut::<Lsb0>();
@@ -271,7 +272,7 @@ pub fn verify_ecdsa_signature(
         return false;
     };
 
-    // Unwrap: provided pukey is guaranteed to be secp256k1 key
+    // Unwrap: provided pubkey is guaranteed to be secp256k1 key
     let pubkey = libsecp256k1::PublicKey::parse_compressed(pubkey)
         .unwrap()
         .serialize();

@@ -339,7 +339,7 @@ async fn fails_to_approve_message_from_different_verifier_set() {
         .await
         .unwrap();
 
-    // Create a message signed byt a different verifier set (not registered with the gateway, but
+    // Create a message signed byte a different verifier set (not registered with the gateway, but
     // this shoulnd't affect this test)
     let different_verifier_set = make_verifier_set(&[100, 200], 999, metadata.domain_separator);
     let different_execute_data = metadata.construct_execute_data(&different_verifier_set, payload);
