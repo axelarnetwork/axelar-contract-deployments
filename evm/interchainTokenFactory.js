@@ -78,7 +78,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
     }
 
     switch (action) {
-        // EX: node evm/interchainTokenFactory.js contract-id --chainNames avalanche --env testnet --yes
         case 'contract-id': {
             const contractId = await interchainTokenFactory.contractId();
             printInfo('InterchainTokenFactory contract ID', contractId);
@@ -86,7 +85,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
-        // TODO: review
         case 'interchain-token-deploy-salt': {
             const [deployer] = args;
 
