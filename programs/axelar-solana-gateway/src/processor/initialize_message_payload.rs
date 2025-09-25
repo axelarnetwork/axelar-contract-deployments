@@ -3,7 +3,10 @@ use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
 
 use super::Processor;
-use program_utils::pda::{init_pda_raw, BytemuckedPda, ValidPDA};
+use program_utils::{
+    pda::{init_pda_raw, BytemuckedPda, ValidPDA},
+    validate_system_account_key,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -59,10 +62,7 @@ impl Processor {
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
 
         // Check: System Program
-        if !solana_program::system_program::check_id(system_program.key) {
-            solana_program::msg!("Error: invalid system program account");
-            return Err(ProgramError::InvalidAccountData);
-        }
+        validate_system_account_key(system_program.key)?;
 
         // Check: Message payload account is writable
         if !message_payload_account.is_writable {

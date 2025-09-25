@@ -21,7 +21,7 @@ use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,
-    get_gateway_root_config_internal, get_verifier_set_tracker_pda, seed_prefixes,
+    get_gateway_root_config_pda, get_verifier_set_tracker_pda, seed_prefixes,
 };
 
 impl Processor {
@@ -107,7 +107,7 @@ impl Processor {
         // check that everything has been derived correctly
         assert_valid_verifier_set_tracker_pda(tracker, verifier_set_pda.key)?;
 
-        let (_, bump) = get_gateway_root_config_internal(program_id);
+        let (_, bump) = get_gateway_root_config_pda();
 
         // Check: Gateway Config account uses the canonical bump.
         assert_valid_gateway_root_pda(bump, gateway_root_pda.key)?;
