@@ -335,6 +335,74 @@ impl SolanaAxelarIntegrationMetadata {
         Ok((verification_session_account, res))
     }
 
+    /// Build rotate_signers instruction (private helper)
+    fn build_rotate_signers_instruction(
+        &self,
+        signers: &SigningVerifierSet,
+        new_verifier_set: &VerifierSet,
+        verification_session_account: Pubkey,
+        operator: Option<Pubkey>,
+    ) -> solana_sdk::instruction::Instruction {
+        let new_verifier_set_hash =
+            verifier_set_hash::<NativeHasher>(new_verifier_set, &self.domain_separator).unwrap();
+        let gateway_config_pda = get_gateway_root_config_pda().0;
+
+        let (new_vs_tracker_pda, _new_vs_tracker_bump) =
+            axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
+        axelar_solana_gateway::instructions::rotate_signers(
+            gateway_config_pda,
+            verification_session_account,
+            signers.verifier_set_tracker().0,
+            new_vs_tracker_pda,
+            self.payer.pubkey(),
+            operator,
+            new_verifier_set_hash,
+        )
+        .unwrap()
+    }
+
+    /// Simulate rotate_signers transaction
+    pub async fn simulate_rotate_signers(
+        &mut self,
+        signers: &SigningVerifierSet,
+        new_verifier_set: &VerifierSet,
+        verification_session_account: Pubkey,
+    ) -> Result<
+        solana_banks_interface::BanksTransactionResultWithSimulation,
+        solana_program_test::BanksClientError,
+    > {
+        let ix = self.build_rotate_signers_instruction(
+            signers,
+            new_verifier_set,
+            verification_session_account,
+            None,
+        );
+        self.simulate_tx(&[ix]).await
+    }
+
+    /// Simulate rotate_signers transaction with operator
+    pub async fn simulate_rotate_signers_with_operator(
+        &mut self,
+        signers: &SigningVerifierSet,
+        new_verifier_set: &VerifierSet,
+        verification_session_account: Pubkey,
+        operator: Pubkey,
+    ) -> Result<
+        solana_banks_interface::BanksTransactionResultWithSimulation,
+        solana_program_test::BanksClientError,
+    > {
+        let ix = self.build_rotate_signers_instruction(
+            signers,
+            new_verifier_set,
+            verification_session_account,
+            Some(operator),
+        );
+        let operator_keypair = self.operator.insecure_clone();
+        let payer_keypair = self.payer.insecure_clone();
+        self.simulate_tx_with_custom_signers(&[ix], &[&operator_keypair, &payer_keypair])
+            .await
+    }
+
     /// Rotate the signers.
     /// The assumption is that the signer verification session is already
     /// complete beforehand.
@@ -344,23 +412,13 @@ impl SolanaAxelarIntegrationMetadata {
         new_verifier_set: &VerifierSet,
         verification_session_account: Pubkey,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
-        let new_verifier_set_hash =
-            verifier_set_hash::<NativeHasher>(new_verifier_set, &self.domain_separator).unwrap();
-        let gateway_config_pda = get_gateway_root_config_pda().0;
-        let (new_vs_tracker_pda, _new_vs_tracker_bump) =
-            axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
-        let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-            gateway_config_pda,
+        let ix = self.build_rotate_signers_instruction(
+            signers,
+            new_verifier_set,
             verification_session_account,
-            signers.verifier_set_tracker().0,
-            new_vs_tracker_pda,
-            self.payer.pubkey(),
             None,
-            new_verifier_set_hash,
-        )
-        .unwrap();
-
-        self.send_tx(&[rotate_signers_ix]).await
+        );
+        self.send_tx(&[ix]).await
     }
 
     /// Call `execute` on an axelar-executable program

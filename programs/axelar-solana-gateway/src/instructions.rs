@@ -296,20 +296,23 @@ pub fn rotate_signers(
     let (event_authority, _bump) =
         Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
 
-    let mut accounts = vec![
+    let accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new_readonly(verification_session_account, false),
         AccountMeta::new_readonly(current_verifier_set_tracker_pda, false),
         AccountMeta::new(new_verifier_set_tracker_pda, false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        // either push the operator as signer
+        // or push the payer as non-signer
+        if let Some(operator) = operator {
+            AccountMeta::new(operator, true)
+        } else {
+            AccountMeta::new_readonly(payer, false)
+        },
         AccountMeta::new_readonly(event_authority, false),
         AccountMeta::new_readonly(crate::ID, false),
     ];
-
-    if let Some(operator) = operator {
-        accounts.push(AccountMeta::new(operator, true));
-    }
 
     Ok(Instruction {
         program_id: crate::id(),
