@@ -1,5 +1,3 @@
-'use strict';
-
 import { Command, Option } from 'commander';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
@@ -30,7 +28,7 @@ const addEnvOption = (program: Command, defaultValue?: string): void => {
     program.addOption(
         new Option('-e, --env <env>', 'environment')
             .choices(CHAIN_ENVIRONMENTS)
-            .default(defaultValue || 'testnet')
+            .default(defaultValue ?? 'testnet')
             .makeOptionMandatory(true)
             .env('ENV'),
     );
