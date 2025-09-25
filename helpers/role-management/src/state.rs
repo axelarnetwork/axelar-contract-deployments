@@ -39,7 +39,6 @@ where
 
 /// Roles assigned to a user on a specific resource.
 #[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
-#[non_exhaustive]
 pub struct UserRoles<F: RolesFlags> {
     roles: F,
     bump: u8,

@@ -9,7 +9,6 @@ use solana_program::program_error::ProgramError;
 /// Governance program logs.
 ///
 /// Following the [implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/interfaces/IInterchainGovernance.sol#L20-L40)
-#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum GovernanceEvent {
     /// Logged when the governance program receives and successfully processes
@@ -22,8 +21,8 @@ pub enum GovernanceEvent {
         /// The target address represented as a 32-byte array. It represents the
         /// [`solana_program::pubkey::Pubkey`].
         target_address: [u8; 32],
-        /// The call data required to execute the target program. The rkyv
-        /// encoded [`crate::proposal::ExecuteProposalCallData`].
+        /// The call data required to execute the target program.
+        /// See [`crate::proposal::ExecuteProposalCallData`].
         call_data: Vec<u8>,
         /// This field represents how many native tokens (lamports) are being
         /// sent to the target program. It's a little-endian U256 value.
@@ -43,8 +42,8 @@ pub enum GovernanceEvent {
         /// The target address represented as a 32-byte array. It represents the
         /// [`solana_program::pubkey::Pubkey`].
         target_address: [u8; 32],
-        /// The call data required to execute the target program. The rkyv
-        /// encoded [`crate::proposal::ExecuteProposalCallData`].
+        /// The call data required to execute the target program.
+        /// See [`crate::proposal::ExecuteProposalCallData`].
         call_data: Vec<u8>,
         /// This field represents how many native tokens (lamports) are being
         /// sent to the target program. It's a little-endian U256 value.
@@ -63,8 +62,8 @@ pub enum GovernanceEvent {
         /// The target address represented as a 32-byte array. It represents the
         /// [`solana_program::pubkey::Pubkey`].
         target_address: [u8; 32],
-        /// The call data required to execute the target program. The rkyv
-        /// encoded [`crate::proposal::ExecuteProposalCallData`].
+        /// The call data required to execute the target program.
+        /// See [`crate::proposal::ExecuteProposalCallData`].
         call_data: Vec<u8>,
         /// This field represents how many native tokens (lamports) are being
         /// sent to the target program. It's a little-endian U256 value.
@@ -84,8 +83,8 @@ pub enum GovernanceEvent {
         /// The target address represented as a 32-byte array. It represents the
         /// [`solana_program::pubkey::Pubkey`].
         target_address: [u8; 32],
-        /// The call data required to execute the target program. The rkyv
-        /// encoded [`crate::proposal::ExecuteProposalCallData`].
+        /// The call data required to execute the target program.
+        /// See [`crate::proposal::ExecuteProposalCallData`].
         call_data: Vec<u8>,
         /// This field represents how many native tokens (lamports) are being
         /// sent to the target program. It's a little-endian U256 value.
@@ -102,8 +101,8 @@ pub enum GovernanceEvent {
         /// The target address represented as a 32-byte array. It represents the
         /// [`solana_program::pubkey::Pubkey`].
         target_address: [u8; 32],
-        /// The call data required to execute the target program. The rkyv
-        /// encoded [`crate::proposal::ExecuteProposalCallData`].
+        /// The call data required to execute the target program.
+        /// See [`crate::proposal::ExecuteProposalCallData`].
         call_data: Vec<u8>,
         /// This field represents how many native tokens (lamports) are being
         /// sent to the target program. It's a little-endian U256 value.
@@ -120,8 +119,8 @@ pub enum GovernanceEvent {
         /// The target address represented as a 32-byte array. It represents the
         /// [`solana_program::pubkey::Pubkey`].
         target_address: [u8; 32],
-        /// The call data required to execute the target program. The rkyv
-        /// encoded [`crate::proposal::ExecuteProposalCallData`].
+        /// The call data required to execute the target program.
+        /// See [`crate::proposal::ExecuteProposalCallData`].
         call_data: Vec<u8>,
         /// This field represents how many native tokens (lamports) are being
         /// sent to the target program. It's a little-endian U256 value.
@@ -156,7 +155,7 @@ impl GovernanceEvent {
         Ok(())
     }
 
-    /// Encode the [`GovernanceEvent`] into a [`Vec<u8>`] which satisfies rkyv
+    /// Encode the [`GovernanceEvent`] into a [`Vec<u8>`] which satisfies
     /// alignment requirements
     ///
     /// # Panics
@@ -180,14 +179,14 @@ impl GovernanceEvent {
     }
 }
 
-/// Wrapper around the rkyv encoded [`GovernanceEvent`]
+/// Wrapper around the encoded [`GovernanceEvent`]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EventContainer {
     buffer: Vec<u8>,
 }
 
 impl EventContainer {
-    /// Create a new [`EventContainer`] from an rkyv encoded [`GovernanceEvent`]
+    /// Create a new [`EventContainer`] from an encoded [`GovernanceEvent`]
     ///
     /// The method will return `None` if the buffer cannod be deserialised into
     /// a valid [`ArchivedGovernanceEvent`]

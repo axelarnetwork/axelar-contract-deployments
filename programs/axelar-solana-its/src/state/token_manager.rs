@@ -18,7 +18,6 @@ use crate::state::flow_limit::FlowState;
 ///
 /// NOTE: The Gateway token manager type is not supported on Solana.
 #[derive(Debug, Eq, PartialEq, Clone, Copy, BorshSerialize, BorshDeserialize)]
-#[non_exhaustive]
 pub enum Type {
     /// For tokens that are deployed directly from ITS itself they use a native
     /// interchain token manager. Tokens that are deployed via the frontend

@@ -19,13 +19,9 @@ const IRRECOVERABLE_ERROR: u32 = 7;
 #[repr(u32)]
 #[derive(Clone, Debug, Eq, thiserror::Error, FromPrimitive, ToPrimitive, PartialEq)]
 pub enum GatewayError {
-    /// Verifier set has already been initialized.
-    #[error("Verifier set already initialized")]
-    VerifierSetAlreadyInitialised = 0,
-
     /// Used when someone tries to verify a signature that has already been verified.
     #[error("Slot has been previously verified")]
-    SlotAlreadyVerified,
+    SlotAlreadyVerified = 0,
 
     /// The message has already been initialized.
     #[error("Message already initialized")]
@@ -181,7 +177,7 @@ mod tests {
             .collect_vec();
 
         // confidence check that we derived the errors correctly
-        assert_eq!(errors_to_proceed.len(), 7);
+        assert_eq!(errors_to_proceed.len(), 6);
         assert_eq!(errors_to_not_proceed.len(), 23);
 
         // Errors that should cause the relayer to proceed (error numbers < 7)
