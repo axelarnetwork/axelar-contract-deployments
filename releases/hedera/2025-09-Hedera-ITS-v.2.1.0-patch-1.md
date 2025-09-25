@@ -109,3 +109,11 @@ ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient
 # Transfer token back from remote chain
 ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
 ```
+
+Additionally, to test the patch itself:
+
+```bash
+node evm/interchainTokenFactory.js --action registerCanonicalInterchainToken -n $CHAIN --tokenAddress [token-address]
+```
+
+To find an appropriate token address, go to [HashScan](https://hashscan.io/), either testnet or mainnet, and look for a fungible token created with the `max supply` field set to a non-max value (e.g. `1000000`).
