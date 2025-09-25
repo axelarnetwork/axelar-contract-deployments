@@ -69,14 +69,14 @@ const confirmProposalSubmission = (options, proposal, proposalType) => {
     return true;
 };
 
-const callSubmitProposal = async (client, config, options, proposal) => {
-    const proposalId = await submitProposal(client, config, options, proposal);
+const callSubmitProposal = async (client, config, options, proposal, fee) => {
+    const proposalId = await submitProposal(client, config, options, proposal, fee);
     printInfo('Proposal submitted', proposalId);
 
     return proposalId;
 };
 
-const storeCode = async (client, config, options, _args, _fee) => {
+const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
@@ -86,13 +86,13 @@ const storeCode = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
-const storeInstantiate = async (client, config, options, _args, _fee) => {
+const storeInstantiate = async (client, config, options, _args, fee) => {
     const { contractName, instantiate2 } = options;
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
 
@@ -107,13 +107,13 @@ const storeInstantiate = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractConfig.storeInstantiateProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
-const instantiate = async (client, config, options, _args, _fee) => {
+const instantiate = async (client, config, options, _args, fee) => {
     const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -149,13 +149,13 @@ const instantiate = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractConfig.instantiateProposalId = proposalId;
     if (instantiate2) contractConfig.address = contractAddress;
 };
 
-const execute = async (client, config, options, _args, _fee) => {
+const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
@@ -164,7 +164,7 @@ const execute = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
 const registerItsChain = async (client, config, options, _args, _fee) => {
@@ -228,17 +228,17 @@ const registerProtocol = async (client, config, options, _args, _fee) => {
     });
 };
 
-const paramChange = async (client, config, options, _args, _fee) => {
+const paramChange = async (client, config, options, _args, fee) => {
     const proposal = encodeParameterChangeProposal(options);
 
     if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposa, fee);
 };
 
-const migrate = async (client, config, options, _args, _fee) => {
+const migrate = async (client, config, options, _args, fee) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
     contractConfig.codeId = await getCodeId(client, config, options);
 
@@ -248,7 +248,7 @@ const migrate = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
 const instantiateChainContracts = async (client, config, options, _args, _fee) => {
