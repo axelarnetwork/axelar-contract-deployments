@@ -170,6 +170,32 @@ pub fn assert_valid_incoming_message_pda(
     Ok(())
 }
 
+/// Assert that the message payload PDA has been derived correctly
+///
+/// # Errors
+///
+/// Returns [`ProgramError::InvalidSeeds`] if the derived PDA does not match the expected pubkey.
+///
+/// # Panics
+///
+/// Panics if the bump seed produces an invalid program derived address.
+#[inline]
+#[track_caller]
+pub fn assert_valid_message_payload_pda(
+    incoming_message_pda: Pubkey,
+    payer: Pubkey,
+    bump: u8,
+    expected_pubkey: &Pubkey,
+) -> Result<(), ProgramError> {
+    let derived_pubkey = create_message_payload_pda(incoming_message_pda, payer, bump)
+        .expect("invalid bump for the message payload PDA");
+    if &derived_pubkey != expected_pubkey {
+        solana_program::msg!("Error: Invalid message payload PDA ");
+        return Err(ProgramError::InvalidSeeds);
+    }
+    Ok(())
+}
+
 /// Get the PDA and bump seed for a given verifier set hash.
 /// This is used to calculate the PDA for `VerifierSetTracker`.
 #[inline]
