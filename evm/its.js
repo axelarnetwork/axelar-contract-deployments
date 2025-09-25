@@ -26,7 +26,6 @@ const {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     isTrustedChain,
     loadConfig,
-    scaleGasValue,
 } = require('./utils');
 const {
     getChainConfigByAxelarId,
@@ -34,6 +33,7 @@ const {
     validateChain,
     tokenManagerTypes,
     validateLinkType,
+    estimateITSFee,
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -319,7 +319,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { gasValue, metadata } = options;
+            const { metadata, env } = options;
+
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTransfer', options.gasValue, _axelar);
+
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
@@ -366,24 +369,26 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 amountInUnits,
                 metadata,
                 gasValue,
-                { value: scaleGasValue(chain, gasValue), ...gasOptions },
+                { value: gasValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
         }
 
-        case 'register-token-metadata': {
+        case 'register-token-metadata':
             const [tokenAddress] = args;
-            const { gasValue } = options;
+            const { env } = options;
+
+            const gasValue = await estimateITSFee(chain, 'axelar', env, 'TokenMetadataRegistered', options.gasValue, _axelar);
+
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
-                value: scaleGasValue(chain, gasValue),
+                value: gasValue,
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
             break;
-        }
 
         case 'set-flow-limits': {
             const [tokenIdsArg, flowLimitsArg] = args;
@@ -666,8 +671,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'link-token': {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
-            const { gasValue } = options;
+            const { env } = options;
             const deploymentSalt = getDeploymentSalt(options);
+
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             validateParameters({
                 isValidTokenId: { tokenId },
@@ -819,7 +826,7 @@ if (require.main === module) {
         .argument('<amount>', 'Amount')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((destinationChain, tokenId, destinationAddress, amount, options, cmd) => {
             main(cmd.name(), [destinationChain, tokenId, destinationAddress, amount], options);
         });
@@ -828,7 +835,7 @@ if (require.main === module) {
         .command('register-token-metadata')
         .description('Register token metadata')
         .argument('<token-address>', 'Token address')
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((tokenAddress, options, cmd) => {
             main(cmd.name(), [tokenAddress], options);
         });
@@ -938,7 +945,7 @@ if (require.main === module) {
         .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
             main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });
