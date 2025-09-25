@@ -167,7 +167,7 @@ const execute = async (client, config, options, _args, fee) => {
     return callSubmitProposal(client, config, options, proposal, fee);
 };
 
-const registerItsChain = async (client, config, options, _args, _fee) => {
+const registerItsChain = async (client, config, options, _args, fee) => {
     if (options.itsEdgeContract && options.chains.length > 1) {
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
@@ -207,10 +207,10 @@ const registerItsChain = async (client, config, options, _args, _fee) => {
         ...options,
         contractName: 'InterchainTokenService',
         msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
-    });
+    }, undefined, fee);
 };
 
-const registerProtocol = async (client, config, options, _args, _fee) => {
+const registerProtocol = async (client, config, options, _args, fee) => {
     const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
     const router = config.axelar?.contracts?.Router?.address;
     const multisig = config.axelar?.contracts?.Multisig?.address;
@@ -225,7 +225,7 @@ const registerProtocol = async (client, config, options, _args, _fee) => {
                 multisig_address: multisig,
             },
         }),
-    });
+    }, undefined, fee);
 };
 
 const paramChange = async (client, config, options, _args, fee) => {
@@ -251,7 +251,7 @@ const migrate = async (client, config, options, _args, fee) => {
     return callSubmitProposal(client, config, options, proposal, fee);
 };
 
-const instantiateChainContracts = async (client, config, options, _args, _fee) => {
+const instantiateChainContracts = async (client, config, options, _args, fee) => {
     const { chainName } = options;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
@@ -265,7 +265,7 @@ const instantiateChainContracts = async (client, config, options, _args, _fee) =
         ...options,
         contractName: 'Coordinator',
         msg: JSON.stringify(message),
-    });
+    }, undefined, fee);
 
     if (!config.axelar.contracts.Coordinator.deployments) {
         config.axelar.contracts.Coordinator.deployments = {};
