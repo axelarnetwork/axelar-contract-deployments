@@ -424,7 +424,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
         const version = Math.max(0, Object.keys(contractsConfig[name]?.versions || {}).length - 1);
         const originalPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
 
-        updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, originalPackageId);
+        updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, originalPackageId, true);
     }
 
     const builder = new TxBuilder(client);
@@ -437,7 +437,7 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
         // Update the toml and lock file so running the sync command is not required
         contractConfig.structs = await getStructs(client, result.packageId);
         const version = Math.max(0, Object.keys(contractConfig.versions || {}).length - 1);
-        updateMoveToml(packageDir, result.packageId, moveDir, undefined, version, network, contractConfig.versions['0']);
+        updateMoveToml(packageDir, result.packageId, moveDir, undefined, version, network, contractConfig.versions['0'], true);
     }
 }
 
@@ -507,7 +507,7 @@ async function syncPackages(keypair, client, config, chain, options) {
         const version = Math.max(0, Object.keys(chain.contracts[packageName]?.versions || {}).length - 1);
         const originalPackageId = version > 0 ? chain.contracts[packageName]?.versions['0'] : undefined;
 
-        updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, originalPackageId);
+        updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, originalPackageId, true);
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
