@@ -337,7 +337,6 @@ if (require.main === module) {
             main(cmd.name(), [], options);
         });
 
-    // ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
     program
         .command('interchain-token-deploy-salt')
         .argument('<deployer>', 'Deployer')
@@ -370,7 +369,6 @@ if (require.main === module) {
             main(cmd.name(), [deployer], options);
         });
 
-    //ts-node node evm/interchainTokenFactory.js deploy-interchain-token btest11 btest11 18 12345 0x312dba807EAE77f01EF3dd21E885052f8F617c5B  --chainNames ethereum-sepolia --env testnet --yes --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e44a
     program
         .command('deploy-interchain-token')
         .description('Deploy interchain token')

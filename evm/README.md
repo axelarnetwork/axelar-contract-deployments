@@ -488,3 +488,226 @@ ts-node evm/its.js link-token --salt [deploy-salt] [token-id] [destination-chain
 ```
 
 The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of hashing the provided salt string.
+
+## Interchain Token Factory
+
+The Interchain Token Factory is responsible for deploying new interchain tokens and managing their token managers. It has the following functionality:
+
+### Contract-Id
+
+Getter for the contract id.
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames <chain_name> --env <env> 
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames avalanche --env testnet  
+```
+
+Example Response:
+
+```bash
+InterchainTokenFactory contract ID: 0x80547d63ed663962b99f8ed432bff3879a35b5418af92258aa171feef14cc3cc
+```
+
+### Interchain Token Deploy Salt
+
+Computes the deploy salt for an interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt <deployer>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
+```
+
+Example Response:
+
+```bash
+interchainTokenDeploySalt for deployer 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f and deployment salt: 0x511cf8ffa226b88f7412a8d05960efcedb6526849eff5932bf063e008ece393b
+```
+
+### Canonical Interchain Token Deploy Salt
+
+Computes the deploy salt for a canonical interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt <token_address> --chainNames <chain_name>  --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+Example Response:
+
+```bash
+canonicalInterchainTokenDeploySalt for token address: 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1: 0xe513f2267d22ff732afa2c2ffacbea3d620a1aaf56ff2da43364e50580a74db5
+```
+
+### Canonical Interchain Token Id
+
+Computes the ID for a canonical interchain token based on its address.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id <token_address> --chainNames <chain_name>  --env <env>
+
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+Example Response:
+
+```bash
+canonicalInterchainTokenId for token address: 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1: 0x578a3eef4bdf76cad3cc2aba334341759c02a9c233dece18ed64ba32c2e0f67f
+```
+
+### Interchain Token Id
+
+Computes the ID for an interchain token based on the deployer and a salt.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id <deployer> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id 0x312dba807EAE77f01EF3dd21E885052f8F617c5B --chainNames avalanche --env testnet --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+```
+
+Example Response:
+```bash
+InterchainTokenId for deployer 0x312dba807EAE77f01EF3dd21E885052f8F617c5B and deployment salt: 0x28cdf5de538ba9ca6dde00c89f20e0de32f63c9a3052295cb162daf4cf3cb358: 0xd162c4aec6dca05d0c3be25937a4e8743c144000818f952b2199b29cd69e41c7
+```
+
+### Deploy Interchain Token
+
+Creates a new token and optionally mints an initial amount to a specified minter
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token <name> <symbol> <decimals> <initialSupply> <minter>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token Test_Token TT 18 12345 0x312dba807EAE77f01EF3dd21E885052f8F617c5B  --chainNames ethereum-sepolia --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+Example Response:
+
+```bash
+Token address: 0x5330f9bA7F231F7fe1aC8b7e6bC880a4ebC7Ff8d
+```
+
+### Deploy Remote Interchain Token
+
+Deploys a remote interchain token on a specified destination chain. No additional minter is set on the deployed token.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token <destination_chain> <gas_value>  --chainNames <chain_name>  --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token Avalanche 10000000000000000  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Register Canonical Interchain Token
+
+Registers a canonical token as an interchain token and deploys its token manager.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token <token_address> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token 0xff0021D9201B51C681d26799A338f98741fBBB6a --chainNames ethereum-sepolia --env testnet
+```
+
+Example Response:
+
+```bash
+register-canonical-interchain-token tx: 0x18a5cb3a1095b0963fa3110ee9efce9c0640fbb9a4338d6aa12f788a43ffa4aa
+```
+
+
+### Deploy Remote Canonical Interchain Token
+
+Deploys a canonical interchain token on a remote chain.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token <token_address> <destination_chain> <gas_value> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche 100000000000 --chainNames ethereum-sepolia --env testnet
+```
+
+Example Response:
+
+```bash
+deploy-remote-canonical-interchain-token tx: 0xf23e2b939c2af373bb4db004f96cacbfcbdb0e4c6acfa97b42ede309cbfbca65
+```
+
+
+### Register Custom Token
+
+Register an existing ERC20 token under a `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token  <token_address> <token_manager_type> <operator> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token 0x0F6814301C0DA51bFddA9D2A6Dd877950aa0F912 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb50
+```
+
+Example Response: 
+
+```bash
+register-custom-token tx: 0xeab6d934a487e1242d8fe2704bf59e59e456b9db2d736d98dca5a54fc93a2877
+```
+
+### Link Token
+
+Links a remote token on `destinationChain` to a local token corresponding to the `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token <destination_chain> <destination_token_address> <token_manager_type> <link_params> <gas_value>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token Avalanche 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000000  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+```
+
+Example Response:
+
+```bash
+link-token tx: 0xbc5feb02b1af05c8ad2aceae63edafd02cd74d8cb4976181e091d4c8cacd2505
+```
