@@ -611,7 +611,11 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token Test_Token TT 18 1
 Example Response:
 
 ```bash
-Token address: 0x5330f9bA7F231F7fe1aC8b7e6bC880a4ebC7Ff8d
+tokenId: 0x782e0c9fbe864b324a5d35b6b62249176517139d1b9a7cd015b0c96f25bc5670
+
+deploy-interchain-token tx: 0xf92c9570174d76e5c86db9b1f62fea0591b320438982d61117efc223d984711b
+
+Token address: 0xec6FEd3f823fD8fbc2805Ade8FBb610264B903ce
 ```
 
 ### Deploy Remote Interchain Token
@@ -619,13 +623,21 @@ Token address: 0x5330f9bA7F231F7fe1aC8b7e6bC880a4ebC7Ff8d
 Deploys a remote interchain token on a specified destination chain. No additional minter is set on the deployed token.
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token <destination_chain> <gas_value>  --chainNames <chain_name>  --env <env> --salt <salt>
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token <destination_chain> --chainNames <chain_name>  --env <env> --salt <salt>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token Avalanche 10000000000000000  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token Avalanche  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+Example Response:
+
+```bash
+tokenId: 0x782e0c9fbe864b324a5d35b6b62249176517139d1b9a7cd015b0c96f25bc5670
+deploy-remote-interchain-token tx: 0xbc4773d47a2d824e0dea7016cd8d4cee7d049fe186f3978810ce7d3987c81018
 ```
 
 
@@ -655,20 +667,27 @@ register-canonical-interchain-token tx: 0x18a5cb3a1095b0963fa3110ee9efce9c0640fb
 Deploys a canonical interchain token on a remote chain.
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token <token_address> <destination_chain> <gas_value> --chainNames <chain_name> --env <env>
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token <token_address> <destination_chain> --chainNames <chain_name> --env <env>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche 100000000000 --chainNames ethereum-sepolia --env testnet
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche --chainNames ethereum-sepolia --env testnet
 ```
 
 Example Response:
 
 ```bash
-deploy-remote-canonical-interchain-token tx: 0xf23e2b939c2af373bb4db004f96cacbfcbdb0e4c6acfa97b42ede309cbfbca65
-```
+tokenId: 0x96d9a34512abea0b206c91ff7b3e27af65a58455ded4cd098296ce5674716b01
+
+Token name: SimpleCustomToken
+
+Token symbol: SCT
+
+Token decimals: 18
+
+deploy-remote-canonical-interchain-token tx: 0xf23e2b939c2af373bb4db004f96cacbfcbdb0e4c6acfa97b42ede309cbfbca65```
 
 
 ### Register Custom Token
@@ -697,13 +716,13 @@ register-custom-token tx: 0xeab6d934a487e1242d8fe2704bf59e59e456b9db2d736d98dca5
 Links a remote token on `destinationChain` to a local token corresponding to the `tokenId` computed from the provided `salt`.
 
 ```bash
-ts-node evm/interchainTokenFactory.js link-token <destination_chain> <destination_token_address> <token_manager_type> <link_params> <gas_value>  --chainNames <chain_name> --env <env> --salt <salt>
+ts-node evm/interchainTokenFactory.js link-token <destination_chain> <destination_token_address> <token_manager_type> <link_params>  --chainNames <chain_name> --env <env> --salt <salt>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js link-token Avalanche 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1000000  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+ts-node evm/interchainTokenFactory.js link-token Avalanche 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C 4 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
 ```
 
 Example Response:
