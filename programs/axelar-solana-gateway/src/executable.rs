@@ -221,7 +221,11 @@ fn validate_message_internal(
             message.clone(),
         )?,
         &[gateway_incoming_message.clone(), signing_pda.clone()],
-        &[&[&command_id, &[signing_pda_derived_bump]]],
+        &[&[
+            crate::seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED,
+            &command_id,
+            &[signing_pda_derived_bump],
+        ]],
     )?;
 
     Ok(())
