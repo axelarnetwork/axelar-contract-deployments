@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 
-import { loadConfig, saveConfig, printInfo, printWarn } from '../common';
+import { loadConfig, printInfo, printWarn, saveConfig } from '../common';
 import { addEnvOption } from '../common/cli-utils';
 
 const programHandler = () => {
@@ -27,7 +27,7 @@ const programHandler = () => {
 
                     const chains = config?.chains || {};
 
-                    const chainTypes = Object.values(chains).map(chainConfig => {
+                    const chainTypes = Object.values(chains).map((chainConfig) => {
                         return (chainConfig as { chainType: string })?.chainType;
                     });
 
@@ -71,7 +71,7 @@ const programHandler = () => {
                 } catch (error) {
                     console.error(error);
                 }
-        })
+            }),
     );
 
     program.parse();

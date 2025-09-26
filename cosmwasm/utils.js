@@ -29,7 +29,14 @@ const {
     validateParameters,
     tryItsEdgeContract,
 } = require('../common');
-const { pascalToSnake, pascalToKebab, downloadContractCode, readContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
+const {
+    pascalToSnake,
+    pascalToKebab,
+    downloadContractCode,
+    readContractCode,
+    VERSION_REGEX,
+    SHORT_COMMIT_HASH_REGEX,
+} = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const XRPLClient = require('../xrpl/xrpl-client');
