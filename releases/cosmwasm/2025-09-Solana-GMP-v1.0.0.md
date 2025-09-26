@@ -268,31 +268,31 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
-    -c Coordinator \
-    -t "Register Multisig Prover for solana" \
-    -d "Register Multisig Prover address for solana at Coordinator contract" \
-    --msg "{
-        \"register_prover_contract\": {
-            \"chain_name\": \"$CHAIN\",
-            \"new_prover_addr\": \"$MULTISIG_PROVER\"
-        }
-    }"
+        -c Coordinator \
+        -t "Register Multisig Prover for solana" \
+        -d "Register Multisig Prover address for solana at Coordinator contract" \
+        --msg "{
+            \"register_prover_contract\": {
+                \"chain_name\": \"$CHAIN\",
+                \"new_prover_addr\": \"$MULTISIG_PROVER\"
+            }
+        }"
     ```
 
 1. Authorize Multisig prover on Multisig
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
-    -c Multisig \
-    -t "Authorize Multisig Prover for solana" \
-    -d "Authorize Multisig Prover address for solana at Multisig contract" \
-    --msg "{
-        \"authorize_callers\": {
-            \"contracts\": {
-                \"$MULTISIG_PROVER\": \"$CHAIN\"
+        -c Multisig \
+        -t "Authorize Multisig Prover for solana" \
+        -d "Authorize Multisig Prover address for solana at Multisig contract" \
+        --msg "{
+            \"authorize_callers\": {
+                \"contracts\": {
+                    \"$MULTISIG_PROVER\": \"$CHAIN\"
+                }
             }
-        }
-    }"
+        }"
     ```
 
     ```bash

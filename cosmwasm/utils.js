@@ -487,6 +487,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 const getVerifierContractForChain = (chainName) => {
     const chainVerifierMapping = {
         stacks: 'StacksVotingVerifier',
+        'solana-5': 'SolanaVotingVerifier',
         solana: 'SolanaVotingVerifier',
     };
 
@@ -495,6 +496,7 @@ const getVerifierContractForChain = (chainName) => {
 
 const getGatewayContractForChain = (chainName) => {
     const chainGatewayMapping = {
+        'solana-5': 'SolanaGateway',
         solana: 'SolanaGateway',
     };
 
@@ -511,7 +513,9 @@ const getAxelarGatewayContractForChain = (chainName) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
+    console.log('chainName', chainName);
     const verifierContract = getVerifierContractForChain(chainName);
+    console.log('verifierContract', verifierContract);
 
     const {
         axelar: {
