@@ -39,6 +39,10 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
+// V0.50!
+const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
+const { MsgExecuteContract } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+
 const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -1039,6 +1043,29 @@ const encodeExecuteContractProposal = (config, options, chainName) => {
     };
 };
 
+// V0.50!
+const encodeExecuteContractMessageV50 = (config, options, chainName) => {
+    const { contractName, msg, runAs } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+    } = config;
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    const executeMsg = MsgExecuteContract.fromPartial({
+        sender: runAs,
+        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
+        msg: Buffer.from(msg),
+        funds: [],
+    });
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+        value: Uint8Array.from(MsgExecuteContract.encode(executeMsg).finish()),
+    };
+};
+
 const encodeParameterChangeProposal = (options) => {
     const proposal = ParameterChangeProposal.fromPartial(getParameterChangeParams(options));
 
@@ -1073,6 +1100,26 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
+// V0.50!
+const encodeSubmitProposalV50 = (messages, config, options, proposer) => {
+    const {
+        axelar: { tokenSymbol },
+    } = config;
+    const { deposit, title, description } = options;
+
+    return {
+        typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
+        value: MsgSubmitProposalV1.fromPartial({
+            messages: messages,
+            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
+            proposer,
+            metadata: '',
+            title,
+            summary: description,
+        }),
+    };
+};
+
 const submitProposal = async (client, config, options, content, fee) => {
     const [account] = client.accounts;
 
@@ -1081,6 +1128,30 @@ const submitProposal = async (client, config, options, content, fee) => {
     const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
+};
+
+// V0.50!
+const submitProposalV50 = async (client, config, options, messages, fee) => {
+    const [account] = await client.signer.getAccounts();
+    printInfo('Proposer address', account.address);
+
+    const submitProposalMsg = encodeSubmitProposalV50(messages, config, options, account.address);
+
+    const result = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const { events } = result;
+
+    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
+    if (!proposalEvent) {
+        throw new Error('Proposal submission event not found');
+    }
+
+    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
+    if (!proposalId) {
+        throw new Error('Proposal ID not found in events');
+    }
+
+    printInfo('Proposal ID', proposalId);
+    return proposalId;
 };
 
 const getContractR2Url = (contractName, contractVersion) => {
@@ -1467,4 +1538,7 @@ module.exports = {
     getProverInstantiateMsg,
     getInstantiateChainContractsMessage,
     validateItsChainChange,
+    // V0.50!
+    encodeExecuteContractMessageV50,
+    submitProposalV50,
 };

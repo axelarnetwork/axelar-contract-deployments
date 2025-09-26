@@ -25,6 +25,9 @@ const {
     submitProposal,
     getInstantiateChainContractsMessage,
     validateItsChainChange,
+    // V0.50!
+    encodeExecuteContractMessageV50,
+    submitProposalV50,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
@@ -155,16 +158,37 @@ const instantiate = async (client, config, options, _args, fee) => {
     if (instantiate2) contractConfig.address = contractAddress;
 };
 
+// const execute = async (client, config, options, _args, fee) => {
+//     const { chainName } = options;
+
+//     const proposal = encodeExecuteContractProposal(config, options, chainName);
+
+//     if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
+//         return;
+//     }
+
+//     return callSubmitProposal(client, config, options, proposal, fee);
+// };
+
+// V0.50!
 const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
 
-    const proposal = encodeExecuteContractProposal(config, options, chainName);
+    // Create the MsgExecuteContract message
+    const executeMsg = encodeExecuteContractMessageV50(config, options, chainName);
 
-    if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
+    // Wrap it in an Array for the proposal messages field
+    const messages = [executeMsg];
+
+    // Show what we're submitting
+    console.log('Submitting MsgExecuteContract via governance proposal (SDK v0.50)');
+
+    if (prompt('Proceed with proposal submission?', options.yes)) {
+        // REMOVED the !
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal, fee);
+    return submitProposalV50(client, config, options, messages, fee);
 };
 
 const registerItsChain = async (client, config, options, _args, fee) => {
