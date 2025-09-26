@@ -360,7 +360,7 @@ const selectSuiNetwork = (env) => {
     }
 
     return network;
-}
+};
 
 module.exports = {
     suiCoinId,
