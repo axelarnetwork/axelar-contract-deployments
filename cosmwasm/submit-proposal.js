@@ -69,14 +69,14 @@ const confirmProposalSubmission = (options, proposal, proposalType) => {
     return true;
 };
 
-const callSubmitProposal = async (client, config, options, proposal) => {
-    const proposalId = await submitProposal(client, config, options, proposal);
+const callSubmitProposal = async (client, config, options, proposal, fee) => {
+    const proposalId = await submitProposal(client, config, options, proposal, fee);
     printInfo('Proposal submitted', proposalId);
 
     return proposalId;
 };
 
-const storeCode = async (client, config, options, _args, _fee) => {
+const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
@@ -86,13 +86,13 @@ const storeCode = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
-const storeInstantiate = async (client, config, options, _args, _fee) => {
+const storeInstantiate = async (client, config, options, _args, fee) => {
     const { contractName, instantiate2 } = options;
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
 
@@ -107,13 +107,13 @@ const storeInstantiate = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractConfig.storeInstantiateProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
-const instantiate = async (client, config, options, _args, _fee) => {
+const instantiate = async (client, config, options, _args, fee) => {
     const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -149,13 +149,13 @@ const instantiate = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal);
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractConfig.instantiateProposalId = proposalId;
     if (instantiate2) contractConfig.address = contractAddress;
 };
 
-const execute = async (client, config, options, _args, _fee) => {
+const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
 
     const proposal = encodeExecuteContractProposal(config, options, chainName);
@@ -164,10 +164,10 @@ const execute = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
-const registerItsChain = async (client, config, options, _args, _fee) => {
+const registerItsChain = async (client, config, options, _args, fee) => {
     if (options.itsEdgeContract && options.chains.length > 1) {
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
@@ -203,42 +203,54 @@ const registerItsChain = async (client, config, options, _args, _fee) => {
 
     const operation = options.update ? 'update' : 'register';
 
-    return execute(client, config, {
-        ...options,
-        contractName: 'InterchainTokenService',
-        msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
-    });
+    return execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'InterchainTokenService',
+            msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
+        },
+        undefined,
+        fee,
+    );
 };
 
-const registerProtocol = async (client, config, options, _args, _fee) => {
+const registerProtocol = async (client, config, options, _args, fee) => {
     const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
     const router = config.axelar?.contracts?.Router?.address;
     const multisig = config.axelar?.contracts?.Multisig?.address;
 
-    return execute(client, config, {
-        ...options,
-        contractName: 'Coordinator',
-        msg: JSON.stringify({
-            register_protocol: {
-                service_registry_address: serviceRegistry,
-                router_address: router,
-                multisig_address: multisig,
-            },
-        }),
-    });
+    return execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'Coordinator',
+            msg: JSON.stringify({
+                register_protocol: {
+                    service_registry_address: serviceRegistry,
+                    router_address: router,
+                    multisig_address: multisig,
+                },
+            }),
+        },
+        undefined,
+        fee,
+    );
 };
 
-const paramChange = async (client, config, options, _args, _fee) => {
+const paramChange = async (client, config, options, _args, fee) => {
     const proposal = encodeParameterChangeProposal(options);
 
     if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
-const migrate = async (client, config, options, _args, _fee) => {
+const migrate = async (client, config, options, _args, fee) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
     contractConfig.codeId = await getCodeId(client, config, options);
 
@@ -248,10 +260,10 @@ const migrate = async (client, config, options, _args, _fee) => {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal);
+    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
-const instantiateChainContracts = async (client, config, options, _args, _fee) => {
+const instantiateChainContracts = async (client, config, options, _args, fee) => {
     const { chainName } = options;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
@@ -261,11 +273,17 @@ const instantiateChainContracts = async (client, config, options, _args, _fee) =
 
     const message = await getInstantiateChainContractsMessage(client, config, options);
 
-    const proposalId = await execute(client, config, {
-        ...options,
-        contractName: 'Coordinator',
-        msg: JSON.stringify(message),
-    });
+    const proposalId = await execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'Coordinator',
+            msg: JSON.stringify(message),
+        },
+        undefined,
+        fee,
+    );
 
     if (!config.axelar.contracts.Coordinator.deployments) {
         config.axelar.contracts.Coordinator.deployments = {};
