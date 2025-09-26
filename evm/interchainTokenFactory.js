@@ -167,12 +167,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'deploy-remote-interchain-token': {
-            // const { destinationChain, env } = options;
-            const [destinationChain, manualGasValue] = args;
+            const [destinationChain] = args;
+            const { env } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', manualGasValue, _axelar);
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue, _axelar);
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
@@ -217,10 +217,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'deploy-remote-canonical-interchain-token': {
-            const [tokenAddress, destinationChain, manualGasValue] = args;
+            const [tokenAddress, destinationChain] = args;
 
-            const { /*gasValue,*/ env } = options;
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', manualGasValue, _axelar);
+            const { env } = options;
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue, _axelar);
 
             validateParameters({
                 isValidAddress: { tokenAddress },
@@ -274,12 +274,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'link-token': {
-            const [destinationChain, destinationTokenAddress, tokenManagerType, linkParams, manualGasValue] = args;
+            const [destinationChain, destinationTokenAddress, tokenManagerType, linkParams] = args;
 
-            // const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
             const { env } = options;
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', manualGasValue, _axelar);
+            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             const deploymentSalt = getDeploymentSalt(options);
 
@@ -337,73 +336,96 @@ if (require.main === module) {
         });
 
     program
-        .command('interchain-token-deploy-salt <deployer>')
+        .command('interchain-token-deploy-salt')
+        .argument('<deployer>', 'Deployer')
         .description('Get interchain token deploy salt')
         .action((deployer, options, cmd) => {
             main(cmd.name(), [deployer], options);
         });
 
     program
-        .command('canonical-interchain-token-deploy-salt <tokenAddress>')
+        .command('canonical-interchain-token-deploy-salt')
         .description('Get canonical interchain token deploy salt')
+        .argument('<tokenAddress>', 'Token address')
         .action((tokenAddress, options, cmd) => {
             main(cmd.name(), [tokenAddress], options);
         });
 
     program
-        .command('canonical-interchain-token-id <tokenAddress>')
+        .command('canonical-interchain-token-id')
         .description('Get canonical interchain token id')
+        .argument('<tokenAddress>', 'Token address')
         .action((tokenAddress, options, cmd) => {
             main(cmd.name(), [tokenAddress], options);
         });
 
     program
-        .command('interchain-token-id <deployer>')
+        .command('interchain-token-id')
         .description('Get interchain token id')
+        .argument('<deployer>', 'Deployer')
         .action((deployer, options, cmd) => {
             main(cmd.name(), [deployer], options);
         });
 
     program
-        .command('deploy-interchain-token <name> <symbol> <decimals> <initialSupply> <minter>')
+        .command('deploy-interchain-token')
         .description('Deploy interchain token')
+        .argument('<name>', 'Name')
+        .argument('<symbol>', 'Symbol')
+        .argument('<decimals>', 'Decimals')
+        .argument('<initialSupply>', 'Initial supply')
+        .argument('<minter>', 'Minter')
         .action((name, symbol, decimals, initialSupply, minter, options, cmd) => {
             main(cmd.name(), [name, symbol, decimals, initialSupply, minter], options);
         });
 
     program
-        .command('deploy-remote-interchain-token <destinationChain> <gasValue>')
+        .command('deploy-remote-interchain-token')
         .description('Deploy remote interchain token')
-        .action((destinationChain, gasValue, options, cmd) => {
-            main(cmd.name(), [destinationChain, gasValue], options);
+        .argument('<destinationChain>', 'Destination chain')
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
+        .action((destinationChain, options, cmd) => {
+            main(cmd.name(), [destinationChain], options);
         });
 
     program
-        .command('register-canonical-interchain-token <tokenAddress>')
+        .command('register-canonical-interchain-token')
         .description('Register canonical interchain token')
+        .argument('<tokenAddress>', 'Token address')
         .action((tokenAddress, options, cmd) => {
             main(cmd.name(), [tokenAddress], options);
         });
 
     program
-        .command('deploy-remote-canonical-interchain-token <tokenAddress> <destinationChain> <gasValue>')
+        .command('deploy-remote-canonical-interchain-token')
         .description('Deploy remote canonical interchain token')
-        .action((tokenAddress, destinationChain, gasValue, options, cmd) => {
-            main(cmd.name(), [tokenAddress, destinationChain, gasValue], options);
+        .argument('<tokenAddress>', 'Token address')
+        .argument('<destinationChain>', 'Destination chain')
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
+        .action((tokenAddress, destinationChain, options, cmd) => {
+            main(cmd.name(), [tokenAddress, destinationChain], options);
         });
 
     program
-        .command('register-custom-token <tokenAddress> <tokenManagerType> <operator>')
+        .command('register-custom-token')
         .description('Register custom token')
+        .argument('<tokenAddress>', 'Token address')
+        .argument('<tokenManagerType>', 'Token manager type')
+        .argument('<operator>', 'Operator')
         .action((tokenAddress, tokenManagerType, operator, options, cmd) => {
             main(cmd.name(), [tokenAddress, tokenManagerType, operator], options);
         });
 
     program
-        .command('link-token <destinationChain> <destinationTokenAddress> <tokenManagerType> <linkParams> <gasValue>')
+        .command('link-token')
         .description('Link token to token on destination chain')
-        .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue, options, cmd) => {
-            main(cmd.name(), [destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue], options);
+        .argument('<destinationChain>', 'Destination chain')
+        .argument('<destinationTokenAddress>', 'Destination token address')
+        .argument('<tokenManagerType>', 'Token manager type')
+        .argument('<linkParams>', 'Link params')
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
+        .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, options, cmd) => {
+            main(cmd.name(), [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], options);
         });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
