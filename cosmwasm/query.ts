@@ -7,6 +7,7 @@ import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../
 import { FullConfig } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
+import { getChainCodecContractNameByChainType } from './utils';
 
 export interface ContractInfo {
     contract: string;
@@ -207,6 +208,32 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         address: result.prover,
     };
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
+
+    // query chain codec address from prover config
+    const key = Buffer.from('config');
+    try {
+        const value = await client.queryContractRaw(result.prover, key);
+        const proverConfig = JSON.parse(Buffer.from(value).toString('ascii'));
+        const chainCodec = proverConfig.chain_codec;
+
+        // Determine the ChainCodecXyz contract name by chain type
+        try {
+            const codecContractName = getChainCodecContractNameByChainType(config, chainName);
+
+            if (!config.axelar.contracts[codecContractName]) {
+                config.axelar.contracts[codecContractName] = {};
+            }
+            config.axelar.contracts[codecContractName] = {
+                ...config.axelar.contracts[codecContractName],
+                address: chainCodec,
+            };
+            printInfo(`Updated ${codecContractName}.address`, chainCodec);
+        } catch (error) {
+            printWarn(error.message);
+        }
+    } catch (error) {
+        printWarn(`Failed to fetch chain codec address for ${chainName}`, error?.message || String(error));
+    }
     printInfo(`Config updated successfully for ${chainName}`);
 }
 
@@ -272,7 +299,7 @@ const programHandler = () => {
 
     const saveDeployedContractsCmd = program
         .command('save-deployed-contracts <chainName>')
-        .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
+        .description('Query and save deployed Gateway, VotingVerifier, ChainCodec and MultisigProver contracts via Coordinator')
         .action((chainName, options) => {
             mainQueryProcessor(saveDeployedContracts, options, [chainName]);
         });
