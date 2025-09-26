@@ -25,6 +25,7 @@ const {
     restrictUpgradePolicy,
     broadcastRestrictedUpgradePolicy,
     broadcastFromTxBuilder,
+    selectSuiNetwork,
 } = require('./utils');
 const GatewayCli = require('./gateway');
 
@@ -416,25 +417,14 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     const packageDependencies = getLocalDependencies(packageDir, moveDir);
 
-    let network;
-    switch (options.env) {
-        case 'devnet':
-        case 'testnet':
-        case 'mainnet': {
-            network = options.env;
-            break;
-        }
-        default: {
-            network = 'testnet';
-        }
-    }
+    const network = selectSuiNetwork(options.env);
 
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
         const version = Math.max(0, Object.keys(contractsConfig[name]?.versions || {}).length - 1);
-        const legacyPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
+        const originalPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
 
-        updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, legacyPackageId);
+        updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, originalPackageId);
     }
 
     const builder = new TxBuilder(client);
@@ -507,18 +497,7 @@ async function syncPackages(keypair, client, config, chain, options) {
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
 
-        let network;
-        switch (options.env) {
-            case 'devnet':
-            case 'testnet':
-            case 'mainnet': {
-                network = options.env;
-                break;
-            }
-            default: {
-                network = 'testnet';
-            }
-        }
+        const network = selectSuiNetwork(options.env);
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
@@ -526,9 +505,9 @@ async function syncPackages(keypair, client, config, chain, options) {
         }
 
         const version = Math.max(0, Object.keys(chain.contracts[packageName]?.versions || {}).length - 1);
-        const legacyPackageId = version > 0 ? chain.contracts[packageName]?.versions['0'] : undefined;
+        const originalPackageId = version > 0 ? chain.contracts[packageName]?.versions['0'] : undefined;
 
-        updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, legacyPackageId);
+        updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, originalPackageId);
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
