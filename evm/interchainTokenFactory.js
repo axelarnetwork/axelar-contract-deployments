@@ -338,7 +338,7 @@ if (require.main === module) {
 
     program
         .command('interchain-token-deploy-salt <deployer>')
-        .description('Get interchain token deploy')
+        .description('Get interchain token deploy salt')
         .action((deployer, options, cmd) => {
             main(cmd.name(), [deployer], options);
         });
