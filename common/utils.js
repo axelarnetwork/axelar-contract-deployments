@@ -811,7 +811,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     if (res.error) {
         throw new Error(`Error querying gas amount: ${res.error}`);
     }
-    return res
+    return res;
 }
 
 module.exports = {

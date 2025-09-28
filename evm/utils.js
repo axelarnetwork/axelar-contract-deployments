@@ -1168,5 +1168,5 @@ module.exports = {
     isTrustedChain,
     detectITSVersion,
     getChains,
-    scaleGasValue
+    scaleGasValue,
 };
