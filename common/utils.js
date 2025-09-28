@@ -11,6 +11,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -795,7 +796,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     }
 
     if (isValidNumber(gasValue)) {
-        return scaleGasValue(chain, gasValue);
+        return gasValue;
     }
 
     const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
@@ -811,33 +812,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     if (res.error) {
         throw new Error(`Error querying gas amount: ${res.error}`);
     }
-    return res;
-}
-
-/**
- * Scales a gas value up to 18 decimals when required.
- *
- * Hedera uses a lower decimal precision for gas/fees, while EVM ecosystems
- * standardize on 18 decimals. For EVM interactions we need to scale Hedera
- * values up so that on-chain math uses the same 18-decimal base. Chains that
- * require scaling should set `gasScalingFactor` to the number of missing
- * decimals to reach 18.
- *
- * Example: if a chain uses 8 decimals, set `gasScalingFactor = 10` so
- * `gasValue * 10^10` yields an 18-decimal value.
- *
- * When `gasScalingFactor` is not a number, no scaling is applied.
- *
- * @param {Object} chain - Chain config, may include `gasScalingFactor`.
- * @param {string|number|BigNumber} gasValue - Raw gas value to scale.
- * @returns {BigNumber|*} Scaled gas if factor provided; original otherwise.
- */
-function scaleGasValue(chain, gasValue) {
-    if (typeof chain.gasScalingFactor === 'number') {
-        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
-    }
-
-    return gasValue;
+    return BigNumber.from(res.toString());
 }
 
 module.exports = {
