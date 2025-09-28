@@ -11,7 +11,6 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
-    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -812,7 +811,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     if (res.error) {
         throw new Error(`Error querying gas amount: ${res.error}`);
     }
-    return BigNumber.from(res.toString());
+    return res
 }
 
 module.exports = {
