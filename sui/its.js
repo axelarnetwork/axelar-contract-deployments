@@ -470,8 +470,8 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const [symbol, name, decimals, destinationChain, destinationAddress] = args;
 
     // Token manager type
-    const tokenManagerTypes = ["lock_unlock", "mint_burn"];
-    const tokenManager = (options.tokenManagerMode) ? options.tokenManagerMode : tokenManagerTypes[0];
+    const tokenManagerTypes = ['lock_unlock', 'mint_burn'];
+    const tokenManager = options.tokenManagerMode ? options.tokenManagerMode : tokenManagerTypes[0];
 
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
@@ -522,12 +522,14 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     txBuilder = new TxBuilder(client);
 
     // Token manager type
-    const tokenManagerType = tokenManager == tokenManagerTypes[1] 
-        ? await txBuilder.moveCall({
-            target: `${itsConfig.address}::token_manager_type::mint_burn`,
-        }) : await txBuilder.moveCall({
-            target: `${itsConfig.address}::token_manager_type::lock_unlock`,
-        });
+    const tokenManagerType =
+        tokenManager == tokenManagerTypes[1]
+            ? await txBuilder.moveCall({
+                  target: `${itsConfig.address}::token_manager_type::mint_burn`,
+              })
+            : await txBuilder.moveCall({
+                  target: `${itsConfig.address}::token_manager_type::lock_unlock`,
+              });
 
     // Salt
     const salt = await txBuilder.moveCall({
@@ -535,7 +537,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         arguments: [saltAddress],
     });
 
-    // Link params 
+    // Link params
     const linkParams = options.destinationDeployer ? options.destinationDeployer : '';
 
     messageTicket = await txBuilder.moveCall({
