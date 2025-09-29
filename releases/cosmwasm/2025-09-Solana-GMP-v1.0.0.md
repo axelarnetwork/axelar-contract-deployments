@@ -14,9 +14,9 @@
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-  - SolanaVotingVerifier: `52af1024c7548a724ec97728a1748bd1ce4ccb80bfb5c2a0ed7e57ee5ce5275c`
-  - SolanaGateway: `31572a174679ebbf31ac63fdfb99d7a99199d873b4558d61b8cfdf5800174fee`
-  - SolanaMultisigProver: `20c38aff9c725424cd71e7f85e357fb8a078954c11302f6d5e325060de9dac5c`
+  - SolanaVotingVerifier: `a7b14150253b0e1f0a78bbe846afd1ddff8247645d6f2959b653cd924a714e99`
+  - SolanaGateway: `efa37c79eb04499f4c45e4500ca5baca9f7d3226f8b5efb588004ede8a002a3c`
+  - SolanaMultisigProver: `09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6`
 
 ## Background
 
@@ -46,6 +46,8 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
         cosmwasm/optimizer:0.16.1
     ```
+
+1. Update the above Contract Checksums per `artifacts/checksums.txt`
 
 That would create the `artifacts` folder with all the compiled contracts, plus the checksums.
 
@@ -80,8 +82,8 @@ Add `INIT_ADDRESSES` to `.env`.
 > Set `RUN_AS_ACCOUNT` to an EOA account's address instead of the governance address to avoid having to instantiate the contracts via another governance proposal.
 
 ```yaml
-INIT_ADDRESSES=
-RUN_AS_ACCOUNT=
+INIT_ADDRESSES=[INIT_ADDRESSES]
+RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 ```
 
 1. Store SolanaVotingVerifier:
