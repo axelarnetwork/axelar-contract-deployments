@@ -952,10 +952,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
-            new Option('--tokenManagerMode <mode>', 'Token Manager Mode')
-                .default('lock_unlock')
-                .choices(['lock_unlock', 'mint_burn'])
-                .makeOptionMandatory(true),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
