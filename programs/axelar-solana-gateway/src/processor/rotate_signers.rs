@@ -2,14 +2,13 @@ use core::convert::TryInto;
 use core::mem::size_of;
 
 use axelar_message_primitives::U256;
-use event_utils::{read_array, EventParseError};
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::{
     pda::{BytemuckedPda, ValidPDA},
     validate_system_account_key,
 };
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
@@ -18,11 +17,11 @@ use super::Processor;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_gateway_root_pda, error::GatewayError};
 use crate::{
-    assert_valid_signature_verification_pda, assert_valid_verifier_set_tracker_pda, event_prefixes,
-    get_verifier_set_tracker_pda, seed_prefixes,
+    assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
+    assert_valid_verifier_set_tracker_pda, get_verifier_set_tracker_pda, seed_prefixes,
 };
+use crate::{error::GatewayError, events::VerifierSetRotatedEvent};
 
 impl Processor {
     /// Rotate the weighted signers, signed off by the latest Axelar signers.
@@ -68,6 +67,7 @@ impl Processor {
         let payer = next_account_info(accounts_iter)?;
         let system_account = next_account_info(accounts_iter)?;
         let operator = next_account_info(accounts_iter);
+        event_cpi_accounts!(accounts_iter);
 
         validate_system_account_key(system_account.key)?;
 
@@ -159,6 +159,8 @@ impl Processor {
             new_empty_verifier_set,
             program_id,
             system_account,
+            __event_cpi_authority_info,
+            __event_cpi_authority_bump,
         )
     }
 }
@@ -183,6 +185,8 @@ fn rotate_signers<'a>(
     new_empty_verifier_set: &AccountInfo<'a>,
     program_id: &Pubkey,
     system_account: &AccountInfo<'a>,
+    __event_cpi_authority_info: &AccountInfo<'a>,
+    __event_cpi_authority_bump: u8,
 ) -> Result<(), ProgramError> {
     // Increment the current epoch
     gateway_config.current_epoch = gateway_config
@@ -220,12 +224,11 @@ fn rotate_signers<'a>(
     // Check that everything has been derived correctly
     assert_valid_verifier_set_tracker_pda(new_verifier_set_tracker, new_empty_verifier_set.key)?;
 
-    // Emit the rotation event
-    sol_log_data(&[
-        event_prefixes::SIGNERS_ROTATED,
-        &new_verifier_set_tracker.epoch.to_le_bytes(), // u256 as LE [u8; 32]
-        &new_verifier_set_tracker.verifier_set_hash,   // [u8; 32]
-    ]);
+    emit_cpi!(VerifierSetRotatedEvent {
+        epoch: new_verifier_set_tracker.epoch,
+        verifier_set_hash: new_verifier_set_tracker.verifier_set_hash,
+    });
+
     Ok(())
 }
 
@@ -236,45 +239,4 @@ fn enough_time_till_next_rotation(current_time: u64, config: &GatewayConfig) -> 
             "Current time minus rotate signers last successful operation time should not underflow",
         );
     secs_since_last_rotation >= config.minimum_rotation_delay
-}
-
-/// Represents a `SignersRotatedEvent`.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct VerifierSetRotated {
-    /// Epoch of the new verifier set
-    pub epoch: U256,
-    /// the hash of the new verifier set
-    pub verifier_set_hash: [u8; 32],
-}
-
-impl VerifierSetRotated {
-    /// Constructs a new `SignersRotatedEvent` with the provided data slice.
-    ///
-    /// Expects exactly two 32-byte arrays:
-    /// - Epoch number as U256 (little-endian).
-    /// - Verifier set hash.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`EventParseError`] if:
-    /// * Required data fields are missing
-    /// * Data arrays are not exactly 32 bytes
-    pub fn new<I: Iterator<Item = Vec<u8>>>(mut data: I) -> Result<Self, EventParseError> {
-        let epoch = read_array::<32>(
-            "epoch",
-            &data.next().ok_or(EventParseError::MissingData("epoch"))?,
-        )?;
-        let epoch = U256::from_le_bytes(epoch);
-
-        let verifier_set_hash = read_array::<32>(
-            "verifier_set_hash",
-            &data
-                .next()
-                .ok_or(EventParseError::MissingData("verifier_set_hash"))?,
-        )?;
-        Ok(Self {
-            epoch,
-            verifier_set_hash,
-        })
-    }
 }

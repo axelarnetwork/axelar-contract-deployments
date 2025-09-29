@@ -1,7 +1,6 @@
 //! Parse Solana events from transaction data
 
 use axelar_solana_gas_service_events::events::GasServiceEvent;
-use axelar_solana_gateway::processor::GatewayEvent;
 use base64::{engine::general_purpose, Engine};
 
 /// Represents the state of a program invocation along with associated events.
@@ -103,65 +102,6 @@ where
 #[must_use]
 pub fn decode_base64(input: &str) -> Option<Vec<u8>> {
     general_purpose::STANDARD.decode(input).ok()
-}
-
-/// Parses gateway logs and extracts events.
-///
-/// # Arguments
-///
-/// * `log` - The log entry to parse.
-///
-/// # Errors
-///
-/// - if the discriminant for the event is not present
-/// - if the event was detected via the discriminant but the data does not match the discriminant type
-pub fn parse_gateway_logs<T>(log: &T) -> Result<GatewayEvent, event_utils::EventParseError>
-where
-    T: AsRef<str>,
-{
-    use axelar_solana_gateway::event_prefixes::*;
-    use event_utils::EventParseError;
-
-    let mut logs = log
-        .as_ref()
-        .trim()
-        .trim_start_matches("Program data: ")
-        .split(' ')
-        .filter_map(decode_base64);
-    let disc = logs
-        .next()
-        .ok_or(EventParseError::MissingData("discriminant"))?
-        .try_into()
-        .map_err(|err: Vec<u8>| EventParseError::InvalidLength {
-            field: "discriminant",
-            expected: 32,
-            actual: err.len(),
-        })?;
-    let gateway_event = match &disc {
-        CALL_CONTRACT => {
-            let event = axelar_solana_gateway::processor::CallContractEvent::new(logs)?;
-            GatewayEvent::CallContract(event)
-        }
-        MESSAGE_APPROVED => {
-            let event = axelar_solana_gateway::processor::MessageEvent::new(logs)?;
-            GatewayEvent::MessageApproved(event)
-        }
-        MESSAGE_EXECUTED => {
-            let event = axelar_solana_gateway::processor::MessageEvent::new(logs)?;
-            GatewayEvent::MessageExecuted(event)
-        }
-        OPERATORSHIP_TRANSFERRED => {
-            let event = axelar_solana_gateway::processor::OperatorshipTransferredEvent::new(logs)?;
-            GatewayEvent::OperatorshipTransferred(event)
-        }
-        SIGNERS_ROTATED => {
-            let event = axelar_solana_gateway::processor::VerifierSetRotated::new(logs)?;
-            GatewayEvent::VerifierSetRotated(event)
-        }
-        _ => return Err(EventParseError::Other("unsupported discriminant")),
-    };
-
-    Ok(gateway_event)
 }
 
 /// Parses gas service logs and extracts events.
@@ -266,147 +206,11 @@ mod tests {
     use core::str::FromStr;
 
     use axelar_solana_gas_service_events::events::NativeGasPaidForContractCallEvent;
-    use axelar_solana_gateway::processor::CallContractEvent;
     use pretty_assertions::assert_eq;
     use solana_sdk::pubkey::Pubkey;
     use test_log::test;
 
     use super::*;
-
-    static GATEWAY_EXAMPLE_ID: &str = "gtwEpzTprUX7TJLx1hFXNeqCXJMsoxYQhQaEbnuDcj1";
-
-    // Include the test_call_data function
-    fn fixture_call_data() -> (&'static str, GatewayEvent) {
-        // this is a `CallContract` extract form other unittests
-        let base64_data = "Y2FsbCBjb250cmFjdF9fXw== 6NGe5cm7PkXHz/g8V2VdRg0nU0l7R48x8lll4s0Clz0= xtlu5J3pLn7c4BhqnNSrP1wDZK/pQOJVCYbk6sroJhY= ZXRoZXJldW0= MHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA2YzIwNjAzYzdiODc2NjgyYzEyMTczYmRlZjlhMWRjYTUyOGYxNGZk 8J+QqvCfkKrwn5Cq8J+Qqg==";
-        // Simple `CallContract` fixture
-        let event = GatewayEvent::CallContract(CallContractEvent {
-            sender_key: Pubkey::from_str("GfpyaXoJrd9XHHRehAPCGETie3wpM8xDxscAUoC12Cxt").unwrap(),
-            destination_chain: "ethereum".to_owned(),
-            destination_contract_address:
-                "0x0000000000000000000000006c20603c7b876682c12173bdef9a1dca528f14fd".to_owned(),
-            payload: vec![
-                240, 159, 144, 170, 240, 159, 144, 170, 240, 159, 144, 170, 240, 159, 144, 170,
-            ],
-            payload_hash: [
-                198, 217, 110, 228, 157, 233, 46, 126, 220, 224, 24, 106, 156, 212, 171, 63, 92, 3,
-                100, 175, 233, 64, 226, 85, 9, 134, 228, 234, 202, 232, 38, 22,
-            ],
-        });
-        (base64_data, event)
-    }
-
-    fn fixture_match_context() -> MatchContext {
-        MatchContext::new(GATEWAY_EXAMPLE_ID)
-    }
-
-    #[test]
-    fn test_simple_event() {
-        // Use the test_call_data fixture
-        let (base64_data, event) = fixture_call_data();
-
-        // Sample logs with multiple gateway calls, some succeed and some fail
-        let logs = vec![
-            format!("Program {GATEWAY_EXAMPLE_ID} invoke [1]"), // Invocation 1 starts
-            "Program log: Instruction: Call Contract".to_owned(),
-            format!("Program data: {}", base64_data),
-            format!("Program {GATEWAY_EXAMPLE_ID} success"), // Invocation 1 succeeds
-        ];
-
-        let result = build_program_event_stack(&fixture_match_context(), &logs, parse_gateway_logs);
-
-        // Expected result: two successful invocations with their events, one failed invocation
-        let expected = vec![ProgramInvocationState::Succeeded(vec![(2, event)])];
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_multiple_gateway_calls_some_succeed_some_fail() {
-        // Use the test_call_data fixture
-        let (base64_data, event) = fixture_call_data();
-
-        // Sample logs with multiple gateway calls, some succeed and some fail
-        let logs = vec![
-            format!("Program {GATEWAY_EXAMPLE_ID} invoke [1]"), // Invocation 1 starts
-            "Program log: Instruction: Call Contract".to_owned(),
-            format!("Program data: {}", base64_data),
-            format!("Program {GATEWAY_EXAMPLE_ID} success"), // Invocation 1 succeeds
-            format!("Program {GATEWAY_EXAMPLE_ID} invoke [2]"), // Invocation 2 starts
-            "Program log: Instruction: Call Contract".to_owned(),
-            format!("Program data: {}", base64_data),
-            format!("Program {GATEWAY_EXAMPLE_ID} failed"), // Invocation 2 fails
-            format!("Program {GATEWAY_EXAMPLE_ID} invoke [3]"), // Invocation 3 starts
-            "Program log: Instruction: Call Contract".to_owned(),
-            format!("Program data: {}", base64_data),
-            format!("Program {GATEWAY_EXAMPLE_ID} success"), // Invocation 3 succeeds
-        ];
-
-        let result = build_program_event_stack(&fixture_match_context(), &logs, parse_gateway_logs);
-
-        // Expected result: two successful invocations with their events, one failed invocation
-        let expected = vec![
-            ProgramInvocationState::Succeeded(vec![(2, event.clone())]),
-            ProgramInvocationState::Failed(vec![(6, event.clone())]),
-            ProgramInvocationState::Succeeded(vec![(10, event)]),
-        ];
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_no_gateway_calls() {
-        // Logs with no gateway calls
-        let logs = vec![
-            "Program some_other_program invoke [1]".to_owned(),
-            "Program log: Instruction: Do something".to_owned(),
-            "Program some_other_program success".to_owned(),
-        ];
-
-        let result = build_program_event_stack(&fixture_match_context(), &logs, parse_gateway_logs);
-
-        // Expected result: empty stack
-        let expected = Vec::new();
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_gateway_call_with_no_events() {
-        // Gateway call that succeeds but has no events
-        let logs = vec![
-            format!("Program {GATEWAY_EXAMPLE_ID} invoke [1]"),
-            "Program log: Instruction: Do something".to_owned(),
-            format!("Program {GATEWAY_EXAMPLE_ID} success"),
-        ];
-
-        let result = build_program_event_stack(&fixture_match_context(), &logs, parse_gateway_logs);
-
-        // Expected result: one successful invocation with no events
-        let expected = vec![ProgramInvocationState::Succeeded(vec![])];
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_gateway_call_failure_with_events() {
-        // Use the test_call_data fixture
-        let (base64_data, event) = fixture_call_data();
-
-        // Gateway call that fails but has events (events should be discarded)
-        let logs = vec![
-            format!("Program {GATEWAY_EXAMPLE_ID} invoke [1]"),
-            format!("Program data: {}", base64_data),
-            format!("Program {GATEWAY_EXAMPLE_ID} failed"),
-        ];
-
-        let result = build_program_event_stack(&fixture_match_context(), &logs, parse_gateway_logs);
-
-        // Expected result: one failed invocation
-        let expected = vec![ProgramInvocationState::Failed(vec![(1, event)])];
-
-        assert_eq!(result, expected);
-    }
 
     #[test]
     fn test_gas_service_fixture() {

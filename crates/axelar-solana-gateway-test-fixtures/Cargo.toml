@@ -9,6 +9,7 @@ axelar-solana-gas-service-events.workspace = true
 tokio.workspace = true
 solana-program.workspace = true
 solana-program-test.workspace = true
+event-cpi.workspace = true
 bincode.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 typed-builder.workspace = true
@@ -24,6 +25,7 @@ spl-associated-token-account = { workspace = true, features = [
     "no-entrypoint",
 ] }
 
+solana-banks-interface = { workspace = true }
 solana-test-validator = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 

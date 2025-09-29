@@ -1,6 +1,7 @@
 //! Program state processor.
 
 use borsh::BorshDeserialize;
+use event_cpi_macros::event_cpi_handler;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -21,11 +22,6 @@ mod transfer_operatorship;
 mod validate_message;
 mod verify_signature;
 mod write_message_payload;
-
-pub use call_contract::CallContractEvent;
-pub use rotate_signers::VerifierSetRotated;
-pub use transfer_operatorship::OperatorshipTransferredEvent;
-pub use validate_message::MessageEvent;
 
 #[allow(clippy::multiple_inherent_impl)]
 /// Program state handler.
@@ -53,8 +49,11 @@ impl Processor {
         accounts: &[AccountInfo<'_>],
         input: &[u8],
     ) -> ProgramResult {
-        let instruction = GatewayInstruction::try_from_slice(input)?;
         check_program_account(*program_id)?;
+
+        event_cpi_handler!(input);
+
+        let instruction = GatewayInstruction::try_from_slice(input)?;
 
         match instruction {
             GatewayInstruction::ApproveMessage {
@@ -86,7 +85,7 @@ impl Processor {
                     accounts,
                     &destination_chain,
                     &destination_contract_address,
-                    &payload,
+                    payload,
                     signing_pda_bump,
                 )
             }
@@ -158,38 +157,4 @@ impl Processor {
             }
         }
     }
-}
-
-/// Represents the various events emitted by the Gateway.
-///
-/// The `GatewayEvent` enum encapsulates all possible events that can be emitted by the Gateway.
-/// Each variant corresponds to a specific event type and contains the relevant data associated with that event.
-///
-/// These events are crucial for monitoring the state and actions within the Gateway, such as contract calls,
-/// verifier set rotations, operatorship transfers, and message approvals and executions.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum GatewayEvent {
-    /// Represents a `CallContract` event.
-    ///
-    /// This event is emitted when a contract call is initiated to an external chain.
-    CallContract(CallContractEvent),
-
-    /// Represents a `VerifierSetRotated` event.
-    VerifierSetRotated(VerifierSetRotated),
-
-    /// Represents an `OperatorshipTransferred` event.
-    ///
-    /// This event is emitted when the operatorship is transferred to a new operator.
-    /// It includes the public key of the new operator.
-    OperatorshipTransferred(OperatorshipTransferredEvent),
-
-    /// Represents a `MessageApproved` event.
-    ///
-    /// This event is emitted when a message is approved for execution by the Gateway.
-    MessageApproved(MessageEvent),
-
-    /// Represents a `MessageExecuted` event.
-    ///
-    /// This event is emitted when a message has been received & execution has begun on the destination contract.
-    MessageExecuted(MessageEvent),
 }

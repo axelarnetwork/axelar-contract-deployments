@@ -34,6 +34,7 @@ default = ["devnet-amplifier"]
 
 [dependencies]
 anchor-discriminators-macros.workspace = true
+anchor-discriminators.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding = { workspace = true, features = ["solana"] }
 bincode.workspace = true
@@ -52,6 +53,8 @@ role-management.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 alloy-sol-types.workspace = true
+event-cpi.workspace = true
+event-cpi-macros.workspace = true
 
 [dev-dependencies]
 hex.workspace = true

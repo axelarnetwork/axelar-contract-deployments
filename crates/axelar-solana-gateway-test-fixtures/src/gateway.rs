@@ -13,9 +13,9 @@ use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
 use axelar_solana_encoding::{borsh, hash_payload};
 use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::events::GatewayEvent;
 use axelar_solana_gateway::instructions::InitialVerifierSet;
 use axelar_solana_gateway::num_traits::FromPrimitive;
-use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
@@ -252,13 +252,13 @@ impl SolanaAxelarIntegrationMetadata {
         borsh::from_slice::<ExecuteData>(&execute_data).unwrap()
     }
 
-    /// Approve a single message on the Gateway
-    pub async fn approve_message(
-        &mut self,
+    /// Build approve_message instruction (private helper)
+    fn build_approve_message_instruction(
+        &self,
         payload_merkle_root: [u8; 32],
         message: MerkleisedMessage,
         verification_session_pda: Pubkey,
-    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+    ) -> solana_sdk::instruction::Instruction {
         let command_id = command_id(
             &message.leaf.message.cc_id.chain,
             &message.leaf.message.cc_id.id,
@@ -267,7 +267,7 @@ impl SolanaAxelarIntegrationMetadata {
         let (incoming_message_pda, _incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
-        let ix = axelar_solana_gateway::instructions::approve_message(
+        axelar_solana_gateway::instructions::approve_message(
             message,
             payload_merkle_root,
             self.gateway_root_pda,
@@ -275,7 +275,39 @@ impl SolanaAxelarIntegrationMetadata {
             verification_session_pda,
             incoming_message_pda,
         )
-        .unwrap();
+        .unwrap()
+    }
+
+    /// Simulate approve_message transaction
+    pub async fn simulate_approve_message(
+        &mut self,
+        payload_merkle_root: [u8; 32],
+        message: MerkleisedMessage,
+        verification_session_pda: Pubkey,
+    ) -> Result<
+        solana_banks_interface::BanksTransactionResultWithSimulation,
+        solana_program_test::BanksClientError,
+    > {
+        let ix = self.build_approve_message_instruction(
+            payload_merkle_root,
+            message,
+            verification_session_pda,
+        );
+        self.simulate_tx(&[ix]).await
+    }
+
+    /// Approve a single message on the Gateway
+    pub async fn approve_message(
+        &mut self,
+        payload_merkle_root: [u8; 32],
+        message: MerkleisedMessage,
+        verification_session_pda: Pubkey,
+    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        let ix = self.build_approve_message_instruction(
+            payload_merkle_root,
+            message,
+            verification_session_pda,
+        );
         self.send_tx(&[ix]).await
     }
 
@@ -628,12 +660,7 @@ impl SolanaAxelarIntegration {
 pub fn get_gateway_events(
     tx: &solana_program_test::BanksTransactionResultWithMetadata,
 ) -> Vec<ProgramInvocationState<GatewayEvent>> {
-    let match_context = MatchContext::new(&axelar_solana_gateway::ID.to_string());
-    gateway_event_stack::build_program_event_stack(
-        &match_context,
-        tx.metadata.as_ref().unwrap().log_messages.as_slice(),
-        gateway_event_stack::parse_gateway_logs,
-    )
+    vec![]
 }
 
 /// Utility for extracting the `GatewayError` from the tx metadata

@@ -5,8 +5,8 @@ use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
 use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::events::{GatewayEvent, VerifierSetRotatedEvent};
 use axelar_solana_gateway::get_verifier_set_tracker_pda;
-use axelar_solana_gateway::processor::{GatewayEvent, VerifierSetRotated};
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
@@ -74,7 +74,7 @@ async fn successfully_rotates_signers() {
     let [(_, GatewayEvent::VerifierSetRotated(emitted_event))] = vec_events.as_slice() else {
         panic!("unexpected event")
     };
-    let expected_event = VerifierSetRotated {
+    let expected_event = VerifierSetRotatedEvent {
         epoch: new_epoch,
         verifier_set_hash: new_verifier_set_hash,
     };
@@ -281,7 +281,7 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     let [(_, GatewayEvent::VerifierSetRotated(emitted_event))] = vec_events.as_slice() else {
         panic!("unexpected event")
     };
-    let expected_event = VerifierSetRotated {
+    let expected_event = VerifierSetRotatedEvent {
         epoch: new_epoch,
         verifier_set_hash: new_verifier_set_hash,
     };

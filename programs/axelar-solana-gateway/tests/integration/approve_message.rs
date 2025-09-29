@@ -8,21 +8,20 @@ use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
 use axelar_solana_encoding::LeafHash;
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::instructions::approve_message;
-use axelar_solana_gateway::processor::GatewayEvent;
+use axelar_solana_gateway::events::MessageApprovedEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, random_message, GetGatewayError,
-    ProgramInvocationState,
 };
-use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
+use axelar_solana_gateway_test_fixtures::{
+    assert_event_cpi, find_event_cpi, SolanaAxelarIntegration,
+};
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
 use rand::Rng;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signer::Signer;
 
 #[tokio::test]
 async fn successfully_approves_messages() {
@@ -54,35 +53,48 @@ async fn successfully_approves_messages() {
             get_incoming_message_pda(&command_id);
 
         let message = message_info.leaf.clone().message;
-        let ix = approve_message(
-            message_info,
-            execute_data.payload_merkle_root,
-            metadata.gateway_root_pda,
-            metadata.payer.pubkey(),
-            verification_session_pda,
-            incoming_message_pda,
-        )
-        .unwrap();
-        let tx = metadata.send_tx(&[ix]).await.unwrap();
+        // First simulate to check events
+        let simulation_result = metadata
+            .simulate_approve_message(
+                execute_data.payload_merkle_root,
+                message_info.clone(),
+                verification_session_pda,
+            )
+            .await
+            .unwrap();
 
-        // Assert event
-        let expected_event = axelar_solana_gateway::processor::MessageEvent {
+        // Assert event emitted
+        let inner_ixs = simulation_result
+            .simulation_details
+            .unwrap()
+            .inner_instructions
+            .unwrap()
+            .first()
+            .cloned()
+            .unwrap();
+        assert!(inner_ixs.len() > 0);
+
+        let expected_event = MessageApprovedEvent {
             command_id,
-            cc_id_chain: message.cc_id.chain.clone(),
-            cc_id_id: message.cc_id.id.clone(),
+            source_chain: message.cc_id.chain.clone(),
+            cc_id: message.cc_id.id.clone(),
             source_address: message.source_address.clone(),
             destination_address: Pubkey::from_str(&message.destination_address).unwrap(),
             payload_hash: message.payload_hash,
             destination_chain: message.destination_chain,
         };
-        let emitted_events = get_gateway_events(&tx).pop().unwrap();
-        let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-            panic!("unexpected event")
-        };
-        let [(_, GatewayEvent::MessageApproved(emitted_event))] = vec_events.as_slice() else {
-            panic!("unexpected event")
-        };
-        assert_eq!(emitted_event, &expected_event);
+
+        assert_event_cpi(&expected_event, &inner_ixs);
+
+        // Execute the transaction
+        let _tx = metadata
+            .approve_message(
+                execute_data.payload_merkle_root,
+                message_info,
+                verification_session_pda,
+            )
+            .await
+            .unwrap();
 
         let (_, signing_pda_bump) =
             get_validate_message_signing_pda(expected_event.destination_address, command_id);
@@ -143,6 +155,45 @@ async fn fail_individual_approval_if_done_many_times() {
     let mut message_counter = 0;
     for message_info in merkle_messages_batch_two {
         let hash = message_info.leaf.message.hash::<SolanaSyscallHasher>();
+        // First simulate to check events
+        let simulation_result = metadata
+            .simulate_approve_message(
+                execute_data_batch_two.payload_merkle_root,
+                message_info.clone(),
+                verification_session_pda,
+            )
+            .await;
+
+        // Check the event was emitted in simulation
+        if let Some(inner_ixs) = simulation_result
+            .ok()
+            .and_then(|sim| sim.simulation_details)
+            .and_then(|details| details.inner_instructions)
+            .and_then(|instructions| instructions.first().cloned())
+        {
+            let destination_address =
+                Pubkey::from_str(&message_info.leaf.message.destination_address).unwrap();
+            let command_id = command_id(
+                &message_info.leaf.message.cc_id.chain,
+                &message_info.leaf.message.cc_id.id,
+            );
+
+            let expected_event = MessageApprovedEvent {
+                command_id,
+                source_chain: message_info.leaf.message.cc_id.chain.clone(),
+                cc_id: message_info.leaf.message.cc_id.id.clone(),
+                source_address: message_info.leaf.message.source_address.clone(),
+                destination_address,
+                payload_hash: message_info.leaf.message.payload_hash,
+                destination_chain: message_info.leaf.message.destination_chain.clone(),
+            };
+
+            if find_event_cpi(&expected_event, &inner_ixs) {
+                events_counter += 1;
+            }
+        }
+
+        // Now execute the transaction
         let tx = metadata
             .approve_message(
                 execute_data_batch_two.payload_merkle_root,
@@ -151,7 +202,7 @@ async fn fail_individual_approval_if_done_many_times() {
             )
             .await;
 
-        let tx = match tx {
+        let _tx = match tx {
             Ok(tx) => tx,
             Err(err) => {
                 let gateway_error = err.get_gateway_error().unwrap();
@@ -159,18 +210,11 @@ async fn fail_individual_approval_if_done_many_times() {
                 continue;
             }
         };
+
         message_counter += 1;
 
         let destination_address =
             Pubkey::from_str(&message_info.leaf.message.destination_address).unwrap();
-
-        let emitted_events = get_gateway_events(&tx).pop().unwrap();
-        let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-            panic!("unexpected event")
-        };
-        if let [(_, GatewayEvent::MessageApproved(_emitted_event))] = vec_events.as_slice() {
-            events_counter += 1;
-        };
 
         // Assert PDA state for message approval
         let command_id = command_id(

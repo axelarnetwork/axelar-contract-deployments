@@ -1,6 +1,7 @@
 //! Axelar Gateway program for the Solana blockchain
 pub mod entrypoint;
 pub mod error;
+pub mod events;
 pub mod executable;
 pub mod instructions;
 pub mod processor;
@@ -54,23 +55,6 @@ pub mod seed_prefixes {
     /// The seed prefix for deriving validate message signing PDAs
     /// This corresponds to the hardcoded value in `axelar_message_primitives::destination_program_id::DestinationProgramId::signing_pda`
     pub const VALIDATE_MESSAGE_SIGNING_SEED: &[u8] = b"gtw-validate-msg";
-}
-
-/// Event discriminators for different types of events
-pub mod event_prefixes {
-    /// Event prefix / discrimintator size
-    pub type Disc = [u8; 16];
-
-    /// Event prefix for an event when a message gets executed
-    pub const MESSAGE_EXECUTED: &Disc = b"message executed";
-    /// Event prefix for an event when a message gets approved
-    pub const MESSAGE_APPROVED: &Disc = b"message approved";
-    /// Event prefix for an event when an outgoing GMP call gets emitted
-    pub const CALL_CONTRACT: &Disc = b"call contract___";
-    /// Event prefix for an event when signers rotate
-    pub const SIGNERS_ROTATED: &Disc = b"signers rotated_";
-    /// Event prefix for an event when operatorship was transferred
-    pub const OPERATORSHIP_TRANSFERRED: &Disc = b"operatorship trn";
 }
 
 /// Checks that the supplied program ID is the correct one

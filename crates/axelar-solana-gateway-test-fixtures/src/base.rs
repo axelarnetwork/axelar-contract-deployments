@@ -5,6 +5,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 use axelar_solana_encoding::borsh::BorshDeserialize;
+use solana_banks_interface::BanksTransactionResultWithSimulation;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
@@ -181,6 +182,42 @@ impl TestFixture {
 
         // set clock
         context.set_sysvar(&new_clock);
+    }
+
+    /// Simulates transactions.
+    /// Using the default `self.payer` for signing.
+    pub async fn simulate_tx(
+        &mut self,
+        ixs: &[Instruction],
+    ) -> Result<BanksTransactionResultWithSimulation, BanksClientError> {
+        self.simulate_tx_with_custom_signers(ixs, &[&self.payer.insecure_clone()])
+            .await
+    }
+
+    /// Simulates a transaction with custom signers.
+    pub async fn simulate_tx_with_custom_signers<T: Signers + ?Sized>(
+        &mut self,
+        ixs: &[Instruction],
+        signing_keypairs: &T,
+    ) -> Result<BanksTransactionResultWithSimulation, BanksClientError> {
+        // always refresh blockhash first
+        let hash = self.refresh_blockhash().await;
+
+        // build the transaction
+        let tx = Transaction::new_signed_with_payer(
+            ixs,
+            Some(&self.payer.pubkey()),
+            signing_keypairs,
+            hash,
+        );
+
+        let TestNodeMode::ProgramTest { banks_client, .. } = &mut self.test_node else {
+            unimplemented!();
+        };
+
+        // For ProgramTest mode, use the banks client simulation directly
+        let result = banks_client.simulate_transaction(tx).await.unwrap();
+        Ok(result)
     }
 
     /// Send a new transaction.

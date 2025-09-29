@@ -2,24 +2,25 @@ use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
 use core::str::FromStr;
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::{
     pda::{BytemuckedPda, ValidPDA},
     validate_system_account_key,
 };
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::error::GatewayError;
+use crate::events::MessageApprovedEvent;
 use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_incoming_message_pda,
-    assert_valid_signature_verification_pda, event_prefixes, get_incoming_message_pda,
+    assert_valid_signature_verification_pda, get_incoming_message_pda,
     get_validate_message_signing_pda, seed_prefixes,
 };
 
@@ -67,6 +68,7 @@ impl Processor {
         let verification_session_account = next_account_info(accounts_iter)?;
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
+        event_cpi_accounts!(accounts_iter);
 
         validate_system_account_key(system_program.key)?;
 
@@ -172,17 +174,15 @@ impl Processor {
             message.payload_hash,
         );
 
-        // Emit an event
-        sol_log_data(&[
-            event_prefixes::MESSAGE_APPROVED,
-            &command_id,
-            &destination_address.to_bytes(),
-            &message.payload_hash,
-            cc_id.chain.as_bytes(),
-            cc_id.id.as_bytes(),
-            message.source_address.as_bytes(),
-            message.destination_chain.as_bytes(),
-        ]);
+        emit_cpi!(MessageApprovedEvent {
+            command_id,
+            destination_address,
+            payload_hash: message.payload_hash,
+            source_chain: cc_id.chain.clone(),
+            cc_id: cc_id.id.clone(),
+            source_address: message.source_address.clone(),
+            destination_chain: message.destination_chain.clone(),
+        });
 
         Ok(())
     }

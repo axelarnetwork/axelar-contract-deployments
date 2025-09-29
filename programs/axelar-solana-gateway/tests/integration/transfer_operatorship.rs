@@ -1,6 +1,6 @@
 use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::events::{GatewayEvent, OperatorshipTransferredEvent};
 use axelar_solana_gateway::instructions::GatewayInstruction;
-use axelar_solana_gateway::processor::{GatewayEvent, OperatorshipTransferredEvent};
 use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, ProgramInvocationState};
