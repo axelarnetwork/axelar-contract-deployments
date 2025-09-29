@@ -184,7 +184,14 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const {gasValue, scaledGasValue} = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue, _axelar);
+            const { gasValue, scaledGasValue } = await estimateITSFee(
+                chain,
+                destinationChain,
+                env,
+                'InterchainTokenDeployment',
+                options.gasValue,
+                _axelar,
+            );
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
@@ -231,7 +238,14 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'deployRemoteCanonicalInterchainToken': {
             const { tokenAddress, destinationChain, env } = options;
 
-            const {gasValue, scaledGasValue} = await estimateITSFee(chain, destinationChain, env, 'InterchainTokenDeployment', options.gasValue, _axelar);
+            const { gasValue, scaledGasValue } = await estimateITSFee(
+                chain,
+                destinationChain,
+                env,
+                'InterchainTokenDeployment',
+                options.gasValue,
+                _axelar,
+            );
 
             validateParameters({
                 isValidAddress: { tokenAddress },
@@ -287,7 +301,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'linkToken': {
             const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
 
-            const {gasValue, scaledGasValue} = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
+            const { gasValue, scaledGasValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             const deploymentSalt = getDeploymentSalt(options);
 
