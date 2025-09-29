@@ -809,14 +809,12 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     };
 
     const rawEstimate = await httpPost(url, payload);
-    
+
     if (rawEstimate.error || rawEstimate === 0) {
         throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
     }
 
-    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER 
-        ? rawEstimate.toString() 
-        : rawEstimate;
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER ? rawEstimate.toString() : rawEstimate;
 
     const ethValue = scaleGasValue(chain, estimate, false);
     return { gasValue: ethValue, gasFeeValue: estimate };
