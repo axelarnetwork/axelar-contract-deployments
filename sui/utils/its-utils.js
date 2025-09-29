@@ -41,7 +41,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
 
     // TreasuryCapReclaimer<T>
     const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', coinType, '>'].join('');
-    if (config.options.treasuryCap) {
+    if (treasuryCap) {
         const treasuryCapReclaimer = await txBuilder.moveCall({
             target: `${STD_PACKAGE_ID}::option::extract`,
             arguments: [treasuryCapReclaimerOption],

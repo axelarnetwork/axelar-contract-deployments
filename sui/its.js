@@ -470,8 +470,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const [symbol, name, decimals, destinationChain, destinationAddress] = args;
 
     // Token manager type
-    const tokenManagerTypes = ['lock_unlock', 'mint_burn'];
-    const tokenManager = options.tokenManagerMode ? options.tokenManagerMode : tokenManagerTypes[0];
+    const tokenManager = options.tokenManagerMode;
 
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
@@ -505,7 +504,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         symbol,
         metadata,
         tokenType,
-        tokenManager === tokenManagerTypes[1] ? treasuryCap : null,
+        tokenManager === 'mint_burn' ? treasuryCap : null,
     );
 
     if (!tokenId) {
@@ -522,14 +521,9 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     txBuilder = new TxBuilder(client);
 
     // Token manager type
-    const tokenManagerType =
-        tokenManager == tokenManagerTypes[1]
-            ? await txBuilder.moveCall({
-                  target: `${itsConfig.address}::token_manager_type::mint_burn`,
-              })
-            : await txBuilder.moveCall({
-                  target: `${itsConfig.address}::token_manager_type::lock_unlock`,
-              });
+    const tokenManagerType = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_manager_type::${tokenManager}`,
+    });
 
     // Salt
     const salt = await txBuilder.moveCall({
@@ -958,7 +952,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
-            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').default('lock_unlock').choices(['lock_unlock', 'mint_burn']),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').default('lock_unlock').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
