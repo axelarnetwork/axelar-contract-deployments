@@ -33,7 +33,7 @@ const chalk = require('chalk');
 const {
     utils: { arrayify, parseUnits },
 } = require('hardhat').ethers;
-const { checkIfCoinExists, checkIfCoinIsMinted } = require('./utils/token-utils');
+const { checkIfCoinExists, checkIfSenderHasSufficientBalance } = require('./utils/token-utils');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -593,7 +593,8 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
         typeArguments: [coinType],
     });
 
-    console.log('🚀 Deploying remote interchain coin...');
+    printInfo('🚀 Expected contract address');
+
 
     const unitAmountGas = parseUnits('1', 9).toBigInt();
 
@@ -701,7 +702,7 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const [coinPackageId, coinPackageName, coinModName, initialCoinObjectId, tokenId, destinationChain, destinationAddress, initialAmount] =
+    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] =
         args;
 
     const walletAddress = keypair.toSuiAddress();
@@ -711,8 +712,8 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     validateParameters({
         isNonEmptyString: { coinPackageName, coinModName, destinationChain, destinationAddress },
-        isHexString: { coinPackageId, coinObjectId: initialCoinObjectId, tokenId },
-        isValidNumber: { amount: initialAmount },
+        isHexString: { coinPackageId, coinObjectId, tokenId },
+        isValidNumber: { amount },
     });
 
     validateDestinationChain(config.chains, destinationChain);
@@ -729,27 +730,8 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [],
     });
 
-    // Use dynamic values for amount and coinObjectId
-    let coinObjectId = initialCoinObjectId;
-    let amount = initialAmount;
-    const ZERO_ID = '0x0000000000000000000000000000000000000000000000000000000000000000';
-    if (coinObjectId === ZERO_ID) {
-        const [totalBalance, mintedCoinObjectId] = await mintCoins(
-            keypair,
-            client,
-            config,
-            contracts,
-            [coinPackageId, coinPackageName, coinModName, amount, walletAddress],
-            options,
-        );
-        coinObjectId = mintedCoinObjectId;
-
-        //if minting coins from scratch during interchain transfer, then send total minted amount in transfer.
-        amount = totalBalance;
-    }
-
     await checkIfCoinExists(client, coinPackageId, coinType);
-    await checkIfCoinIsMinted(client, coinObjectId, coinType);
+    await checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount);
 
     const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
 
@@ -865,11 +847,11 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
         coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
     });
 
-    console.log(`💰 my token balance ${balance.totalBalance}`);
+    printInfo('💰 my token balance', balance.totalBalance);
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
-    console.log('New coin object id:', coinChanged.objectId);
+    printInfo('New coin object id:', coinChanged.objectId);
 
     return [balance.totalBalance, coinChanged.objectId];
 }
@@ -1049,7 +1031,6 @@ if (require.main === module) {
             'interchain-transfer <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
         )
         .description('Send interchain transfer from sui to a chain where token is linked')
-        // TODO set coinObjectId default to 0x0000000000000000000000000000000000000000000000000000000000000000 when refactoring script
         .action(
             (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
                 mainProcessor(
