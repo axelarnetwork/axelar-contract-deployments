@@ -196,7 +196,7 @@ async function deployToken(keypair, client, contracts, args, options) {
             typeArguments: [tokenType],
         });
 
-        mintTxBuilder.tx.transferObjects([coin], recipient);
+        mintTxBuilder.tx.transferObjects([coin], walletAddress);
 
         await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
     }
