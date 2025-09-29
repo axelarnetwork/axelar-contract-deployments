@@ -538,7 +538,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Link params (only outbound chain supported for now)
-    const linkParams = options.destinationDeployer ? options.destinationDeployer : '';
+    const linkParams = options.destinationOperator ? options.destinationOperator : '';
 
     messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::link_coin`,
@@ -960,7 +960,7 @@ if (require.main === module) {
         .addOption(
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').default('lock_unlock').choices(['lock_unlock', 'mint_burn']),
         )
-        .addOption(new Option('--destinationDeployer <address>', 'Address that deployed the token at the destination chain & address'))
+        .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
