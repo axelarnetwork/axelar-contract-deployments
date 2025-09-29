@@ -123,13 +123,12 @@ fn verify_gateway_event_and_source(
         .find(|(_, event)| {
             matches!(
                 event,
-                axelar_solana_gateway::processor::GatewayEvent::CallContract(_)
+                axelar_solana_gateway::events::GatewayEvent::CallContract(_)
             )
         })
         .expect("CallContract event not found");
 
-    let (_, axelar_solana_gateway::processor::GatewayEvent::CallContract(event)) =
-        call_contract_event
+    let (_, axelar_solana_gateway::events::GatewayEvent::CallContract(event)) = call_contract_event
     else {
         panic!("Expected CallContract event");
     };

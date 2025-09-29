@@ -51,7 +51,7 @@ use solana_sdk::system_instruction;
 use test_context::AsyncTestContext;
 
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
+use axelar_solana_gateway::events::{CallContractEvent, GatewayEvent};
 use axelar_solana_gateway::state::incoming_message::command_id;
 use axelar_solana_gateway_test_fixtures::base::workspace_root_dir;
 use axelar_solana_gateway_test_fixtures::gas_service::GasServiceUtils;

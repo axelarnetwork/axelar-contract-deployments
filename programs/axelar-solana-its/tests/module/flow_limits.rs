@@ -12,7 +12,7 @@ use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_token_2022::state::Account;
 use test_context::test_context;
 
-use axelar_solana_gateway::processor::GatewayEvent;
+use axelar_solana_gateway::events::GatewayEvent;
 use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
 use axelar_solana_gateway_test_fixtures::gateway::ProgramInvocationState;
 use evm_contracts_test_suite::ethers::signers::Signer as EvmSigner;
