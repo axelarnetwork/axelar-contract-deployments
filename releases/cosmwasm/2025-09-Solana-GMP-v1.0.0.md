@@ -402,7 +402,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
     # Check reward pool to confirm funding worked
-    ts-node cosmwasm/query.js rewards $CHAIN
+    ts-node cosmwasm/query.ts rewards $CHAIN
     ```
 
 1. Create genesis verifier set
