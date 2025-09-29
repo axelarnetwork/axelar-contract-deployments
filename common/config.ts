@@ -1,6 +1,6 @@
 import { GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
 
-import { loadConfig, printError, saveConfig } from './utils';
+import { loadConfig, printWarn, saveConfig } from './utils';
 
 export interface FullConfig {
     axelar: {
@@ -79,7 +79,6 @@ export class ConfigManager {
 
         if (errors.length > 0) {
             this.printValidationReport(errors);
-            throw new Error(`Configuration validation failed with ${errors.length} error(s). See details above.`);
         }
     }
 
@@ -226,19 +225,19 @@ export class ConfigManager {
     }
 
     private printValidationReport(errors: string[]): void {
-        printError(`\n❌ Configuration Validation Report for ${this.environment.toUpperCase()}`);
-        printError(`Found ${errors.length} error(s).\n`);
+        printWarn(`\n❌ Configuration Validation Report for ${this.environment.toUpperCase()}`);
+        printWarn(`Found ${errors.length} error(s).\n`);
 
         if (errors.length > 0) {
             errors.forEach((error, index) => {
-                printError(`  ${index + 1}. ${error}`);
+                printWarn(`  ${index + 1}. ${error}`);
             });
         }
 
-        printError('📋 SUMMARY:');
-        printError(`  Total Errors: ${errors.length}`);
-        printError(`  Configuration Status: ${errors.length > 0 ? 'INVALID' : 'VALID'}`);
-        printError('');
+        printWarn('📋 SUMMARY:');
+        printWarn(`  Total Errors: ${errors.length}`);
+        printWarn(`  Configuration Status: ${errors.length > 0 ? 'INVALID' : 'VALID'}`);
+        printWarn('');
     }
 
     private isValidGasPrice(price: string): boolean {
