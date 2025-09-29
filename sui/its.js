@@ -957,7 +957,11 @@ if (require.main === module) {
             `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
-        .addOption(new Option('--tokenManagerMode <mode>', 'Either "lock_unlock" or "mint_burn", default: "lock_unlock"'))
+        .addOption(
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode')
+                .default('lock_unlock')
+                .choices(['lock_unlock', 'mint_burn']),
+        )
         .addOption(new Option('--destinationDeployer <address>', 'Address that deployed the token at the destination chain & address'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);

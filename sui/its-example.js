@@ -183,6 +183,24 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     const [TreasuryCap, Metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
 
+    // Mint tokens before registration (while user still holds the TreasuryCap)
+    const amount = isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+    if (amount) {
+        const unitAmount = getUnitAmount(options.mintAmount, decimals);
+
+        const mintTxBuilder = new TxBuilder(client);
+
+        const coin = await mintTxBuilder.moveCall({
+            target: `${SUI_PACKAGE_ID}::coin::mint`,
+            arguments: [TreasuryCap, unitAmount],
+            typeArguments: [tokenType],
+        });
+
+        mintTxBuilder.tx.transferObjects([coin], recipient);
+
+        await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
+    }
+
     // Register Token in InterchainTokenService
     const { Example, InterchainTokenService } = contracts;
     let tokenId;
@@ -368,6 +386,10 @@ if (require.main === module) {
             new Option('--tokenManagerMode <tokenManagerMode>', 'Token Manager Mode')
                 .default('lock_unlock')
                 .choices(['lock_unlock', 'mint_burn']),
+        )
+        .addOption(
+            new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer')
+                .default('0')
         )
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
         .action((symbol, name, decimals, options) => {
