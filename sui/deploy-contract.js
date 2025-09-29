@@ -472,6 +472,10 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
                 target: `${contractConfig.address}::interchain_token_service::migrate`,
                 arguments: [InterchainTokenService, ownerCap],
             });
+            await builder.moveCall({
+                target: `${contractConfig.address}::discovery::register_transaction`,
+                arguments: [InterchainTokenService, RelayerDiscovery],
+            });
 
             await builder.moveCall({
                 target: `${contractConfig.address}::discovery::register_transaction`,
