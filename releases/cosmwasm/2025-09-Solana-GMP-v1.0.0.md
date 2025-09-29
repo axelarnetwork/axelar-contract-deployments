@@ -235,6 +235,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     -c Router \
     -t "Register Gateway for solana" \
     -d "Register Gateway address for solana at Router contract" \
+    -m $MNEMONIC \
     --msg "{
             \"register_chain\": {
                 \"chain\": \"$CHAIN\",
@@ -247,7 +248,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     - Verify Gateway Registration:
 
     ```bash
-    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node [axelar rpc address] | jq .
+    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node [axelar rpc url] | jq .
     ```
 
     ```bash
@@ -271,6 +272,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -c Coordinator \
         -t "Register Multisig Prover for solana" \
         -d "Register Multisig Prover address for solana at Coordinator contract" \
+        -m $MNEMONIC \
         --msg "{
             \"register_prover_contract\": {
                 \"chain_name\": \"$CHAIN\",
@@ -286,6 +288,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -c Multisig \
         -t "Authorize Multisig Prover for solana" \
         -d "Authorize Multisig Prover address for solana at Multisig contract" \
+        -m $MNEMONIC \
         --msg "{
             \"authorize_callers\": {
                 \"contracts\": {
@@ -296,7 +299,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```
 
     ```bash
-    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node [axelar rpc url] | jq .
 
     # Result should look like:
     {
@@ -317,50 +320,52 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for solana in solana voting verifier" \
-    -d "Create pool for solana in solana voting verifier" \
-    --deposit $DEPOSIT_VALUE \
-    --msg "{
-        \"create_pool\": {
-            \"params\": {
-                \"epoch_duration\": \"<epoch_duration>\",
-                \"participation_threshold\": [<participation_threshold>],
-                \"rewards_per_epoch\": \"<rewards_per_epoch>\"
-            },
-            \"pool_id\": {
-                \"chain_name\": \"$CHAIN\",
-                \"contract\": \"$VOTING_VERIFIER\"
+        -c Rewards \
+        -t "Create pool for solana in solana voting verifier" \
+        -d "Create pool for solana in solana voting verifier" \
+        --deposit $DEPOSIT_VALUE \
+        -m $MNEMONIC \
+        --msg "{
+            \"create_pool\": {
+                \"params\": {
+                \"epoch_duration\": \"[epoch_duration]\",
+                \"participation_threshold\": [participation_threshold],
+                \"rewards_per_epoch\": \"[rewards_per_epoch]\"
+                },
+                \"pool_id\": {
+                    \"chain_name\": \"$CHAIN\",
+                    \"contract\": \"$VOTING_VERIFIER\"
+                }
             }
-        }
-    }"
+        }"
     ```
 
 1. Create reward pool for multisig
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for solana in axelar multisig" \
-    -d "Create pool for solana in axelar multisig" \
-    --msg "{
-        \"create_pool\": {
-            \"params\": {
-                \"epoch_duration\": \"<epoch_duration>\",
-                \"participation_threshold\": [<participation_threshold>],
-                \"rewards_per_epoch\": \"<rewards_per_epoch>\"
-            },
-            \"pool_id\": {
-                \"chain_name\": \"$CHAIN\",
-                \"contract\": \"$MULTISIG\"
+        -c Rewards \
+        -t "Create pool for solana in axelar multisig" \
+        -d "Create pool for solana in axelar multisig" \
+        -m $MNEMONIC \
+        --msg "{
+            \"create_pool\": {
+                \"params\": {
+                \"epoch_duration\": \"[epoch_duration]\",
+                \"participation_threshold\": [participation_threshold],
+                \"rewards_per_epoch\": \"[rewards_per_epoch]\"
+                },
+                \"pool_id\": {
+                    \"chain_name\": \"$CHAIN\",
+                    \"contract\": \"$MULTISIG\"
+                }
             }
-        }
-    }"
+        }"
     ```
 
 1. Update ampd with the Solana chain configuration. Verifiers should use their own Solana RPC node for the `http_url` in production.
 
-    | Axelar Env           | `http_url`                            |
+    | Axelar Env           | `rpc_url`                             |
     | -------------------- | ------------------------------------- |
     | **Devnet-amplifier** | `https://api.devnet.solana.com`       |
     | **Stagenet**         | `https://api.testnet.solana.com`      |
@@ -369,18 +374,17 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     [[handlers]]
-    type = "MultisigSigner"
-    cosmwasm_contract = "$MULTISIG"
-
-    [[handlers]]
-    type="SolanaMsgVerifier"
-    http_url=[http_url]
-    cosmwasm_contract="$VOTING_VERIFIER"
-
-    [[handlers]]
-    type="SolanaVerifierSetVerifier"
-    http_url=[http_url]
-    cosmwasm_contract="$VOTING_VERIFIER"
+      - type: MultisigSigner
+        cosmwasm_contract: $MULTISIG
+        chain_name: $CHAIN
+      - type: SolanaMsgVerifier
+        chain_name: $CHAIN
+        cosmwasm_contract: $VOTING_VERIFIER
+        rpc_url: [rpc_url]
+      - type: SolanaVerifierSetVerifier
+        chain_name: $CHAIN
+        cosmwasm_contract: $VOTING_VERIFIER
+        rpc_url: [rpc_url]
     ```
 
 1. Update ampd with the Solana chain configuration.
