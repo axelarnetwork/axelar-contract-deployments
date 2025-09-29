@@ -844,11 +844,11 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
 
     const balance = await client.getBalance({
-        owner: walletAddress,
+        owner: receiver,
         coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
     });
 
-    printInfo('💰 my token balance', balance.totalBalance);
+    printInfo('💰 receiver token balance', balance.totalBalance);
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
