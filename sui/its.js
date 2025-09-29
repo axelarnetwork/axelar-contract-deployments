@@ -9,6 +9,7 @@ const {
     validateParameters,
     isValidNumber,
     validateDestinationChain,
+    estimateITSFee,
 } = require('../common/utils');
 const {
     addBaseOptions,
@@ -747,9 +748,9 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
     });
 
-    const unitAmountGas = parseUnits('1', 9).toBigInt();
+    const gasValue = await estimateITSFee(config.chains['sui'], destinationChain, options.env, 'InterchainTransfer', 'auto', config.axelar);
 
-    const [gas] = tx.splitCoins(tx.gas, [unitAmountGas]);
+    const [gas] = tx.splitCoins(tx.gas, [gasValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
@@ -857,6 +858,7 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
 }
 
 async function processCommand(command, config, chain, args, options) {
+    
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
