@@ -796,8 +796,8 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     }
 
     if (isValidNumber(gasValue)) {
-        const scaledGasValue = scaleGasValue(chain, gasValue);
-        return { gasValue, scaledGasValue };
+        const gasFeeValue = scaleGasValue(chain, gasValue);
+        return { gasValue, gasFeeValue };
     }
 
     const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
@@ -808,19 +808,27 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         event: eventType,
     };
 
-    const res = await httpPost(url, payload);
-
-    if (res.error) {
-        throw new Error(`Error querying gas amount: ${res.error}`);
+    const rawEstimate = await httpPost(url, payload);
+    
+    if (rawEstimate.error || rawEstimate === 0) {
+        throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
     }
 
-    const scaledGasValue = scaleGasValue(chain, res);
-    return { gasValue: res, scaledGasValue };
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER 
+        ? rawEstimate.toString() 
+        : rawEstimate;
+
+    const ethValue = scaleGasValue(chain, estimate, false);
+    return { gasValue: ethValue, gasFeeValue: estimate };
 }
 
-function scaleGasValue(chain, gasValue) {
+function scaleGasValue(chain, gasValue, up = true) {
     if (typeof chain.gasScalingFactor === 'number') {
-        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        if (up) {
+            return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        } else {
+            return BigNumber.from(gasValue).div(BigNumber.from(10).pow(chain.gasScalingFactor));
+        }
     }
 
     return gasValue;

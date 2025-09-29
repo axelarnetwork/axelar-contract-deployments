@@ -184,7 +184,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const { gasValue, scaledGasValue } = await estimateITSFee(
+            const { gasValue, gasFeeValue } = await estimateITSFee(
                 chain,
                 destinationChain,
                 env,
@@ -207,7 +207,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 destinationChain,
                 gasValue,
                 {
-                    value: scaledGasValue,
+                    value: gasFeeValue,
                     ...gasOptions,
                 },
             );
@@ -238,7 +238,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'deployRemoteCanonicalInterchainToken': {
             const { tokenAddress, destinationChain, env } = options;
 
-            const { gasValue, scaledGasValue } = await estimateITSFee(
+            const { gasValue, gasFeeValue } = await estimateITSFee(
                 chain,
                 destinationChain,
                 env,
@@ -259,7 +259,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 tokenAddress,
                 destinationChain,
                 gasValue,
-                { value: scaledGasValue, ...gasOptions },
+                { value: gasFeeValue, ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
@@ -301,7 +301,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'linkToken': {
             const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, env } = options;
 
-            const { gasValue, scaledGasValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
+            const { gasValue, gasFeeValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             const deploymentSalt = getDeploymentSalt(options);
 
@@ -325,7 +325,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 tokenManagerType,
                 linkParams,
                 gasValue,
-                { value: scaledGasValue, ...gasOptions },
+                { value: gasFeeValue, ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
