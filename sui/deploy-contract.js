@@ -25,6 +25,7 @@ const {
     restrictUpgradePolicy,
     broadcastRestrictedUpgradePolicy,
     broadcastFromTxBuilder,
+    selectSuiNetwork,
 } = require('./utils');
 const GatewayCli = require('./gateway');
 
@@ -416,9 +417,14 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 
     const packageDependencies = getLocalDependencies(packageDir, moveDir);
 
+    const network = selectSuiNetwork(options.env);
+
     for (const { name } of packageDependencies) {
         const packageAddress = contractsConfig[name]?.address;
-        updateMoveToml(packageDir, packageAddress, moveDir);
+        const version = Math.max(0, Object.keys(contractsConfig[name]?.versions || {}).length - 1);
+        const originalPackageId = version > 0 ? contractsConfig[name]?.versions['0'] : undefined;
+
+        updateMoveToml(packageDir, packageAddress, moveDir, undefined, version, network, originalPackageId, true);
     }
 
     const builder = new TxBuilder(client);
@@ -427,7 +433,11 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     if (!options.offline) {
         // The new upgraded package takes a bit of time to register, so we wait.
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        chain.contracts[packageName].structs = await getStructs(client, result.packageId);
+
+        // Update the toml and lock file so running the sync command is not required
+        contractConfig.structs = await getStructs(client, result.packageId);
+        const version = Math.max(0, Object.keys(contractConfig.versions || {}).length - 1);
+        updateMoveToml(packageDir, result.packageId, moveDir, undefined, version, network, contractConfig.versions['0'], true);
     }
 }
 
@@ -491,12 +501,17 @@ async function syncPackages(keypair, client, config, chain, options) {
         const packageName = readMovePackageName(packageDir);
         const packageId = chain.contracts[packageName]?.address;
 
+        const network = selectSuiNetwork(options.env);
+
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
             continue;
         }
 
-        updateMoveToml(packageDir, packageId, moveDir);
+        const version = Math.max(0, Object.keys(chain.contracts[packageName]?.versions || {}).length - 1);
+        const originalPackageId = version > 0 ? chain.contracts[packageName]?.versions['0'] : undefined;
+
+        updateMoveToml(packageDir, packageId, moveDir, undefined, version, network, originalPackageId, true);
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
