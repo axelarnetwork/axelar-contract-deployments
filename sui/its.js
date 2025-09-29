@@ -469,6 +469,10 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const { Gateway } = AxelarGateway.objects;
     const [symbol, name, decimals, destinationChain, destinationAddress] = args;
 
+    // Token manager type
+    const tokenManagerTypes = ["lock_unlock", "mint_burn"];
+    const tokenManager = (options.tokenManagerMode) ? options.tokenManagerMode : tokenManagerTypes[0];
+
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
 
@@ -501,10 +505,15 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         symbol,
         metadata,
         tokenType,
+        tokenManager === tokenManagerTypes[1] ? treasuryCap : null,
     );
 
-    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
-    if (!options.channel && !channelId) throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
+    if (!tokenId) {
+        throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
+    }
+    if (!options.channel && !channelId) {
+        throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
+    }
 
     const channel = options.channel ? options.channel : channelId;
 
@@ -512,15 +521,22 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // This submits a LinkToken msg type to ITS Hub.
     txBuilder = new TxBuilder(client);
 
-    const tokenManagerType = await txBuilder.moveCall({
-        target: `${itsConfig.address}::token_manager_type::lock_unlock`,
-    });
+    // Token manager type
+    const tokenManagerType = tokenManager == tokenManagerTypes[1] 
+        ? await txBuilder.moveCall({
+            target: `${itsConfig.address}::token_manager_type::mint_burn`,
+        }) : await txBuilder.moveCall({
+            target: `${itsConfig.address}::token_manager_type::lock_unlock`,
+        });
 
     // Salt
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
         arguments: [saltAddress],
     });
+
+    // Link params 
+    const linkParams = options.destinationDeployer ? options.destinationDeployer : '';
 
     messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::link_coin`,
@@ -531,7 +547,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             destinationChain, // This assumes the chain is already added as a trusted chain
             bcs.string().serialize(destinationAddress).toBytes(),
             tokenManagerType,
-            bcs.string().serialize('link params').toBytes(), // TODO: what value should go here?
+            bcs.string().serialize(linkParams).toBytes(),
         ],
     });
 
@@ -939,6 +955,8 @@ if (require.main === module) {
             `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
+        .addOption(new Option('--tokenManagerMode <mode>', 'Either "lock_unlock" or "mint_burn", default: "lock_unlock"'))
+        .addOption(new Option('--destinationDeployer <address>', 'Address that deployed the token at the destination chain & address'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
