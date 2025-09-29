@@ -182,7 +182,7 @@ jobs:
         run: ts-node evm/its.js transfer-mintership 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: InterchainTokenFactory link token
-        run: ts-node evm/interchainTokenFactory.js link-token remote remote "0x1234" 4 "0x5678" --salt "salt" -y
+        run: ts-node evm/interchainTokenFactory.js link-token remote "0x1234" 4 "0x5678" --salt "salt" -y
 
       # Note that tokenId is hardcoded since it's derivation must always be the same
       - name: InterchainTokenService interchain transfer to destination chain
