@@ -211,12 +211,6 @@ jobs:
 
       ###### Command: ITS ######
       - name: ITS Pause
-        run: ts-node sui/contract.js pause InterchainTokenService -y
-
-      - name: ITS Unpause
-        run: ts-node sui/contract.js unpause InterchainTokenService -y
-
-      - name: ITS Pause
         run: ts-node sui/contract.js pause InterchainTokenService --functions all -y
 
       - name: ITS Unpause
