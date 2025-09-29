@@ -87,8 +87,8 @@ impl Processor {
         emit_cpi!(CallContractEvent {
             sender: *sender.key,
             payload_hash,
-            destination_chain: destination_chain.to_string(),
-            destination_contract_address: destination_contract_address.to_string(),
+            destination_chain: destination_chain.to_owned(),
+            destination_contract_address: destination_contract_address.to_owned(),
             payload,
         });
 

@@ -2,6 +2,7 @@ use anchor_discriminators::Discriminator;
 use dummy_axelar_solana_event_cpi::{
     instruction::emit_event, processor::MemoSentEvent, ID as PROGRAM_ID,
 };
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program::{instruction::AccountMeta, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
@@ -77,44 +78,23 @@ async fn test_emit_memo_cpi_event() {
     assert!(simulation_result.result.is_some_and(|r| r.is_ok()));
 
     // Extract inner instructions
-    let inner_instructions = simulation_result
+    let inner_ixs = simulation_result
         .simulation_details
         .unwrap()
         .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
         .unwrap();
+    assert!(inner_ixs.len() > 0);
 
     // Find the event CPI instruction
-    let mut found_event = None;
+    let expected_event = MemoSentEvent {
+        sender: test_keypair.pubkey(),
+        memo: memo.clone(),
+    };
 
-    for inner_ix_group in inner_instructions {
-        for inner_ix in inner_ix_group {
-            let inner_ix = inner_ix.instruction;
-
-            let data = inner_ix.data;
-
-            // Check if it starts with the event tag
-            if data.len() >= 8 && &data[0..8] == event_cpi::EVENT_IX_TAG_LE {
-                // Extract the event data (skip the 8-byte tag)
-                let event_data = &data[8..];
-
-                // Check if this is a MemoSentEvent (discriminator match)
-                if event_data.len() >= 8 && &event_data[0..8] == MemoSentEvent::DISCRIMINATOR {
-                    // Deserialize the event
-                    if let Ok(event) = borsh::BorshDeserialize::try_from_slice(&event_data[8..]) {
-                        found_event = Some(event);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // Verify we found the event
-    let event: MemoSentEvent =
-        found_event.expect("Expected to find MemoSentEvent in inner instructions");
-
-    assert_eq!(event.sender, test_keypair.pubkey());
-    assert_eq!(event.memo, memo);
+    assert_event_cpi(&expected_event, &inner_ixs);
 
     // Also process the transaction to ensure it actually works
     banks_client.process_transaction(transaction).await.unwrap();

@@ -12,9 +12,10 @@ use axelar_solana_gateway::{
 };
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_gateway_test_fixtures::{
-    assert_event_cpi, SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
 use core::str::FromStr;
+use event_cpi_test_utils::assert_event_cpi;
 use pretty_assertions::assert_eq;
 use solana_program_test::tokio;
 use solana_sdk::account::Account;

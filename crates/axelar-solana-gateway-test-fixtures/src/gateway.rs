@@ -716,7 +716,7 @@ impl SolanaAxelarIntegration {
 /// Get events emitted by the Gateway
 #[must_use]
 pub fn get_gateway_events(
-    tx: &solana_program_test::BanksTransactionResultWithMetadata,
+    _tx: &solana_program_test::BanksTransactionResultWithMetadata,
 ) -> Vec<ProgramInvocationState<GatewayEvent>> {
     vec![]
 }

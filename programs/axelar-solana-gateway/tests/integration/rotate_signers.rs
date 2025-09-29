@@ -13,7 +13,8 @@ use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
     make_messages, make_verifier_set, random_bytes, random_message, GetGatewayError,
 };
-use axelar_solana_gateway_test_fixtures::{assert_event_cpi, SolanaAxelarIntegration};
+use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::tokio;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;

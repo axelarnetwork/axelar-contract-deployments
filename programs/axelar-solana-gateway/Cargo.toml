@@ -57,6 +57,7 @@ event-cpi.workspace = true
 event-cpi-macros.workspace = true
 
 [dev-dependencies]
+event-cpi-test-utils.workspace = true
 hex.workspace = true
 lazy_static.workspace = true
 sha3.workspace = true

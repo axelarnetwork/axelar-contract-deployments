@@ -4,8 +4,9 @@ use axelar_solana_gateway::instructions::GatewayInstruction;
 use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_gateway_test_fixtures::{
-    assert_event_cpi, SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
+    SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
+use event_cpi_test_utils::assert_event_cpi;
 use num_traits::ToPrimitive as _;
 use program_utils::pda::BytemuckedPda;
 use solana_program_test::tokio::fs;

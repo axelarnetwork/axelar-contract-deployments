@@ -178,6 +178,7 @@ impl Processor {
 /// Returns [`GatewayError`] if:
 /// * Verifier set tracker data serialization fails
 /// * PDA validation fails
+#[allow(clippy::too_many_arguments)]
 fn rotate_signers<'a>(
     gateway_config: &mut GatewayConfig,
     new_verifier_set_merkle_root: [u8; 32],

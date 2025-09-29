@@ -1,7 +1,7 @@
 //! Events emitted by the Axelar Solana Gateway program.
 
+use anchor_discriminators::Discriminator;
 use axelar_message_primitives::U256;
-use event_cpi::Discriminator;
 use event_cpi_macros::event;
 use solana_program::pubkey::Pubkey;
 
