@@ -537,7 +537,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         arguments: [saltAddress],
     });
 
-    // Link params
+    // Link params (only outbound chain supported for now)
     const linkParams = options.destinationDeployer ? options.destinationDeployer : '';
 
     messageTicket = await txBuilder.moveCall({
