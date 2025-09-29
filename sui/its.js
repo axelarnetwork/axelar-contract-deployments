@@ -958,9 +958,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
-            new Option('--tokenManagerMode <mode>', 'Token Manager Mode')
-                .default('lock_unlock')
-                .choices(['lock_unlock', 'mint_burn']),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').default('lock_unlock').choices(['lock_unlock', 'mint_burn']),
         )
         .addOption(new Option('--destinationDeployer <address>', 'Address that deployed the token at the destination chain & address'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {

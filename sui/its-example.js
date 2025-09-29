@@ -387,10 +387,7 @@ if (require.main === module) {
                 .default('lock_unlock')
                 .choices(['lock_unlock', 'mint_burn']),
         )
-        .addOption(
-            new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer')
-                .default('0')
-        )
+        .addOption(new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer').default('0'))
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
