@@ -687,7 +687,8 @@ Token symbol: SCT
 
 Token decimals: 18
 
-deploy-remote-canonical-interchain-token tx: 0xf23e2b939c2af373bb4db004f96cacbfcbdb0e4c6acfa97b42ede309cbfbca65```
+deploy-remote-canonical-interchain-token tx: 0xf23e2b939c2af373bb4db004f96cacbfcbdb0e4c6acfa97b42ede309cbfbca65
+```
 
 
 ### Register Custom Token
