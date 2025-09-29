@@ -11,6 +11,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -795,7 +796,8 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     }
 
     if (isValidNumber(gasValue)) {
-        return gasValue;
+        const scaledGasValue = scaleGasValue(chain, gasValue);
+        return { gasValue, scaledGasValue };
     }
 
     const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
@@ -811,7 +813,17 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     if (res.error) {
         throw new Error(`Error querying gas amount: ${res.error}`);
     }
-    return res;
+
+    const scaledGasValue = scaleGasValue(chain, res);
+    return { gasValue: res, scaledGasValue };
+}
+
+function scaleGasValue(chain, gasValue) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+    }
+
+    return gasValue;
 }
 
 module.exports = {
