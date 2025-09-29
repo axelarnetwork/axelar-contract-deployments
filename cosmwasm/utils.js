@@ -513,9 +513,7 @@ const getAxelarGatewayContractForChain = (chainName) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    console.log('chainName', chainName);
     const verifierContract = getVerifierContractForChain(chainName);
-    console.log('verifierContract', verifierContract);
 
     const {
         axelar: {
