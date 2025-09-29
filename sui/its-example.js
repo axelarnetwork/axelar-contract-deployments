@@ -184,7 +184,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     const [TreasuryCap, Metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
 
     // Mint tokens before registration (while user still holds the TreasuryCap)
-    const amount = isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+    const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
     if (amount) {
         const unitAmount = getUnitAmount(options.mintAmount, decimals);
 
