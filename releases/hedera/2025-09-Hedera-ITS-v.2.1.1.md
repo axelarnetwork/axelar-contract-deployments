@@ -7,7 +7,7 @@
 
 | **Network**          | **Deployment Status** | **Date**    |
 | -------------------- | --------------------- | ----------- |
-| **Devnet Amplifier** | Deployed              | 2025-09-25  |
+| **Devnet Amplifier** | n/a                   | n/a         |
 | **Stagenet**         | -                     | TBD         |
 | **Testnet**          | -                     | TBD         |
 | **Mainnet**          | -                     | TBD         |
@@ -18,7 +18,7 @@ Upgrade of the Hedera-fork of Interchain Token Service. Contracts impacted: `Tok
 
 Changes in the release:
 
-1. Lower the approval amount to the max supply of a token with finite supply. This prevents issues when registering tokens with non-max max supply. [See commit.](https://github.com/commonprefix/interchain-token-service/commit/c6fda1781dfb0a00d9e74e420cca7beba9bbcda8)
+1. Lower the approval amount to the max supply of a token with finite supply. This prevents issues when registering tokens with finite max supply. [See commit.](https://github.com/commonprefix/interchain-token-service/commit/c6fda1781dfb0a00d9e74e420cca7beba9bbcda8)
 
 ## Deployment
 
@@ -48,7 +48,7 @@ CHAIN=<chain name>
 
 ```bash
 # Deploy new implementation
-ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier patch-1" -m create2 --reuseProxy
+ts-node evm/deploy-its.js -s "v2.1.1 devnet-amplifier" -m create2 --reuseProxy
 
 ts-node evm/deploy-its.js --upgrade
 ```
@@ -57,7 +57,7 @@ ts-node evm/deploy-its.js --upgrade
 
 ```bash
 # Deploy new implementation
-ts-node evm/deploy-its.js -s "v2.1.0 patch-1" -m create2 --reuseProxy
+ts-node evm/deploy-its.js -s "v2.1.1" -m create2 --reuseProxy
 
 ts-node evm/deploy-its.js --upgrade
 ```
@@ -116,4 +116,4 @@ Additionally, to test the patch itself:
 node evm/interchainTokenFactory.js --action registerCanonicalInterchainToken -n $CHAIN --tokenAddress [token-address]
 ```
 
-To find an appropriate token address, go to [HashScan](https://hashscan.io/), either testnet or mainnet, and look for a fungible token created with the `max supply` field set to a non-max value (e.g. `1000000`).
+To find an appropriate token address, go to [HashScan](https://hashscan.io/), either testnet or mainnet, and look for a fungible token created with the `max supply` field set to a finite value (e.g. `1000000`).
