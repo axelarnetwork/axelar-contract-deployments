@@ -2515,7 +2515,559 @@
             "OwnerCap": "0x0878df5c58f0d14a54ad5363cb81803e7075914821f2954f6141b40e878d35be",
             "OperatorCap": "0xff1e6be4d0904970c0fbec31e8390a7fb227a3d2b9b5bd2d1fa9ce24f9994982",
             "UpgradeCap": "0x5c7ce319e54e55442fe915b487db458bcfe00f2521e23eeb8fe05d46920b6b40"
-          }
+          },
+          "legacyCoins": [
+            {
+              "TokenId": "0x9afedbaea3c93d6d9c6b30965cc512d9aca601cbda2b6519ea1f38e1d69acf08",
+              "TokenType": "0x2::coin::CoinMetadata<0x0082533d9a47c19c97d45dfc816a7fb3b964756a691bb0a6d8e387938537b3e3::dasdas::DASDAS>",
+              "symbol": "dasdas"
+            },
+            {
+              "TokenId": "0x977df3fcd5cab205d2ef45bf1d6f817af2061eede705c0bb5c4d8f4c992534bc",
+              "TokenType": "0x2::coin::CoinMetadata<0x0fe5ddc5774e2bce85a984a224e31e54731ce5b0b568f5522a20b03f98978b59::agc9::AGC9>",
+              "symbol": "AGC9"
+            },
+            {
+              "TokenId": "0x16584ab048ca4e61a0914ddb20964039e43c724f0d308658c99f09f6088f8911",
+              "TokenType": "0x2::coin::CoinMetadata<0xecaa35451edceb2e1b599c5be2d38b16e3b0d21e517b1d3b44bf1df2b20dce7a::dsad::DSAD>",
+              "symbol": "dsad"
+            },
+            {
+              "TokenId": "0x7806cbd94f6b2d99a741feac19757feed12fe81dcc4cad3dbedb8c7eaee217dd",
+              "TokenType": "0x2::coin::CoinMetadata<0x4df924bebc176f5c76b89bbcabdcebb2ae1c121fbe82fab8d637228b1533e141::dsadas::DSADAS>",
+              "symbol": "dsadas"
+            },
+            {
+              "TokenId": "0x793675c987a3c9886a971b8b46932b270e7003eba149cb06d693a720220b8716",
+              "TokenType": "0x2::coin::CoinMetadata<0xd53e06fed139b773ae56fbf00b524fea9d7406edee44ee43d6f7827012953df4::coin::COIN>",
+              "symbol": "COIN"
+            },
+            {
+              "TokenId": "0xb204948fec309441ba13d3dbefe6f73c29d2beb8844d0378772db6dba60fd48f",
+              "TokenType": "0x2::coin::CoinMetadata<0x2be5131b8592af2952aae8ce04d72c498f92f97321f5e41a082ed79218b8de05::nusdt::NUSDT>",
+              "symbol": "nUSDT"
+            },
+            {
+              "TokenId": "0x3f7ced0d6ef420cdb49feb2b6fc39fb520cb70c20d6c5b63fcf4a69a1b66767b",
+              "TokenType": "0x2::coin::CoinMetadata<0xb784ab2d44afd34e320c42f999dcf5ee77ecb71e0e0a6a3bb1ee0066b1501e71::das::DAS>",
+              "symbol": "das"
+            },
+            {
+              "TokenId": "0x6fc0b81d9d8b0df69ffbae3cc0e5cc00cf2e1c5624926d376c44f2575a3c8e28",
+              "TokenType": "0x2::coin::CoinMetadata<0x82c0d950c40e13161525d1e37b0d01ce0ae84745d95cb96caee169439d5ed88a::dsada::DSADA>",
+              "symbol": "dsada"
+            },
+            {
+              "TokenId": "0xee1aace8e18742190444527d4a0ca585b3a38a49e1b024af2a2214a83ea8938a",
+              "TokenType": "0x2::coin::CoinMetadata<0x52ea081dbb944dea3e728e8f0733f86189dbafe248b93d17f5f4577bb001bf5f::steps::STEPS>",
+              "symbol": "STEPS"
+            },
+            {
+              "TokenId": "0x14b963a6c5471211472c03913a119cf0e3620fbc4caf62bc42934993628ea34d",
+              "TokenType": "0x2::coin::CoinMetadata<0x1c8addc572bf5fc0675d3d95d916fa7a8dcee22f81da73b306d6220173eb0afa::das1::DAS1>",
+              "symbol": "das1"
+            },
+            {
+              "TokenId": "0x9790c14536023fa208706766b66eafe177067776ccc730f6dcb38d13c3386812",
+              "TokenType": "0x2::coin::CoinMetadata<0xd6b712d10dac2f9b30db5ae47f222b3dbc1bae24c3867a3d1f96b3b2c8a49e09::tgld::TGLD>",
+              "symbol": "TGLD"
+            },
+            {
+              "TokenId": "0x4b748be33054dcfafee5b506024d0ee347e557707ff5fd8544dfa62f48c4bf95",
+              "TokenType": "0x2::coin::CoinMetadata<0x460f04549d0b007d380e44d0c59a89c52fdab55531f3d6f04d10222e1781d36e::xshibt::XSHIBT>",
+              "symbol": "XSHIBT"
+            },
+            {
+              "TokenId": "0x274b9c51054e8967681888ea0b2737a49756e17ba428b1e59690cd54341b4419",
+              "TokenType": "0x2::coin::CoinMetadata<0x13d9e3af1a2ebaa399487f4b214b5b7484e9b475bd734ec441eee0e6783691d7::zarz::ZARZ>",
+              "symbol": "ZARZ"
+            },
+            {
+              "TokenId": "0x7ed1f2858b511f7c20a61665b31e2b50c8f1887438ff5d7949a2b7c194324d9b",
+              "TokenType": "0x2::coin::CoinMetadata<0x59276ad5afef52e632bb72a20c25473ef6c78a832753b557b6b6b42191d71007::bbb::BBB>",
+              "symbol": "bbb"
+            },
+            {
+              "TokenId": "0xb279c8b4f997bed5f0b08d909139b54e847a7f3e0f6ac73a2fb6254d9f0fa3b0",
+              "TokenType": "0x2::coin::CoinMetadata<0x5c16ab470cc70cd318e2a71fa35511e7846a2fb23840d524bcae5e39acca0a8c::bbb::BBB>",
+              "symbol": "bbb"
+            },
+            {
+              "TokenId": "0x93e04635e6cc73b52b37f43d955730a01543a6a3a988c06f7d0de24d4da66328",
+              "TokenType": "0x2::coin::CoinMetadata<0x7acd56bd856a81280b09b01d8d14e011222c76fad0564c333ea1130294a04e11::mngn::MNGN>",
+              "symbol": "mNGN"
+            },
+            {
+              "TokenId": "0xb4f17ddf24f29442a80ce428052e94070044ef21df5aee481890912527e9f430",
+              "TokenType": "0x2::coin::CoinMetadata<0xf1800f486ba5ded921a339e855c8310a48db8a697dd036a61bda317407328e81::refx::REFX>",
+              "symbol": "REFX"
+            },
+            {
+              "TokenId": "0x315ef21da193cadabc6003bb7b657b92b9ac9759183b596bd9282b181a953a50",
+              "TokenType": "0x2::coin::CoinMetadata<0xece6e0ceccd7c79dbd8c3d8a0eac2be1fef9373aef20383e597613e29aac9e61::suitest2::SUITEST2>",
+              "symbol": "SUITEST2"
+            },
+            {
+              "TokenId": "0x6d5ed5e6fef18908ac4dd69aaeed272abd3b6256ff5f341c31266f6b1ba8b1b9",
+              "TokenType": "0x2::coin::CoinMetadata<0xfe92939e55085a15bb020d0d1bd54866679c7b3c70ed6de579e4b51abb4e9a3b::asdasds::ASDASDS>",
+              "symbol": "asdasds"
+            },
+            {
+              "TokenId": "0x4f37d660b3379b15f83e0b2931fe4ff9946281507f1979fd68672fad2441d4a4",
+              "TokenType": "0x2::coin::CoinMetadata<0x7c3e8b99c0cb3a3df076f9559a574067265322f5b04a6f1619239b69e1986d86::usdcallow::USDCALLOW>",
+              "symbol": "USDCAllow"
+            },
+            {
+              "TokenId": "0x8600a4dcf88a51be2b20f81e83d0472f7564c2bb36d26a4912b0f1244786d842",
+              "TokenType": "0x2::coin::CoinMetadata<0xafa0f95a5f8ff9b85fe7bf96f8b760d23ffee9f0d5c03cc83e5c84ff5d4eb2d3::sto::STO>",
+              "symbol": "sto"
+            },
+            {
+              "TokenId": "0xec6f531397e23ce98a9b9a870bd1fb8b9370009cef0ace0ce3556ec213a5c102",
+              "TokenType": "0x2::coin::CoinMetadata<0xb3359f8620edd2321e124090539758ad5b1e7fdc5edd5a8b2f9a5b3fa6f6bd11::rtstr::RTSTR>",
+              "symbol": "rtstr"
+            },
+            {
+              "TokenId": "0x4983c0f744ae5770f7f33195758a24cdaeec5b07bdc17660357532424c186e37",
+              "TokenType": "0x2::coin::CoinMetadata<0x1f3cd2ae2d22b3d0ee3c64ed1a4fcd8a09d4cf47f0e622cb579ce956a2a99908::dsadas::DSADAS>",
+              "symbol": "dsadas"
+            },
+            {
+              "TokenId": "0x96c06a84dab379f98ead59c40470874af03a206a346b20a9067903080b1e32d0",
+              "TokenType": "0x2::coin::CoinMetadata<0x3642f8a427af0630d5ac03bb9bd11d0799157e89f43850464835728fecc2a718::s::S>",
+              "symbol": "s"
+            },
+            {
+              "TokenId": "0xffb87e34d9a168a7c0d1828767002741f0393c60999caed5f1a53a538cb1a72c",
+              "TokenType": "0x2::coin::CoinMetadata<0x10c97c41159fc50505d4fbf092f84790355e79b23b18a3401356b7f49db9fcbd::dasdas::DASDAS>",
+              "symbol": "dasdas"
+            },
+            {
+              "TokenId": "0x022090bea99723e2dc3632a299113f4fa92656e9b268c5a4a03482e774d20dae",
+              "TokenType": "0x2::coin::CoinMetadata<0xe76c9386bf6f150acf48ea3810161559265151dd5debe453836fcacd1404476c::dsds::DSDS>",
+              "symbol": "dsds"
+            },
+            {
+              "TokenId": "0xa7db5b2ce9d4e631ba18ab7ae90196d37151d6cc01cfecd88413b7bd384cbb7e",
+              "TokenType": "0x2::coin::CoinMetadata<0x441e70c3776de8ca1a0c5931d412879542ec6c1c8506621434f9488559a9a230::fst::FST>",
+              "symbol": "fst"
+            },
+            {
+              "TokenId": "0x6ea570204c3a67e8d123c9bb828bc993c306cd6e787ff86946307ff4d571b348",
+              "TokenType": "0x2::coin::CoinMetadata<0x496805ab1c928551ab14d1549f17649fb50cea73742b7d0404a1b16c98f7098a::asdsa::ASDSA>",
+              "symbol": "asdsa"
+            },
+            {
+              "TokenId": "0x67458524e473b38ba84aef1159d191c3801b47673f33791a75cbf5400bdc973f",
+              "TokenType": "0x2::coin::CoinMetadata<0xc430e45b806b2da7d10369101872a56a14aebc3417545f6c4a12af5eb59b08d7::dtoken::DTOKEN>",
+              "symbol": "D-Token"
+            },
+            {
+              "TokenId": "0x24f5f6da0b9a1aeb3421dafe3bafffc97b96bd9666856442ba267b5708c8983d",
+              "TokenType": "0x2::coin::CoinMetadata<0x71ebf4f954b9d0684982f19ca03e46a6543b4ad4278d04d757c2c65b4a76eb1c::erre::ERRE>",
+              "symbol": "erre"
+            },
+            {
+              "TokenId": "0xf9786440b2a545e88250c3159d8803ae9c7abb3d8212ea1577e7af51505d4d12",
+              "TokenType": "0x2::coin::CoinMetadata<0xf6b01f1fe0e24d0d2bfd01f402309c5205c27199a74f252f66888b11f92bb535::fff::FFF>",
+              "symbol": "fff"
+            },
+            {
+              "TokenId": "0xc2a76ebd5e7c32bff441e1283f27c98a97a8dbca5aa0e2fbbaa37b8c80a6adbc",
+              "TokenType": "0x2::coin::CoinMetadata<0x9608986d5cebda67de6dc28c241ff8aaad85cc05774eaff518e5dc257739ac9c::sadsa::SADSA>",
+              "symbol": "sadsa"
+            },
+            {
+              "TokenId": "0x65060b1c97343bdd08b45fc434ebf559a27577c3c8ebd84652e593954d90e87f",
+              "TokenType": "0x2::coin::CoinMetadata<0x4ff22e1493a20c22ce3251196e142700d41724a696a9ebeafbd482dfd5b7dc39::ber::BER>",
+              "symbol": "ber"
+            },
+            {
+              "TokenId": "0xe8a94f9996eaf866fbcf732287bce84c20fbd8f826a6f0b7567268cf5b4978c3",
+              "TokenType": "0x2::coin::CoinMetadata<0xc7d354ca059842ae8266f6639bf68b06945aff0a245ccdb70df59869140d16a3::suidrop::SUIDROP>",
+              "symbol": "SUIDROP"
+            },
+            {
+              "TokenId": "0x0ea4e7db8c4fec6d016b5f6cc159eae707c06c5bad8d56bb8b09f178ea3c9b3d",
+              "TokenType": "0x2::coin::CoinMetadata<0xf70d431f77f25d120d5c82888c2aae65146e8d81537f89e1186a63eb6f0fc229::tst::TST>",
+              "symbol": "TST"
+            },
+            {
+              "TokenId": "0x8c5f72b3b77c55861d77f5c636d4e8e67f7262abb7b98e8a49434310999f0c87",
+              "TokenType": "0x2::coin::CoinMetadata<0x523bef7c4b283b10cefe708fff1bdbfc9ff48ebef8cf36a83687f43efd7cfd0a::trumpcoin::TRUMPCOIN>",
+              "symbol": "TRUMPCOIN"
+            },
+            {
+              "TokenId": "0x212a20569b58a093f543c66205dbc94bc332c182e990f4cf521b64b8551d3531",
+              "TokenType": "0x2::coin::CoinMetadata<0xc85ad6b1c23a5f9886c34fb617ca0dfdafd228f70cda8966741882c1b926b605::dasd::DASD>",
+              "symbol": "dasd"
+            },
+            {
+              "TokenId": "0x469a649bef76746db077307c1982b030cd5068be954c3a2cb6c60f8015ada13c",
+              "TokenType": "0x2::coin::CoinMetadata<0x37d0e75afda491e0ecf5a72f6d4c40fa79bfe34a02c43572db22462adacad41e::adasd::ADASD>",
+              "symbol": "adasd"
+            },
+            {
+              "TokenId": "0xa743bac4d1a033dc299b47130dd8964b3a8d2d0ae068a30d9d78c620d10a898c",
+              "TokenType": "0x2::coin::CoinMetadata<0x54617247a74f6c1fa3bdf71862b89a0d361918375bf18613f63e30f2fcb5c6f9::hhh::HHH>",
+              "symbol": "hhh"
+            },
+            {
+              "TokenId": "0x13216cb1dc342c4c542a004d6137d7828a11bcf6a72ab52a89d96681fd1c6f6e",
+              "TokenType": "0x2::coin::CoinMetadata<0x246325a165dbd1fe721edadb7279397af563e1a97c850278cf0fc64a2cddf61f::dtoken2::DTOKEN2>",
+              "symbol": "D-Token2"
+            },
+            {
+              "TokenId": "0xb8f8583269514449015dccbae5df98b146e3002e200b43fc776c9b747ea53e22",
+              "TokenType": "0x2::coin::CoinMetadata<0x05ecc37314c9553fd78892d85026ebc3b0f882634abe15ee4fff1e91dd2d1fb2::ste::STE>",
+              "symbol": "Ste"
+            },
+            {
+              "TokenId": "0x406656e6fd0fa35cd5aa9c02695f00e6ea402e305c5d656b63ea9c3dc4ab01ee",
+              "TokenType": "0x2::coin::CoinMetadata<0x94da8a05100ee2c08c4e6fd92214a57abab3b85cedf63cbdff3b727a61f458cd::test22::TEST22>",
+              "symbol": "test22"
+            },
+            {
+              "TokenId": "0xcf8c651353bbe2f0a34077e1c3002d7586a03a4a1135db881eccd8c83b2358b7",
+              "TokenType": "0x2::coin::CoinMetadata<0x554b26557b46af05131ec174541a2b88ce258e77f80bada5e6a09d5d34fd4aa3::mdt::MDT>",
+              "symbol": "MDT"
+            },
+            {
+              "TokenId": "0x06c21c0cba9594f74a86873a7437cc0795f709f927c7e50053df0e1b8596827a",
+              "TokenType": "0x2::coin::CoinMetadata<0x15694874bb07bfc605d6d37751bc03cef885a4a3c30943a732c77a248ecbffe5::asdas::ASDAS>",
+              "symbol": "asdas"
+            },
+            {
+              "TokenId": "0xe794e609495c2fd8ca7dee426b8146b4e05baefcbabbb1da145b35cd7871b18c",
+              "TokenType": "0x2::coin::CoinMetadata<0xf531086a855813640359fd99d27d7728e1c2fc31c0d90c74c126abd07f5d1c14::suitestv32x5::SUITESTV32X5>",
+              "symbol": "SUITESTV32X5"
+            },
+            {
+              "TokenId": "0x768dd2ecb2d5238e001affe4fd4527deeda44fd5dcac607d10768a73c3f7667c",
+              "TokenType": "0x2::coin::CoinMetadata<0x4b6ba66c70eca9b5f8dda483616d628bdfce8c0a248ab74d0e215224da318aa6::ste2::STE2>",
+              "symbol": "ste2"
+            },
+            {
+              "TokenId": "0x54da1d5644ed5fe2c5c6e9d2a9efa7f77b3ac252812432b9304e7a24c6f0cacc",
+              "TokenType": "0x2::coin::CoinMetadata<0xe263719ad7f9ad81668f67456e8491b5922922cd0995543231a89891cdbc068c::damrevasset::DAMREVASSET>",
+              "symbol": "DAMREVASSET"
+            },
+            {
+              "TokenId": "0x6c36f7d18fbaaa557290482a868d38257dd874b7daa0397df9303e8a9d6cd0bd",
+              "TokenType": "0x2::coin::CoinMetadata<0x2f7229efc915ec7d3df4a422eecc2472003ff466f04540f6864d071e136d5cf9::fff::FFF>",
+              "symbol": "fff"
+            },
+            {
+              "TokenId": "0xed02599773bf61e94052b06c86474671d9901ceab377793b48bad7f72e00b446",
+              "TokenType": "0x2::coin::CoinMetadata<0x356f2e3c4234d587a354ed311fea1382ac62259bd5000c23ba8163d9340f3f3a::ad::AD>",
+              "symbol": "ad"
+            },
+            {
+              "TokenId": "0x6dbc365d65f1623387f0067d67e0405363229350d258716b2435299b63dc11b3",
+              "TokenType": "0x2::coin::CoinMetadata<0x97b7d069294453570c73ebf63d2cc47ae3c6543d934bfbd7c56d9c0221b9e947::asdsa::ASDSA>",
+              "symbol": "asdsa"
+            },
+            {
+              "TokenId": "0x68a225d5c9969d7f7adc7e243d85d76dc1265f309041c384f29271ddaf347739",
+              "TokenType": "0x2::coin::CoinMetadata<0xaa2e3778ac44811b7bf0770181972b50887616ed25809e6aeed50d7c9fb0809d::suitest1::SUITEST1>",
+              "symbol": "SUITEST1"
+            },
+            {
+              "TokenId": "0x8906203b1ed99b5bba7b08e532f997c31218388acaa75f69b4cf53caae198481",
+              "TokenType": "0x2::coin::CoinMetadata<0xf7dc7b72ee3d0f8db6cdbb8ff24a040f81aed9acb2eccdb971652a374ad85f57::tt::TT>",
+              "symbol": "TT"
+            },
+            {
+              "TokenId": "0xf0546c437c39d8833c247db10b534623fa2504fc0bd6916a8485cd93b2629053",
+              "TokenType": "0x2::coin::CoinMetadata<0xa3d7f73023c33a108759aaf7314dac509f2e4dfb30d8bd5b300fa4e98ef70d8f::testtoken::TESTTOKEN>",
+              "symbol": "testtoken"
+            },
+            {
+              "TokenId": "0x7d9a7d5a177e8223e401cce5565550d59c5f6532e0d0d9f8cbc53baa6712dcaa",
+              "TokenType": "0x2::coin::CoinMetadata<0x9c6f6f080c357b0085f12b930c47dbbd88a0fe762ce3acd3b20f546808f4ce24::dsfds::DSFDS>",
+              "symbol": "dsfds"
+            },
+            {
+              "TokenId": "0x748344a182852a965ba0fe4b614a976beb4c3b3c41cd48809d458f61e5a7651f",
+              "TokenType": "0x2::coin::CoinMetadata<0x0dba2f62ccbe64988cb71ac637d01e58666334ca519fa4ad36488bc40b4c5a36::many::MANY>",
+              "symbol": "many"
+            },
+            {
+              "TokenId": "0x68d0cb95cc988e549b24d6c93a22375c3891af8663991df5ed317a36f3e3004a",
+              "TokenType": "0x2::coin::CoinMetadata<0x2197f78af6fc17a94e5d9928e0375aa8e0efed33747abbc9afa951c058a3b312::sadsads::SADSADS>",
+              "symbol": "sadsads"
+            },
+            {
+              "TokenId": "0xf77c3bd4536f773697d6abb5fea6b7e1370ef37255965d87519a5845346dac97",
+              "TokenType": "0x2::coin::CoinMetadata<0x0d97db6cba96587370f7d56f5c8c8cbe27a073773cd6634838e6534e5ea0fe19::test2::TEST2>",
+              "symbol": "Test2"
+            },
+            {
+              "TokenId": "0xee13da08e13bf327f9d40a9662f2e034caffc0281c5273efa3318bf877a052df",
+              "TokenType": "0x2::coin::CoinMetadata<0x146d69e584aad03a41584d60caca8921e8b5f67544a6947c6af5608850afb393::tes::TES>",
+              "symbol": "tes"
+            },
+            {
+              "TokenId": "0xce639bdf13b78a0ed00aa2a4e61f5d5722b8c5638f337ec2c2613730a6e30498",
+              "TokenType": "0x2::coin::CoinMetadata<0xcf81de5d333a877dfd5b2ee4a986e93321c000295bb4f19af7264e6befcaba68::asadas::ASADAS>",
+              "symbol": "ASADAS"
+            },
+            {
+              "TokenId": "0x597dd81a01b9043ee6687613ed40173311913f292c27d098302c66e9ac54c8c0",
+              "TokenType": "0x2::coin::CoinMetadata<0x291d9be9981acbc7bb9d55936d1b7cfd26199fc69371a6b30cddbd45484dc816::suitest1::SUITEST1>",
+              "symbol": "SUITEST1"
+            },
+            {
+              "TokenId": "0x908dab2e3664adcb827072caeb700d1ffa62c1e0aca2fec2e34f231704077016",
+              "TokenType": "0x2::coin::CoinMetadata<0x4baa83cb904c53f3dc8ac402814a6cb6b43cfefb5d1ebcd068c16f826f9a4fdd::dalhe::DALHE>",
+              "symbol": "dalhe"
+            },
+            {
+              "TokenId": "0x3d458b3a79cae99e04f192874917752dd5ed60316d78fd923c34e08c823f4f36",
+              "TokenType": "0x2::coin::CoinMetadata<0x84a2130507e8ca8de4b5add1b8198ddd87ec5fac29b99986fb2ef645752ceb22::a::A>",
+              "symbol": "a"
+            },
+            {
+              "TokenId": "0x9d743efa8c8641bec954bf20a329b960257808d63feb1a537635738cdfffd6b8",
+              "TokenType": "0x2::coin::CoinMetadata<0xd6e1a6b95599be5adebc3f4feb6b4509d84647a20b9f1e935a288c876552c965::werew::WEREW>",
+              "symbol": "werew"
+            },
+            {
+              "TokenId": "0x41aa899decaacacfb2cd9ca95b6ff29be0a29edf02aab35c5a5632095220733e",
+              "TokenType": "0x2::coin::CoinMetadata<0xe6442a6e1761c90832f589a044d2255eab30a37430420bc39c72a9c2890fc7bb::suitestv32x4::SUITESTV32X4>",
+              "symbol": "SUITESTV32X4"
+            },
+            {
+              "TokenId": "0xc58ec7bcdba20b4bd883534cf105d139339a1592c763b04ec9a9619c2906beaf",
+              "TokenType": "0x2::coin::CoinMetadata<0xc2c2d518312c9a0827b2177a0c385d277b4b507a9b8241ff092ee9996ddd0bd9::sadsa::SADSA>",
+              "symbol": "sadsa"
+            },
+            {
+              "TokenId": "0xc6b71ecb80f8f32ff4044b7c813f2af80029064883624fa7940b79ba3aaa864b",
+              "TokenType": "0x2::coin::CoinMetadata<0x3b09fe0f78b65b4d1c9dcf08d5a7a0f5d70246e9925f03f61ea3f4a954406c76::test::TEST>",
+              "symbol": "TEST"
+            },
+            {
+              "TokenId": "0x8cab630042c6717bf0a8839e3f98b3fe7e33b8bcff5cabc66e92b2c764c23f37",
+              "TokenType": "0x2::coin::CoinMetadata<0x95be484a971a8a84b9f85799117fc68331211b93dbb3f2aa7d5e2e8d95ff469f::leslie1::LESLIE1>",
+              "symbol": "LESLIE1"
+            },
+            {
+              "TokenId": "0x819242619c73bf0bd2b305d36db6bad7baabdf9c8247a96705aada1c0335d9c9",
+              "TokenType": "0x2::coin::CoinMetadata<0xb6707805e7bab2764bd57315fdd05da59ad948087d82aa357a14c0d078c2d03e::ste::STE>",
+              "symbol": "ste"
+            },
+            {
+              "TokenId": "0x13518e827d519d757d1b8c284bf324512e144dd1caa0d11c3c05eda9050de826",
+              "TokenType": "0x2::coin::CoinMetadata<0xfd2e9eb5d8fd493c265f6d7f7c6fef9aad3c4d83bc0ac4f1263e6baa8734b628::tetes::TETES>",
+              "symbol": "tetes"
+            },
+            {
+              "TokenId": "0xe3b64053a54e39e2d0962f7c7bb7243ab6f31d4864ea748995ec2162ede227df",
+              "TokenType": "0x2::coin::CoinMetadata<0x30ad9cdbef7bf7cd82ca134f9836f28ed91fa2bea4bf1e043aa2cfe67fc6fc04::sadasd::SADASD>",
+              "symbol": "sadasd"
+            },
+            {
+              "TokenId": "0x993e8e1e522ada58de76d270ce49e2e2a11417b09d3bbfc11b63af3f88f43e4c",
+              "TokenType": "0x2::coin::CoinMetadata<0xe9b5245fe5d563413f2a8f1668108b6df988ff8702f65ae6af1fb49e7e8b268d::sadsa::SADSA>",
+              "symbol": "sadsa"
+            },
+            {
+              "TokenId": "0x9a452f90f051e4b63002b85de6531d0abffac97c2756877e9aaf6714c1c17126",
+              "TokenType": "0x2::coin::CoinMetadata<0xc8cb3e5cdf8196ada1d31a0693f3e67bb867a145030c2e5b7a842348dcc651c9::ste6::STE6>",
+              "symbol": "Ste6"
+            },
+            {
+              "TokenId": "0xd141a3cbb83f9b5f05ca5a3ce2997e13ed7bbcce121bf55eb3dd02a2af3433c8",
+              "TokenType": "0x2::coin::CoinMetadata<0x0df34406fa241bd96d54dd8babd4966f671dd998ffcb1dc995e4513fc1c970e2::usdpend::USDPEND>",
+              "symbol": "USDPEND"
+            },
+            {
+              "TokenId": "0x2397759929cd4da63ed2718248f058b9363486ced1af8f8348496cbf4e17f833",
+              "TokenType": "0x2::coin::CoinMetadata<0x61bad3b149572051a35f210050a97e71832fbd761210d5341fc637f21f5eccae::coin::COIN>",
+              "symbol": "COIN"
+            },
+            {
+              "TokenId": "0x61c42270fcfc0df5901884d585995429d5259abc5fe8cb9550c951e4244084c6",
+              "TokenType": "0x2::coin::CoinMetadata<0xc2311234fa5e9e30f6be39ef7a35531115be767333a1a8fb665361f6b656f46b::dsada::DSADA>",
+              "symbol": "dsada"
+            },
+            {
+              "TokenId": "0x0af236684a045a2f8da60cc96f0adc5e842785f7e2e8af5bd054654e7748212f",
+              "TokenType": "0x2::coin::CoinMetadata<0xb01e23eaee19e5ef57b472f53fd11263cc9ad3a9c4f00576f27e2c1f220fe53e::afsfasf::AFSFASF>",
+              "symbol": "afsfasf"
+            },
+            {
+              "TokenId": "0xb69a96266ff36ad23f9d2deb62b7008436d4cb3f0af23a8b69ebeb377a90cc6d",
+              "TokenType": "0x2::coin::CoinMetadata<0xb6393c14a8f4e033b33fd3ccc3a1aaaa39751306ff8b713fdaafb5dad198621b::coin::COIN>",
+              "symbol": "COIN"
+            },
+            {
+              "TokenId": "0x9e133d41b8c3c1932464e976b0902c149c9d3a433ab1b5ea92030b862f3a13b8",
+              "TokenType": "0x2::coin::CoinMetadata<0xc33fc18fa9c47c2192b8313c0cc286528c4904c1e67b0fe71bbac2a39624a236::sss::SSS>",
+              "symbol": "sss"
+            },
+            {
+              "TokenId": "0x298fcb49ad3b0a647744f9dd9567c0a54f48c729cef35d0abe2d457b6518de61",
+              "TokenType": "0x2::coin::CoinMetadata<0xb74683d88f49ca41c4f391bae3adde0008c0754deebf61d734d3dcb5a2d2fc55::stes::STES>",
+              "symbol": "stes"
+            },
+            {
+              "TokenId": "0x86821eea6f167f3c27eb631fdacc5a1439a11e3f9ac6af20d95124f1044a726d",
+              "TokenType": "0x2::coin::CoinMetadata<0x292ebb91400d63432ae7f62c3c6b4bcb8e3460bde6d8c9ddb82a9115ab8a35f7::dtoken::DTOKEN>",
+              "symbol": "D-Token"
+            },
+            {
+              "TokenId": "0x74d8f82e28ff4c763dbeee5be1d90c2ed5879b36526ab63d795415ad12c7645c",
+              "TokenType": "0x2::coin::CoinMetadata<0xffd0a6cdda611fc2077d464468d357c783d6554c48c0bc22e11a27e9d02b63e5::nwt::NWT>",
+              "symbol": "nwt"
+            },
+            {
+              "TokenId": "0x0c7c2871e12bda8df9333b157b77814e54c8cbfcc7f4ff48b64cb36747ddcb90",
+              "TokenType": "0x2::coin::CoinMetadata<0x7543d5f6140597b8443abd75ea7440311ba302563b1e5cf087cc18adf963206d::net1::NET1>",
+              "symbol": "NET1"
+            },
+            {
+              "TokenId": "0x19ae2e0a4e29d9db7b12c165416e5571b90cff108fa7241d471ed828014a1c7f",
+              "TokenType": "0x2::coin::CoinMetadata<0xfc2d1b9bc4ddb419bc55f98f80295b7fc945dba3e252f006cd541454d1587906::sadsa::SADSA>",
+              "symbol": "sadsa"
+            },
+            {
+              "TokenId": "0x5ad4e3a0af609920aec9b43df81cd231514aab1343604799a1b4446e91ca1ef5",
+              "TokenType": "0x2::coin::CoinMetadata<0x879da17c947c37a8982d8992976608df906145aa3869d09640cc4b54f5734985::flow::FLOW>",
+              "symbol": "Flow"
+            },
+            {
+              "TokenId": "0xd125f0c746ca92e3d9f7c183f3776158823005e64eac6b8ecb0df88d96c31a3c",
+              "TokenType": "0x2::coin::CoinMetadata<0xd3d8ddb29373efbb1955abe210203146a8cb938330a54e1729ea8d14182e1db9::agty::AGTY>",
+              "symbol": "AGTY"
+            },
+            {
+              "TokenId": "0xa4cf2e486b5070ab485663994bea197d0ab0812de130ad1744eece31005af71f",
+              "TokenType": "0x2::coin::CoinMetadata<0x148776df36965dd1d2359d9c1c933fb970fee36feeee73839ebf96097883e19a::new::NEW>",
+              "symbol": "new"
+            },
+            {
+              "TokenId": "0x0de1c69400bf7673b8a2c0aa2504255714291f583a59463ca602a7da5a206b7c",
+              "TokenType": "0x2::coin::CoinMetadata<0xbc57de1e1310f2ecaaf761a54a52a1e8974273c9891b5a92d1aee34106f3336c::usdf::USDF>",
+              "symbol": "USDF"
+            },
+            {
+              "TokenId": "0xa861afbe0f61f48f006006ddf8753c8fabb471b0ce1566a247b16fed4d8f8e27",
+              "TokenType": "0x2::coin::CoinMetadata<0xf7eff4f1b4784d23c1804d5118476bb47c759e0cd201be5676ce796565f7fbee::wqeqweqw::WQEQWEQW>",
+              "symbol": "wqeqweqw"
+            },
+            {
+              "TokenId": "0x7eb3abf5fd5408e49b2fd185c2036c02f6a1801b1e3befd4e2999cee5b75ea63",
+              "TokenType": "0x2::coin::CoinMetadata<0x15d9c3b149d2f6606c654b7690d029bf72b749098a331700caacd39f4227dfe9::cadl::CADL>",
+              "symbol": "CADL"
+            },
+            {
+              "TokenId": "0xde57b0c85d31fb8fb90cbde228edd873172574ba84a28d1e78bde962313606b2",
+              "TokenType": "0x2::coin::CoinMetadata<0xb856f661a428fbc7f5e56cf2089fe78216f3d6351837c7211740af93e15713c5::l::L>",
+              "symbol": "l"
+            },
+            {
+              "TokenId": "0xd11d965edc14afcb77605c120134806f23f08d02944adf873f0acea3cb357528",
+              "TokenType": "0x2::coin::CoinMetadata<0x7242f09254d4c9a0e5b2285eddf07707c9af0ab10f06a63086574f43af424b3d::tete::TETE>",
+              "symbol": "tete"
+            },
+            {
+              "TokenId": "0xcbf0d717a5c85a9eee7f96405612dd6e0776970ca619c95b5d2dee917d627592",
+              "TokenType": "0x2::coin::CoinMetadata<0xa106a49c0e7cf8b11b0b193ee3ab2536be333ee0441a3d124f35c612d3a2299f::govice::GOVICE>",
+              "symbol": "govICE"
+            },
+            {
+              "TokenId": "0xc85a4c2be913912de4b5de4aba4889660a48011389ebabc707bcdbbe50175f05",
+              "TokenType": "0x2::coin::CoinMetadata<0xda41761e7f979be83e978c9b9d5f609ab6bc3d2c5247e8d62e558f3014cf3c13::eur::EUR>",
+              "symbol": "Eur"
+            },
+            {
+              "TokenId": "0x07b6bf80cd300c48ffb8e0331511db3f9436bf988e48a84caf88cb2cd6b6782f",
+              "TokenType": "0x2::coin::CoinMetadata<0x0c02e40fcc3862b6096432b2ff8122afe63a711e55bf313be8027be508678397::euah::EUAH>",
+              "symbol": "eUAH"
+            },
+            {
+              "TokenId": "0x6ec27d69172da2b0f2d6cb5be850cd55184ac9fad531e70e20f57aa94fdd9e4c",
+              "TokenType": "0x2::coin::CoinMetadata<0xc7ab0f080f48df741306687c857a41652895798ed4a32870a681a3ee5421c27d::pdm::PDM>",
+              "symbol": "PDM"
+            },
+            {
+              "TokenId": "0x129b894355179a6543a7cc1b9abdbb0b181c63f0955b27d592e53d26557196f2",
+              "TokenType": "0x2::coin::CoinMetadata<0x5721fd0720148c037615b5d940e81cf4cf95f06ee745a25c15a7d0e41c2a20fd::dsad::DSAD>",
+              "symbol": "dsad"
+            },
+            {
+              "TokenId": "0x6a6035e9efa43989dd71895f97f6c684e5e86b512a9a01ed46ae98c575866224",
+              "TokenType": "0x2::coin::CoinMetadata<0x78e536e2698ee347ceafbd55876653c043859914ec42da878396185405538918::dsada::DSADA>",
+              "symbol": "dsada"
+            },
+            {
+              "TokenId": "0xf79ede4d4128030a34cfb2368cfc9cd6ce00cbcf94c3d9541ec6ada8a8b5376e",
+              "TokenType": "0x2::coin::CoinMetadata<0x54910c0e678dc20fcfc7a6e7ebb5d778a939a17cbf5fb275d5415d36597c07cc::testevent::TESTEVENT>",
+              "symbol": "testevent"
+            },
+            {
+              "TokenId": "0x12735743917358c341fb814e8519c1aeff8fd05fa11ca9cce2810d4fa119e202",
+              "TokenType": "0x2::coin::CoinMetadata<0x6faf38670d01af06267922f8a5bc2ffb512b0f08fb3933b01bd4906fa8ef3f3e::bbb::BBB>",
+              "symbol": "bbb"
+            },
+            {
+              "TokenId": "0x715ae65c58c93b2f2a20351746c4dc0f0443cbcbb27332c591636e8f8661e38a",
+              "TokenType": "0x2::coin::CoinMetadata<0x291fe22beb0a54a6b13e8faed848504304959df6a34e73c2c9e4e5d019d4344c::newasset::NEWASSET>",
+              "symbol": "NEWASSET"
+            },
+            {
+              "TokenId": "0x388e9f4cdbf124d1f9796214a89628016b9f4ddc83e71b97219baeb066280080",
+              "TokenType": "0x2::coin::CoinMetadata<0xb5f113ddcf67815c3f4007a0e87bcbd889a4c6d70c8ca506d13928ca3cac2cd7::suitestv32x3::SUITESTV32X3>",
+              "symbol": "SUITESTV32X3"
+            },
+            {
+              "TokenId": "0xf57934d12c47e9139a5e830492d858358417d265c9859b808c99b8a501d6ba2e",
+              "TokenType": "0x2::coin::CoinMetadata<0xd750d7d427c1b8bd893b206d36d7017313bf97dae83507be38a40b333e1248e3::ste::STE>",
+              "symbol": "ste"
+            },
+            {
+              "TokenId": "0x564045e63b9ea50e26bbd143d211537141e39285387d4e5b52f5de6c461cf19d",
+              "TokenType": "0x2::coin::CoinMetadata<0xf0e78f46a16919c583de2e0d7c6dd51f0eacaa7c77bf1884b077f33f69a1f3cf::withdash::WITHDASH>",
+              "symbol": "With-Dash"
+            },
+            {
+              "TokenId": "0x61d56768967a50c3f05f6ec710f7fb92824d73842796efd55dd157d98d68bf87",
+              "TokenType": "0x2::coin::CoinMetadata<0x14cc7bfcb69046093f27754fe9784bc7b4c1ec00ead615daf8a296c7ad5279b0::weth::WETH>",
+              "symbol": "WETH"
+            },
+            {
+              "TokenId": "0x09af4289005f3be4b872c2bf1e0c23c19b09a903c051d96e2d98336d222fae57",
+              "TokenType": "0x2::coin::CoinMetadata<0xbe1682adbe99a0e8d26c10a7bb228f99541b0b8227580dd3f61f562d7acc7894::coin::COIN>",
+              "symbol": "COIN"
+            },
+            {
+              "TokenId": "0x34b157e1125eed3e83775098a1ec2849df15e8a5cf69f88c009d91275c0ceb0f",
+              "TokenType": "0x2::coin::CoinMetadata<0x45660d8e2e4bf011a50d6288acad74716b3e5f3e0fe8d85835214454c6d09a2e::usdt::USDT>",
+              "symbol": "USDT"
+            },
+            {
+              "TokenId": "0x0a7f96a573329c62e3c788a875881990aaddf5dee44f0e1da97e643f4bc11166",
+              "TokenType": "0x2::coin::CoinMetadata<0x02f8eecfbb3c77f5dd0de055115cdec24e23fac611ab9c03f3799035d822ff05::fff::FFF>",
+              "symbol": "fff"
+            },
+            {
+              "TokenId": "0xa2e11c90ffe0d54901d1ceb0b97fa070dce2205589ed1daf457bf579a647fac8",
+              "TokenType": "0x2::coin::CoinMetadata<0x9e2b96a72174f0dd09fa58b2695a8be35cb18cce6c9bbd37440d9f668678106d::test::TEST>",
+              "symbol": "test"
+            },
+            {
+              "TokenId": "0xd816f86996d930e3af1e30f5b9601ee2154f7f9207742633035c91de7c714850",
+              "TokenType": "0x2::coin::CoinMetadata<0xd07a85c9ca343b5bdeda5ce2ed94dfe57ce2d5b993db7815326b963c0afa24e4::h::H>",
+              "symbol": "h"
+            },
+            {
+              "TokenId": "0x9abbbb5651b30370153a863ea412de17f49f324d3b3607318583ecbccbb234c7",
+              "TokenType": "0x2::coin::CoinMetadata<0x51b34ae3a272cc3adebff01f7328800a3e8dbf8653a401efe477473a08d4db34::testgas::TESTGAS>",
+              "symbol": "testgas"
+            }
+          ]
         },
         "Example": {
           "address": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64",
