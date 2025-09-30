@@ -688,7 +688,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { env } = options;
             const deploymentSalt = getDeploymentSalt(options);
 
-            const { gasValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
+            const { gasValue, gasFeeValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             validateParameters({
                 isValidTokenId: { tokenId },
@@ -727,7 +727,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 tokenManagerType,
                 linkParams,
                 gasValue,
-                gasOptions,
+                { value: gasFeeValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'LinkTokenStarted');
             break;
