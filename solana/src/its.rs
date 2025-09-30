@@ -148,11 +148,15 @@ pub(crate) struct TokenManagerSetFlowLimitArgs {
 
     /// The flow limit to set for the Interchain Token
     #[clap(long)]
-    flow_limit: u64,
+    flow_limit: Option<u64>,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerAddFlowLimiterArgs {
+    /// The account to add as a flow limiter
+    #[clap(long)]
+    adder: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -164,6 +168,10 @@ pub(crate) struct TokenManagerAddFlowLimiterArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerRemoveFlowLimiterArgs {
+    /// The account to remove as a flow limiter
+    #[clap(long)]
+    remover: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -175,6 +183,10 @@ pub(crate) struct TokenManagerRemoveFlowLimiterArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerTransferOperatorshipArgs {
+    /// The account that sends the operatorship transfer
+    #[clap(long)]
+    sender: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -186,6 +198,10 @@ pub(crate) struct TokenManagerTransferOperatorshipArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerProposeOperatorshipArgs {
+    /// The account that proposes the operatorship transfer
+    #[clap(long)]
+    proposer: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -197,6 +213,10 @@ pub(crate) struct TokenManagerProposeOperatorshipArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerAcceptOperatorshipArgs {
+    /// The account that accepts the operatorship transfer
+    #[clap(long)]
+    accepter: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -245,6 +265,10 @@ pub(crate) struct InterchainTokenMintArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenTransferMintershipArgs {
+    /// The account that sends the minter role transfer
+    #[clap(long)]
+    sender: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -256,6 +280,10 @@ pub(crate) struct InterchainTokenTransferMintershipArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenProposeMintershipArgs {
+    /// The account that proposes the minter role transfer
+    #[clap(long)]
+    proposer: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -267,6 +295,10 @@ pub(crate) struct InterchainTokenProposeMintershipArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenAcceptMintershipArgs {
+    /// The account that accepts the minter role transfer
+    #[clap(long)]
+    accepter: Pubkey,
+
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -658,18 +690,30 @@ pub(crate) struct SetFlowLimitArgs {
 
     /// The flow limit to set for the Interchain Token
     #[clap(long)]
-    flow_limit: u64,
+    flow_limit: Option<u64>,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TransferOperatorshipArgs {
-    /// The account to which the operatorship will be transferred
+    /// The account that sends the operatorship transfer
+    #[clap(long)]
+    sender: Pubkey,
+
+    /// The account that proposes the operatorship transfer
+    #[clap(long)]
+    proposer: Pubkey,
+
+    /// The account from which the operatorship will be transferred
     #[clap(long)]
     to: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct AcceptOperatorshipArgs {
+    /// The account to which the operatorship will be accepted
+    #[clap(long)]
+    role_receiver: Pubkey,
+
     /// The account from which the operatorship will be accepted
     #[clap(long)]
     from: Pubkey,
@@ -780,18 +824,18 @@ pub(crate) fn build_instruction(
             register_canonical_interchain_token(fee_payer, args, config)
         }
         Commands::DeployRemoteCanonicalInterchainToken(args) => {
-            deploy_remote_canonical_interchain_token(fee_payer, args, config)
+            deploy_remote_canonical_interchain_token(fee_payer, args)
         }
         Commands::DeployInterchainToken(args) => deploy_interchain_token(fee_payer, args),
         Commands::DeployRemoteInterchainToken(args) => {
-            deploy_remote_interchain_token(fee_payer, args, config)
+            deploy_remote_interchain_token(fee_payer, args)
         }
         Commands::DeployRemoteInterchainTokenWithMinter(args) => {
             deploy_remote_interchain_token_with_minter(fee_payer, args, config)
         }
-        Commands::RegisterTokenMetadata(args) => register_token_metadata(fee_payer, args, config),
+        Commands::RegisterTokenMetadata(args) => register_token_metadata(fee_payer, args),
         Commands::RegisterCustomToken(args) => register_custom_token(fee_payer, args, config),
-        Commands::LinkToken(args) => link_token(fee_payer, args, config),
+        Commands::LinkToken(args) => link_token(fee_payer, args),
         Commands::InterchainTransfer(args) => interchain_transfer(fee_payer, args, config),
         Commands::CallContractWithInterchainToken(args) => {
             call_contract_with_interchain_token(fee_payer, args, config)
@@ -1028,18 +1072,13 @@ fn register_canonical_interchain_token(
 fn deploy_remote_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteCanonicalInterchainTokenArgs,
-    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     Ok(vec![
         axelar_solana_its::instruction::deploy_remote_canonical_interchain_token(
             *fee_payer,
             args.mint,
             args.destination_chain,
             args.gas_value,
-            gas_service,
-            gas_config_account,
         )?,
     ])
 }
@@ -1062,6 +1101,7 @@ fn deploy_interchain_token(
     Ok(vec![
         axelar_solana_its::instruction::deploy_interchain_token(
             *fee_payer,
+            *fee_payer,
             args.salt,
             args.name,
             args.symbol,
@@ -1075,18 +1115,13 @@ fn deploy_interchain_token(
 fn deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteInterchainTokenArgs,
-    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token(
             *fee_payer,
             args.salt,
             args.destination_chain,
             args.gas_value,
-            gas_service,
-            gas_config_account,
         )?,
     ])
 }
@@ -1096,8 +1131,6 @@ fn deploy_remote_interchain_token_with_minter(
     args: DeployRemoteInterchainTokenWithMinterArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_minter = decode_its_destination(
         &chains_info,
@@ -1112,8 +1145,6 @@ fn deploy_remote_interchain_token_with_minter(
             args.destination_chain,
             destination_minter,
             args.gas_value,
-            gas_service,
-            gas_config_account,
         )?,
     ])
 }
@@ -1121,19 +1152,12 @@ fn deploy_remote_interchain_token_with_minter(
 fn register_token_metadata(
     fee_payer: &Pubkey,
     args: RegisterTokenMetadataArgs,
-    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
     Ok(vec![
         axelar_solana_its::instruction::register_token_metadata(
             *fee_payer,
             args.mint,
-            token_program,
             args.gas_value,
-            gas_service,
-            gas_config_account,
         )?,
     ])
 }
@@ -1164,14 +1188,7 @@ fn register_custom_token(
     )?])
 }
 
-fn link_token(
-    fee_payer: &Pubkey,
-    args: LinkTokenArgs,
-    config: &Config,
-) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-
+fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::link_token(
         *fee_payer,
         args.salt,
@@ -1180,8 +1197,6 @@ fn link_token(
         args.token_manager_type,
         args.link_params,
         args.gas_value,
-        gas_service,
-        gas_config_account,
     )?])
 }
 
@@ -1190,16 +1205,8 @@ fn interchain_transfer(
     args: InterchainTransferArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
-    let timestamp: i64 = args.timestamp.unwrap_or(
-        SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)?
-            .as_secs()
-            .try_into()?,
-    );
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
@@ -1218,9 +1225,6 @@ fn interchain_transfer(
         mint,
         token_program,
         args.gas_value,
-        gas_service,
-        gas_config_account,
-        timestamp,
     )?])
 }
 
@@ -1229,16 +1233,8 @@ fn call_contract_with_interchain_token(
     args: CallContractWithInterchainTokenArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
-    let timestamp: i64 = args.timestamp.unwrap_or(
-        SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)?
-            .as_secs()
-            .try_into()?,
-    );
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
@@ -1257,9 +1253,6 @@ fn call_contract_with_interchain_token(
             args.data,
             token_program,
             args.gas_value,
-            gas_service,
-            gas_config_account,
-            timestamp,
         )?,
     ])
 }
@@ -1269,16 +1262,8 @@ fn call_contract_with_interchain_token_offchain_data(
     args: CallContractWithInterchainTokenOffchainDataArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
-    let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
-    let timestamp: i64 = args.timestamp.unwrap_or(
-        SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)?
-            .as_secs()
-            .try_into()?,
-    );
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
@@ -1286,25 +1271,21 @@ fn call_contract_with_interchain_token_offchain_data(
         args.destination_address,
     )?;
 
-    let (instruction, payload) =
-        axelar_solana_its::instruction::call_contract_with_interchain_token_offchain_data(
-            *fee_payer,
-            args.source_account,
-            args.token_id,
-            args.destination_chain,
-            destination_address,
-            args.amount,
-            mint,
-            args.data,
-            token_program,
-            args.gas_value,
-            gas_service,
-            gas_config_account,
-            timestamp,
-        )?;
+    let instruction = axelar_solana_its::instruction::call_contract_with_interchain_token(
+        *fee_payer,
+        args.source_account,
+        args.token_id,
+        args.destination_chain,
+        destination_address,
+        args.amount,
+        mint,
+        args.data,
+        token_program,
+        args.gas_value,
+    )?;
 
     let mut file = File::create(config.output_dir.join("offchain_data_payload.bin"))?;
-    file.write_all(&payload)?;
+    file.write_all(&instruction.data)?;
 
     Ok(vec![instruction])
 }
@@ -1322,7 +1303,9 @@ fn transfer_operatorship(
     args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::transfer_operatorship(
-        *fee_payer, args.to,
+        *fee_payer,
+        args.sender,
+        args.to,
     )?])
 }
 
@@ -1331,7 +1314,9 @@ fn propose_operatorship(
     args: TransferOperatorshipArgs, // Reuses args from transfer
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::propose_operatorship(
-        *fee_payer, args.to,
+        *fee_payer,
+        args.proposer,
+        args.to,
     )?])
 }
 
@@ -1340,7 +1325,9 @@ fn accept_operatorship(
     args: AcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::accept_operatorship(
-        *fee_payer, args.from,
+        *fee_payer,
+        args.role_receiver,
+        args.from,
     )?])
 }
 
@@ -1364,6 +1351,7 @@ fn token_manager_add_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::add_flow_limiter(
             *fee_payer,
+            args.adder,
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1377,6 +1365,7 @@ fn token_manager_remove_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::remove_flow_limiter(
             *fee_payer,
+            args.remover,
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1390,6 +1379,7 @@ fn token_manager_transfer_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::transfer_operatorship(
             *fee_payer,
+            args.sender,
             args.token_id,
             args.to,
         )?,
@@ -1403,6 +1393,7 @@ fn token_manager_propose_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::propose_operatorship(
             *fee_payer,
+            args.proposer,
             args.token_id,
             args.to,
         )?,
@@ -1416,6 +1407,7 @@ fn token_manager_accept_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::accept_operatorship(
             *fee_payer,
+            args.accepter,
             args.token_id,
             args.from,
         )?,
@@ -1465,6 +1457,7 @@ fn interchain_token_transfer_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::transfer_mintership(
             *fee_payer,
+            args.sender,
             args.token_id,
             args.to,
         )?,
@@ -1478,6 +1471,7 @@ fn interchain_token_propose_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::propose_mintership(
             *fee_payer,
+            args.proposer,
             args.token_id,
             args.to,
         )?,
@@ -1491,6 +1485,7 @@ fn interchain_token_accept_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::accept_mintership(
             *fee_payer,
+            args.accepter,
             args.token_id,
             args.from,
         )?,
@@ -1522,7 +1517,10 @@ fn get_token_manager(args: TokenManagerArgs, config: &Config) -> eyre::Result<()
     println!("- Interchain Token ID: {}", args.token_id);
     println!("- Mint Address: {}", token_manager.token_address);
     println!("- Type: {:#?}", token_manager.ty);
-    println!("- Flow Limit: {}", token_manager.flow_limit);
+    println!(
+        "- Flow Limit: {}",
+        token_manager.flow_slot.flow_limit.unwrap()
+    );
     println!("------------------------------------------");
 
     Ok(())

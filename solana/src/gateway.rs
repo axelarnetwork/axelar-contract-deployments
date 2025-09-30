@@ -887,8 +887,10 @@ async fn execute(
     )?);
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
-        let (message_payload_pda, _) =
-            axelar_solana_gateway::find_message_payload_pda(gateway_config_pda, incoming_message_pda);
+        let (message_payload_pda, _) = axelar_solana_gateway::find_message_payload_pda(
+            gateway_config_pda,
+            incoming_message_pda,
+        );
 
         // Handle special destination addresses
         if destination_address == axelar_solana_its::id() {
