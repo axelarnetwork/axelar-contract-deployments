@@ -426,10 +426,6 @@ const makeChainCodecInstantiateMsg = (config, options, _contractConfig) => {
         },
     } = config;
 
-    if (!validateAddress(proverAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].address in axelar info`);
-    }
-
     return codecConfig; // we pass on all properties in the codec config
 };
 
