@@ -14,6 +14,7 @@ export interface AxelarConfig {
     gasLimit: string | number;
     govProposalInstantiateAddresses: string[];
     govProposalDepositAmount: string;
+    chainId: string;
 }
 
 export interface NonEVMChainConfig {

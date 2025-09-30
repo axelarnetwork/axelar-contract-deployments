@@ -1143,10 +1143,6 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
-const generateDeploymentName = (chainName, codeId) => {
-    return `${chainName}-${codeId}`;
-};
-
 const getVerifierInstantiateMsg = (config, chainName) => {
     const {
         axelar: {
@@ -1301,52 +1297,6 @@ const getProverInstantiateMsg = (config, chainName) => {
     };
 };
 
-const getInstantiateChainContractsMessage = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    if (!chainName) {
-        throw new Error('Chain name is required');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required');
-    }
-
-    const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
-    const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
-    const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
-
-    const verifierMsg = getVerifierInstantiateMsg(config, chainName);
-    const proverMsg = getProverInstantiateMsg(config, chainName);
-
-    return {
-        instantiate_chain_contracts: {
-            chain: chainName,
-            deployment_name: generateDeploymentName(chainName, `${gatewayCode}-${verifierCode}-${proverCode}`),
-            salt: salt,
-            params: {
-                gateway: {
-                    code_id: Number(gatewayCode),
-                    label: `Gateway ${chainName}`,
-                    contract_admin: admin,
-                },
-                verifier: {
-                    code_id: Number(verifierCode),
-                    label: `VotingVerifier ${chainName}`,
-                    msg: verifierMsg,
-                    contract_admin: admin,
-                },
-                prover: {
-                    code_id: Number(proverCode),
-                    label: `MultisigProver ${chainName}`,
-                    msg: proverMsg,
-                    contract_admin: admin,
-                },
-            },
-        },
-    };
-};
-
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
     const chainConfig = getChainConfig(config.chains, chainName);
 
@@ -1484,9 +1434,7 @@ module.exports = {
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
-    generateDeploymentName,
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
-    getInstantiateChainContractsMessage,
     validateItsChainChange,
 };

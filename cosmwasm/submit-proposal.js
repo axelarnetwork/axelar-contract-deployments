@@ -23,7 +23,6 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
-    getInstantiateChainContractsMessage,
     validateItsChainChange,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
@@ -40,6 +39,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { mainProcessor } = require('./processor');
+const { CoordinatorManager } = require('./coordinator');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -264,14 +264,35 @@ const migrate = async (client, config, options, _args, fee) => {
 };
 
 const instantiateChainContracts = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
+    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
     if (!coordinatorAddress) {
         throw new Error('Coordinator contract address not found in config');
     }
 
-    const message = await getInstantiateChainContractsMessage(client, config, options);
+    if (!admin) {
+        throw new Error('Admin address is required when instantiating chain contracts');
+    }
+
+    if (options.fetchCodeId) {
+        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
+        const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
+        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
+        config.axelar.contracts.Gateway.codeId = gatewayCode;
+        config.axelar.contracts.VotingVerifier.codeId = verifierCode;
+        config.axelar.contracts.MultisigProver.codeId = proverCode;
+    } else {
+        if (!gatewayCodeId || !verifierCodeId || !proverCodeId) {
+            throw new Error('Gateway, VotingVerifier and MultisigProver code IDs are required when --fetchCodeId is not used');
+        }
+        config.axelar.contracts.Gateway.codeId = gatewayCodeId;
+        config.axelar.contracts.VotingVerifier.codeId = verifierCodeId;
+        config.axelar.contracts.MultisigProver.codeId = proverCodeId;
+    }
+
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
 
     const proposalId = await execute(
         client,
