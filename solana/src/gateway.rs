@@ -959,7 +959,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
     let invocations = gateway_event_stack::build_program_event_stack(
         &gateway_match_ctx,
         &log_messages,
-        gateway_event_stack::parse_gateway_logs,
+        gateway_event_stack::parse_gas_service_log,
     );
 
     for (i, invocation) in invocations.into_iter().enumerate() {

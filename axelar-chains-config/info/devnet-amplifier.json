@@ -1406,7 +1406,7 @@
       },
       "contracts": {
         "AxelarGateway": {
-          "address": "gtwRtcJ6CT8a7bsymztPEDzaMM5d3h6PN6vXeHtkESq",
+          "address": "gtwLmC1UUvmkVCN4NoXobHbLpQN2AZEZrWyqc7Q13QA",
           "connectionType": "amplifier",
           "domainSeparator": "0x020345c4bdac04b3ea1e3108ad3260cf201e3da0ecdf9899a0bc451a85c97053",
           "minimumRotationDelay": 0,

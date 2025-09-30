@@ -1060,7 +1060,6 @@ fn deploy_interchain_token(
     Ok(vec![
         axelar_solana_its::instruction::deploy_interchain_token(
             *fee_payer,
-            *fee_payer,
             args.salt,
             args.name,
             args.symbol,
@@ -1262,9 +1261,7 @@ fn transfer_operatorship(
     args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::transfer_operatorship(
-        *fee_payer,
-        args.sender,
-        args.to,
+        *fee_payer, args.to,
     )?])
 }
 
@@ -1273,9 +1270,7 @@ fn propose_operatorship(
     args: TransferOperatorshipArgs, // Reuses args from transfer
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::propose_operatorship(
-        *fee_payer,
-        args.proposer,
-        args.to,
+        *fee_payer, args.to,
     )?])
 }
 
@@ -1284,9 +1279,7 @@ fn accept_operatorship(
     args: AcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::accept_operatorship(
-        *fee_payer,
-        args.role_receiver,
-        args.from,
+        *fee_payer, args.from,
     )?])
 }
 
@@ -1310,7 +1303,6 @@ fn token_manager_add_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::add_flow_limiter(
             *fee_payer,
-            args.adder,
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1324,7 +1316,6 @@ fn token_manager_remove_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::remove_flow_limiter(
             *fee_payer,
-            args.remover,
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1338,7 +1329,6 @@ fn token_manager_transfer_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::transfer_operatorship(
             *fee_payer,
-            args.sender,
             args.token_id,
             args.to,
         )?,
@@ -1352,7 +1342,6 @@ fn token_manager_propose_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::propose_operatorship(
             *fee_payer,
-            args.proposer,
             args.token_id,
             args.to,
         )?,
@@ -1366,7 +1355,6 @@ fn token_manager_accept_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::accept_operatorship(
             *fee_payer,
-            args.accepter,
             args.token_id,
             args.from,
         )?,
@@ -1416,7 +1404,6 @@ fn interchain_token_transfer_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::transfer_mintership(
             *fee_payer,
-            args.sender,
             args.token_id,
             args.to,
         )?,
@@ -1430,7 +1417,6 @@ fn interchain_token_propose_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::propose_mintership(
             *fee_payer,
-            args.proposer,
             args.token_id,
             args.to,
         )?,
@@ -1444,7 +1430,6 @@ fn interchain_token_accept_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::accept_mintership(
             *fee_payer,
-            args.accepter,
             args.token_id,
             args.from,
         )?,
