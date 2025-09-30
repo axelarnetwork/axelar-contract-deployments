@@ -145,7 +145,7 @@ export class CoordinatorManager {
                 `VotingVerifier[${chainName}].governanceAddress`,
             );
             const serviceName = validateRequired(votingVerifierConfig.serviceName, `VotingVerifier[${chainName}].serviceName`);
-            const rewardsAddress = validateRequired(rewardsConfig.address, `Rewards[${chainName}].address`);
+            const rewardsAddress = validateRequired(rewardsConfig.address, `Rewards.address`);
             const sourceGatewayAddress = validateRequired(
                 votingVerifierConfig.sourceGatewayAddress,
                 `VotingVerifier[${chainName}].sourceGatewayAddress`,
@@ -161,7 +161,8 @@ export class CoordinatorManager {
             const encoder = validateRequired(multisigProverConfig.encoder, `MultisigProver[${chainName}].encoder`);
             const keyType = validateRequired(multisigProverConfig.keyType, `MultisigProver[${chainName}].keyType`);
 
-            const domainSeparator = calculateDomainSeparator(chainName, routerConfig.address, this.configManager.axelar.chainId);
+            const routerAddress = validateRequired(routerConfig.address, `Router.address`);
+            const domainSeparator = calculateDomainSeparator(chainName, routerAddress, this.configManager.axelar.chainId);
             if (!isKeccak256Hash(domainSeparator)) {
                 throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
             }
@@ -171,7 +172,7 @@ export class CoordinatorManager {
             const multisigContractAdminAddress = admin;
             const gatewayContractAdminAddress = admin;
             const multisigAdminAddress = validateRequired(multisigProverConfig.adminAddress, `MultisigProver[${chainName}].adminAddress`);
-            const multisigAddress = validateRequired(multisigConfig.address, `Multisig[${chainName}].address`);
+            const multisigAddress = validateRequired(multisigConfig.address, `Multisig.address`);
             const verifierSetDiffThreshold = validateRequired(
                 multisigProverConfig.verifierSetDiffThreshold,
                 `MultisigProver[${chainName}].verifierSetDiffThreshold`,

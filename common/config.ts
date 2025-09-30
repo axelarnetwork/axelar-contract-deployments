@@ -106,7 +106,15 @@ export class ConfigManager implements FullConfig {
         const { axelar } = this;
         if (!axelar) return errors;
 
-        const requiredFields = ['contracts', 'rpc', 'gasPrice', 'gasLimit', 'govProposalInstantiateAddresses', 'govProposalDepositAmount'];
+        const requiredFields = [
+            'contracts',
+            'rpc',
+            'gasPrice',
+            'gasLimit',
+            'govProposalInstantiateAddresses',
+            'govProposalDepositAmount',
+            'chainId',
+        ];
         requiredFields.forEach((field) => {
             if (axelar[field] === undefined || axelar[field] === null) {
                 errors.push(`Missing 'axelar.${field}' in ${this.environment} config`);
@@ -129,6 +137,10 @@ export class ConfigManager implements FullConfig {
             {
                 condition: !axelar.govProposalInstantiateAddresses || !Array.isArray(axelar.govProposalInstantiateAddresses),
                 message: `Invalid 'axelar.govProposalInstantiateAddresses' in ${this.environment} config`,
+            },
+            {
+                condition: !axelar.chainId || typeof axelar.chainId !== 'string' || axelar.chainId.trim() === '',
+                message: `Invalid 'axelar.chainId' format: ${axelar.chainId} - must be a non-empty string`,
             },
         ];
 
