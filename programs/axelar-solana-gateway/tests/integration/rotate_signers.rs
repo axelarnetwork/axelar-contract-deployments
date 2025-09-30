@@ -445,6 +445,7 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
     // reject for missing signatures
     rotate_signers_ix
         .accounts
+        // -3 is the operator account. see the accounts list in the rotate_signers instruction
         .index_mut(rotate_signers_ix.accounts.len() - 3)
         .is_signer = false;
 
