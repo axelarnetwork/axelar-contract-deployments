@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::Write;
 use std::str::FromStr;
-use std::time::SystemTime;
 
 use axelar_solana_its::state;
 use axelar_solana_its::state::token_manager::TokenManager;
