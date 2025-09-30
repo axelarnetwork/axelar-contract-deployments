@@ -9,4 +9,3 @@ workspace = true
 [dependencies]
 event-cpi.workspace = true
 solana-sdk.workspace = true
-borsh.workspace = true

@@ -42,7 +42,6 @@ bitvec.workspace = true
 borsh.workspace = true
 bytemuck.workspace = true
 ed25519-dalek.workspace = true
-event-utils.workspace = true
 hex.workspace = true
 itertools.workspace = true
 libsecp256k1.workspace = true

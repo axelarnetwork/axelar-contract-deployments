@@ -9,7 +9,6 @@ axelar-solana-gas-service-events.workspace = true
 tokio.workspace = true
 solana-program.workspace = true
 solana-program-test.workspace = true
-event-cpi.workspace = true
 bincode.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 typed-builder.workspace = true
@@ -36,21 +35,17 @@ workspace = true
 devnet-amplifier = [
     "axelar-solana-gas-service/devnet-amplifier",
     "axelar-solana-gateway/devnet-amplifier",
-    "gateway-event-stack/devnet-amplifier"
 ]
 stagenet = [
     "axelar-solana-gas-service/stagenet",
     "axelar-solana-gateway/stagenet",
-    "gateway-event-stack/stagenet"
 ]
 testnet = [
     "axelar-solana-gas-service/testnet",
     "axelar-solana-gateway/testnet",
-    "gateway-event-stack/testnet"
 ]
 mainnet = [
     "axelar-solana-gas-service/mainnet",
     "axelar-solana-gateway/mainnet",
-    "gateway-event-stack/mainnet"
 ]
 default = ["devnet-amplifier"]
