@@ -7,7 +7,6 @@ const {
     getChainConfig,
     parseTrustedChains,
     validateParameters,
-    isValidNumber,
     validateDestinationChain,
 } = require('../common/utils');
 const {
@@ -18,7 +17,6 @@ const {
     deployTokenFromInfo,
     getAllowedFunctions,
     getObjectIdsByObjectTypes,
-    getStructs,
     getWallet,
     itsFunctions,
     printWalletInfo,
