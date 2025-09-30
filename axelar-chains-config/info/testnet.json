@@ -1668,7 +1668,7 @@
       "name": "Blast-Sepolia",
       "axelarId": "blast-sepolia",
       "chainId": 168587773,
-      "rpc": "https://blastl2-sepolia.public.blastapi.io",
+      "rpc": "https://blast-sepolia.drpc.org",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "chainType": "evm",
