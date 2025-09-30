@@ -210,9 +210,14 @@ async function deployToken(keypair, client, contracts, args, options) {
     if (options.origin) {
         const coinRegistration = options.tokenManagerMode === 'lock_unlock' ? 'register_coin' : 'register_coin_with_cap';
 
+        const coinRegistration = options.tokenManagerMode === 'lock_unlock' ? 'register_coin' : 'register_coin_with_cap';
+        const registrationArgs = options.tokenManagerMode === 'lock_unlock' 
+            ? [InterchainTokenService.objects.InterchainTokenService, Metadata]
+            : [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap];
+
         await postDeployTxBuilder.moveCall({
             target: `${Example.address}::its::${coinRegistration}`,
-            arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap],
+            arguments: registrationArgs,
             typeArguments: [tokenType],
         });
 
