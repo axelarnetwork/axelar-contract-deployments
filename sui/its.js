@@ -893,8 +893,6 @@ if (require.main === module) {
     const program = new Command();
     program.name('InterchainTokenService').description('SUI InterchainTokenService scripts');
 
-    // v0 release
-
     // This command is used to setup the trusted chains on the InterchainTokenService contract.
     // The trusted chain is used to verify the message from the source chain.
     const addTrustedChainsProgram = new Command()
@@ -923,7 +921,6 @@ if (require.main === module) {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
-    // v1 release
     const registerCoinFromInfoProgram = new Command()
         .name('register-coin-from-info')
         .command('register-coin-from-info <symbol> <name> <decimals>')
@@ -1075,8 +1072,6 @@ if (require.main === module) {
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
-
-    // v1
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
@@ -1090,7 +1085,6 @@ if (require.main === module) {
     program.addCommand(restoreTreasuryCapProgram);
     program.addCommand(checkVersionControlProgram);
     program.addCommand(interchainTransferProgram);
-
     program.addCommand(mintCoinsProgram);
 
     // finalize program
