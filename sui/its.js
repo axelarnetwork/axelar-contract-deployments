@@ -853,10 +853,10 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
 
     const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
 
-    const balance = await client.getBalance({
+    const balance = (await client.getBalance({
         owner: receiver,
         coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
-    });
+    })).totalBalance;
 
     printInfo('💰 receiver token balance', balance.totalBalance);
 
