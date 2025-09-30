@@ -206,17 +206,6 @@ impl SignatureVerification {
         Ok(())
     }
 
-    /// Returns the slot for a given position.
-    #[inline]
-    #[must_use]
-    pub fn slot(&self, position: usize) -> Option<bool> {
-        self.signature_slots
-            .view_bits::<Lsb0>()
-            .get(position)
-            .as_deref()
-            .copied()
-    }
-
     /// Iterator over the signature slots.
     pub fn slots_iter(&self) -> impl Iterator<Item = bool> + '_ {
         let signature_slots = self.signature_slots.view_bits::<Lsb0>();

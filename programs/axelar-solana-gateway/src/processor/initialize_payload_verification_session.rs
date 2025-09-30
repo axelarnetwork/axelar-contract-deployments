@@ -59,10 +59,6 @@ impl Processor {
         }
 
         // Check verification session account requirements
-        if verification_session_account.is_signer {
-            solana_program::msg!("Error: verification session account cannot be a signer");
-            return Err(ProgramError::InvalidAccountData);
-        }
         if !verification_session_account.is_writable {
             solana_program::msg!("Error: verification session account is not writable");
             return Err(ProgramError::InvalidAccountData);
