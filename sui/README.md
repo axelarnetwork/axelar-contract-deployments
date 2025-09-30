@@ -170,14 +170,16 @@ ts-node sui/deploy-contract.js deploy ITS
 
 #### Interchain Transfer
 
+Send interchain transfer from sui to a chain where token is linked
+
 ```bash
-ts-node sui/its interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 --env <your-env> --signatureScheme <your-signature-scheme>
+ts-node sui/its interchain-transfer interchain-transfer [options] <coin object id> <token id> <destination chain> <destination address> <amount>
 ```
 
 - Example Command: 
 
 ```bash
-ts-node sui/its interchain-transfer 0x5d693cebdbba9fdcc8a5990858998a2f7bee87ef2d537e9dd4588a30ec615ad7 my_custom_coin MY_CUSTOM_COIN 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1 --env testnet --signatureScheme ed25519
+ts-node sui/its interchain-transfer 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1
 ```
 
 
@@ -555,7 +557,7 @@ ts-node sui/its restore-treasury-cap [options] <symbol>
 
 ### Mint Coin
 
-Mint coins for a given coin type via the coin's symbol (or using options for coins not saved in config)
+Mint coins for the given symbol on Sui. The token must be deployed on Sui first.
 
 Command:
 ```bash
@@ -565,7 +567,7 @@ ts-node sui/its mint-coins [options] <symbol> <amount> <recipient>
 
 Example:
 ```bash
-ts-node sui/its mint-coins MY_CUSTOM_COIN 1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 -e testnet --signatureScheme ed25519 --coinPackageId 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b --coinPackageName my_custom_coin --coinDecimals 9
+ts-node sui/its mint-coins MY_CUSTOM_COIN 1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 --coinPackageId 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b --coinPackageName my_custom_coin --coinDecimals 9
 ```
 
 Example Response:
