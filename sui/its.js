@@ -724,10 +724,10 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     let coinType, coinPackageId;
     try {
         const coinDataType = coinData.data ? coinData.data.content.type : null;
-        coinType = coinDataType.split('<')[1].replace('>','');
+        coinType = coinDataType.split('<')[1].replace('>', '');
         coinPackageId = coinType.split('::')[0];
     } catch {
-        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${coinData.data.content.type}`)
+        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${coinData.data.content.type}`);
     }
 
     const walletAddress = keypair.toSuiAddress();
@@ -1097,20 +1097,16 @@ if (require.main === module) {
 
     const interchainTransferProgram = new Command()
         .name('interchain-transfer')
-        .command(
-            'interchain-transfer <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
-        )
+        .command('interchain-transfer <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('Send interchain transfer from sui to a chain where token is linked')
-        .action(
-            (coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
-                mainProcessor(
-                    interchainTransfer,
-                    options,
-                    [coinObjectId, tokenId, destinationChain, destinationAddress, amount],
-                    processCommand,
-                );
-            },
-        );
+        .action((coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
+            mainProcessor(
+                interchainTransfer,
+                options,
+                [coinObjectId, tokenId, destinationChain, destinationAddress, amount],
+                processCommand,
+            );
+        });
 
     const mintCoinsProgram = new Command()
         .name('mint-coins')
