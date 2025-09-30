@@ -116,30 +116,18 @@ const executeTransaction = async (client, account, contractAddress, message, fee
     return tx;
 };
 
-const uploadContract = async (client, config, options) => {
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-
+const uploadContract = async (client, options, uploadFee) => {
     const [account] = client.accounts;
     const wasm = readContractCode(options);
-
-    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options, initFee) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
     const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-
     const contractLabel = getLabel(options);
 
     const { contractAddress } = instantiate2
@@ -159,15 +147,10 @@ const instantiateContract = async (client, initMsg, config, options) => {
     return contractAddress;
 };
 
-const migrateContract = async (client, config, options) => {
+const migrateContract = async (client, config, options, migrateFee) => {
     const { msg } = options;
     const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
@@ -988,13 +971,17 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config.chains, chainName);
+    let contractConfig;
+    let chainConfig;
+    if (!options.address || !options.codeId) {
+        contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+        chainConfig = getChainConfig(config.chains, chainName);
+    }
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
-        codeId: contractConfig.codeId,
+        contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+        codeId: options.codeId ?? contractConfig.codeId,
         msg: Buffer.from(msg),
     };
 };
@@ -1086,17 +1073,34 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, config, options, content) => {
-    const [account] = client.accounts;
+// Retries sign-and-broadcast on transient RPC socket closures
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3) => {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await client.signAndBroadcast(signerAddress, msgs, fee, memo);
+        } catch (error) {
+            lastError = error;
+            const code = error?.cause?.code || error?.code;
+            const message = error?.message || '';
 
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+            // Confirm err is socket error
+            const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
+            if (!isTransient || attempt === maxAttempts - 1) {
+                throw error;
+            }
+
+            printInfo('Retrying proposal submission..... 🔄');
+        }
+    }
+};
+
+const submitProposal = async (client, config, options, content, fee) => {
+    const [account] = client.accounts;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };

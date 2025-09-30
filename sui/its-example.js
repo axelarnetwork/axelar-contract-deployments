@@ -190,6 +190,24 @@ async function deployToken(keypair, client, contracts, args, options) {
     const postDeployTxBuilder = new TxBuilder(client);
 
     if (options.origin) {
+        // Mint tokens before registration (while user still holds the TreasuryCap)
+        const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+        if (amount) {
+            const unitAmount = getUnitAmount(options.mintAmount, decimals);
+
+            const mintTxBuilder = new TxBuilder(client);
+
+            const coin = await mintTxBuilder.moveCall({
+                target: `${SUI_PACKAGE_ID}::coin::mint`,
+                arguments: [TreasuryCap, unitAmount],
+                typeArguments: [tokenType],
+            });
+
+            mintTxBuilder.tx.transferObjects([coin], walletAddress);
+
+            await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
+        }
+
         if (options.tokenManagerMode === 'lock_unlock') {
             await postDeployTxBuilder.moveCall({
                 target: `${Example.address}::its::register_coin`,
@@ -369,6 +387,7 @@ if (require.main === module) {
                 .default('lock_unlock')
                 .choices(['lock_unlock', 'mint_burn']),
         )
+        .addOption(new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer (must be origin).').default('1000'))
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);

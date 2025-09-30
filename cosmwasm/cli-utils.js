@@ -93,6 +93,12 @@ const addAmplifierQueryOptions = (program) => {
     addChainNameOption(program);
 };
 
+const addAmplifierQueryContractOptions = (program) => {
+    addEnvOption(program);
+
+    addContractOptions(program);
+};
+
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     addChainNameOption(program);
@@ -180,5 +186,6 @@ const addProposalOptions = (program) => {
 module.exports = {
     addAmplifierOptions,
     addAmplifierQueryOptions,
+    addAmplifierQueryContractOptions,
     addChainNameOption,
 };

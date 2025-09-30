@@ -75,12 +75,20 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
     }
 }
 
-async function checkIfCoinIsMinted(client, coinObjectId, coinType) {
-    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
-    const objectType = coinObject?.data?.type;
-    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
-    if (objectType !== expectedObjectType) {
-        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
+async function checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount) {
+    const coins = await client.getCoins({
+        owner: walletAddress,
+        coinType,
+    });
+
+    const coin = coins.data.find((c) => c.coinObjectId === coinObjectId);
+    if (!coin) {
+        throw new Error(`Coin with ID ${coinObjectId} not found for owner ${walletAddress}`);
+    }
+
+    const balance = Number(coin.balance);
+    if (balance < amount) {
+        throw new Error(`User does not have sufficient balance. Expected ${amount}, got ${balance}`);
     }
 }
 
@@ -89,5 +97,5 @@ module.exports = {
     createLockedCoinManagement,
     saveTokenDeployment,
     checkIfCoinExists,
-    checkIfCoinIsMinted,
+    checkIfSenderHasSufficientBalance,
 };

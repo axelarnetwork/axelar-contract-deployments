@@ -345,6 +345,23 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
     return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
 };
 
+const selectSuiNetwork = (env) => {
+    let network;
+    switch (env) {
+        case 'devnet':
+        case 'testnet':
+        case 'mainnet': {
+            network = env;
+            break;
+        }
+        default: {
+            network = 'testnet';
+        }
+    }
+
+    return network;
+};
+
 module.exports = {
     suiCoinId,
     isGasToken,
@@ -369,6 +386,7 @@ module.exports = {
     checkTrustedAddresses,
     getStructs,
     saveGeneratedTx,
+    selectSuiNetwork,
     isAllowed,
     getAllowedFunctions,
 };
