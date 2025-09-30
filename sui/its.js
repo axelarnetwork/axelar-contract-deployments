@@ -830,11 +830,35 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
 }
 
 async function mintCoins(keypair, client, config, contracts, args, options) {
-    const [coinPackageId, coinPackageName, coinModName, amount, receiver] = args;
+    const [symbol, amount, recipient] = args;
 
     const walletAddress = keypair.toSuiAddress();
 
-    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+    validateParameters({
+        isNonEmptyString: { symbol, amount, recipient },
+    });
+
+    if (isNaN(amount)) {
+        throw new Error(`Amount to be minted must be a valid number, found: ${amount}`);
+    }
+
+    const coin = contracts[symbol.toUpperCase()];
+
+    if (!coin) {
+        if (!options.coinPackageId || !options.coinPackageName) {
+            throw new Error(
+                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringifgy(options)}`
+            );
+        }
+    }
+
+    const coinType = coin ? coin.typeArgument : `${options.coinPackageId}::${options.coinPackageName}::${symbol.toUpperCase()}`;
+    const coinPackageId = coin ? coin.address : options.coinPackageId;
+    const coinPackageName = coin ? coinType.split("::")[1] : options.coinPackageName;
+
+    if (!coinPackageName) {
+        throw new Error(`Invalid coin type, found: ${coinType}`);
+    }
 
     await checkIfCoinExists(client, coinPackageId, coinType);
 
@@ -853,19 +877,19 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const txBuilder = new TxBuilder(client);
     await txBuilder.moveCall({
         target: `${coinPackageId}::${coinPackageName}::mint`,
-        arguments: [treasury, amount, receiver],
+        arguments: [treasury, amount, recipient],
     });
 
     const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
 
     const balance = (
         await client.getBalance({
-            owner: receiver,
-            coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
+            owner: recipient,
+            coinType,
         })
     ).totalBalance;
 
-    printInfo('💰 receiver token balance', balance);
+    printInfo('💰 recipient token balance', balance);
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
@@ -1063,10 +1087,12 @@ if (require.main === module) {
 
     const mintCoinsProgram = new Command()
         .name('mint-coins')
-        .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <amount> <receiver>')
-        .description('Mint coins for a given package on sui')
-        .action((coinPackageId, coinPackageName, coinModName, amount, receiver, options) => {
-            mainProcessor(mintCoins, options, [coinPackageId, coinPackageName, coinModName, amount, receiver], processCommand);
+        .command('mint-coins <symbol> <amount> <recipient>')
+        .description('Mint coins for a given token on sui')
+        .addOption(new Option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved to config)'))
+        .addOption(new Option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved to config)'))
+        .action((symbol, amount, recipient, options) => {
+            mainProcessor(mintCoins, options, [symbol, amount, recipient], processCommand);
         });
 
     program.addCommand(setFlowLimitsProgram);

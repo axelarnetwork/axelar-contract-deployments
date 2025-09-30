@@ -555,17 +555,17 @@ ts-node sui/its restore-treasury-cap [options] <symbol>
 
 ### Mint Coin
 
-Mint new Sui Coin
+Mint coins for a given coin type via the coin's symbol (or using options for coins not saved in config)
 
 Command:
 ```bash
-ts-node sui/its.js mint-coins <coin-package-id> <coin-package-name> <coin-mod-name> <amount> <receiver> <env> <signature-scheme>
+ts-node sui/its.js mint-coins [options] <symbol> <amount> <recipient>
 ```
 
 
 Example:
 ```bash
-ts-node sui/its.js mint-coins 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b my_custom_coin MY_CUSTOM_COIN  1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 -e testnet --signatureScheme ed25519
+ts-node sui/its.js mint-coins --coinPackageId 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b --coinPackageName my_custom_coin MY_CUSTOM_COIN  1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 -e testnet --signatureScheme ed25519
 ```
 
 Example Response:
