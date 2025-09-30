@@ -847,9 +847,13 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const coin = contracts[symbol.toUpperCase()];
 
     if (!coin) {
-        if (!options.coinPackageId || !options.coinPackageName || options.coinDecimals) {
+        if (!options.coinPackageId || !options.coinPackageName || !options.coinDecimals) {
             throw new Error(
-                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringify([options.coinPackageId, options.coinPackageName, options.coinDecimals])}`,
+                `Options coinPackageId, coinPackageName and coinDecimals are required for coins not saved in config, found: ${JSON.stringify([
+                    options.coinPackageId,
+                    options.coinPackageName,
+                    options.coinDecimals
+                ])}`
             );
         }
     }
@@ -1102,8 +1106,9 @@ if (require.main === module) {
         .name('mint-coins')
         .command('mint-coins <symbol> <amount> <recipient>')
         .description('Mint coins for the given symbol on Sui. The token must be deployed on Sui first.')
-        .addOption(new Option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved to config)'))
-        .addOption(new Option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved to config)'))
+        .addOption(new Option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved in config)'))
+        .addOption(new Option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved in config)'))
+        .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimal precision (mandatory if coin is not saved in config)'))
         .action((symbol, amount, recipient, options) => {
             mainProcessor(mintCoins, options, [symbol, amount, recipient], processCommand);
         });
