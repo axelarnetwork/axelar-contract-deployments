@@ -1549,7 +1549,6 @@ module.exports = {
     isValidCosmosAddress,
     getContractCodePath,
     generateDeploymentName,
-    getChainCodecInstantiateMsg,
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
     getInstantiateChainContractsMessage,
