@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
+use axelar_solana_gateway::events::{CallContractEvent, GatewayEvent};
 use axelar_solana_gateway_test_fixtures::{
     base::TestFixture,
     gateway::{get_gateway_events, ProgramInvocationState},
@@ -133,7 +133,7 @@ fn evm_prepare_approve_contract_call(
         evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Message {
             source_chain: solana_id.to_string(),
             message_id: "message555".to_string(),
-            source_address: call_contract.sender_key.to_string(),
+            source_address: call_contract.sender.to_string(),
             contract_address: ethers_core::types::Address::from_str(
                 call_contract.destination_contract_address.as_str(),
             )

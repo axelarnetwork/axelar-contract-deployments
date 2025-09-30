@@ -203,11 +203,8 @@ fn handle_success_log<K>(program_stack: &mut Vec<ProgramInvocationState<K>>) {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use axelar_solana_gas_service_events::events::NativeGasPaidForContractCallEvent;
     use pretty_assertions::assert_eq;
-    use solana_sdk::pubkey::Pubkey;
     use test_log::test;
 
     use super::*;

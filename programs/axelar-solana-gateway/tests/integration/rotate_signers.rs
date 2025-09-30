@@ -65,7 +65,7 @@ async fn successfully_rotates_signers() {
         .first()
         .cloned()
         .unwrap();
-    assert!(inner_ixs.len() > 0);
+    assert!(!inner_ixs.is_empty());
 
     let expected_event = VerifierSetRotatedEvent {
         epoch: new_epoch,
@@ -280,7 +280,7 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
         .first()
         .cloned()
         .unwrap();
-    assert!(inner_ixs.len() > 0);
+    assert!(!inner_ixs.is_empty());
 
     let expected_event = VerifierSetRotatedEvent {
         epoch: new_epoch,

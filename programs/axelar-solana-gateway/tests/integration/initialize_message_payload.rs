@@ -86,7 +86,7 @@ pub async fn approve_message(runner: &mut SolanaAxelarIntegrationMetadata, messa
         .first()
         .cloned()
         .unwrap();
-    assert!(inner_ixs.len() > 0);
+    assert!(!inner_ixs.is_empty());
 
     // Assert event
     let expected_event = MessageApprovedEvent {

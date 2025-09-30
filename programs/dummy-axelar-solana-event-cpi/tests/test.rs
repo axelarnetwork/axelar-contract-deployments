@@ -86,7 +86,7 @@ async fn test_emit_memo_cpi_event() {
         .first()
         .cloned()
         .unwrap();
-    assert!(inner_ixs.len() > 0);
+    assert!(!inner_ixs.is_empty());
 
     // Find the event CPI instruction
     let expected_event = MemoSentEvent {

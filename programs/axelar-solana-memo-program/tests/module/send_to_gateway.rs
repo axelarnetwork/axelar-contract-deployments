@@ -1,4 +1,4 @@
-use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
+use axelar_solana_gateway::events::{CallContractEvent, GatewayEvent};
 use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, ProgramInvocationState};
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
@@ -51,7 +51,7 @@ async fn test_successfully_send_to_gateway() {
     assert_eq!(
         emitted_event,
         &CallContractEvent {
-            sender_key: axelar_solana_memo_program::ID,
+            sender: axelar_solana_memo_program::ID,
             destination_chain,
             destination_contract_address: destination_address,
             payload: memo.as_bytes().to_vec(),

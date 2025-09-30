@@ -65,7 +65,7 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
         .first()
         .cloned()
         .unwrap();
-    assert!(inner_ixs.len() > 0);
+    assert!(!inner_ixs.is_empty());
 
     let expected_event = OperatorshipTransferredEvent {
         new_operator: new_operator.pubkey(),
@@ -147,7 +147,7 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
         .first()
         .cloned()
         .unwrap();
-    assert!(inner_ixs.len() > 0);
+    assert!(!inner_ixs.is_empty());
 
     let expected_event = OperatorshipTransferredEvent {
         new_operator: new_operator.pubkey(),

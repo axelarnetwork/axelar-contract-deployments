@@ -1,6 +1,6 @@
+use axelar_solana_gateway::events::MessageExecutedEvent;
 use axelar_solana_gateway::executable::EncodingScheme;
 use axelar_solana_gateway::get_incoming_message_pda;
-use axelar_solana_gateway::processor::MessageEvent;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
@@ -18,7 +18,7 @@ use crate::program_test;
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
     use std::str::FromStr;
 
-    use axelar_solana_gateway::processor::GatewayEvent;
+    use axelar_solana_gateway::events::GatewayEvent;
     // Setup
     use axelar_solana_gateway_test_fixtures::gateway::{
         get_gateway_events, ProgramInvocationState,
@@ -135,10 +135,10 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         &merkelised_message.leaf.message.cc_id.chain,
         &merkelised_message.leaf.message.cc_id.id,
     );
-    let expected_event = MessageEvent {
+    let expected_event = MessageExecutedEvent {
         command_id,
-        cc_id_chain: merkelised_message.leaf.message.cc_id.chain,
-        cc_id_id: merkelised_message.leaf.message.cc_id.id,
+        source_chain: merkelised_message.leaf.message.cc_id.chain,
+        cc_id: merkelised_message.leaf.message.cc_id.id,
         source_address: merkelised_message.leaf.message.source_address,
         destination_address: Pubkey::from_str(&merkelised_message.leaf.message.destination_address)
             .unwrap(),

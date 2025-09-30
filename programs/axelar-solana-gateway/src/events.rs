@@ -134,15 +134,10 @@ mod tests {
         let event = CallContractEvent {
             sender: solana_program::pubkey::new_rand(),
             payload_hash: [0u8; 32],
-            destination_chain: "Ethereum".to_string(),
-            destination_contract_address: "0x1234567890abcdef".to_string(),
+            destination_chain: "Ethereum".to_owned(),
+            destination_contract_address: "0x1234567890abcdef".to_owned(),
             payload: vec![1, 2, 3, 4],
         };
-
-        println!(
-            "CallContractEvent Discriminator: {:?}",
-            CallContractEvent::DISCRIMINATOR
-        );
 
         let data = event.data();
         #[allow(clippy::indexing_slicing)]
