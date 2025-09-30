@@ -28,7 +28,7 @@ const {
     writeJSON,
     isKeccak256Hash,
 } = require('./utils.js');
-const { addBaseOptions } = require('./cli-utils.js');
+const { addBaseOptions } = require('./cli-utils.ts');
 const { getWallet } = require('./sign-utils.js');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
