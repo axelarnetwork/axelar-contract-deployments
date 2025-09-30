@@ -1119,23 +1119,23 @@ if (require.main === module) {
             mainProcessor(mintCoins, options, [symbol, amount, recipient], processCommand);
         });
 
-    program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
-    program.addCommand(removeTrustedChainsProgram);
+    program.addCommand(checkVersionControlProgram);
+    program.addCommand(deployRemoteCoinProgram);
+    program.addCommand(giveUnlinkedCoinProgram);
+    program.addCommand(interchainTransferProgram);
+    program.addCommand(linkCoinProgram);
+    program.addCommand(mintCoinsProgram);
+    program.addCommand(migrateAllCoinMetadataProgram);
+    program.addCommand(migrateCoinMetadataProgram);
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
-    program.addCommand(migrateCoinMetadataProgram);
-    program.addCommand(migrateAllCoinMetadataProgram);
-    program.addCommand(giveUnlinkedCoinProgram);
-    program.addCommand(removeUnlinkedCoinProgram);
-    program.addCommand(linkCoinProgram);
-    program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
+    program.addCommand(removeTrustedChainsProgram);
+    program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(restoreTreasuryCapProgram);
-    program.addCommand(checkVersionControlProgram);
-    program.addCommand(interchainTransferProgram);
-    program.addCommand(mintCoinsProgram);
+    program.addCommand(setFlowLimitsProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
