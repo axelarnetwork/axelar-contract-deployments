@@ -19,6 +19,7 @@ const {
     getAllowedFunctions,
     getObjectIdsByObjectTypes,
     getWallet,
+    getFormattedAmount,
     getUnitAmount,
     itsFunctions,
     printWalletInfo,
@@ -892,7 +893,7 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
 
     txBuilder.tx.transferObjects([mintedCoins], recipient);
 
-    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
+    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${symbol}`, options);
 
     const balance = (
         await client.getBalance({
@@ -901,7 +902,7 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
         })
     ).totalBalance;
 
-    printInfo('💰 recipient token balance', balance);
+    printInfo('💰 recipient token balance', getFormattedAmount(balance));
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
