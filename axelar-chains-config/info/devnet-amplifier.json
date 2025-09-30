@@ -1408,7 +1408,7 @@
         "AxelarGateway": {
           "address": "gtwRtcJ6CT8a7bsymztPEDzaMM5d3h6PN6vXeHtkESq",
           "connectionType": "amplifier",
-          "domainSeparator": "TBD",
+          "domainSeparator": "0x020345c4bdac04b3ea1e3108ad3260cf201e3da0ecdf9899a0bc451a85c97053",
           "minimumRotationDelay": 0,
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": 15,
