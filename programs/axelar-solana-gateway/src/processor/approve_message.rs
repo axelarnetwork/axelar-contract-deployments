@@ -178,10 +178,10 @@ impl Processor {
             command_id,
             destination_address,
             payload_hash: message.payload_hash,
-            source_chain: cc_id.chain.clone(),
-            cc_id: cc_id.id.clone(),
-            source_address: message.source_address.clone(),
-            destination_chain: message.destination_chain.clone(),
+            source_chain: cc_id.chain,
+            cc_id: cc_id.id,
+            source_address: message.source_address,
+            destination_chain: message.destination_chain,
         });
 
         Ok(())

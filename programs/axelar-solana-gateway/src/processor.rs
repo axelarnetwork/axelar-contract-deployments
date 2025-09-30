@@ -83,8 +83,8 @@ impl Processor {
                 Self::process_call_contract(
                     program_id,
                     accounts,
-                    &destination_chain,
-                    &destination_contract_address,
+                    destination_chain,
+                    destination_contract_address,
                     payload,
                     signing_pda_bump,
                 )
@@ -119,7 +119,7 @@ impl Processor {
             }
             GatewayInstruction::ValidateMessage { message } => {
                 msg!("Instruction: Validate Message");
-                Self::process_validate_message(program_id, accounts, &message)
+                Self::process_validate_message(program_id, accounts, message)
             }
             GatewayInstruction::InitializeMessagePayload {
                 buffer_size,

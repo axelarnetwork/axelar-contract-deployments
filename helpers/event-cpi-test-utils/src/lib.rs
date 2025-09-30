@@ -1,5 +1,5 @@
 #[allow(clippy::use_debug, clippy::indexing_slicing, clippy::print_stderr)]
-pub fn find_event_cpi<E: event_cpi::CpiEvent + std::fmt::Debug + PartialEq>(
+pub fn contains_event_cpi<E: event_cpi::CpiEvent + std::fmt::Debug + PartialEq>(
     event: &E,
     ixs: &[solana_sdk::inner_instruction::InnerInstruction],
 ) -> bool {
@@ -45,6 +45,6 @@ pub fn assert_event_cpi<E: event_cpi::CpiEvent + std::fmt::Debug + PartialEq>(
     event: &E,
     ixs: &[solana_sdk::inner_instruction::InnerInstruction],
 ) {
-    let found = find_event_cpi(event, ixs);
+    let found = contains_event_cpi(event, ixs);
     assert!(found, "Event not found in inner instructions");
 }

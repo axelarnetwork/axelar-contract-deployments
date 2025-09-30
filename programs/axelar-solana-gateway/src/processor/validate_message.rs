@@ -38,7 +38,7 @@ impl Processor {
     pub fn process_validate_message(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        message: &Message,
+        message: Message,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
@@ -97,10 +97,10 @@ impl Processor {
             command_id,
             destination_address,
             payload_hash: message.payload_hash,
-            source_chain: message.cc_id.chain.clone(),
-            cc_id: message.cc_id.id.clone(),
-            source_address: message.source_address.clone(),
-            destination_chain: message.destination_chain.clone(),
+            source_chain: message.cc_id.chain,
+            cc_id: message.cc_id.id,
+            source_address: message.source_address,
+            destination_chain: message.destination_chain,
         });
 
         Ok(())

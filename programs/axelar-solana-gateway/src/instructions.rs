@@ -308,7 +308,9 @@ pub fn rotate_signers(
         if let Some(operator) = operator {
             AccountMeta::new(operator, true)
         } else {
-            AccountMeta::new_readonly(payer, false)
+            // Pushing the program id as the default value
+            // See https://github.com/solana-foundation/anchor/blob/d5d7eb97979234eb1e9e32fcef66ce171a928b62/lang/syn/src/codegen/accounts/to_account_metas.rs#L27
+            AccountMeta::new_readonly(crate::ID, false)
         },
         AccountMeta::new_readonly(event_authority, false),
         AccountMeta::new_readonly(crate::ID, false),
