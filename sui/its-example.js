@@ -59,7 +59,7 @@ async function sendToken(keypair, client, contracts, args, options) {
     let Coin;
     const tokenManagerMode = ItsToken.tokenManagerMode || 'lock_unlock';
     const isOrigin = ItsToken.objects.origin;
-    
+
     if (isOrigin && tokenManagerMode === 'mint_burn') {
         // For origin tokens with mint_burn mode, TreasuryCap is transferred to InterchainTokenService
         // Use existing coins from wallet instead of minting
@@ -69,13 +69,15 @@ async function sendToken(keypair, client, contracts, args, options) {
         });
 
         if (!coins.data.length) {
-            throw new Error(`No ${symbol} tokens found in wallet. Make sure tokens were minted during deployment or use mint-token command.`);
+            throw new Error(
+                `No ${symbol} tokens found in wallet. Make sure tokens were minted during deployment or use mint-token command.`,
+            );
         }
 
         // Find a coin with sufficient balance or merge coins
         let selectedCoin = null;
         let totalBalance = 0n;
-        
+
         for (const coin of coins.data) {
             totalBalance += BigInt(coin.balance);
             if (BigInt(coin.balance) >= BigInt(unitAmount)) {
@@ -100,13 +102,13 @@ async function sendToken(keypair, client, contracts, args, options) {
             }
         } else {
             // Merge multiple coins to get the required amount
-            const coinObjects = coins.data.map(coin => tx.object(coin.coinObjectId));
+            const coinObjects = coins.data.map((coin) => tx.object(coin.coinObjectId));
             const primaryCoin = coinObjects[0];
-            
+
             if (coinObjects.length > 1) {
                 tx.mergeCoins(primaryCoin, coinObjects.slice(1));
             }
-            
+
             Coin = tx.splitCoins(primaryCoin, [unitAmount]);
         }
     } else {
