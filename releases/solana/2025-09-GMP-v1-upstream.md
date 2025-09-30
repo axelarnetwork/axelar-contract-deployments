@@ -1,4 +1,4 @@
-# Solana GMP v1.0.0
+# Solana GMP v1 upstream
 
 ## Network Status
 
@@ -163,6 +163,10 @@ This is the v1.0.0 Solana GMP release.
 > Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
+
+1. Check out the `upstream` branch.
+
+    - Note: This will change for real V1 release.
 
 1. Compile the Solana programs:
 

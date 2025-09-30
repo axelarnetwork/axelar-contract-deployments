@@ -1,4 +1,4 @@
-# Solana ITS v1.0.0
+# Solana ITS v1 anchor
 
 ## Network Status
 

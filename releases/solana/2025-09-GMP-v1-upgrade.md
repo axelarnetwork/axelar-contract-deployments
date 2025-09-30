@@ -1,4 +1,4 @@
-// TODO: add remaining
+# Solana GMP v1 upgrade
 
 ### Deployment Steps
 
