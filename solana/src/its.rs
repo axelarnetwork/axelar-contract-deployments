@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::Write;
-use std::str::FromStr;
 
 use axelar_solana_its::state;
 use axelar_solana_its::state::token_manager::TokenManager;
@@ -15,8 +14,8 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, decode_its_destination, fetch_latest_blockhash,
+    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
+    UPGRADE_AUTHORITY_KEY, decode_its_destination, fetch_latest_blockhash,
     read_json_file_from_path, write_json_to_file_path,
 };
 
@@ -759,45 +758,6 @@ fn get_mint_from_token_manager(token_id: &[u8; 32], config: &Config) -> eyre::Re
     let account = rpc_client.get_account(&token_manager_pda)?;
     let token_manager = TokenManager::try_from_slice(&account.data)?;
     Ok(token_manager.token_address)
-}
-
-fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre::Result<Pubkey> {
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    if let Some(id) = maybe_arg {
-        Ok(id)
-    } else {
-        let id = Pubkey::from_str(
-            &String::deserialize(&chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY]
-                [GAS_SERVICE_KEY][ADDRESS_KEY],
-            )?
-        )
-        .map_err(|_| eyre!(
-            "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
-            Please update the file or pass a value to --gas-service"))?;
-
-        Ok(id)
-    }
-}
-
-fn try_infer_gas_service_config_account(
-    maybe_arg: Option<Pubkey>,
-    config: &Config,
-) -> eyre::Result<Pubkey> {
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    if let Some(id) = maybe_arg {
-        Ok(id)
-    } else {
-        let id = Pubkey::from_str(
-            &String::deserialize(&chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY]
-                [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
-            )?
-        )
-        .map_err(|_| eyre!(
-            "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
-            Please update the file or pass a value to --gas-config-account"))?;
-
-        Ok(id)
-    }
 }
 
 pub(crate) fn build_instruction(
