@@ -847,7 +847,7 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     if (!coin) {
         if (!options.coinPackageId || !options.coinPackageName) {
             throw new Error(
-                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringifgy(options)}`,
+                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringify(options)}`,
             );
         }
     }
