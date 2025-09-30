@@ -87,7 +87,7 @@ This is the Solana GMP upgrade doc for vanilla TO vanilla OR anchor programs.
 1. Upgrade the programs:
 
     ```sh
-    solana/cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_PATH
+    solana program deploy --program-id $PROGRAM_PDA $PROGRAM_PATH
     ```
 
 1. Verify the programs:

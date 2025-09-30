@@ -894,7 +894,7 @@ async fn execute(
 
         // Handle special destination addresses
         if destination_address == axelar_solana_its::id() {
-            let ix = its_instruction_builder::build_execute_instruction(
+            let ix = its_instruction_builder::build_its_gmp_instruction(
                 *fee_payer,
                 incoming_message_pda,
                 message_payload_pda,
@@ -915,7 +915,6 @@ async fn execute(
             instructions.push(ix);
         } else {
             let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
-                *fee_payer,
                 &message,
                 &payload,
                 incoming_message_pda,
