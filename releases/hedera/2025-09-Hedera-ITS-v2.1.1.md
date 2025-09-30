@@ -1,4 +1,4 @@
-# Hedera ITS v2.1.0
+# Hedera ITS v2.1.1
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
@@ -22,7 +22,7 @@ Changes in the release:
 
 ## Deployment
 
-Ensure that [Hedera ITS](./2025-07-Hedera-ITS-v.2.1.0) is deployed first.
+Ensure that [Hedera ITS](./2025-07-Hedera-ITS-v2.1.0) is deployed first.
 
 Follow `hedera/README.md` for Hedera account setup and in-depth `.env` configuration.
 
@@ -33,7 +33,7 @@ Create an `.env` config
 ```sh
 PRIVATE_KEY=<deployer hex private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAINS=hedera
 # + hedera specific env vars, see hedera/README.md
 ```
 
