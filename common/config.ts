@@ -3,15 +3,17 @@ import { GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
 import { loadConfig, printWarn, saveConfig } from './utils';
 
 export interface FullConfig {
-    axelar: {
-        contracts: Record<string, AxelarContractConfig>;
-        rpc: string;
-        gasPrice: string;
-        gasLimit: string | number;
-        govProposalInstantiateAddresses: string[];
-        govProposalDepositAmount: string;
-    };
+    axelar: AxelarConfig;
     chains: Record<string, ChainConfig>;
+}
+
+export interface AxelarConfig {
+    contracts: Record<string, AxelarContractConfig>;
+    rpc: string;
+    gasPrice: string;
+    gasLimit: string | number;
+    govProposalInstantiateAddresses: string[];
+    govProposalDepositAmount: string;
 }
 
 export interface NonEVMChainConfig {
@@ -54,22 +56,25 @@ export interface AxelarContractConfig extends ContractConfig {
     [chainName: string]: unknown;
 }
 
-export class ConfigManager {
+export class ConfigManager implements FullConfig {
     private environment: string;
-    private fullConfig: FullConfig;
+
+    public axelar: AxelarConfig;
+    public chains: Record<string, ChainConfig>;
 
     constructor(environment: string, fullConfig?: FullConfig) {
         this.environment = environment;
 
-        if (fullConfig) {
-            this.fullConfig = fullConfig;
-        } else {
+        if (!fullConfig) {
             const loadedConfig = loadConfig(this.environment);
             if (!loadedConfig) {
                 throw new Error(`Failed to load configuration for environment: ${this.environment}`);
             }
-            this.fullConfig = loadedConfig;
+            fullConfig = loadedConfig;
         }
+
+        this.axelar = fullConfig.axelar;
+        this.chains = fullConfig.chains;
 
         this.validateConfig();
     }
@@ -84,7 +89,7 @@ export class ConfigManager {
 
     private validateBasicStructure(): string[] {
         const errors: string[] = [];
-        const { axelar, chains } = this.fullConfig;
+        const { axelar, chains } = this;
 
         if (!axelar) errors.push(`Missing 'axelar' section in ${this.environment} config`);
         if (!chains)
@@ -97,7 +102,7 @@ export class ConfigManager {
 
     private validateAxelarConfig(): string[] {
         const errors: string[] = [];
-        const { axelar } = this.fullConfig;
+        const { axelar } = this;
         if (!axelar) return errors;
 
         const requiredFields = ['contracts', 'rpc', 'gasPrice', 'gasLimit', 'govProposalInstantiateAddresses', 'govProposalDepositAmount'];
@@ -132,9 +137,9 @@ export class ConfigManager {
 
     private validateChainConfigs(): string[] {
         const errors: string[] = [];
-        if (!this.fullConfig.chains) return errors;
+        if (!this.chains) return errors;
 
-        Object.entries(this.fullConfig.chains).forEach(([chainName, chainConfig]) => {
+        Object.entries(this.chains).forEach(([chainName, chainConfig]) => {
             errors.push(...this.validateSingleChain(chainName, chainConfig));
         });
 
@@ -265,35 +270,52 @@ export class ConfigManager {
     }
 
     public initContractConfig(contractName: string, chainName: string) {
-        if (!this.fullConfig.axelar.contracts[contractName]) {
-            this.fullConfig.axelar.contracts[contractName] = {};
+        if (!this.axelar.contracts[contractName]) {
+            this.axelar.contracts[contractName] = {};
         }
 
         if (chainName) {
-            if (!this.fullConfig.axelar.contracts[contractName][chainName]) {
-                this.fullConfig.axelar.contracts[contractName][chainName] = {};
+            if (!this.axelar.contracts[contractName][chainName]) {
+                this.axelar.contracts[contractName][chainName] = {};
             }
         }
     }
 
     public saveConfig(): void {
-        saveConfig(this.fullConfig, this.environment);
-    }
-
-    public getFullConfig(): FullConfig {
-        return this.fullConfig;
+        saveConfig({ axelar: this.axelar, chains: this.chains }, this.environment);
     }
 
     public getProposalInstantiateAddresses(): string[] {
-        return this.fullConfig.axelar.govProposalInstantiateAddresses;
+        return this.axelar.govProposalInstantiateAddresses;
     }
 
     public getProposalDepositAmount(): string {
-        return this.fullConfig.axelar.govProposalDepositAmount;
+        return this.axelar.govProposalDepositAmount;
+    }
+
+    public getChainConfig(chainName: string): ChainConfig {
+        const chainConfig = this.chains[chainName];
+        if (!chainConfig) {
+            throw new Error(`Chain '${chainName}' not found in ${this.environment} config`);
+        }
+        return chainConfig;
+    }
+
+    public getContractConfig(configContractName: string): ContractConfig {
+        const axelarContracts = this.axelar.contracts;
+        if (!axelarContracts) {
+            throw new Error(`Axelar contracts section not found in config for environment ${this.environment}`);
+        }
+
+        if (!axelarContracts[configContractName]) {
+            axelarContracts[configContractName] = {};
+        }
+
+        return axelarContracts[configContractName];
     }
 
     public getFee(): string | StdFee {
-        const { gasPrice, gasLimit } = this.fullConfig.axelar;
+        const { gasPrice, gasLimit } = this.axelar;
 
         if (gasLimit === 'auto') {
             return 'auto';
