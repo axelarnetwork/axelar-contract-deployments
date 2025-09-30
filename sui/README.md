@@ -173,7 +173,7 @@ ts-node sui/deploy-contract.js deploy ITS
 Send interchain transfer from sui to a chain where token is linked
 
 ```bash
-ts-node sui/its interchain-transfer interchain-transfer [options] <coin object id> <token id> <destination chain> <destination address> <amount>
+ts-node sui/its interchain-transfer [options] <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>
 ```
 
 - Example Command: 
@@ -528,12 +528,12 @@ Deploy an interchain coin on a destination chain corresponding with a registered
 
 Command:
 ```bash
-ts-node sui/its deploy-remote-coin <coin-package-id> <coin-package-name> <coin-mod-name> <token-id> <destination-chain> <env> <signature-scheme>
+ts-node sui/its deploy-remote-coin [options] <coinPackageId> <tokenId> <destinationChain>
 ```
 
 Example: 
 ```bash
-ts-node sui/its deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 my_custom_coin MY_CUSTOM_COIN 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia --env testnet --signatureScheme ed25519
+ts-node sui/its deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia
 ```
 Response: `Deploy remote coin: Ec1pnBpwxrv26WdJt5wXifj7N66vQ1zCabqKRgtz3ktK`
 

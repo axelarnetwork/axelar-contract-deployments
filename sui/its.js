@@ -582,14 +582,27 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     const tx = txBuilder.tx;
 
-    const [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain] = args;
+    const [coinPackageId, tokenId, destinationChain] = args;
 
     validateParameters({
-        isNonEmptyString: { coinPackageName, coinModName, destinationChain },
+        isNonEmptyString: { destinationChain },
         isHexString: { coinPackageId, tokenId },
     });
 
     validateDestinationChain(config.chains, destinationChain);
+
+    // TODO: find a better way to fetch coinType this is hacky
+    let coinPackageName, coinModName;
+    try {
+        const packageData = await client.getObject({
+            id: coinPackageId,
+            options: { showContent: true },
+        });
+        coinPackageName = Object.keys(packageData.data.content.disassembled)[0];
+        coinModName = coinPackageName.toUpperCase();
+    } catch {
+        throw new Error(`Failed parsing package ${coinPackageId}`);
+    }
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
@@ -1060,13 +1073,13 @@ if (require.main === module) {
 
     const deployRemoteCoinProgram = new Command()
         .name('deploy-remote-coin')
-        .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <tokenId> <destinationChain>')
+        .command('deploy-remote-coin <coinPackageId> <tokenId> <destinationChain>')
         .description(`Deploy an interchain token on a remote chain`)
-        .action((coinPackageId, coinPackageName, coinModName, tokenId, destinationChain, options) => {
+        .action((coinPackageId, tokenId, destinationChain, options) => {
             mainProcessor(
                 deployRemoteCoin,
                 options,
-                [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain],
+                [coinPackageId, tokenId, destinationChain],
                 processCommand,
             );
         });
