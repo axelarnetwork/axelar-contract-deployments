@@ -1,4 +1,3 @@
-use anchor_discriminators::Discriminator;
 use dummy_axelar_solana_event_cpi::{
     instruction::emit_event, processor::MemoSentEvent, ID as PROGRAM_ID,
 };
