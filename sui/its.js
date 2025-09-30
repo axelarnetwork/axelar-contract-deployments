@@ -867,13 +867,13 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
         })
     ).totalBalance;
 
-    printInfo('💰 receiver token balance', balance.totalBalance);
+    printInfo('💰 receiver token balance', balance);
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
     printInfo('New coin object id:', coinChanged.objectId);
 
-    return [balance.totalBalance, coinChanged.objectId];
+    return [balance, coinChanged.objectId];
 }
 
 async function processCommand(command, config, chain, args, options) {
