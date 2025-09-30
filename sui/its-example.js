@@ -377,9 +377,7 @@ if (require.main === module) {
         .description('Deploy token on Sui. The supported token manager modes are lock_unlock (default) and mint_burn.')
         .command('deploy-token <symbol> <name> <decimals>')
         .addOption(
-            new Option('--tokenManagerMode <tokenManagerMode>', 'Token Manager Mode')
-                .default('lock_unlock')
-                .choices(['lock_unlock', 'mint_burn']),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer (must be origin).').default('1000'))
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
