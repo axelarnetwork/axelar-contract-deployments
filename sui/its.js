@@ -758,7 +758,14 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
     });
 
-    const gasValue = await estimateITSFee(config.chains[options.chainName], destinationChain, options.env, 'InterchainTransfer', 'auto', config.axelar);
+    const gasValue = await estimateITSFee(
+        config.chains[options.chainName],
+        destinationChain,
+        options.env,
+        'InterchainTransfer',
+        'auto',
+        config.axelar,
+    );
 
     const [gas] = tx.splitCoins(tx.gas, [gasValue]);
 
@@ -853,10 +860,12 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
 
     const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
 
-    const balance = (await client.getBalance({
-        owner: receiver,
-        coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
-    })).totalBalance;
+    const balance = (
+        await client.getBalance({
+            owner: receiver,
+            coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
+        })
+    ).totalBalance;
 
     printInfo('💰 receiver token balance', balance.totalBalance);
 
