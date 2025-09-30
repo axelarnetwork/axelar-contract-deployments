@@ -321,7 +321,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
             const { metadata, env } = options;
 
-            const { gasValue, scaledGasValue } = await estimateITSFee(
+            const { gasValue, gasFeeValue } = await estimateITSFee(
                 chain,
                 destinationChain,
                 env,
@@ -376,7 +376,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 amountInUnits,
                 metadata,
                 gasValue,
-                { value: scaledGasValue, ...gasOptions },
+                { value: gasFeeValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
@@ -386,7 +386,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenAddress] = args;
             const { env } = options;
 
-            const { gasValue, scaledGasValue } = await estimateITSFee(
+            const { gasValue, gasFeeValue } = await estimateITSFee(
                 chain,
                 'axelar',
                 env,
@@ -398,7 +398,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
-                value: scaledGasValue,
+                value: gasFeeValue,
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
