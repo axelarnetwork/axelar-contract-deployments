@@ -16,11 +16,11 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use token_manager::{handover_mint_authority, SetFlowLimitAccounts};
+use token_manager::handover_mint_authority;
 
 use crate::instruction::InterchainTokenServiceInstruction;
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, check_program_account, event, FromAccountInfoSlice, Roles};
+use crate::{assert_valid_its_root_pda, check_program_account, event, Roles};
 
 pub(crate) mod gmp;
 pub(crate) mod interchain_token;
@@ -203,19 +203,36 @@ pub fn process_instruction<'a>(
             signing_pda_bump,
         ),
         InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
-            let instruction_accounts =
-                SetFlowLimitAccounts::from_account_info_slice(accounts, &true)?;
+            let accounts_iter = &mut accounts.iter();
+            let payer = next_account_info(accounts_iter)?;
+            let operator = next_account_info(accounts_iter)?;
+            let its_root_pda = next_account_info(accounts_iter)?;
+            let its_roles_pda = next_account_info(accounts_iter)?;
+            let token_manager_pda = next_account_info(accounts_iter)?;
+            let system_account = next_account_info(accounts_iter)?;
 
             msg!("Instruction: SetFlowLimit");
+
+            let its_config_pda = InterchainTokenService::load(its_root_pda)?;
+            assert_valid_its_root_pda(its_root_pda, its_config_pda.bump)?;
+
+            validate_system_account_key(system_account.key)?;
+
             ensure_signer_roles(
                 &crate::id(),
-                instruction_accounts.its_root_pda,
-                instruction_accounts.payer,
-                instruction_accounts.its_user_roles_pda,
+                its_root_pda,
+                operator,
+                its_roles_pda,
                 Roles::OPERATOR,
             )?;
 
-            token_manager::set_flow_limit(&instruction_accounts, flow_limit)
+            token_manager::set_flow_limit(
+                payer,
+                token_manager_pda,
+                its_root_pda,
+                system_account,
+                flow_limit,
+            )
         }
         InterchainTokenServiceInstruction::TransferOperatorship => {
             process_transfer_operatorship(accounts)
@@ -380,7 +397,7 @@ fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> Program
 
     validate_system_account_key(system_account.key)?;
 
-    if payer.key == destination_user_account.key {
+    if origin_user_account.key == destination_user_account.key {
         msg!("Source and destination accounts are the same");
         return Err(ProgramError::InvalidArgument);
     }
@@ -489,7 +506,7 @@ fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramRe
 
 fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
+    let owner = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
@@ -498,13 +515,13 @@ fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -
 
     msg!("Instruction: SetPauseStatus");
 
-    ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+    ensure_upgrade_authority(&crate::id(), owner, program_data_account)?;
 
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
     its_root_config.paused = paused;
-    its_root_config.store(payer, its_root_pda, system_account)?;
+    its_root_config.store(owner, its_root_pda, system_account)?;
 
     Ok(())
 }
@@ -513,21 +530,21 @@ fn process_set_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: String,
 ) -> ProgramResult {
-    let (payer, payer_roles, program_data_account, its_root_pda, system_account) =
+    let (payer, authority, authority_roles, program_data_account, its_root_pda, system_account) =
         get_trusted_chain_accounts(accounts)?;
     msg!("Instruction: SetTrustedChain");
 
-    if ensure_upgrade_authority(&crate::id(), payer, program_data_account).is_err()
+    if ensure_upgrade_authority(&crate::id(), authority, program_data_account).is_err()
         && ensure_signer_roles(
             &crate::id(),
             its_root_pda,
-            payer,
-            payer_roles,
+            authority,
+            authority_roles,
             Roles::OPERATOR,
         )
         .is_err()
     {
-        msg!("Payer is neither upgrade authority nor operator");
+        msg!("Account passed as authority is neither upgrade authority nor operator");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -546,22 +563,22 @@ fn process_remove_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: &str,
 ) -> ProgramResult {
-    let (payer, payer_roles, program_data_account, its_root_pda, system_account) =
+    let (payer, authority, authority_roles, program_data_account, its_root_pda, system_account) =
         get_trusted_chain_accounts(accounts)?;
 
     msg!("Instruction: RemoveTrustedChain");
 
-    if ensure_upgrade_authority(&crate::id(), payer, program_data_account).is_err()
+    if ensure_upgrade_authority(&crate::id(), authority, program_data_account).is_err()
         && ensure_signer_roles(
             &crate::id(),
             its_root_pda,
-            payer,
-            payer_roles,
+            authority,
+            authority_roles,
             Roles::OPERATOR,
         )
         .is_err()
     {
-        msg!("Payer is neither upgrade authority nor operator");
+        msg!("Account passed as authority is neither upgrade authority nor operator");
         return Err(ProgramError::MissingRequiredSignature);
     }
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
@@ -587,12 +604,14 @@ fn get_trusted_chain_accounts<'a>(
         &'a AccountInfo<'a>,
         &'a AccountInfo<'a>,
         &'a AccountInfo<'a>,
+        &'a AccountInfo<'a>,
     ),
     ProgramError,
 > {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
-    let roles_account = next_account_info(accounts_iter)?;
+    let authority = next_account_info(accounts_iter)?;
+    let authority_roles_account = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
@@ -600,7 +619,8 @@ fn get_trusted_chain_accounts<'a>(
     validate_system_account_key(system_account.key)?;
     Ok((
         payer,
-        roles_account,
+        authority,
+        authority_roles_account,
         program_data_account,
         its_root_pda,
         system_account,

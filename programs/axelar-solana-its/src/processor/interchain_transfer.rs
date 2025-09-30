@@ -269,9 +269,11 @@ pub(crate) fn process_user_interchain_transfer<'a>(
     signing_pda_bump: u8,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let _payer = next_account_info(accounts_iter)?;
     // Check that the sender is a user account, not a program or PDA
     // We get the sender from the first account
-    let sender = next_account_info(&mut accounts.iter())?;
+    let sender = next_account_info(accounts_iter)?;
 
     // User accounts should be owned by the System Program
     if sender.owner != &solana_program::system_program::ID {
@@ -308,8 +310,10 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
     pda_seeds: Vec<Vec<u8>>,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let _payer = next_account_info(accounts_iter)?;
     // The sender should be a PDA owned by the source program
-    let sender = next_account_info(&mut accounts.iter())?;
+    let sender = next_account_info(accounts_iter)?;
     if sender.owner != &source_id {
         msg!(
             "Sender account must be owned by the source program. Expected: {}, Got: {}",
@@ -357,7 +361,7 @@ pub(crate) fn process_outbound_transfer<'a>(
     data: Option<Vec<u8>>,
     source_address: Pubkey,
 ) -> ProgramResult {
-    const GMP_ACCOUNTS_IDX: usize = 6;
+    const GMP_ACCOUNTS_IDX: usize = 7;
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
     let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
@@ -566,7 +570,7 @@ fn handle_take_token_transfer(
     let transferred = match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => {
             burn(
-                accounts.payer,
+                accounts.authority,
                 accounts.token_program,
                 accounts.token_mint,
                 accounts.source_ata,
@@ -628,7 +632,7 @@ fn create_take_token_transfer_info<'a, 'b>(
         token_program: accounts.token_program,
         token_mint: accounts.token_mint,
         destination: accounts.token_manager_ata,
-        authority: accounts.payer,
+        authority: accounts.authority,
         source: accounts.source_ata,
         signers_seeds,
         amount,
@@ -780,6 +784,7 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
 #[derive(Debug)]
 pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
+    pub(crate) authority: &'a AccountInfo<'a>,
     pub(crate) source_ata: &'a AccountInfo<'a>,
     pub(crate) token_mint: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -795,6 +800,10 @@ impl Validate for TakeTokenAccounts<'_> {
         spl_token_2022::check_spl_token_program_account(self.token_program.key)?;
 
         if !self.payer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        if !self.authority.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
 
@@ -815,6 +824,7 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
 
         Ok(TakeTokenAccounts {
             payer: next_account_info(accounts_iter)?,
+            authority: next_account_info(accounts_iter)?,
             source_ata: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -843,7 +853,6 @@ struct GiveTokenAccounts<'a> {
     token_manager_ata: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
     ata_program: &'a AccountInfo<'a>,
-    _its_roles_pda: &'a AccountInfo<'a>,
     rent_sysvar: &'a AccountInfo<'a>,
     destination: &'a AccountInfo<'a>,
     destination_ata: &'a AccountInfo<'a>,
@@ -883,7 +892,6 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             token_manager_ata: next_account_info(accounts_iter)?,
             token_program: next_account_info(accounts_iter)?,
             ata_program: next_account_info(accounts_iter)?,
-            _its_roles_pda: next_account_info(accounts_iter)?,
             rent_sysvar: next_account_info(accounts_iter)?,
             destination: next_account_info(accounts_iter)?,
             destination_ata: next_account_info(accounts_iter)?,

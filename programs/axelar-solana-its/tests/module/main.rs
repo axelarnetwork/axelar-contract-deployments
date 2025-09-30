@@ -317,6 +317,7 @@ impl ItsTestContext {
             axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
                 self.solana_wallet,
                 self.solana_wallet,
+                self.solana_wallet,
                 salt,
                 self.evm_chain_name.clone(),
                 self.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -329,6 +330,7 @@ impl ItsTestContext {
 
         let deploy_remote_ix =
             axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+                self.solana_wallet,
                 self.solana_wallet,
                 salt,
                 self.solana_wallet,
@@ -367,6 +369,7 @@ impl ItsTestContext {
         let amount = 100;
 
         let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+            self.solana_wallet,
             self.solana_wallet,
             token_account,
             token_id,
@@ -525,6 +528,7 @@ async fn axelar_solana_setup() -> (SolanaAxelarIntegrationMetadata, Pubkey) {
                 )
                 .unwrap(),
                 axelar_solana_its::instruction::set_trusted_chain(
+                    solana_chain.fixture.payer.pubkey(),
                     solana_chain.upgrade_authority.pubkey(),
                     EVM_CHAIN_NAME.to_owned(),
                 )

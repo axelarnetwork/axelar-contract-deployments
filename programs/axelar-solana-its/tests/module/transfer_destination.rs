@@ -28,6 +28,7 @@ async fn setup_custom_mint_and_token_manager(
     let token_id = axelar_solana_its::linked_token_id(&ctx.solana_wallet, &salt);
     let register_custom_token_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         custom_mint,
         token_manager_type,
@@ -94,6 +95,7 @@ async fn test_inbound_transfer_using_token_account_mint_burn(
 
     let authority_transfer_ix =
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
+            ctx.solana_wallet,
             ctx.solana_wallet,
             token_id,
             custom_mint,
@@ -245,6 +247,7 @@ async fn test_inbound_transfer_using_wallet_mint_burn(
 
     let authority_transfer_ix =
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
+            ctx.solana_wallet,
             ctx.solana_wallet,
             token_id,
             custom_mint,

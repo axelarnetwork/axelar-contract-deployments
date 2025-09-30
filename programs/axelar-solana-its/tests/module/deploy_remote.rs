@@ -49,6 +49,7 @@ async fn test_deploy_remote_interchain_token_with_valid_metadata(
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             ctx.solana_wallet,
             ctx.solana_wallet,
+            ctx.solana_wallet,
             salt,
             "ethereum".to_string(),
             vec![1, 2, 3, 4],
@@ -61,6 +62,7 @@ async fn test_deploy_remote_interchain_token_with_valid_metadata(
     // Deploy remote with correct mint and metadata accounts
     let deploy_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            ctx.solana_wallet,
             ctx.solana_wallet,
             salt,
             ctx.solana_wallet,
@@ -165,6 +167,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_metadata(
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             ctx.solana_wallet,
             ctx.solana_wallet,
+            ctx.solana_wallet,
             salt,
             "ethereum".to_string(),
             vec![5, 6, 7, 8],
@@ -178,6 +181,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_metadata(
     let deploy_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
             ctx.solana_wallet,
+            ctx.solana_wallet,
             salt,
             ctx.solana_wallet,
             "ethereum".to_string(),
@@ -189,8 +193,8 @@ async fn test_deploy_remote_interchain_token_with_mismatched_metadata(
     let mut accounts = deploy_remote_ix.accounts.clone();
 
     // Temper with the accounts
-    accounts[1].pubkey = separate_mint;
-    accounts[2].pubkey = interchain_token_metadata_pda;
+    accounts[2].pubkey = separate_mint;
+    accounts[3].pubkey = interchain_token_metadata_pda;
 
     // Create the modified instruction
     let mismatched_ix = Instruction {
@@ -411,6 +415,7 @@ async fn test_deploy_remote_without_minter_with_mismatched_metadata(
     // Deploy remote without minter
     let deploy_remote_ix = axelar_solana_its::instruction::deploy_remote_interchain_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         "ethereum".to_string(),
         0,
@@ -420,9 +425,9 @@ async fn test_deploy_remote_without_minter_with_mismatched_metadata(
     let mut accounts = deploy_remote_ix.accounts.clone();
 
     // Replace the mint account with our separate mint
-    accounts[1].pubkey = separate_mint;
-    // The metadata account is at position 2
-    accounts[2].pubkey = interchain_token_metadata_pda;
+    accounts[2].pubkey = separate_mint;
+    // The metadata account is at position 3
+    accounts[3].pubkey = interchain_token_metadata_pda;
 
     // Create the modified instruction
     let mismatched_ix = Instruction {
@@ -503,6 +508,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_token_manager(
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             ctx.solana_wallet,
             ctx.solana_wallet,
+            ctx.solana_wallet,
             salt1,
             "ethereum".to_string(),
             vec![1, 2, 3, 4],
@@ -516,6 +522,7 @@ async fn test_deploy_remote_interchain_token_with_mismatched_token_manager(
     let deploy_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
             ctx.solana_wallet,
+            ctx.solana_wallet,
             salt1,
             ctx.solana_wallet,
             "ethereum".to_string(),
@@ -528,9 +535,9 @@ async fn test_deploy_remote_interchain_token_with_mismatched_token_manager(
 
     // Replace the mint account with the second token's mint
     // but keep the token manager for the first token (salt1)
-    accounts[1].pubkey = mint2;
+    accounts[2].pubkey = mint2;
     let (metadata2_pda, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint2);
-    accounts[2].pubkey = metadata2_pda;
+    accounts[3].pubkey = metadata2_pda;
 
     // Create the modified instruction
     let mismatched_token_manager_ix = Instruction {

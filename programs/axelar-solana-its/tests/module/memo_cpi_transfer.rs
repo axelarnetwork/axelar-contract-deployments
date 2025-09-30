@@ -170,6 +170,7 @@ async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
     let gas_value = 0u128;
 
     let send_transfer = axelar_solana_memo_program::instruction::send_interchain_transfer(
+        &ctx.solana_wallet,
         &setup.counter_pda,
         &setup.its_root_pda,
         &setup.token_manager_pda,
@@ -238,6 +239,7 @@ async fn test_cpi_transfer_fails_with_non_pda_account(ctx: &mut ItsTestContext) 
     ctx.send_solana_tx(&[mint_ix]).await.unwrap();
 
     let cpi_transfer_ix = axelar_solana_its::instruction::cpi_interchain_transfer(
+        ctx.solana_wallet,
         payer,
         payer_ata,
         token_id,
@@ -280,6 +282,7 @@ async fn test_cpi_transfer_fails_with_inconsistent_seeds(ctx: &mut ItsTestContex
     // Use the special memo instruction that provides wrong seeds
     let transfer_with_wrong_seeds =
         axelar_solana_memo_program::instruction::send_interchain_transfer_with_wrong_seeds(
+            &ctx.solana_wallet,
             &setup.counter_pda,
             &setup.its_root_pda,
             &setup.token_manager_pda,
@@ -320,6 +323,7 @@ async fn test_memo_cpi_call_contract_with_interchain_token(ctx: &mut ItsTestCont
     // Create the CallContractWithInterchainToken instruction through memo program
     let call_contract_transfer =
         axelar_solana_memo_program::instruction::call_contract_with_interchain_token(
+            &ctx.solana_wallet,
             &setup.counter_pda,
             &setup.its_root_pda,
             &setup.token_manager_pda,

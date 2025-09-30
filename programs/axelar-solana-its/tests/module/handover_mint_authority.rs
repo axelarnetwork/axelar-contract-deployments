@@ -72,6 +72,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
     // Register the target token as MintBurn type
     let target_salt = solana_sdk::keccak::hash(b"TargetToken").0;
     let target_register_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
         legitimate_user.pubkey(),
         target_salt,
         target_token_mint,
@@ -154,6 +155,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
     // Step 2: Bob calls RegisterCustomToken instruction to register TokenB
     let salt = solana_sdk::keccak::hash(b"BobsTokenB").0;
     let register_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
         bob.pubkey(),
         salt,
         token_b_mint,
@@ -228,6 +230,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
     // with the target token's token_id but providing his own TokenB mint address
 
     let handover_ix = axelar_solana_its::instruction::token_manager::handover_mint_authority(
+        ctx.solana_wallet,
         bob.pubkey(),
         target_token_id, // Target token's ID
         token_b_mint,    // Bob's token mint (TokenB)
@@ -360,6 +363,7 @@ async fn test_successful_handover_mint_authority(ctx: &mut ItsTestContext) {
 
     let salt = solana_sdk::keccak::hash(b"AliceToken").0;
     let register_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
         alice.pubkey(),
         salt,
         alice_token_mint,
@@ -392,6 +396,7 @@ async fn test_successful_handover_mint_authority(ctx: &mut ItsTestContext) {
 
     let alice_token_id = alice_token_id_event.token_id;
     let handover_ix = axelar_solana_its::instruction::token_manager::handover_mint_authority(
+        ctx.solana_wallet,
         alice.pubkey(),
         alice_token_id,   // Alice's own token ID
         alice_token_mint, // Alice's own token mint
@@ -564,6 +569,7 @@ async fn test_fail_handover_mint_authority_for_lock_unlock_token(ctx: &mut ItsTe
     // Step 2: Register the token as LockUnlock type
     let salt = solana_sdk::keccak::hash(b"LockUnlockToken").0;
     let register_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
         user.pubkey(),
         salt,
         user_token_mint,
@@ -618,6 +624,7 @@ async fn test_fail_handover_mint_authority_for_lock_unlock_token(ctx: &mut ItsTe
 
     // Step 3: Attempt to handover mint authority (this should fail)
     let handover_ix = axelar_solana_its::instruction::token_manager::handover_mint_authority(
+        ctx.solana_wallet,
         user.pubkey(),
         token_id,
         user_token_mint,
@@ -713,6 +720,7 @@ async fn test_fail_handover_mint_authority_for_native_interchain_token(ctx: &mut
     // The deployer (payer) should be the operator of this token
     // Attempt to handover mint authority (should fail for NativeInterchainToken)
     let handover_ix = axelar_solana_its::instruction::token_manager::handover_mint_authority(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.fixture.payer.pubkey(),
         target_token_id,
         target_token_mint,

@@ -435,7 +435,7 @@ pub fn find_interchain_transfer_execute_pda(destination_program: &Pubkey) -> (Pu
     )
 }
 
-/// Either create the interchain_transfer_execute pda or read it, and ensure it is derived properly.
+/// Either create the interchain_transfer_execute PDA or read it, and ensure it is derived properly.
 pub(crate) fn assert_valid_interchain_transfer_execute_pda<'a>(
     interchain_transfer_execute_pda_account: &AccountInfo<'a>,
     destination_program: &Pubkey,
@@ -466,7 +466,7 @@ pub(crate) fn assert_valid_interchain_transfer_execute_pda<'a>(
     Ok(bump)
 }
 
-/// Either create the interchain_transfer_execute pda or read it, and ensure it is derived properly.
+/// Either create the interchain_transfer_execute PDA or read it, and ensure it is derived properly.
 pub(crate) fn initiate_interchain_execute_pda_if_empty<'a>(
     interchain_transfer_execute_pda_account: &AccountInfo<'a>,
     payer: &AccountInfo<'a>,

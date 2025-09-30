@@ -173,6 +173,7 @@ pub fn call_gateway_with_memo(
 /// The source token account (counter PDA's ATA) is automatically derived and verified inside the processor.
 #[allow(clippy::too_many_arguments)]
 pub fn send_interchain_transfer(
+    payer: &Pubkey,
     memo_counter_pda: &Pubkey,
     its_root_pda: &Pubkey,
     token_manager_pda: &Pubkey,
@@ -210,6 +211,7 @@ pub fn send_interchain_transfer(
     let its_program = axelar_solana_its::id();
 
     let accounts = vec![
+        AccountMeta::new(*payer, true),
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(*its_root_pda, false),
         AccountMeta::new(*token_manager_pda, false),
@@ -237,6 +239,7 @@ pub fn send_interchain_transfer(
 /// This is identical to `send_interchain_transfer` but will use wrong seeds for testing validation
 #[allow(clippy::too_many_arguments)]
 pub fn send_interchain_transfer_with_wrong_seeds(
+    payer: &Pubkey,
     memo_counter_pda: &Pubkey,
     its_root_pda: &Pubkey,
     token_manager_pda: &Pubkey,
@@ -276,6 +279,7 @@ pub fn send_interchain_transfer_with_wrong_seeds(
     let its_program = axelar_solana_its::id();
 
     let accounts = vec![
+        AccountMeta::new(*payer, true),
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(*its_root_pda, false),
         AccountMeta::new(*token_manager_pda, false),
@@ -303,6 +307,7 @@ pub fn send_interchain_transfer_with_wrong_seeds(
 /// This sends tokens along with additional data to call a contract on the destination
 #[allow(clippy::too_many_arguments)]
 pub fn call_contract_with_interchain_token(
+    payer: &Pubkey,
     memo_counter_pda: &Pubkey,
     its_root_pda: &Pubkey,
     token_manager_pda: &Pubkey,
@@ -342,6 +347,7 @@ pub fn call_contract_with_interchain_token(
     let its_program = axelar_solana_its::id();
 
     let accounts = vec![
+        AccountMeta::new(*payer, true),
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(*its_root_pda, false),
         AccountMeta::new(*token_manager_pda, false),

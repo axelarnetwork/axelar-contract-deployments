@@ -78,10 +78,14 @@ pub(crate) fn process_outbound<'a>(
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    const OUTBOUND_MESSAGE_ACCOUNTS_IDX: usize = 2;
+    const OUTBOUND_MESSAGE_ACCOUNTS_IDX: usize = 3;
 
-    let (link_token_accounts, outbound_message_accounts) =
-        accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX);
+    let ([payer, deployer, token_manager_account], outbound_message_accounts) =
+        accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX)
+    else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
+
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
     let its_root_config = InterchainTokenService::load(gmp_accounts.its_root_account)?;
@@ -91,22 +95,23 @@ pub(crate) fn process_outbound<'a>(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let accounts_iter = &mut link_token_accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-    let token_manager_account = next_account_info(accounts_iter)?;
-
     if !payer.is_signer {
-        msg!("Payer Should be Signer");
+        msg!("Payer should be signer");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    if !deployer.is_signer {
+        msg!("Deployer should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
     msg!("Instruction: ProcessOutbound");
-    let deploy_salt = crate::linked_token_deployer_salt(payer.key, &salt);
+    let deploy_salt = crate::linked_token_deployer_salt(deployer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
     event::InterchainTokenIdClaimed {
         token_id,
-        deployer: *payer.key,
+        deployer: *deployer.key,
         salt: deploy_salt,
     }
     .emit();
@@ -239,14 +244,12 @@ fn register_token<'a>(
 ) -> ProgramResult {
     const DEPLOY_TOKEN_MANAGER_ACCOUNTS_IDX: usize = 2;
 
-    let (registration_accounts, deploy_token_manager_accounts) =
-        accounts.split_at(DEPLOY_TOKEN_MANAGER_ACCOUNTS_IDX);
+    let ([payer, registration_specific_account], deploy_token_manager_accounts) =
+        accounts.split_at(DEPLOY_TOKEN_MANAGER_ACCOUNTS_IDX)
+    else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
-    let (payer, metadata_account) = registration_accounts
-        .split_first()
-        .ok_or(ProgramError::NotEnoughAccountKeys)?;
-
-    let maybe_metadata_account = metadata_account.first();
     let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(
         deploy_token_manager_accounts,
         &Some(payer),
@@ -265,10 +268,12 @@ fn register_token<'a>(
 
     let (token_manager_type, operator, deploy_salt) = match *registration {
         TokenRegistration::Canonical => {
+            let metadata_account = registration_specific_account;
+
             // Metadata is required for canonical tokens
             if let Err(_err) = interchain_token::get_token_metadata(
                 parsed_accounts.token_mint,
-                maybe_metadata_account,
+                Some(metadata_account),
             ) {
                 return Err(ProgramError::InvalidAccountData);
             }
@@ -289,11 +294,15 @@ fn register_token<'a>(
             salt,
             token_manager_type,
             operator,
-        } => (
-            token_manager_type,
-            operator,
-            crate::linked_token_deployer_salt(payer.key, &salt),
-        ),
+        } => {
+            let deployer = registration_specific_account;
+
+            (
+                token_manager_type,
+                operator,
+                crate::linked_token_deployer_salt(deployer.key, &salt),
+            )
+        }
     };
 
     let token_id = crate::interchain_token_id_internal(&deploy_salt);

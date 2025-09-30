@@ -218,6 +218,7 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
     let authority_transfer_ix =
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             ctx.solana_wallet,
+            ctx.solana_wallet,
             token_id,
             solana_token,
             spl_token_2022::id(),
@@ -417,6 +418,7 @@ async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
         .fixture
         .send_tx_with_custom_signers(
             &[axelar_solana_its::instruction::remove_trusted_chain(
+                ctx.solana_chain.fixture.payer.pubkey(),
                 ctx.solana_chain.upgrade_authority.pubkey(),
                 ctx.evm_chain_name.clone(),
             )

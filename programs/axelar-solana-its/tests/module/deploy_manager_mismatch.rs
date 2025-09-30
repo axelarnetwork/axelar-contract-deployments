@@ -14,7 +14,7 @@ async fn deploy_interchain_token_for_user(
     symbol: &str,
 ) -> anyhow::Result<[u8; 32]> {
     let deploy_token_ix = axelar_solana_its::instruction::deploy_interchain_token(
-        user.pubkey(),
+        ctx.solana_chain.fixture.payer.pubkey(),
         user.pubkey(),
         salt,
         name.to_owned(),
@@ -50,6 +50,7 @@ async fn create_deployment_approval(
 ) -> anyhow::Result<()> {
     let approve_deployment_ix =
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+            ctx.solana_chain.fixture.payer.pubkey(),
             minter.pubkey(),
             minter.pubkey(), // minter is the deployer
             salt,
@@ -84,6 +85,7 @@ async fn attempt_deployment_with_specific_token_manager(
 > {
     let mut deploy_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            ctx.solana_chain.fixture.payer.pubkey(),
             deployer.pubkey(),
             target_token_salt,
             deployer.pubkey(),
@@ -98,7 +100,7 @@ async fn attempt_deployment_with_specific_token_manager(
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let fake_token_manager_pda =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &manager_token_id).0;
-    deploy_remote_ix.accounts[3].pubkey = fake_token_manager_pda;
+    deploy_remote_ix.accounts[4].pubkey = fake_token_manager_pda;
 
     ctx.solana_chain
         .fixture

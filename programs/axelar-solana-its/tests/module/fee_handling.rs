@@ -123,6 +123,7 @@ async fn test_canonical_token_with_fee_lock_unlock(ctx: &mut ItsTestContext) -> 
     let transfer_amount = 1000_u64;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         user_ata,
         canonical_token_id,
         ctx.evm_chain_name.clone(),
@@ -264,6 +265,7 @@ async fn test_canonical_token_various_fee_configs(ctx: &mut ItsTestContext) -> a
     let transfer_amount = 10_000_u64;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         user_ata,
         canonical_token_id,
         ctx.evm_chain_name.clone(),
@@ -402,6 +404,7 @@ async fn test_canonical_token_maximum_fee_cap(ctx: &mut ItsTestContext) -> anyho
     // Test transfer
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         user_ata,
         canonical_token_id,
         ctx.evm_chain_name.clone(),
@@ -519,6 +522,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
     let token_id = axelar_solana_its::linked_token_id(&ctx.solana_wallet, &salt);
     let register_custom_token_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         solana_custom_token,
         axelar_solana_its::state::token_manager::Type::LockUnlockFee,
@@ -532,6 +536,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
 
     // Link token from Solana to EVM
     let link_token_ix = axelar_solana_its::instruction::link_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         ctx.evm_chain_name.clone(),
@@ -624,6 +629,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
     // Outbound transfer
     let transfer_amount = 3000_u64;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         user_ata,
         token_id,
@@ -938,6 +944,7 @@ async fn test_custom_token_registration_rejects_lock_unlock_with_fee(
     let salt = [1u8; 32];
     let register_custom_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         custom_token,
         axelar_solana_its::state::token_manager::Type::LockUnlock,
@@ -996,6 +1003,7 @@ async fn test_custom_token_registration_rejects_lock_unlock_fee_without_fee(
     let salt = [2u8; 32];
     let register_custom_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         custom_token,
         axelar_solana_its::state::token_manager::Type::LockUnlockFee,
@@ -1053,6 +1061,7 @@ async fn test_custom_token_registration_accepts_lock_unlock_without_fee(
     // Register with LockUnlock (should succeed)
     let salt = [3u8; 32];
     let register_custom_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         custom_token,
@@ -1118,6 +1127,7 @@ async fn test_custom_token_registration_accepts_lock_unlock_fee_with_fee(
     // Register with LockUnlockFee (should succeed)
     let salt = [4u8; 32];
     let register_custom_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         custom_token,

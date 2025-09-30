@@ -290,6 +290,7 @@ pub fn process_send_interchain_transfer(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
 
+    let payer = next_account_info(accounts_iter)?;
     let counter_pda = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
@@ -328,6 +329,7 @@ pub fn process_send_interchain_transfer(
     // The counter PDA is derived with empty seeds
     let pda_seeds = vec![];
     let transfer_ix = axelar_solana_its::instruction::cpi_interchain_transfer(
+        *payer.key,
         *counter_pda.key,
         *source_ata.key,
         token_id,
@@ -346,6 +348,7 @@ pub fn process_send_interchain_transfer(
     invoke_signed(
         &transfer_ix,
         &[
+            payer.clone(),
             counter_pda.clone(),
             source_ata.clone(),
             token_mint.clone(),
@@ -417,6 +420,7 @@ pub fn process_send_interchain_transfer_with_wrong_seeds(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
 
+    let payer = next_account_info(accounts_iter)?;
     let counter_pda = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
@@ -453,6 +457,7 @@ pub fn process_send_interchain_transfer_with_wrong_seeds(
 
     let wrong_pda_seeds = vec![b"wrong_seed".to_vec()];
     let transfer_ix = axelar_solana_its::instruction::cpi_interchain_transfer(
+        *payer.key,
         *counter_pda.key,
         *source_ata.key,
         token_id,
@@ -471,6 +476,7 @@ pub fn process_send_interchain_transfer_with_wrong_seeds(
     invoke_signed(
         &transfer_ix,
         &[
+            payer.clone(),
             counter_pda.clone(),
             source_ata.clone(),
             token_mint.clone(),
@@ -506,6 +512,7 @@ pub fn process_call_contract_with_interchain_token(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
 
+    let payer = next_account_info(accounts_iter)?;
     let counter_pda = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let token_manager_pda = next_account_info(accounts_iter)?;
@@ -543,6 +550,7 @@ pub fn process_call_contract_with_interchain_token(
     // Use correct seeds for the counter PDA (empty seeds)
     let pda_seeds = vec![];
     let transfer_ix = axelar_solana_its::instruction::cpi_call_contract_with_interchain_token(
+        *payer.key,
         *counter_pda.key,
         *source_ata.key,
         token_id,
@@ -562,6 +570,7 @@ pub fn process_call_contract_with_interchain_token(
     invoke_signed(
         &transfer_ix,
         &[
+            payer.clone(),
             counter_pda.clone(),
             source_ata.clone(),
             token_mint.clone(),

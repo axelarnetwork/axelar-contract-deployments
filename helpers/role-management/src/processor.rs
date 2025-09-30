@@ -88,8 +88,14 @@ pub fn accept<F: RolesFlags>(
     accounts: RoleTransferWithProposalAccounts<'_>,
     roles: F,
 ) -> ProgramResult {
+    if accounts.origin_user_account.key == accounts.destination_user_account.key {
+        msg!("Source and destination accounts are the same");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     let proposal = RoleProposal::<F>::load(accounts.proposal_account)?;
     let proposal_pda_bump = proposal.bump;
+
     let (derived_proposal_pda, _) = crate::create_roles_proposal_pda(
         program_id,
         accounts.resource.key,

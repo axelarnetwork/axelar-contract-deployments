@@ -358,6 +358,7 @@ async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             ctx.solana_chain.fixture.payer.pubkey(),
             ctx.solana_chain.fixture.payer.pubkey(),
+            ctx.solana_chain.fixture.payer.pubkey(),
             token_a_salt,
             destination_chain.to_string(),
             destination_minter.clone(),
@@ -389,6 +390,7 @@ async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow
     // First, build the proper instruction for deploying TokenB
     let deploy_token_b_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            ctx.solana_chain.fixture.payer.pubkey(),
             bob.pubkey(),
             token_b_salt,
             bob.pubkey(),
@@ -515,6 +517,7 @@ async fn test_prevent_deploy_approval_created_by_anyone(
 
     let accounts = vec![
         AccountMeta::new(alice.pubkey(), true),
+        AccountMeta::new(alice.pubkey(), true),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(roles_pda, false),
         AccountMeta::new(deploy_approval_pda, false),
@@ -560,16 +563,17 @@ async fn test_prevent_deploy_approval_created_by_anyone(
 
 #[test_context(ItsTestContext)]
 #[tokio::test]
-async fn test_deploy_remote_interchain_token_payer_must_be_signer(
+async fn test_deploy_remote_interchain_token_deployer_must_be_signer(
     ctx: &mut ItsTestContext,
 ) -> anyhow::Result<()> {
     let destination_chain = "ethereum";
     let destination_minter = vec![1, 2, 3, 4, 5];
     // Use the already deployed token salt from the test context setup
     let salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
-    let fake_payer = Pubkey::new_unique();
+    let fake_deployer = Pubkey::new_unique();
 
     let approve_deploy_ix = axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.fixture.payer.pubkey(),
         salt,
@@ -581,7 +585,8 @@ async fn test_deploy_remote_interchain_token_payer_must_be_signer(
 
     let mut deploy_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
-            fake_payer,
+            ctx.solana_chain.fixture.payer.pubkey(),
+            fake_deployer,
             salt,
             ctx.solana_chain.fixture.payer.pubkey(),
             destination_chain.to_string(),
@@ -589,13 +594,13 @@ async fn test_deploy_remote_interchain_token_payer_must_be_signer(
             0,
         )?;
 
-    deploy_remote_ix.accounts[0].is_signer = false;
+    deploy_remote_ix.accounts[1].is_signer = false;
 
     let result = ctx.send_solana_tx(&[deploy_remote_ix]).await;
 
     assert!(
         result.is_err(),
-        "Expected transaction to fail when payer is not a signer"
+        "Expected transaction to fail when deployer is not a signer"
     );
 
     let err = result.unwrap_err();
@@ -603,7 +608,7 @@ async fn test_deploy_remote_interchain_token_payer_must_be_signer(
 
     let has_payer_warning = error_logs
         .iter()
-        .any(|log| log.contains("Payer should be a signer"));
+        .any(|log| log.contains("Deployer should be a signer"));
 
     assert!(
         has_payer_warning,
@@ -633,6 +638,7 @@ async fn test_approve_revoke_approve_deploy_sequence(
 
     // First approval
     let approve_deploy_ix = axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
@@ -673,6 +679,7 @@ async fn test_approve_revoke_approve_deploy_sequence(
 
     // Now revoke that approval
     let revoke_deploy_ix = axelar_solana_its::instruction::revoke_deploy_remote_interchain_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         ctx.solana_wallet,
         salt,

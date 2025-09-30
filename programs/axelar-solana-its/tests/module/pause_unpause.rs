@@ -124,6 +124,7 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
     .unwrap();
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         token_account,
         ctx.deployed_interchain_token,
         ctx.evm_chain_name.clone(),

@@ -46,9 +46,9 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [writable,signer] The address of the payer, needs to be the ITS owner.
+    /// 0. [signer] The address of the upgrade authority (ITS owner).
     /// 1. [] The program data account.
-    /// 2. [writable] ITS root pda.
+    /// 2. [writable] ITS root PDA.
     /// 3. [] System program account
     SetPauseStatus {
         /// The new pause status.
@@ -59,11 +59,12 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [writable,signer] The address of the payer, needs to be the ITS owner.
-    /// 1. [] The account that holds the payer roles on the ITS root account.
-    /// 2. [] The program data account.
-    /// 3. [writable] ITS root pda.
-    /// 4. [] The system program account.
+    /// 0. [writable,signer] The address of the payer.
+    /// 1. [signer] The address of the authority: either ITS operator or upgrade authority (owner).
+    /// 2. [] The account that holds the authority roles on the ITS root account.
+    /// 3. [] The program data account.
+    /// 4. [writable] ITS root PDA.
+    /// 5. [] The system program account.
     SetTrustedChain {
         /// The name of the chain to be trusted.
         chain_name: String,
@@ -73,11 +74,12 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [writable,signer] The address of the payer, needs to be the ITS owner.
-    /// 1. [] The account that holds the payer roles on the ITS root account.
-    /// 2. [] The program data account.
-    /// 3. [writable] ITS root pda.
-    /// 4. [] The system program account.
+    /// 0. [writable,signer] The address of the payer.
+    /// 1. [signer] The address of the authority: either ITS operator or upgrade authority (owner).
+    /// 2. [] The account that holds the authority roles on the ITS root account.
+    /// 3. [] The program data account.
+    /// 4. [writable] ITS root PDA.
+    /// 5. [] The system program account.
     RemoveTrustedChain {
         /// The name of the chain from which trust is removed.
         chain_name: String,
@@ -85,12 +87,12 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Approves the deployment of remote token with a destination minter
     ///
-    /// 0. [writable,signer] The address of the payer, needs to have minter role on the token
-    ///    manager.
-    /// 1. [] The token manager account associated with the token
-    /// 2. [] The account that holds the payer roles on the token manager
-    /// 3. [writable] The account that will hold the approval of the deployment
-    /// 4. [] The system program account
+    /// 0. [writable,signer] The address of the payer
+    /// 1. [signer] The address account with minter role on the token manager.
+    /// 2. [] The token manager account associated with the token
+    /// 3. [] The account that holds the minter roles on the token manager
+    /// 4. [writable] The account that will hold the approval of the deployment
+    /// 5. [] The system program account
     ApproveDeployRemoteInterchainToken {
         /// The address of the account that deployed the `InterchainToken`
         deployer: Pubkey,
@@ -105,8 +107,9 @@ pub enum InterchainTokenServiceInstruction {
     /// Revokes an approval of a deployment of remote token with a destination minter
     ///
     /// 0. [writable,signer] The address of the payer
-    /// 1. [writable] The account holding the approval of the deployment that should be revoked
-    /// 2. [] The system program account
+    /// 1. [signer] The address of the account with minter role on the token manager
+    /// 2. [writable] The account holding the approval of the deployment that should be revoked
+    /// 3. [] The system program account
     RevokeDeployRemoteInterchainToken {
         /// The address of the account that deployed the `InterchainToken`
         deployer: Pubkey,
@@ -133,7 +136,7 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Deploys a canonical interchain token on a remote chain.
     ///
-    /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
+    /// 0. [writable,signer] The account which is paying for the transaction
     /// 1. [] The mint account (token address) to deploy
     /// 2. [] The Metaplex metadata account associated with the mint
     /// 3. [] The token manager account associated with the interchain token
@@ -156,20 +159,23 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Transfers interchain tokens.
     ///
-    /// 0. [signer] The address of the payer
-    /// 1. [writable] The source account from which the tokens are being transferred
-    /// 2. [writable] The mint account (token address)
-    /// 3. [writable] The token manager account associated with the interchain token
-    /// 4. [writable] The token manager Associated Token Account associated with the mint
-    /// 5. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 6. [] The GMP gateway root account
-    /// 7. [] The GMP gateway program account
-    /// 8. [writable] The GMP gas configuration account
-    /// 9. [] The GMP gas service program account
-    /// 10. [] The system program account
-    /// 11. [] The ITS root account
-    /// 12. [] The GMP call contract signing account
-    /// 13. [] The ITS program account
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The address of the owner or delegate of the source account of the
+    ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
+    ///    happens on chain.
+    /// 2. [writable] The source account from which the tokens are being transferred
+    /// 3. [writable] The mint account (token address)
+    /// 4. [writable] The token manager account associated with the interchain token
+    /// 5. [writable] The token manager Associated Token Account associated with the mint
+    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 7. [] The GMP gateway root account
+    /// 8. [] The GMP gateway program account
+    /// 9. [writable] The GMP gas configuration account
+    /// 10. [] The GMP gas service program account
+    /// 11. [] The system program account
+    /// 12. [] The ITS root account
+    /// 13. [] The GMP call contract signing account
+    /// 14. [] The ITS program account
     InterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -194,20 +200,23 @@ pub enum InterchainTokenServiceInstruction {
     /// This variant is designed for CPI-initiated transfers and includes
     /// the source program ID and PDA seeds for proper attribution.
     ///
-    /// 0. [signer] The address of the sender
-    /// 1. [writable] The source account from which the tokens are being transferred
-    /// 2. [writable] The mint account (token address)
-    /// 3. [writable] The token manager account associated with the interchain token
-    /// 4. [writable] The token manager Associated Token Account associated with the mint
-    /// 5. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 6. [] The GMP gateway root account
-    /// 7. [] The GMP gateway program account
-    /// 8. [writable] The GMP gas configuration account
-    /// 9. [] The GMP gas service program account
-    /// 10. [] The system program account
-    /// 11. [] The ITS root account
-    /// 12. [] The GMP call contract signing account
-    /// 13. [] The ITS program account
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The address of the owner or delegate of the source account of the
+    ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
+    ///    happens on chain.
+    /// 2. [writable] The source account from which the tokens are being transferred
+    /// 3. [writable] The mint account (token address)
+    /// 4. [writable] The token manager account associated with the interchain token
+    /// 5. [writable] The token manager Associated Token Account associated with the mint
+    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 7. [] The GMP gateway root account
+    /// 8. [] The GMP gateway program account
+    /// 9. [writable] The GMP gas configuration account
+    /// 10. [] The GMP gas service program account
+    /// 11. [] The system program account
+    /// 12. [] The ITS root account
+    /// 13. [] The GMP call contract signing account
+    /// 14. [] The ITS program account
     CpiInterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -238,22 +247,23 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Deploys an interchain token.
     ///
-    /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
-    /// 1. [] The system program account
-    /// 2. [] The ITS root account
-    /// 3. [writable] The token manager account associated with the interchain token
-    /// 4. [writable] The mint account (token address) to deploy
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account (`spl_token_2022`)
-    /// 7. [] The Associated Token Account program account (`spl_associated_token_account`)
-    /// 8. [writable] The account holding the roles of the ITS root account on the token manager
-    /// 9. [] The rent sysvar account
-    /// 10. [] The instructions sysvar account
-    /// 11. [] The Metaplex metadata program account (`mpl_token_metadata`)
-    /// 12. [writable] The Metaplex metadata account associated with the mint
-    /// 13. [writable] The payer's Associated Token Account for the mint
-    /// 14. [] Optional: The account to set as minter of the token
-    /// 15. [writable] Optional: The account holding the roles of the minter account on the `TokenManager`
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The account of the deployer
+    /// 2. [] The system program account
+    /// 3. [] The ITS root account
+    /// 4. [writable] The token manager account associated with the interchain token
+    /// 5. [writable] The mint account (token address) to deploy
+    /// 6. [writable] The token manager Associated Token Account associated with the mint
+    /// 7. [] The token program account (`spl_token_2022`)
+    /// 8. [] The Associated Token Account program account (`spl_associated_token_account`)
+    /// 9. [writable] The account holding the roles of the ITS root account on the token manager
+    /// 10. [] The rent sysvar account
+    /// 11. [] The instructions sysvar account
+    /// 12. [] The Metaplex metadata program account (`mpl_token_metadata`)
+    /// 13. [writable] The Metaplex metadata account associated with the mint
+    /// 14. [writable] The payer's Associated Token Account for the mint
+    /// 15. [] Optional: The account to set as minter of the token
+    /// 16. [writable] Optional: The account holding the roles of the minter account on the `TokenManager`
     DeployInterchainToken {
         /// The salt used to derive the tokenId associated with the token
         salt: [u8; 32],
@@ -273,18 +283,19 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Deploys a remote interchain token
     ///
-    /// 0. [writable,signer] The address of the payer
-    /// 1. [] The mint account (token address)
-    /// 2. [] The Metaplex metadata account associated with the mint
-    /// 3. [] The token manager account associated with the interchain token
-    /// 4. [] The GMP gateway root account
-    /// 5. [] The GMP gateway program account
-    /// 6. [writable] The GMP gas configuration account
-    /// 7. [] The GMP gas service program account
-    /// 8. [] The system program account
-    /// 9. [] The ITS root account
-    /// 10. [] The GMP call contract signing account
-    /// 11. [] The ITS program account
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The account of the deployer
+    /// 2. [] The mint account (token address)
+    /// 3. [] The Metaplex metadata account associated with the mint
+    /// 4. [] The token manager account associated with the interchain token
+    /// 5. [] The GMP gateway root account
+    /// 6. [] The GMP gateway program account
+    /// 7. [writable] The GMP gas configuration account
+    /// 8. [] The GMP gas service program account
+    /// 9. [] The system program account
+    /// 10. [] The ITS root account
+    /// 11. [] The GMP call contract signing account
+    /// 12. [] The ITS program account
     DeployRemoteInterchainToken {
         /// The salt used to derive the tokenId associated with the token
         salt: [u8; 32],
@@ -301,21 +312,22 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Deploys a remote interchain token with associated minter
     ///
-    /// 0. [writable,signer] The address of the payer
-    /// 1. [] The mint account (token address)
-    /// 2. [] The Metaplex metadata account associated with the mint
-    /// 3. [] The token manager account associated with the interchain token
-    /// 4. [] The account of the minter that approved the deployment
-    /// 5. [writable] The account holding the approval for the deployment
-    /// 6. [] The account holding the roles of the minter on the token manager
-    /// 7. [] The GMP gateway root account
-    /// 8. [] The GMP gateway program account
-    /// 9. [writable] The GMP gas configuration account
-    /// 10. [] The GMP gas service program account
-    /// 11. [] The system program account
-    /// 12. [] The ITS root account
-    /// 13. [] The GMP call contract signing account
-    /// 14. [] The ITS program account
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The account of the deployer
+    /// 2. [] The mint account (token address)
+    /// 3. [] The Metaplex metadata account associated with the mint
+    /// 4. [] The token manager account associated with the interchain token
+    /// 5. [] The account of the minter that approved the deployment
+    /// 6. [writable] The account holding the approval for the deployment
+    /// 7. [] The account holding the roles of the minter on the token manager
+    /// 8. [] The GMP gateway root account
+    /// 9. [] The GMP gateway program account
+    /// 10. [writable] The GMP gas configuration account
+    /// 11. [] The GMP gas service program account
+    /// 12. [] The system program account
+    /// 13. [] The ITS root account
+    /// 14. [] The GMP call contract signing account
+    /// 15. [] The ITS program account
     DeployRemoteInterchainTokenWithMinter {
         /// The salt used to derive the tokenId associated with the token
         salt: [u8; 32],
@@ -354,8 +366,8 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Registers a custom token with ITS, deploying a new [`TokenManager`] to manage it.
     ///
-    /// 0. [writable,signer] The account of the deployer, which is also paying for the transaction
-    /// 1. [] The Metaplex metadata account associated with the mint
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The account of the deployer
     /// 2. [] The system program account
     /// 3. [] The ITS root account
     /// 4. [writable] The token manager account associated with the interchain token
@@ -363,10 +375,9 @@ pub enum InterchainTokenServiceInstruction {
     /// 6. [writable] The token manager Associated Token Account associated with the mint
     /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
     /// 8. [] The Associated Token Account program account (`spl_associated_token_account`)
-    /// 9. [writable] The account holding the roles of the ITS root account on the token manager
-    /// 10. [] The rent sysvar account
-    /// 11. [] Optional: Account to set as operator on the `TokenManager`
-    /// 12. [writable] Optional: The account holding the roles of the operator on the `TokenManager`
+    /// 9. [] The rent sysvar account
+    /// 10. [] Optional: Account to set as operator on the `TokenManager`
+    /// 11. [writable] Optional: The account holding the roles of the operator on the `TokenManager`
     RegisterCustomToken {
         /// Salt used to derive the `token_id` associated with the token.
         salt: [u8; 32],
@@ -379,16 +390,17 @@ pub enum InterchainTokenServiceInstruction {
     /// Link a local token derived from salt and payer to another token on the `destination_chain`,
     /// at the `destination_token_address`.
     ///
-    /// 0. [writable,signer] The address of the payer
-    /// 1. [] The `TokenManager` account associated with the token being linked
-    /// 2. [] The GMP gateway root account
-    /// 3. [] The GMP gateway program account
-    /// 4. [writable] The GMP gas configuration account
-    /// 5. [] The GMP gas service program account
-    /// 6. [] The system program account
-    /// 7. [] The ITS root account
-    /// 8. [] The GMP call contract signing account
-    /// 9. [] The ITS program account
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The account of the deployer
+    /// 2. [] The `TokenManager` account associated with the token being linked
+    /// 3. [] The GMP gateway root account
+    /// 4. [] The GMP gateway program account
+    /// 5. [writable] The GMP gas configuration account
+    /// 6. [] The GMP gas service program account
+    /// 7. [] The system program account
+    /// 8. [] The ITS root account
+    /// 9. [] The GMP call contract signing account
+    /// 10. [] The ITS program account
     LinkToken {
         /// Salt used to derive the `token_id` associated with the token.
         salt: [u8; 32],
@@ -406,28 +418,26 @@ pub enum InterchainTokenServiceInstruction {
         signing_pda_bump: u8,
     },
 
-    /// Transfers tokens to a contract on the destination chain and call the give instruction on
+    /// Transfers tokens to a contract on the destination chain and call the given instruction on
     /// it. This instruction is the same as [`InterchainTransfer`], but will fail if call data
     /// is empty.
     ///
-    /// 0. [writable,signer] The address of the sender
-    /// 1. [maybe signer] The address of the owner or delegate of the source account of the
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
     /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [] The mint account (token address)
+    /// 3. [writable] The mint account (token address)
     /// 4. [] The token manager account associated with the interchain token
     /// 5. [writable] The token manager Associated Token Account associated with the mint
     /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [writable] The account tracking the flow of this mint for the current epoch
-    /// 8. [] The GMP gateway root account
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The GMP gas service program account
-    /// 12. [] The system program account
-    /// 13. [] The ITS root account
-    /// 14. [] The GMP call contract signing account
-    /// 15. [] The ITS program account
+    /// 7. [] The GMP gateway program account
+    /// 8. [writable] The GMP gas configuration account
+    /// 9. [] The GMP gas service program account
+    /// 10. [] The system program account
+    /// 11. [] The ITS root account
+    /// 12. [] The GMP call contract signing account
+    /// 13. [] The ITS program account
     CallContractWithInterchainToken {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -455,24 +465,23 @@ pub enum InterchainTokenServiceInstruction {
     /// and calls the given instruction on it. This instruction is designed for CPI-initiated
     /// transfers and includes the source program ID and PDA seeds for proper attribution.
     ///
-    /// 0. [writable,signer] The address of the sender
-    /// 1. [maybe signer] The address of the owner or delegate of the source account of the
+    /// 0. [writable,signer] The account which is paying for the transaction
+    /// 1. [signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
     /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [] The mint account (token address)
-    /// 4. [] The token manager account associated with the interchain token
+    /// 3. [writable] The mint account (token address)
+    /// 4. [writable] The token manager account associated with the interchain token
     /// 5. [writable] The token manager Associated Token Account associated with the mint
     /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [writable] The account tracking the flow of this mint for the current epoch
-    /// 8. [] The GMP gateway root account
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The GMP gas service program account
-    /// 12. [] The system program account
-    /// 13. [] The ITS root account
-    /// 14. [] The GMP call contract signing account
-    /// 15. [] The ITS program account
+    /// 7. [] The GMP gateway root account
+    /// 8. [] The GMP gateway program account
+    /// 9. [writable] The GMP gas configuration account
+    /// 10. [] The GMP gas service program account
+    /// 11. [] The system program account
+    /// 12. [] The ITS root account
+    /// 13. [] The GMP call contract signing account
+    /// 14. [] The ITS program account
     CpiCallContractWithInterchainToken {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -507,10 +516,11 @@ pub enum InterchainTokenServiceInstruction {
     /// Sets the flow limit for an interchain token.
     ///
     /// 0. [writable,signer] The address of the payer
-    /// 1. [] The ITS root account
-    /// 2. [writable] The token manager account associated with the interchain token
-    /// 3. [writable] The account holding the roles of the payer on the ITS root account
-    /// 4. [writable] The account holding the roles of the payer on the `TokenManager`
+    /// 1. [signer] The address of the operator with operator role on the ITS root account
+    /// 2. [] The ITS root account
+    /// 3. [] The account holding the roles of the operator on the ITS root account
+    /// 4. [writable] The token manager account associated with the interchain token
+    /// 5. [] The system program account
     SetFlowLimit {
         /// The new flow limit.
         flow_limit: Option<u64>,
@@ -560,31 +570,36 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Adds a flow limiter to a [`TokenManager`].
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account (must have operator role).
-    /// 2. [] PDA for the payer roles on the token manager.
-    /// 3. [] PDA for the token manager.
-    /// 4. [] Account to add as flow limiter.
-    /// 5. [writable] PDA with the roles on the token manager for the flow limiter being added.
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Account with operator role on the token manager.
+    /// 4. [] PDA for the operator's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account to add as flow limiter.
+    /// 7. [writable] PDA with the roles on the token manager for the flow limiter being added.
     AddTokenManagerFlowLimiter,
 
     /// Removes a flow limiter from a [`TokenManager`].
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account (must have operator role).
-    /// 2. [] PDA for the payer roles on the token manager.
-    /// 3. [] PDA for the token manager.
-    /// 4. [] Account to remove as flow limiter.
-    /// 5. [writable] PDA with the roles on the token manager for the flow limiter being removed.
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Account with operator role on the token manager.
+    /// 4. [] PDA for the operator's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account to remove as flow limiter.
+    /// 7. [writable] PDA with the roles on the token manager for the flow limiter being removed.
     RemoveTokenManagerFlowLimiter,
 
     /// Sets the flow limit for an interchain token.
     ///
-    /// 0. [signer] Payer account.
-    /// 1. [] ITS root PDA account.
-    /// 2. [writable] The [`TokenManager`] PDA account.
-    /// 3. [] The PDA account with the user roles on the [`TokenManager`].
-    /// 4. [] The PDA account with the user roles on ITS.
+    /// 0. [writable,signer] Payer account.
+    /// 1. [signer] Account with flow limiter role on the token manager.
+    /// 2. [] ITS root PDA account.
+    /// 3. [writable] The [`TokenManager`] PDA account.
+    /// 4. [] The PDA account with the flow limiter's roles on the [`TokenManager`].
+    /// 5. [] System program account.
     SetTokenManagerFlowLimit {
         /// The new flow limit.
         flow_limit: Option<u64>,
@@ -594,52 +609,52 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [] ITS root PDA.
     /// 1. [] System program account.
-    /// 2. [writable, signer] Payer account.
-    /// 3. [] PDA for the payer roles on the resource which the operatorship is being transferred
-    ///    from.
-    /// 4. [] PDA for the resource.
-    /// 5. [] Account to transfer operatorship to.
-    /// 6. [writable] PDA with the roles on the resource the
-    ///    operatorship is being transferred to.
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Sender account with operator role.
+    /// 4. [writable] PDA for the sender's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account to transfer operatorship to.
+    /// 7. [writable] PDA with the roles on the token manager for the destination account.
     TransferTokenManagerOperatorship,
 
     /// Proposes operatorship transfer to another account.
     ///
     /// 0. [] ITS root PDA.
     /// 1. [] System program account.
-    /// 2. [writable, signer] Payer account.
-    /// 3. [] PDA for the payer roles on the resource.
-    /// 4. [] PDA for the resource.
-    /// 5. [] Account to transfer operatorship to.
-    /// 6. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred to.
-    /// 7. [writable] PDA for the proposal
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Proposer account with operator role.
+    /// 4. [] PDA for the proposer's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account to transfer operatorship to.
+    /// 7. [writable] PDA with the roles on the token manager for the destination account.
+    /// 8. [writable] PDA for the proposal
     ProposeTokenManagerOperatorship,
 
     /// Accepts operatorship transfer from another account.
     ///
     /// 0. [] ITS root PDA.
     /// 1. [] System program account.
-    /// 2. [writable, signer] Payer account.
-    /// 3. [writable] PDA for the payer roles on the resource.
-    /// 4. [] PDA for the resource.
-    /// 5. [] Account that operatorship is being transferred from.
-    /// 6. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    /// 7. [writable] PDA for the proposal
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Accepter account.
+    /// 4. [writable] PDA for the accepter's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account that operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the token manager for the origin account.
+    /// 8. [writable] PDA for the proposal
     AcceptTokenManagerOperatorship,
 
     /// Transfers the mint authority to the token manager allowing it to mint tokens and manage
     /// minters. The account transferring the authority gains minter role on the [`TokenManager`] and
     /// thus can then mint tokens through the ITS mint instruction.
     ///
-    /// 0. [writable, signer] Payer, current mint authority
-    /// 1. [writable] The mint for which the authority is being handed over
-    /// 2. [] ITS root account
-    /// 3. [] The [`TokenManager`] account associated with the mint
-    /// 4. [] The account that will hold the roles of the former authority on the [`TokenManager`]
-    /// 5. [] The token program used to create the mint
-    /// 6. [] The system program account
+    /// 0. [writable,signer] The payer
+    /// 1. [signer] The current mint authority
+    /// 2. [writable] The mint for which the authority is being handed over
+    /// 3. [] ITS root account
+    /// 4. [] The [`TokenManager`] account associated with the mint
+    /// 5. [writable] The account that will hold the roles of the former authority on the [`TokenManager`]
+    /// 6. [] The token program used to create the mint
+    /// 7. [] The system program account
     HandoverMintAuthority {
         /// The id of the token registered with ITS for which the authority is being handed over.
         token_id: [u8; 32],
@@ -651,10 +666,11 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable] The mint account
     /// 1. [writable] The account to mint tokens to
-    /// 2. [] The interchain token PDA associated with the mint
+    /// 2. [] The ITS root PDA
     /// 3. [] The token manager PDA
     /// 4. [signer] The minter account
-    /// 5. [] The token program id
+    /// 5. [] The account holding the minter's roles on the token manager
+    /// 6. [] The token program id
     MintInterchainToken {
         /// The amount of tokens to mint.
         amount: u64,
@@ -664,50 +680,45 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [] ITS root PDA.
     /// 1. [] System program account.
-    /// 2. [writable, signer] Payer account.
-    /// 3. [] PDA for the payer roles on the resource which the mintership is being transferred
-    ///    from.
-    /// 4. [] PDA for the resource.
-    /// 5. [] Account to transfer mintership to.
-    /// 6. [writable] PDA with the roles on the resource the
-    ///    mintership is being transferred to.
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Account with minter role on the token manager.
+    /// 4. [writable] PDA for the sender's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account to transfer mintership to.
+    /// 7. [writable] PDA with the roles on the token manager for the destination account.
     TransferInterchainTokenMintership,
 
     /// Proposes mintership transfer to another account.
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
-    ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Proposer account with minter role.
+    /// 4. [] PDA for the proposer's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [] Account to transfer mintership to.
+    /// 7. [writable] PDA with the roles on the token manager for the destination account.
     /// 8. [writable] PDA for the proposal
     ProposeInterchainTokenMintership,
 
     /// Accepts mintership transfer from another account.
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
-    ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable,signer] Payer account.
+    /// 3. [signer] Accepter account.
+    /// 4. [writable] PDA for the accepter's roles on the token manager.
+    /// 5. [] PDA for the token manager.
+    /// 6. [writable] Account which the mintership is being transferred from.
+    /// 7. [writable] PDA with the roles on the token manager for the origin account.
     /// 8. [writable] PDA for the proposal
     AcceptInterchainTokenMintership,
 
     /// A GMP Interchain Token Service instruction.
     ///
     /// 0. [writable,signer] The address of payer / sender
-    /// 1. [] gateway root pda
-    /// 2. [] ITS root pda
+    /// 1. [] gateway root PDA
+    /// 2. [] ITS root PDA
     ///
     /// 3..N Accounts depend on the inner ITS instruction.
     Execute {
@@ -806,7 +817,7 @@ pub fn initialize(
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, ProgramError> {
+pub fn set_pause_status(owner: Pubkey, paused: bool) -> Result<Instruction, ProgramError> {
     let (program_data_address, _) =
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -814,7 +825,7 @@ pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, Prog
     let data = to_vec(&InterchainTokenServiceInstruction::SetPauseStatus { paused })?;
 
     let accounts = vec![
-        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(owner, true),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -832,19 +843,24 @@ pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, Prog
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn set_trusted_chain(payer: Pubkey, chain_name: String) -> Result<Instruction, ProgramError> {
+pub fn set_trusted_chain(
+    payer: Pubkey,
+    authority: Pubkey,
+    chain_name: String,
+) -> Result<Instruction, ProgramError> {
     let (program_data_address, _) =
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
 
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
+    let (authority_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &authority);
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetTrustedChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(authority_roles_pda, false),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -864,19 +880,21 @@ pub fn set_trusted_chain(payer: Pubkey, chain_name: String) -> Result<Instructio
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn remove_trusted_chain(
     payer: Pubkey,
+    authority: Pubkey,
     chain_name: String,
 ) -> Result<Instruction, ProgramError> {
     let (program_data_address, _) =
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let (payer_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
+    let (authority_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &authority);
 
     let data = to_vec(&InterchainTokenServiceInstruction::RemoveTrustedChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(authority_roles_pda, false),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -898,7 +916,8 @@ pub fn remove_trusted_chain(
 ///
 /// # Parameters
 ///
-/// `payer`: The account paying for the transaction, also with minter role on the `TokenManager`.
+/// `payer`: The account paying for the transaction.
+/// `minter`: The account with minter role on the `TokenManager`.
 /// `deployer`: The address of the account that deployed the `InterchainToken`.
 /// `salt`: The unique salt for deploying the token.
 /// `destination_chain`: The name of the destination chain.
@@ -909,6 +928,7 @@ pub fn remove_trusted_chain(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn approve_deploy_remote_interchain_token(
     payer: Pubkey,
+    minter: Pubkey,
     deployer: Pubkey,
     salt: [u8; 32],
     destination_chain: String,
@@ -918,12 +938,13 @@ pub fn approve_deploy_remote_interchain_token(
     let token_id = crate::interchain_token_id(&deployer, &salt);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &payer);
+        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &minter);
     let (deploy_approval_pda, _) =
-        crate::find_deployment_approval_pda(&payer, &token_id, &destination_chain);
+        crate::find_deployment_approval_pda(&minter, &token_id, &destination_chain);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(minter, true),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(roles_pda, false),
         AccountMeta::new(deploy_approval_pda, false),
@@ -953,7 +974,8 @@ pub fn approve_deploy_remote_interchain_token(
 ///
 /// # Parameters
 ///
-/// `payer`: The account paying for the transaction, also with minter role on the `TokenManager`.
+/// `payer`: The account paying for the transaction.
+/// `minter`: The account with minter role on the `TokenManager`.
 /// `deployer`: The address of the account that deployed the `InterchainToken`.
 /// `salt`: The unique salt for deploying the token.
 /// `destination_chain`: The name of the destination chain.
@@ -963,16 +985,18 @@ pub fn approve_deploy_remote_interchain_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn revoke_deploy_remote_interchain_token(
     payer: Pubkey,
+    minter: Pubkey,
     deployer: Pubkey,
     salt: [u8; 32],
     destination_chain: String,
 ) -> Result<Instruction, ProgramError> {
     let token_id = crate::interchain_token_id(&deployer, &salt);
     let (deploy_approval_pda, _) =
-        crate::find_deployment_approval_pda(&payer, &token_id, &destination_chain);
+        crate::find_deployment_approval_pda(&minter, &token_id, &destination_chain);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(minter, true),
         AccountMeta::new(deploy_approval_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
@@ -1009,8 +1033,6 @@ pub fn register_canonical_interchain_token(
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (token_metadata_account, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
-    let (its_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -1022,7 +1044,6 @@ pub fn register_canonical_interchain_token(
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(spl_associated_token_account::ID, false),
-        AccountMeta::new(its_user_roles_pda, false),
         AccountMeta::new_readonly(sysvar::rent::ID, false),
     ];
 
@@ -1113,13 +1134,11 @@ pub fn deploy_interchain_token(
     );
     let deployer_ata =
         get_associated_token_address_with_program_id(&deployer, &mint, &spl_token_2022::ID);
-    let (its_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
 
     let mut accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new(deployer, true),
+        AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1127,7 +1146,6 @@ pub fn deploy_interchain_token(
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(spl_token_2022::ID, false),
         AccountMeta::new_readonly(spl_associated_token_account::ID, false),
-        AccountMeta::new(its_user_roles_pda, false),
         AccountMeta::new_readonly(sysvar::rent::ID, false),
         AccountMeta::new_readonly(sysvar::instructions::ID, false),
         AccountMeta::new_readonly(mpl_token_metadata::ID, false),
@@ -1165,13 +1183,14 @@ pub fn deploy_interchain_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn deploy_remote_interchain_token(
     payer: Pubkey,
+    deployer: Pubkey,
     salt: [u8; 32],
     destination_chain: String,
     gas_value: u64,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let token_id = crate::interchain_token_id(&payer, &salt);
+    let token_id = crate::interchain_token_id(&deployer, &salt);
     let (mint, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
@@ -1181,6 +1200,7 @@ pub fn deploy_remote_interchain_token(
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
         AccountMeta::new_readonly(token_manager, false),
@@ -1218,6 +1238,7 @@ pub fn deploy_remote_interchain_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn deploy_remote_interchain_token_with_minter(
     payer: Pubkey,
+    deployer: Pubkey,
     salt: [u8; 32],
     minter: Pubkey,
     destination_chain: String,
@@ -1226,7 +1247,7 @@ pub fn deploy_remote_interchain_token_with_minter(
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let token_id = crate::interchain_token_id(&payer, &salt);
+    let token_id = crate::interchain_token_id(&deployer, &salt);
     let (mint, _) = crate::find_interchain_token_pda(&its_root_pda, &token_id);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
@@ -1240,6 +1261,7 @@ pub fn deploy_remote_interchain_token_with_minter(
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
         AccountMeta::new_readonly(token_manager_pda, false),
@@ -1322,6 +1344,7 @@ pub fn register_token_metadata(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn register_custom_token(
     payer: Pubkey,
+    deployer: Pubkey,
     salt: [u8; 32],
     mint: Pubkey,
     token_manager_type: state::token_manager::Type,
@@ -1329,17 +1352,14 @@ pub fn register_custom_token(
     operator: Option<Pubkey>,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let token_id = crate::linked_token_id(&payer, &salt);
+    let token_id = crate::linked_token_id(&deployer, &salt);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
-    let (token_metadata_account, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
-    let (its_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
 
     let mut accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(token_metadata_account, false),
+        AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1347,7 +1367,6 @@ pub fn register_custom_token(
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(spl_associated_token_account::ID, false),
-        AccountMeta::new(its_user_roles_pda, false),
         AccountMeta::new_readonly(sysvar::rent::ID, false),
     ];
 
@@ -1378,6 +1397,7 @@ pub fn register_custom_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn link_token(
     payer: Pubkey,
+    deployer: Pubkey,
     salt: [u8; 32],
     destination_chain: String,
     destination_token_address: Vec<u8>,
@@ -1389,12 +1409,13 @@ pub fn link_token(
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
-    let token_id = crate::linked_token_id(&payer, &salt);
+    let token_id = crate::linked_token_id(&deployer, &salt);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
@@ -1431,6 +1452,7 @@ pub fn link_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn interchain_transfer(
     payer: Pubkey,
+    authority: Pubkey,
     source_account: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
@@ -1450,7 +1472,8 @@ pub fn interchain_transfer(
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(authority, true),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1490,7 +1513,8 @@ pub fn interchain_transfer(
 ///
 /// This function will return an error if the instruction data cannot be serialized.
 pub fn cpi_interchain_transfer(
-    sender: Pubkey,
+    payer: Pubkey,
+    authority: Pubkey,
     source_account: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
@@ -1512,7 +1536,8 @@ pub fn cpi_interchain_transfer(
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(sender, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(authority, true),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1554,6 +1579,7 @@ pub fn cpi_interchain_transfer(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn call_contract_with_interchain_token(
     payer: Pubkey,
+    authority: Pubkey,
     source_account: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
@@ -1573,7 +1599,8 @@ pub fn call_contract_with_interchain_token(
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(authority, true),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(token_manager_pda, false),
@@ -1615,7 +1642,8 @@ pub fn call_contract_with_interchain_token(
 ///
 /// This function will return an error if the instruction data cannot be serialized.
 pub fn cpi_call_contract_with_interchain_token(
-    sender: Pubkey,
+    payer: Pubkey,
+    authority: Pubkey,
     source_account: Pubkey,
     token_id: [u8; 32],
     destination_chain: String,
@@ -1638,7 +1666,8 @@ pub fn cpi_call_contract_with_interchain_token(
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
-        AccountMeta::new_readonly(sender, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(authority, true),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1682,24 +1711,22 @@ pub fn cpi_call_contract_with_interchain_token(
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn set_flow_limit(
     payer: Pubkey,
+    operator: Pubkey,
     token_id: [u8; 32],
     flow_limit: Option<u64>,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-
     let (its_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
-    let (token_manager_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &operator);
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetFlowLimit { flow_limit })?;
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(operator, true),
         AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(its_user_roles_pda, false),
-        AccountMeta::new_readonly(token_manager_user_roles_pda, false),
+        AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
 
@@ -1856,7 +1883,7 @@ pub fn accept_operatorship(
     let accounts = vec![
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new(payer, true),
-        AccountMeta::new(role_receiver, true),
+        AccountMeta::new_readonly(role_receiver, true),
         AccountMeta::new(role_receiver_roles_pda, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(from, false),
@@ -2037,9 +2064,6 @@ fn derive_common_its_accounts(
         &token_program,
     );
 
-    let (its_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
-
     Ok((
         vec![
             AccountMeta::new_readonly(system_program::ID, false),
@@ -2049,7 +2073,6 @@ fn derive_common_its_accounts(
             AccountMeta::new(token_manager_ata, false),
             AccountMeta::new_readonly(token_program, false),
             AccountMeta::new_readonly(spl_associated_token_account::ID, false),
-            AccountMeta::new(its_user_roles_pda, false),
             AccountMeta::new_readonly(sysvar::rent::ID, false),
         ],
         token_mint,

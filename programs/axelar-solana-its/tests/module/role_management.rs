@@ -775,6 +775,7 @@ async fn test_set_trusted_chain_with_upgrade_authority(ctx: &mut ItsTestContext)
     .unwrap();
 
     let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.upgrade_authority.pubkey(),
         chain_name.clone(),
     )
@@ -834,9 +835,12 @@ async fn test_set_trusted_chain_with_operator_role(ctx: &mut ItsTestContext) {
         .unwrap();
 
     // Bob sets trusted chain using operator role
-    let set_trusted_chain_ix =
-        axelar_solana_its::instruction::set_trusted_chain(bob.pubkey(), chain_name.clone())
-            .unwrap();
+    let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        bob.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
 
     ctx.solana_chain
         .fixture
@@ -880,9 +884,12 @@ async fn test_set_trusted_chain_failure_without_authority(ctx: &mut ItsTestConte
     .unwrap();
 
     // Charlie has neither upgrade authority nor operator role
-    let set_trusted_chain_ix =
-        axelar_solana_its::instruction::set_trusted_chain(charlie.pubkey(), chain_name.clone())
-            .unwrap();
+    let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        charlie.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
 
     let tx_metadata = ctx
         .solana_chain
@@ -899,7 +906,7 @@ async fn test_set_trusted_chain_failure_without_authority(ctx: &mut ItsTestConte
 
     // Verify the transaction failed with proper error
     assert!(tx_metadata
-        .find_log("Payer is neither upgrade authority nor operator")
+        .find_log("Account passed as authority is neither upgrade authority nor operator")
         .is_some());
 
     // Verify the chain was NOT added as trusted
@@ -932,6 +939,7 @@ async fn test_remove_trusted_chain_with_upgrade_authority(ctx: &mut ItsTestConte
 
     // First add the chain as trusted
     let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.upgrade_authority.pubkey(),
         chain_name.clone(),
     )
@@ -963,6 +971,7 @@ async fn test_remove_trusted_chain_with_upgrade_authority(ctx: &mut ItsTestConte
 
     // Now remove the chain using upgrade authority
     let remove_trusted_chain_ix = axelar_solana_its::instruction::remove_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.upgrade_authority.pubkey(),
         chain_name.clone(),
     )
@@ -1017,6 +1026,7 @@ async fn test_remove_trusted_chain_with_operator_role(ctx: &mut ItsTestContext) 
 
     // First add the chain as trusted using upgrade authority
     let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.upgrade_authority.pubkey(),
         chain_name.clone(),
     )
@@ -1047,9 +1057,12 @@ async fn test_remove_trusted_chain_with_operator_role(ctx: &mut ItsTestContext) 
         .unwrap();
 
     // Bob removes the chain using operator role
-    let remove_trusted_chain_ix =
-        axelar_solana_its::instruction::remove_trusted_chain(bob.pubkey(), chain_name.clone())
-            .unwrap();
+    let remove_trusted_chain_ix = axelar_solana_its::instruction::remove_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        bob.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
 
     ctx.solana_chain
         .fixture
@@ -1101,6 +1114,7 @@ async fn test_remove_trusted_chain_failure_without_authority(ctx: &mut ItsTestCo
 
     // First add the chain as trusted using upgrade authority
     let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.upgrade_authority.pubkey(),
         chain_name.clone(),
     )
@@ -1119,9 +1133,12 @@ async fn test_remove_trusted_chain_failure_without_authority(ctx: &mut ItsTestCo
         .unwrap();
 
     // Charlie has neither upgrade authority nor operator role
-    let remove_trusted_chain_ix =
-        axelar_solana_its::instruction::remove_trusted_chain(charlie.pubkey(), chain_name.clone())
-            .unwrap();
+    let remove_trusted_chain_ix = axelar_solana_its::instruction::remove_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        charlie.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
 
     let tx_metadata = ctx
         .solana_chain
@@ -1138,7 +1155,7 @@ async fn test_remove_trusted_chain_failure_without_authority(ctx: &mut ItsTestCo
 
     // Verify the transaction failed with proper error
     assert!(tx_metadata
-        .find_log("Payer is neither upgrade authority nor operator")
+        .find_log("Account passed as authority is neither upgrade authority nor operator")
         .is_some());
 
     // Verify the chain was NOT removed
@@ -1698,6 +1715,7 @@ async fn test_fail_remove_non_existing_trusted_chain(ctx: &mut ItsTestContext) {
 
     // Attempt to remove a chain that was never added as trusted
     let remove_trusted_chain_ix = axelar_solana_its::instruction::remove_trusted_chain(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.upgrade_authority.pubkey(),
         non_existing_chain.clone(),
     )
@@ -2017,4 +2035,133 @@ async fn test_simultaneous_role_proposals_different_roles(ctx: &mut ItsTestConte
 
     assert!(!updated_payer_roles.contains(Roles::MINTER));
     assert!(!updated_payer_roles.contains(Roles::OPERATOR));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_accept_operatorship_to_self(ctx: &mut ItsTestContext) {
+    let bob = Keypair::new();
+
+    // First propose operatorship from wallet to bob
+    let propose_ix = axelar_solana_its::instruction::propose_operatorship(
+        ctx.solana_wallet,
+        ctx.solana_wallet,
+        bob.pubkey(),
+    )
+    .unwrap();
+
+    ctx.send_solana_tx(&[propose_ix]).await.unwrap();
+
+    // Now try to accept the proposal with bob as both origin and destination
+    // This should fail because origin and destination are the same
+    let accept_self_ix = axelar_solana_its::instruction::accept_operatorship(
+        ctx.solana_wallet,
+        bob.pubkey(),
+        bob.pubkey(), // Using bob as both origin and destination
+    )
+    .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_self_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_accept_token_manager_operatorship_to_self(ctx: &mut ItsTestContext) {
+    let bob = Keypair::new();
+    let token_id = ctx.deployed_interchain_token;
+
+    // First propose token manager operatorship from payer to bob
+    let propose_ix = axelar_solana_its::instruction::token_manager::propose_operatorship(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        ctx.solana_chain.fixture.payer.pubkey(),
+        token_id,
+        bob.pubkey(),
+    )
+    .unwrap();
+
+    ctx.send_solana_tx(&[propose_ix]).await.unwrap();
+
+    // Now try to accept the proposal with bob as both origin and destination
+    // This should fail because origin and destination are the same
+    let accept_self_ix = axelar_solana_its::instruction::token_manager::accept_operatorship(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        bob.pubkey(),
+        token_id,
+        bob.pubkey(), // Using bob as both origin and destination
+    )
+    .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_self_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_accept_mintership_to_self(ctx: &mut ItsTestContext) {
+    let bob = Keypair::new();
+    let token_id = ctx.deployed_interchain_token;
+
+    // First propose mintership from payer to bob
+    let propose_ix = axelar_solana_its::instruction::interchain_token::propose_mintership(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        ctx.solana_chain.fixture.payer.pubkey(),
+        token_id,
+        bob.pubkey(),
+    )
+    .unwrap();
+
+    ctx.send_solana_tx(&[propose_ix]).await.unwrap();
+
+    // Now try to accept the proposal with bob as both origin and destination
+    // This should fail because origin and destination are the same
+    let accept_self_ix = axelar_solana_its::instruction::interchain_token::accept_mintership(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        bob.pubkey(),
+        token_id,
+        bob.pubkey(), // Using bob as both origin and destination
+    )
+    .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_self_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with self-transfer error
+    assert_msg_present_in_logs(tx_metadata, "Source and destination accounts are the same");
 }

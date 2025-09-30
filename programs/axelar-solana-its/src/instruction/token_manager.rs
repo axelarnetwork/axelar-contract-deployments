@@ -16,24 +16,23 @@ use super::InterchainTokenServiceInstruction;
 /// If serialization fails.
 pub fn set_flow_limit(
     payer: Pubkey,
+    flow_limiter: Pubkey,
     token_id: [u8; 32],
     flow_limit: Option<u64>,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (token_manager_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
-    let (its_user_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetTokenManagerFlowLimit { flow_limit })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(flow_limiter, true),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(token_manager_user_roles_pda, false),
-        AccountMeta::new_readonly(its_user_roles_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
 
@@ -257,6 +256,7 @@ pub fn accept_operatorship(
 /// If serialization fails.
 pub fn handover_mint_authority(
     payer: Pubkey,
+    authority: Pubkey,
     token_id: [u8; 32],
     mint: Pubkey,
     token_program: Pubkey,
@@ -264,10 +264,11 @@ pub fn handover_mint_authority(
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &payer);
+        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &authority);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(authority, true),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),

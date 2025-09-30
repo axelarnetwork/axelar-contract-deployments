@@ -59,6 +59,7 @@ async fn test_metadata_retrieval_with_metaplex_fallback(
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             ctx.solana_wallet,
             ctx.solana_wallet,
+            ctx.solana_wallet,
             salt,
             "ethereum".to_string(),
             vec![1, 2, 3, 4],
@@ -72,6 +73,7 @@ async fn test_metadata_retrieval_with_metaplex_fallback(
     // Deploy remote - this will use our get_token_metadata function
     let deploy_remote_ix =
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            ctx.solana_wallet,
             ctx.solana_wallet,
             salt,
             ctx.solana_wallet,

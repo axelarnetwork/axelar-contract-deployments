@@ -51,30 +51,31 @@ fn prepare_account_structure<'a, 'b>(
     // Calculate the minimum rent required for the account
     let rent = Rent::get()?.minimum_balance(space.try_into().expect("u64 fits into sbf word size"));
 
-    // Check if the account already has enough lamports to cover rent
-    let required_funds_for_rent = if to_create.lamports() >= rent {
-        0
-    } else {
-        rent.checked_sub(to_create.lamports())
-            .expect("To not underflow when calculating needed rent")
+    // Check if the account already has enough lamports to cover rent, otherwise transfer
+    if to_create.lamports() < rent {
+        let required_funds_for_rent = rent
+            .checked_sub(to_create.lamports())
+            .expect("To not underflow when calculating needed rent");
+
+        let transfer_ix =
+            &system_instruction::transfer(funder_info.key, to_create.key, required_funds_for_rent);
+
+        invoke_signed(
+            transfer_ix,
+            &[
+                funder_info.clone(),
+                to_create.clone(),
+                system_program_info.clone(),
+            ],
+            &[signer_seeds],
+        )?;
     };
 
-    // Create the instructions to transfer funds, allocate space, and assign the program ID
-    let transfer_ix =
-        &system_instruction::transfer(funder_info.key, to_create.key, required_funds_for_rent);
+    // Create the instructions to allocate space, and assign the program ID
     let alloc_ix = &system_instruction::allocate(to_create.key, space);
     let assign_ix = &system_instruction::assign(to_create.key, program_id);
 
-    // Invoke the instructions to transfer funds, allocate space, and assign the program ID
-    invoke_signed(
-        transfer_ix,
-        &[
-            funder_info.clone(),
-            to_create.clone(),
-            system_program_info.clone(),
-        ],
-        &[signer_seeds],
-    )?;
+    // Invoke the instructions to allocate space, and assign the program ID
     invoke_signed(
         alloc_ix,
         &[

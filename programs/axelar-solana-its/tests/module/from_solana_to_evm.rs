@@ -94,6 +94,7 @@ async fn custom_token(
     let token_id = axelar_solana_its::linked_token_id(&ctx.solana_wallet, &salt);
     let register_custom_token_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         custom_solana_token,
         token_manager_type,
@@ -106,6 +107,7 @@ async fn custom_token(
         .unwrap();
 
     let link_token_ix = axelar_solana_its::instruction::link_token(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         salt,
         ctx.evm_chain_name.clone(),
@@ -371,6 +373,7 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
     let authority_transfer_ix =
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             ctx.solana_wallet,
+            ctx.solana_wallet,
             token_id,
             solana_token,
             spl_token_2022::id(),
@@ -466,6 +469,7 @@ async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
         .fixture
         .send_tx_with_custom_signers(
             &[axelar_solana_its::instruction::remove_trusted_chain(
+                ctx.solana_chain.fixture.payer.pubkey(),
                 ctx.solana_chain.upgrade_authority.pubkey(),
                 ctx.evm_chain_name.clone(),
             )
@@ -510,6 +514,7 @@ async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyh
 
     ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
     let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         token_account,
         token_id,
@@ -579,6 +584,7 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
 
     // Try to transfer from the TokenManager to payer. This should fail after the fix
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_chain.fixture.payer.pubkey(),
         ctx.solana_chain.fixture.payer.pubkey(),
         token_manager_ata,
         token_id,
@@ -659,6 +665,7 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     let token_id = axelar_solana_its::linked_token_id(&ctx.solana_wallet, &salt);
     let register_custom_token_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         solana_token,
         TokenManagerType::MintBurnFrom,
@@ -673,6 +680,7 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     // Link the token
     let link_token_ix = axelar_solana_its::instruction::link_token(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         salt,
         ctx.evm_chain_name.clone(),
         custom_token.address().as_bytes().to_vec(),
@@ -684,7 +692,7 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     // Check that an invalid program account leads to a failure
     {
         let mut link_token_ix = link_token_ix.clone();
-        link_token_ix.accounts[9].pubkey = Pubkey::new_unique();
+        link_token_ix.accounts[10].pubkey = Pubkey::new_unique();
         let result = ctx.send_solana_tx(&[link_token_ix]).await;
         assert!(result.is_err());
 
@@ -701,6 +709,7 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     // Transfer mint authority to ITS
     let authority_transfer_ix =
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
+            ctx.solana_wallet,
             ctx.solana_wallet,
             token_id,
             solana_token,
@@ -785,6 +794,7 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
     // Make solana_wallet perform an interchain transfer from bob's account using approved amount
     let transfer_amount = 300;
     let interchain_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         bob_token_account,
         token_id,
@@ -913,6 +923,7 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
 
     let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
+        ctx.solana_wallet,
         token_account,
         token_id,
         ctx.evm_chain_name.clone(),
@@ -925,7 +936,7 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
     .unwrap();
 
     // Now inject an arbitrary ATA that does not match the token manager PDA
-    transfer_ix.accounts[4].pubkey = {
+    transfer_ix.accounts[5].pubkey = {
         let attacker_wallet = Keypair::new();
 
         // Fund the attacker wallet (for transaction fees)
@@ -997,6 +1008,7 @@ async fn test_source_address_stays_consistent_through_the_transfer(
     let destination_address = b"0x1234567890123456789012345678901234567890".to_vec();
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
         ctx.solana_wallet,
         user_token_account,
         token_id,
