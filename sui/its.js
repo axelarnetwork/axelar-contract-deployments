@@ -19,6 +19,7 @@ const {
     getAllowedFunctions,
     getObjectIdsByObjectTypes,
     getWallet,
+    getUnitAmount,
     itsFunctions,
     printWalletInfo,
     registerCustomCoinUtil,
@@ -845,9 +846,9 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const coin = contracts[symbol.toUpperCase()];
 
     if (!coin) {
-        if (!options.coinPackageId || !options.coinPackageName) {
+        if (!options.coinPackageId || !options.coinPackageName || options.coinDecimals) {
             throw new Error(
-                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringify([options.coinPackageId, options.coinPackageName])}`,
+                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringify([options.coinPackageId, options.coinPackageName, options.coinDecimals])}`,
             );
         }
     }
@@ -855,9 +856,14 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const coinType = coin ? coin.typeArgument : `${options.coinPackageId}::${options.coinPackageName}::${symbol.toUpperCase()}`;
     const coinPackageId = coin ? coin.address : options.coinPackageId;
     const coinPackageName = coin ? coinType.split('::')[1] : options.coinPackageName;
+    const coinDecimals = coin ? coin.decimals : options.coinDecimals;
 
     if (!coinPackageName) {
         throw new Error(`Invalid coin type, found: ${coinType}`);
+    }
+
+    if (!coinDecimals) {
+        throw new Error(`Coin decimals are required, found: ${coinDecimals}`);
     }
 
     await checkIfCoinExists(client, coinPackageId, coinType);
@@ -875,10 +881,16 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const treasury = data[0].data?.objectId ?? data[0].objectId;
 
     const txBuilder = new TxBuilder(client);
-    await txBuilder.moveCall({
-        target: `${coinPackageId}::${coinPackageName}::mint`,
-        arguments: [treasury, amount, recipient],
+
+    const unitAmount = getUnitAmount(amount, coinDecimals);
+
+    const mintedCoins = await txBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::coin::mint`,
+        arguments: [treasury, unitAmount],
+        typeArguments: [coinType],
     });
+
+    txBuilder.tx.transferObjects([mintedCoins], recipient);
 
     const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
 
