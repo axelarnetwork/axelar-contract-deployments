@@ -208,7 +208,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     }
 
     if (options.origin) {
-        const coinRegistration = options.tokenManagerMode === 'lock_unlock' ?  'register_coin' : 'register_coin_with_cap';
+        const coinRegistration = options.tokenManagerMode === 'lock_unlock' ? 'register_coin' : 'register_coin_with_cap';
 
         await postDeployTxBuilder.moveCall({
             target: `${Example.address}::its::${coinRegistration}`,
