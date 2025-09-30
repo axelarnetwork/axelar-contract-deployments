@@ -210,6 +210,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     MULTISIG=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
     REWARDS=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
     ROUTER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Router.address" | tr -d '"')
+    SERVICE_REGISTRY=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.ServiceRegistry.address" | tr -d '"')
     ```
 
     - Gov proposal environment variables. Update these for each Axelar env
@@ -392,17 +393,25 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Update ampd with the Solana chain configuration.
 
     ```bash
-    ampd register-chain-support "[service name]" $CHAIN
+    ampd register-public-key ed25519
+
+    ampd register-chain-support validator $CHAIN
     ```
 
 1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
     ```bash
-    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node [axelar rpc url]
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node [axelar rpc url]
 
     # Check reward pool to confirm funding worked
     ts-node cosmwasm/query.ts rewards $CHAIN
+    ```
+
+1. Add public key to validator set
+
+    ```bash
+    axelard query wasm contract-state smart $SERVICE_REGISTRY_ADDRESS '{"active_verifiers": {"service_name": "validators", "chain_name": "solana-5"}}' --node [axelar rpc url]
     ```
 
 1. Create genesis verifier set
@@ -410,10 +419,10 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     Note that this step can only be run once a sufficient number of verifiers have registered.
 
     ```bash
-    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
+    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2 --node [axelar rpc url]
 
     # Query the multisig prover for active verifier set
-    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
+    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
     ```
 
 ## Checklist
