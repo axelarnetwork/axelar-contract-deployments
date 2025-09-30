@@ -272,9 +272,6 @@ pub enum GatewayError {
 
     /// Error indicating an underflow occurred during epoch calculation.
     #[msg("Epoch calculation resulted in an underflow")]
-    // --- NOTICE ---
-    // this bumps the error representation to start at 500
-    // Any error after this point is deemed irrecoverable
     EpochCalculationOverflow,
 
     /// Error indicating the provided verifier set is too old.

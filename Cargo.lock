@@ -724,7 +724,6 @@ dependencies = [
  "bytemuck",
  "evm-contracts-rs",
  "evm-contracts-test-suite",
- "hex",
  "rstest",
  "solana-program",
  "test-log",

@@ -16,14 +16,12 @@ alloy-sol-types.workspace = true
 bnum.workspace = true
 borsh.workspace = true
 bytemuck.workspace = true
-hex.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
 evm-contracts-rs.workspace = true
 evm-contracts-test-suite.workspace = true
-hex.workspace = true
 rstest.workspace = true
 test-log.workspace = true
 tokio.workspace = true
