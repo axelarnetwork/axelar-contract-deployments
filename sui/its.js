@@ -594,8 +594,7 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
         typeArguments: [coinType],
     });
 
-    printInfo('🚀 Expected contract address');
-
+    printInfo('🚀 Deploying remote interchain token....');
 
     const unitAmountGas = parseUnits('1', 9).toBigInt();
 
@@ -703,8 +702,7 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] =
-        args;
+    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
 
     const walletAddress = keypair.toSuiAddress();
 
@@ -858,7 +856,6 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
 }
 
 async function processCommand(command, config, chain, args, options) {
-    
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
