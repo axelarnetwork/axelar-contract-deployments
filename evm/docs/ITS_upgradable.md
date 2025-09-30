@@ -21,7 +21,7 @@ Token liquidity should be preserved post upgrade of the ERC20 on the source chai
     a. If users are expected to redeem the old tokens in order to get new tokens, we would need to re-enable cross-chain transactions where the old tokens can be sent back to the source chain. The tokens would flow through the old Token manager unlocking the tokens, which can be sent back to destination chain via a new token manager.
     b. If users are not expected to redeem the tokens, the new ITS contracts can be created with a substitute supply that can be distributed to each token holder on the destination chains. For this approach it is necessary to transfer an equivalent amount of tokens on the source chain to the new Token Manager to lock tokens that can be redeemed whenever users send tokens back to source chain using a newly created tokenId.
 4. Connect the new ITS contracts on the destination chains with the upgraded contract on the source chain using custom token linking:
-5. For the newly created token managers on the destination chains if they are using mint/burn transfer mintership
+5. For the newly created token managers on the destination chains, if they are using mint/burn, transfer mintership to the token manager.
 
 
 ## Scenario 2: ERC20 is directly upgradable on both source and destination chains and was connected via ITS Custom Token Linking
@@ -54,13 +54,13 @@ ts-node evm/its.js register-token-metadata <tokenAddress>
 ```
 
 b. From the source chain the upgrade contract must be registered as custom token. Must define unique salt and deployer to manage connection moving forward.
-    i. This step creates the new token manager on the source chain. Depending on liquidity management strategy 
+    i. This step creates the new token manager on the source chain. Depending on liquidity management strategy, different token manager types may be selected. 
 
 ```bash
 ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress [tokenAddress] --tokenManagerType 4 --operator [wallet] --salt "salt6789"
 ```
 
-c. From the source chain the upgrade contract is linked to each new ITS contract on the destination chains. during linking process must use same salt and deployer as previous steps.
+c. From the source chain the upgrade contract is linked to each new ITS contract on the destination chains. During linking process must use same salt and deployer as previous steps.
     i. On this step it is necessary to define the token manager of the destination chains (mint/burn or lock/unlock)
 
 ```bash
