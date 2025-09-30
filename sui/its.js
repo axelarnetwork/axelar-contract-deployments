@@ -847,14 +847,14 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     if (!coin) {
         if (!options.coinPackageId || !options.coinPackageName) {
             throw new Error(
-                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringifgy(options)}`
+                `Options coinPackageId and coinPackageName are required for coins not saved in config, found: ${JSON.stringifgy(options)}`,
             );
         }
     }
 
     const coinType = coin ? coin.typeArgument : `${options.coinPackageId}::${options.coinPackageName}::${symbol.toUpperCase()}`;
     const coinPackageId = coin ? coin.address : options.coinPackageId;
-    const coinPackageName = coin ? coinType.split("::")[1] : options.coinPackageName;
+    const coinPackageName = coin ? coinType.split('::')[1] : options.coinPackageName;
 
     if (!coinPackageName) {
         throw new Error(`Invalid coin type, found: ${coinType}`);
@@ -1088,7 +1088,7 @@ if (require.main === module) {
     const mintCoinsProgram = new Command()
         .name('mint-coins')
         .command('mint-coins <symbol> <amount> <recipient>')
-        .description('Mint coins for a given token on sui')
+        .description('Mint coins for the given symbol on Sui. The token must be deployed on Sui first.')
         .addOption(new Option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved to config)'))
         .addOption(new Option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved to config)'))
         .action((symbol, amount, recipient, options) => {
