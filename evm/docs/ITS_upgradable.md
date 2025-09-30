@@ -49,7 +49,32 @@ If the custom ERC20 contract cant be directly upgraded and a new contracts must 
 ### Custom Token Linking Process
 Once contracts are deployed on source and destination chain:
 a. On source chain and destination chain the token metadata must be registered 
+```bash
+ts-node evm/its.js register-token-metadata <tokenAddress>
+```
+
 b. From the source chain the upgrade contract must be registered as custom token. Must define unique salt and deployer to manage connection moving forward.
     i. This step creates the new token manager on the source chain. Depending on liquidity management strategy 
+
+```bash
+ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress [tokenAddress] --tokenManagerType 4 --operator [wallet] --salt "salt6789"
+```
+
 c. From the source chain the upgrade contract is linked to each new ITS contract on the destination chains. during linking process must use same salt and deployer as previous steps.
     i. On this step it is necessary to define the token manager of the destination chains (mint/burn or lock/unlock)
+
+```bash
+ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain chain2 --destinationTokenAddress [remote token address] --tokenManagerType 4 --linkParams "0x" --salt "salt6789"
+```
+
+d. If any of the token managers was deployed as Mint/Burn the token mintership must be transfered to the token manager. If the contracts are ITS standard tokens the following procedure can be applied
+    i. Fetch tokenManager address for deployed token on target chain
+
+```bash
+ts-node evm/its.js token-manager-address <tokenId>
+```
+    ii. Transfer mintership for the token to the token manager retrieved in previous step
+
+```bash
+ts-node evm/its.js transfer-mintership <tokenAddress> <tokenManagerAddress>
+```
