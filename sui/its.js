@@ -489,6 +489,16 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         typeArguments: [tokenType],
     });
 
+    // Pay gas for register coin metadata cross-chain message
+    const unitAmountGas = parseUnits('1', 9).toBigInt();
+    const [gas1] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [unitAmountGas]);
+
+    await txBuilder.moveCall({
+        target: `${contracts.GasService.address}::gas_service::pay_gas`,
+        typeArguments: [suiCoinId],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, gas1, walletAddress, '0x'],
+    });
+
     await txBuilder.moveCall({
         target: `${AxelarGateway.address}::gateway::send_message`,
         arguments: [Gateway, messageTicket],
@@ -546,6 +556,15 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             tokenManagerType,
             bcs.string().serialize(linkParams).toBytes(),
         ],
+    });
+
+    // Pay gas for link coin cross-chain message  
+    const [gas2] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [unitAmountGas]);
+
+    await txBuilder.moveCall({
+        target: `${contracts.GasService.address}::gas_service::pay_gas`,
+        typeArguments: [suiCoinId],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, gas2, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
