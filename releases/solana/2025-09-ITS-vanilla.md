@@ -1,4 +1,4 @@
-# Solana ITS v1 upstream
+# Solana ITS (vanilla)
 
 ## Network Status
 
@@ -25,7 +25,7 @@
 
 ## Background
 
-This is the v1.0.0 Solana ITS release.
+This is the vanilla Solana ITS release.
 
 ## Deployment
 

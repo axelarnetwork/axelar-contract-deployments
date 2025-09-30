@@ -1,4 +1,4 @@
-# Solana GMP v1 upstream
+# Solana GMP (anchor)
 
 ## Network Status
 
@@ -56,7 +56,7 @@
 
 ## Background
 
-This is the v1.0.0 Solana GMP release.
+This is the anchor Solana GMP release.
 
 ## Deployment
 
@@ -82,16 +82,10 @@ This is the v1.0.0 Solana GMP release.
     CHAIN=<solana-custom|solana>
     ```
 
-1. Ensure you have Rust installed. If you don't:
+1. Quick install Anchor + all dependencies:
 
     ```sh
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    ```
-
-1. Install Solana CLI:
-
-    ```sh
-    sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.14/install)"
+    curl --proto '=https' --tlsv1.2 -sSfL https://solana-install.solana.workers.dev | bash
     ```
 
 1. Install `solana-verify`, for verifiable builds:
@@ -164,9 +158,9 @@ This is the v1.0.0 Solana GMP release.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Check out the `upstream` branch.
+1. Check out the `v2-anchor` branch.
 
-    - Note: This will change for real V1 release.
+    - Note: This will change for real V2 release.
 
 1. Compile the Solana programs:
 
@@ -238,46 +232,46 @@ This is the v1.0.0 Solana GMP release.
 >
 > Only run the `solana-verify` commands for mainnet
 
-1. Be sure you are back in `axelar-contract-deployments/solana` directory.
+1. Be sure you are still in `axelar-contract-deployments/solana/axelar-amplifier-solana` directory.
 
 1. Deploy and verify axelar_solana_gateway program:
 
     ```sh
-    solana program deploy --program-id $GATEWAY_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GATEWAY_PROGRAM_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair GATEWAY_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_gateway -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_gas_service program:
 
     ```sh
-    solana program deploy --program-id $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GAS_SERVICE_PROGRAM_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair GAS_SERVICE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_gas_service -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_governance program:
 
     ```sh
-    solana program deploy --program-id $GOVERNANCE_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GOVERNANCE_PROGRAM_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair GOVERNANCE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_governance -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_multicall program:
 
     ```sh
-    solana program deploy --program-id $MULTICALL_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $MULTICALL_PROGRAM_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair MULTICALL_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_multicall -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_memo_program program:
 
     ```sh
-    solana program deploy --program-id $MEMO_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $MEMO_PROGRAM_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair MEMO_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_memo_program -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. After deploying Solana contracts, deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
@@ -294,6 +288,7 @@ The initialization steps can only be performed by the upgrade authority.
     GATEWAY_PDA="[gateway-pda]"
     GAS_SERVICE_PDA="[gas-service-pda]"
     GOVERNANCE_PDA="[governance-pda]"
+    MULTICALL_PDA="[multicall-pda]"
     MEMO_PDA="[memo-pda]"
     ```
 

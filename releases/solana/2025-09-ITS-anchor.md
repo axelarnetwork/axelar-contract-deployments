@@ -1,4 +1,4 @@
-# Solana ITS v1 anchor
+# Solana ITS (anchor)
 
 ## Network Status
 
@@ -25,7 +25,7 @@
 
 ## Background
 
-This is the v1.0.0 Solana ITS release.
+This is the anchor Solana ITS release.
 
 ## Deployment
 
@@ -165,12 +165,14 @@ This is the v1.0.0 Solana ITS release.
 > If `--upgrade-authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
 > After each deployment, populate the above tables with the respective PDAs.
 
+1. Be sure you are in `axelar-contract-deployments/solana/axelar-amplifier-solana` directory.
+
 1. Deploy and verify axelar_solana_its program (only run the `solana-verify` command for mainnet):
 
     ```sh
-    solana program deploy --program-id $ITS_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH  $ITS_PROGRAM_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair ITS_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_its -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 ### Initialization Steps

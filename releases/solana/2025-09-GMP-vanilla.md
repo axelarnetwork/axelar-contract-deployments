@@ -1,4 +1,4 @@
-# Solana GMP v2 anchor
+# Solana GMP (vanilla)
 
 ## Network Status
 
@@ -56,7 +56,7 @@
 
 ## Background
 
-This is the v1.0.0 Solana GMP release.
+This is the vanilla Solana GMP release.
 
 ## Deployment
 
