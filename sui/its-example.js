@@ -189,38 +189,32 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     const postDeployTxBuilder = new TxBuilder(client);
 
+    // Mint tokens before registration (while user still holds the TreasuryCap)
+    const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+    if (amount && options.origin) {
+        const unitAmount = getUnitAmount(options.mintAmount, decimals);
+
+        const mintTxBuilder = new TxBuilder(client);
+
+        const coin = await mintTxBuilder.moveCall({
+            target: `${SUI_PACKAGE_ID}::coin::mint`,
+            arguments: [TreasuryCap, unitAmount],
+            typeArguments: [tokenType],
+        });
+
+        mintTxBuilder.tx.transferObjects([coin], walletAddress);
+
+        await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
+    }
+
     if (options.origin) {
-        // Mint tokens before registration (while user still holds the TreasuryCap)
-        const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
-        if (amount) {
-            const unitAmount = getUnitAmount(options.mintAmount, decimals);
+        const coinRegistration = options.tokenManagerMode === 'lock_unlock' ?  'register_coin' : 'register_coin_with_cap';
 
-            const mintTxBuilder = new TxBuilder(client);
-
-            const coin = await mintTxBuilder.moveCall({
-                target: `${SUI_PACKAGE_ID}::coin::mint`,
-                arguments: [TreasuryCap, unitAmount],
-                typeArguments: [tokenType],
-            });
-
-            mintTxBuilder.tx.transferObjects([coin], walletAddress);
-
-            await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
-        }
-
-        if (options.tokenManagerMode === 'lock_unlock') {
-            await postDeployTxBuilder.moveCall({
-                target: `${Example.address}::its::register_coin`,
-                arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
-                typeArguments: [tokenType],
-            });
-        } else {
-            await postDeployTxBuilder.moveCall({
-                target: `${Example.address}::its::register_coin_with_cap`,
-                arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap],
-                typeArguments: [tokenType],
-            });
-        }
+        await postDeployTxBuilder.moveCall({
+            target: `${Example.address}::its::${coinRegistration}`,
+            arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap],
+            typeArguments: [tokenType],
+        });
 
         const result = await broadcastFromTxBuilder(
             postDeployTxBuilder,
