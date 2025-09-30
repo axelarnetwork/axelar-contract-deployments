@@ -1416,13 +1416,13 @@
         },
         "AxelarGasService": {
           "address": "gasfiUSLzSZEKQiH4Nsm5Yk2rjzWWEtsk3Ji3qs1Ryw",
-          "configAccount": "TBD",
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "configAccount": "4W49irSfWZsM428BH1XJSygzmuVxJaYD8ZRZwdHseLTm",
           "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
         },
         "InterchainGovernance": {
           "address": "govWBE74GceA32mcz9CXuFV1zLvtSgkqXh4czqondBi",
-          "configAccount": "TBD",
+          "configAccount": "2mvM8Cm2FNv1Y3H9D7YXFvghmozGiwcX4eD28um7iAYY",
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "governanceChain": "Axelarnet",
           "minimumTimeDelay": 3600,
