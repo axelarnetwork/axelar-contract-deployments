@@ -835,7 +835,7 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
 
     const { data } = await client.getOwnedObjects({
         owner: walletAddress,
-        filter: { StructType: `0x2::coin::TreasuryCap<${coinType}>` },
+        filter: { StructType: `${SUI_PACKAGE_ID}::coin::TreasuryCap<${coinType}>` },
         options: { showType: true },
     });
 
