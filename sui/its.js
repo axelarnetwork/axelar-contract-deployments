@@ -714,7 +714,21 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
+    const [coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
+
+    const coinData = await client.getObject({
+        id: coinObjectId,
+        options: { showContent: true },
+    });
+
+    let coinType, coinPackageId;
+    try {
+        const coinDataType = coinData.data ? coinData.data.content.type : null;
+        coinType = coinDataType.split('<')[1].replace('>','');
+        coinPackageId = coinType.split('::')[0];
+    } catch {
+        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${coinData.data.content.type}`)
+    }
 
     const walletAddress = keypair.toSuiAddress();
 
@@ -722,14 +736,12 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const tx = txBuilder.tx;
 
     validateParameters({
-        isNonEmptyString: { coinPackageName, coinModName, destinationChain, destinationAddress },
-        isHexString: { coinPackageId, coinObjectId, tokenId },
+        isNonEmptyString: { destinationChain, destinationAddress },
+        isHexString: { coinObjectId, tokenId, coinPackageId },
         isValidNumber: { amount },
     });
 
     validateDestinationChain(config.chains, destinationChain);
-
-    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -1086,15 +1098,15 @@ if (require.main === module) {
     const interchainTransferProgram = new Command()
         .name('interchain-transfer')
         .command(
-            'interchain-transfer <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
+            'interchain-transfer <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
         )
         .description('Send interchain transfer from sui to a chain where token is linked')
         .action(
-            (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
+            (coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
                 mainProcessor(
                     interchainTransfer,
                     options,
-                    [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount],
+                    [coinObjectId, tokenId, destinationChain, destinationAddress, amount],
                     processCommand,
                 );
             },
