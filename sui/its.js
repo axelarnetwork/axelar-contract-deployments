@@ -1076,12 +1076,7 @@ if (require.main === module) {
         .command('deploy-remote-coin <coinPackageId> <tokenId> <destinationChain>')
         .description(`Deploy an interchain token on a remote chain`)
         .action((coinPackageId, tokenId, destinationChain, options) => {
-            mainProcessor(
-                deployRemoteCoin,
-                options,
-                [coinPackageId, tokenId, destinationChain],
-                processCommand,
-            );
+            mainProcessor(deployRemoteCoin, options, [coinPackageId, tokenId, destinationChain], processCommand);
         });
 
     const removeTreasuryCapProgram = new Command()
