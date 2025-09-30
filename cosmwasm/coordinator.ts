@@ -107,11 +107,6 @@ export class CoordinatorManager {
             const rewardsConfig = this.configManager.getContractConfig('Rewards');
             const multisigConfig = this.configManager.getContractConfig('Multisig');
             const routerConfig = this.configManager.getContractConfig('Router');
-            const votingVerifierConfig =
-                (this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig) || {};
-            const multisigProverConfig =
-                (this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig) || {};
-            const gatewayConfig = (this.configManager.getContractConfig('Gateway')[chainName] as GatewayChainConfig) || {};
 
             const validateRequired = <T>(value: T | undefined | null, configPath: string): T => {
                 if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
@@ -128,6 +123,19 @@ export class CoordinatorManager {
                 }
                 return value;
             };
+
+            const votingVerifierConfig = validateRequired(
+                this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig,
+                `VotingVerifier[${chainName}]`,
+            );
+            const multisigProverConfig = validateRequired(
+                this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig,
+                `MultisigProver[${chainName}]`,
+            );
+            const gatewayConfig = validateRequired(
+                this.configManager.getContractConfig('Gateway')[chainName] as GatewayChainConfig,
+                `Gateway[${chainName}]`,
+            );
 
             const gatewayCodeId: number = validateRequired(this.configManager.getContractConfig('Gateway').codeId, `Gateway.codeId`);
             const verifierCodeId: number = validateRequired(
@@ -171,6 +179,10 @@ export class CoordinatorManager {
             const verifierContractAdminAddress = admin;
             const multisigContractAdminAddress = admin;
             const gatewayContractAdminAddress = admin;
+            votingVerifierConfig.contractAdmin = verifierContractAdminAddress;
+            multisigProverConfig.contractAdmin = multisigContractAdminAddress;
+            gatewayConfig.contractAdmin = gatewayContractAdminAddress;
+
             const multisigAdminAddress = validateRequired(multisigProverConfig.adminAddress, `MultisigProver[${chainName}].adminAddress`);
             const multisigAddress = validateRequired(multisigConfig.address, `Multisig.address`);
             const verifierSetDiffThreshold = validateRequired(
@@ -182,7 +194,7 @@ export class CoordinatorManager {
                 `MultisigProver[${chainName}].signingThreshold`,
             );
             const validSalt = validateRequired(salt, 'CLI option --salt');
-            const saltUint8Array = getSalt(validSalt, chainName, chainConfig.axelarId);
+            const saltUint8Array = getSalt(validSalt, 'Coordinator', chainName);
 
             printInfo(`Code IDs - Gateway: ${gatewayCodeId}, Verifier: ${verifierCodeId}, Prover: ${proverCodeId}`);
 
