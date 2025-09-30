@@ -9,7 +9,7 @@ use solana_program::account_info::next_account_info;
 use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
-use event_cpi::Discriminator;
+use anchor_discriminators::Discriminator;
 use event_cpi_macros::{emit_cpi, event, event_cpi_accounts, event_cpi_handler};
 
 use crate::instruction::AxelarEventCpiInstruction;

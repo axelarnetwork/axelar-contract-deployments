@@ -2,6 +2,7 @@
 
 use core::fmt::Debug;
 
+use anchor_discriminators_macros::InstructionDiscriminator;
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVerifierSetInfo};
 use axelar_solana_encoding::types::messages::Message;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
@@ -15,7 +16,7 @@ use crate::state::verifier_set_tracker::VerifierSetHash;
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, PartialEq, Eq, InstructionDiscriminator)]
 pub enum GatewayInstruction {
     /// Processes incoming batch of `ApproveMessage` commands from Axelar
     ///

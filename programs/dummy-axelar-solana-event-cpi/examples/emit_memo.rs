@@ -1,6 +1,6 @@
+use anchor_discriminators::Discriminator;
 use anyhow::Result;
 use dummy_axelar_solana_event_cpi::{instruction::emit_event, processor::MemoSentEvent};
-use event_cpi::Discriminator;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{

@@ -1,5 +1,5 @@
 [package]
-name = "event-cpi-macros"
+name = "anchor-discriminators-macros"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,15 +10,14 @@ workspace = true
 proc-macro = true
 
 [dependencies]
+borsh.workspace = true
 anchor-discriminators.workspace = true
-event-cpi.workspace = true
 proc-macro2 = "1"
 quote = "1"
+convert_case = "0.8"
 syn = { version = "1", features = ["full"] }
 
 [dev-dependencies]
-borsh.workspace = true
 solana-program.workspace = true
 solana-sdk.workspace = true
 solana-program-test.workspace = true
-program-utils.workspace = true

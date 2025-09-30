@@ -8,6 +8,7 @@ license.workspace = true
 edition.workspace = true
 
 [dependencies]
+anchor-discriminators-macros.workspace = true
 solana-program.workspace = true
 spl-token = { workspace = true, features = ["no-entrypoint"] }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
@@ -47,6 +48,6 @@ testnet = [
 ]
 mainnet = [
     "axelar-solana-gateway-test-fixtures/mainnet",
-    "program-utils/mainnet", 
+    "program-utils/mainnet",
 ]
 default = ["devnet-amplifier"]

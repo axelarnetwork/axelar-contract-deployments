@@ -2,7 +2,7 @@
 //!
 //! This module provides constructors and definitions for all instructions that can be issued to the
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use anchor_discriminators_macros::InstructionDiscriminator;
 use solana_program::program_error::ProgramError;
 use solana_program::system_program;
 use solana_program::{
@@ -12,7 +12,7 @@ use solana_program::{
 
 /// Top-level instructions supported by the Axelar Solana Gas Service program.
 #[repr(u8)]
-#[derive(Clone, Debug, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
+#[derive(Clone, Debug, PartialEq, Eq, InstructionDiscriminator)]
 pub enum GasServiceInstruction {
     /// Initialize the configuration PDA.
     ///
@@ -31,17 +31,6 @@ pub enum GasServiceInstruction {
     /// 2. `[writable]` The `config_pda` account
     TransferOperatorship,
 
-    /// Use SPL tokens to pay for gas-related operations.
-    SplToken(PayWithSplToken),
-
-    /// Use SOL to pay for gas-related operations.
-    Native(PayWithNativeToken),
-}
-
-/// Instructions related to paying gas fees with SPL tokens.
-#[repr(u8)]
-#[derive(Clone, Debug, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
-pub enum PayWithSplToken {
     /// Pay gas fees for a contract call using SPL tokens.
     ///
     /// Accounts expected:
@@ -52,7 +41,7 @@ pub enum PayWithSplToken {
     /// 4. `[readonly]` The `mint` account for the SPL token.
     /// 5. `[readonly]` The `token_program` account.
     /// 6+ `[signer, readonly]` Additional signer accounts if required.
-    ForContractCall {
+    PaySplForContractCall {
         /// The target blockchain (e.g., "ethereum") for the contract call.
         destination_chain: String,
         /// The recipient address on the destination chain.
@@ -77,7 +66,7 @@ pub enum PayWithSplToken {
     /// 4. `[readonly]` The `mint` account for the SPL token.
     /// 5. `[readonly]` The `token_program` account.
     /// 6+ `[signer, readonly]` Additional signer accounts if required.
-    AddGas {
+    AddSplGas {
         /// A 64-byte unique transaction identifier.
         tx_hash: [u8; 64],
         /// The index of the log entry in the transaction.
@@ -99,7 +88,7 @@ pub enum PayWithSplToken {
     /// 3. `[writable]` The `config_pda_token_account` account holding the accrued SPL tokens to collect.
     /// 4. `[readonly]` The `mint` account for the SPL token.
     /// 5. `[readonly]` The `token_program` account.
-    CollectFees {
+    CollectSplFees {
         /// The amount of SPL tokens to be collected as fees.
         amount: u64,
         /// The decimals for the mint
@@ -115,7 +104,7 @@ pub enum PayWithSplToken {
     /// 3. `[writable]` The `config_pda_token_account` account from which SPL tokens are refunded.
     /// 4. `[readonly]` The `mint` account for the SPL token.
     /// 5. `[readonly]` The `token_program` account.
-    Refund {
+    RefundSplFees {
         /// A 64-byte unique transaction identifier
         tx_hash: [u8; 64],
         /// The index of the log entry in the transaction
@@ -125,19 +114,14 @@ pub enum PayWithSplToken {
         /// The decimals for the mint
         decimals: u8,
     },
-}
 
-/// Instructions related to paying gas fees with native SOL.
-#[repr(u8)]
-#[derive(Clone, Debug, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
-pub enum PayWithNativeToken {
     /// Pay gas fees for a contract call using native SOL.
     ///
     /// Accounts expected:
     /// 0. `[signer, writable]` The account (`payer`) paying the gas fee in lamports.
     /// 1. `[writable]` The `config_pda` account that receives the lamports.
     /// 2. `[]` The `system_program` account.
-    ForContractCall {
+    PayNativeForContractCall {
         /// The target blockchain for the contract call.
         destination_chain: String,
         /// The destination address on the target chain.
@@ -156,7 +140,7 @@ pub enum PayWithNativeToken {
     /// 1. `[signer, writable]` The account (`sender`) providing the additional lamports.
     /// 2. `[writable]` The `config_pda` account that receives the additional lamports.
     /// 3. `[]` The `system_program` account.
-    AddGas {
+    AddNativeGas {
         /// A 64-byte unique transaction identifier.
         tx_hash: [u8; 64],
         /// The index of the log entry in the transaction.
@@ -173,7 +157,7 @@ pub enum PayWithNativeToken {
     /// 1. `[signer, read-only]` The `operator` account authorized to collect fees.
     /// 2. `[writable]` The `config_pda` account holding the accrued lamports to collect.
     /// 3. `[writable]` The `receiver` account where the collected lamports will be sent.
-    CollectFees {
+    CollectNativeFees {
         /// The amount of SOL to collect as fees.
         amount: u64,
     },
@@ -184,7 +168,7 @@ pub enum PayWithNativeToken {
     /// 1. `[signer, read-only]` The `operator` account authorized to issue refunds.
     /// 2. `[writable]` The `receiver` account that will receive the refunded lamports.
     /// 3. `[writable]` The `config_pda` account from which lamports are refunded.
-    Refund {
+    RefundNativeFees {
         /// A 64-byte unique transaction identifier.
         tx_hash: [u8; 64],
         /// The index of the log entry in the transaction.
@@ -253,15 +237,13 @@ pub fn pay_native_for_contract_call_instruction(
     refund_address: Pubkey,
     gas_fee_amount: u64,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::Native(
-        PayWithNativeToken::ForContractCall {
-            destination_chain,
-            destination_address,
-            payload_hash,
-            gas_fee_amount,
-            refund_address,
-        },
-    ))?;
+    let ix_data = borsh::to_vec(&GasServiceInstruction::PayNativeForContractCall {
+        destination_chain,
+        destination_address,
+        payload_hash,
+        refund_address,
+        gas_fee_amount,
+    })?;
     let (config_pda, _bump) = crate::get_config_pda();
 
     let accounts = vec![
@@ -288,12 +270,12 @@ pub fn add_native_gas_instruction(
     gas_fee_amount: u64,
     refund_address: Pubkey,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::Native(PayWithNativeToken::AddGas {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::AddNativeGas {
         tx_hash,
         log_index,
         gas_fee_amount,
         refund_address,
-    }))?;
+    })?;
     let (config_pda, _bump) = crate::get_config_pda();
 
     let accounts = vec![
@@ -318,9 +300,7 @@ pub fn collect_native_fees_instruction(
     receiver: &Pubkey,
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::Native(
-        PayWithNativeToken::CollectFees { amount },
-    ))?;
+    let ix_data = borsh::to_vec(&GasServiceInstruction::CollectNativeFees { amount })?;
     let (config_pda, _bump) = crate::get_config_pda();
 
     let accounts = vec![
@@ -347,11 +327,11 @@ pub fn refund_native_fees_instruction(
     log_index: u64,
     fees: u64,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::Native(PayWithNativeToken::Refund {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::RefundNativeFees {
         tx_hash,
         log_index,
         fees,
-    }))?;
+    })?;
     let (config_pda, _) = crate::get_config_pda();
 
     let accounts = vec![
@@ -385,16 +365,14 @@ pub fn pay_spl_for_contract_call_instruction(
     signer_pubkeys: &[Pubkey],
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(
-        PayWithSplToken::ForContractCall {
-            destination_chain,
-            destination_address,
-            payload_hash,
-            refund_address,
-            decimals,
-            gas_fee_amount,
-        },
-    ))?;
+    let ix_data = borsh::to_vec(&GasServiceInstruction::PaySplForContractCall {
+        destination_chain,
+        destination_address,
+        payload_hash,
+        refund_address,
+        decimals,
+        gas_fee_amount,
+    })?;
     let (config_pda, _bump) = crate::get_config_pda();
     let config_pda_token_account =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -440,13 +418,13 @@ pub fn add_spl_gas_instruction(
     refund_address: Pubkey,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(PayWithSplToken::AddGas {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::AddSplGas {
         tx_hash,
         log_index,
         decimals,
         gas_fee_amount,
         refund_address,
-    }))?;
+    })?;
     let (config_pda, _bump) = crate::get_config_pda();
     let config_pda_token_account =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -487,9 +465,7 @@ pub fn collect_spl_fees_instruction(
     amount: u64,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(
-        PayWithSplToken::CollectFees { amount, decimals },
-    ))?;
+    let ix_data = borsh::to_vec(&GasServiceInstruction::CollectSplFees { amount, decimals })?;
     let (config_pda, _bump) = crate::get_config_pda();
     let config_pda_token_account =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -529,12 +505,12 @@ pub fn refund_spl_fees_instruction(
     fees: u64,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
-    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(PayWithSplToken::Refund {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::RefundSplFees {
         decimals,
         tx_hash,
         log_index,
         fees,
-    }))?;
+    })?;
     let (config_pda, _bump) = crate::get_config_pda();
     let config_pda_token_account =
         spl_associated_token_account::get_associated_token_address_with_program_id(

@@ -7,8 +7,5 @@ edition = "2021"
 workspace = true
 
 [dependencies]
+anchor-discriminators.workspace = true
 borsh.workspace = true
-serde = { workspace = true, features = ["derive"] }
-thiserror.workspace = true
-bs58 = "0.5"
-sha2 = "0.10.9"

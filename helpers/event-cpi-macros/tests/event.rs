@@ -1,6 +1,7 @@
 #![cfg(test)]
 
-use event_cpi::{CpiEvent, Discriminator};
+use anchor_discriminators::Discriminator;
+use event_cpi::CpiEvent;
 use event_cpi_macros::{emit_cpi, event, event_cpi_accounts};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::{account_info::AccountInfo, clock::Epoch, program_error::ProgramError};

@@ -190,6 +190,8 @@ event-utils = { path = "crates/event-utils" }
 event-macros = { path = "crates/event-macros" }
 event-cpi = { path = "helpers/event-cpi" }
 event-cpi-macros = { path = "helpers/event-cpi-macros" }
+anchor-discriminators = { path = "helpers/anchor-discriminators" }
+anchor-discriminators-macros = { path = "helpers/anchor-discriminators-macros" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
 gateway-event-stack = { path = "crates/gateway-event-stack", default-features = false }

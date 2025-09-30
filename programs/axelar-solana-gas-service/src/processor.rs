@@ -3,10 +3,7 @@
 use borsh::BorshDeserialize;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
-use crate::{
-    check_program_account,
-    instructions::{GasServiceInstruction, PayWithNativeToken, PayWithSplToken},
-};
+use crate::{check_program_account, instructions::GasServiceInstruction};
 
 use self::{
     initialize::process_initialize_config,
@@ -39,86 +36,85 @@ pub fn process_instruction(
         GasServiceInstruction::TransferOperatorship => {
             process_transfer_operatorship(program_id, accounts)
         }
-        GasServiceInstruction::SplToken(ix) => match ix {
-            PayWithSplToken::ForContractCall {
-                destination_chain,
-                destination_address,
-                payload_hash,
-                gas_fee_amount,
-                decimals,
-                refund_address,
-            } => process_pay_spl_for_contract_call(
-                program_id,
-                accounts,
-                destination_chain,
-                destination_address,
-                payload_hash,
-                refund_address,
-                gas_fee_amount,
-                decimals,
-            ),
-            PayWithSplToken::AddGas {
-                tx_hash,
-                log_index,
-                gas_fee_amount,
-                decimals,
-                refund_address,
-            } => add_spl_gas(
-                program_id,
-                accounts,
-                tx_hash,
-                log_index,
-                gas_fee_amount,
-                refund_address,
-                decimals,
-            ),
-            PayWithSplToken::CollectFees { amount, decimals } => {
-                collect_fees_spl(program_id, accounts, amount, decimals)
-            }
-            PayWithSplToken::Refund {
-                tx_hash,
-                log_index,
-                fees,
-                decimals,
-            } => refund_spl(program_id, accounts, tx_hash, log_index, fees, decimals),
-        },
-        GasServiceInstruction::Native(ix) => match ix {
-            PayWithNativeToken::ForContractCall {
-                destination_chain,
-                destination_address,
-                payload_hash,
-                refund_address,
-                gas_fee_amount,
-            } => process_pay_native_for_contract_call(
-                program_id,
-                accounts,
-                destination_chain,
-                destination_address,
-                payload_hash,
-                refund_address,
-                gas_fee_amount,
-            ),
-            PayWithNativeToken::AddGas {
-                tx_hash,
-                log_index,
-                gas_fee_amount,
-                refund_address,
-            } => add_native_gas(
-                program_id,
-                accounts,
-                tx_hash,
-                log_index,
-                gas_fee_amount,
-                refund_address,
-            ),
-            PayWithNativeToken::CollectFees { amount } => {
-                collect_fees_native(program_id, accounts, amount)
-            }
-            PayWithNativeToken::Refund {
-                tx_hash,
-                log_index,
-                fees,
-            } => refund_native(program_id, accounts, tx_hash, log_index, fees),
-        },
+        // Spl token instructions
+        GasServiceInstruction::PaySplForContractCall {
+            destination_chain,
+            destination_address,
+            payload_hash,
+            gas_fee_amount,
+            decimals,
+            refund_address,
+        } => process_pay_spl_for_contract_call(
+            program_id,
+            accounts,
+            destination_chain,
+            destination_address,
+            payload_hash,
+            refund_address,
+            gas_fee_amount,
+            decimals,
+        ),
+        GasServiceInstruction::AddSplGas {
+            tx_hash,
+            log_index,
+            gas_fee_amount,
+            decimals,
+            refund_address,
+        } => add_spl_gas(
+            program_id,
+            accounts,
+            tx_hash,
+            log_index,
+            gas_fee_amount,
+            refund_address,
+            decimals,
+        ),
+        GasServiceInstruction::CollectSplFees { amount, decimals } => {
+            collect_fees_spl(program_id, accounts, amount, decimals)
+        }
+        GasServiceInstruction::RefundSplFees {
+            tx_hash,
+            log_index,
+            fees,
+            decimals,
+        } => refund_spl(program_id, accounts, tx_hash, log_index, fees, decimals),
+
+        // Native token instructions
+        GasServiceInstruction::PayNativeForContractCall {
+            destination_chain,
+            destination_address,
+            payload_hash,
+            refund_address,
+            gas_fee_amount,
+        } => process_pay_native_for_contract_call(
+            program_id,
+            accounts,
+            destination_chain,
+            destination_address,
+            payload_hash,
+            refund_address,
+            gas_fee_amount,
+        ),
+        GasServiceInstruction::AddNativeGas {
+            tx_hash,
+            log_index,
+            gas_fee_amount,
+            refund_address,
+        } => add_native_gas(
+            program_id,
+            accounts,
+            tx_hash,
+            log_index,
+            gas_fee_amount,
+            refund_address,
+        ),
+        GasServiceInstruction::CollectNativeFees { amount } => {
+            collect_fees_native(program_id, accounts, amount)
+        }
+        GasServiceInstruction::RefundNativeFees {
+            tx_hash,
+            log_index,
+            fees,
+        } => refund_native(program_id, accounts, tx_hash, log_index, fees),
     }
 }

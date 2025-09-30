@@ -28,11 +28,12 @@ testnet = [
 ]
 mainnet = [
     "axelar-solana-gateway-test-fixtures/mainnet",
-    "program-utils/mainnet", 
+    "program-utils/mainnet",
 ]
 default = ["devnet-amplifier"]
 
 [dependencies]
+anchor-discriminators-macros.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding = { workspace = true, features = ["solana"] }
 bincode.workspace = true

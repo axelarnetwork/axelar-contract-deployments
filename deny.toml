@@ -227,6 +227,14 @@ license-files = []
 crate = "event-cpi-macros"
 expression = "MIT"
 license-files = []
+[[licenses.clarify]]
+crate = "anchor-discriminators"
+expression = "MIT"
+license-files = []
+[[licenses.clarify]]
+crate = "anchor-discriminators-macros"
+expression = "MIT"
+license-files = []
 
 [[licenses.clarify]]
 # The package spec the clarification applies to

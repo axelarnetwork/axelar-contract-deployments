@@ -2,11 +2,13 @@
 
 extern crate proc_macro;
 
+use anchor_discriminators::sighash;
 use quote::quote;
 use syn::parse_macro_input;
 
+// https://github.com/solana-foundation/anchor/blob/56b21edd1f4c1865e5f943537fb7f89a0ffe5ede/lang/syn/src/codegen/program/common.rs#L21
 fn gen_discriminator(namespace: &str, name: impl ToString) -> proc_macro2::TokenStream {
-    let discriminator = event_cpi::sighash(namespace, name.to_string().as_str());
+    let discriminator = sighash(namespace, name.to_string().as_str());
     format!("&{discriminator:?}").parse().unwrap()
 }
 
@@ -22,7 +24,7 @@ fn gen_discriminator(namespace: &str, name: impl ToString) -> proc_macro2::Token
 /// - Requires `borsh` crate for serialization
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// #[event]
 /// #[derive(Debug, Clone)]
 /// pub struct MyEvent {
@@ -30,6 +32,7 @@ fn gen_discriminator(namespace: &str, name: impl ToString) -> proc_macro2::Token
 ///     pub amount: u64,
 /// }
 /// ```
+// https://github.com/solana-foundation/anchor/blob/d5d7eb97979234eb1e9e32fcef66ce171a928b62/lang/attribute/event/src/lib.rs#L32
 #[proc_macro_attribute]
 pub fn event(
     _args: proc_macro::TokenStream,
@@ -38,7 +41,7 @@ pub fn event(
     let event_strct = parse_macro_input!(input as syn::ItemStruct);
     let event_name = &event_strct.ident;
 
-    let discriminator = gen_discriminator("event", event_name);
+    let discriminator = gen_discriminator(event_cpi::SIGHASH_EVENT_NAMESPACE, event_name);
 
     let ret = quote! {
         #[derive(borsh::BorshSerialize, borsh::BorshDeserialize)]
@@ -55,7 +58,7 @@ pub fn event(
             }
         }
 
-        impl event_cpi::Discriminator for #event_name {
+        impl anchor_discriminators::Discriminator for #event_name {
             const DISCRIMINATOR: &'static [u8] = #discriminator;
         }
     };
@@ -87,12 +90,13 @@ pub fn event(
 /// - `__event_cpi_authority_bump: u8` - The bump seed for the authority PDA
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// let accounts = &mut accounts.iter();
 /// event_cpi_accounts!(accounts);
 /// // or with default iterator name:
 /// event_cpi_accounts!();
 /// ```
+// https://github.com/solana-foundation/anchor/blob/d5d7eb97979234eb1e9e32fcef66ce171a928b62/lang/syn/src/parser/accounts/event_cpi.rs#L28
 #[proc_macro]
 pub fn event_cpi_accounts(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input to get the accounts list name (optional)
@@ -143,13 +147,14 @@ pub fn event_cpi_accounts(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// - `__event_cpi_authority_bump: u8` - The bump seed for authority PDA
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// let event = MyEvent {
 ///     user: *user_account.key,
 ///     amount: 1000,
 /// };
 /// emit_cpi!(event);
 /// ```
+// https://github.com/solana-foundation/anchor/blob/d5d7eb97979234eb1e9e32fcef66ce171a928b62/lang/attribute/event/src/lib.rs#L157
 #[proc_macro]
 pub fn emit_cpi(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let event_struct = parse_macro_input!(input as syn::Expr);
@@ -213,7 +218,7 @@ pub fn emit_cpi(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 /// - If instruction data doesn't match: continues normal execution (no early return)
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// pub fn process_instruction(
 ///     program_id: &Pubkey,
 ///     accounts: &[AccountInfo],
@@ -226,8 +231,8 @@ pub fn emit_cpi(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 ///     // ...
 /// }
 /// ```
-#[proc_macro]
 // https://github.com/solana-foundation/anchor/blob/5300d7cf8aaf52da08ce331db3fc8182cd821228/lang/syn/src/codegen/program/handlers.rs#L213
+#[proc_macro]
 pub fn event_cpi_handler(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input to get the accounts list name (optional)
     let instruction_data_name = if input.is_empty() {

@@ -28,6 +28,7 @@ default = ["devnet-amplifier"]
 name = "emit_memo"
 
 [dependencies]
+anchor-discriminators.workspace = true
 borsh.workspace = true
 program-utils = { workspace = true, default-features = false }
 solana-program.workspace = true
