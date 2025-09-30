@@ -1,5 +1,5 @@
 target/
 output/
-*.env
+.env
 axelar-amplifier-solana
 axelar-amplifier
