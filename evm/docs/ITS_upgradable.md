@@ -31,7 +31,7 @@ Token liquidity should be preserved post upgrade of the ERC20 on the source chai
 Developer team will have deployed a custom ERC20 contract that is directly upgradable on all chains the token is integrated with.
 Contract must be able to grant mintership role to another address
 The individual contracts are connected using custom token linking using mint/burn token managers. Developer team is in charge of performing the necessary steps and axelar will provide instructions and scripts.
-Developer team has identified a single chain to act as the source chain for creating all conections.
+Developer team has identified a single chain to act as the source chain for creating all connections.
 
 ### Procedure
 
