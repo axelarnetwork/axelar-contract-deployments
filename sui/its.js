@@ -490,13 +490,12 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for register coin metadata cross-chain message
-    const unitAmountGas = parseUnits('1', 9).toBigInt();
-    const [gas1] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [unitAmountGas]);
+    const [fee] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [options.gasFee]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
         typeArguments: [suiCoinId],
-        arguments: [contracts.GasService.objects.GasService, messageTicket, gas1, walletAddress, '0x'],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, fee, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
@@ -560,12 +559,12 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for link coin cross-chain message  
-    const [gas2] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [unitAmountGas]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [options.gasFee]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
         typeArguments: [suiCoinId],
-        arguments: [contracts.GasService.objects.GasService, messageTicket, gas2, walletAddress, '0x'],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, gas, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
@@ -1019,7 +1018,7 @@ if (require.main === module) {
 
     const linkCoinProgram = new Command()
         .name('link-coin')
-        .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
+        .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress> <gasFee>')
         .description(
             `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
         )
@@ -1028,8 +1027,8 @@ if (require.main === module) {
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
-        .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
-            mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
+        .action((symbol, name, decimals, destinationChain, destinationAddress, gasFee, options) => {
+            mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress, gasFee], processCommand);
         });
 
     const deployRemoteCoinProgram = new Command()
