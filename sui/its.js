@@ -516,7 +516,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     });
 
     // Pay gas for register coin metadata cross-chain message
-    const gasValue = await estimateITSFee(
+    const gasEstimate = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -525,7 +525,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
         config.axelar,
     );
 
-    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasEstimate.gasFeeValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
@@ -631,7 +631,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for link coin cross-chain message
-    const gasValue = await estimateITSFee(
+    const gasEstimate = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -640,7 +640,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         config.axelar,
     );
 
-    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasEstimate.gasFeeValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
