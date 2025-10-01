@@ -18,7 +18,7 @@ use crate::processor::token_manager::{DeployTokenManagerAccounts, DeployTokenMan
 use crate::state::token_manager::TokenManager;
 use crate::state::{token_manager, InterchainTokenService};
 use crate::{
-    assert_its_not_paused, assert_valid_its_root_pda, assert_valid_token_manager_pda, event,
+    assert_its_not_paused, assert_valid_its_root_pda, assert_valid_token_manager_pda, events,
     FromAccountInfoSlice,
 };
 
@@ -109,7 +109,7 @@ pub(crate) fn process_outbound<'a>(
     let deploy_salt = crate::linked_token_deployer_salt(deployer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
-    event::InterchainTokenIdClaimed {
+    events::InterchainTokenIdClaimed {
         token_id,
         deployer: *deployer.key,
         salt: deploy_salt,
@@ -125,7 +125,7 @@ pub(crate) fn process_outbound<'a>(
         token_manager.bump,
     )?;
 
-    let link_started_event = event::LinkTokenStarted {
+    let link_started_events = events::LinkTokenStarted {
         token_id,
         destination_chain,
         source_token_address: token_manager.token_address,
@@ -133,7 +133,7 @@ pub(crate) fn process_outbound<'a>(
         token_manager_type: token_manager_type.into(),
         params: link_params,
     };
-    link_started_event.emit();
+    link_started_events.emit();
 
     let message = GMPPayload::LinkToken(LinkToken {
         selector: LinkToken::MESSAGE_TYPE_ID
@@ -142,15 +142,15 @@ pub(crate) fn process_outbound<'a>(
         token_id: token_id.into(),
         token_manager_type: token_manager_type.into(),
         source_token_address: token_manager.token_address.to_bytes().into(),
-        destination_token_address: link_started_event.destination_token_address.into(),
-        link_params: link_started_event.params.into(),
+        destination_token_address: link_started_events.destination_token_address.into(),
+        link_params: link_started_events.params.into(),
     });
 
     gmp::process_outbound(
         payer,
         &gmp_accounts,
         &message,
-        link_started_event.destination_chain,
+        link_started_events.destination_chain,
         gas_value,
         signing_pda_bump,
         true,
@@ -186,7 +186,7 @@ pub(crate) fn register_token_metadata<'a>(
         decimals: mint.base.decimals,
     });
 
-    event::TokenMetadataRegistered {
+    events::TokenMetadataRegistered {
         token_address: *mint_account.key,
         decimals: mint.base.decimals,
     }
@@ -315,7 +315,7 @@ fn register_token<'a>(
         token_manager_pda_bump,
     )?;
 
-    event::InterchainTokenIdClaimed {
+    events::InterchainTokenIdClaimed {
         token_id,
         deployer: *payer.key,
         salt: deploy_salt,

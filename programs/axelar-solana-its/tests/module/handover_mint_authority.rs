@@ -101,7 +101,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenIdClaimed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenIdClaimed::try_from_log(log).ok())
         .unwrap();
 
     let target_token_id = target_token_id_event.token_id;
@@ -184,7 +184,7 @@ async fn test_handover_mint_authority_exploit_prevention(ctx: &mut ItsTestContex
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenIdClaimed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenIdClaimed::try_from_log(log).ok())
         .unwrap();
 
     let bob_token_id = bob_token_id_event.token_id;
@@ -391,7 +391,7 @@ async fn test_successful_handover_mint_authority(ctx: &mut ItsTestContext) {
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenIdClaimed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenIdClaimed::try_from_log(log).ok())
         .unwrap();
 
     let alice_token_id = alice_token_id_event.token_id;
@@ -598,7 +598,7 @@ async fn test_fail_handover_mint_authority_for_lock_unlock_token(ctx: &mut ItsTe
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenIdClaimed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenIdClaimed::try_from_log(log).ok())
         .unwrap();
 
     let token_id = token_id_event.token_id;

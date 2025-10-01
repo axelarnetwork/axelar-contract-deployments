@@ -20,7 +20,7 @@ use token_manager::handover_mint_authority;
 
 use crate::instruction::InterchainTokenServiceInstruction;
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, check_program_account, event, Roles};
+use crate::{assert_valid_its_root_pda, check_program_account, events, Roles};
 
 pub(crate) mod gmp;
 pub(crate) mod interchain_token;
@@ -551,7 +551,7 @@ fn process_set_trusted_chain<'a>(
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
-    let trusted_chain_event = event::TrustedChainSet { chain_name };
+    let trusted_chain_event = events::TrustedChainSet { chain_name };
     trusted_chain_event.emit();
     its_root_config.add_trusted_chain(trusted_chain_event.chain_name);
     its_root_config.store(payer, its_root_pda, system_account)?;
@@ -584,7 +584,7 @@ fn process_remove_trusted_chain<'a>(
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
-    event::TrustedChainRemoved {
+    events::TrustedChainRemoved {
         chain_name: chain_name.to_owned(),
     }
     .emit();

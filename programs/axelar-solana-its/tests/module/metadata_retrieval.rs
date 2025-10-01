@@ -46,7 +46,7 @@ async fn test_metadata_retrieval_with_metaplex_fallback(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(
@@ -99,7 +99,7 @@ async fn test_metadata_retrieval_with_metaplex_fallback(
         .log_messages
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTokenDeploymentStarted::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTokenDeploymentStarted::try_from_log(log).ok()
         })
         .unwrap();
 
@@ -231,7 +231,7 @@ async fn test_metadata_retrieval_with_token_2022_embedded(
         .log_messages
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTokenDeploymentStarted::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTokenDeploymentStarted::try_from_log(log).ok()
         })
         .unwrap();
 
@@ -317,7 +317,7 @@ async fn test_metadata_retrieval_with_token_2022_external_pointer(
         .log_messages
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTokenDeploymentStarted::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTokenDeploymentStarted::try_from_log(log).ok()
         })
         .unwrap();
 

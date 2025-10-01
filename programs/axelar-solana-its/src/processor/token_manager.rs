@@ -25,7 +25,7 @@ use spl_token_2022::state::Mint;
 
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, event, Validate};
+use crate::{assert_valid_its_root_pda, events, Validate};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
 
 pub(crate) fn set_flow_limit<'a>(
@@ -45,10 +45,10 @@ pub(crate) fn set_flow_limit<'a>(
     token_manager.flow_slot.flow_limit = flow_limit;
     token_manager.store(payer, token_manager_pda, system_account)?;
 
-    // TODO: Current implementation doesn't support Option<T>. When updating the events to be emitted
-    // through CPI, we need to emit this event.
+    // TODO: Current implementation doesn't support Option<T>. When updating the eventss to be emitted
+    // through CPI, we need to emit this events.
 
-    // event::FlowLimitSet {
+    // events::FlowLimitSet {
     //     token_id: token_manager.token_id,
     //     operator: *accounts.flow_limiter.key,
     //     flow_limit,
@@ -156,7 +156,7 @@ pub(crate) fn deploy<'a>(
         ],
     )?;
 
-    event::TokenManagerDeployed {
+    events::TokenManagerDeployed {
         token_id: deploy_token_manager.token_id,
         token_manager: *accounts.token_manager_pda.key,
         token_manager_type: deploy_token_manager.manager_type.into(),

@@ -154,7 +154,7 @@ async fn test_canonical_token_with_fee_lock_unlock(ctx: &mut ItsTestContext) -> 
     let transfer_logs = transfer_tx.metadata.unwrap().log_messages;
     let transfer_event = transfer_logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTransfer::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTransfer::try_from_log(log).ok())
         .unwrap();
 
     let amount_after_fee = transfer_amount.checked_sub(fee).unwrap();
@@ -296,7 +296,7 @@ async fn test_canonical_token_various_fee_configs(ctx: &mut ItsTestContext) -> a
     let transfer_logs = transfer_tx.metadata.unwrap().log_messages;
     let transfer_event = transfer_logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTransfer::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTransfer::try_from_log(log).ok())
         .unwrap();
 
     let amount_after_fee = transfer_amount.checked_sub(fee).unwrap();
@@ -436,7 +436,7 @@ async fn test_canonical_token_maximum_fee_cap(ctx: &mut ItsTestContext) -> anyho
     let transfer_logs = transfer_tx.metadata.unwrap().log_messages;
     let transfer_event = transfer_logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTransfer::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTransfer::try_from_log(log).ok())
         .unwrap();
 
     let expected_after_fee = large_amount - maximum_fee;
@@ -662,7 +662,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
     let outbound_logs = outbound_tx.metadata.as_ref().unwrap().log_messages.clone();
     let outbound_event = outbound_logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTransfer::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTransfer::try_from_log(log).ok())
         .unwrap();
 
     let outbound_amount_after_fee = transfer_amount.checked_sub(outbound_fee).unwrap();
@@ -741,7 +741,7 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
     let received_event = inbound_logs
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTransferReceived::try_from_log(log).ok()
         })
         .unwrap();
 

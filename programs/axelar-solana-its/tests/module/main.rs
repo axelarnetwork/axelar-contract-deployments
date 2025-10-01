@@ -307,7 +307,7 @@ impl ItsTestContext {
             .log_messages
             .iter()
             .find_map(|log| {
-                axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok()
+                axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok()
             })
             .unwrap();
 
@@ -387,7 +387,7 @@ impl ItsTestContext {
         let logs = tx.metadata.unwrap().log_messages;
         let transfer_event = logs
             .iter()
-            .find_map(|log| axelar_solana_its::event::InterchainTransfer::try_from_log(log).ok())
+            .find_map(|log| axelar_solana_its::events::InterchainTransfer::try_from_log(log).ok())
             .unwrap();
 
         assert_eq!(transfer_event.amount, amount);
@@ -452,7 +452,7 @@ impl ItsTestContext {
         let transfer_received_event = logs
             .iter()
             .find_map(|log| {
-                axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+                axelar_solana_its::events::InterchainTransferReceived::try_from_log(log).ok()
             })
             .unwrap();
         assert_eq!(transfer_received_event.amount, amount_back);

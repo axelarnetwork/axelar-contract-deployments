@@ -135,7 +135,7 @@ async fn test_inbound_transfer_using_token_account_mint_burn(
     let transfer_received_event = logs
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTransferReceived::try_from_log(log).ok()
         })
         .expect("InterchainTransferReceived event should be present");
 
@@ -216,7 +216,7 @@ async fn test_inbound_transfer_using_token_account_lock_unlock(
     let transfer_received_event = logs
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTransferReceived::try_from_log(log).ok()
         })
         .expect("InterchainTransferReceived event should be present");
 
@@ -285,7 +285,7 @@ async fn test_inbound_transfer_using_wallet_mint_burn(
     let transfer_received_event = logs
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTransferReceived::try_from_log(log).ok()
         })
         .expect("InterchainTransferReceived event should be present");
 
@@ -372,7 +372,7 @@ async fn test_inbound_transfer_using_wallet_lock_unlock(
     let transfer_received_event = logs
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTransferReceived::try_from_log(log).ok()
         })
         .expect("InterchainTransferReceived event should be present");
 

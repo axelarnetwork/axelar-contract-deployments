@@ -118,7 +118,7 @@ async fn test_local_deployment_succeeds_with_valid_lengths(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(deploy_event.name, valid_name);
@@ -157,7 +157,7 @@ async fn test_local_deployment_succeeds_with_max_lengths(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(deploy_event.name, max_name);
@@ -226,7 +226,7 @@ async fn test_incoming_deployment_truncates_long_name(
     let logs = result.metadata.unwrap().log_messages;
     let deploy_event = logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .expect("Should emit InterchainTokenDeployed event");
 
     assert_eq!(
@@ -300,7 +300,7 @@ async fn test_incoming_deployment_truncates_long_symbol(
     let logs = result.metadata.unwrap().log_messages;
     let deploy_event = logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .expect("Should emit InterchainTokenDeployed event");
 
     assert_eq!(deploy_event.name, valid_name);
@@ -366,7 +366,7 @@ async fn test_incoming_deployment_truncates_long_name_and_symbol(
     let logs = result.metadata.unwrap().log_messages;
     let deploy_event = logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .expect("Should emit InterchainTokenDeployed event");
 
     assert_eq!(deploy_event.name.len(), 32);
@@ -437,7 +437,7 @@ async fn test_incoming_deployment_succeeds_with_valid_lengths(
     let logs = result.metadata.unwrap().log_messages;
     let deploy_event = logs
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .expect("Should emit InterchainTokenDeployed event");
 
     assert_eq!(deploy_event.name, valid_name);

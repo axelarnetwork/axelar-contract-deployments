@@ -84,7 +84,7 @@ async fn test_deploy_interchain_token_with_minter_but_no_initial_supply(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(
@@ -186,7 +186,7 @@ async fn test_deploy_interchain_token_with_large_initial_supply(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(
@@ -252,7 +252,7 @@ async fn test_deploy_interchain_token_with_no_minter_but_initial_supply(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(

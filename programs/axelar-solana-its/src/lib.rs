@@ -14,7 +14,7 @@ use state::interchain_transfer_execute::InterchainTransferExecute;
 use state::InterchainTokenService;
 
 mod entrypoint;
-pub mod event;
+pub mod events;
 pub mod executable;
 pub mod instruction;
 pub mod processor;

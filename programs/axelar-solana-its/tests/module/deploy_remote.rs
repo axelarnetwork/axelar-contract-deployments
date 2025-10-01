@@ -36,7 +36,7 @@ async fn test_deploy_remote_interchain_token_with_valid_metadata(
         .unwrap()
         .log_messages
         .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
+        .find_map(|log| axelar_solana_its::events::InterchainTokenDeployed::try_from_log(log).ok())
         .unwrap();
 
     assert_eq!(
@@ -86,7 +86,7 @@ async fn test_deploy_remote_interchain_token_with_valid_metadata(
         .log_messages
         .iter()
         .find_map(|log| {
-            axelar_solana_its::event::InterchainTokenDeploymentStarted::try_from_log(log).ok()
+            axelar_solana_its::events::InterchainTokenDeploymentStarted::try_from_log(log).ok()
         })
         .unwrap();
 

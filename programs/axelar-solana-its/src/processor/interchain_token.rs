@@ -36,7 +36,7 @@ use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
-    assert_its_not_paused, assert_valid_deploy_approval_pda, event, find_its_root_pda, Validate,
+    assert_its_not_paused, assert_valid_deploy_approval_pda, events, find_its_root_pda, Validate,
 };
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
@@ -184,7 +184,7 @@ pub(crate) fn process_deploy<'a>(
         return Err(ProgramError::InvalidArgument);
     }
 
-    event::InterchainTokenIdClaimed {
+    events::InterchainTokenIdClaimed {
         token_id,
         deployer: *parsed_accounts.deployer.key,
         salt: deploy_salt,
@@ -273,7 +273,7 @@ pub(crate) fn process_inbound_deploy<'a>(
         token_manager_pda_bump,
     )?;
 
-    event::InterchainTokenDeployed {
+    events::InterchainTokenDeployed {
         token_id,
         token_address: *deploy_token_manager_accounts.token_mint.key,
         minter: deploy_token_manager_accounts
@@ -401,7 +401,7 @@ pub(crate) fn process_outbound_deploy<'a>(
         return Err(ProgramError::InvalidArgument);
     }
 
-    let deployment_started_event = event::InterchainTokenDeploymentStarted {
+    let deployment_started_events = events::InterchainTokenDeploymentStarted {
         token_id,
         token_name: name,
         token_symbol: symbol,
@@ -412,15 +412,15 @@ pub(crate) fn process_outbound_deploy<'a>(
             .unwrap_or_default(),
         destination_chain: destination_chain.clone(),
     };
-    deployment_started_event.emit();
+    deployment_started_events.emit();
 
     let message = GMPPayload::DeployInterchainToken(DeployInterchainToken {
         selector: DeployInterchainToken::MESSAGE_TYPE_ID
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         token_id: token_id.into(),
-        name: deployment_started_event.token_name,
-        symbol: deployment_started_event.token_symbol,
+        name: deployment_started_events.token_name,
+        symbol: deployment_started_events.token_symbol,
         decimals: mint_data.decimals,
         minter: destination_minter_data
             .as_ref()
@@ -768,7 +768,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
         ],
     )?;
 
-    event::DeployRemoteInterchainTokenApproval {
+    events::DeployRemoteInterchainTokenApproval {
         minter: *minter.key,
         deployer,
         token_id,
@@ -810,7 +810,7 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
         approval.bump,
     )?;
 
-    event::RevokeRemoteInterchainTokenApproval {
+    events::RevokeRemoteInterchainTokenApproval {
         minter: *minter.key,
         deployer,
         token_id,

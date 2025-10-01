@@ -28,7 +28,7 @@ use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::FlowDirection;
 use crate::state::token_manager::{self, TokenManager};
 use crate::{
-    assert_valid_interchain_transfer_execute_pda, assert_valid_token_manager_pda, event,
+    assert_valid_interchain_transfer_execute_pda, assert_valid_token_manager_pda, events,
     initiate_interchain_execute_pda_if_empty, seed_prefixes, FromAccountInfoSlice, Validate,
 };
 
@@ -88,11 +88,11 @@ pub(super) fn is_valid_token_account(
 ///    Account (ATA) for that address.
 ///    
 ///    For security, the program verifies that the ATA's owner matches the `destination_address`:
-///    - **SPL Token 2022 ATAs**: Always safe (have `ImmutableOwner` extension preventing ownership
+///    - **SPL Token 2022 ATAs**: Always safe (have `ImmutableOwner` extension preventsing ownership
 ///    changes)
 ///    - **SPL Token ATAs**: Can have ownership transferred, creating a security risk
 ///    
-///    If ownership verification fails, the transaction is rejected to prevent funds being sent to
+///    If ownership verification fails, the transaction is rejected to prevents funds being sent to
 ///    accounts controlled by unexpected parties./
 ///
 /// # Errors
@@ -125,7 +125,7 @@ pub(crate) fn process_inbound_transfer<'a>(
     // Check if source is already a valid token account for this mint
     let transferred_amount = give_token(&parsed_accounts, &token_manager, converted_amount)?;
 
-    event::InterchainTransferReceived {
+    events::InterchainTransferReceived {
         command_id: command_id(&message.cc_id.chain, &message.cc_id.id),
         token_id: token_manager.token_id,
         source_chain,
@@ -258,7 +258,7 @@ fn build_axelar_interchain_token_execute(
 ///
 /// This function handles transfers where the source address should be the sender
 /// (user account). It validates that the sender is a user account and not a
-/// program or PDA to ensure proper source attribution in the transfer event.
+/// program or PDA to ensure proper source attribution in the transfer events.
 pub(crate) fn process_user_interchain_transfer<'a>(
     accounts: &'a [AccountInfo<'a>],
     token_id: [u8; 32],
@@ -396,7 +396,7 @@ pub(crate) fn process_outbound_transfer<'a>(
     let amount_minus_fees = take_token(&take_token_accounts, &token_manager, amount)?;
     amount = amount_minus_fees;
 
-    let transfer_event = event::InterchainTransfer {
+    let transfer_event = events::InterchainTransfer {
         token_id,
         source_address,
         source_token_account: *take_token_accounts.source_ata.key,
