@@ -518,6 +518,8 @@ Deploys a source coin and links it with a destination chain coin. If a `channel`
 
 ```bash
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
+
+node sui/its.js link-coin-with-channel <symbol> <destinationChain> <destinationAddress> --channel <channelId> --tokenManagerMode <lock_unlock|mint_burn> --gasValue <amount_in_SUI> --saltAddress <addr>
 ```
 
 ### Deploy Remote Interchain Coin
