@@ -616,7 +616,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Link params (only outbound chain supported for now)
-    const linkParams = options.destinationOperator ? options.destinationOperator : '';
+    const linkParams = options.destinationOperator ? options.destinationOperator : '0x';
 
     const messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::link_coin`,
