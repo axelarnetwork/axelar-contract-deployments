@@ -572,6 +572,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // Coin params
     const coin = contracts[symbol.toUpperCase()];
+    const decimals = coin.decimals;
     const metadata = coin.objects.Metadata;
     const packageId = coin.address;
     const tokenType = coin.typeArgument;
