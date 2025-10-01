@@ -7,7 +7,6 @@ const {
     getChainConfig,
     parseTrustedChains,
     validateParameters,
-    isValidNumber,
     validateDestinationChain,
     estimateITSFee,
 } = require('../common/utils');
@@ -19,8 +18,9 @@ const {
     deployTokenFromInfo,
     getAllowedFunctions,
     getObjectIdsByObjectTypes,
-    getStructs,
     getWallet,
+    getFormattedAmount,
+    getUnitAmount,
     itsFunctions,
     printWalletInfo,
     registerCustomCoinUtil,
@@ -582,14 +582,27 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     const tx = txBuilder.tx;
 
-    const [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain] = args;
+    const [coinPackageId, tokenId, destinationChain] = args;
 
     validateParameters({
-        isNonEmptyString: { coinPackageName, coinModName, destinationChain },
+        isNonEmptyString: { destinationChain },
         isHexString: { coinPackageId, tokenId },
     });
 
     validateDestinationChain(config.chains, destinationChain);
+
+    // TODO: find a better way to fetch coinType this is hacky
+    let coinPackageName, coinModName;
+    try {
+        const packageData = await client.getObject({
+            id: coinPackageId,
+            options: { showContent: true },
+        });
+        coinPackageName = Object.keys(packageData.data.content.disassembled)[0];
+        coinModName = coinPackageName.toUpperCase();
+    } catch {
+        throw new Error(`Failed parsing package ${coinPackageId}`);
+    }
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
@@ -714,7 +727,21 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
+    const [coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
+
+    const coinData = await client.getObject({
+        id: coinObjectId,
+        options: { showContent: true },
+    });
+
+    let coinType, coinPackageId;
+    try {
+        const coinDataType = coinData.data ? coinData.data.content.type : null;
+        coinType = coinDataType.split('<')[1].replace('>', '');
+        coinPackageId = coinType.split('::')[0];
+    } catch {
+        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${coinData.data.content.type}`);
+    }
 
     const walletAddress = keypair.toSuiAddress();
 
@@ -722,14 +749,12 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const tx = txBuilder.tx;
 
     validateParameters({
-        isNonEmptyString: { coinPackageName, coinModName, destinationChain, destinationAddress },
-        isHexString: { coinPackageId, coinObjectId, tokenId },
+        isNonEmptyString: { destinationChain, destinationAddress },
+        isHexString: { coinObjectId, tokenId, coinPackageId },
         isValidNumber: { amount },
     });
 
     validateDestinationChain(config.chains, destinationChain);
-
-    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -832,11 +857,42 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
 }
 
 async function mintCoins(keypair, client, config, contracts, args, options) {
-    const [coinPackageId, coinPackageName, coinModName, amount, receiver] = args;
+    const [symbol, amount, recipient] = args;
 
     const walletAddress = keypair.toSuiAddress();
 
-    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+    validateParameters({
+        isNonEmptyString: { symbol, amount, recipient },
+    });
+
+    if (isNaN(amount)) {
+        throw new Error(`Amount to be minted must be a valid number, found: ${amount}`);
+    }
+
+    const coin = contracts[symbol.toUpperCase()];
+
+    if (!coin) {
+        if (!options.coinPackageId || !options.coinPackageName || !options.coinDecimals) {
+            throw new Error(
+                `Options coinPackageId, coinPackageName and coinDecimals are required for coins not saved in config, found: ${JSON.stringify(
+                    [options.coinPackageId, options.coinPackageName, options.coinDecimals],
+                )}`,
+            );
+        }
+    }
+
+    const coinType = coin ? coin.typeArgument : `${options.coinPackageId}::${options.coinPackageName}::${symbol.toUpperCase()}`;
+    const coinPackageId = coin ? coin.address : options.coinPackageId;
+    const coinPackageName = coin ? coinType.split('::')[1] : options.coinPackageName;
+    const coinDecimals = coin ? coin.decimals : options.coinDecimals;
+
+    if (!coinPackageName) {
+        throw new Error(`Invalid coin type, found: ${coinType}`);
+    }
+
+    if (!coinDecimals) {
+        throw new Error(`Coin decimals are required, found: ${coinDecimals}`);
+    }
 
     await checkIfCoinExists(client, coinPackageId, coinType);
 
@@ -853,21 +909,27 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const treasury = data[0].data?.objectId ?? data[0].objectId;
 
     const txBuilder = new TxBuilder(client);
-    await txBuilder.moveCall({
-        target: `${coinPackageId}::${coinPackageName}::mint`,
-        arguments: [treasury, amount, receiver],
+
+    const unitAmount = getUnitAmount(amount, coinDecimals);
+
+    const mintedCoins = await txBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::coin::mint`,
+        arguments: [treasury, unitAmount],
+        typeArguments: [coinType],
     });
 
-    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${coinPackageId}`, options);
+    txBuilder.tx.transferObjects([mintedCoins], recipient);
+
+    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${symbol}`, options);
 
     const balance = (
         await client.getBalance({
-            owner: receiver,
-            coinType: `${coinPackageId}::${coinPackageName}::${coinModName}`,
+            owner: recipient,
+            coinType,
         })
     ).totalBalance;
 
-    printInfo('💰 receiver token balance', balance);
+    printInfo('💰 recipient token balance', getFormattedAmount(balance));
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
@@ -894,8 +956,6 @@ async function mainProcessor(command, options, args, processor) {
 if (require.main === module) {
     const program = new Command();
     program.name('InterchainTokenService').description('SUI InterchainTokenService scripts');
-
-    // v0 release
 
     // This command is used to setup the trusted chains on the InterchainTokenService contract.
     // The trusted chain is used to verify the message from the source chain.
@@ -925,7 +985,6 @@ if (require.main === module) {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
-    // v1 release
     const registerCoinFromInfoProgram = new Command()
         .name('register-coin-from-info')
         .command('register-coin-from-info <symbol> <name> <decimals>')
@@ -1014,15 +1073,10 @@ if (require.main === module) {
 
     const deployRemoteCoinProgram = new Command()
         .name('deploy-remote-coin')
-        .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <tokenId> <destinationChain>')
+        .command('deploy-remote-coin <coinPackageId> <tokenId> <destinationChain>')
         .description(`Deploy an interchain token on a remote chain`)
-        .action((coinPackageId, coinPackageName, coinModName, tokenId, destinationChain, options) => {
-            mainProcessor(
-                deployRemoteCoin,
-                options,
-                [coinPackageId, coinPackageName, coinModName, tokenId, destinationChain],
-                processCommand,
-            );
+        .action((coinPackageId, tokenId, destinationChain, options) => {
+            mainProcessor(deployRemoteCoin, options, [coinPackageId, tokenId, destinationChain], processCommand);
         });
 
     const removeTreasuryCapProgram = new Command()
@@ -1051,49 +1105,45 @@ if (require.main === module) {
 
     const interchainTransferProgram = new Command()
         .name('interchain-transfer')
-        .command(
-            'interchain-transfer <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
-        )
+        .command('interchain-transfer <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('Send interchain transfer from sui to a chain where token is linked')
-        .action(
-            (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
-                mainProcessor(
-                    interchainTransfer,
-                    options,
-                    [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount],
-                    processCommand,
-                );
-            },
-        );
+        .action((coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
+            mainProcessor(
+                interchainTransfer,
+                options,
+                [coinObjectId, tokenId, destinationChain, destinationAddress, amount],
+                processCommand,
+            );
+        });
 
     const mintCoinsProgram = new Command()
         .name('mint-coins')
-        .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <amount> <receiver>')
-        .description('Mint coins for a given package on sui')
-        .action((coinPackageId, coinPackageName, coinModName, amount, receiver, options) => {
-            mainProcessor(mintCoins, options, [coinPackageId, coinPackageName, coinModName, amount, receiver], processCommand);
+        .command('mint-coins <symbol> <amount> <recipient>')
+        .description('Mint coins for the given symbol on Sui. The token must be deployed on Sui first.')
+        .addOption(new Option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved in config)'))
+        .addOption(new Option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved in config)'))
+        .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimal precision (mandatory if coin is not saved in config)'))
+        .action((symbol, amount, recipient, options) => {
+            mainProcessor(mintCoins, options, [symbol, amount, recipient], processCommand);
         });
 
-    program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
-    program.addCommand(removeTrustedChainsProgram);
-
-    // v1
+    program.addCommand(checkVersionControlProgram);
+    program.addCommand(deployRemoteCoinProgram);
+    program.addCommand(giveUnlinkedCoinProgram);
+    program.addCommand(interchainTransferProgram);
+    program.addCommand(linkCoinProgram);
+    program.addCommand(mintCoinsProgram);
+    program.addCommand(migrateAllCoinMetadataProgram);
+    program.addCommand(migrateCoinMetadataProgram);
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
-    program.addCommand(migrateCoinMetadataProgram);
-    program.addCommand(migrateAllCoinMetadataProgram);
-    program.addCommand(giveUnlinkedCoinProgram);
-    program.addCommand(removeUnlinkedCoinProgram);
-    program.addCommand(linkCoinProgram);
-    program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
+    program.addCommand(removeTrustedChainsProgram);
+    program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(restoreTreasuryCapProgram);
-    program.addCommand(checkVersionControlProgram);
-    program.addCommand(interchainTransferProgram);
-
-    program.addCommand(mintCoinsProgram);
+    program.addCommand(setFlowLimitsProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
