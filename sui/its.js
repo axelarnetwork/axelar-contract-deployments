@@ -515,49 +515,9 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
     }
 
-    const channel = options.channel ? options.channel : channelId;
-
-    // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
-    // This submits a LinkToken msg type to ITS Hub.
-    txBuilder = new TxBuilder(client);
-
-    // Token manager type
-    const tokenManagerType = await txBuilder.moveCall({
-        target: `${itsConfig.address}::token_manager_type::${tokenManager}`,
-    });
-
-    // Salt
-    const salt = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [saltAddress],
-    });
-
-    // Link params (only outbound chain supported for now)
-    const linkParams = options.destinationOperator ? options.destinationOperator : '';
-
-    messageTicket = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::link_coin`,
-        arguments: [
-            InterchainTokenService,
-            channel,
-            salt,
-            destinationChain, // This assumes the chain is already added as a trusted chain
-            bcs.string().serialize(destinationAddress).toBytes(),
-            tokenManagerType,
-            bcs.string().serialize(linkParams).toBytes(),
-        ],
-    });
-
-    await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::gateway::send_message`,
-        arguments: [Gateway, messageTicket],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (${symbol})`, options);
-
-    // Linked tokens (source / destination)
+    printInfo(`ChannelId : ${channelId}`);
+    
     const sourceToken = { metadata, packageId, tokenType, treasuryCap };
-    const linkedToken = { destinationChain, destinationAddress };
 
     // Save deployed tokens
     saveTokenDeployment(
@@ -569,7 +529,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         tokenId,
         sourceToken.treasuryCap,
         sourceToken.metadata,
-        [linkedToken],
+        [],
         saltAddress,
     );
 }
@@ -876,6 +836,69 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     return [balance, coinChanged.objectId];
 }
 
+async function linkCoinWithChannel(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const { Gateway } = AxelarGateway.objects;
+
+    const [symbol, destinationChain, destinationAddress] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    if (!options.channel) {
+        throw new Error('Missing required --channel <channelId>');
+    }
+
+    const tokenManager = options.tokenManagerMode;
+    const saltAddress = contracts[symbol.toUpperCase()]?.saltAddress || options.saltAddress;
+
+    if (!saltAddress) {
+        throw new Error('Missing saltAddress: pass --saltAddress or ensure coin was registered and saved in config.');
+    }
+
+    let txBuilder = new TxBuilder(client);
+
+    const tokenManagerType = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_manager_type::${tokenManager}`,
+    });
+
+    const salt = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::bytes32::new`,
+        arguments: [saltAddress],
+    });
+
+    const linkParams = options.destinationOperator ? options.destinationOperator : '';
+
+    const messageTicket = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::link_coin`,
+        arguments: [
+            InterchainTokenService,
+            options.channel,
+            salt,
+            destinationChain,
+            bcs.string().serialize(destinationAddress).toBytes(),
+            tokenManagerType,
+            bcs.string().serialize(linkParams).toBytes(),
+        ],
+    });
+
+    const tx = txBuilder.tx;
+    const [gas] = tx.splitCoins(tx.gas, [options.gasValue]);
+
+    await txBuilder.moveCall({
+        target: `${contracts.GasService.address}::gas_service::pay_gas`,
+        typeArguments: [suiCoinId],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, gas, walletAddress, '0x'],
+    });
+
+    await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::gateway::send_message`,
+        arguments: [Gateway, messageTicket],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (channel=${options.channel})`, options);
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -1012,6 +1035,21 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
+    const linkCoinWithChannelProgram = new Command()
+        .name('link-coin-with-channel')
+        .command('link-coin-with-channel <symbol> <destinationChain> <destinationAddress>')
+        .description('Link a coin using a provided channelId (no registration step)')
+        .addOption(new Option('--channel <channel>', 'Existing channel ID to use').makeOptionMandatory(true))
+        .addOption(
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
+        )
+        .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
+        .requiredOption('--gasValue <amount>', 'Amount to pay gas (SUI full units)', parseSuiUnitAmount)
+        .addOption(new Option('--saltAddress <address>', 'Salt address to derive tokenId'))
+        .action((symbol, destinationChain, destinationAddress, options) => {
+            mainProcessor(linkCoinWithChannel, options, [symbol, destinationChain, destinationAddress], processCommand);
+        });
+
     const deployRemoteCoinProgram = new Command()
         .name('deploy-remote-coin')
         .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <tokenId> <destinationChain>')
@@ -1087,6 +1125,7 @@ if (require.main === module) {
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
+    program.addCommand(linkCoinWithChannelProgram);
     program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
