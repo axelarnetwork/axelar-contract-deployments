@@ -516,7 +516,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     }
 
     printInfo(`ChannelId : ${channelId}`);
-    
+
     const sourceToken = { metadata, packageId, tokenType, treasuryCap };
 
     // Save deployed tokens
