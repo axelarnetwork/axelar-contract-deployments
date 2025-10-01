@@ -280,9 +280,9 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     }
 
     // validate that the contract configs exist
-    config.axelar.contracts.getContractConfigByChain('Gateway', chainName);
-    config.axelar.contracts.getContractConfigByChain('VotingVerifier', chainName);
-    config.axelar.contracts.getContractConfigByChain('MultisigProver', chainName);
+    config.getContractConfigByChain('Gateway', chainName);
+    config.getContractConfigByChain('VotingVerifier', chainName);
+    config.getContractConfigByChain('MultisigProver', chainName);
 
     if (options.fetchCodeId) {
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
