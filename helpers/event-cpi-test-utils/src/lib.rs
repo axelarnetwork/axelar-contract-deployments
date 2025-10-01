@@ -46,5 +46,7 @@ pub fn assert_event_cpi<E: event_cpi::CpiEvent + std::fmt::Debug + PartialEq>(
     ixs: &[solana_sdk::inner_instruction::InnerInstruction],
 ) {
     let found = contains_event_cpi(event, ixs);
+
+    // TODO print event name/details
     assert!(found, "Event not found in inner instructions");
 }

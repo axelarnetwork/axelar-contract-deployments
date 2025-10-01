@@ -1,8 +1,6 @@
-use axelar_solana_gas_service_events::events::{GasServiceEvent, NativeGasRefundedEvent};
-use axelar_solana_gateway_test_fixtures::{
-    assert_msg_present_in_logs, base::TestFixture, gas_service::get_gas_service_events,
-};
-use gateway_event_stack::ProgramInvocationState;
+use axelar_solana_gas_service::events::NativeGasRefundedEvent;
+use axelar_solana_gateway_test_fixtures::{assert_msg_present_in_logs, base::TestFixture};
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{signature::Keypair, signer::Signer};
 
@@ -40,7 +38,43 @@ async fn test_refund_native() {
     )
     .unwrap();
 
-    let res = test_fixture
+    // First simulate to check events
+    let simulation_result = test_fixture
+        .simulate_tx_with_custom_signers(
+            &[ix.clone()],
+            &[
+                // pays for tx
+                &test_fixture.payer.insecure_clone(),
+                // operator for config pda deduction
+                &gas_utils.operator,
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(!inner_ixs.is_empty());
+
+    let expected_event = NativeGasRefundedEvent {
+        config_pda: gas_utils.config_pda,
+        tx_hash,
+        log_index,
+        receiver: refunded_user.pubkey(),
+        fees: gas_amount,
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Execute the transaction
+    let _res = test_fixture
         .send_tx_with_custom_signers(
             &[ix],
             &[
@@ -52,25 +86,6 @@ async fn test_refund_native() {
         )
         .await
         .unwrap();
-
-    // assert event
-    let emitted_events = get_gas_service_events(&res).into_iter().next().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GasServiceEvent::NativeGasRefunded(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    assert_eq!(
-        emitted_event,
-        &NativeGasRefundedEvent {
-            config_pda: gas_utils.config_pda,
-            tx_hash,
-            log_index,
-            receiver: refunded_user.pubkey(),
-            fees: gas_amount
-        }
-    );
 
     // assert that SOL gets transferred
     let refunder_balance_after = test_fixture

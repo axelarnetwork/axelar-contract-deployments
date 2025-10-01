@@ -1,5 +1,5 @@
-use axelar_solana_gateway_test_fixtures::{base::TestFixture, gas_service::get_gas_service_events};
-use gateway_event_stack::ProgramInvocationState;
+use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 
@@ -10,7 +10,7 @@ use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
     // Setup the test fixture and deploy the gas service program
 
-    use axelar_solana_gas_service_events::events::{GasServiceEvent, SplGasRefundedEvent};
+    use axelar_solana_gas_service::events::SplGasRefundedEvent;
 
     let pt = ProgramTest::default();
     let mut test_fixture = TestFixture::new(pt).await;
@@ -62,8 +62,46 @@ async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
     )
     .unwrap();
 
-    // Send transaction
-    let res = test_fixture
+    // First simulate to check events
+    let simulation_result = test_fixture
+        .simulate_tx_with_custom_signers(
+            &[ix.clone()],
+            &[
+                // pays for transaction fees
+                &test_fixture.payer.insecure_clone(),
+                // operator must be a signer
+                &gas_utils.operator,
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(!inner_ixs.is_empty());
+
+    let expected_event = SplGasRefundedEvent {
+        config_pda_ata,
+        mint,
+        token_program_id,
+        tx_hash,
+        config_pda: gas_utils.config_pda,
+        log_index,
+        receiver: receiver_ata,
+        fees: gas_amount,
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Execute the transaction
+    let _res = test_fixture
         .send_tx_with_custom_signers(
             &[ix],
             &[
@@ -75,33 +113,6 @@ async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
         )
         .await
         .unwrap();
-
-    // Assert event
-    let emitted_events = get_gas_service_events(&res)
-        .into_iter()
-        .next()
-        .expect("No events emitted");
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event");
-    };
-
-    let [(_, GasServiceEvent::SplGasRefunded(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event sequence");
-    };
-
-    assert_eq!(
-        emitted_event,
-        &SplGasRefundedEvent {
-            config_pda_ata,
-            mint,
-            token_program_id,
-            tx_hash,
-            config_pda: gas_utils.config_pda,
-            log_index,
-            receiver: receiver_ata,
-            fees: gas_amount,
-        }
-    );
 
     // Fetch payer and config_pda ATA balances before
     let payer_token_after = test_fixture.get_token_account(&receiver_ata).await.amount;

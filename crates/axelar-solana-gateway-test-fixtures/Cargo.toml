@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 axelar-solana-encoding.workspace = true
-axelar-solana-gas-service-events.workspace = true
 tokio.workspace = true
 solana-program.workspace = true
 solana-program-test.workspace = true
@@ -17,7 +16,6 @@ ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
 libsecp256k1.workspace = true
 rand.workspace = true
 libsecp-rand.workspace = true
-gateway-event-stack = { workspace = true, default-features = false }
 axelar-solana-gas-service = { workspace = true, default-features = false, features = ["no-entrypoint"] }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
 spl-associated-token-account = { workspace = true, features = [

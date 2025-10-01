@@ -1,8 +1,6 @@
-use axelar_solana_gas_service_events::events::{
-    GasServiceEvent, NativeGasPaidForContractCallEvent,
-};
-use axelar_solana_gateway_test_fixtures::{base::TestFixture, gas_service::get_gas_service_events};
-use gateway_event_stack::ProgramInvocationState;
+use axelar_solana_gas_service::events::NativeGasPaidForContractCallEvent;
+use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 
@@ -48,7 +46,44 @@ async fn test_pay_native_for_contract_call() {
     )
     .unwrap();
 
-    let res = test_fixture
+    // First simulate to check events
+    let simulation_result = test_fixture
+        .simulate_tx_with_custom_signers(
+            &[ix.clone()],
+            &[
+                // pays for tx
+                &test_fixture.payer.insecure_clone(),
+                // pays for gas deduction
+                &payer,
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(!inner_ixs.is_empty());
+
+    let expected_event = NativeGasPaidForContractCallEvent {
+        config_pda: gas_utils.config_pda,
+        destination_chain: destination_chain.clone(),
+        destination_address: destination_addr.clone(),
+        payload_hash,
+        refund_address,
+        gas_fee_amount: gas_amount,
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Execute the transaction
+    let _res = test_fixture
         .send_tx_with_custom_signers(
             &[ix],
             &[
@@ -60,27 +95,6 @@ async fn test_pay_native_for_contract_call() {
         )
         .await
         .unwrap();
-
-    // assert event
-    let emitted_events = get_gas_service_events(&res).into_iter().next().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GasServiceEvent::NativeGasPaidForContractCall(emitted_event))] = vec_events.as_slice()
-    else {
-        panic!("unexpected event")
-    };
-    assert_eq!(
-        emitted_event,
-        &NativeGasPaidForContractCallEvent {
-            config_pda: gas_utils.config_pda,
-            destination_chain,
-            destination_address: destination_addr,
-            payload_hash,
-            refund_address,
-            gas_fee_amount: gas_amount,
-        }
-    );
 
     // assert that SOL gets transferred
     let payer_balance_after = test_fixture

@@ -777,12 +777,14 @@ dependencies = [
 name = "axelar-solana-gas-service"
 version = "0.1.0"
 dependencies = [
+ "anchor-discriminators",
  "anchor-discriminators-macros",
- "axelar-solana-gas-service-events",
  "axelar-solana-gateway-test-fixtures",
  "borsh 1.5.7",
  "bytemuck",
- "gateway-event-stack",
+ "event-cpi",
+ "event-cpi-macros",
+ "event-cpi-test-utils",
  "program-utils",
  "rstest",
  "solana-program",
@@ -791,14 +793,6 @@ dependencies = [
  "spl-associated-token-account 6.0.0",
  "spl-token 6.0.0",
  "spl-token-2022 6.0.0",
-]
-
-[[package]]
-name = "axelar-solana-gas-service-events"
-version = "0.1.0"
-dependencies = [
- "event-utils",
- "solana-program",
 ]
 
 [[package]]
@@ -850,11 +844,9 @@ version = "0.1.0"
 dependencies = [
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
- "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
  "bincode",
  "ed25519-dalek 2.1.1",
- "gateway-event-stack",
  "libsecp256k1",
  "rand 0.7.3",
  "rand 0.8.5",
@@ -3301,18 +3293,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
 dependencies = [
  "byteorder",
-]
-
-[[package]]
-name = "gateway-event-stack"
-version = "0.1.0"
-dependencies = [
- "axelar-solana-gas-service-events",
- "base64 0.21.7",
- "event-utils",
- "pretty_assertions",
- "test-log",
- "tracing",
 ]
 
 [[package]]

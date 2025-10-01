@@ -185,7 +185,6 @@ axelar-solana-governance = { path = "programs/axelar-solana-governance", default
 # helper crates
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
-axelar-solana-gas-service-events = { path = "crates/axelar-solana-gas-service-events" }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures", default-features = false }
 event-utils = { path = "crates/event-utils" }
 event-macros = { path = "crates/event-macros" }
@@ -196,7 +195,6 @@ anchor-discriminators-macros = { path = "helpers/anchor-discriminators-macros" }
 event-cpi-test-utils = { path = "helpers/event-cpi-test-utils" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
-gateway-event-stack = { path = "crates/gateway-event-stack", default-features = false }
 governance-gmp = { path = "helpers/governance-gmp" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
 its-instruction-builder = { path = "helpers/its-instruction-builder", default-features = false }

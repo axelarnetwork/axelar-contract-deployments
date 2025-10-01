@@ -24,7 +24,6 @@ use axelar_solana_gateway::{
     get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
     BytemuckedPda,
 };
-pub use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use rand::Rng as _;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
@@ -713,7 +712,20 @@ impl SolanaAxelarIntegration {
     }
 }
 
+// TODO remove this once all programs switch to CPI events
+/// Represents the state of a program invocation along with associated events.
+#[derive(Debug, PartialEq, Eq)]
+pub enum ProgramInvocationState<T> {
+    /// The program invocation is currently in progress, holding a list of events and their indexes.
+    InProgress(Vec<(usize, T)>),
+    /// The program invocation has succeeded, holding a list of events and their indexes.
+    Succeeded(Vec<(usize, T)>),
+    /// The program invocation has failed, holding a list of events and their indexes.
+    Failed(Vec<(usize, T)>),
+}
+
 /// Get events emitted by the Gateway
+// TODO remove this once all programs switch to CPI events
 #[must_use]
 pub fn get_gateway_events(
     _tx: &solana_program_test::BanksTransactionResultWithMetadata,

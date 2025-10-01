@@ -22,7 +22,7 @@ mod native {
 
 mod spl {
     mod add_gas;
-    mod collet_fees;
+    mod collect_fees;
     mod pay_for_contract_call;
     mod refund_gas;
 }

@@ -1,6 +1,7 @@
 //! Processor for the Solana gas service
 
 use borsh::BorshDeserialize;
+use event_cpi_macros::event_cpi_handler;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
 use crate::{check_program_account, instructions::GasServiceInstruction};
@@ -28,8 +29,11 @@ pub fn process_instruction(
     accounts: &[AccountInfo<'_>],
     input: &[u8],
 ) -> ProgramResult {
-    let instruction = GasServiceInstruction::try_from_slice(input)?;
     check_program_account(*program_id)?;
+
+    event_cpi_handler!(input);
+
+    let instruction = GasServiceInstruction::try_from_slice(input)?;
 
     match instruction {
         GasServiceInstruction::Initialize => process_initialize_config(program_id, accounts),
