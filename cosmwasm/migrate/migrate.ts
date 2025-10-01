@@ -6,7 +6,7 @@ import { Command, Option } from 'commander';
 import { FullConfig } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, mainProcessor } from '../processor';
-import { ContractInfo, getContractInfo } from '../query';
+import { getContractInfo } from '../query';
 import { migrate as migrateCoordinator } from './coordinator';
 import { MigrationOptions } from './types';
 
@@ -15,7 +15,7 @@ async function migrate(
     config: FullConfig,
     options: MigrationOptions,
     args: string[],
-    fee: string | StdFee,
+    _fee: string | StdFee,
 ): Promise<void> {
     const sender_address = client.accounts[0].address;
     const contract_address = options.address ?? config.axelar.contracts[options.contractName]?.address;
@@ -45,6 +45,7 @@ const programHandler = () => {
             .command('migrate')
             .argument('<code_id>', 'code id of new contract')
             .addOption(new Option('--fees <fees>', 'fees').default('auto'))
+            .addOption(new Option('--ignoreChains [chains]', 'chains to ignore').default('auto'))
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
             .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
             .option('--proposal', 'make a proposal rather than a direct migration')

@@ -6,4 +6,5 @@ export interface MigrationOptions extends Options {
     deposit: string;
     dry?: boolean;
     proposal?: boolean;
+    ignoreChains?: string;
 }
