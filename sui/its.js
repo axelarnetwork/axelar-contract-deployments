@@ -558,7 +558,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         ],
     });
 
-    // Pay gas for link coin cross-chain message  
+    // Pay gas for link coin cross-chain message
     const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [options.gasFee]);
 
     await txBuilder.moveCall({
