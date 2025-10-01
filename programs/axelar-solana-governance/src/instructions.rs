@@ -1,13 +1,13 @@
 //! Main instructions for the governance contract.
 
+use anchor_discriminators_macros::InstructionDiscriminator;
 use axelar_solana_encoding::types::messages::Message;
-use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::state::proposal::ExecuteProposalData;
 use crate::state::{GovernanceConfig, GovernanceConfigUpdate};
 
 /// Instructions supported by the governance program.
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Eq, PartialEq, Clone, InstructionDiscriminator)]
 pub enum GovernanceInstruction {
     /// Initializes the governance configuration PDA account.
     ///
@@ -26,7 +26,7 @@ pub enum GovernanceInstruction {
     UpdateConfig(GovernanceConfigUpdate),
 
     /// A GMP instruction coming from the axelar network.
-    /// The very first accounts are the gateways accounts:  
+    /// The very first accounts are the gateways accounts:
     ///
     /// 0. [WRITE] Gateway incoming message PDA account
     /// 1. [] Message payload account

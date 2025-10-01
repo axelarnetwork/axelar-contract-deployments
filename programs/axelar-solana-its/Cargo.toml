@@ -44,6 +44,7 @@ mainnet = [
 default = ["devnet-amplifier"]
 
 [dependencies]
+anchor-discriminators-macros.workspace = true
 alloy-primitives.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding.workspace = true

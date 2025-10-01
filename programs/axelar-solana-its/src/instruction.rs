@@ -3,10 +3,11 @@
 
 use std::borrow::Cow;
 
+use anchor_discriminators_macros::InstructionDiscriminator;
 use axelar_message_primitives::DataPayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use borsh::to_vec;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -22,7 +23,7 @@ pub mod interchain_token;
 pub mod token_manager;
 
 /// Instructions supported by the ITS program.
-#[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, PartialEq, Eq, InstructionDiscriminator)]
 pub enum InterchainTokenServiceInstruction {
     /// Initializes the interchain token service program.
     ///

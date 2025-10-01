@@ -1,7 +1,8 @@
 //! Instruction module for the Axelar Memo program.
 
+use anchor_discriminators_macros::InstructionDiscriminator;
 use axelar_solana_gateway::executable::AxelarMessagePayload;
-use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use borsh::to_vec;
 pub use solana_program;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -10,7 +11,7 @@ use solana_program::system_program;
 
 /// Instructions supported by the Axelar Memo program.
 #[repr(u8)]
-#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+#[derive(Clone, Debug, PartialEq, InstructionDiscriminator)]
 pub enum AxelarMemoInstruction {
     /// Initialize the memo program by creating a counter PDA
     ///

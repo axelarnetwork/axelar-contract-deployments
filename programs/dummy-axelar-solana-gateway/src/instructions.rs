@@ -2,7 +2,8 @@
 
 use std::fmt::Debug;
 
-use borsh::{to_vec, BorshDeserialize, BorshSerialize};
+use anchor_discriminators_macros::InstructionDiscriminator;
+use borsh::to_vec;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
@@ -13,7 +14,7 @@ use crate::seed_prefixes;
 
 /// Instructions supported by the gateway program.
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, PartialEq, Eq, InstructionDiscriminator)]
 pub enum DummyGatewayInstruction {
     /// Prints the message back to the caller
     Echo {

@@ -1,3 +1,4 @@
+//! Derive macro for generating instruction discriminators for enums.
 extern crate proc_macro;
 
 use convert_case::{Case, Casing};
@@ -70,6 +71,8 @@ pub fn derive_instruction_discriminator(input: proc_macro::TokenStream) -> proc_
         let discriminator = gen_discriminator(SIGHASH_GLOBAL_NAMESPACE, &variant_name_snake);
 
         discriminator_constants.push(quote! {
+            #[doc = concat!("Discriminator for ", stringify!(#variant_name))]
+            #[doc = concat!("sha256(global::", #variant_name_snake, ")[..8]")]
             pub const #const_name: [u8; 8] = #discriminator;
         });
 
@@ -132,7 +135,7 @@ pub fn derive_instruction_discriminator(input: proc_macro::TokenStream) -> proc_
                 });
             }
 
-            // We don't support unnamed fields (tuples)
+            // We only support single unnamed field variant: WrapperType(Type)
             syn::Fields::Unnamed(fields) => {
                 if fields.unnamed.len() != 1 {
                     return syn::Error::new_spanned(
@@ -167,6 +170,7 @@ pub fn derive_instruction_discriminator(input: proc_macro::TokenStream) -> proc_
     }
 
     let expanded = quote! {
+        #[doc = concat!("Discriminators for ", stringify!(#enum_name))]
         #enum_vis mod discriminators {
             #(#discriminator_constants)*
         }

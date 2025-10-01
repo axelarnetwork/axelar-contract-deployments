@@ -36,6 +36,7 @@ mainnet = [
 default = ["devnet-amplifier"]
 
 [dependencies]
+anchor-discriminators-macros.workspace = true
 alloy-sol-types.workspace = true
 borsh.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }

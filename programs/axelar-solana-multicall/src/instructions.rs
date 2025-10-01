@@ -1,14 +1,14 @@
 //! Instructions supported by the multicall program.
 
+use anchor_discriminators_macros::InstructionDiscriminator;
 use axelar_solana_gateway::executable::{AxelarMessagePayload, EncodingScheme, PayloadError};
-use borsh::{BorshDeserialize, BorshSerialize};
 use error::BuilderError;
 use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
 
 /// Instructions supported by the multicall program.
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, PartialEq, Eq, InstructionDiscriminator)]
 pub enum MultiCallInstruction {
     /// `MultiCall` instruction
     MultiCall {
@@ -22,7 +22,7 @@ pub enum MultiCallInstruction {
 /// Encoding and decoding of multicall program payloads.
 pub mod encoding {
     use alloy_sol_types::{sol, SolValue};
-    use borsh::BorshDeserialize;
+    use borsh::{BorshDeserialize, BorshSerialize};
 
     use super::*;
 
