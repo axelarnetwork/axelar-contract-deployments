@@ -897,6 +897,28 @@ async function linkCoinWithChannel(keypair, client, config, contracts, args, opt
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (channel=${options.channel})`, options);
+
+    // Save linked token info in config
+    const symbolKey = symbol.toUpperCase();
+    const coin = contracts[symbolKey];
+    if (!coin) {
+        throw new Error(`Token ${symbolKey} not found in contracts config. Run registration first.`);
+    }
+
+    const linkedToken = { destinationChain, destinationAddress };
+
+    saveTokenDeployment(
+        coin.address,
+        coin.typeArgument,
+        contracts,
+        symbol,
+        coin.decimals,
+        coin.objects.TokenId,
+        coin.objects.TreasuryCap,
+        coin.objects.Metadata,
+        [linkedToken],
+        saltAddress,
+    );
 }
 
 async function processCommand(command, config, chain, args, options) {
