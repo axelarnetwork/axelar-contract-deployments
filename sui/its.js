@@ -504,6 +504,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Register Token Metadata (${symbol})`, options);
+
     printInfo('Wait for GMP execution to complete before proceding with next steps');
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
@@ -559,7 +560,16 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for link coin cross-chain message
-    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [options.gasFee]);
+    const gasValue = await estimateITSFee(
+        config.chains[options.chainName],
+        destinationChain,
+        options.env,
+        'LinkToken',
+        'auto',
+        config.axelar,
+    );
+
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
@@ -1018,7 +1028,7 @@ if (require.main === module) {
 
     const linkCoinProgram = new Command()
         .name('link-coin')
-        .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress> <gasFee>')
+        .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
         .description(
             `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
         )
@@ -1027,8 +1037,8 @@ if (require.main === module) {
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
-        .action((symbol, name, decimals, destinationChain, destinationAddress, gasFee, options) => {
-            mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress, gasFee], processCommand);
+        .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
+            mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
     const deployRemoteCoinProgram = new Command()

@@ -517,7 +517,7 @@ ts-node sui/its remove-unlinked-coin [options] <symbol>
 Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transactions will automatically be created.
 
 ```bash
-ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress> <gasValue>
+ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
 
 ### Deploy Remote Interchain Coin
