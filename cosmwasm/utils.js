@@ -1323,6 +1323,24 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
     }
 };
 
+const initContractConfig = (config, options) => {
+    const { contractName, chainName } = options;
+
+    if (!contractName) {
+        return;
+    }
+
+    if (!config.axelar.contracts[contractName]) {
+        config.axelar.contracts[contractName] = {};
+    }
+
+    if (chainName) {
+        if (!config.axelar.contracts[contractName][chainName]) {
+            config.axelar.contracts[contractName][chainName] = {};
+        }
+    }
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1437,4 +1455,5 @@ module.exports = {
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
     validateItsChainChange,
+    initContractConfig,
 };
