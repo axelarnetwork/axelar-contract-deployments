@@ -1119,7 +1119,12 @@ if (require.main === module) {
         .addOption(
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
-        .addOption(new Option('--destinationOperator <operator>', 'Optional token manager address on the destination chain. If provided, used as link paramater.'))
+        .addOption(
+            new Option(
+                '--destinationOperator <operator>',
+                'Optional token manager address on the destination chain. If provided, used as link paramater.',
+            ),
+        )
         .action((symbol, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
         });
