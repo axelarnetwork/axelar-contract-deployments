@@ -408,7 +408,6 @@ const programHandler = () => {
         .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
         .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
         .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
-        .option('--chainCodecCodeId <chainCodecCodeId>', 'code ID for ChainCodec contract')
         .action((options) => mainProcessor(instantiateChainContracts, options));
     addAmplifierOptions(instantiateChainContractsCmd, {
         proposalOptions: true,
