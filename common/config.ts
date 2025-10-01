@@ -331,6 +331,14 @@ export class ConfigManager implements FullConfig {
         return axelarContracts[configContractName];
     }
 
+    public getContractConfigByChain(configContractName: string, chainName: string): ContractConfig {
+        const contractConfig = this.getContractConfig(configContractName);
+        if (!contractConfig[chainName]) {
+            contractConfig[chainName] = {};
+        }
+        return contractConfig[chainName];
+    }
+
     public getFee(): string | StdFee {
         const { gasPrice, gasLimit } = this.axelar;
 

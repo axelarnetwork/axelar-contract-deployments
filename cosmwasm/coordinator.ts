@@ -134,18 +134,15 @@ export class CoordinatorManager {
                 return value;
             };
 
-            const votingVerifierConfig = validateRequired(
-                this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig,
-                `VotingVerifier[${chainName}]`,
-            );
-            const multisigProverConfig = validateRequired(
-                this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig,
-                `MultisigProver[${chainName}]`,
-            );
-            const gatewayConfig = validateRequired(
-                this.configManager.getContractConfig('Gateway')[chainName] as GatewayChainConfig,
-                `Gateway[${chainName}]`,
-            );
+            const votingVerifierConfig = this.configManager.getContractConfigByChain(
+                'VotingVerifier',
+                chainName,
+            ) as VotingVerifierChainConfig;
+            const multisigProverConfig = this.configManager.getContractConfigByChain(
+                'MultisigProver',
+                chainName,
+            ) as MultisigProverChainConfig;
+            const gatewayConfig = this.configManager.getContractConfigByChain('Gateway', chainName) as GatewayChainConfig;
 
             const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `Gateway.codeId`);
             const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `VotingVerifier.codeId`);

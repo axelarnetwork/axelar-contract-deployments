@@ -279,15 +279,10 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         throw new Error('Salt is required when instantiating chain contracts');
     }
 
-    if (!config.axelar.contracts.Gateway) {
-        config.axelar.contracts.Gateway = {};
-    }
-    if (!config.axelar.contracts.VotingVerifier) {
-        config.axelar.contracts.VotingVerifier = {};
-    }
-    if (!config.axelar.contracts.MultisigProver) {
-        config.axelar.contracts.MultisigProver = {};
-    }
+    // validate that the contract configs exist
+    config.axelar.contracts.getContractConfigByChain('Gateway', chainName);
+    config.axelar.contracts.getContractConfigByChain('VotingVerifier', chainName);
+    config.axelar.contracts.getContractConfigByChain('MultisigProver', chainName);
 
     if (options.fetchCodeId) {
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
