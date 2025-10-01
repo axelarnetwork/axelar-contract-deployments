@@ -419,7 +419,7 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 };
 
 const makeChainCodecInstantiateMsg = (config, options, _contractConfig) => {
-    const { chainName, contractName } = options;
+    const { contractName } = options;
     const {
         axelar: {
             contracts: { [contractName]: codecConfig = {} },
