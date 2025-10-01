@@ -72,6 +72,8 @@ export interface VotingVerifierChainConfig {
     deploymentName?: string;
     proposalId?: string;
     contractAdmin?: string;
+    codeId: number;
+    address?: string;
 }
 
 export interface MultisigProverChainConfig {
@@ -85,6 +87,8 @@ export interface MultisigProverChainConfig {
     deploymentName?: string;
     proposalId?: string;
     contractAdmin?: string;
+    codeId: number;
+    address?: string;
 }
 
 export interface GatewayChainConfig {
@@ -92,6 +96,8 @@ export interface GatewayChainConfig {
     proposalId?: string;
     salt?: string;
     contractAdmin?: string;
+    codeId: number;
+    address?: string;
 }
 
 export class CoordinatorManager {
@@ -109,7 +115,7 @@ export class CoordinatorManager {
             const routerConfig = this.configManager.getContractConfig('Router');
 
             const validateRequired = <T>(value: T | undefined | null, configPath: string): T => {
-                if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
+                if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
                     throw new Error(`Missing required configuration for chain ${chainName}. Please configure it in ${configPath}.`);
                 }
                 return value;
@@ -119,6 +125,10 @@ export class CoordinatorManager {
                 if (!value || !Array.isArray(value) || value.length !== 2) {
                     throw new Error(
                         `Missing or invalid threshold configuration for chain ${chainName}. Please configure it in ${configPath} as [numerator, denominator].`,
+                    );
+                } else if (Number(value[0]) > Number(value[1])) {
+                    throw new Error(
+                        `Invalid threshold configuration for chain ${chainName}. Numerator must not be greater than denominator.`,
                     );
                 }
                 return value;
@@ -137,15 +147,9 @@ export class CoordinatorManager {
                 `Gateway[${chainName}]`,
             );
 
-            const gatewayCodeId: number = validateRequired(this.configManager.getContractConfig('Gateway').codeId, `Gateway.codeId`);
-            const verifierCodeId: number = validateRequired(
-                this.configManager.getContractConfig('VotingVerifier').codeId,
-                `VotingVerifier.codeId`,
-            );
-            const proverCodeId: number = validateRequired(
-                this.configManager.getContractConfig('MultisigProver').codeId,
-                `MultisigProver.codeId`,
-            );
+            const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `Gateway.codeId`);
+            const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `VotingVerifier.codeId`);
+            const proverCodeId: number = validateRequired(multisigProverConfig.codeId, `MultisigProver.codeId`);
             const deploymentName = this.generateDeploymentName(chainName, `${gatewayCodeId}-${verifierCodeId}-${proverCodeId}`);
 
             const governanceAddress = validateRequired(

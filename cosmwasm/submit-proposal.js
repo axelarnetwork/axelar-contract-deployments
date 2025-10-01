@@ -275,6 +275,10 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         throw new Error('Admin address is required when instantiating chain contracts');
     }
 
+    if (!salt) {
+        throw new Error('Salt is required when instantiating chain contracts');
+    }
+
     if (!config.axelar.contracts.Gateway) {
         config.axelar.contracts.Gateway = {};
     }
@@ -289,16 +293,30 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
         const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
         const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
-        config.axelar.contracts.Gateway.codeId = gatewayCode;
-        config.axelar.contracts.VotingVerifier.codeId = verifierCode;
-        config.axelar.contracts.MultisigProver.codeId = proverCode;
+        config.axelar.contracts.Gateway[chainName].codeId = gatewayCode;
+        config.axelar.contracts.VotingVerifier[chainName].codeId = verifierCode;
+        config.axelar.contracts.MultisigProver[chainName].codeId = proverCode;
     } else {
-        if (!gatewayCodeId || !verifierCodeId || !proverCodeId) {
-            throw new Error('Gateway, VotingVerifier and MultisigProver code IDs are required when --fetchCodeId is not used');
+        if (!config.axelar.contracts.Gateway[chainName].codeId && !gatewayCodeId) {
+            throw new Error(
+                'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
+            );
         }
-        config.axelar.contracts.Gateway.codeId = gatewayCodeId;
-        config.axelar.contracts.VotingVerifier.codeId = verifierCodeId;
-        config.axelar.contracts.MultisigProver.codeId = proverCodeId;
+        if (!config.axelar.contracts.VotingVerifier[chainName].codeId && !verifierCodeId) {
+            throw new Error(
+                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
+            );
+        }
+        if (!config.axelar.contracts.MultisigProver[chainName].codeId && !proverCodeId) {
+            throw new Error(
+                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
+            );
+        }
+
+        config.axelar.contracts.Gateway[chainName].codeId = gatewayCodeId || config.axelar.contracts.Gateway[chainName].codeId;
+        config.axelar.contracts.VotingVerifier[chainName].codeId =
+            verifierCodeId || config.axelar.contracts.VotingVerifier[chainName].codeId;
+        config.axelar.contracts.MultisigProver[chainName].codeId = proverCodeId || config.axelar.contracts.MultisigProver[chainName].codeId;
     }
 
     const coordinator = new CoordinatorManager(config);
@@ -321,7 +339,7 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     }
     config.axelar.contracts.Coordinator.deployments[chainName] = {
         deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: options.salt,
+        salt: salt,
         proposalId,
     };
 };

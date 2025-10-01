@@ -283,6 +283,10 @@ export class ConfigManager implements FullConfig {
     }
 
     public initContractConfig(contractName: string, chainName: string) {
+        if (!contractName) {
+            return;
+        }
+
         if (!this.axelar.contracts[contractName]) {
             this.axelar.contracts[contractName] = {};
         }
