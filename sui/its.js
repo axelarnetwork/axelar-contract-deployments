@@ -490,12 +490,21 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for register coin metadata cross-chain message
-    const [fee] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [options.gasFee]);
+    const metaGasValue = await estimateITSFee(
+        config.chains[options.chainName],
+        destinationChain,
+        options.env,
+        'LinkToken',
+        'auto',
+        config.axelar,
+    );
+
+    const [metaGas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [metaGasValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
         typeArguments: [suiCoinId],
-        arguments: [contracts.GasService.objects.GasService, messageTicket, fee, walletAddress, '0x'],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, metaGas, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
@@ -560,7 +569,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for link coin cross-chain message
-    const gasValue = await estimateITSFee(
+    const linkGasValue = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -569,12 +578,12 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         config.axelar,
     );
 
-    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
+    const [linkGas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [linkGasValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
         typeArguments: [suiCoinId],
-        arguments: [contracts.GasService.objects.GasService, messageTicket, gas, walletAddress, '0x'],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, linkGas, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
