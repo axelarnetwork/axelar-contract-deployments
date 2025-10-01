@@ -480,15 +480,23 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     // If coin is already deployed load it, else deploy a new coin
     const savedCoin = contracts[symbol.toUpperCase()];
     if (!savedCoin && !options.coinName && !options.coinDecimals) {
-        throw new Error(`Coin name and decimals are required for coins not saved in config, found: ${JSON.stringify(
-            [!options.coinName, options.coinDecimals]
-        )}`);
+        throw new Error(
+            `Coin name and decimals are required for coins not saved in config, found: ${JSON.stringify([
+                !options.coinName,
+                options.coinDecimals,
+            ])}`,
+        );
     }
 
     let metadata, packageId, tokenType, treasuryCap;
     if (!savedCoin) {
         // Deploy source token on Sui
-        [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, options.coinName, options.coinDecimals);
+        [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(
+            deployConfig,
+            symbol,
+            options.coinName,
+            options.coinDecimals,
+        );
     } else {
         // Load saved coin params
         metadata = savedCoin.objects.Metadata;
@@ -1093,9 +1101,7 @@ if (require.main === module) {
     const registerCoinMetadataProgram = new Command()
         .name('register-coin-metadata')
         .command('register-coin-metadata <symbol> <destinationChain>')
-        .description(
-            `Load or deploy a source coin on SUI using its symbol, and register its metadata on Axelar Hub.`,
-        )
+        .description(`Load or deploy a source coin on SUI using its symbol, and register its metadata on Axelar Hub.`)
         .addOption(new Option('--coinName <name>', 'Optional coin name (mandatory if coin not saved in config)'))
         .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimals (mandatory if coin not saved in config)'))
         .action((symbol, destinationChain, options) => {
@@ -1112,7 +1118,7 @@ if (require.main === module) {
         .addOption(
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
-        
+
         .action((symbol, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
         });
