@@ -463,48 +463,66 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
 }
 
-// link_coin
-async function linkCoin(keypair, client, config, contracts, args, options) {
+// regiser_coin_metadata
+async function registerCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
     const { Gateway } = AxelarGateway.objects;
-    const [symbol, name, decimals, destinationChain, destinationAddress] = args;
+    const [symbol, destinationChain] = args;
 
-    // Token manager type
-    const tokenManager = options.tokenManagerMode;
+    validateParameters({
+        isNonEmptyString: { symbol, destinationChain },
+    });
 
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
 
-    // Deploy source token on Sui (Token A)
-    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    // If coin is already deployed load it, else deploy a new coin
+    const savedCoin = contracts[symbol.toUpperCase()];
+    if (!savedCoin && !options.coinName && !options.coinDecimals) {
+        throw new Error(`Coin name and decimals are required for coins not saved in config, found: ${JSON.stringify(
+            [!options.coinName, options.coinDecimals]
+        )}`);
+    }
+
+    let metadata, packageId, tokenType, treasuryCap;
+    if (!savedCoin) {
+        // Deploy source token on Sui
+        [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, options.coinName, options.coinDecimals);
+    } else {
+        // Load saved coin params
+        metadata = savedCoin.objects.Metadata;
+        packageId = savedCoin.address;
+        tokenType = savedCoin.typeArgument;
+        treasuryCap = savedCoin.objects.TreasuryCap;
+    }
 
     // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to
     // ITS Hub to register token data in ITS hub.
-    let txBuilder = new TxBuilder(client);
+    const txBuilder = new TxBuilder(client);
 
-    let messageTicket = await txBuilder.moveCall({
+    const messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
         arguments: [InterchainTokenService, metadata],
         typeArguments: [tokenType],
     });
 
     // Pay gas for register coin metadata cross-chain message
-    const metaGasValue = await estimateITSFee(
+    const gasValue = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
-        'LinkToken',
+        'TokenMetadataRegistered',
         'auto',
         config.axelar,
     );
 
-    const [metaGas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [metaGasValue]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
         typeArguments: [suiCoinId],
-        arguments: [contracts.GasService.objects.GasService, messageTicket, metaGas, walletAddress, '0x'],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, gas, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
@@ -514,7 +532,43 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Register Token Metadata (${symbol})`, options);
 
-    printInfo('Wait for GMP execution to complete before proceding with next steps');
+    if (!savedCoin) {
+        // Save deployed tokens
+        saveTokenDeployment(
+            packageId,
+            tokenType,
+            contracts,
+            symbol,
+            options.coinDecimals,
+            null, // TokenId does not yet exist (pre-registration)
+            treasuryCap,
+            metadata,
+        );
+    }
+}
+
+// link_coin
+async function linkCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const { Gateway } = AxelarGateway.objects;
+    const [symbol, destinationChain, destinationAddress] = args;
+
+    validateParameters({
+        isNonEmptyString: { symbol, destinationChain, destinationAddress },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
+    });
+
+    const walletAddress = keypair.toSuiAddress();
+    const deployConfig = { client, keypair, options, walletAddress };
+
+    // Coin params
+    const coin = contracts[symbol.toUpperCase()];
+    const metadata = coin.objects.Metadata;
+    const packageId = coin.address;
+    const tokenType = coin.typeArgument;
+    const treasuryCap = coin.objects.TreasuryCap;
+    const tokenManager = options.tokenManagerMode;
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
@@ -539,7 +593,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
     // This submits a LinkToken msg type to ITS Hub.
-    txBuilder = new TxBuilder(client);
+    const txBuilder = new TxBuilder(client);
 
     // Token manager type
     const tokenManagerType = await txBuilder.moveCall({
@@ -555,7 +609,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // Link params (only outbound chain supported for now)
     const linkParams = options.destinationOperator ? options.destinationOperator : '';
 
-    messageTicket = await txBuilder.moveCall({
+    const messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::link_coin`,
         arguments: [
             InterchainTokenService,
@@ -569,7 +623,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for link coin cross-chain message
-    const linkGasValue = await estimateITSFee(
+    const gasValue = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -578,12 +632,12 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         config.axelar,
     );
 
-    const [linkGas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [linkGasValue]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
         typeArguments: [suiCoinId],
-        arguments: [contracts.GasService.objects.GasService, messageTicket, linkGas, walletAddress, '0x'],
+        arguments: [contracts.GasService.objects.GasService, messageTicket, gas, walletAddress, '0x'],
     });
 
     await txBuilder.moveCall({
@@ -609,6 +663,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         sourceToken.metadata,
         [linkedToken],
         saltAddress,
+        tokenManager,
     );
 }
 
@@ -1035,19 +1090,31 @@ if (require.main === module) {
             mainProcessor(removeUnlinkedCoin, options, symbol, processCommand);
         });
 
+    const registerCoinMetadataProgram = new Command()
+        .name('register-coin-metadata')
+        .command('register-coin-metadata <symbol> <destinationChain>')
+        .description(
+            `Load or deploy a source coin on SUI using its symbol, and register its metadata on Axelar Hub.`,
+        )
+        .addOption(new Option('--coinName <name>', 'Optional coin name (mandatory if coin not saved in config)'))
+        .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimals (mandatory if coin not saved in config)'))
+        .action((symbol, destinationChain, options) => {
+            mainProcessor(registerCoinMetadata, options, [symbol, destinationChain], processCommand);
+        });
+
     const linkCoinProgram = new Command()
         .name('link-coin')
-        .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
+        .command('link-coin <symbol> <destinationChain> <destinationAddress>')
         .description(
-            `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
+            `Link a coin with the destination using the destination chain name and address. Token metadata must be registered on Axelar Hub.`,
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
-        .addOption(new Option('--destinationOperator <address>', 'Operator that can control flow limits on the destination chain'))
-        .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
-            mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
+        
+        .action((symbol, destinationChain, destinationAddress, options) => {
+            mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
         });
 
     const deployRemoteCoinProgram = new Command()
@@ -1124,6 +1191,7 @@ if (require.main === module) {
     program.addCommand(migrateAllCoinMetadataProgram);
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
+    program.addCommand(registerCoinMetadataProgram);
     program.addCommand(linkCoinProgram);
     program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
