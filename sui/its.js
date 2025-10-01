@@ -758,7 +758,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
     });
 
-    const gasValue = await estimateITSFee(
+    const {gasValue} = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
