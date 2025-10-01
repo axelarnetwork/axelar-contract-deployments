@@ -505,6 +505,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Register Token Metadata (${symbol})`, options);
+    printInfo('Wait for GMP execution to complete before proceding with next steps');
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
