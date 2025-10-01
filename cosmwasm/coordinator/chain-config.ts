@@ -1,0 +1,111 @@
+import { ConfigManager, ConfigureChainOptions } from '.';
+import { calculateDomainSeparator, printInfo } from '../../common';
+
+export const DEFAULTS = {
+    serviceName: 'amplifier',
+    votingThreshold: ['51', '100'] as [string, string],
+    signingThreshold: ['51', '100'] as [string, string],
+    blockExpiry: '10',
+    confirmationHeight: 1000000,
+    msgIdFormat: 'hex_tx_hash_and_event_index',
+    addressFormat: 'eip55',
+    verifierSetDiffThreshold: 1,
+    encoder: 'abi',
+    keyType: 'ecdsa',
+    proposalDeposit: '1000000000',
+    minAddressLength: 39,
+    maxAddressLength: 100,
+    hexStringLength: 64,
+    defaultSaltLength: 32,
+};
+
+export class ChainConfigManager {
+    private configManager: ConfigManager;
+
+    constructor(configManager: ConfigManager) {
+        this.configManager = configManager;
+    }
+
+    public updateChainConfig(options: ConfigureChainOptions): void {
+        const chainConfig = this.configManager.getChainConfig(options.chainName);
+        const governanceAddress = options.governanceAddress || this.configManager.getDefaultGovernanceAddress();
+        const serviceName = options.serviceName || DEFAULTS.serviceName;
+        const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
+        const sourceGatewayAddress =
+            options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(options.chainName, 'AxelarGateway');
+        const domainSeparator =
+            options.domainSeparator ||
+            calculateDomainSeparator(options.chainName, this.configManager.getContractAddressFromConfig('Router'), chainConfig.axelarId);
+        const votingVerifierParams = {
+            governanceAddress,
+            serviceName,
+            sourceGatewayAddress,
+            votingThreshold: [
+                options.votingThreshold?.[0] || DEFAULTS.votingThreshold[0],
+                options.votingThreshold?.[1] || DEFAULTS.votingThreshold[1],
+            ],
+            blockExpiry: options.blockExpiry || DEFAULTS.blockExpiry,
+            confirmationHeight:
+                typeof options.confirmationHeight === 'number'
+                    ? options.confirmationHeight
+                    : options.confirmationHeight
+                      ? parseInt(options.confirmationHeight.toString())
+                      : DEFAULTS.confirmationHeight,
+            sourceChain: chainConfig.axelarId,
+            rewardsAddress,
+            msgIdFormat: options.msgIdFormat || DEFAULTS.msgIdFormat,
+            addressFormat: options.addressFormat || DEFAULTS.addressFormat,
+            contractAdmin: options.contractAdmin,
+        };
+
+        const multisigProverParams = {
+            governanceAddress,
+            multisigAddress: this.configManager.getContractAddressFromConfig('Multisig'),
+            signingThreshold: [
+                options.signingThreshold?.[0] || DEFAULTS.signingThreshold[0],
+                options.signingThreshold?.[1] || DEFAULTS.signingThreshold[1],
+            ],
+            serviceName,
+            chainName: chainConfig.axelarId,
+            verifierSetDiffThreshold:
+                typeof options.verifierSetDiffThreshold === 'number'
+                    ? options.verifierSetDiffThreshold
+                    : options.verifierSetDiffThreshold
+                      ? parseInt(options.verifierSetDiffThreshold.toString())
+                      : DEFAULTS.verifierSetDiffThreshold,
+            encoder: options.encoder || DEFAULTS.encoder,
+            keyType: options.keyType || DEFAULTS.keyType,
+            domainSeparator: domainSeparator.replace('0x', ''),
+            contractAdmin: options.contractAdmin,
+            adminAddress: options.multisigAdmin,
+        };
+
+        const gatewayParams = {
+            salt: options.salt,
+            contractAdmin: options.contractAdmin,
+        };
+
+        const axelarContracts = this.configManager.getFullConfig().axelar?.contracts;
+        if (!axelarContracts) {
+            throw new Error('Axelar contracts section not found in config');
+        }
+
+        if (!axelarContracts.VotingVerifier) {
+            axelarContracts.VotingVerifier = {};
+        }
+        if (!axelarContracts.MultisigProver) {
+            axelarContracts.MultisigProver = {};
+        }
+        if (!axelarContracts.Gateway) {
+            axelarContracts.Gateway = {};
+        }
+
+        (axelarContracts.VotingVerifier as Record<string, unknown>)[options.chainName] = votingVerifierParams;
+        (axelarContracts.MultisigProver as Record<string, unknown>)[options.chainName] = multisigProverParams;
+        (axelarContracts.Gateway as Record<string, unknown>)[options.chainName] = gatewayParams;
+
+        this.configManager.saveConfig();
+
+        printInfo('Chain-specific parameters stored successfully');
+    }
+}
