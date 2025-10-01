@@ -1,6 +1,7 @@
 //! Processor for [`TokenManager`] related requests.
 
-use event_utils::Event as _;
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
+use program_utils::next_optional_account_info;
 use program_utils::{
     pda::BorshPda, validate_rent_key, validate_spl_associated_token_account_key,
     validate_system_account_key,
@@ -25,8 +26,10 @@ use spl_token_2022::state::Mint;
 
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, events, Validate};
+use crate::{assert_valid_its_root_pda, events, EventAccounts, Validate};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
+
+use super::gmp::ItsExecuteAccounts;
 
 pub(crate) fn set_flow_limit<'a>(
     payer: &'a AccountInfo<'a>,
@@ -44,16 +47,6 @@ pub(crate) fn set_flow_limit<'a>(
     )?;
     token_manager.flow_slot.flow_limit = flow_limit;
     token_manager.store(payer, token_manager_pda, system_account)?;
-
-    // TODO: Current implementation doesn't support Option<T>. When updating the eventss to be emitted
-    // through CPI, we need to emit this events.
-
-    // events::FlowLimitSet {
-    //     token_id: token_manager.token_id,
-    //     operator: *accounts.flow_limiter.key,
-    //     flow_limit,
-    // }
-    // .emit();
 
     Ok(())
 }
@@ -97,6 +90,8 @@ pub(crate) fn deploy<'a>(
 ) -> ProgramResult {
     msg!("Instruction: TM Deploy");
     validate_mint_extensions(deploy_token_manager.manager_type, accounts.token_mint)?;
+    let event_accounts_iter = &mut accounts.event_accounts().into_iter();
+    event_cpi_accounts!(event_accounts_iter);
 
     crate::create_associated_token_account_idempotent(
         accounts.payer,
@@ -156,7 +151,7 @@ pub(crate) fn deploy<'a>(
         ],
     )?;
 
-    events::TokenManagerDeployed {
+    emit_cpi!(events::TokenManagerDeployed {
         token_id: deploy_token_manager.token_id,
         token_manager: *accounts.token_manager_pda.key,
         token_manager_type: deploy_token_manager.manager_type.into(),
@@ -164,8 +159,7 @@ pub(crate) fn deploy<'a>(
             .operator
             .map(|op| op.to_bytes().to_vec())
             .unwrap_or_default(),
-    }
-    .emit();
+    });
 
     Ok(())
 }
@@ -377,6 +371,8 @@ pub(crate) struct DeployTokenManagerAccounts<'a> {
     pub(crate) rent_sysvar: &'a AccountInfo<'a>,
     pub(crate) operator: Option<&'a AccountInfo<'a>>,
     pub(crate) operator_roles_pda: Option<&'a AccountInfo<'a>>,
+    pub(crate) __event_cpi_authority_info: &'a AccountInfo<'a>,
+    pub(crate) __event_cpi_program_account: &'a AccountInfo<'a>,
 }
 
 impl Validate for DeployTokenManagerAccounts<'_> {
@@ -404,7 +400,41 @@ impl Validate for DeployTokenManagerAccounts<'_> {
             msg!("Wrong ata account key");
             return Err(ProgramError::InvalidAccountData);
         }
+
         Ok(())
+    }
+}
+
+impl<'a> EventAccounts<'a> for DeployTokenManagerAccounts<'a> {
+    fn event_accounts(&self) -> [&'a AccountInfo<'a>; 2] {
+        [
+            self.__event_cpi_authority_info,
+            self.__event_cpi_program_account,
+        ]
+    }
+}
+
+impl<'a> TryFrom<ItsExecuteAccounts<'a>> for DeployTokenManagerAccounts<'a> {
+    type Error = ProgramError;
+
+    fn try_from(value: ItsExecuteAccounts<'a>) -> Result<Self, Self::Error> {
+        let remaining_accounts_iter = &mut value.remaining_accounts.iter();
+
+        Ok(Self {
+            payer: value.payer,
+            system_account: value.system_program,
+            its_root_pda: value.its_root_pda,
+            token_manager_pda: value.token_manager_pda,
+            token_mint: value.token_mint,
+            token_manager_ata: value.token_manager_ata,
+            token_program: value.token_program,
+            ata_program: value.ata_program,
+            rent_sysvar: value.rent_sysvar,
+            operator: next_optional_account_info(remaining_accounts_iter, &crate::ID)?,
+            operator_roles_pda: next_optional_account_info(remaining_accounts_iter, &crate::ID)?,
+            __event_cpi_authority_info: value.__event_cpi_authority_info,
+            __event_cpi_program_account: value.__event_cpi_program_account,
+        })
     }
 }
 
@@ -435,8 +465,10 @@ impl<'a> FromAccountInfoSlice<'a> for DeployTokenManagerAccounts<'a> {
             token_program: next_account_info(accounts_iter)?,
             ata_program: next_account_info(accounts_iter)?,
             rent_sysvar: next_account_info(accounts_iter)?,
-            operator: next_account_info(accounts_iter).ok(),
-            operator_roles_pda: next_account_info(accounts_iter).ok(),
+            operator: next_optional_account_info(accounts_iter, &crate::ID)?,
+            operator_roles_pda: next_optional_account_info(accounts_iter, &crate::ID)?,
+            __event_cpi_authority_info: next_account_info(accounts_iter)?,
+            __event_cpi_program_account: next_account_info(accounts_iter)?,
         })
     }
 }
@@ -549,6 +581,8 @@ pub(crate) fn process_set_flow_limit<'a>(
     let token_manager_user_roles_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    event_cpi_accounts!(accounts_iter);
+
     let its_config_pda = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_config_pda.bump)?;
 
@@ -562,13 +596,25 @@ pub(crate) fn process_set_flow_limit<'a>(
         Roles::FLOW_LIMITER,
     )?;
 
+    let token_manager = TokenManager::load(token_manager_pda)?;
+
     set_flow_limit(
         payer,
         token_manager_pda,
         its_root_pda,
         system_account,
         flow_limit,
-    )
+    )?;
+
+    if let Some(limit) = flow_limit {
+        emit_cpi!(events::FlowLimitSet {
+            token_id: token_manager.token_id,
+            operator: *flow_limiter.key,
+            flow_limit: limit,
+        });
+    }
+
+    Ok(())
 }
 
 pub(crate) fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {

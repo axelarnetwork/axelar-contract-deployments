@@ -1,6 +1,6 @@
 //! This module is responsible for functions related to custom token linking
 
-use event_utils::Event as _;
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use interchain_token_transfer_gmp::{GMPPayload, LinkToken, RegisterTokenMetadata};
 use program_utils::pda::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -19,12 +19,11 @@ use crate::state::token_manager::TokenManager;
 use crate::state::{token_manager, InterchainTokenService};
 use crate::{
     assert_its_not_paused, assert_valid_its_root_pda, assert_valid_token_manager_pda, events,
-    FromAccountInfoSlice,
+    EventAccounts, FromAccountInfoSlice,
 };
 
 pub(crate) fn process_inbound<'a>(
-    payer: &'a AccountInfo<'a>,
-    accounts: &'a [AccountInfo<'a>],
+    accounts: DeployTokenManagerAccounts<'a>,
     payload: &LinkToken,
 ) -> ProgramResult {
     let token_manager_type: token_manager::Type = payload.token_manager_type.try_into()?;
@@ -52,17 +51,15 @@ pub(crate) fn process_inbound<'a>(
         None,
     );
 
-    let parsed_accounts =
-        DeployTokenManagerAccounts::from_account_info_slice(accounts, &Some(payer))?;
-    let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
+    let its_root_pda_bump = InterchainTokenService::load(accounts.its_root_pda)?.bump;
 
-    assert_valid_its_root_pda(parsed_accounts.its_root_pda, its_root_pda_bump)?;
+    assert_valid_its_root_pda(accounts.its_root_pda, its_root_pda_bump)?;
 
     let (_, token_manager_pda_bump) =
-        crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, payload.token_id.as_ref());
+        crate::find_token_manager_pda(accounts.its_root_pda.key, payload.token_id.as_ref());
 
     crate::processor::token_manager::deploy(
-        &parsed_accounts,
+        &accounts,
         &deploy_token_manager,
         token_manager_pda_bump,
     )
@@ -109,12 +106,14 @@ pub(crate) fn process_outbound<'a>(
     let deploy_salt = crate::linked_token_deployer_salt(deployer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
-    events::InterchainTokenIdClaimed {
+    let event_accounts_iter = &mut gmp_accounts.event_accounts().into_iter();
+    event_cpi_accounts!(event_accounts_iter);
+
+    emit_cpi!(events::InterchainTokenIdClaimed {
         token_id,
         deployer: *deployer.key,
         salt: deploy_salt,
-    }
-    .emit();
+    });
 
     let token_manager = TokenManager::load(token_manager_account)?;
 
@@ -133,7 +132,7 @@ pub(crate) fn process_outbound<'a>(
         token_manager_type: token_manager_type.into(),
         params: link_params,
     };
-    link_started_events.emit();
+    emit_cpi!(link_started_events);
 
     let message = GMPPayload::LinkToken(LinkToken {
         selector: LinkToken::MESSAGE_TYPE_ID
@@ -176,6 +175,9 @@ pub(crate) fn register_token_metadata<'a>(
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
     msg!("Instruction: RegisterTokenMetadata");
 
+    let event_accounts_iter = &mut gmp_accounts.event_accounts().into_iter();
+    event_cpi_accounts!(event_accounts_iter);
+
     let mint_data = mint_account.try_borrow_data()?;
     let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
     let payload = GMPPayload::RegisterTokenMetadata(RegisterTokenMetadata {
@@ -186,11 +188,10 @@ pub(crate) fn register_token_metadata<'a>(
         decimals: mint.base.decimals,
     });
 
-    events::TokenMetadataRegistered {
+    emit_cpi!(events::TokenMetadataRegistered {
         token_address: *mint_account.key,
         decimals: mint.base.decimals,
-    }
-    .emit();
+    });
 
     gmp::process_outbound(
         payer,
@@ -257,6 +258,9 @@ fn register_token<'a>(
 
     msg!("Instruction: RegisterToken");
 
+    let event_accounts_iter = &mut parsed_accounts.event_accounts().into_iter();
+    event_cpi_accounts!(event_accounts_iter);
+
     let its_config = InterchainTokenService::load(parsed_accounts.its_root_pda)?;
     assert_valid_its_root_pda(parsed_accounts.its_root_pda, its_config.bump)?;
     assert_its_not_paused(&its_config)?;
@@ -315,12 +319,11 @@ fn register_token<'a>(
         token_manager_pda_bump,
     )?;
 
-    events::InterchainTokenIdClaimed {
+    emit_cpi!(events::InterchainTokenIdClaimed {
         token_id,
         deployer: *payer.key,
         salt: deploy_salt,
-    }
-    .emit();
+    });
 
     let deploy_token_manager = DeployTokenManagerInternal::new(
         token_manager_type,

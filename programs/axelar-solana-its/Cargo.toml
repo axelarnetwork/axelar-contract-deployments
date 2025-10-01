@@ -46,12 +46,15 @@ default = ["devnet-amplifier"]
 [dependencies]
 anchor-discriminators-macros.workspace = true
 alloy-primitives.workspace = true
+anchor-discriminators.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding.workspace = true
 axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 bitflags.workspace = true
 borsh.workspace = true
+event-cpi-macros.workspace = true
+event-cpi.workspace = true
 interchain-token-transfer-gmp.workspace = true
 itertools.workspace = true
 mpl-token-metadata.workspace = true
@@ -62,14 +65,15 @@ spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] 
 spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }
 spl-token-metadata-interface.workspace = true
 typed-builder.workspace = true
-event-utils.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
+event-cpi-test-utils.workspace = true
 evm-contracts-test-suite.workspace = true
 rstest.workspace = true
+solana-banks-interface.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-context.workspace = true

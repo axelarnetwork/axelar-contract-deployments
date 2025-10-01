@@ -1,4 +1,5 @@
 //! # `InterchainTokenService` program
+
 use bitflags::bitflags;
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::ensure_single_feature;
@@ -86,6 +87,10 @@ pub(crate) trait FromAccountInfoSlice<'a> {
     ) -> Result<Self, ProgramError>
     where
         Self: Sized + Validate;
+}
+
+pub(crate) trait EventAccounts<'a> {
+    fn event_accounts(&self) -> [&'a AccountInfo<'a>; 2];
 }
 
 /// Seed prefixes for different PDAs initialized by the program

@@ -39,10 +39,11 @@ default = ["devnet-amplifier"]
 [dependencies]
 anchor-discriminators-macros.workspace = true
 axelar-solana-encoding.workspace = true
-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 borsh.workspace = true
+event-cpi.workspace = true
 hex.workspace = true
 mpl-token-metadata.workspace = true
 program-utils = { workspace = true, default-features = false }

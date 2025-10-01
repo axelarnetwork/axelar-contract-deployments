@@ -1,15 +1,16 @@
-use axelar_solana_gateway_test_fixtures::{
-    assert_msg_present_in_logs,
-    gateway::{get_gateway_events, ProgramInvocationState},
-};
+use anyhow::anyhow;
+use axelar_solana_gateway::events::CallContractEvent;
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_its::state::token_manager::Type;
 use axelar_solana_memo_program::get_counter_pda;
 use evm_contracts_test_suite::ethers::signers::Signer as EvmSigner;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_program::pubkey::Pubkey;
-use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
+use solana_program_test::tokio;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use test_context::test_context;
+
+use event_cpi_test_utils::get_first_event_cpi_occurrence;
 
 use crate::{BorshPdaAccount, ItsTestContext};
 
@@ -107,31 +108,15 @@ async fn verify_token_manager_type(ctx: &mut ItsTestContext, token_manager_pda: 
     };
 }
 
-/// Extract and verify the CallContract event from a transaction
+/// Extract and verify the CallContract event from inner instructions
 fn verify_gateway_event_and_source(
-    tx: &BanksTransactionResultWithMetadata,
+    inner_ixs: &[solana_sdk::inner_instruction::InnerInstruction],
     expected_source: &[u8; 32],
     expected_amount: u64,
 ) -> GMPPayload {
-    let events = get_gateway_events(tx);
-    let ProgramInvocationState::Succeeded(vec_events) = &events[0] else {
-        panic!("Expected successful program invocation");
-    };
-
-    let call_contract_event = vec_events
-        .iter()
-        .find(|(_, event)| {
-            matches!(
-                event,
-                axelar_solana_gateway::events::GatewayEvent::CallContract(_)
-            )
-        })
-        .expect("CallContract event not found");
-
-    let (_, axelar_solana_gateway::events::GatewayEvent::CallContract(event)) = call_contract_event
-    else {
-        panic!("Expected CallContract event");
-    };
+    let event = get_first_event_cpi_occurrence::<CallContractEvent>(inner_ixs)
+        .ok_or_else(|| anyhow!("CallContractEvent not found"))
+        .unwrap();
 
     let gmp_payload = GMPPayload::decode(&event.payload).unwrap();
     let GMPPayload::SendToHub(hub_message) = &gmp_payload else {
@@ -186,13 +171,25 @@ async fn test_memo_cpi_transfer(ctx: &mut ItsTestContext) {
     )
     .unwrap();
 
-    let tx = ctx.send_solana_tx(&[send_transfer]).await.unwrap();
+    // Simulate first to get the event
+    let simulation_result = ctx.simulate_solana_tx(&[send_transfer.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
 
     verify_gateway_event_and_source(
-        &tx,
+        &inner_ixs,
         &axelar_solana_memo_program::ID.to_bytes(),
         transfer_amount,
     );
+
+    // Then execute the transaction
+    ctx.send_solana_tx(&[send_transfer]).await.unwrap();
 }
 
 /// Test that CPI transfers fail when initiated by non-PDA accounts
@@ -340,13 +337,27 @@ async fn test_memo_cpi_call_contract_with_interchain_token(ctx: &mut ItsTestCont
         )
         .unwrap();
 
-    let tx = ctx.send_solana_tx(&[call_contract_transfer]).await.unwrap();
+    // Simulate first to get the event
+    let simulation_result = ctx
+        .simulate_solana_tx(&[call_contract_transfer.clone()])
+        .await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
 
     let gmp_payload = verify_gateway_event_and_source(
-        &tx,
+        &inner_ixs,
         &axelar_solana_memo_program::ID.to_bytes(),
         transfer_amount,
     );
+
+    // Then execute the transaction
+    ctx.send_solana_tx(&[call_contract_transfer]).await.unwrap();
 
     let GMPPayload::SendToHub(hub_message) = gmp_payload else {
         panic!("Expected SendToHub payload");

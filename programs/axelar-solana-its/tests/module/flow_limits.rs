@@ -12,13 +12,13 @@ use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_token_2022::state::Account;
 use test_context::test_context;
 
-use axelar_solana_gateway::events::GatewayEvent;
-use axelar_solana_gateway_test_fixtures::gateway::get_gateway_events;
-use axelar_solana_gateway_test_fixtures::gateway::ProgramInvocationState;
+use axelar_solana_gateway::events::CallContractEvent;
 use evm_contracts_test_suite::ethers::signers::Signer as EvmSigner;
 use evm_contracts_test_suite::ethers::types::U256;
 use interchain_token_transfer_gmp::GMPPayload;
 use interchain_token_transfer_gmp::InterchainTransfer;
+
+use event_cpi_test_utils::get_first_event_cpi_occurrence;
 
 use crate::{retrieve_evm_log_with_filter, ItsTestContext};
 
@@ -58,12 +58,13 @@ async fn test_incoming_interchain_transfer_within_limit(
     })
     .encode();
 
-    ctx.relay_to_solana(
-        &inner_transfer_payload,
-        Some(interchain_token_pda),
-        token_program_id,
-    )
-    .await;
+    let (_inner_ixs, _tx) = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
 
     let destination_ata =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -123,7 +124,7 @@ async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext
     })
     .encode();
 
-    let tx = ctx
+    let (_inner_ixs, tx) = ctx
         .relay_to_solana(
             &inner_transfer_payload,
             Some(interchain_token_pda),
@@ -171,7 +172,7 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
     })
     .encode();
 
-    let tx = ctx
+    let (_inner_ixs, tx) = ctx
         .relay_to_solana(
             &inner_transfer_payload,
             Some(interchain_token_pda),
@@ -198,7 +199,7 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
     })
     .encode();
 
-    let tx = ctx
+    let (_inner_ixs, tx) = ctx
         .relay_to_solana(
             &inner_transfer_payload,
             Some(interchain_token_pda),
@@ -228,7 +229,7 @@ async fn test_flow_reset_upon_epoch_change(ctx: &mut ItsTestContext) {
     assert_ne!(new_epoch, current_epoch, "Epoch should have advanced");
 
     // Now the same transfer should succeed because it's a fresh epoch
-    let tx_success = ctx
+    let (_inner_ixs, tx_success) = ctx
         .relay_to_solana(
             &inner_transfer_payload,
             Some(interchain_token_pda),
@@ -350,18 +351,22 @@ async fn test_outgoing_interchain_transfer_within_limit(
         0,
     )?;
 
-    let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
-    let emitted_events = get_gateway_events(&tx)
-        .pop()
-        .ok_or_else(|| anyhow!("no events"))?;
+    // Simulate first to get the event
+    let simulation_result = ctx.simulate_solana_tx(&[transfer_ix.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
 
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
+    let emitted_event = get_first_event_cpi_occurrence::<CallContractEvent>(&inner_ixs)
+        .ok_or_else(|| anyhow!("CallContractEvent not found"))?;
 
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
+    // Then execute the transaction
+    ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
 
     ctx.relay_to_evm(&emitted_event.payload).await;
 
@@ -479,12 +484,13 @@ async fn test_flow_slot_initialization_incoming_transfer(
     })
     .encode();
 
-    ctx.relay_to_solana(
-        &inner_transfer_payload,
-        Some(interchain_token_pda),
-        token_program_id,
-    )
-    .await;
+    let (_inner_ixs, _tx) = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
 
     // Verify the token was minted
     let destination_ata =
@@ -525,12 +531,13 @@ async fn test_flow_slot_initialization_incoming_transfer(
     })
     .encode();
 
-    ctx.relay_to_solana(
-        &inner_transfer_payload_2,
-        Some(interchain_token_pda),
-        token_program_id,
-    )
-    .await;
+    let (_inner_ixs, _tx) = ctx
+        .relay_to_solana(
+            &inner_transfer_payload_2,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
 
     let destination_raw_account_2 = ctx
         .solana_chain
@@ -638,18 +645,22 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         0,
     )?;
 
-    let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
-    let emitted_events = get_gateway_events(&tx)
-        .pop()
-        .ok_or_else(|| anyhow!("no events"))?;
+    // Simulate first to get the event
+    let simulation_result = ctx.simulate_solana_tx(&[transfer_ix.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
 
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
+    let emitted_event = get_first_event_cpi_occurrence::<CallContractEvent>(&inner_ixs)
+        .ok_or_else(|| anyhow!("CallContractEvent not found"))?;
 
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
+    // Then execute the transaction
+    ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
 
     ctx.relay_to_evm(&emitted_event.payload).await;
 
@@ -677,18 +688,22 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         0,
     )?;
 
-    let tx_2 = ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();
-    let emitted_events_2 = get_gateway_events(&tx_2)
-        .pop()
-        .ok_or_else(|| anyhow!("no events"))?;
+    // Simulate first to get the event
+    let simulation_result_2 = ctx.simulate_solana_tx(&[transfer_ix_2.clone()]).await;
+    let inner_ixs_2 = simulation_result_2
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
 
-    let ProgramInvocationState::Succeeded(vec_events_2) = emitted_events_2 else {
-        panic!("unexpected event")
-    };
+    let emitted_event_2 = get_first_event_cpi_occurrence::<CallContractEvent>(&inner_ixs_2)
+        .ok_or_else(|| anyhow!("CallContractEvent not found"))?;
 
-    let [(_, GatewayEvent::CallContract(emitted_event_2))] = vec_events_2.as_slice() else {
-        panic!("unexpected event")
-    };
+    // Then execute the transaction
+    ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();
 
     ctx.relay_to_evm(&emitted_event_2.payload).await;
 
@@ -759,12 +774,13 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
     })
     .encode();
 
-    ctx.relay_to_solana(
-        &inner_transfer_payload,
-        Some(interchain_token_pda),
-        token_program_id,
-    )
-    .await;
+    let (_inner_ixs, _tx) = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
 
     let associated_account_address = get_associated_token_address_with_program_id(
         &ctx.solana_wallet,
@@ -793,14 +809,8 @@ async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow
         0,
     )?;
 
-    let tx = ctx.send_solana_tx(&[outgoing_transfer_ix]).await.unwrap();
-    let emitted_events = get_gateway_events(&tx)
-        .pop()
-        .ok_or_else(|| anyhow!("no events"))?;
-
-    let ProgramInvocationState::Succeeded(_) = emitted_events else {
-        panic!("transfer should succeed")
-    };
+    // Execute the transaction (no need to check events for this test)
+    ctx.send_solana_tx(&[outgoing_transfer_ix]).await.unwrap();
 
     let ata = ctx
         .solana_chain
@@ -850,12 +860,13 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
     })
     .encode();
 
-    ctx.relay_to_solana(
-        &inner_transfer_payload,
-        Some(interchain_token_pda),
-        token_program_id,
-    )
-    .await;
+    let (_inner_ixs, _tx) = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
 
     let associated_account_address = get_associated_token_address_with_program_id(
         &ctx.solana_wallet,
@@ -886,14 +897,8 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
         0,
     )?;
 
-    let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
-    let emitted_events = get_gateway_events(&tx)
-        .pop()
-        .ok_or_else(|| anyhow!("no events"))?;
-
-    let ProgramInvocationState::Succeeded(_) = emitted_events else {
-        panic!("transfer should succeed")
-    };
+    // Execute the transaction (no need to check events for this test)
+    ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
 
     let additional_amount = 200;
     let transfer_ix_2 = axelar_solana_its::instruction::interchain_transfer(
@@ -909,14 +914,8 @@ async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> an
         0,
     )?;
 
-    let tx_2 = ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();
-    let emitted_events_2 = get_gateway_events(&tx_2)
-        .pop()
-        .ok_or_else(|| anyhow!("no events"))?;
-
-    let ProgramInvocationState::Succeeded(_) = emitted_events_2 else {
-        panic!("transfer should succeed")
-    };
+    // Execute the transaction (no need to check events for this test)
+    ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();
 
     let ata = ctx
         .solana_chain

@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 //! Program state processor
 use borsh::BorshDeserialize;
-use event_utils::Event as _;
+use event_cpi_macros::{emit_cpi, event_cpi_accounts, event_cpi_handler};
 use program_utils::{
     pda::{BorshPda, ValidPDA},
     validate_system_account_key,
@@ -19,6 +19,7 @@ use solana_program::pubkey::Pubkey;
 use token_manager::handover_mint_authority;
 
 use crate::instruction::InterchainTokenServiceInstruction;
+use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
 use crate::{assert_valid_its_root_pda, check_program_account, events, Roles};
 
@@ -41,6 +42,9 @@ pub fn process_instruction<'a>(
     instruction_data: &[u8],
 ) -> ProgramResult {
     check_program_account(*program_id)?;
+
+    event_cpi_handler!(instruction_data);
+
     let instruction = match InterchainTokenServiceInstruction::try_from_slice(instruction_data) {
         Ok(instruction) => instruction,
         Err(err) => {
@@ -211,6 +215,8 @@ pub fn process_instruction<'a>(
             let token_manager_pda = next_account_info(accounts_iter)?;
             let system_account = next_account_info(accounts_iter)?;
 
+            event_cpi_accounts!(accounts_iter);
+
             msg!("Instruction: SetFlowLimit");
 
             let its_config_pda = InterchainTokenService::load(its_root_pda)?;
@@ -226,13 +232,25 @@ pub fn process_instruction<'a>(
                 Roles::OPERATOR,
             )?;
 
+            let token_manager = TokenManager::load(token_manager_pda)?;
+
             token_manager::set_flow_limit(
                 payer,
                 token_manager_pda,
                 its_root_pda,
                 system_account,
                 flow_limit,
-            )
+            )?;
+
+            if let Some(limit) = flow_limit {
+                emit_cpi!(events::FlowLimitSet {
+                    token_id: token_manager.token_id,
+                    operator: *operator.key,
+                    flow_limit: limit,
+                });
+            }
+
+            Ok(())
         }
         InterchainTokenServiceInstruction::TransferOperatorship => {
             process_transfer_operatorship(accounts)
@@ -530,9 +548,12 @@ fn process_set_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: String,
 ) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
     let (payer, authority, authority_roles, program_data_account, its_root_pda, system_account) =
-        get_trusted_chain_accounts(accounts)?;
+        get_trusted_chain_accounts(accounts, accounts_iter)?;
     msg!("Instruction: SetTrustedChain");
+
+    event_cpi_accounts!(accounts_iter);
 
     if ensure_upgrade_authority(&crate::id(), authority, program_data_account).is_err()
         && ensure_signer_roles(
@@ -552,7 +573,7 @@ fn process_set_trusted_chain<'a>(
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
     let trusted_chain_event = events::TrustedChainSet { chain_name };
-    trusted_chain_event.emit();
+    emit_cpi!(trusted_chain_event);
     its_root_config.add_trusted_chain(trusted_chain_event.chain_name);
     its_root_config.store(payer, its_root_pda, system_account)?;
 
@@ -563,10 +584,13 @@ fn process_remove_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: &str,
 ) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
     let (payer, authority, authority_roles, program_data_account, its_root_pda, system_account) =
-        get_trusted_chain_accounts(accounts)?;
+        get_trusted_chain_accounts(accounts, accounts_iter)?;
 
     msg!("Instruction: RemoveTrustedChain");
+
+    event_cpi_accounts!(accounts_iter);
 
     if ensure_upgrade_authority(&crate::id(), authority, program_data_account).is_err()
         && ensure_signer_roles(
@@ -584,10 +608,9 @@ fn process_remove_trusted_chain<'a>(
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
-    events::TrustedChainRemoved {
+    emit_cpi!(events::TrustedChainRemoved {
         chain_name: chain_name.to_owned(),
-    }
-    .emit();
+    });
 
     its_root_config.remove_trusted_chain(chain_name)?;
     its_root_config.store(payer, its_root_pda, system_account)?;
@@ -596,7 +619,8 @@ fn process_remove_trusted_chain<'a>(
 }
 
 fn get_trusted_chain_accounts<'a>(
-    accounts: &'a [AccountInfo<'a>],
+    _accounts: &'a [AccountInfo<'a>],
+    accounts_iter: &mut core::slice::Iter<'a, AccountInfo<'a>>,
 ) -> Result<
     (
         &'a AccountInfo<'a>,
@@ -608,7 +632,6 @@ fn get_trusted_chain_accounts<'a>(
     ),
     ProgramError,
 > {
-    let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let authority = next_account_info(accounts_iter)?;
     let authority_roles_account = next_account_info(accounts_iter)?;

@@ -22,9 +22,9 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::interchain_token::Int
 use evm_contracts_test_suite::ContractMiddleware;
 use interchain_token_transfer_gmp::GMPPayload;
 
-use crate::{
-    fetch_first_call_contract_event_from_tx, retrieve_evm_log_with_filter, ItsTestContext,
-};
+use event_cpi_test_utils::get_first_event_cpi_occurrence;
+
+use crate::{retrieve_evm_log_with_filter, ItsTestContext};
 
 async fn custom_token(
     ctx: &mut ItsTestContext,
@@ -82,8 +82,23 @@ async fn custom_token(
         0,
     )?;
 
-    let tx = ctx.send_solana_tx(&[register_metadata]).await.unwrap();
-    let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
+    // Simulate first to get the event
+    let simulation_result = ctx.simulate_solana_tx(&[register_metadata.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    let call_contract_event = get_first_event_cpi_occurrence::<
+        axelar_solana_gateway::events::CallContractEvent,
+    >(&inner_ixs)
+    .expect("CallContractEvent not found");
+
+    // Then execute the transaction
+    ctx.send_solana_tx(&[register_metadata]).await.unwrap();
 
     let GMPPayload::RegisterTokenMetadata(register_message) =
         GMPPayload::decode(&call_contract_event.payload)?
@@ -121,12 +136,13 @@ async fn custom_token(
         .next()
         .ok_or_else(|| anyhow!("no logs found"))?;
 
-    ctx.relay_to_solana(
-        log.payload.as_ref(),
-        Some(custom_solana_token),
-        spl_token_2022::id(),
-    )
-    .await;
+    let (_inner_ixs, _tx) = ctx
+        .relay_to_solana(
+            log.payload.as_ref(),
+            Some(custom_solana_token),
+            spl_token_2022::id(),
+        )
+        .await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
@@ -361,7 +377,7 @@ async fn test_call_contract_with_token(ctx: &mut ItsTestContext) -> anyhow::Resu
         .data;
     let token_manager = TokenManager::try_from_slice(&data)?;
 
-    let tx = ctx
+    let (_inner_ixs, tx) = ctx
         .relay_to_solana(
             log.payload.as_ref(),
             Some(token_manager.token_address),

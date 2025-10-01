@@ -305,6 +305,9 @@ pub fn process_send_interchain_transfer(
     let call_contract_signing_account = next_account_info(accounts_iter)?;
     let its_program_account = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
+    let its_event_authority = next_account_info(accounts_iter)?;
+    let gateway_event_authority = next_account_info(accounts_iter)?;
+    let gas_service_event_authority = next_account_info(accounts_iter)?;
 
     let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
     assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
@@ -363,6 +366,9 @@ pub fn process_send_interchain_transfer(
             its_root_pda.clone(),
             call_contract_signing_account.clone(),
             its_program_account.clone(),
+            its_event_authority.clone(),
+            gateway_event_authority.clone(),
+            gas_service_event_authority.clone(),
         ],
         &[&[&[counter_bump]]],
     )?;
@@ -435,6 +441,9 @@ pub fn process_send_interchain_transfer_with_wrong_seeds(
     let call_contract_signing_account = next_account_info(accounts_iter)?;
     let its_program_account = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
+    let its_event_authority = next_account_info(accounts_iter)?;
+    let gateway_event_authority = next_account_info(accounts_iter)?;
+    let gas_service_event_authority = next_account_info(accounts_iter)?;
 
     let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
     assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
@@ -491,6 +500,9 @@ pub fn process_send_interchain_transfer_with_wrong_seeds(
             its_root_pda.clone(),
             call_contract_signing_account.clone(),
             its_program_account.clone(),
+            its_event_authority.clone(),
+            gateway_event_authority.clone(),
+            gas_service_event_authority.clone(),
         ],
         &[&[&[counter_bump]]],
     )?;
@@ -527,6 +539,9 @@ pub fn process_call_contract_with_interchain_token(
     let call_contract_signing_account = next_account_info(accounts_iter)?;
     let its_program_account = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
+    let its_event_authority = next_account_info(accounts_iter)?;
+    let gateway_event_authority = next_account_info(accounts_iter)?;
+    let gas_service_event_authority = next_account_info(accounts_iter)?;
 
     let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
     assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
@@ -585,6 +600,9 @@ pub fn process_call_contract_with_interchain_token(
             its_root_pda.clone(),
             call_contract_signing_account.clone(),
             its_program_account.clone(),
+            its_event_authority.clone(),
+            gateway_event_authority.clone(),
+            gas_service_event_authority.clone(),
         ],
         &[&[&[counter_bump]]],
     )?;
