@@ -562,6 +562,8 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const { Gateway } = AxelarGateway.objects;
     const [symbol, destinationChain, destinationAddress] = args;
 
+    const encoder = new TextEncoder();
+
     validateParameters({
         isNonEmptyString: { symbol, destinationChain, destinationAddress },
         isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
@@ -625,9 +627,9 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             channel,
             salt,
             destinationChain, // This assumes the chain is already added as a trusted chain
-            bcs.string().serialize(destinationAddress).toBytes(),
+            encoder.encode(destinationAddress),
             tokenManagerType,
-            bcs.string().serialize(linkParams).toBytes(),
+            encoder.encode(linkParams),
         ],
     });
 
