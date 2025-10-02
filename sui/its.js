@@ -228,6 +228,12 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const deployConfig = { client, keypair, options, walletAddress };
     const [symbol, name, decimals] = args;
 
+    if (options.salt) {
+        validateParameters({
+            isHexString: {salt: options.salt} 
+        });
+    }
+
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
@@ -239,7 +245,8 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         symbol,
         metadata,
         tokenType,
-        options.treasuryCap ? treasuryCap : false,
+        options.treasuryCap ? treasuryCap : null,
+        salt === options.salt ? options.salt : null,
     );
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
 
@@ -366,6 +373,12 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const [symbol, name, decimals] = args;
     const txBuilder = new TxBuilder(client);
 
+    if (options.salt) {
+        validateParameters({
+            isHexString: {salt: options.salt} 
+        });
+    }
+
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
@@ -377,6 +390,8 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
         symbol,
         metadata,
         tokenType,
+        null,
+        options.salt ? options.salt : null,
     );
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
 
@@ -564,10 +579,16 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     const encoder = new TextEncoder();
 
-    validateParameters({
+    const unvalidatedParams = {
         isNonEmptyString: { symbol, destinationChain, destinationAddress },
         isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
-    });
+    };
+
+    if (options.salt) {
+        unvalidatedParams.isHexString = { salt: options.salt };
+    }
+
+    validateParameters(unvalidatedParams);
 
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
@@ -591,6 +612,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         metadata,
         tokenType,
         tokenManager === 'mint_burn' ? treasuryCap : null,
+        salt === options.salt ? options.salt : null,
     );
 
     if (!tokenId) {
@@ -1049,9 +1071,10 @@ if (require.main === module) {
     const registerCustomCoinProgram = new Command()
         .name('register-custom-coin')
         .command('register-custom-coin <symbol> <name> <decimals>')
-        .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
+        .description(`Register a custom coin in ITS using token name, symbol and decimals. If no salt is provided, the calling wallet address is used.`)
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(new Option('--treasuryCap', `Give the coin's TreasuryCap to ITS`))
+        .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
@@ -1089,6 +1112,7 @@ if (require.main === module) {
         .command('give-unlinked-coin <symbol> <name> <decimals>')
         .description(`Deploy a coin on Sui, register it as custom coin and give its treasury capability to ITS.`)
         .addOption(new Option('--treasuryCapReclaimer', 'Pass this flag to retain the ability to reclaim the treasury capability'))
+        .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
         .action((symbol, name, decimals, options) => {
             mainProcessor(giveUnlinkedCoin, options, [symbol, name, decimals], processCommand);
         });
@@ -1127,6 +1151,7 @@ if (require.main === module) {
                 'Optional token manager address on the destination chain. If provided, used as link paramater.',
             ),
         )
+        .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
         .action((symbol, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
         });
