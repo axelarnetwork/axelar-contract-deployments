@@ -351,16 +351,9 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
     } = contracts;
-    const {
-        governanceAddress,
-        serviceName,
-        sourceGatewayAddress,
-        votingThreshold,
-        blockExpiry,
-        confirmationHeight,
-        msgIdFormat,
-        addressFormat,
-    } = contractConfig;
+    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
+    const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
+        contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -368,6 +361,10 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(chainCodecAddress)) {
+        throw new Error(`Missing or invalid ChainCodec address for chain ${chainName} in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
@@ -406,10 +403,6 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
     }
 
-    if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
-    }
-
     return {
         service_registry_address: serviceRegistryAddress,
         rewards_address: rewardsAddress,
@@ -421,8 +414,19 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         confirmation_height: confirmationHeight,
         source_chain: chainName,
         msg_id_format: msgIdFormat,
-        address_format: addressFormat,
+        chain_codec_address: chainCodecAddress,
     };
+};
+
+const makeChainCodecInstantiateMsg = (config, options, _contractConfig) => {
+    const { contractName } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: codecConfig = {} },
+        },
+    } = config;
+
+    return codecConfig; // we pass on all properties in the codec config
 };
 
 const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
@@ -509,6 +513,33 @@ const getAxelarGatewayContractForChain = (chainName) => {
     return chainGatewayMapping[chainName] || 'AxelarGateway';
 };
 
+// Helpers to resolve ChainCodecXyz entries from the new split config
+/** Get the ChainCodec config object for the chain type (single instance, not per-chain) */
+const getChainCodecConfigForChain = (config, chainName) => {
+    const codecContract = getChainCodecContractNameByChainType(config, chainName);
+    return config.axelar.contracts[codecContract];
+};
+
+const getChainCodecContractNameByChainType = (config, chainName) => {
+    const chainType = config.chains?.[chainName]?.chainType;
+    const mapping = {
+        evm: 'ChainCodecEvm',
+        sui: 'ChainCodecSui',
+        stellar: 'ChainCodecStellar',
+    };
+
+    const result = mapping[chainType];
+    if (!result) {
+        throw new Error(`Unsupported or unknown chain type '${chainType}' for chain ${chainName} when resolving ChainCodec`);
+    }
+    return result;
+};
+
+const getChainCodecAddressForChain = (config, chainName) => {
+    const codecConfig = getChainCodecConfigForChain(config, chainName);
+    return codecConfig?.address;
+};
+
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
     const verifierContract = getVerifierContractForChain(chainName);
@@ -529,7 +560,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid ${verifierContractName}[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${verifierContract}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -671,6 +702,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
+        // ChainCodec address will be resolved dynamically from the split ChainCodec contracts
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
@@ -678,19 +710,20 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
-        contractConfig;
+    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
+    const { adminAddress, governanceAddress, signingThreshold, serviceName, verifierSetDiffThreshold, keyType } = contractConfig;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
     }
 
+    if (!validateAddress(chainCodecAddress)) {
+        throw new Error(`Missing or invalid ChainCodec address for chain ${chainName} in axelar info`);
+    }
+
     if (!isString(axelarChainId)) {
         throw new Error(`Missing or invalid chain ID`);
     }
-
-    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
-    contractConfig.domainSeparator = separator;
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
@@ -720,10 +753,6 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
     }
 
-    if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
-    }
-
     if (!isStringArray(signingThreshold)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
     }
@@ -736,12 +765,14 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
     }
 
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
-    }
-
     if (!isString(keyType)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
+    }
+
+    contractConfig.domainSeparator = contractConfig.domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+
+    if (!isKeccak256Hash(contractConfig.domainSeparator)) {
+        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
     }
 
     return {
@@ -752,13 +783,15 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        domain_separator: separator.replace('0x', ''),
+        chain_codec_address: chainCodecAddress,
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainName,
         verifier_set_diff_threshold: verifierSetDiffThreshold,
-        encoder,
         key_type: keyType,
+        domain_separator: contractConfig.domainSeparator.replace('0x', ''),
+        expect_full_message_payloads: Boolean(contractConfig.expectFullMessagePayloads) || false,
+        notify_signing_session: Boolean(contractConfig.notifySigningSession) || false,
     };
 };
 
@@ -1106,15 +1139,15 @@ const submitProposal = async (client, config, options, content, fee) => {
 };
 
 const getContractR2Url = (contractName, contractVersion) => {
-    const pathName = pascalToKebab(contractName);
-    const fileName = pascalToSnake(contractName);
+    const pathName = getCrateName(contractName);
+    const fileName = getFileName(contractName);
 
     if (VERSION_REGEX.test(contractVersion)) {
-        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${contractVersion}/${fileName}.wasm`;
+        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${contractVersion}/${fileName}`;
     }
 
     if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
-        return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
+        return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}`;
     }
 
     throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
@@ -1122,8 +1155,17 @@ const getContractR2Url = (contractName, contractVersion) => {
 
 const getContractArtifactPath = (artifactDir, contractName) => {
     const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
-    const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
+    const fileName = getFileName(contractName);
+
     return basePath + fileName;
+};
+
+const getCrateName = (contractName) => {
+    return pascalToKebab(contractName);
+};
+
+const getFileName = (contractName) => {
+    return `${pascalToSnake(contractName)}.wasm`;
 };
 
 const getContractCodePath = async (options, contractName) => {
@@ -1162,16 +1204,9 @@ const getVerifierInstantiateMsg = (config, chainName) => {
         throw new Error(`VotingVerifier config not found for chain ${chainName}`);
     }
 
-    const {
-        governanceAddress,
-        serviceName,
-        sourceGatewayAddress,
-        votingThreshold,
-        blockExpiry,
-        confirmationHeight,
-        msgIdFormat,
-        addressFormat,
-    } = verifierConfig;
+    const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
+        verifierConfig;
+    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -1183,6 +1218,10 @@ const getVerifierInstantiateMsg = (config, chainName) => {
 
     if (!validateAddress(governanceAddress)) {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(chainCodecAddress)) {
+        throw new Error(`Missing or invalid ChainCodec address for chain ${chainName} in axelar info`);
     }
 
     if (!isString(serviceName)) {
@@ -1209,10 +1248,6 @@ const getVerifierInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
     }
 
-    if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
-    }
-
     return {
         service_registry_address: serviceRegistryAddress,
         governance_address: governanceAddress,
@@ -1224,7 +1259,7 @@ const getVerifierInstantiateMsg = (config, chainName) => {
         source_chain: chainName,
         rewards_address: rewardsAddress,
         msg_id_format: msgIdFormat,
-        address_format: addressFormat,
+        chain_codec_address: chainCodecAddress,
     };
 };
 
@@ -1233,6 +1268,7 @@ const getProverInstantiateMsg = (config, chainName) => {
         axelar: {
             contracts: {
                 MultisigProver: { [chainName]: proverConfig },
+                Router: { address: routerAddress },
             },
             chainId: axelarChainId,
         },
@@ -1242,12 +1278,17 @@ const getProverInstantiateMsg = (config, chainName) => {
         throw new Error(`MultisigProver config not found for chain ${chainName}`);
     }
 
-    const { governanceAddress, adminAddress, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType, domainSeparator } =
-        proverConfig;
-
-    if (!isString(axelarChainId)) {
-        throw new Error(`Missing or invalid chain ID`);
-    }
+    const {
+        governanceAddress,
+        adminAddress,
+        signingThreshold,
+        serviceName,
+        verifierSetDiffThreshold,
+        keyType,
+        domainSeparator,
+        sigVerifierAddress,
+    } = proverConfig;
+    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
 
     if (!validateAddress(governanceAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
@@ -1255,6 +1296,10 @@ const getProverInstantiateMsg = (config, chainName) => {
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(chainCodecAddress)) {
+        throw new Error(`Missing or invalid ChainCodec address for chain ${chainName} in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
@@ -1269,17 +1314,16 @@ const getProverInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
     }
 
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
-    }
-
     if (!isString(keyType)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
     }
 
-    const routerAddress = config.axelar.contracts.Router?.address;
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
     }
 
     const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
@@ -1295,9 +1339,12 @@ const getProverInstantiateMsg = (config, chainName) => {
         service_name: serviceName,
         chain_name: chainName,
         verifier_set_diff_threshold: verifierSetDiffThreshold,
-        encoder,
         key_type: keyType,
+        sig_verifier_address: sigVerifierAddress || null,
         domain_separator: separator.replace('0x', ''),
+        expect_full_message_payloads: Boolean(proverConfig.expectFullMessagePayloads) || false,
+        notify_signing_session: Boolean(proverConfig.notifySigningSession) || false,
+        chain_codec_address: chainCodecAddress,
     };
 };
 
@@ -1313,6 +1360,7 @@ const getInstantiateChainContractsMessage = async (client, config, options) => {
     }
 
     const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
+
     const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
     const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
 
@@ -1397,6 +1445,18 @@ const CONTRACTS = {
     VotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
+    ChainCodecEvm: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeChainCodecInstantiateMsg,
+    },
+    ChainCodecSui: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeChainCodecInstantiateMsg,
+    },
+    ChainCodecStellar: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeChainCodecInstantiateMsg,
     },
     XrplVotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
@@ -1489,4 +1549,7 @@ module.exports = {
     getProverInstantiateMsg,
     getInstantiateChainContractsMessage,
     validateItsChainChange,
+    getChainCodecAddressForChain,
+    getChainCodecConfigForChain,
+    getChainCodecContractNameByChainType,
 };
