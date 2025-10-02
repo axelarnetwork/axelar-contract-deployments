@@ -26,7 +26,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
           });
 
     // Salt
-    const saltAddress = createSaltAddress();
+    const saltAddress = createSaltAddress(config.keypair);
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
         arguments: [saltAddress],
@@ -85,8 +85,10 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     return [tokenId, channelId, saltAddress, result];
 }
 
-function createSaltAddress() {
-    const keypair = new Ed25519Keypair();
+function createSaltAddress(keypair = null) {
+    if (!keypair) {
+        keypair = new Ed25519Keypair();
+    }
     const address = keypair.getPublicKey().toSuiAddress();
     return address;
 }
