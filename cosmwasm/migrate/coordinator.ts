@@ -282,7 +282,7 @@ async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, co
             }
 
             const prover_seen = multisig_map.get(chain);
-            if (prover_seen != prover) {
+            if (prover_seen !== prover) {
                 console.log(`Coordinator's prover does not match multisig's for chain ${chain}: expected ${prover_seen}, saw ${prover}`);
                 state_is_consistent = false;
                 continue;
