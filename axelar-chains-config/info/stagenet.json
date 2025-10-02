@@ -1960,6 +1960,16 @@
             "ItsSingleton": "0x6820a95d12727c5fde66a5f4a1ca91481733372200a51b1fcdf065cbcc404313",
             "ItsChannelId": "0xf0b041d8f718ba483e17e340e133dc866f410c2b80bf85899c5e4bda5361209f"
           }
+        },
+        "TESTR": {
+          "address": "0x0f583cc9d368c380c4490692e7cebe43ec7792e44d88f45028991566774dd488",
+          "typeArgument": "0x0f583cc9d368c380c4490692e7cebe43ec7792e44d88f45028991566774dd488::testr::TESTR",
+          "decimals": "9",
+          "objects": {
+            "TokenId": null,
+            "TreasuryCap": "0xa077b12d83f3329dc15399863f663ba4cbfd63ae43441df81b4752fb041eb3c0",
+            "Metadata": "0x455559377f0d5704295f2be9886e928d4cb6f67610c83dab0115b395d5264eb9"
+          }
         }
       },
       "finality": "1",
