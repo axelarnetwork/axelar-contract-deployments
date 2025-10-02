@@ -273,7 +273,7 @@ const programHandler = () => {
 
     const saveDeployedContractsCmd = program
         .command('save-deployed-contracts <chainName>')
-        .description('Query and save deployed Gateway, VotingVerifier, ChainCodec and MultisigProver contracts via Coordinator')
+        .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
         .action((chainName, options) => {
             mainQueryProcessor(saveDeployedContracts, options, [chainName]);
         });
