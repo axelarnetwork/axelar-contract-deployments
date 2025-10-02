@@ -1,16 +1,16 @@
 'use strict';
 
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
+import { addEnvOption } from '../../common/cli-utils';
 import { FullConfig } from '../../common/config';
 import { addAmplifierOptions, addAmplifierQueryContractOptions } from '../cli-utils';
 import { ClientManager, mainProcessor, mainQueryProcessor } from '../processor';
 import { getContractInfo } from '../query';
-import { migrate as migrateCoordinator, checkMigration as checkMigrationCoordinator} from './coordinator';
+import { checkMigration as checkMigrationCoordinator, migrate as migrateCoordinator } from './coordinator';
 import { MigrationCheckOptions, MigrationOptions } from './types';
-import { addEnvOption } from '../../common/cli-utils';
-import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 
 async function migrate(
     client: ClientManager,
@@ -86,7 +86,7 @@ const programHandler = () => {
             .action((options: MigrationCheckOptions) => {
                 mainQueryProcessor(checkMigration, options, []);
             }),
-    )
+    );
 
     program.parse();
 };
