@@ -230,7 +230,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
 
     if (options.salt) {
         validateParameters({
-            isHexString: {salt: options.salt} 
+            isHexString: { salt: options.salt },
         });
     }
 
@@ -375,7 +375,7 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
 
     if (options.salt) {
         validateParameters({
-            isHexString: {salt: options.salt} 
+            isHexString: { salt: options.salt },
         });
     }
 
@@ -1071,7 +1071,9 @@ if (require.main === module) {
     const registerCustomCoinProgram = new Command()
         .name('register-custom-coin')
         .command('register-custom-coin <symbol> <name> <decimals>')
-        .description(`Register a custom coin in ITS using token name, symbol and decimals. If no salt is provided, the calling wallet address is used.`)
+        .description(
+            `Register a custom coin in ITS using token name, symbol and decimals. If no salt is provided, the calling wallet address is used.`,
+        )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(new Option('--treasuryCap', `Give the coin's TreasuryCap to ITS`))
         .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))

@@ -2,7 +2,16 @@ const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { broadcastFromTxBuilder } = require('./sign-utils');
 
-async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymbol, coinMetadata, coinType, treasuryCap = null, fixedSalt = null) {
+async function registerCustomCoinUtil(
+    config,
+    itsConfig,
+    AxelarGateway,
+    coinSymbol,
+    coinMetadata,
+    coinType,
+    treasuryCap = null,
+    fixedSalt = null,
+) {
     const { InterchainTokenService } = itsConfig.objects;
     const txBuilder = new TxBuilder(config.client);
 
