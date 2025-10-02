@@ -1920,8 +1920,7 @@
         "lastUploadedCodeId": 1427,
         "storeCodeProposalId": "1007",
         "storeCodeProposalCodeHash": "20c38aff9c725424cd71e7f85e357fb8a078954c11302f6d5e325060de9dac5c"
-      },
-      "undefined": {}
+      }
     },
     "axelarId": "axelar",
     "chainId": "devnet-amplifier",
