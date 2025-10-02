@@ -482,7 +482,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     if (!savedCoin && !options.coinName && !options.coinDecimals) {
         throw new Error(
             `Coin name and decimals are required for coins not saved in config, found: ${JSON.stringify([
-                !options.coinName,
+                options.coinName,
                 options.coinDecimals,
             ])}`,
         );
