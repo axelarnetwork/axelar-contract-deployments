@@ -45,7 +45,7 @@ const programHandler = () => {
             .command('migrate')
             .argument('<code_id>', 'code id of new contract')
             .addOption(new Option('--fees <fees>', 'fees').default('auto'))
-            .addOption(new Option('--ignoreChains [chains]', 'chains to ignore').default('auto'))
+            .addOption(new Option('--ignoreChains [chains]', 'chains to ignore'))
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
             .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
             .option('--proposal', 'make a proposal rather than a direct migration')
