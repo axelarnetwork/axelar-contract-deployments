@@ -478,24 +478,15 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     const deployConfig = { client, keypair, options, walletAddress };
 
     // If coin is already deployed load it, else deploy a new coin
-	const savedCoin = contracts[symbol.toUpperCase()];
-	if (
-		!savedCoin &&
-		(
-			!options.coinName ||
-			(typeof options.coinName === 'string' && options.coinName.trim() === '') ||
-			options.coinDecimals === undefined ||
-			options.coinDecimals === null ||
-			options.coinDecimals === ''
-		)
-	) {
-		throw new Error(
-			`Coin name and decimals are required for coins not saved in config. Provided: ${JSON.stringify({
-				coinName: options.coinName,
-				coinDecimals: options.coinDecimals,
-			})}`,
-		);
-	}
+    const savedCoin = contracts[symbol.toUpperCase()];
+    if (!savedCoin && !options.coinName && !options.coinDecimals) {
+        throw new Error(
+            `Coin name and decimals are required for coins not saved in config, found: ${JSON.stringify([
+                !options.coinName,
+                options.coinDecimals,
+            ])}`,
+        );
+    }
 
     let metadata, packageId, tokenType, treasuryCap;
     if (!savedCoin) {
