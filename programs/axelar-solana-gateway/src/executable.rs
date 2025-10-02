@@ -27,7 +27,7 @@ pub const AXELAR_EXECUTE: &[u8; 16] = b"axelar-execute__";
 
 /// The index of the first account that is expected to be passed to the
 /// destination program.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 6;
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 7;
 
 /// Perform CPI call to the Axelar Gateway to ensure that the given message is
 /// approved.
@@ -40,7 +40,9 @@ pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 6;
 /// 1. `gateway_message_payload` - `MessagePayload` PDA
 /// 2. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_program_id` - Gateway Program ID
+/// 3. `gateway_root_pda` - Gateway Root PDA
+/// 4. `gateway_event_authority` - Gateway event authority used to emit events
+/// 5. `gateway_program_id` - Gateway Program ID
 /// N. accounts required by the `DataPayload` constructor
 ///
 /// # Errors
@@ -131,7 +133,9 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
 /// 1. `gateway_message_payload` - `MessagePayload` PDA
 /// 2. `signing_pda` - Signing PDA that's associated with the provided
 ///    `program_id`
-/// 3. `gateway_program_id` - Gateway Program ID
+/// 3. `gateway_root_pda` - Gateway Root PDA
+/// 4. `gateway_event_authority` - Gateway event authority used to emit events
+/// 5. `gateway_program_id` - Gateway Program ID
 /// N. accounts required by the inner instruction (part of the payload).
 ///
 /// # Errors
@@ -206,6 +210,7 @@ fn validate_message_internal(
     let _message_payload_pda = next_account_info(account_info_iter)?; // skip this one, we don't need it
     let signing_pda = next_account_info(account_info_iter)?;
     let gateway_root_pda = next_account_info(account_info_iter)?;
+    let gateway_event_authority = next_account_info(account_info_iter)?;
     let gateway_program_id = next_account_info(account_info_iter)?;
 
     // Build the actual Message we are going to use
@@ -229,6 +234,7 @@ fn validate_message_internal(
             signing_pda.clone(),
             gateway_root_pda.clone(),
             gateway_program_id.clone(),
+            gateway_event_authority.clone(),
         ],
         &[&[
             crate::seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED,
