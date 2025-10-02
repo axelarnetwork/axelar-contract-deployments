@@ -246,7 +246,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         metadata,
         tokenType,
         options.treasuryCap ? treasuryCap : null,
-        salt === options.salt ? options.salt : null,
+        options.salt ? options.salt : null,
     );
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
 
@@ -612,7 +612,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         metadata,
         tokenType,
         tokenManager === 'mint_burn' ? treasuryCap : null,
-        salt === options.salt ? options.salt : null,
+        options.salt ? options.salt : null,
     );
 
     if (!tokenId) {
