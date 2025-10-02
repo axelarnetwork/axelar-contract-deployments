@@ -283,16 +283,16 @@ async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, co
 
             const prover_seen = multisig_map.get(chain);
             if (prover_seen != prover) {
-                console.log(`Multisig prover mismatch for chain ${chain}: expected ${prover}, saw ${prover_seen}`);
+                console.log(`Coordinator's prover does not match multisig's for chain ${chain}: expected ${prover_seen}, saw ${prover}`);
                 state_is_consistent = false;
                 continue;
             }
         }
 
         if (!state_is_consistent) {
-            console.error(`Error: state of coordinator v2 is not consistent with the rest of protocol`);
+            console.error(`❌ State of coordinator v2 is not consistent with the rest of protocol`);
         } else {
-            console.log(`Migration succeeded!`);
+            console.log(`✅ Migration succeeded!`);
         }
     } catch (e) {
         // These errors should never happen, as it would indicate a critical problem in the

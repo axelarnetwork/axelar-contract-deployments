@@ -207,3 +207,11 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    ```bash
    {contract: 'coordinator', version: '2.1.0'}
    ```
+
+1. Check that the coordinator uses the same provers that the multisig uses for each chain.
+   
+   ```
+   ts-node cosmwasm/migrate/migrate.ts check -e $ENV -c Coordinator 
+   ```
+
+   You may manually specify the address of the coordinator and multisig by using the `--coordinator` and `--multisig` flags respectively.
