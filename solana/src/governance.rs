@@ -105,9 +105,7 @@ pub(crate) fn build_instruction(
     match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config, &config_pda),
         Commands::ExecuteProposal(args) => execute_proposal(fee_payer, args, &config_pda),
-        Commands::ExecuteOperatorProposal(args) => {
-            execute_operator_proposal(fee_payer, args, &config_pda)
-        }
+        Commands::ExecuteOperatorProposal(args) => execute_operator_proposal(args, &config_pda),
     }
 }
 
@@ -216,7 +214,6 @@ fn execute_proposal(
 }
 
 fn execute_operator_proposal(
-    fee_payer: &Pubkey,
     args: ExecuteOperatorProposalArgs,
     config_pda: &Pubkey,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -238,7 +235,7 @@ fn execute_operator_proposal(
 
     Ok(vec![
         builder
-            .execute_operator_proposal(fee_payer, config_pda, &args.operator)
+            .execute_operator_proposal(config_pda, &args.operator)
             .build(),
     ])
 }

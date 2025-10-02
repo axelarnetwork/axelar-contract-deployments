@@ -520,7 +520,10 @@ async fn init(
             payer,
             upgrade_authority,
             domain_separator,
-            vec![(verifier_set_hash, verifier_set_tracker_pda)],
+            axelar_solana_gateway::instructions::InitialVerifierSet {
+                hash: verifier_set_hash,
+                pda: verifier_set_tracker_pda,
+            },
             init_args.minimum_rotation_delay,
             init_args.operator,
             init_args.previous_signers_retention.into(),
@@ -884,8 +887,10 @@ async fn execute(
     )?);
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
-        let (message_payload_pda, _) =
-            axelar_solana_gateway::find_message_payload_pda(incoming_message_pda);
+        let (message_payload_pda, _) = axelar_solana_gateway::find_message_payload_pda(
+            gateway_config_pda,
+            incoming_message_pda,
+        );
 
         // Handle special destination addresses
         if destination_address == axelar_solana_its::id() {
@@ -909,7 +914,7 @@ async fn execute(
             )?;
             instructions.push(ix);
         } else {
-            let ix = axelar_executable::construct_axelar_executable_ix(
+            let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
                 &message,
                 &payload,
                 incoming_message_pda,
