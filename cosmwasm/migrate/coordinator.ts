@@ -1,3 +1,4 @@
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
@@ -11,6 +12,11 @@ interface ChainContracts {
     verifier_address: string;
 }
 
+interface ChainProverPair {
+    chain: string,
+    prover: string,
+}
+
 export interface ChainEndpoint {
     name: string;
     gateway: {
@@ -18,7 +24,7 @@ export interface ChainEndpoint {
     };
 }
 
-export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
+export async function queryChainsFromRouter(client: CosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
     try {
         const res: ChainEndpoint[] = await client.queryContractSmart(router_address, { chains: {} });
         return res;
@@ -127,6 +133,36 @@ async function constructChainContracts(
     }
 }
 
+async function constructCoordinatorChainProverPairs(
+    client: CosmWasmClient,
+    coordinator_address: string,
+    router_address: string,
+): Promise<ChainProverPair[]> {
+    const all_chains = await queryChainsFromRouter(client, router_address);
+    const chain_prover_pairs: ChainProverPair[] = [];
+
+    for (let i = 0; i < all_chains.length; i++) {
+        try {
+            const chain_info: ChainContracts = await client.queryContractSmart(coordinator_address, {
+                chain_contracts_info: { chain_name: all_chains[i].name},
+            });
+
+            if (!chain_info.prover_address) {
+                throw new Error(`missing prover for chain ${all_chains[i].name}`);
+            }
+
+            chain_prover_pairs.push({
+                chain: all_chains[i].name,
+                prover: chain_info.prover_address,
+            });
+        } catch (e) {
+            console.error(`Error querying contracts for chain ${all_chains[i].name}: ${e}`)
+        }
+    }
+
+    return chain_prover_pairs;
+}
+
 async function coordinatorToVersion2_1_0(
     client: typeof SigningCosmWasmClient,
     options: MigrationOptions,
@@ -181,15 +217,16 @@ async function coordinatorToVersion2_1_0(
 }
 
 async function checkCoordinatorToVersion2_1_0(
-    client: typeof SigningCosmWasmClient,
+    client: CosmWasmClient,
     config,
     coordinator_address?: string,
     multisig_address?: string,
 ) {
     coordinator_address = coordinator_address ?? config.axelar.contracts.Coordinator.address;
     multisig_address = multisig_address ?? config.axelar.contracts.Multisig.address;
+    const router_address = config.axelar.contracts.Router.address;
 
-    console.log(`"Coordinator ${coordinator_address}, Multisig ${multisig_address}`);
+    console.log(await constructCoordinatorChainProverPairs(client, coordinator_address, router_address));
 }
 
 export async function migrate(
@@ -210,7 +247,7 @@ export async function migrate(
 }
 
 export async function checkMigration(
-    client: typeof SigningCosmWasmClient,
+    client: CosmWasmClient,
     config,
     version: string,
     coordinator_address?: string,
