@@ -253,8 +253,10 @@ version = "0.1.0"
 dependencies = [
  "anchor-discriminators",
  "borsh 1.5.7",
+ "bytemuck",
  "convert_case 0.8.0",
  "proc-macro2",
+ "program-utils",
  "quote",
  "solana-program",
  "solana-program-test",

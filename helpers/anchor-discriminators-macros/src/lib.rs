@@ -211,3 +211,46 @@ pub fn derive_instruction_discriminator(input: proc_macro::TokenStream) -> proc_
 
     proc_macro::TokenStream::from(expanded)
 }
+
+#[proc_macro_derive(AccountDiscriminator)]
+pub fn account(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let account_strct = parse_macro_input!(input as syn::ItemStruct);
+    let account_name = &account_strct.ident;
+    let account_vis = &account_strct.vis;
+    let account_attrs = &account_strct.attrs;
+
+    let discriminator = gen_discriminator(
+        anchor_discriminators::SIGHASH_ACCOUNT_NAMESPACE,
+        account_name,
+    );
+
+    // Extract the original fields
+    let original_fields = match &account_strct.fields {
+        syn::Fields::Named(fields) => &fields.named,
+        _ => {
+            return syn::Error::new_spanned(
+                account_strct,
+                "AccountDiscriminator only supports structs with named fields",
+            )
+            .to_compile_error()
+            .into();
+        }
+    };
+
+    let ret = quote! {
+        #(#account_attrs)*
+        #account_vis struct #account_name {
+            /// Account discriminator
+            pub discriminator: [u8; 8],
+            #(#original_fields,)*
+        }
+
+        #[automatically_derived]
+        impl anchor_discriminators::Discriminator for #account_name {
+            const DISCRIMINATOR: &'static [u8] = #discriminator;
+        }
+    };
+
+    #[allow(unreachable_code)]
+    proc_macro::TokenStream::from(ret)
+}
