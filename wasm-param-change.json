@@ -1,0 +1,12 @@
+{
+  "title": "Grant Coordinator Code Upload Permission",
+  "description": "Add Coordinator address to code_upload_access to allow it to upload CosmWasm contracts",
+  "changes": [
+    {
+      "subspace": "wasm",
+      "key": "code_upload_access",
+      "value": "{\"permission\":\"AnyOfAddresses\",\"address\":\"\",\"addresses\":[\"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5\",\"axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj\",\"axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e\"]}"
+    }
+  ],
+  "deposit": "100000000uattiss"
+}

@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmwasm.wasm.v1.MsgUpdateParams",
+      "authority": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "params": {
+        "code_upload_access": {
+          "permission": "AnyOfAddresses",
+          "addresses": [
+            "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+            "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+            "axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e"
+          ]
+        },
+        "instantiate_default_permission": "AnyOfAddresses"
+      }
+    }
+  ],
+  "metadata": "",
+  "deposit": "100000000uattiss",
+  "title": "Grant Coordinator Code Upload Permission",
+  "summary": "Add Coordinator address to code_upload_access to allow it to upload CosmWasm contracts",
+  "expedited": false
+}

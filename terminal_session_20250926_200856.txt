@@ -1,0 +1,711 @@
+ 1462          } else {
+ 1463              console.log('\n❌ The proposed gasPriceAdjustment: 1.2 might not be enough.');
+ 1464              console.log('Consider increasing to 1.5 or 2.0');
+ 1465          }
+ 1466          
+ 1467      } catch (error) {
+ 1468          console.error('Error testing gas price:', error.message);
+ 1469      }
+ 1470  }
+ 1471  testImmutableGas();
+ 1472  EOF
+ 1473  node test-immutable-gas.js
+ 1474  ts-node evm/its.js set-trusted-chains hub -n immutable
+ 1475  git status
+ 1476  # Create a test script to check RPC connectivity
+ 1477  cat > test-polygon-rpc.js << 'EOF'
+ 1478  const { ethers } = require('hardhat');
+ 1479  const { getDefaultProvider } = ethers;
+ 1480  async function testPolygonRPC() {
+ 1481      console.log('Testing Polygon-Sepolia RPC endpoint...\n');
+ 1482      
+ 1483      const rpcUrl = 'https://polygon-amoy.drpc.org';
+ 1484      
+ 1485      try {
+ 1486          console.log('Connecting to:', rpcUrl);
+ 1487          const provider = getDefaultProvider(rpcUrl);
+ 1488          
+ 1489          // Test basic connectivity
+ 1490          console.log('Testing basic connectivity...');
+ 1491          const blockNumber = await provider.getBlockNumber();
+ 1492          console.log('✅ Current block number:', blockNumber);
+ 1493          
+ 1494          // Test gas price
+ 1495          console.log('Testing gas price...');
+ 1496          const gasPrice = await provider.getGasPrice();
+ 1497          console.log('✅ Gas price:', gasPrice.toString(), 'wei');
+ 1498          console.log('✅ Gas price:', (gasPrice / 1e9).toFixed(2), 'gwei');
+ 1499          
+ 1500          // Test network info
+ 1501          console.log('Testing network info...');
+ 1502          const network = await provider.getNetwork();
+ 1503          console.log('✅ Network:', network);
+ 1504          
+ 1505          console.log('\n✅ RPC endpoint is working correctly!');
+ 1506          
+ 1507      } catch (error) {
+ 1508          console.error('❌ RPC endpoint error:', error.message);
+ 1509          console.error('Error details:', error);
+ 1510          
+ 1511          if (error.message.includes('Unable to perform request')) {
+ 1512              console.log('\n🔍 This confirms it\'s an RPC server issue, not a gas price issue.');
+ 1513          }
+ 1514      }
+ 1515  }
+ 1516  testPolygonRPC();
+ 1517  EOF
+ 1518  # Test alternative RPC endpoints
+ 1519  cat > test-polygon-alternatives.js << 'EOF'
+ 1520  const { ethers } = require('hardhat');
+ 1521  const { getDefaultProvider } = ethers;
+ 1522  async function testRPC(rpcUrl, name) {
+ 1523      try {
+ 1524          console.log(`\nTesting ${name}: ${rpcUrl}`);
+ 1525          const provider = getDefaultProvider(rpcUrl);
+ 1526          const blockNumber = await provider.getBlockNumber();
+ 1527          const gasPrice = await provider.getGasPrice();
+ 1528          console.log(`✅ ${name} - Block: ${blockNumber}, Gas: ${(gasPrice / 1e9).toFixed(2)} gwei`);
+ 1529          return true;
+ 1530      } catch (error) {
+ 1531          console.log(`❌ ${name} - Error: ${error.message}`);
+ 1532          return false;
+ 1533      }
+ 1534  }
+ 1535  async function testAllEndpoints() {
+ 1536      const endpoints = [
+ 1537          { url: 'https://polygon-amoy.drpc.org', name: 'drpc.org' },
+ 1538          { url: 'https://rpc.ankr.com/polygon_amoy', name: 'Ankr' },
+ 1539          { url: 'https://polygon-amoy.g.alchemy.com/v2/demo', name: 'Alchemy Demo' },
+ 1540          { url: 'https://sepolia-polygon.chainstacklabs.com', name: 'Chainstack' }
+ 1541      ];
+ 1542      
+ 1543      console.log('Testing Polygon-Sepolia RPC endpoints...\n');
+ 1544      
+ 1545      const results = [];
+ 1546      for (const endpoint of endpoints) {
+ 1547          const success = await testRPC(endpoint.url, endpoint.name);
+ 1548          results.push({ ...endpoint, success });
+ 1549      }
+ 1550      
+ 1551      console.log('\n📊 Results Summary:');
+ 1552      results.forEach(result => {
+ 1553          console.log(`${result.success ? '✅' : '❌'} ${result.name}: ${result.url}`);
+ 1554      });
+ 1555      
+ 1556      const workingEndpoints = results.filter(r => r.success);
+ 1557      if (workingEndpoints.length > 0) {
+ 1558          console.log('\n💡 Working alternatives found!');
+ 1559          workingEndpoints.forEach(endpoint => {
+ 1560              console.log(`   ${endpoint.name}: ${endpoint.url}`);
+ 1561          });
+ 1562      }
+ 1563  }
+ 1564  testAllEndpoints();
+ 1565  EOF
+ 1566  # Test the current RPC endpoint
+ 1567  node test-polygon-rpc.js
+ 1568  # Test alternative endpoints
+ 1569  node test-polygon-alternatives.js
+ 1570  ts-node evm/its.js set-trusted-chains hub -n polygon-sepolia
+ 1571  ps aux | grep -i warp | head -5
+ 1572  kill -STOP 6651 && sleep 1 && kill -CONT 6651
+ 1573  gnome-extensions enable pop-shell@system76.com
+ 1574  # Save the guide to your home directory
+ 1575  cat > ~/frozen-help.txt << 'EOF'
+ 1576  GNOME FREEZE RECOVERY GUIDE
+ 1577  ============================
+ 1578  QUICK FIXES (Try in order):
+ 1579  ----------------------------
+ 1580  1. RESTART GNOME SHELL (keeps windows open):
+ 1581     killall -3 gnome-shell
+ 1582     
+ 1583     Then switch back to GUI: Alt+F1 or Alt+F2
+ 1584  2. IF IT FREEZES AGAIN IMMEDIATELY:
+ 1585     # Disable pop-shell tiling (likely culprit)
+ 1586     gnome-extensions disable pop-shell@system76.com
+ 1587     killall -3 gnome-shell
+ 1588  3. CHECK FOR FROZEN WARP TERMINAL:
+ 1589     # See if Warp is using high CPU
+ 1590     ps aux | grep -i warp | head -5
+ 1591     
+ 1592     # Try to unfreeze Warp without killing it
+ 1593     kill -STOP $(pgrep -f warp-terminal) && sleep 1 && kill -CONT $(pgrep -f warp-terminal)
+ 1594     
+ 1595     # If desperate, kill Warp (loses terminal sessions)
+ 1596     pkill -9 -f warp-terminal
+ 1597  4. IF SUPER KEY STOPS WORKING:
+ 1598     # Re-enable pop-shell often fixes it
+ 1599     gnome-extensions enable pop-shell@system76.com
+ 1600     
+ 1601     # Or reset the key binding
+ 1602     gsettings set org.gnome.mutter overlay-key 'Super_R'
+ 1603     gsettings set org.gnome.mutter overlay-key 'Super_L'
+ 1604  5. FULL GNOME RESTART (if nothing else works):
+ 1605     gnome-shell --replace &
+ 1606     # Then switch back to GUI
+ 1607  6. LAST RESORT - RESTART DISPLAY MANAGER:
+ 1608     sudo systemctl restart gdm3
+ 1609     # WARNING: This logs you out, losing unsaved work
+ 1610  PERMANENT FIXES TO TRY:
+ 1611  ------------------------
+ 1612  A. Disable pop-shell focus-following (reduces freezes):
+ 1613     gsettings set org.gnome.shell.extensions.pop-shell mouse-cursor-follows-focus false
+ 1614     gsettings set org.gnome.shell.extensions.pop-shell focus-down []
+ 1615     gsettings set org.gnome.shell.extensions.pop-shell focus-up []
+ 1616     gsettings set org.gnome.shell.extensions.pop-shell focus-left []
+ 1617     gsettings set org.gnome.shell.extensions.pop-shell focus-right []
+ 1618  B. Keep system updated:
+ 1619     sudo apt update && sudo apt install gnome-shell gnome-shell-common
+ 1620  C. Monitor for errors after a freeze:
+ 1621     journalctl -b --since "5 minutes ago" | grep -i gnome-shell | grep -E "error|warning|critical"
+ 1622  KNOWN TRIGGERS:
+ 1623  ---------------
+ 1624  - Switching workspaces rapidly with many windows
+ 1625  - Warp terminal + pop-shell + workspace switching
+ 1626  - Multiple monitors being disconnected/reconnected
+ 1627  TO RE-ENABLE TILING AFTER RESTART:
+ 1628  -----------------------------------
+ 1629  gnome-extensions enable pop-shell@system76.com
+ 1630  EOF
+ 1631  # Create the frozen-help command
+ 1632  echo 'alias frozen-help="less ~/frozen-help.txt"' >> ~/.bashrc
+ 1633  # Also add it to .bash_aliases if you use that
+ 1634  [ -f ~/.bash_aliases ] && echo 'alias frozen-help="less ~/frozen-help.txt"' >> ~/.bash_aliases
+ 1635  # Make it available immediately in current session
+ 1636  alias frozen-help="less ~/frozen-help.txt"
+ 1637  # Save the guide to your home directory
+ 1638  cat > ~/frozen-help.txt << 'EOF'
+ 1639  GNOME FREEZE RECOVERY GUIDE
+ 1640  ============================
+ 1641  QUICK FIXES (Try in order):
+ 1642  ----------------------------
+ 1643  1. RESTART GNOME SHELL (keeps windows open):
+ 1644     killall -3 gnome-shell
+ 1645     
+ 1646     Then switch back to GUI: Alt+F1 or Alt+F2
+ 1647  2. IF IT FREEZES AGAIN IMMEDIATELY:
+ 1648     # Disable pop-shell tiling (likely culprit)
+ 1649     gnome-extensions disable pop-shell@system76.com
+ 1650     killall -3 gnome-shell
+ 1651  3. CHECK FOR FROZEN WARP TERMINAL:
+ 1652     # See if Warp is using high CPU
+ 1653     ps aux | grep -i warp | head -5
+ 1654     
+ 1655     # Try to unfreeze Warp without killing it
+ 1656     kill -STOP $(pgrep -f warp-terminal) && sleep 1 && kill -CONT $(pgrep -f warp-terminal)
+ 1657     
+ 1658     # If desperate, kill Warp (loses terminal sessions)
+ 1659     pkill -9 -f warp-terminal
+ 1660  4. IF SUPER KEY STOPS WORKING:
+ 1661     # Re-enable pop-shell often fixes it
+ 1662     gnome-extensions enable pop-shell@system76.com
+ 1663     
+ 1664     # Or reset the key binding
+ 1665     gsettings set org.gnome.mutter overlay-key 'Super_R'
+ 1666     gsettings set org.gnome.mutter overlay-key 'Super_L'
+ 1667  5. FULL GNOME RESTART (if nothing else works):
+ 1668     gnome-shell --replace &
+ 1669     # Then switch back to GUI
+ 1670  6. LAST RESORT - RESTART DISPLAY MANAGER:
+ 1671     sudo systemctl restart gdm3
+ 1672     # WARNING: This logs you out, losing unsaved work
+ 1673  PERMANENT FIXES TO TRY:
+ 1674  ------------------------
+ 1675  A. Disable pop-shell focus-following (reduces freezes):
+ 1676     gsettings set org.gnome.shell.extensions.pop-shell mouse-cursor-follows-focus false
+ 1677     gsettings set org.gnome.shell.extensions.pop-shell focus-down []
+ 1678     gsettings set org.gnome.shell.extensions.pop-shell focus-up []
+ 1679     gsettings set org.gnome.shell.extensions.pop-shell focus-left []
+ 1680     gsettings set org.gnome.shell.extensions.pop-shell focus-right []
+ 1681  B. Keep system updated:
+ 1682     sudo apt update && sudo apt install gnome-shell gnome-shell-common
+ 1683  C. Monitor for errors after a freeze:
+ 1684     journalctl -b --since "5 minutes ago" | grep -i gnome-shell | grep -E "error|warning|critical"
+ 1685  KNOWN TRIGGERS:
+ 1686  ---------------
+ 1687  - Switching workspaces rapidly with many windows
+ 1688  - Warp terminal + pop-shell + workspace switching
+ 1689  - Multiple monitors being disconnected/reconnected
+ 1690  TO RE-ENABLE TILING AFTER RESTART:
+ 1691  -----------------------------------
+ 1692  gnome-extensions enable pop-shell@system76.com
+ 1693  EOF
+ 1694  # Create the frozen-help command
+ 1695  echo 'alias frozen-help="less ~/frozen-help.txt"' >> ~/.bashrc
+ 1696  # Also add it to .bash_aliases if you use that
+ 1697  [ -f ~/.bash_aliases ] && echo 'alias frozen-help="less ~/frozen-help.txt"' >> ~/.bash_aliases
+ 1698  # Make it available immediately in current session
+ 1699  alias frozen-help="less ~/frozen-help.txt"
+ 1700  # Create the script
+ 1701  cat > ~/bin/frozen-help << 'EOF'
+ 1702  #!/bin/bash
+ 1703  less ~/frozen-help.txt
+ 1704  EOF
+ 1705  # Make the bin directory if it doesn't exist
+ 1706  mkdir -p ~/bin
+ 1707  # Make it executable
+ 1708  chmod +x ~/bin/frozen-help
+ 1709  # Add ~/bin to PATH if not already there
+ 1710  echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+ 1711  cat > test-gas-price-analysis.js << 'EOF'
+ 1712  const { ethers } = require('hardhat');
+ 1713  const { getDefaultProvider } = ethers;
+ 1714  async function analyzeGasPriceImpact() {
+ 1715      console.log('Analyzing gas price impact on Polygon-Sepolia...\n');
+ 1716      
+ 1717      try {
+ 1718          const provider = getDefaultProvider('https://polygon-amoy.drpc.org');
+ 1719          
+ 1720          // Get current network conditions
+ 1721          const gasPrice = await provider.getGasPrice();
+ 1722          const blockNumber = await provider.getBlockNumber();
+ 1723          const block = await provider.getBlock(blockNumber);
+ 1724          
+ 1725          console.log('Current network conditions:');
+ 1726          console.log(`- Block: ${blockNumber}`);
+ 1727          console.log(`- Base gas price: ${gasPrice.toString()} wei (${(gasPrice / 1e9).toFixed(2)} gwei)`);
+ 1728          console.log(`- Timestamp: ${new Date(block.timestamp * 1000).toISOString()}`);
+ 1729          
+ 1730          // Test different adjustment factors
+ 1731          const adjustments = [1.0, 1.2, 1.5, 2.0, 2.5];
+ 1732          
+ 1733          console.log('\nGas price calculations with different adjustments:');
+ 1734          console.log('Adjustment | Gas Price (gwei) | Risk Level');
+ 1735          console.log('-----------|-------------------|-----------');
+ 1736          
+ 1737          adjustments.forEach(adj => {
+ 1738              const adjustedPrice = Math.floor(gasPrice * adj);
+ 1739              const gwei = (adjustedPrice / 1e9).toFixed(2);
+ 1740              
+ 1741              let riskLevel = '🟢 Low';
+ 1742              if (adjustedPrice > 80 * 1e9) riskLevel = '🔴 High (>80 gwei)';
+ 1743              else if (adjustedPrice > 60 * 1e9) riskLevel = '🟡 Medium (>60 gwei)';
+ 1744              
+ 1745              console.log(`${adj.toFixed(1).padEnd(10)} | ${gwei.padEnd(17)} | ${riskLevel}`);
+ 1746          });
+ 1747          
+ 1748          // Historical analysis
+ 1749          console.log('\nHistorical failure analysis:');
+ 1750          console.log('- Sep 23 failure: 75.4 gwei (likely 1.5x adjustment during congestion)');
+ 1751          console.log('- Current test: 39.4-41.3 gwei (1.5x adjustment during normal conditions)');
+ 1752          
+ 1753          // Network congestion indicators
+ 1754          const baseFee = block.baseFeePerGas;
+ 1755          if (baseFee) {
+ 1756              console.log(`- Base fee: ${baseFee.toString()} wei (${(baseFee / 1e9).toFixed(2)} gwei)`);
+ 1757              const congestionLevel = baseFee > 20 * 1e9 ? 'High' : baseFee > 10 * 1e9 ? 'Medium' : 'Low';
+ 1758              console.log(`- Congestion level: ${congestionLevel}`);
+ 1759          }
+ 1760          
+ 1761          // Recommendations
+ 1762          console.log('\nRecommendations:');
+ 1763          const currentGwei = gasPrice / 1e9;
+ 1764          if (currentGwei > 30) {
+ 1765              console.log('🔴 High base gas price detected - consider reducing adjustment to 1.2');
+ 1766          } else if (currentGwei > 20) {
+ 1767              console.log('🟡 Medium base gas price - 1.3 adjustment might be safer');
+ 1768          } else {
+ 1769              console.log('🟢 Low base gas price - 1.5 adjustment should be fine');
+ 1770          }
+ 1771          
+ 1772      } catch (error) {
+ 1773          console.error('Error analyzing gas prices:', error.message);
+ 1774      }
+ 1775  }
+ 1776  analyzeGasPriceImpact();
+ 1777  EOF
+ 1778  ts-node test-gas-price-analysis.js
+ 1779  # Test current RPC
+ 1780  curl -X POST https://polygon-amoy.drpc.org   -H "Content-Type: application/json"   -d '{"jsonrpc":"2.0","method":"eth_gasPrice","id":1}'   -w "\nTime: %{time_total}s Status: %{http_code}\n"
+ 1781  # Test official Polygon RPC
+ 1782  curl -X POST https://rpc-amoy.polygon.technology/   -H "Content-Type: application/json"   -d '{"jsonrpc":"2.0","method":"eth_gasPrice","id":1}'   -w "\nTime: %{time_total}s Status: %{http_code}\n"
+ 1783  # Test PublicNode
+ 1784  curl -X POST https://polygon-amoy-bor-rpc.publicnode.com   -H "Content-Type: application/json"   -d '{"jsonrpc":"2.0","method":"eth_gasPrice","id":1}'   -w "\nTime: %{time_total}s Status: %{http_code}\n"
+ 1785  git checkout main
+ 1786  git pull origin main
+ 1787  git status
+ 1788  git statua
+ 1789  git status
+ 1790  git checkout -b fix/immutable-testnet-gas-config
+ 1791  git status
+ 1792  git add .
+ 1793  git commit
+ 1794  git push origin fix/immutable-testnet-gas-config 
+ 1795  git checkout main
+ 1796  git pull origin main
+ 1797  git checkout -b fix/polygon-testnet-rpc-config
+ 1798  git status
+ 1799  git add .
+ 1800  git commit
+ 1801  git push origin fix/polygon-testnet-rpc-config 
+ 1802  git branch
+ 1803  git checkout test/cosmos-sdk-v0.50 
+ 1804  git checkout test-cosmos-sdk-v0.50-upgrade 
+ 1805  git log --oneline --graph --all --decorate --date=relative
+ 1806  git show -s --format=%ci test-cosmos-sdk-v0.50-upgrade 
+ 1807  git show -s --format=%ci test/cosmos-sdk-v0.50 
+ 1808  git checkout test/cosmos-sdk-v0.50 
+ 1809  git checkout origin/main cosmwasm/submit-proposal.js cosmwasm/utils.js
+ 1810  cd Documents/axelar/axelar-contract-deployments/
+ 1811  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" --fetchCodeId -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1812  source .env
+ 1813  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" --fetchCodeId -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1814  echo $CHAIN
+ 1815  ts-node evm/deploy-amplifier-gateway.js -m create --minimumRotationDelay 0 --predictOnly
+ 1816  source .env
+ 1817  ts-node evm/deploy-amplifier-gateway.js -m create --minimumRotationDelay 0 --predictOnly
+ 1818  ts-node evm/deploy-amplifier-gateway.js -m create3 --minimumRotationDelay 0 --predictOnly
+ 1819  kubectl config get-contexts
+ 1820  kubectl config use-context arn:aws:eks:us-east-2:499786161782:cluster/devnet-cluster
+ 1821  kubectl get ns
+ 1822  NAMESPACE=devnet-attiss
+ 1823  aws s3 cp s3://axelar-devnet/${NAMESPACE}/devnet.json ./axelar-chains-config/info/${NAMESPACE}.json
+ 1824  ls -al ./axelar-chains-config/info/${NAMESPACE}.json
+ 1825  ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
+ 1826  ts-node evm/deploy-contract.js -c Create3Deployer -m create2
+ 1827  ts-node evm/deploy-amplifier-gateway.js -m create3 --minimumRotationDelay 0 --predictOnly
+ 1828  kubectl exec genesis-0 -n "$NAMESPACE" -- sh -c 'axelard keys show -a amplifier'
+ 1829  MNEMONIC="$(kubectl exec genesis-0 -c core -n ${NAMESPACE} -- sh -c 'cat /home/axelard/.axelar/info/amplifier.txt | tail -1')"
+ 1830  echo $MNEMONIC;
+ 1831  ADMIN_ADDR="$(kubectl exec genesis-0 -n ${NAMESPACE} -- sh -c 'axelard keys show -a amplifier')"
+ 1832  echo $ADMIN_ADDR;
+ 1833  aws s3 cp --recursive s3://axelar-devnet/${NAMESPACE}/artifacts/ ./artifacts 
+ 1834  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   -n flow   -m $MNEMONIC   -a "./artifacts"
+ 1835  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   -n flow   -m $MNEMONIC   -a "./artifacts"
+ 1836  echo $MNEMONIC;
+ 1837  source .env
+ 1838  echo $MNEMONIC;
+ 1839  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   -n flow   -m $MNEMONIC   -a "./artifacts"
+ 1840  MNEMONIC=
+ 1841  source .env
+ 1842  echo $MNEMONIC;
+ 1843  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   -n flow   -m $MNEMONIC   -a "./artifacts"
+ 1844  export MNEMONIC="satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry"
+ 1845  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   -n flow   -m $MNEMONIC   -a "./artifacts"
+ 1846  ts-node cosmwasm/deploy-contract.js upload -c VotingVerifier -n flow -m $MNEMONIC -a "./artifacts"
+ 1847  MNEMONIC=
+ 1848  echo $MNEMONIC;
+ 1849  source .env
+ 1850  echo $MNEMONIC;
+ 1851  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   -n flow   -m "satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry"   -a "./artifacts"   -y
+ 1852  MNEMONIC='satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry'
+ 1853  ts-node cosmwasm/deploy-contract.js upload   -c Gateway   -n flow   -m $MNEMONIC   -a "./artifacts"   -y
+ 1854  ts-node cosmwasm/deploy-contract.js upload   -c Gateway   -n flow   -m "satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry"   -a "./artifacts"   -y
+ 1855  ts-node cosmwasm/deploy-contract.js upload   -c MultisigProver   -n flow   -m "satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry"   -a "./artifacts"   -y
+ 1856  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" --fetchCodeId -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1857  SALT="$(cat ./artifacts/checksums.txt | grep voting_verifier.wasm | awk '{print $1;}')"
+ 1858  echo $SALT;
+ 1859  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" --fetchCodeId -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1860  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1861  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1862  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1863  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1864  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1865  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1866  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1867  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1868  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1869  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1870  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1871  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1872  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1873  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1874  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1875  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1876  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1877  git status
+ 1878  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1879  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1880  git diff feat/test-cosmos-sdk-v0.50 old-cosmos-sdk-v0.50-test -- cosmwasm/utils.js
+ 1881  git diff feat/test-cosmos-sdk-v0.50 old-cosmos-sdk-v0.50-test -- axelar-chains-config/info/devnet-attiss.json 
+ 1882  cd Documents/axelar/axelar-contract-deployments/
+ 1883  source .env
+ 1884  echo $CHAIN
+ 1885  ts-node evm/its.js set-trusted-chains memento-demo hub 
+ 1886  ts-node evm/its.js set-trusted-chains memento-demo hub -n polygon-sepolia
+ 1887  ts-node evm/its.js set-trusted-chains memento-demo -n polygon-sepolia
+ 1888  grep -r "setTrustedChains\|setTrustedAddress" evm/its.js
+ 1889  grep -B 10 "populateTransaction.setTrustedAddress" evm/its.js
+ 1890  grep -n "gasOptions\s*=" evm/its.js
+ 1891  grep -A 20 "async function handleGasPriceAdjustment" evm/utils.js
+ 1892  grep -n "sendTransaction\|\.send(" evm/its.js
+ 1893  grep -A 10 "populateTransaction.setTrustedAddress" evm/its.js
+ 1894  grep -n -A 10 "populateTransaction.setTrustedAddress" evm/its.js
+ 1895  grep -n -B 2 -A 2 "\.multicall(" evm/its.js
+ 1896  grep -n "interchainTokenService\." evm/its.js | grep -v "populateTransaction" | grep -v "address" | head -5
+ 1897  grep -n "await.*interchainTokenService\.[a-z]" evm/its.js | grep -v "\.(contractId\|tokenManagerAddress\|deployedTokenManager\|interchainTokenAddress\|registeredTokenAddress\|populateTransaction\|address\|owner)" | head -5
+ 1898  ts-node evm/its.js set-trusted-chains memento-demo -n polygon-sepolia
+ 1899  ts-node evm/its.js is-trusted-chain memento-demo -n polygon-sepolia
+ 1900  grep -n "\.multicall(" evm/*.js
+ 1901  grep -n "await.*\.\(send\|execute\|deploy\|transfer\)(" evm/*.js | grep -v "gasOptions"
+ 1902  grep -n -B 5 -A 5 "await governance.execute" evm/governance.js
+ 1903  cd /home/attiss/Documents/axelar/axelar-contract-deployments && node -e "const config = require('./axelar-chains-config/info/devnet-attiss.json'); console.log('RPC:', config.axelar.rpc); console.log('Chain ID:', config.axelar.chainId);"
+ 1904  curl -s "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:26657/status" | jq '.result.node_info.version'
+ 1905  curl -s "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:26657/status" | jq '.result.node_info.other'
+ 1906  curl -s "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:26657/abci_info" | jq '.result.response.version'
+ 1907  git branch --show-current
+ 1908  curl -s "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:26657/abci_info" | jq '.result.response.data'
+ 1909  curl -s "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:1317/cosmos/base/tendermint/v1beta1/node_info" | jq '.application_version'
+ 1910  node -e "
+ 1911  const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+ 1912  const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
+ 1913  const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
+ 1914  console.log('Testing imports...');
+ 1915  console.log('MsgSubmitProposal type:', typeof MsgSubmitProposal);
+ 1916  console.log('MsgSubmitProposal available:', curl -s "http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:1317/cosmos/base/tendermint/v1beta1/node_info" | jq '.application_version'MsgSubmitProposal);
+ 1917  "
+ 1918  node -e "const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx'); console.log('MsgSubmitProposal type:', typeof MsgSubmitProposal);"
+ 1919  node -e "const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1/tx'); console.log('MsgSubmitProposal v1 type:', typeof MsgSubmitProposal);"
+ 1920  node -e "
+ 1921  const v1beta1 = require('cosmjs-types/cosmos/gov/v1beta1/tx');
+ 1922  const v1 = require('cosmjs-types/cosmos/gov/v1/tx');
+ 1923  console.log('v1beta1 MsgSubmitProposal keys:', Object.keys(v1beta1.MsgSubmitProposal || {}));
+ 1924  console.log('v1 MsgSubmitProposal keys:', Object.keys(v1.MsgSubmitProposal || {}));
+ 1925  "
+ 1926  node -e "
+ 1927  const v1beta1 = require('cosmjs-types/cosmos/gov/v1beta1/tx');
+ 1928  const v1 = require('cosmjs-types/cosmos/gov/v1/tx');
+ 1929  console.log('v1beta1 typeUrl:', v1beta1.MsgSubmitProposal.typeUrl);
+ 1930  console.log('v1 typeUrl:', v1.MsgSubmitProposal.typeUrl);
+ 1931  "
+ 1932  echo "MNEMONIC length: ${#MNEMONIC}"
+ 1933  echo "Testing mnemonic parsing..."
+ 1934  node -e "
+ 1935  const { Command } = require('commander');
+ 1936  const program = new Command();
+ 1937  program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+ 1938  program.parse(['node', 'test', '-m', 'satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry']);
+ 1939  console.log('Parsed mnemonic:', program.opts().mnemonic);
+ 1940  console.log('Word count:', program.opts().mnemonic.split(' ').length);
+ 1941  "
+ 1942  node -e "
+ 1943  const mnemonic = 'satoshi expire oil potato busy group program merry evil eternal elite odor giraffe clean concert donate click ridge silver nest magnet wheel rose merry';
+ 1944  console.log('Mnemonic length:', mnemonic.length);
+ 1945  console.log('Word count:', mnemonic.split(' ').length);
+ 1946  console.log('First few words:', mnemonic.split(' ').slice(0, 5));
+ 1947  "
+ 1948  ts-node cosmwasm/deploy-contract.js upload --help
+ 1949  find node_modules/cosmjs-types -name "*gov*" -type d
+ 1950  ls -la node_modules/cosmjs-types/cosmos/gov/
+ 1951  ls -la node_modules/cosmjs-types/cosmos/gov/v1/
+ 1952  grep -n "MsgSubmitProposal" node_modules/cosmjs-types/cosmos/gov/v1/tx.d.ts
+ 1953  git status
+ 1954  git restore cosmwasm/processor.ts cosmwasm/submit-proposal.js cosmwasm/utils.js
+ 1955  git status
+ 1956  grep -n "maxPriorityFeePerGas\|maxFeePerGas" evm/utils.js
+ 1957  git status
+ 1958  # Check what files you've modified
+ 1959  git diff --name-only
+ 1960  # Check the specific changes
+ 1961  git diff
+ 1962  cd Documents/axelar/axelar-contract-deployments/
+ 1963  source .env
+ 1964  echo $CHAIN
+ 1965  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1966  SALT="$(cat ./artifacts/checksums.txt | grep voting_verifier.wasm | awk '{print $1;}')"
+ 1967  echo $SALT;
+ 1968  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1969  grep -A 20 "const instantiateChainContracts = async" cosmwasm/submit-proposal.js
+ 1970  grep -A 30 "const instantiateChainContracts = async" cosmwasm/submit-proposal.js
+ 1971  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1972  grep -B 2 -A 5 "signAndBroadcast" cosmwasm/utils.js
+ 1973  grep -B 5 -A 5 "catch" cosmwasm/submit-proposal.js | head -20
+ 1974  NODE=http://k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:26657
+ 1975  axelard status --node $NODE | grep network
+ 1976  NETWORK=devnet-attiss
+ 1977  ARGS="--node $NODE --chain-id $NETWORK"
+ 1978  axelard q gov proposals --output json $ARGS
+ 1979  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1980  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1981  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1982  axelard q gov proposal 4 --node $NODE --chain-id $NETWORK --output json
+ 1983  axelard q gov proposal 4 --node $NODE --chain-id $NETWORK --output json | jq .
+ 1984  axelard q gov params --node $NODE --chain-id $NETWORK --output json | jq '.voting_params'
+ 1985  echo $NAMESPACE
+ 1986  NAMESPACE=devnet-attiss
+ 1987  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard keys list
+ 1988  chmod +x ../scripts/vote_custom_devnet.sh 
+ 1989  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 1990  ../scripts/vote_custom_devnet.sh 5
+ 1991  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard q gov proposal 5 --output json $ARGS | jq '.status'
+ 1992  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard q gov proposal 5 --output json | jq '.status'
+ 1993  axelard q gov proposal 5 --node $NODE --chain-id $NETWORK --output json | jq '.status'
+ 1994  axelard q gov proposal 5 --node $NODE --chain-id $NETWORK --output json | jq '.final_tally_result'
+ 1995  axelard q gov params $ARGS --output json | jq '.tally_params'
+ 1996  axelard q tx C4E7145C14E1A036F22338CE650F0A7F6A81829C703E660DBEA17831EB74098C --node $NODE --chain-id $NETWORK --output json | jq '.timestamp'
+ 1997  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard q txs --events "message.sender=axelar17mqcn93mxxgnszpppxkzdztmu22q494ex4ypdw" --limit 5 --output json | jq '.txs[].body.messages[].type_url'
+ 1998  axelard q gov proposal 5 --node $NODE --chain-id $NETWORK --output json | jq '{status, voting_start: .voting_start_time, voting_end: .voting_end_time}'
+ 1999  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard q txs --query "message.sender='axelar17mqcn93mxxgnszpppxkzdztmu22q494ex4ypdw' AND message.action='vote'" --limit 5 --output json
+ 2000  kubectl exec -it -n $NAMESPACE validator-0 -c core -- bash
+ 2001  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 2002  axelard q gov proposal 6 --node $NODE --chain-id $NETWORK --output json | jq '{status, voting_start: .voting_start_time, voting_end: .voting_end_time}'
+ 2003  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard tx gov vote 6 yes --from validator -y
+ 2004  axelard q gov proposal 6 --node $NODE --chain-id $NETWORK --output json | jq '.final_tally_result'
+ 2005  axelard q tx AC1D525BC60B252E59F8ECDBCA627CC7CA285091E55E8FAC016F16531D464BC6 --node $NODE --chain-id $NETWORK --output json
+ 2006  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard status
+ 2007  kubectl exec -n $NAMESPACE validator-0 -c core -- cat /home/axelard/.axelar/config/client.toml | grep -E "node|broadcast"
+ 2008  kubectl get svc -n $NAMESPACE
+ 2009  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 2010  kubectl exec -n $NAMESPACE validator-0 -c core -- axelard tx gov vote 7 yes --from validator --node tcp://core-sentry-0:26657 -y
+ 2011  kubectl exec -n $NAMESPACE validator-1 -c core -- axelard tx gov vote 7 yes --from validator --node tcp://core-sentry-0:26657 -y
+ 2012  kubectl exec -n $NAMESPACE validator-2 -c core -- axelard tx gov vote 7 yes --from validator --node tcp://core-sentry-0:26657 -y
+ 2013  kubectl exec -n $NAMESPACE validator-3 -c core -- axelard tx gov vote 7 yes --from validator --node tcp://core-sentry-0:26657 -y
+ 2014  # Check who the proposer is
+ 2015  axelard keys show axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5 --node $NODE --chain-id $NETWORK
+ 2016  # Check who the proposer is
+ 2017  axelard keys show axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5
+ 2018  axelard q staking validators --node $NODE --chain-id $NETWORK --output json | jq '.validators[] | {moniker: .description.moniker, voting_power: .tokens, status: .status}'
+ 2019  axelard q auth accounts --node $NODE --chain-id $NETWORK --output json | jq '.accounts[] | select(.address | startswith("axelar1")) | .address' | head -5
+ 2020  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 2021  kubectl exec validator-0 -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2022  kubectl exec validator-1 -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2023  kubectl exec validator-2 -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2024  kubectl exec validator-3 -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2025  kubectl exec validator-0 -n $NAMESPACE -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2026  kubectl exec validator-1 -n $NAMESPACE -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2027  kubectl exec validator-2 -n $NAMESPACE -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2028  kubectl exec validator-3 -n $NAMESPACE -c core -- axelard tx gov vote 8 yes --from validator --gas auto --gas-adjustment 2.0
+ 2029  axelard q gov proposal 8 --node $NODE --chain-id $NETWORK --output json | jq '{status, final_tally: .final_tally_result}'
+ 2030  axelard q gov votes 8 --node $NODE --chain-id $NETWORK --output json | jq '.votes[] | {voter: .voter, option: .options}'
+ 2031  sleep 30
+ 2032  axelard q gov proposal 8 --node $NODE --chain-id $NETWORK --output json | jq '{status, final_tally: .final_tally_result}'
+ 2033  axelard q gov proposal 8 --node $NODE --chain-id $NETWORK --output json | jq '.failed_reason'
+ 2034  axelard q gov proposal 8 --node $NODE --chain-id $NETWORK --output json | grep -i error
+ 2035  axelard q wasm code 12 --node $NODE --chain-id $NETWORK --output json | jq '.code_id'
+ 2036  axelard q wasm code 13 --node $NODE --chain-id $NETWORK --output json | jq '.code_id'
+ 2037  axelard q wasm code 14 --node $NODE --chain-id $NETWORK --output json | jq '.code_id'
+ 2038  axelard q wasm contract-state smart axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e --query-msg '{"deployment": {"deployment_name": "flow-13-12-14"}}' --node $NODE --chain-id $NETWORK --output json
+ 2039  # Check if codes exist
+ 2040  axelard q wasm code-info 12 --node $NODE --chain-id $NETWORK --output json
+ 2041  axelard q wasm code-info 13 --node $NODE --chain-id $NETWORK --output json
+ 2042  axelard q wasm code-info 14 --node $NODE --chain-id $NETWORK --output json
+ 2043  axelard q wasm contract-state smart axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e '{"deployment": {"deployment_name": "flow-13-12-14"}}' --node $NODE --chain-id $NETWORK --output json
+ 2044  axelard q wasm contract-state smart axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e '{"chain_contracts_info": {"chain": "flow"}}' --node $NODE --chain-id $NETWORK --output json
+ 2045  chmod +x ../scripts/vote_custom_devnet.sh 
+ 2046  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts --help
+ 2047  axelard q wasm contract-state smart axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e '{"chain_contracts_info": {"chain_name": "flow"}}' --node $NODE --chain-id $NETWORK --output json
+ 2048  SALT="v1.0.1"
+ 2049  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN - attempt 2" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" -r axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5
+ 2050  # Check the last few transactions to see if anything was submitted
+ 2051  axelard q txs --query "message.sender='axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5'" --limit 5 --node $NODE --chain-id $NETWORK --output json | jq '.txs[-1].body.messages[0]["@type"]'
+ 2052  axelard q gov proposals --status deposit_period --node $NODE --chain-id $NETWORK --output json | jq '.proposals[] | {id: .proposal_id, title: .title}'
+ 2053  axelard q gov proposals --node $NODE --chain-id $NETWORK --output json | jq '.proposals[] | {id: .id, status: .status, title: .title}' | tail -10
+ 2054  axelard q bank balances axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5 --node $NODE --chain-id $NETWORK
+ 2055  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" -r axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5
+ 2056  axelard q gov proposals --limit 1 --node $NODE --chain-id $NETWORK 2>&1 | grep -A5 "code 13"
+ 2057  # Check a specific proposal that should exist
+ 2058  axelard q gov proposal 8 --node $NODE --chain-id $NETWORK --output json | jq '.id'
+ 2059  # Check what happens without -r flag
+ 2060  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n $CHAIN -s "$SALT" -t "Instantiate contracts for $CHAIN" -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+ 2061  # Vote on proposal 9 immediately
+ 2062  ../scripts/vote_custom_devnet.sh 9
+ 2063  # Check proposal 9 status and tally
+ 2064  axelard q gov proposal 9 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2065  # Check proposal 9 status and tally
+ 2066  axelard q gov proposal 9 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2067  # Check proposal 9 status and tally
+ 2068  axelard q gov proposal 9 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2069  sleep 30
+ 2070  # Check proposal 9 status and tally
+ 2071  axelard q gov proposal 9 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2072  # Re-upload VotingVerifier with both addresses allowed to instantiate
+ 2073  ts-node cosmwasm/deploy-contract.js upload   -c VotingVerifier   --instantiate-addresses "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+ 2074  # Check available options for upload command
+ 2075  ts-node cosmwasm/deploy-contract.js upload --help
+ 2076  # Check if there's a command to update code permissions
+ 2077  axelard tx wasm --help | grep -i permission
+ 2078  ts-node cosmwasm/s.js upload --help
+ 2079  ts-node cosmwasm/submit-proposal.js store --help
+ 2080  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2081  # Submit store proposal for VotingVerifier with both addresses
+ 2082  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2083  # Submit store proposal for VotingVerifier with both addresses
+ 2084  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2085  # Check the callSubmitProposal function to see how it chooses between v0.46 and v0.50
+ 2086  grep -n -B 5 -A 15 "const callSubmitProposal = " cosmwasm/submit-proposal.js
+ 2087  # Submit store proposal for VotingVerifier with permissions for both admin and governance
+ 2088  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2089  # Submit store proposal for VotingVerifier with permissions for both admin and governance
+ 2090  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2091  # Submit store proposal for VotingVerifier with permissions for both admin and governance
+ 2092  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2093  ../scripts/vote_custom_devnet.sh 10
+ 2094  # Check proposal 10 status and tally
+ 2095  axelard q gov proposal 10 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2096  # Verify kubectl can access the namespace and pods
+ 2097  kubectl --context=arn:aws:eks:us-east-2:499786161782:cluster/devnet-cluster get pods -n devnet-attiss
+ 2098  source ~/.bashrc
+ 2099  # Verify kubectl can access the namespace and pods
+ 2100  kubectl --context=arn:aws:eks:us-east-2:499786161782:cluster/devnet-cluster get pods -n devnet-attiss
+ 2101  # Submit store proposal 11 for VotingVerifier
+ 2102  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store VotingVerifier with correct permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin and governance"
+ 2103  ../scripts/vote_custom_devnet.sh 11
+ 2104  axelard q gov proposal 11 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2105  sleep 30
+ 2106  axelard q gov proposal 11 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2107  # Query the latest code IDs to find the new VotingVerifier code
+ 2108  axelard q wasm list-code --node $NODE --output json | jq '.code_infos[-1] | {id: .code_id, creator: .creator, checksum: .data_hash}'
+ 2109  # Submit store proposal for Gateway with correct permissions
+ 2110  ts-node cosmwasm/submit-proposal.js store   -c Gateway   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store Gateway with correct permissions"   -d "Store Gateway contract with instantiate permissions for admin and governance"
+ 2111  ../scripts/vote_custom_devnet.sh 12
+ 2112  sleep 70
+ 2113  axelard q gov proposal 12 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2114  axelard q wasm list-code --node $NODE --output json | jq '.code_infos[-1] | {id: .code_id, creator: .creator, checksum: .data_hash}'
+ 2115  # Submit store proposal for MultisigProver with correct permissions
+ 2116  ts-node cosmwasm/submit-proposal.js store   -c MultisigProver   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"   -t "Store MultisigProver with correct permissions"   -d "Store MultisigProver contract with instantiate permissions for admin and governance"
+ 2117  ../scripts/vote_custom_devnet.sh 13
+ 2118  sleep 70
+ 2119  axelard q gov proposal 13 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2120  axelard q wasm list-code --node $NODE --output json | jq '.code_infos[-1] | {id: .code_id, creator: .creator, checksum: .data_hash}'
+ 2121  # Check the command options for instantiate-chain-contracts
+ 2122  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts --help
+ 2123  # Submit instantiate proposal for all three contracts via Coordinator
+ 2124  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts   -n flow   --fetchCodeId   -t "Instantiate contracts for flow"   -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for flow via Coordinator"
+ 2125  # With salt if required
+ 2126  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts   -n flow   -s "flow"   --fetchCodeId   -t "Instantiate contracts for flow"   -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for flow via Coordinator"
+ 2127  ../scripts/vote_custom_devnet.sh 14
+ 2128  sleep 70
+ 2129  axelard q gov proposal 14 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2130  # Query the full proposal details to see if there's an error message
+ 2131  axelard q gov proposal 14 --node $NODE --chain-id $NETWORK --output json | jq '.messages'
+ 2132  # Check if code IDs 15, 16, 17 allow instantiation by the Coordinator
+ 2133  axelard q wasm code-info 15 --node $NODE --output json | jq '.instantiate_permission'
+ 2134  axelard q wasm code-info 16 --node $NODE --output json | jq '.instantiate_permission'
+ 2135  axelard q wasm code-info 17 --node $NODE --output json | jq '.instantiate_permission'
+ 2136  # Store VotingVerifier with permissions for admin, governance, AND Coordinator
+ 2137  ts-node cosmwasm/submit-proposal.js store   -c VotingVerifier   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e"   -t "Store VotingVerifier with Coordinator permissions"   -d "Store VotingVerifier contract with instantiate permissions for admin, governance, and Coordinator"
+ 2138  ../scripts/vote_custom_devnet.sh 16
+ 2139  sleep 70
+ 2140  axelard q gov proposal 16 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2141  axelard q wasm list-code --node $NODE --output json | jq '.code_infos[-1] | {id: .code_id, creator: .creator, checksum: .data_hash}'
+ 2142  # Store Gateway with permissions for admin, governance, and Coordinator
+ 2143  ts-node cosmwasm/submit-proposal.js store   -c Gateway   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e"   -t "Store Gateway with Coordinator permissions"   -d "Store Gateway contract with instantiate permissions for admin, governance, and Coordinator"
+ 2144  ../scripts/vote_custom_devnet.sh 17
+ 2145  sleep 70
+ 2146  axelard q gov proposal 17 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2147  axelard q wasm list-code --node $NODE --output json | jq '.code_infos[-1] | {id: .code_id, creator: .creator, checksum: .data_hash}'
+ 2148  # Store MultisigProver with permissions for admin, governance, and Coordinator
+ 2149  ts-node cosmwasm/submit-proposal.js store   -c MultisigProver   -a artifacts   -i "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e"   -t "Store MultisigProver with Coordinator permissions"   -d "Store MultisigProver contract with instantiate permissions for admin, governance, and Coordinator"
+ 2150  ../scripts/vote_custom_devnet.sh 18
+ 2151  sleep 70
+ 2152  axelard q gov proposal 18 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2153  axelard q wasm list-code --node $NODE --output json | jq '.code_infos[-1] | {id: .code_id, creator: .creator, checksum: .data_hash}'
+ 2154  # Submit instantiate proposal with salt
+ 2155  ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts   -n flow   -s "flow-v1"   --fetchCodeId   -t "Instantiate contracts for flow"   -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for flow via Coordinator"
+ 2156  ../scripts/vote_custom_devnet.sh 19
+ 2157  sleep 70
+ 2158  axelard q gov proposal 19 --node $NODE --chain-id $NETWORK --output json | jq '{status: .status, tally: .final_tally_result}'
+ 2159  # Query transaction events around when the proposal should have executed
+ 2160  axelard q txs --events 'message.action=/cosmos.gov.v1.MsgExecLegacyContent' --height-range 1-999999999 --node $NODE --output json | jq '.txs[-1].logs'
+ 2161  # Check the actual message content in proposal 19
+ 2162  axelard q gov proposal 19 --node $NODE --output json | jq '.'
+ 2163  # Search for proposal-related transactions
+ 2164  axelard q txs --events 'proposal_id=19' --node $NODE --output json | jq '.txs[] | {height: .height, code: .code, logs: .logs}'
+ 2165  # Query the Coordinator contract to see what chains it knows about
+ 2166  axelard q wasm contract-state smart axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e '{"get_chain_config": {"chain": "flow"}}' --node $NODE --output json
+ 2167  # Try to manually execute the same coordinator call (this will fail but show us the error)
+ 2168  axelard tx wasm execute axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e   '{"instantiate_chain_contracts":{"chain":"flow","deployment_name":"flow-test","salt":"flow-v1","params":{"gateway":{"code_id":19,"label":"Gateway flow"},"verifier":{"code_id":18,"label":"VotingVerifier flow","msg":{"service_registry_address":"axelar1kxnt7c625dc9ajw6su72j0f3hrcme2m0u38nlafa4ftpsvqjkmjquqnfvc","governance_address":"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5","service_name":"validators","source_gateway_address":"0xB3f4df88D23e71FFAf487731ea7780D287E5B195","voting_threshold":["6","10"],"block_expiry":"10","confirmation_height":1000000,"source_chain":"flow","rewards_address":"axelar1kgwz42efrkn243ggg90fs2tf5a0ly47zx6xk42z785wc2pq25txscnv33t","msg_id_format":"hex_tx_hash_and_event_index","address_format":"eip55"}},"prover":{"code_id":20,"label":"MultisigProver flow","msg":{"governance_address":"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5","admin_address":"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5","signing_threshold":["6","10"],"service_name":"validators","chain_name":"flow","verifier_set_diff_threshold":0,"encoder":"abi","key_type":"ecdsa","domain_separator":"587d8bc571d781bb2921bcb3aeda16d3e1efca0ccc0bde55832374724b93047f"}}}}}'   --from wallet   --chain-id $NETWORK   --node $NODE   --gas auto   --gas-adjustment 2
+ 2169  axelard keys list
+ 2170  # Try to manually execute the same coordinator call (this will fail but show us the error)
+ 2171  axelard tx wasm execute axelar1ka5lcv4g7hs2q463yxt47kwm2ku90pap4sm6767gvxu4hdl2kz0qcjvt3e   '{"instantiate_chain_contracts":{"chain":"flow","deployment_name":"flow-test","salt":"flow-v1","params":{"gateway":{"code_id":19,"label":"Gateway flow"},"verifier":{"code_id":18,"label":"VotingVerifier flow","msg":{"service_registry_address":"axelar1kxnt7c625dc9ajw6su72j0f3hrcme2m0u38nlafa4ftpsvqjkmjquqnfvc","governance_address":"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5","service_name":"validators","source_gateway_address":"0xB3f4df88D23e71FFAf487731ea7780D287E5B195","voting_threshold":["6","10"],"block_expiry":"10","confirmation_height":1000000,"source_chain":"flow","rewards_address":"axelar1kgwz42efrkn243ggg90fs2tf5a0ly47zx6xk42z785wc2pq25txscnv33t","msg_id_format":"hex_tx_hash_and_event_index","address_format":"eip55"}},"prover":{"code_id":20,"label":"MultisigProver flow","msg":{"governance_address":"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5","admin_address":"axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5","signing_threshold":["6","10"],"service_name":"validators","chain_name":"flow","verifier_set_diff_threshold":0,"encoder":"abi","key_type":"ecdsa","domain_separator":"587d8bc571d781bb2921bcb3aeda16d3e1efca0ccc0bde55832374724b93047f"}}}}}'   --from devnet-attiss-admin   --chain-id $NETWORK   --node $NODE   --gas auto   --gas-adjustment 2
+ 2172  history > terminal_session_$(date +%Y%m%d_%H%M%S).txt

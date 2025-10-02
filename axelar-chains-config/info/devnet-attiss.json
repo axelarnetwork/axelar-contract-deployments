@@ -37,6 +37,41 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1
+    },
+    "berachain": {
+      "name": "Berachain",
+      "axelarId": "berachain",
+      "chainId": 80069,
+      "rpc": "https://bepolia.rpc.berachain.com",
+      "tokenSymbol": "BERA",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Berascan",
+        "url": "https://testnet.berascan.com/",
+        "api": "https://api-testnet.berascan.com/api"
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x782c11B66E4e17E3A9d1dAea70Dc15240E6dF249",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x38C436744d2C32643f59f5899EfBf1324a6346Fc",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
@@ -69,9 +104,9 @@
         "codeId": 1,
         "deployments": {
           "flow": {
-            "deploymentName": "flow-13-12-14",
-            "salt": "0b6dfd992e6254e22dc0f5eeb77f8ed0d2797a8bebad5a55da6c5b30728ecdb1",
-            "proposalId": "4"
+            "deploymentName": "flow-19-18-20",
+            "salt": "flow-v1",
+            "proposalId": "33"
           }
         }
       },
@@ -108,13 +143,20 @@
           "blockExpiry": 10,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55"
+          "addressFormat": "eip55",
+          "address": "axelar1ga26e74kdckg8zk67usskwx8ynzu3w23x6vhptd4ysrhjdcxzmys4udqzs"
         },
-        "lastUploadedCodeId": 12
+        "lastUploadedCodeId": 18,
+        "storeCodeProposalId": "16",
+        "storeCodeProposalCodeHash": "0b6dfd992e6254e22dc0f5eeb77f8ed0d2797a8bebad5a55da6c5b30728ecdb1"
       },
       "Gateway": {
-        "flow": {},
-        "lastUploadedCodeId": 13
+        "flow": {
+          "address": "axelar1lag8g4p0vhw6pn2n4qrplmzh6zwlhne8hc8vgz8scmkfkpfg84fsvvss64"
+        },
+        "lastUploadedCodeId": 19,
+        "storeCodeProposalId": "17",
+        "storeCodeProposalCodeHash": "01e73658193431828bc9451df6387b70997735e69d4105de1074859b8da9bd90"
       },
       "MultisigProver": {
         "flow": {
@@ -127,9 +169,12 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
-          "keyType": "ecdsa"
+          "keyType": "ecdsa",
+          "address": "axelar1w5djd6ek4ntcdp9cl92uev90qzv06znrm8md2awj058yhrhyq84qh4yz24"
         },
-        "lastUploadedCodeId": 14
+        "lastUploadedCodeId": 20,
+        "storeCodeProposalId": "18",
+        "storeCodeProposalCodeHash": "85ace8a5ec63cd8fceb5642f187dc25b3de0ac3b78f04d32f61804939fba58ad"
       },
       "ItsAbiTranslator": {
         "lastUploadedCodeId": 8,
@@ -148,10 +193,11 @@
     "grpc": "k8s-devnetat-coresent-1765c590ba-0ce6be8a5dee8b32.elb.us-east-2.amazonaws.com:9090",
     "tokenSymbol": "ATTISS",
     "gasPrice": "0.00005uattiss",
-    "gasLimit": 5000000,
+    "gasLimit": "auto",
     "govProposalDepositAmount": "100000000",
     "govProposalInstantiateAddresses": [
-      "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5"
+      "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
     ]
   }
 }

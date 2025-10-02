@@ -41,7 +41,7 @@ const { normalizeBech32 } = require('@cosmjs/encoding');
 
 // V0.50!
 const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
-const { MsgExecuteContract } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const XRPLClient = require('../xrpl/xrpl-client');
 
@@ -999,6 +999,31 @@ const encodeStoreCodeProposal = (options) => {
     };
 };
 
+// V0.50 Store Code
+const encodeStoreCodeMessageV50 = (options) => {
+    const { runAs, source, builder, instantiateAddresses } = options;
+
+    const wasm = readContractCode(options);
+
+    const instantiatePermission =
+        instantiateAddresses && instantiateAddresses.length > 0
+            ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+            : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
+
+    const storeMsg = MsgStoreCode.fromPartial({
+        sender: runAs,
+        wasmByteCode: zlib.gzipSync(wasm),
+        instantiatePermission,
+        source,
+        builder,
+    });
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
+        value: Uint8Array.from(MsgStoreCode.encode(storeMsg).finish()),
+    };
+};
+
 const encodeStoreInstantiateProposal = (config, options, msg) => {
     const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
 
@@ -1138,6 +1163,11 @@ const submitProposalV50 = async (client, config, options, messages, fee) => {
     const submitProposalMsg = encodeSubmitProposalV50(messages, config, options, account.address);
 
     const result = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+
+    // Debug logging
+    console.log('Transaction code:', result.code);
+    console.log('Events received:', result.events ? result.events.map((e) => e.type) : 'no events');
+
     const { events } = result;
 
     const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
@@ -1200,7 +1230,7 @@ const getVerifierInstantiateMsg = (config, chainName) => {
     const {
         axelar: {
             contracts: {
-                ServiceRegistry: { address: serviceRegistryAddress },
+                // ServiceRegistry: { address: serviceRegistryAddress }, // REMOVED - not needed for Coordinator v2
                 Rewards: { address: rewardsAddress },
                 VotingVerifier: { [chainName]: verifierConfig },
             },
@@ -1222,9 +1252,7 @@ const getVerifierInstantiateMsg = (config, chainName) => {
         addressFormat,
     } = verifierConfig;
 
-    if (!validateAddress(serviceRegistryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
+    // Removed serviceRegistryAddress validation - not needed for Coordinator v2
 
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
@@ -1263,7 +1291,7 @@ const getVerifierInstantiateMsg = (config, chainName) => {
     }
 
     return {
-        service_registry_address: serviceRegistryAddress,
+        // service_registry_address: serviceRegistryAddress,  // REMOVED - not in Coordinator v2 VerifierMsg
         governance_address: governanceAddress,
         service_name: serviceName,
         source_gateway_address: sourceGatewayAddress,
@@ -1339,7 +1367,8 @@ const getProverInstantiateMsg = (config, chainName) => {
 
     return {
         governance_address: governanceAddress,
-        admin_address: adminAddress,
+        // admin_address: adminAddress,  // TODO: Restore this after custom devnet is updated (currently using buggy Coordinator with multisig_address field)
+        multisig_address: adminAddress, // TEMPORARY: custom devnetCoordinator expects multisig_address instead of admin_address
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainName,
@@ -1351,7 +1380,7 @@ const getProverInstantiateMsg = (config, chainName) => {
 };
 
 const getInstantiateChainContractsMessage = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
+    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId } = options;
 
     if (!chainName) {
         throw new Error('Chain name is required');
@@ -1370,26 +1399,25 @@ const getInstantiateChainContractsMessage = async (client, config, options) => {
 
     return {
         instantiate_chain_contracts: {
-            chain: chainName,
             deployment_name: generateDeploymentName(chainName, `${gatewayCode}-${verifierCode}-${proverCode}`),
-            salt: salt,
+            salt: Buffer.from(salt).toString('base64'),
             params: {
-                gateway: {
-                    code_id: Number(gatewayCode),
-                    label: `Gateway ${chainName}`,
-                    contract_admin: admin,
-                },
-                verifier: {
-                    code_id: Number(verifierCode),
-                    label: `VotingVerifier ${chainName}`,
-                    msg: verifierMsg,
-                    contract_admin: admin,
-                },
-                prover: {
-                    code_id: Number(proverCode),
-                    label: `MultisigProver ${chainName}`,
-                    msg: proverMsg,
-                    contract_admin: admin,
+                manual: {
+                    gateway: {
+                        code_id: Number(gatewayCode),
+                        label: `Gateway ${chainName}`,
+                        msg: null,
+                    },
+                    verifier: {
+                        code_id: Number(verifierCode),
+                        label: `VotingVerifier ${chainName}`,
+                        msg: verifierMsg,
+                    },
+                    prover: {
+                        code_id: Number(proverCode),
+                        label: `MultisigProver ${chainName}`,
+                        msg: proverMsg,
+                    },
                 },
             },
         },
@@ -1541,4 +1569,5 @@ module.exports = {
     // V0.50!
     encodeExecuteContractMessageV50,
     submitProposalV50,
+    encodeStoreCodeMessageV50,
 };

@@ -28,6 +28,7 @@ const {
     // V0.50!
     encodeExecuteContractMessageV50,
     submitProposalV50,
+    encodeStoreCodeMessageV50,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
@@ -39,6 +40,8 @@ const {
     MigrateContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+// V0.50! message decoding
+const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -72,6 +75,47 @@ const confirmProposalSubmission = (options, proposal, proposalType) => {
     return true;
 };
 
+// V0.50!
+// Updated printProposalV50 function
+const printProposalV50 = (messages) => {
+    messages.forEach((message) => {
+        const typeMap = {
+            '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
+            '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
+        };
+
+        const MessageType = typeMap[message.typeUrl];
+        if (MessageType) {
+            const decoded = MessageType.decode(message.value);
+
+            // Special handling for MsgExecuteContract - decode the msg field
+            if (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' && decoded.msg) {
+                decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
+            }
+
+            // Special handling for large fields
+            if (decoded.wasmByteCode) {
+                decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
+            }
+
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+        } else {
+            printInfo(`Encoded ${message.typeUrl}`, '<Unable to decode>');
+        }
+    });
+};
+
+// V0.50!
+const confirmProposalSubmissionV50 = (options, messages) => {
+    printProposalV50(messages);
+
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return false;
+    }
+
+    return true;
+};
+
 const callSubmitProposal = async (client, config, options, proposal, fee) => {
     const proposalId = await submitProposal(client, config, options, proposal, fee);
     printInfo('Proposal submitted', proposalId);
@@ -79,20 +123,41 @@ const callSubmitProposal = async (client, config, options, proposal, fee) => {
     return proposalId;
 };
 
+// const storeCode = async (client, config, options, _args, fee) => {
+//     const { contractName } = options;
+//     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+
+//     const proposal = encodeStoreCodeProposal(options);
+
+//     if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
+//         return;
+//     }
+
+//     const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
+
+//     contractBaseConfig.storeCodeProposalId = proposalId;
+//     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
+// };
+
+// V0.50!
 const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
-    const proposal = encodeStoreCodeProposal(options);
+    const storeMsg = encodeStoreCodeMessageV50(options);
+    const messages = [storeMsg];
 
-    if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
+    if (!confirmProposalSubmissionV50(options, messages)) {
         return;
     }
 
-    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
+    const proposalId = await submitProposalV50(client, config, options, messages, fee);
+    printInfo('Proposal submitted', proposalId);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
+
+    return proposalId;
 };
 
 const storeInstantiate = async (client, config, options, _args, fee) => {
@@ -174,17 +239,10 @@ const instantiate = async (client, config, options, _args, fee) => {
 const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
 
-    // Create the MsgExecuteContract message
     const executeMsg = encodeExecuteContractMessageV50(config, options, chainName);
-
-    // Wrap it in an Array for the proposal messages field
     const messages = [executeMsg];
 
-    // Show what we're submitting
-    console.log('Submitting MsgExecuteContract via governance proposal (SDK v0.50)');
-
-    if (prompt('Proceed with proposal submission?', options.yes)) {
-        // REMOVED the !
+    if (!confirmProposalSubmissionV50(options, messages)) {
         return;
     }
 
