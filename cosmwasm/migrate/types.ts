@@ -8,3 +8,9 @@ export interface MigrationOptions extends Options {
     proposal?: boolean;
     ignoreChains?: string;
 }
+
+export interface MigrationCheckOptions extends Options {
+    address?: string;
+    coordinator?: string,
+    multisig?: string,
+}

@@ -180,6 +180,18 @@ async function coordinatorToVersion2_1_0(
     }
 }
 
+async function checkCoordinatorToVersion2_1_0(
+    client: typeof SigningCosmWasmClient,
+    config,
+    coordinator_address?: string,
+    multisig_address?: string,
+) {
+    coordinator_address = coordinator_address ?? config.axelar.contracts.Coordinator.address;
+    multisig_address = multisig_address ?? config.axelar.contracts.Multisig.address;
+
+    console.log(`"Coordinator ${coordinator_address}, Multisig ${multisig_address}`);
+}
+
 export async function migrate(
     client: typeof SigningCosmWasmClient,
     options: MigrationOptions,
@@ -194,5 +206,20 @@ export async function migrate(
             return coordinatorToVersion2_1_0(client, options, config, sender_address, coordinator_address, code_id);
         default:
             console.error(`no migration script found for coordinator ${version}`);
+    }
+}
+
+export async function checkMigration(
+    client: typeof SigningCosmWasmClient,
+    config,
+    version: string,
+    coordinator_address?: string,
+    multisig_address?: string,
+) {
+    switch (version) {
+        case '2.1.0':
+            return checkCoordinatorToVersion2_1_0(client, config, coordinator_address, multisig_address);
+        default:
+            console.error(`no migration check script found for coordinator ${version}`);
     }
 }
