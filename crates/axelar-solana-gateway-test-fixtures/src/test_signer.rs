@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use axelar_solana_encoding::hasher::NativeHasher;
+use axelar_solana_encoding::hasher::{Hasher, NativeHasher};
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
 use solana_sdk::pubkey::Pubkey;
@@ -110,9 +110,18 @@ impl TestSigningKey {
     /// Sign an arbitrary message, generating a [`Signature`]
     #[must_use]
     pub fn sign(&self, message: &[u8]) -> Signature {
+        // Add Solana offchain prefix to the message before signing
+        const SOLANA_OFFCHAIN_PREFIX: &[u8] = b"\xffsolana offchain";
+        let mut prefixed_message = Vec::with_capacity(SOLANA_OFFCHAIN_PREFIX.len() + message.len());
+        prefixed_message.extend_from_slice(SOLANA_OFFCHAIN_PREFIX);
+        prefixed_message.extend_from_slice(message);
+
+        // Hash the prefixed message to get a 32-byte digest
+        let hashed_message = NativeHasher::hash(&prefixed_message);
+
         match self {
             Self::Ecdsa(signing_key) => {
-                let message = libsecp256k1::Message::parse(message.try_into().unwrap());
+                let message = libsecp256k1::Message::parse(&hashed_message);
                 let (signature, recovery_id) = libsecp256k1::sign(&message, signing_key);
                 let mut signature_bytes = signature.serialize().to_vec();
                 // Convert recovery ID to Ethereum format (0,1 -> 27,28)
@@ -126,7 +135,7 @@ impl TestSigningKey {
             }
             Self::Ed25519(signing_key) => {
                 use ed25519_dalek::Signer as _;
-                let signature: ed25519_dalek::Signature = signing_key.sign(message);
+                let signature: ed25519_dalek::Signature = signing_key.sign(&hashed_message);
                 Signature::Ed25519(signature.to_bytes())
             }
         }

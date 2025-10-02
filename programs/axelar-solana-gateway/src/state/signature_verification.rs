@@ -1,6 +1,6 @@
 //! Multi-step signature verification.
 
-use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+use axelar_solana_encoding::hasher::{Hasher, SolanaSyscallHasher};
 use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSetLeaf;
@@ -159,9 +159,12 @@ impl SignatureVerification {
     ) -> Result<(), GatewayError> {
         let is_valid = match (signature, public_key) {
             (Signature::EcdsaRecoverable(signature), PublicKey::Secp256k1(pubkey)) => {
-                verify_ecdsa_signature(pubkey, signature, message)
+                verify_ecdsa_signature_with_prefix(pubkey, signature, message)
             }
             (Signature::Ed25519(_signature), PublicKey::Ed25519(_pubkey)) => {
+                // TODO: Whenever we implement this, make sure to use the
+                // `verify_eddsa_signature_with_prefix` function instead to account for the chain
+                // prefix, similar to what we do for ECDSA above.
                 unimplemented!()
             }
             _ => {
@@ -231,7 +234,7 @@ impl SignatureVerification {
 /// (via `unwrap`).
 #[must_use]
 #[allow(clippy::unwrap_used)]
-pub fn verify_ecdsa_signature(
+fn verify_ecdsa_signature(
     pubkey: &axelar_solana_encoding::types::pubkey::Secp256k1Pubkey,
     signature: &axelar_solana_encoding::types::pubkey::EcdsaRecoverableSignature,
     message: &[u8; 32],
@@ -281,7 +284,7 @@ pub fn verify_ecdsa_signature(
 /// and message; otherwise, returns `false`.
 #[deprecated(note = "Trying to verify Ed25519 signatures on-chain will exhaust the compute budget")]
 #[must_use]
-pub fn verify_eddsa_signature(
+fn verify_eddsa_signature(
     pubkey: &axelar_solana_encoding::types::pubkey::Ed25519Pubkey,
     signature: &axelar_solana_encoding::types::pubkey::Ed25519Signature,
     message: &[u8; 32],
@@ -301,10 +304,66 @@ pub fn verify_eddsa_signature(
     verifying_key.verify(message, &signature).is_ok()
 }
 
+/// Prefix added to all signature verifications for Solana offchain messages
+const SOLANA_OFFCHAIN_PREFIX: &[u8] = b"\xffsolana offchain";
+
+/// Wrapper for `verify_ecdsa_signature` that adds the Solana offchain prefix.
+///
+/// This function prepends `\xffsolana offchain` to the message before verification.
+/// Returns `true` if the signature is valid and corresponds to the public key
+/// and prefixed message; otherwise, returns `false`.
+///
+/// # Panics
+///
+/// This function will panic if the provided `pubkey` is not a valid compressed secp256k1 public key
+/// (via `unwrap`).
+#[must_use]
+pub fn verify_ecdsa_signature_with_prefix(
+    pubkey: &axelar_solana_encoding::types::pubkey::Secp256k1Pubkey,
+    signature: &axelar_solana_encoding::types::pubkey::EcdsaRecoverableSignature,
+    message: &[u8; 32],
+) -> bool {
+    // Create prefixed message by concatenating prefix + original message
+    let mut prefixed_message = Vec::with_capacity(SOLANA_OFFCHAIN_PREFIX.len() + message.len());
+    prefixed_message.extend_from_slice(SOLANA_OFFCHAIN_PREFIX);
+    prefixed_message.extend_from_slice(message);
+
+    // Hash the prefixed message to get a 32-byte digest
+    let hashed_message = SolanaSyscallHasher::hash(&prefixed_message);
+
+    // Call the original verification function with the hashed prefixed message
+    verify_ecdsa_signature(pubkey, signature, &hashed_message)
+}
+
+/// Wrapper for `verify_eddsa_signature` that adds the Solana offchain prefix.
+///
+/// This function prepends `\xffsolana offchain` to the message before verification.
+/// Returns `true` if the signature is valid and corresponds to the public key
+/// and prefixed message; otherwise, returns `false`.
+#[deprecated(note = "Trying to verify Ed25519 signatures on-chain will exhaust the compute budget")]
+#[must_use]
+#[allow(deprecated)]
+pub fn verify_eddsa_signature_with_prefix(
+    pubkey: &axelar_solana_encoding::types::pubkey::Ed25519Pubkey,
+    signature: &axelar_solana_encoding::types::pubkey::Ed25519Signature,
+    message: &[u8; 32],
+) -> bool {
+    // Create prefixed message by concatenating prefix + original message
+    let mut prefixed_message = Vec::with_capacity(SOLANA_OFFCHAIN_PREFIX.len() + message.len());
+    prefixed_message.extend_from_slice(SOLANA_OFFCHAIN_PREFIX);
+    prefixed_message.extend_from_slice(message);
+
+    // Hash the prefixed message to get a 32-byte digest
+    let hashed_message = SolanaSyscallHasher::hash(&prefixed_message);
+
+    // Call the original verification function with the hashed prefixed message
+    verify_eddsa_signature(pubkey, signature, &hashed_message)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+    use axelar_solana_encoding::hasher::{Hasher, NativeHasher};
     use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
     use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
     use axelar_solana_encoding::types::verifier_set::VerifierSetLeaf;
@@ -404,8 +463,8 @@ mod tests {
 
         // Create Merkle tree and proof
         let (merkle_root, proof_bytes) = {
-            let leaf_hash = verifier_leaf.hash::<SolanaSyscallHasher>();
-            let tree = rs_merkle::MerkleTree::<SolanaSyscallHasher>::from_leaves(&[leaf_hash]);
+            let leaf_hash = verifier_leaf.hash::<NativeHasher>();
+            let tree = rs_merkle::MerkleTree::<NativeHasher>::from_leaves(&[leaf_hash]);
             let merkle_root = tree.root().expect("tree should have root");
             let merkle_proof = tree.proof(&[0]);
             let proof_bytes = merkle_proof.to_bytes();
@@ -416,7 +475,15 @@ mod tests {
         let (payload_merkle_root, signature_array) = {
             let mut rng = rand::thread_rng();
             let payload_merkle_root: [u8; 32] = rng.gen();
-            let message = libsecp256k1::Message::parse(&payload_merkle_root);
+
+            // Create the prefixed message that will actually be signed
+            let mut prefixed_message =
+                Vec::with_capacity(SOLANA_OFFCHAIN_PREFIX.len() + payload_merkle_root.len());
+            prefixed_message.extend_from_slice(SOLANA_OFFCHAIN_PREFIX);
+            prefixed_message.extend_from_slice(&payload_merkle_root);
+            let hashed_prefixed_message = NativeHasher::hash(&prefixed_message);
+
+            let message = libsecp256k1::Message::parse(&hashed_prefixed_message);
             let (signature, recovery_id) = libsecp256k1::sign(&message, &secret_key);
             let mut signature_bytes = signature.serialize().to_vec();
             // Convert recovery_id from libsecp256k1 format (0-3) to Ethereum format (27-28)
