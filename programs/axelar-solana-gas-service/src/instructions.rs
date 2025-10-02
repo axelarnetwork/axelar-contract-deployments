@@ -69,8 +69,10 @@ pub enum GasServiceInstruction {
     AddSplGas {
         /// A 64-byte unique transaction identifier.
         tx_hash: [u8; 64],
-        /// The index of the log entry in the transaction.
-        log_index: u64,
+        /// Index of the CallContract instruction
+        ix_index: u8,
+        /// Index of the CPI event inside inner instructions
+        event_ix_index: u8,
         /// The additional SPL tokens to add as gas.
         gas_fee_amount: u64,
         /// The decimals for the mint
@@ -107,8 +109,10 @@ pub enum GasServiceInstruction {
     RefundSplFees {
         /// A 64-byte unique transaction identifier
         tx_hash: [u8; 64],
-        /// The index of the log entry in the transaction
-        log_index: u64,
+        /// Index of the CallContract instruction
+        ix_index: u8,
+        /// Index of the CPI event inside inner instructions
+        event_ix_index: u8,
         /// The amount of SPL tokens to be refunded
         fees: u64,
         /// The decimals for the mint
@@ -143,8 +147,10 @@ pub enum GasServiceInstruction {
     AddNativeGas {
         /// A 64-byte unique transaction identifier.
         tx_hash: [u8; 64],
-        /// The index of the log entry in the transaction.
-        log_index: u64,
+        /// Index of the CallContract instruction
+        ix_index: u8,
+        /// Index of the CPI event inside inner instructions
+        event_ix_index: u8,
         /// The additional SOL to add as gas.
         gas_fee_amount: u64,
         /// Where refunds should be sent.
@@ -171,8 +177,10 @@ pub enum GasServiceInstruction {
     RefundNativeFees {
         /// A 64-byte unique transaction identifier.
         tx_hash: [u8; 64],
-        /// The index of the log entry in the transaction.
-        log_index: u64,
+        /// Index of the CallContract instruction
+        ix_index: u8,
+        /// Index of the CPI event inside inner instructions
+        event_ix_index: u8,
         /// The amount of SOL to be refunded.
         fees: u64,
     },
@@ -271,13 +279,15 @@ pub fn pay_native_for_contract_call_instruction(
 pub fn add_native_gas_instruction(
     sender: &Pubkey,
     tx_hash: [u8; 64],
-    log_index: u64,
+    ix_index: u8,
+    event_ix_index: u8,
     gas_fee_amount: u64,
     refund_address: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::AddNativeGas {
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_fee_amount,
         refund_address,
     })?;
@@ -334,12 +344,14 @@ pub fn refund_native_fees_instruction(
     operator: &Pubkey,
     receiver: &Pubkey,
     tx_hash: [u8; 64],
-    log_index: u64,
+    ix_index: u8,
+    event_ix_index: u8,
     fees: u64,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::RefundNativeFees {
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         fees,
     })?;
     let (config_pda, _) = crate::get_config_pda();
@@ -433,14 +445,16 @@ pub fn add_spl_gas_instruction(
     token_program_id: &Pubkey,
     signer_pubkeys: &[Pubkey],
     tx_hash: [u8; 64],
-    log_index: u64,
+    ix_index: u8,
+    event_ix_index: u8,
     gas_fee_amount: u64,
     refund_address: Pubkey,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::AddSplGas {
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         decimals,
         gas_fee_amount,
         refund_address,
@@ -526,14 +540,16 @@ pub fn refund_spl_fees_instruction(
     mint: &Pubkey,
     receiver: &Pubkey,
     tx_hash: [u8; 64],
-    log_index: u64,
+    ix_index: u8,
+    event_ix_index: u8,
     fees: u64,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::RefundSplFees {
         decimals,
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         fees,
     })?;
     let (config_pda, _bump) = crate::get_config_pda();

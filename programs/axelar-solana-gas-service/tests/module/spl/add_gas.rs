@@ -50,7 +50,8 @@ async fn test_add_spl_gas(#[case] token_program_id: Pubkey) {
     // Prepare args
     let refund_address = Pubkey::new_unique();
     let tx_hash = [42; 64];
-    let log_index = 123;
+    let ix_index = 1;
+    let event_ix_index = 2;
 
     // Create the instruction for paying gas fees with SPL tokens
     let ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
@@ -60,7 +61,8 @@ async fn test_add_spl_gas(#[case] token_program_id: Pubkey) {
         &token_program_id,
         &[],
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
         decimals,
@@ -98,7 +100,8 @@ async fn test_add_spl_gas(#[case] token_program_id: Pubkey) {
         mint,
         token_program_id,
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         refund_address,
         gas_fee_amount: gas_amount,
     };
@@ -167,7 +170,8 @@ async fn test_add_spl_gas_missing_signer(#[case] token_program_id: Pubkey) {
     // Create the instruction without making the payer a signer
     let refund_address = Pubkey::new_unique();
     let tx_hash = [42; 64];
-    let log_index = 123;
+    let ix_index = 1;
+    let event_ix_index = 2;
 
     let mut ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
         &payer.pubkey(),
@@ -176,7 +180,8 @@ async fn test_add_spl_gas_missing_signer(#[case] token_program_id: Pubkey) {
         &token_program_id,
         &[],
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
         decimals,
@@ -248,7 +253,8 @@ async fn test_add_spl_gas_invalid_sender_ata_wrong_mint(#[case] token_program_id
     // Create the instruction with mismatched mint/ATA
     let refund_address = Pubkey::new_unique();
     let tx_hash = [42; 64];
-    let log_index = 123;
+    let ix_index = 1;
+    let event_ix_index = 2;
 
     let ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
         &payer.pubkey(),
@@ -257,7 +263,8 @@ async fn test_add_spl_gas_invalid_sender_ata_wrong_mint(#[case] token_program_id
         &token_program_id,
         &[],
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
         decimals,
@@ -318,7 +325,8 @@ async fn test_add_spl_gas_invalid_sender_ata_wrong_owner(#[case] token_program_i
     // Create the instruction with wrong owner's ATA
     let refund_address = Pubkey::new_unique();
     let tx_hash = [42; 64];
-    let log_index = 123;
+    let ix_index = 1;
+    let event_ix_index = 2;
 
     let ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
         &payer.pubkey(),  // Payer is the signer
@@ -327,7 +335,8 @@ async fn test_add_spl_gas_invalid_sender_ata_wrong_owner(#[case] token_program_i
         &token_program_id,
         &[],
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
         decimals,
@@ -393,7 +402,8 @@ async fn test_add_spl_gas_invalid_config_pda_ata_wrong_mint(#[case] token_progra
     // Create the instruction with mismatched config ATA
     let refund_address = Pubkey::new_unique();
     let tx_hash = [42; 64];
-    let log_index = 123;
+    let ix_index = 1;
+    let event_ix_index = 2;
 
     // Manually construct the instruction to use wrong config_pda_ata
     let mut ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
@@ -403,7 +413,8 @@ async fn test_add_spl_gas_invalid_config_pda_ata_wrong_mint(#[case] token_progra
         &token_program_id,
         &[],
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
         decimals,
@@ -467,7 +478,8 @@ async fn test_add_spl_gas_invalid_config_pda_ata_wrong_owner(#[case] token_progr
     // Create the instruction with wrong owner's ATA as config_pda_ata
     let refund_address = Pubkey::new_unique();
     let tx_hash = [42; 64];
-    let log_index = 123;
+    let ix_index = 1;
+    let event_ix_index = 2;
 
     let mut ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
         &payer.pubkey(),
@@ -476,7 +488,8 @@ async fn test_add_spl_gas_invalid_config_pda_ata_wrong_owner(#[case] token_progr
         &token_program_id,
         &[],
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
         decimals,

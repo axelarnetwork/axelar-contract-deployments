@@ -150,7 +150,8 @@ pub(crate) fn add_spl_gas(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
     tx_hash: [u8; 64],
-    log_index: u64,
+    ix_index: u8,
+    event_ix_index: u8,
     gas_fee_amount: u64,
     refund_address: Pubkey,
     decimals: u8,
@@ -215,7 +216,8 @@ pub(crate) fn add_spl_gas(
         mint: *mint.key,
         token_program_id: *token_program.key,
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         refund_address,
         gas_fee_amount,
     });
@@ -238,7 +240,8 @@ pub(crate) fn refund_spl(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
     tx_hash: [u8; 64],
-    log_index: u64,
+    ix_index: u8,
+    event_ix_index: u8,
     fees: u64,
     decimals: u8,
 ) -> ProgramResult {
@@ -260,7 +263,8 @@ pub(crate) fn refund_spl(
         token_program_id: *token_program.key,
         tx_hash,
         config_pda: *config_pda.key,
-        log_index,
+        ix_index,
+        event_ix_index,
         receiver: *receiver_token_account.key,
         fees,
     });
@@ -367,7 +371,8 @@ mod tests {
         let program_id = Pubkey::new_unique();
         let accounts = vec![];
         let tx_hash = [0; 64];
-        let log_index = 0;
+        let ix_index = 0;
+        let event_ix_index = 0;
         let gas_fee_amount = 0;
         let refund_address = Pubkey::new_unique();
         let decimals = 0;
@@ -376,7 +381,8 @@ mod tests {
             &program_id,
             &accounts,
             tx_hash,
-            log_index,
+            ix_index,
+            event_ix_index,
             gas_fee_amount,
             refund_address,
             decimals,
@@ -402,11 +408,12 @@ mod tests {
         let program_id = Pubkey::new_unique();
         let accounts = vec![];
         let tx_hash = [0; 64];
-        let log_index = 0;
+        let ix_index = 0;
+        let event_ix_index = 0;
         let fees = 0;
         let decimals = 0;
 
-        let result = refund_spl(&program_id, &accounts, tx_hash, log_index, fees, decimals);
+        let result = refund_spl(&program_id, &accounts, tx_hash, ix_index, event_ix_index, fees, decimals);
 
         assert_eq!(result, Err(ProgramError::InvalidInstructionData));
     }

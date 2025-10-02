@@ -34,11 +34,13 @@ async fn test_add_native_gas() {
     let refund_address = Pubkey::new_unique();
     let gas_amount = 1_000_000;
     let tx_hash = [42; 64];
-    let log_index = 1232;
+    let ix_index = 1;
+    let event_ix_index = 2;
     let ix = axelar_solana_gas_service::instructions::add_native_gas_instruction(
         &payer.pubkey(),
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
     )
@@ -72,7 +74,8 @@ async fn test_add_native_gas() {
     let expected_event = NativeGasAddedEvent {
         config_pda: gas_utils.config_pda,
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         refund_address,
         gas_fee_amount: gas_amount,
     };
@@ -132,11 +135,13 @@ async fn fails_if_payer_not_signer() {
     let refund_address = Pubkey::new_unique();
     let gas_amount = 1_000_000;
     let tx_hash = [42; 64];
-    let log_index = 1232;
+    let ix_index = 1;
+    let event_ix_index = 2;
     let mut ix = axelar_solana_gas_service::instructions::add_native_gas_instruction(
         &payer.pubkey(),
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         refund_address,
     )

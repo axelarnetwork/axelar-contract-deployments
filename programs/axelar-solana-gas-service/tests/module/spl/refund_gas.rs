@@ -49,14 +49,16 @@ async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
 
     // Create the instruction for paying gas fees with SPL tokens
     let tx_hash = [132; 64];
-    let log_index = 42;
+    let ix_index = 1;
+    let event_ix_index = 2;
     let ix = axelar_solana_gas_service::instructions::refund_spl_fees_instruction(
         &gas_utils.operator.pubkey(),
         &token_program_id,
         &mint,
         &receiver_ata,
         tx_hash,
-        log_index,
+        ix_index,
+        event_ix_index,
         gas_amount,
         decimals,
     )
@@ -93,7 +95,8 @@ async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
         token_program_id,
         tx_hash,
         config_pda: gas_utils.config_pda,
-        log_index,
+        ix_index,
+        event_ix_index,
         receiver: receiver_ata,
         fees: gas_amount,
     };
