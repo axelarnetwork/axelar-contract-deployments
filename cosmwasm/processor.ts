@@ -39,8 +39,7 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
     const fee = configManager.getFee();
 
     options.runAs =
-        runAs ||
-        (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
+        runAs || configManager.axelar?.contracts?.ServiceRegistry?.governanceAccount || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
     options.deposit = deposit || configManager.getProposalDepositAmount();
     options.instantiateAddresses = instantiateAddresses || configManager.getProposalInstantiateAddresses();
 
