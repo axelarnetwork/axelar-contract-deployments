@@ -1,14 +1,16 @@
 'use strict';
 
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
+import { addEnvOption } from '../../common/cli-utils';
 import { FullConfig } from '../../common/config';
-import { addAmplifierOptions } from '../cli-utils';
-import { ClientManager, mainProcessor } from '../processor';
+import { addAmplifierOptions, addAmplifierQueryContractOptions } from '../cli-utils';
+import { ClientManager, mainProcessor, mainQueryProcessor } from '../processor';
 import { getContractInfo } from '../query';
-import { migrate as migrateCoordinator } from './coordinator';
-import { MigrationOptions } from './types';
+import { checkMigration as checkMigrationCoordinator, migrate as migrateCoordinator } from './coordinator';
+import { MigrationCheckOptions, MigrationOptions } from './types';
 
 async function migrate(
     client: ClientManager,
@@ -35,6 +37,23 @@ async function migrate(
     }
 }
 
+async function checkMigration(
+    client: CosmWasmClient,
+    config: FullConfig,
+    options: MigrationCheckOptions,
+    args: string[],
+    _fee: string | StdFee,
+): Promise<void> {
+    const contract_address = options.address ?? config.axelar.contracts[options.contractName]?.address;
+
+    const contract_info = await getContractInfo(client, contract_address);
+    switch (contract_info.contract) {
+        case 'coordinator':
+            await checkMigrationCoordinator(client, config, contract_info.version, options?.coordinator, options?.multisig);
+            break;
+    }
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -55,6 +74,18 @@ const programHandler = () => {
                 mainProcessor(migrate, options, [code_id]);
             }),
         {},
+    );
+
+    addAmplifierQueryContractOptions(
+        program
+            .command('check')
+            .addOption(new Option('--address <address>', 'address of contract to check'))
+            .addOption(new Option('--coordinator <coordinator address>', 'coordinator address'))
+            .addOption(new Option('--multisig <multisig address>', 'multisig address'))
+            .description('check migration succeeded')
+            .action((options: MigrationCheckOptions) => {
+                mainQueryProcessor(checkMigration, options, []);
+            }),
     );
 
     program.parse();

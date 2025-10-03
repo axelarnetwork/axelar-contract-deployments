@@ -1,5 +1,7 @@
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
-import { MigrationOptions } from './types';
+import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 export const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
@@ -18,7 +20,7 @@ export interface ChainEndpoint {
     };
 }
 
-export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
+export async function queryChainsFromRouter(client: CosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
     try {
         const res: ChainEndpoint[] = await client.queryContractSmart(router_address, { chains: {} });
         return res;
@@ -127,6 +129,82 @@ async function constructChainContracts(
     }
 }
 
+async function constructCoordinatorChainProverPairs(
+    client: CosmWasmClient,
+    coordinator_address: string,
+    router_address: string,
+): Promise<Map<string, string>> {
+    const all_chains = await queryChainsFromRouter(client, router_address);
+    const chain_prover_pairs: Map<string, string> = new Map();
+
+    for (let i = 0; i < all_chains.length; i++) {
+        let chain_info: ChainContracts;
+        try {
+            chain_info = await client.queryContractSmart(coordinator_address, {
+                chain_contracts_info: { chain_name: all_chains[i].name },
+            });
+        } catch (e) {
+            // Chain exists in router, but does not exist in the coordinator
+            // This is not a critical/migration error, so continue
+            continue;
+        }
+
+        if (!chain_info.prover_address) {
+            throw new Error(`missing prover for chain ${all_chains[i].name}`);
+        }
+
+        chain_prover_pairs.set(all_chains[i].name, chain_info.prover_address);
+    }
+
+    return chain_prover_pairs;
+}
+
+async function constructMultisigChainProverPairs(
+    client: CosmWasmClient,
+    multisig_address: string,
+    router_address: string,
+): Promise<Map<string, string>> {
+    const all_chains = await queryChainsFromRouter(client, router_address);
+    const chain_prover_pairs: Map<string, string> = new Map();
+
+    for (let i = 0; i < all_chains.length; i++) {
+        let prover_addr: string;
+
+        try {
+            prover_addr = await client.queryContractSmart(multisig_address, {
+                authorized_caller: { chain_name: all_chains[i].name },
+            });
+        } catch (e) {
+            if (e.toString().includes('unknown variant')) {
+                throw new Error('Multisig version must be >=2.3.0. please check multisig address');
+            }
+
+            // Chain exists in router, but does not exist in the multisig
+            // This is not a critical/migration error, so continue
+            continue;
+        }
+
+        chain_prover_pairs.set(all_chains[i].name, prover_addr);
+    }
+
+    return chain_prover_pairs;
+}
+
+async function coordinatorStoresMultisigAddress(
+    client: CosmWasmClient,
+    coordinator_address: string,
+    multisig_address: string,
+): Promise<boolean> {
+    const res = await client.queryContractRaw(coordinator_address, Buffer.from('protocol'));
+    const protocol_contracts: ProtocolContracts = JSON.parse(Buffer.from(res).toString('ascii'));
+    if (protocol_contracts.multisig != multisig_address) {
+        console.log(`Coordinator stores incorrect multisig address: expected ${multisig_address}, saw ${protocol_contracts.multisig}`);
+        return false;
+    }
+
+    return true;
+}
+
 async function coordinatorToVersion2_1_0(
     client: typeof SigningCosmWasmClient,
     options: MigrationOptions,
@@ -180,6 +258,49 @@ async function coordinatorToVersion2_1_0(
     }
 }
 
+async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, coordinator_address?: string, multisig_address?: string) {
+    coordinator_address = coordinator_address ?? config.axelar.contracts.Coordinator.address;
+    multisig_address = multisig_address ?? config.axelar.contracts.Multisig.address;
+    const router_address = config.axelar.contracts.Router.address;
+    let state_is_consistent = true;
+
+    try {
+        const coordinator_map_promise = constructCoordinatorChainProverPairs(client, coordinator_address, router_address);
+        const multisig_map = await constructMultisigChainProverPairs(client, multisig_address, router_address);
+
+        if (!(await coordinatorStoresMultisigAddress(client, coordinator_address, multisig_address))) {
+            state_is_consistent = false;
+        }
+
+        const coordinator_map = await coordinator_map_promise;
+
+        for (const [chain, prover] of coordinator_map.entries()) {
+            if (!multisig_map.has(chain)) {
+                console.log(`Multisig Missing chain ${chain}`);
+                state_is_consistent = false;
+                continue;
+            }
+
+            const prover_seen = multisig_map.get(chain);
+            if (prover_seen !== prover) {
+                console.log(`Coordinator's prover does not match multisig's for chain ${chain}: expected ${prover_seen}, saw ${prover}`);
+                state_is_consistent = false;
+                continue;
+            }
+        }
+
+        if (!state_is_consistent) {
+            console.error(`❌ State of coordinator v2 is not consistent with the rest of the protocol`);
+        } else {
+            console.log(`✅ Migration succeeded!`);
+        }
+    } catch (e) {
+        // These errors should never happen, as it would indicate a critical problem in the
+        // Amplifier that would likely require manual intervention.
+        console.log(`Critical - ${e}`);
+    }
+}
+
 export async function migrate(
     client: typeof SigningCosmWasmClient,
     options: MigrationOptions,
@@ -194,5 +315,20 @@ export async function migrate(
             return coordinatorToVersion2_1_0(client, options, config, sender_address, coordinator_address, code_id);
         default:
             console.error(`no migration script found for coordinator ${version}`);
+    }
+}
+
+export async function checkMigration(
+    client: CosmWasmClient,
+    config,
+    version: string,
+    coordinator_address?: string,
+    multisig_address?: string,
+) {
+    switch (version) {
+        case '2.1.0':
+            return checkCoordinatorToVersion2_1_0(client, config, coordinator_address, multisig_address);
+        default:
+            console.error(`no migration check script found for coordinator ${version}`);
     }
 }
