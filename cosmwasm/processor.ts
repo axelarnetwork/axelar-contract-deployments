@@ -38,12 +38,12 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
     const configManager = new ConfigManager(env);
     const fee = configManager.getFee();
 
+    configManager.initContractConfig(options.contractName, options.chainName);
+
     options.runAs =
         runAs || configManager.axelar?.contracts?.ServiceRegistry?.governanceAccount || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
     options.deposit = deposit || configManager.getProposalDepositAmount();
     options.instantiateAddresses = instantiateAddresses || configManager.getProposalInstantiateAddresses();
-
-    configManager.initContractConfig(options.contractName, options.chainName);
 
     return { configManager, fee };
 }
