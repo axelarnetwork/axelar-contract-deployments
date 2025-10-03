@@ -23,3 +23,4 @@ solana-sdk.workspace = true
 solana-program-test.workspace = true
 bytemuck.workspace = true
 program-utils.workspace = true
+anchor-lang = "0.31.1"
