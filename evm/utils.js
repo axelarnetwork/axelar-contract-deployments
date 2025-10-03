@@ -1101,7 +1101,6 @@ async function printTokenInfo(tokenAddress, provider) {
 
 async function isTrustedChain(destinationChain, interchainTokenService, itsVersion) {
     if (itsVersion === '2.1.1') {
-        printInfo(`Checking if ${destinationChain} is trusted by ITS v2.1.1`);
         return (await interchainTokenService.trustedAddress(destinationChain)) !== '';
     } else {
         return await interchainTokenService.isTrustedChain(destinationChain);
