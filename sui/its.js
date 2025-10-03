@@ -483,14 +483,16 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
     const { Gateway } = AxelarGateway.objects;
-    const [symbol, destinationChain] = args;
+    const [symbol] = args;
 
     validateParameters({
-        isNonEmptyString: { symbol, destinationChain },
+        isNonEmptyString: { symbol },
     });
 
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
+
+    const destinationChain = 'axelar';
 
     // If coin is already deployed load it, else deploy a new coin
     const savedCoin = contracts[symbol.toUpperCase()];
@@ -1129,12 +1131,12 @@ if (require.main === module) {
 
     const registerCoinMetadataProgram = new Command()
         .name('register-coin-metadata')
-        .command('register-coin-metadata <symbol> <destinationChain>')
+        .command('register-coin-metadata <symbol>')
         .description(`Load or deploy a source coin on SUI using its symbol, and register its metadata on Axelar Hub.`)
         .addOption(new Option('--coinName <name>', 'Optional coin name (mandatory if coin not saved in config)'))
         .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimals (mandatory if coin not saved in config)'))
-        .action((symbol, destinationChain, options) => {
-            mainProcessor(registerCoinMetadata, options, [symbol, destinationChain], processCommand);
+        .action((symbol, options) => {
+            mainProcessor(registerCoinMetadata, options, [symbol], processCommand);
         });
 
     const linkCoinProgram = new Command()
