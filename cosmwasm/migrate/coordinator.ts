@@ -1,8 +1,6 @@
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
-// cosmwasm-stargate imports protobufjs which does not have a default export
-// Therefore, import SigningCosmWasmClient using CommonJS to avoid error TS1192
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 export const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
@@ -29,44 +27,99 @@ export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient
     }
 }
 
-async function constructChainContracts(client: typeof SigningCosmWasmClient, chain_endpoints: ChainEndpoint[]): Promise<ChainContracts[]> {
-    interface GatewayConfig {
-        verifier: string;
-    }
+function check_for_duplicates(chains: ChainContracts[]) {
+    const provers: Map<string, string[]> = new Map();
+    const verifiers: Map<string, string[]> = new Map();
+    const gateways: Map<string, string[]> = new Map();
 
-    try {
-        const chain_contracts: ChainContracts[] = [];
-
-        for (let i = 0; i < chain_endpoints.length; i++) {
-            const res = await client.queryContractRaw(chain_endpoints[i].gateway.address, Buffer.from('config'));
-            const config: GatewayConfig = JSON.parse(Buffer.from(res).toString('ascii'));
-            if (chain_endpoints[i].name && chain_endpoints[i].gateway.address && config.verifier) {
-                chain_contracts.push({
-                    chain_name: chain_endpoints[i].name,
-                    gateway_address: chain_endpoints[i].gateway.address,
-                    verifier_address: config.verifier,
-                });
-            }
+    chains.forEach((c) => {
+        if (c.prover_address && !provers.has(c.prover_address)) {
+            provers.set(c.prover_address, [c.chain_name]);
+        } else if (provers.has(c.prover_address)) {
+            provers.set(c.prover_address, provers.get(c.prover_address).concat([c.chain_name]));
         }
 
-        return chain_contracts;
-    } catch (e) {
-        throw e;
+        if (!verifiers.has(c.verifier_address)) {
+            verifiers.set(c.verifier_address, [c.chain_name]);
+        } else if (verifiers.has(c.verifier_address)) {
+            verifiers.set(c.verifier_address, verifiers.get(c.verifier_address).concat([c.chain_name]));
+        }
+
+        if (!gateways.has(c.gateway_address)) {
+            gateways.set(c.gateway_address, [c.chain_name]);
+        } else if (gateways.has(c.gateway_address)) {
+            gateways.set(c.gateway_address, gateways.get(c.gateway_address).concat([c.chain_name]));
+        }
+    });
+
+    let duplicates_found = false;
+
+    provers.forEach((v, k) => {
+        if (v.length > 1) {
+            duplicates_found = true;
+            console.log(`Prover ${k} duplicated between ${v}`);
+        }
+    });
+
+    verifiers.forEach((v, k) => {
+        if (v.length > 1) {
+            duplicates_found = true;
+            console.log(`Verifier ${k} duplicated between ${v}`);
+        }
+    });
+
+    gateways.forEach((v, k) => {
+        if (v.length > 1) {
+            duplicates_found = true;
+            console.log(`Gateway ${k} duplicated between ${v}`);
+        }
+    });
+
+    if (duplicates_found) {
+        throw new Error('uniqueness constraints not maintained for chain contracts');
     }
 }
 
-async function addMissingProvers(
+async function constructChainContracts(
     client: typeof SigningCosmWasmClient,
     multisig_address: string,
-    chain_contracts: ChainContracts[],
+    chain_endpoints: ChainEndpoint[],
+    ignore_chains: string[],
 ): Promise<ChainContracts[]> {
     try {
-        for (let i = 0; i < chain_contracts.length; i++) {
-            const authorized_provers = await client.queryContractSmart(multisig_address, {
-                authorized_caller: { chain_name: chain_contracts[i].chain_name },
-            });
-            chain_contracts[i].prover_address = authorized_provers ?? '';
+        interface GatewayConfig {
+            verifier: string;
         }
+
+        const chain_contracts: ChainContracts[] = [];
+
+        for (let i = 0; i < chain_endpoints.length; i++) {
+            try {
+                const res = await client.queryContractRaw(chain_endpoints[i].gateway.address, Buffer.from('config'));
+                const config: GatewayConfig = JSON.parse(Buffer.from(res).toString('ascii'));
+                if (
+                    chain_endpoints[i].name &&
+                    !ignore_chains.includes(chain_endpoints[i].name) &&
+                    chain_endpoints[i].gateway.address &&
+                    config.verifier
+                ) {
+                    const authorized_provers = await client.queryContractSmart(multisig_address, {
+                        authorized_caller: { chain_name: chain_endpoints[i].name },
+                    });
+
+                    chain_contracts.push({
+                        chain_name: chain_endpoints[i].name,
+                        gateway_address: chain_endpoints[i].gateway.address,
+                        verifier_address: config.verifier,
+                        prover_address: authorized_provers ?? '',
+                    });
+                }
+            } catch (e) {
+                console.log(`Warning: ${e}`);
+            }
+        }
+
+        check_for_duplicates(chain_contracts);
 
         return chain_contracts;
     } catch (e) {
@@ -84,10 +137,10 @@ async function coordinatorToVersion2_1_0(
 ) {
     const router_address = config.axelar.contracts.Router.address;
     const multisig_address = config.axelar.contracts.Multisig.address;
+    const ignore: string[] = options.ignoreChains ? JSON.parse(options.ignoreChains) : [];
 
     const chain_endpoints = await queryChainsFromRouter(client, router_address);
-    let chain_contracts = await constructChainContracts(client, chain_endpoints);
-    chain_contracts = await addMissingProvers(client, multisig_address, chain_contracts);
+    const chain_contracts = await constructChainContracts(client, multisig_address, chain_endpoints, ignore);
 
     const migration_msg = {
         router: router_address,
@@ -113,9 +166,9 @@ async function coordinatorToVersion2_1_0(
 
     if (!options.dry) {
         try {
-            console.log('Executing migration...');
+            console.log('Executing migration...', migrate_options);
             if (options.proposal) {
-                await submitProposal(client, config, migrate_options, proposal);
+                await submitProposal(client, config, migrate_options, proposal, options.fees);
                 console.log('Migration proposal successfully submitted');
             } else {
                 await client.migrate(sender_address, coordinator_address, Number(code_id), migration_msg, options.fees);

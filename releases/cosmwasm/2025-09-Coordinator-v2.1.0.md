@@ -6,7 +6,7 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
+| **Devnet Amplifier** | Completed             | 2025-10-01 |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
@@ -16,7 +16,7 @@
 
 ## Background
 
-The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.0 require the router to be upgraded to version v1.3.0, and the multisig to be upgraded to v2.3.0. Listed below are the relevant changes made to each contract.
+The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.0 require the router to be upgraded to version v1.3.0, and the multisig to be upgraded to v2.3.1. Listed below are the relevant changes made to each contract.
 
 ### Contract Version Info
 
@@ -32,10 +32,11 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. The coordinator now stores both the router and multisig contract addresses in its state. This information will be given to the coordinator after it is instantiated using the *RegisterProtocol* message. The service registry address will also be registered using *RegisterProtocol*, where it was previously in the coordinator's instantiate message.
 1. Previously, registering a chain with the coordinator involved specifying only the multisig prover's address. Now, registration must also include the corresponding gateway and voting verifier addresses.
 
-### Multisig v2.3.0
+### Multisig v2.3.1
 
 1. Multisig stores the coordinator address. This address is given when the multisig contract is instantiated. This allows the multisig to give the coordinator permission to execute messages (such as when authorizing callers).
 1. Added the `AuthorizedCaller` endpoint. This allows the authorized caller (prover contract) for any given chain to be queried.
+1. Multisig can no longer have multiple provers registered for a particular chain.
 
 ### Router v1.3.0
 
@@ -75,12 +76,12 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
       -c Multisig \
-      -t "Upload Multisig contract v2.3.0" \
-      -d "Upload Multisig contract v2.3.0" \
+      -t "Upload Multisig contract v2.3.1" \
+      -d "Upload Multisig contract v2.3.1" \
       -r $RUN_AS_ACCOUNT \
       --deposit $DEPOSIT_VALUE \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.3.0
+      --version 2.3.1
     ```
 
     ```bash
@@ -115,21 +116,26 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
      -c Multisig \
      -t "Migrate Multisig to v2.3.0" \
      -d "Multisig to v2.3.0" \
-     --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
+     --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\", \"default_authorized_provers\": {\"chain1\": \"prover1\", \"chain2\":\"prover2\",...}}" \
      --fetchCodeId \
      --deposit $DEPOSIT_VALUE
    ```
 
+   The `default_authorized_provers` object should correspond to the chain/prover pairs located at `axelar.contracts.MultisigProver` in `$ENV.json`.
+
 1. Migrate to Coordinator v2.1.0 using the contract deployment scripts
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts <coordinator_code_id> \
+   ts-node cosmwasm/migrate/migrate.ts migrate <coordinator_code_id> \
       --address $COORDINATOR_ADDRESS \
       -m $MNEMONIC \
-      -d $DEPOSIT_VALUE
+      -d $DEPOSIT_VALUE \
+      --proposal
    ```
 
    This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
+
+   **Warning:** Using the `--ignoreChains [chains to ignore...]` flag might introduce protocol breaking behaviour, so it should be used only in a test environment. Coordinator v2 requires the gateways, verifiers and provers for each chain to be unique. You may ignore chains in the event that there are multiple chains that use the same verifier. This is possible because the protocol allows different gateways to be instantiated with the same verifier.
 
 ## Checklist
 
