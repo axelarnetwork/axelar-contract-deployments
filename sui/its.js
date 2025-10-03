@@ -622,7 +622,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         );
 
         txSalt = saltAddress;
-        tokenId = token; 
+        tokenId = token;
         channelId = channel;
     } else {
         if (!txSalt) {
