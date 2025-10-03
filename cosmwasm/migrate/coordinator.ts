@@ -290,7 +290,7 @@ async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, co
         }
 
         if (!state_is_consistent) {
-            console.error(`❌ State of coordinator v2 is not consistent with the rest of protocol`);
+            console.error(`❌ State of coordinator v2 is not consistent with the rest of the protocol`);
         } else {
             console.log(`✅ Migration succeeded!`);
         }
