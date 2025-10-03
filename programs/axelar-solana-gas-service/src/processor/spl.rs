@@ -146,6 +146,7 @@ pub(crate) fn process_pay_spl_for_contract_call(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn add_spl_gas(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
@@ -413,7 +414,15 @@ mod tests {
         let fees = 0;
         let decimals = 0;
 
-        let result = refund_spl(&program_id, &accounts, tx_hash, ix_index, event_ix_index, fees, decimals);
+        let result = refund_spl(
+            &program_id,
+            &accounts,
+            tx_hash,
+            ix_index,
+            event_ix_index,
+            fees,
+            decimals,
+        );
 
         assert_eq!(result, Err(ProgramError::InvalidInstructionData));
     }
