@@ -160,9 +160,14 @@ const addInstantiate2Options = (program) => {
 const addInstantiateProposalOptions = (program) => {
     program.addOption(new Option('--predictOnly', 'output the predicted changes only').env('PREDICT_ONLY'));
 };
-
+// V0.50!
 const addExecuteProposalOptions = (program) => {
-    program.addOption(new Option('--msg <msg>', 'json encoded execute message').makeOptionMandatory(true));
+    program.addOption(
+        new Option(
+            '--msg <msg...>',
+            'json encoded execute message(s). Can be specified multiple times for multiple messages in one proposal',
+        ).makeOptionMandatory(true),
+    );
 };
 
 const addParamChangeProposalOptions = (program) => {

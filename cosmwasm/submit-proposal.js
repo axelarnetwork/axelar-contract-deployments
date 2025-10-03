@@ -237,15 +237,20 @@ const instantiate = async (client, config, options, _args, fee) => {
 
 // V0.50!
 const execute = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
+    const { chainName, msg } = options;
 
-    const executeMsg = encodeExecuteContractMessageV50(config, options, chainName);
-    const messages = [executeMsg];
+    // msg can be an array if multiple --msg flags were provided, or a single string
+    const msgs = Array.isArray(msg) ? msg : [msg];
+
+    // Create a message for each --msg
+    const messages = msgs.map((msgJson) => {
+        const msgOptions = { ...options, msg: msgJson };
+        return encodeExecuteContractMessageV50(config, msgOptions, chainName);
+    });
 
     if (!confirmProposalSubmissionV50(options, messages)) {
         return;
     }
-
     return submitProposalV50(client, config, options, messages, fee);
 };
 
