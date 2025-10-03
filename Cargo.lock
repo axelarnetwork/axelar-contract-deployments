@@ -2883,6 +2883,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-discriminators",
  "borsh 1.5.7",
+ "solana-program",
 ]
 
 [[package]]

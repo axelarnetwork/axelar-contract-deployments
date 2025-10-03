@@ -18,3 +18,26 @@ pub const EVENT_AUTHORITY_SEED: &[u8] = b"__event_authority";
 pub trait CpiEvent: BorshSerialize + BorshDeserialize + Discriminator {
     fn data(&self) -> Vec<u8>;
 }
+
+/// Trait for structs that contain event CPI accounts.
+///
+/// This trait should be implemented by account structs that need to emit events via CPI.
+/// The macro `#[event_cpi]` from the `event-cpi-macros` crate can automatically
+/// implement this trait for structs with the required fields:
+/// - `__event_cpi_authority_info: &'a AccountInfo<'a>`
+/// - `__event_cpi_program_account: &'a AccountInfo<'a>`
+///
+/// # Example
+/// ```ignore
+/// use event_cpi::EventAccounts;
+/// use solana_program::account_info::AccountInfo;
+///
+/// #[event_cpi_macros::event_cpi]
+/// pub struct MyAccounts<'a> {
+///     pub user: &'a AccountInfo<'a>,
+/// }
+/// ```
+pub trait EventAccounts<'a> {
+    /// Returns the two accounts required for event CPI: authority and program account.
+    fn event_accounts(&self) -> [&'a solana_program::account_info::AccountInfo<'a>; 2];
+}
