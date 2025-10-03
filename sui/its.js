@@ -606,22 +606,28 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
-    const [tokenId, channelId, saltAddress] = await registerCustomCoinUtil(
-        deployConfig,
-        itsConfig,
-        AxelarGateway,
-        symbol,
-        metadata,
-        tokenType,
-        tokenManager === 'mint_burn' ? treasuryCap : null,
-        options.salt ? options.salt : null,
-    );
+    let txSalt = options.salt ? options.salt : null;
+    let tokenId = coin.objects.TokenId ? coin.objects.TokenId : null;
+    let channelId = options.channel ? options.channel : null;
+    if (!options.registered) {
+        const [token, channel, saltAddress] = await registerCustomCoinUtil(
+            deployConfig,
+            itsConfig,
+            AxelarGateway,
+            symbol,
+            metadata,
+            tokenType,
+            tokenManager === 'mint_burn' ? treasuryCap : null,
+            options.salt ? options.salt : null,
+        );
 
-    if (!tokenId) {
-        throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
-    }
-    if (!options.channel && !channelId) {
-        throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
+        txSalt = saltAddress;
+        tokenId = token; 
+        channelId = channel;
+    } else {
+        if (!txSalt) {
+            throw new Error(`error resolving unique salt, got ${txSalt}`);
+        }
     }
 
     const channel = options.channel ? options.channel : channelId;
@@ -638,7 +644,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // Salt
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [saltAddress],
+        arguments: [txSalt],
     });
 
     // Link params (only outbound chain supported for now)
@@ -697,7 +703,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         sourceToken.treasuryCap,
         sourceToken.metadata,
         [linkedToken],
-        saltAddress,
+        txSalt,
         tokenManager,
     );
 }
@@ -1156,6 +1162,7 @@ if (require.main === module) {
             ),
         )
         .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
+        .addOption(new Option('--registered', 'Skip token registration and only do coin linking'))
         .action((symbol, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
         });
