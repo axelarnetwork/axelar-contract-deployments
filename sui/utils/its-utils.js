@@ -35,7 +35,7 @@ async function registerCustomCoinUtil(
           });
 
     // Salt
-    const saltAddress = fixedSalt ? fixedSalt : createSaltAddress(config.keypair);
+    const saltAddress = fixedSalt ? fixedSalt : createSaltAddress();
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
         arguments: [saltAddress],
