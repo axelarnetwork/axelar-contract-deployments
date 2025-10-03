@@ -5,12 +5,8 @@ use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
-use program_utils::next_optional_account_info;
-use program_utils::{
-    pda::BorshPda, validate_rent_key, validate_spl_associated_token_account_key,
-    validate_system_account_key,
-};
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::pda::BorshPda;
+use solana_program::account_info::AccountInfo;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::AccountMeta;
@@ -22,39 +18,23 @@ use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
-use spl_token_2022::state::{Account as TokenAccount, Mint};
+use spl_token_2022::state::Mint;
 
+use crate::accounts::{
+    AxelarInterchainTokenExecutableAccounts, FlowTrackingAccounts, GiveTokenAccounts,
+    TakeTokenAccounts,
+};
 use crate::executable::{AxelarInterchainTokenExecuteInfo, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::FlowDirection;
 use crate::state::token_manager::{self, TokenManager};
 use crate::{
     assert_valid_interchain_transfer_execute_pda, assert_valid_token_manager_pda, events,
-    initiate_interchain_execute_pda_if_empty, seed_prefixes, EventAccounts, FromAccountInfoSlice,
-    Validate,
+    initiate_interchain_execute_pda_if_empty, seed_prefixes,
 };
+use event_cpi::EventAccounts;
 
-use super::gmp::{self, GmpAccounts, ItsExecuteAccounts};
-
-/// Checks if an account is a valid Token account for the given mint and owner.
-pub(super) fn is_valid_token_account(
-    account: &AccountInfo,
-    token_program: &Pubkey,
-    expected_mint: &Pubkey,
-) -> bool {
-    // Check account owner is the token program
-    if account.owner != token_program {
-        return false;
-    }
-
-    // Try to unpack as TokenAccount and verify mint/owner
-    let account_data = account.data.borrow();
-    if let Ok(token_account) = StateWithExtensions::<TokenAccount>::unpack(&account_data) {
-        return token_account.base.mint == *expected_mint;
-    }
-
-    false
-}
+use super::gmp;
 
 /// Processes an incoming [`InterchainTransfer`] GMP message.
 ///
@@ -101,17 +81,16 @@ pub(super) fn is_valid_token_account(
 ///
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
-pub(crate) fn process_inbound_transfer<'a>(
+pub(crate) fn process_inbound_transfer(
+    accounts: GiveTokenAccounts,
     message: Message,
-    execute_accounts: ItsExecuteAccounts<'a>,
     payload: &InterchainTransfer,
     source_chain: String,
 ) -> ProgramResult {
-    let accounts = GiveTokenAccounts::try_from(execute_accounts)?;
-    let token_manager = TokenManager::load(accounts.token_manager_pda)?;
+    let token_manager = TokenManager::load(accounts.token_manager)?;
     assert_valid_token_manager_pda(
-        accounts.token_manager_pda,
-        accounts.its_root_pda.key,
+        accounts.token_manager,
+        accounts.its_root.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
@@ -144,7 +123,7 @@ pub(crate) fn process_inbound_transfer<'a>(
 
     if !payload.data.is_empty() {
         let program_account = accounts.destination;
-        let system_account = accounts.system_account;
+        let system_account = accounts.system_program;
         let payer = accounts.payer;
 
         let destination_payload = AxelarMessagePayload::decode(payload.data.as_ref())?;
@@ -161,19 +140,19 @@ pub(crate) fn process_inbound_transfer<'a>(
         }
 
         let axelar_transfer_execute_bump = assert_valid_interchain_transfer_execute_pda(
-            axelar_executable_accounts.interchain_transfer_execute_pda,
+            axelar_executable_accounts.interchain_transfer_execute,
             program_account.key,
         )?;
 
         let account_infos = [
             &[
                 axelar_executable_accounts
-                    .interchain_transfer_execute_pda
+                    .interchain_transfer_execute
                     .clone(),
-                axelar_executable_accounts.message_payload_pda.clone(),
+                axelar_executable_accounts.gateway_message_payload.clone(),
                 axelar_executable_accounts.token_program.clone(),
-                axelar_executable_accounts.token_mint.clone(),
-                axelar_executable_accounts.program_ata.clone(),
+                axelar_executable_accounts.mint.clone(),
+                axelar_executable_accounts.destination_program_ata.clone(),
             ],
             axelar_executable_accounts.destination_program_accounts,
         ]
@@ -199,7 +178,7 @@ pub(crate) fn process_inbound_transfer<'a>(
         )?;
 
         initiate_interchain_execute_pda_if_empty(
-            axelar_executable_accounts.interchain_transfer_execute_pda,
+            axelar_executable_accounts.interchain_transfer_execute,
             payer,
             system_account,
             program_account.key,
@@ -212,7 +191,7 @@ pub(crate) fn process_inbound_transfer<'a>(
 
 fn build_axelar_interchain_token_execute(
     message: Message,
-    axelar_its_executable_accounts: &AxelarInterchainTokenExecutableAccounts<'_>,
+    axelar_its_executable_accounts: &AxelarInterchainTokenExecutableAccounts,
     program_id: Pubkey,
     mut program_accounts: Vec<AccountMeta>,
     payload: &InterchainTransfer,
@@ -221,23 +200,26 @@ fn build_axelar_interchain_token_execute(
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let source_address = payload.source_address.to_vec();
     let source_chain = message.cc_id.chain;
-    let token = axelar_its_executable_accounts.token_mint.key.to_bytes();
+    let token = axelar_its_executable_accounts.mint.key.to_bytes();
     let token_id = payload.token_id.0;
 
     let mut accounts = vec![
         AccountMeta::new(
             *axelar_its_executable_accounts
-                .interchain_transfer_execute_pda
+                .interchain_transfer_execute
                 .key,
             true,
         ),
         AccountMeta::new_readonly(
-            *axelar_its_executable_accounts.message_payload_pda.key,
+            *axelar_its_executable_accounts.gateway_message_payload.key,
             false,
         ),
         AccountMeta::new_readonly(*axelar_its_executable_accounts.token_program.key, false),
-        AccountMeta::new(*axelar_its_executable_accounts.token_mint.key, false),
-        AccountMeta::new(*axelar_its_executable_accounts.program_ata.key, false),
+        AccountMeta::new(*axelar_its_executable_accounts.mint.key, false),
+        AccountMeta::new(
+            *axelar_its_executable_accounts.destination_program_ata.key,
+            false,
+        ),
     ];
     accounts.append(&mut program_accounts);
 
@@ -266,8 +248,8 @@ fn build_axelar_interchain_token_execute(
 /// This function handles transfers where the source address should be the sender
 /// (user account). It validates that the sender is a user account and not a
 /// program or PDA to ensure proper source attribution in the transfer events.
-pub(crate) fn process_user_interchain_transfer<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn process_user_interchain_transfer(
+    accounts: TakeTokenAccounts,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -276,21 +258,17 @@ pub(crate) fn process_user_interchain_transfer<'a>(
     signing_pda_bump: u8,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let _payer = next_account_info(accounts_iter)?;
     // Check that the sender is a user account, not a program or PDA
-    // We get the sender from the first account
-    let sender = next_account_info(accounts_iter)?;
-
     // User accounts should be owned by the System Program
-    if sender.owner != &solana_program::system_program::ID {
+    if accounts.authority.owner != &solana_program::system_program::ID {
         msg!(
             "Sender is not owned by System Program, owner: {}",
-            sender.owner
+            accounts.authority.owner
         );
         return Err(ProgramError::InvalidAccountData);
     }
 
+    let source_address = *accounts.authority.key;
     process_outbound_transfer(
         accounts,
         token_id,
@@ -300,13 +278,13 @@ pub(crate) fn process_user_interchain_transfer<'a>(
         gas_value,
         signing_pda_bump,
         data,
-        *sender.key,
+        source_address,
     )
 }
 
 /// Processes an interchain transfer initiated via Cross-Program Invocation (CPI) by a PDA.
-pub(crate) fn process_cpi_interchain_transfer<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn process_cpi_interchain_transfer(
+    accounts: TakeTokenAccounts,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -317,15 +295,12 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
     pda_seeds: Vec<Vec<u8>>,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let _payer = next_account_info(accounts_iter)?;
     // The sender should be a PDA owned by the source program
-    let sender = next_account_info(accounts_iter)?;
-    if sender.owner != &source_id {
+    if accounts.authority.owner != &source_id {
         msg!(
             "Sender account must be owned by the source program. Expected: {}, Got: {}",
             source_id,
-            sender.owner
+            accounts.authority.owner
         );
         return Err(ProgramError::InvalidAccountData);
     }
@@ -335,11 +310,11 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
     let (expected_pda, _bump) =
         solana_program::pubkey::Pubkey::find_program_address(&seeds_refs, &source_id);
 
-    if expected_pda != *sender.key {
+    if expected_pda != *accounts.authority.key {
         msg!(
             "PDA derivation mismatch. Expected: {}, Got: {}",
             expected_pda,
-            sender.key
+            accounts.authority.key
         );
         return Err(ProgramError::InvalidAccountData);
     }
@@ -357,8 +332,8 @@ pub(crate) fn process_cpi_interchain_transfer<'a>(
     )
 }
 
-pub(crate) fn process_outbound_transfer<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn process_outbound_transfer(
+    accounts: TakeTokenAccounts,
     token_id: [u8; 32],
     destination_chain: String,
     destination_address: Vec<u8>,
@@ -368,45 +343,40 @@ pub(crate) fn process_outbound_transfer<'a>(
     data: Option<Vec<u8>>,
     source_address: Pubkey,
 ) -> ProgramResult {
-    const GMP_ACCOUNTS_IDX: usize = 7;
-    let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
-    let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
-    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
-
     msg!("Instruction: OutboundTransfer");
 
-    let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
+    let token_manager = TokenManager::load(accounts.token_manager)?;
 
     assert_valid_token_manager_pda(
-        take_token_accounts.token_manager_pda,
-        take_token_accounts.its_root_pda.key,
+        accounts.token_manager,
+        accounts.its_root.key,
         &token_id,
         token_manager.bump,
     )?;
 
     let expected_token_manager_ata =
         spl_associated_token_account::get_associated_token_address_with_program_id(
-            take_token_accounts.token_manager_pda.key,
-            take_token_accounts.token_mint.key,
-            take_token_accounts.token_program.key,
+            accounts.token_manager.key,
+            accounts.mint.key,
+            accounts.token_program.key,
         );
-    if *take_token_accounts.token_manager_ata.key != expected_token_manager_ata {
+    if *accounts.token_manager_ata.key != expected_token_manager_ata {
         msg!("Provided token_manager_ata doesn't match expected derivation");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if token_manager.token_address != *take_token_accounts.token_mint.key {
+    if token_manager.token_address != *accounts.mint.key {
         msg!("Mint and token ID don't match");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let amount_minus_fees = take_token(&take_token_accounts, &token_manager, amount)?;
+    let amount_minus_fees = take_token(&accounts, &token_manager, amount)?;
     amount = amount_minus_fees;
 
     let transfer_event = events::InterchainTransfer {
         token_id,
         source_address,
-        source_token_account: *take_token_accounts.source_ata.key,
+        source_token_account: *accounts.source_ata.key,
         destination_chain,
         destination_address,
         amount,
@@ -420,7 +390,7 @@ pub(crate) fn process_outbound_transfer<'a>(
             [0; 32]
         },
     };
-    let event_accounts_iter = &mut gmp_accounts.event_accounts().into_iter();
+    let event_accounts_iter = &mut accounts.event_accounts().into_iter();
     event_cpi_accounts!(event_accounts_iter);
     emit_cpi!(transfer_event);
 
@@ -435,9 +405,8 @@ pub(crate) fn process_outbound_transfer<'a>(
         data: data.unwrap_or_default().into(),
     });
 
-    gmp::process_outbound(
-        take_token_accounts.payer,
-        &gmp_accounts,
+    gmp::process_call_contract(
+        &accounts.try_into()?,
         &payload,
         transfer_event.destination_chain,
         gas_value,
@@ -447,28 +416,28 @@ pub(crate) fn process_outbound_transfer<'a>(
 }
 
 pub(crate) fn take_token(
-    accounts: &TakeTokenAccounts<'_>,
+    accounts: &TakeTokenAccounts,
     token_manager: &TokenManager,
     amount: u64,
 ) -> Result<u64, ProgramError> {
     token_manager_processor::validate_token_manager_type(
         token_manager.ty,
-        accounts.token_mint,
-        accounts.token_manager_pda,
+        accounts.mint,
+        accounts.token_manager,
     )?;
 
     handle_take_token_transfer(accounts, token_manager, amount)
 }
 
 fn give_token(
-    accounts: &GiveTokenAccounts<'_>,
+    accounts: &GiveTokenAccounts,
     token_manager: &TokenManager,
     amount: u64,
 ) -> Result<u64, ProgramError> {
     token_manager_processor::validate_token_manager_type(
         token_manager.ty,
-        accounts.token_mint,
-        accounts.token_manager_pda,
+        accounts.mint,
+        accounts.token_manager,
     )?;
 
     let transferred_amount = handle_give_token_transfer(accounts, token_manager, amount)?;
@@ -477,11 +446,11 @@ fn give_token(
 }
 
 fn track_token_flow(
-    accounts: &FlowTrackingAccounts<'_>,
+    accounts: &FlowTrackingAccounts,
     amount: u64,
     direction: FlowDirection,
 ) -> ProgramResult {
-    let mut token_manager = TokenManager::load(accounts.token_manager_pda)?;
+    let mut token_manager = TokenManager::load(accounts.token_manager)?;
 
     if token_manager.flow_slot.flow_limit.is_none() {
         return Ok(());
@@ -499,15 +468,15 @@ fn track_token_flow(
     token_manager.flow_slot.add_flow(amount, direction)?;
     token_manager.store(
         accounts.payer,
-        accounts.token_manager_pda,
-        accounts.system_account,
+        accounts.token_manager,
+        accounts.system_program,
     )?;
 
     Ok(())
 }
 
 fn handle_give_token_transfer(
-    accounts: &GiveTokenAccounts<'_>,
+    accounts: &GiveTokenAccounts,
     token_manager: &TokenManager,
     amount: u64,
 ) -> Result<u64, ProgramError> {
@@ -521,25 +490,25 @@ fn handle_give_token_transfer(
 
     let signer_seeds = &[
         seed_prefixes::TOKEN_MANAGER_SEED,
-        accounts.its_root_pda.key.as_ref(),
+        accounts.its_root.key.as_ref(),
         &token_id,
         &[token_manager_pda_bump],
     ];
     let transferred = match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => {
             mint_to(
-                accounts.its_root_pda,
+                accounts.its_root,
                 accounts.token_program,
-                accounts.token_mint,
+                accounts.mint,
                 accounts.destination_ata,
-                accounts.token_manager_pda,
+                accounts.token_manager,
                 token_manager,
                 amount,
             )?;
             amount
         }
         LockUnlock => {
-            let decimals = get_mint_decimals(accounts.token_mint)?;
+            let decimals = get_mint_decimals(accounts.mint)?;
             let transfer_info =
                 create_give_token_transfer_info(accounts, amount, decimals, None, signer_seeds);
             transfer_to(&transfer_info)?;
@@ -547,7 +516,7 @@ fn handle_give_token_transfer(
             amount
         }
         LockUnlockFee => {
-            let (fee, decimals) = get_fee_and_decimals(accounts.token_mint, amount)?;
+            let (fee, decimals) = get_fee_and_decimals(accounts.mint, amount)?;
             let transfer_info = create_give_token_transfer_info(
                 accounts,
                 amount,
@@ -566,7 +535,7 @@ fn handle_give_token_transfer(
 }
 
 fn handle_take_token_transfer(
-    accounts: &TakeTokenAccounts<'_>,
+    accounts: &TakeTokenAccounts,
     token_manager: &TokenManager,
     amount: u64,
 ) -> Result<u64, ProgramError> {
@@ -581,7 +550,7 @@ fn handle_take_token_transfer(
             burn(
                 accounts.authority,
                 accounts.token_program,
-                accounts.token_mint,
+                accounts.mint,
                 accounts.source_ata,
                 amount,
                 &[],
@@ -589,14 +558,14 @@ fn handle_take_token_transfer(
             amount
         }
         LockUnlock => {
-            let decimals = get_mint_decimals(accounts.token_mint)?;
+            let decimals = get_mint_decimals(accounts.mint)?;
             let transfer_info =
                 create_take_token_transfer_info(accounts, amount, decimals, None, &[]);
             transfer_to(&transfer_info)?;
             amount
         }
         LockUnlockFee => {
-            let (fee, decimals) = get_fee_and_decimals(accounts.token_mint, amount)?;
+            let (fee, decimals) = get_fee_and_decimals(accounts.mint, amount)?;
             let transfer_info =
                 create_take_token_transfer_info(accounts, amount, decimals, Some(fee), &[]);
             transfer_with_fee_to(&transfer_info)?;
@@ -609,16 +578,13 @@ fn handle_take_token_transfer(
     Ok(transferred)
 }
 
-fn get_mint_decimals(token_mint: &AccountInfo<'_>) -> Result<u8, ProgramError> {
+fn get_mint_decimals(token_mint: &AccountInfo) -> Result<u8, ProgramError> {
     let mint_data = token_mint.try_borrow_data()?;
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data)?;
     Ok(mint_state.base.decimals)
 }
 
-fn get_fee_and_decimals(
-    token_mint: &AccountInfo<'_>,
-    amount: u64,
-) -> Result<(u64, u8), ProgramError> {
+fn get_fee_and_decimals(token_mint: &AccountInfo, amount: u64) -> Result<(u64, u8), ProgramError> {
     let mint_data = token_mint.try_borrow_data()?;
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data)?;
     let fee_config = mint_state.get_extension::<TransferFeeConfig>()?;
@@ -639,7 +605,7 @@ fn create_take_token_transfer_info<'a, 'b>(
 ) -> TransferInfo<'a, 'b> {
     TransferInfo {
         token_program: accounts.token_program,
-        token_mint: accounts.token_mint,
+        token_mint: accounts.mint,
         destination: accounts.token_manager_ata,
         authority: accounts.authority,
         source: accounts.source_ata,
@@ -659,9 +625,9 @@ fn create_give_token_transfer_info<'a, 'b>(
 ) -> TransferInfo<'a, 'b> {
     TransferInfo {
         token_program: accounts.token_program,
-        token_mint: accounts.token_mint,
+        token_mint: accounts.mint,
         destination: accounts.destination_ata,
-        authority: accounts.token_manager_pda,
+        authority: accounts.token_manager,
         source: accounts.token_manager_ata,
         signers_seeds,
         amount,
@@ -743,7 +709,7 @@ struct TransferInfo<'a, 'b> {
     fee: Option<u64>,
 }
 
-fn transfer_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
+fn transfer_to(info: &TransferInfo) -> ProgramResult {
     invoke_signed(
         &spl_token_2022::instruction::transfer_checked(
             info.token_program.key,
@@ -766,7 +732,7 @@ fn transfer_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
     Ok(())
 }
 
-fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
+fn transfer_with_fee_to(info: &TransferInfo) -> ProgramResult {
     invoke_signed(
         &spl_token_2022::extension::transfer_fee::instruction::transfer_checked_with_fee(
             info.token_program.key,
@@ -788,223 +754,4 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
         &[info.signers_seeds],
     )?;
     Ok(())
-}
-
-#[derive(Debug)]
-pub(crate) struct TakeTokenAccounts<'a> {
-    pub(crate) payer: &'a AccountInfo<'a>,
-    pub(crate) authority: &'a AccountInfo<'a>,
-    pub(crate) source_ata: &'a AccountInfo<'a>,
-    pub(crate) token_mint: &'a AccountInfo<'a>,
-    pub(crate) token_manager_pda: &'a AccountInfo<'a>,
-    pub(crate) token_manager_ata: &'a AccountInfo<'a>,
-    pub(crate) token_program: &'a AccountInfo<'a>,
-    pub(crate) system_account: &'a AccountInfo<'a>,
-    pub(crate) its_root_pda: &'a AccountInfo<'a>,
-}
-
-impl Validate for TakeTokenAccounts<'_> {
-    fn validate(&self) -> Result<(), ProgramError> {
-        validate_system_account_key(self.system_account.key)?;
-        spl_token_2022::check_spl_token_program_account(self.token_program.key)?;
-
-        if !self.payer.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-
-        if !self.authority.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-
-        if self.token_mint.owner != self.token_program.key {
-            return Err(ProgramError::InvalidAccountData);
-        }
-        Ok(())
-    }
-}
-
-impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
-    type Context = ();
-    fn extract_accounts(
-        accounts: &'a [AccountInfo<'a>],
-        _context: &Self::Context,
-    ) -> Result<Self, ProgramError> {
-        let accounts_iter = &mut accounts.iter();
-
-        Ok(TakeTokenAccounts {
-            payer: next_account_info(accounts_iter)?,
-            authority: next_account_info(accounts_iter)?,
-            source_ata: next_account_info(accounts_iter)?,
-            token_mint: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            token_manager_ata: next_account_info(accounts_iter)?,
-            token_program: next_account_info(accounts_iter)?,
-            system_account: {
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?
-            },
-            its_root_pda: next_account_info(accounts_iter)?,
-        })
-    }
-}
-
-#[derive(Debug)]
-struct GiveTokenAccounts<'a> {
-    payer: &'a AccountInfo<'a>,
-    system_account: &'a AccountInfo<'a>,
-    its_root_pda: &'a AccountInfo<'a>,
-    message_payload_pda: &'a AccountInfo<'a>,
-    token_manager_pda: &'a AccountInfo<'a>,
-    token_mint: &'a AccountInfo<'a>,
-    token_manager_ata: &'a AccountInfo<'a>,
-    token_program: &'a AccountInfo<'a>,
-    ata_program: &'a AccountInfo<'a>,
-    rent_sysvar: &'a AccountInfo<'a>,
-    destination: &'a AccountInfo<'a>,
-    destination_ata: &'a AccountInfo<'a>,
-    interchain_transfer_execute_pda: Option<&'a AccountInfo<'a>>,
-    __event_cpi_authority_info: &'a AccountInfo<'a>,
-    __event_cpi_program_account: &'a AccountInfo<'a>,
-    remaining_accounts: &'a [AccountInfo<'a>],
-}
-
-impl Validate for GiveTokenAccounts<'_> {
-    fn validate(&self) -> Result<(), ProgramError> {
-        validate_system_account_key(self.system_account.key)?;
-        validate_spl_associated_token_account_key(self.ata_program.key)?;
-        validate_rent_key(self.rent_sysvar.key)?;
-        spl_token_2022::check_spl_token_program_account(self.token_program.key)?;
-
-        if self.token_mint.owner != self.token_program.key {
-            return Err(ProgramError::InvalidAccountData);
-        }
-
-        Ok(())
-    }
-}
-
-impl<'a> TryFrom<ItsExecuteAccounts<'a>> for GiveTokenAccounts<'a> {
-    type Error = ProgramError;
-
-    fn try_from(value: ItsExecuteAccounts<'a>) -> Result<Self, Self::Error> {
-        let remaining_accounts_iter = &mut value.remaining_accounts.iter();
-        let mut converted = Self {
-            payer: value.payer,
-            system_account: value.system_program,
-            its_root_pda: value.its_root_pda,
-            message_payload_pda: value.gateway_payload_account,
-            token_manager_pda: value.token_manager_pda,
-            token_mint: value.token_mint,
-            token_manager_ata: value.token_manager_ata,
-            token_program: value.token_program,
-            ata_program: value.ata_program,
-            rent_sysvar: value.rent_sysvar,
-            destination: next_account_info(remaining_accounts_iter)?,
-            destination_ata: next_account_info(remaining_accounts_iter)?,
-            interchain_transfer_execute_pda: next_optional_account_info(
-                remaining_accounts_iter,
-                &crate::ID,
-            )?,
-            __event_cpi_authority_info: value.__event_cpi_authority_info,
-            __event_cpi_program_account: value.__event_cpi_program_account,
-            remaining_accounts: remaining_accounts_iter.as_slice(),
-        };
-
-        if is_valid_token_account(
-            converted.destination,
-            converted.token_program.key,
-            converted.token_mint.key,
-        ) {
-            converted.destination_ata = converted.destination;
-        } else {
-            crate::create_associated_token_account_idempotent(
-                converted.payer,
-                converted.token_mint,
-                converted.destination_ata,
-                converted.destination,
-                converted.system_account,
-                converted.token_program,
-            )?;
-        }
-
-        converted.validate()?;
-
-        Ok(converted)
-    }
-}
-
-impl<'a> EventAccounts<'a> for GiveTokenAccounts<'a> {
-    fn event_accounts(&self) -> [&'a AccountInfo<'a>; 2] {
-        [
-            self.__event_cpi_authority_info,
-            self.__event_cpi_program_account,
-        ]
-    }
-}
-
-struct AxelarInterchainTokenExecutableAccounts<'a> {
-    message_payload_pda: &'a AccountInfo<'a>,
-    token_program: &'a AccountInfo<'a>,
-    token_mint: &'a AccountInfo<'a>,
-    program_ata: &'a AccountInfo<'a>,
-    destination_program_accounts: &'a [AccountInfo<'a>],
-    interchain_transfer_execute_pda: &'a AccountInfo<'a>,
-}
-
-impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
-    fn validate(&self) -> Result<(), ProgramError> {
-        Ok(())
-    }
-}
-
-impl<'a> TryFrom<GiveTokenAccounts<'a>> for AxelarInterchainTokenExecutableAccounts<'a> {
-    type Error = ProgramError;
-
-    fn try_from(value: GiveTokenAccounts<'a>) -> Result<Self, Self::Error> {
-        let converted = Self {
-            message_payload_pda: value.message_payload_pda,
-            token_program: value.token_program,
-            token_mint: value.token_mint,
-            program_ata: value.destination_ata,
-            destination_program_accounts: value.remaining_accounts,
-            interchain_transfer_execute_pda: value
-                .interchain_transfer_execute_pda
-                .ok_or(ProgramError::NotEnoughAccountKeys)?,
-        };
-
-        converted.validate()?;
-
-        Ok(converted)
-    }
-}
-
-struct FlowTrackingAccounts<'a> {
-    system_account: &'a AccountInfo<'a>,
-    payer: &'a AccountInfo<'a>,
-    token_manager_pda: &'a AccountInfo<'a>,
-}
-
-impl<'a> From<&TakeTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
-    fn from(value: &TakeTokenAccounts<'a>) -> Self {
-        Self {
-            system_account: value.system_account,
-            payer: value.payer,
-            token_manager_pda: value.token_manager_pda,
-        }
-    }
-}
-
-impl<'a> From<&GiveTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
-    fn from(value: &GiveTokenAccounts<'a>) -> Self {
-        Self {
-            system_account: value.system_account,
-            payer: value.payer,
-            token_manager_pda: value.token_manager_pda,
-        }
-    }
 }

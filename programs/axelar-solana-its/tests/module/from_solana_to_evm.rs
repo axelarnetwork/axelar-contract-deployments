@@ -1015,7 +1015,7 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
     .unwrap();
 
     // Now inject an arbitrary ATA that does not match the token manager PDA
-    transfer_ix.accounts[5].pubkey = {
+    transfer_ix.accounts[6].pubkey = {
         let attacker_wallet = Keypair::new();
 
         // Fund the attacker wallet (for transaction fees)

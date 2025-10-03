@@ -1,19 +1,14 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
-use alloy_primitives::Bytes;
 use axelar_solana_gateway::num_traits::Zero;
 use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
 use mpl_token_metadata::types::TokenStandard;
-use program_utils::next_optional_account_info;
 use program_utils::pda::init_pda_raw;
-use program_utils::{
-    pda::BorshPda, validate_mpl_token_metadata_key, validate_rent_key,
-    validate_spl_associated_token_account_key, validate_system_account_key,
-    validate_sysvar_instructions_key,
-};
+use program_utils::pda::BorshPda;
+use program_utils::validate_system_account_key;
 use role_management::processor::{
     ensure_roles, ensure_signer_roles, RoleAddAccounts, RoleRemoveAccounts,
     RoleTransferWithProposalAccounts,
@@ -31,190 +26,37 @@ use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
 
-use super::gmp::{self, GmpAccounts, ItsExecuteAccounts};
-use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
+use super::gmp;
+use super::token_manager::DeployTokenManagerInternal;
+use crate::accounts::CommonDeployRemoteInterchainTokenAccounts;
+use crate::accounts::DeployRemoteCanonicalInterchainTokenAccounts;
+use crate::accounts::DeployRemoteInterchainTokenAccounts;
+use crate::accounts::DeployRemoteInterchainTokenWithMinterAccounts;
+use crate::accounts::{
+    CallContractAccounts, DeployInterchainTokenAccounts, DeployTokenManagerAccounts,
+};
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{
-    assert_its_not_paused, assert_valid_deploy_approval_pda, events, find_its_root_pda,
-    EventAccounts, Validate,
-};
-use crate::{
-    assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
-    Roles,
-};
+use crate::{assert_its_not_paused, assert_valid_deploy_approval_pda, events, find_its_root_pda};
+use crate::{assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, Roles};
+use event_cpi::EventAccounts;
 
-#[derive(Debug)]
-pub(crate) struct DeployInterchainTokenAccounts<'a> {
-    pub(crate) payer: &'a AccountInfo<'a>,
-    pub(crate) deployer: &'a AccountInfo<'a>,
-    pub(crate) system_account: &'a AccountInfo<'a>,
-    pub(crate) its_root_pda: &'a AccountInfo<'a>,
-    pub(crate) token_manager_pda: &'a AccountInfo<'a>,
-    pub(crate) token_mint: &'a AccountInfo<'a>,
-    pub(crate) token_manager_ata: &'a AccountInfo<'a>,
-    pub(crate) token_program: &'a AccountInfo<'a>,
-    pub(crate) ata_program: &'a AccountInfo<'a>,
-    pub(crate) rent_sysvar: &'a AccountInfo<'a>,
-    pub(crate) sysvar_instructions: &'a AccountInfo<'a>,
-    pub(crate) mpl_token_metadata_program: &'a AccountInfo<'a>,
-    pub(crate) mpl_token_metadata_account: &'a AccountInfo<'a>,
-    pub(crate) deployer_ata: &'a AccountInfo<'a>,
-    pub(crate) minter: Option<&'a AccountInfo<'a>>,
-    pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
-    pub(crate) __event_cpi_authority_info: &'a AccountInfo<'a>,
-    pub(crate) __event_cpi_program_account: &'a AccountInfo<'a>,
-}
-
-impl Validate for DeployInterchainTokenAccounts<'_> {
-    fn validate(&self) -> Result<(), ProgramError> {
-        validate_system_account_key(self.system_account.key)?;
-        validate_spl_associated_token_account_key(self.ata_program.key)?;
-        validate_rent_key(self.rent_sysvar.key)?;
-        validate_sysvar_instructions_key(self.sysvar_instructions.key)?;
-        validate_mpl_token_metadata_key(self.mpl_token_metadata_program.key)?;
-        spl_token_2022::check_program_account(self.token_program.key)?;
-
-        if !self.payer.is_signer {
-            msg!("Payer should be a signer");
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-
-        if !self.deployer.is_signer {
-            msg!("Deployer should be a signer");
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-
-        // If it's a cross-chain message, payer_ata is not set (i.e., is set to program id)
-        if *self.deployer_ata.key != crate::id() {
-            crate::assert_valid_ata(
-                self.deployer_ata.key,
-                self.token_program.key,
-                self.token_mint.key,
-                self.deployer.key,
-            )?;
-        }
-
-        crate::assert_valid_ata(
-            self.token_manager_ata.key,
-            self.token_program.key,
-            self.token_mint.key,
-            self.token_manager_pda.key,
-        )?;
-
-        Ok(())
-    }
-}
-
-impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
-    type Context = ();
-    fn extract_accounts(
-        accounts: &'a [AccountInfo<'a>],
-        _context: &Self::Context,
-    ) -> Result<Self, ProgramError>
-    where
-        Self: Sized + Validate,
-    {
-        let accounts_iter = &mut accounts.iter();
-
-        Ok(Self {
-            payer: next_account_info(accounts_iter)?,
-            deployer: next_account_info(accounts_iter)?,
-            system_account: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
-            token_manager_pda: next_account_info(accounts_iter)?,
-            token_mint: next_account_info(accounts_iter)?,
-            token_manager_ata: next_account_info(accounts_iter)?,
-            token_program: next_account_info(accounts_iter)?,
-            ata_program: next_account_info(accounts_iter)?,
-            rent_sysvar: next_account_info(accounts_iter)?,
-            sysvar_instructions: next_account_info(accounts_iter)?,
-            mpl_token_metadata_program: next_account_info(accounts_iter)?,
-            mpl_token_metadata_account: next_account_info(accounts_iter)?,
-            deployer_ata: next_account_info(accounts_iter)?,
-            minter: next_optional_account_info(accounts_iter, &crate::ID)?,
-            minter_roles_pda: next_optional_account_info(accounts_iter, &crate::ID)?,
-            __event_cpi_authority_info: next_account_info(accounts_iter)?,
-            __event_cpi_program_account: next_account_info(accounts_iter)?,
-        })
-    }
-}
-
-impl<'a> EventAccounts<'a> for DeployInterchainTokenAccounts<'a> {
-    fn event_accounts(&self) -> [&'a AccountInfo<'a>; 2] {
-        [
-            self.__event_cpi_authority_info,
-            self.__event_cpi_program_account,
-        ]
-    }
-}
-
-impl<'a> From<DeployInterchainTokenAccounts<'a>> for DeployTokenManagerAccounts<'a> {
-    fn from(value: DeployInterchainTokenAccounts<'a>) -> Self {
-        Self {
-            payer: value.payer,
-            system_account: value.system_account,
-            its_root_pda: value.its_root_pda,
-            token_manager_pda: value.token_manager_pda,
-            token_mint: value.token_mint,
-            token_manager_ata: value.token_manager_ata,
-            token_program: value.token_program,
-            ata_program: value.ata_program,
-            rent_sysvar: value.rent_sysvar,
-            operator: value.minter,
-            operator_roles_pda: value.minter_roles_pda,
-            __event_cpi_authority_info: value.__event_cpi_authority_info,
-            __event_cpi_program_account: value.__event_cpi_program_account,
-        }
-    }
-}
-
-impl<'a> TryFrom<ItsExecuteAccounts<'a>> for DeployInterchainTokenAccounts<'a> {
-    type Error = ProgramError;
-
-    fn try_from(value: ItsExecuteAccounts<'a>) -> Result<Self, Self::Error> {
-        let remaining_accounts_iter = &mut value.remaining_accounts.iter();
-
-        Ok(Self {
-            payer: value.payer,
-            deployer: value.payer,
-            system_account: value.system_program,
-            its_root_pda: value.its_root_pda,
-            token_manager_pda: value.token_manager_pda,
-            token_mint: value.token_mint,
-            token_manager_ata: value.token_manager_ata,
-            token_program: value.token_program,
-            ata_program: value.ata_program,
-            rent_sysvar: value.rent_sysvar,
-            sysvar_instructions: next_account_info(remaining_accounts_iter)?,
-            mpl_token_metadata_program: next_account_info(remaining_accounts_iter)?,
-            mpl_token_metadata_account: next_account_info(remaining_accounts_iter)?,
-            deployer_ata: next_account_info(remaining_accounts_iter)?,
-            minter: next_optional_account_info(remaining_accounts_iter, &crate::ID)?,
-            minter_roles_pda: next_optional_account_info(remaining_accounts_iter, &crate::ID)?,
-            __event_cpi_authority_info: value.__event_cpi_authority_info,
-            __event_cpi_program_account: value.__event_cpi_program_account,
-        })
-    }
-}
-
-pub(crate) fn process_deploy<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn process_deploy(
+    accounts: DeployInterchainTokenAccounts,
     salt: [u8; 32],
     name: String,
     symbol: String,
     decimals: u8,
     initial_supply: u64,
 ) -> ProgramResult {
-    let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &())?;
-    let event_accounts_iter = &mut parsed_accounts.event_accounts().into_iter();
+    let event_accounts_iter = &mut accounts.event_accounts().into_iter();
     event_cpi_accounts!(event_accounts_iter);
 
-    let deploy_salt = crate::interchain_token_deployer_salt(parsed_accounts.deployer.key, &salt);
+    let deploy_salt = crate::interchain_token_deployer_salt(accounts.deployer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
-    if initial_supply.is_zero() && parsed_accounts.minter.is_none() {
+    if initial_supply.is_zero() && accounts.minter.is_none() {
         return Err(ProgramError::InvalidArgument);
     }
 
@@ -227,26 +69,19 @@ pub(crate) fn process_deploy<'a>(
 
     emit_cpi!(events::InterchainTokenIdClaimed {
         token_id,
-        deployer: *parsed_accounts.deployer.key,
+        deployer: *accounts.deployer.key,
         salt: deploy_salt,
     });
 
-    process_inbound_deploy(
-        parsed_accounts,
-        token_id,
-        name,
-        symbol,
-        decimals,
-        initial_supply,
-    )?;
+    process_inbound_deploy(accounts, token_id, name, symbol, decimals, initial_supply)?;
 
     set_return_data(&token_id);
 
     Ok(())
 }
 
-pub(crate) fn process_inbound_deploy<'a>(
-    accounts: DeployInterchainTokenAccounts<'a>,
+pub(crate) fn process_inbound_deploy(
+    accounts: DeployInterchainTokenAccounts,
     token_id: [u8; 32],
     name: String,
     symbol: String,
@@ -258,20 +93,20 @@ pub(crate) fn process_inbound_deploy<'a>(
     let event_accounts_iter = &mut accounts.event_accounts().into_iter();
     event_cpi_accounts!(event_accounts_iter);
 
-    let its_config = InterchainTokenService::load(accounts.its_root_pda)?;
-    assert_valid_its_root_pda(accounts.its_root_pda, its_config.bump)?;
+    let its_config = InterchainTokenService::load(accounts.its_root)?;
+    assert_valid_its_root_pda(accounts.its_root, its_config.bump)?;
     assert_its_not_paused(&its_config)?;
 
     let (interchain_token_pda, interchain_token_pda_bump) =
-        crate::find_interchain_token_pda(accounts.its_root_pda.key, &token_id);
-    if interchain_token_pda.ne(accounts.token_mint.key) {
+        crate::find_interchain_token_pda(accounts.its_root.key, &token_id);
+    if interchain_token_pda.ne(accounts.mint.key) {
         msg!("Invalid mint account provided");
         return Err(ProgramError::InvalidArgument);
     }
 
     let (token_manager_pda, token_manager_pda_bump) =
-        crate::find_token_manager_pda(accounts.its_root_pda.key, &token_id);
-    if token_manager_pda.ne(accounts.token_manager_pda.key) {
+        crate::find_token_manager_pda(accounts.its_root.key, &token_id);
+    if token_manager_pda.ne(accounts.token_manager.key) {
         msg!("Invalid TokenManager account provided");
         return Err(ProgramError::InvalidArgument);
     }
@@ -305,7 +140,7 @@ pub(crate) fn process_inbound_deploy<'a>(
     let deploy_token_manager = DeployTokenManagerInternal::new(
         token_manager::Type::NativeInterchainToken,
         token_id,
-        *accounts.token_mint.key,
+        *accounts.mint.key,
         accounts.minter.map(|account| *account.key),
         accounts.minter.map(|account| *account.key),
     );
@@ -319,7 +154,7 @@ pub(crate) fn process_inbound_deploy<'a>(
 
     emit_cpi!(events::InterchainTokenDeployed {
         token_id,
-        token_address: *deploy_token_manager_accounts.token_mint.key,
+        token_address: *deploy_token_manager_accounts.mint.key,
         minter: deploy_token_manager_accounts
             .operator
             .map(|account| *account.key)
@@ -378,85 +213,44 @@ pub(crate) fn get_token_metadata(
     Ok((name, symbol))
 }
 
-pub(crate) fn process_outbound_deploy<'a>(
-    payer: &'a AccountInfo<'a>,
-    accounts: &'a [AccountInfo<'a>],
-    salt: [u8; 32],
+pub(crate) fn process_outbound_deploy(
+    accounts: CommonDeployRemoteInterchainTokenAccounts,
+    token_id: &[u8; 32],
     destination_chain: String,
     maybe_destination_minter: Option<Vec<u8>>,
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    const OUTBOUND_MESSAGE_ACCOUNTS_INDEX: usize = 3;
-    let accounts_iter = &mut accounts.iter();
-    let mint = next_account_info(accounts_iter)?;
-    let metadata = next_account_info(accounts_iter)?;
-    let token_manager_account = next_account_info(accounts_iter)?;
-    let token_id = crate::interchain_token_id_internal(&salt);
-    let mut outbound_message_accounts_index = OUTBOUND_MESSAGE_ACCOUNTS_INDEX;
-
-    let destination_minter_data = if let Some(destination_minter) = maybe_destination_minter {
-        let minter = next_account_info(accounts_iter)?;
-        let deploy_approval = next_account_info(accounts_iter)?;
-        let minter_roles_account = next_account_info(accounts_iter)?;
-        outbound_message_accounts_index = outbound_message_accounts_index.saturating_add(3);
-
-        msg!("Instruction: OutboundDeployMinter");
-        ensure_roles(
-            &crate::id(),
-            token_manager_account,
-            minter,
-            minter_roles_account,
-            Roles::MINTER,
-        )?;
-
-        Some((Bytes::from(destination_minter), deploy_approval, minter))
-    } else {
-        None
-    };
-
-    let (_other, outbound_message_accounts) = accounts.split_at(outbound_message_accounts_index);
-    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
-    let its_root_config = InterchainTokenService::load(gmp_accounts.its_root_account)?;
-    assert_valid_its_root_pda(gmp_accounts.its_root_account, its_root_config.bump)?;
-    if destination_chain == its_root_config.chain_name {
-        msg!("Cannot deploy remotely to the origin chain");
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
     msg!("Instruction: OutboundDeploy");
 
     // Get metadata with fallback logic (Token 2022 extensions first, then Metaplex)
-    let (name, symbol) = get_token_metadata(mint, Some(metadata))?;
-    let mint_data_ref = mint.try_borrow_data()?;
+    let (name, symbol) = get_token_metadata(accounts.mint, Some(accounts.mpl_token_metadata))?;
+    let mint_data_ref = accounts.mint.try_borrow_data()?;
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data_ref)?;
     let mint_data = mint_state.base;
 
-    let token_manager = TokenManager::load(token_manager_account)?;
+    let token_manager = TokenManager::load(accounts.token_manager)?;
     assert_valid_token_manager_pda(
-        token_manager_account,
-        gmp_accounts.its_root_account.key,
-        &token_id,
+        accounts.token_manager,
+        accounts.its_root.key,
+        token_id,
         token_manager.bump,
     )?;
-    if token_manager.token_address != *mint.key {
+    if token_manager.token_address != *accounts.mint.key {
         msg!("TokenManager doesn't match mint");
         return Err(ProgramError::InvalidArgument);
     }
 
     let deployment_started_events = events::InterchainTokenDeploymentStarted {
-        token_id,
+        token_id: token_id.to_owned(),
         token_name: name,
         token_symbol: symbol,
         token_decimals: mint_data.decimals,
-        minter: destination_minter_data
-            .as_ref()
-            .map(|data| data.0.to_vec())
-            .unwrap_or_default(),
+        minter: maybe_destination_minter.clone().unwrap_or_default(),
         destination_chain: destination_chain.clone(),
     };
 
-    let event_accounts_iter = &mut gmp_accounts.event_accounts().into_iter();
+    let event_accounts_iter = &mut accounts.event_accounts().into_iter();
     event_cpi_accounts!(event_accounts_iter);
     emit_cpi!(deployment_started_events);
 
@@ -468,14 +262,18 @@ pub(crate) fn process_outbound_deploy<'a>(
         name: deployment_started_events.token_name,
         symbol: deployment_started_events.token_symbol,
         decimals: mint_data.decimals,
-        minter: destination_minter_data
-            .as_ref()
-            .map(|data| data.0.clone())
-            .unwrap_or_default(),
+        minter: maybe_destination_minter.unwrap_or_default().into(),
     });
 
-    gmp::process_outbound(
-        payer,
+    let gmp_accounts = CallContractAccounts::try_from(accounts)?;
+    let its_root_config = InterchainTokenService::load(gmp_accounts.its_root)?;
+    assert_valid_its_root_pda(gmp_accounts.its_root, its_root_config.bump)?;
+    if destination_chain == its_root_config.chain_name {
+        msg!("Cannot deploy remotely to the origin chain");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    gmp::process_call_contract(
         &gmp_accounts,
         &message,
         destination_chain.clone(),
@@ -484,82 +282,83 @@ pub(crate) fn process_outbound_deploy<'a>(
         true,
     )?;
 
-    // This closes the account and transfers lamports back, thus, this needs to happen after all
-    // CPIs
-    if let Some((destination_minter, deploy_approval, minter)) = destination_minter_data {
-        use_deploy_approval(
-            payer,
-            minter,
-            deploy_approval,
-            &destination_minter,
-            &token_id,
-            &destination_chain,
-        )?;
-    }
-
     Ok(())
 }
 
-pub(crate) fn deploy_remote_interchain_token<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn deploy_remote_interchain_token(
+    accounts: DeployRemoteInterchainTokenAccounts,
     salt: [u8; 32],
     destination_chain: String,
-    maybe_destination_minter: Option<Vec<u8>>,
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    let ([payer, deployer], outbound_deploy_accounts) = accounts.split_at(2) else {
-        return Err(ProgramError::NotEnoughAccountKeys);
-    };
-
-    if !payer.is_signer {
-        msg!("Payer should be a signer");
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    if !deployer.is_signer {
-        msg!("Deployer should be a signer");
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    let deploy_salt = crate::interchain_token_deployer_salt(deployer.key, &salt);
+    let deploy_salt = crate::interchain_token_deployer_salt(accounts.deployer.key, &salt);
+    let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
     process_outbound_deploy(
-        payer,
-        outbound_deploy_accounts,
-        deploy_salt,
+        accounts.try_into()?,
+        &token_id,
         destination_chain,
-        maybe_destination_minter,
+        None,
         gas_value,
         signing_pda_bump,
     )
 }
 
-pub(crate) fn deploy_remote_canonical_interchain_token<'a>(
-    accounts: &'a [AccountInfo<'a>],
+pub(crate) fn deploy_remote_interchain_token_with_minter(
+    accounts: DeployRemoteInterchainTokenWithMinterAccounts,
+    salt: [u8; 32],
+    destination_chain: String,
+    destination_minter: Vec<u8>,
+    gas_value: u64,
+    signing_pda_bump: u8,
+) -> ProgramResult {
+    ensure_roles(
+        &crate::id(),
+        accounts.token_manager,
+        accounts.minter,
+        accounts.minter_roles,
+        Roles::MINTER,
+    )?;
+
+    let deploy_salt = crate::interchain_token_deployer_salt(accounts.deployer.key, &salt);
+    let token_id = crate::interchain_token_id_internal(&deploy_salt);
+
+    process_outbound_deploy(
+        accounts.clone().try_into()?,
+        &token_id,
+        destination_chain.clone(),
+        Some(destination_minter.clone()),
+        gas_value,
+        signing_pda_bump,
+    )?;
+
+    // This closes the account and transfers lamports back, thus, this needs to happen after all
+    // CPIs
+    use_deploy_approval(
+        accounts.payer,
+        accounts.minter,
+        accounts.deployment_approval,
+        &destination_minter,
+        &token_id,
+        &destination_chain,
+    )?;
+
+    Ok(())
+}
+
+pub(crate) fn deploy_remote_canonical_interchain_token(
+    accounts: DeployRemoteCanonicalInterchainTokenAccounts,
     destination_chain: String,
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    let ([payer], outbound_deploy_accounts) = accounts.split_at(1) else {
-        return Err(ProgramError::NotEnoughAccountKeys);
-    };
-
-    if !payer.is_signer {
-        msg!("Payer should be a signer");
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    let mint = outbound_deploy_accounts
-        .first()
-        .ok_or(ProgramError::NotEnoughAccountKeys)?;
-
-    let deploy_salt = crate::canonical_interchain_token_deploy_salt(mint.key);
+    let deploy_salt = crate::canonical_interchain_token_deploy_salt(accounts.mint.key);
+    let token_id = crate::interchain_token_id_internal(&deploy_salt);
 
     process_outbound_deploy(
-        payer,
-        outbound_deploy_accounts,
-        deploy_salt,
+        accounts,
+        &token_id,
         destination_chain,
         None,
         gas_value,
@@ -569,63 +368,63 @@ pub(crate) fn deploy_remote_canonical_interchain_token<'a>(
 
 pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let mint = next_account_info(accounts_iter)?;
+    let mint_account = next_account_info(accounts_iter)?;
     let destination_account = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let token_manager_pda = next_account_info(accounts_iter)?;
-    let minter = next_account_info(accounts_iter)?;
-    let minter_roles_pda = next_account_info(accounts_iter)?;
-    let token_program = next_account_info(accounts_iter)?;
+    let its_root_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let minter_account = next_account_info(accounts_iter)?;
+    let minter_roles_account = next_account_info(accounts_iter)?;
+    let token_program_account = next_account_info(accounts_iter)?;
 
     msg!("Instruction: MintInterchainToken");
 
-    let its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
+    let its_root_config = InterchainTokenService::load(its_root_account)?;
+    assert_valid_its_root_pda(its_root_account, its_root_config.bump)?;
 
-    let token_manager = TokenManager::load(token_manager_pda)?;
+    let token_manager = TokenManager::load(token_manager_account)?;
     assert_valid_token_manager_pda(
-        token_manager_pda,
-        its_root_pda.key,
+        token_manager_account,
+        its_root_account.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
 
-    if token_manager.token_address.as_ref() != mint.key.as_ref() {
+    if token_manager.token_address.as_ref() != mint_account.key.as_ref() {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    spl_token_2022::check_spl_token_program_account(token_program.key)?;
+    spl_token_2022::check_spl_token_program_account(token_program_account.key)?;
 
-    if mint.owner != token_program.key {
+    if mint_account.owner != token_program_account.key {
         return Err(ProgramError::IncorrectProgramId);
     }
 
     ensure_signer_roles(
         &crate::id(),
-        token_manager_pda,
-        minter,
-        minter_roles_pda,
+        token_manager_account,
+        minter_account,
+        minter_roles_account,
         Roles::MINTER,
     )?;
 
     invoke_signed(
         &spl_token_2022::instruction::mint_to(
-            token_program.key,
-            mint.key,
+            token_program_account.key,
+            mint_account.key,
             destination_account.key,
-            token_manager_pda.key,
+            token_manager_account.key,
             &[],
             amount,
         )?,
         &[
-            mint.clone(),
+            mint_account.clone(),
             destination_account.clone(),
-            token_manager_pda.clone(),
-            token_program.clone(),
+            token_manager_account.clone(),
+            token_program_account.clone(),
         ],
         &[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            its_root_pda.key.as_ref(),
+            its_root_account.key.as_ref(),
             token_manager.token_id.as_ref(),
             &[token_manager.bump],
         ]],
@@ -633,8 +432,8 @@ pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> 
     Ok(())
 }
 
-fn setup_mint<'a>(
-    accounts: &DeployInterchainTokenAccounts<'a>,
+fn setup_mint(
+    accounts: &DeployInterchainTokenAccounts,
     decimals: u8,
     token_id: &[u8],
     interchain_token_pda_bump: u8,
@@ -643,15 +442,15 @@ fn setup_mint<'a>(
 ) -> ProgramResult {
     init_pda_raw(
         accounts.payer,
-        accounts.token_mint,
+        accounts.mint,
         accounts.token_program.key,
-        accounts.system_account,
+        accounts.system_program,
         spl_token_2022::state::Mint::LEN
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         &[
             seed_prefixes::INTERCHAIN_TOKEN_SEED,
-            accounts.its_root_pda.key.as_ref(),
+            accounts.its_root.key.as_ref(),
             token_id,
             &[interchain_token_pda_bump],
         ],
@@ -660,15 +459,15 @@ fn setup_mint<'a>(
     invoke(
         &initialize_mint(
             &spl_token_2022::id(),
-            accounts.token_mint.key,
-            accounts.token_manager_pda.key,
-            Some(accounts.token_manager_pda.key),
+            accounts.mint.key,
+            accounts.token_manager.key,
+            Some(accounts.token_manager.key),
             decimals,
         )?,
         &[
-            accounts.token_mint.clone(),
+            accounts.mint.clone(),
             accounts.rent_sysvar.clone(),
-            accounts.token_manager_pda.clone(),
+            accounts.token_manager.clone(),
             accounts.token_program.clone(),
         ],
     )?;
@@ -676,33 +475,33 @@ fn setup_mint<'a>(
     if initial_supply > 0 {
         crate::create_associated_token_account_idempotent(
             accounts.payer,
-            accounts.token_mint,
+            accounts.mint,
             accounts.deployer_ata,
             accounts.deployer,
-            accounts.system_account,
+            accounts.system_program,
             accounts.token_program,
         )?;
 
         invoke_signed(
             &spl_token_2022::instruction::mint_to(
                 accounts.token_program.key,
-                accounts.token_mint.key,
+                accounts.mint.key,
                 accounts.deployer_ata.key,
-                accounts.token_manager_pda.key,
+                accounts.token_manager.key,
                 &[],
                 initial_supply,
             )?,
             &[
                 accounts.payer.clone(),
                 accounts.deployer.clone(),
-                accounts.token_mint.clone(),
+                accounts.mint.clone(),
                 accounts.deployer_ata.clone(),
-                accounts.token_manager_pda.clone(),
+                accounts.token_manager.clone(),
                 accounts.token_program.clone(),
             ],
             &[&[
                 seed_prefixes::TOKEN_MANAGER_SEED,
-                accounts.its_root_pda.key.as_ref(),
+                accounts.its_root.key.as_ref(),
                 token_id,
                 &[token_manager_pda_bump],
             ]],
@@ -712,8 +511,8 @@ fn setup_mint<'a>(
     Ok(())
 }
 
-fn setup_metadata<'a>(
-    accounts: &DeployInterchainTokenAccounts<'a>,
+fn setup_metadata(
+    accounts: &DeployInterchainTokenAccounts<'_>,
     token_id: &[u8],
     name: String,
     symbol: String,
@@ -721,22 +520,22 @@ fn setup_metadata<'a>(
     token_manager_pda_bump: u8,
 ) -> ProgramResult {
     CreateV1CpiBuilder::new(accounts.mpl_token_metadata_program)
-        .metadata(accounts.mpl_token_metadata_account)
+        .metadata(accounts.mpl_token_metadata)
         .token_standard(TokenStandard::Fungible)
-        .mint(accounts.token_mint, false)
-        .authority(accounts.token_manager_pda)
-        .update_authority(accounts.token_manager_pda, true)
+        .mint(accounts.mint, false)
+        .authority(accounts.token_manager)
+        .update_authority(accounts.token_manager, true)
         .payer(accounts.payer)
         .is_mutable(false)
         .name(name)
         .symbol(symbol)
         .uri(uri)
         .seller_fee_basis_points(0)
-        .system_program(accounts.system_account)
+        .system_program(accounts.system_program)
         .sysvar_instructions(accounts.sysvar_instructions)
         .invoke_signed(&[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
-            accounts.its_root_pda.key.as_ref(),
+            accounts.its_root.key.as_ref(),
             token_id,
             &[token_manager_pda_bump],
         ]])?;
@@ -753,18 +552,18 @@ pub(crate) fn approve_deploy_remote_interchain_token(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
 
-    let payer = next_account_info(accounts_iter)?;
-    let minter = next_account_info(accounts_iter)?;
+    let payer_account = next_account_info(accounts_iter)?;
+    let minter_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
     let minter_roles_account = next_account_info(accounts_iter)?;
     let deploy_approval_account = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
     event_cpi_accounts!(accounts_iter);
 
-    validate_system_account_key(system_account.key)?;
+    validate_system_account_key(system_program_account.key)?;
     msg!("Instruction: ApproveDeployRemoteInterchainToken");
 
-    if !payer.is_signer {
+    if !payer_account.is_signer {
         msg!("Payer should be a signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
@@ -773,7 +572,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     ensure_signer_roles(
         &crate::id(),
         token_manager_account,
-        minter,
+        minter_account,
         minter_roles_account,
         Roles::MINTER,
     )?;
@@ -789,7 +588,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     )?;
 
     let (deploy_approval_pda, bump) =
-        crate::find_deployment_approval_pda(minter.key, &token_id, &destination_chain);
+        crate::find_deployment_approval_pda(minter_account.key, &token_id, &destination_chain);
     if deploy_approval_pda != *deploy_approval_account.key {
         return Err(ProgramError::InvalidAccountData);
     }
@@ -803,12 +602,12 @@ pub(crate) fn approve_deploy_remote_interchain_token(
         solana_program::keccak::hashv(&[destination_chain.as_bytes()]).to_bytes();
     approval.init(
         &crate::id(),
-        system_account,
-        payer,
+        system_program_account,
+        payer_account,
         deploy_approval_account,
         &[
             seed_prefixes::DEPLOYMENT_APPROVAL_SEED,
-            minter.key.as_ref(),
+            minter_account.key.as_ref(),
             &token_id,
             destination_chain_hash.as_ref(),
             &[bump],
@@ -816,7 +615,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     )?;
 
     emit_cpi!(events::DeployRemoteInterchainTokenApproval {
-        minter: *minter.key,
+        minter: *minter_account.key,
         deployer,
         token_id,
         destination_chain,
@@ -833,16 +632,16 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     destination_chain: String,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-    let minter = next_account_info(accounts_iter)?;
+    let payer_account = next_account_info(accounts_iter)?;
+    let minter_account = next_account_info(accounts_iter)?;
     let deploy_approval_account = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
     event_cpi_accounts!(accounts_iter);
 
-    validate_system_account_key(system_account.key)?;
+    validate_system_account_key(system_program_account.key)?;
     msg!("Instruction: RevokeDeployRemoteInterchainToken");
 
-    if !payer.is_signer {
+    if !payer_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -851,20 +650,20 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
 
     assert_valid_deploy_approval_pda(
         deploy_approval_account,
-        minter.key,
+        minter_account.key,
         &token_id,
         &destination_chain,
         approval.bump,
     )?;
 
     emit_cpi!(events::RevokeRemoteInterchainTokenApproval {
-        minter: *minter.key,
+        minter: *minter_account.key,
         deployer,
         token_id,
         destination_chain,
     });
 
-    program_utils::pda::close_pda(payer, deploy_approval_account, &crate::id())
+    program_utils::pda::close_pda(payer_account, deploy_approval_account, &crate::id())
 }
 
 pub(crate) fn use_deploy_approval<'a>(
@@ -896,36 +695,36 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
     msg!("Instruction: TransferInterchainTokenMintership");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
+    let its_root_account = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
+    let payer_account = next_account_info(accounts_iter)?;
     let sender_user_account = next_account_info(accounts_iter)?;
     let sender_roles_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
 
-    validate_system_account_key(system_account.key)?;
+    validate_system_account_key(system_program_account.key)?;
 
     if sender_user_account.key == destination_user_account.key {
         msg!("Source and destination accounts are the same");
         return Err(ProgramError::InvalidArgument);
     }
 
-    let its_config = InterchainTokenService::load(its_config_pda)?;
+    let its_config = InterchainTokenService::load(its_root_account)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
-    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
+    assert_valid_its_root_pda(its_root_account, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_pda.key,
+        its_root_account.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
 
     let role_add_accounts = RoleAddAccounts {
-        system_account,
-        payer,
+        system_account: system_program_account,
+        payer: payer_account,
         authority_user_account: sender_user_account,
         authority_roles_account: sender_roles_account,
         resource: token_manager_account,
@@ -934,8 +733,8 @@ pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -
     };
 
     let role_remove_accounts = RoleRemoveAccounts {
-        system_account,
-        payer,
+        system_account: system_program_account,
+        payer: payer_account,
         authority_user_account: sender_user_account,
         authority_roles_account: sender_roles_account,
         resource: token_manager_account,
@@ -962,9 +761,9 @@ pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) ->
     msg!("Instruction: ProposeInterchainTokenMintership");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
+    let its_root_account = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
+    let payer_account = next_account_info(accounts_iter)?;
     let origin_user_account = next_account_info(accounts_iter)?;
     let origin_roles_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
@@ -972,22 +771,22 @@ pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) ->
     let destination_roles_account = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
 
-    validate_system_account_key(system_account.key)?;
+    validate_system_account_key(system_program_account.key)?;
 
-    let its_config = InterchainTokenService::load(its_config_pda)?;
+    let its_config = InterchainTokenService::load(its_root_account)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
-    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
+    assert_valid_its_root_pda(its_root_account, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_pda.key,
+        its_root_account.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
 
     let role_management_accounts = RoleTransferWithProposalAccounts {
-        system_account,
-        payer,
+        system_account: system_program_account,
+        payer: payer_account,
         origin_user_account,
         origin_roles_account,
         resource: token_manager_account,
@@ -1003,9 +802,9 @@ pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> 
     msg!("Instruction: AcceptInterchainTokenMintership");
 
     let accounts_iter = &mut accounts.iter();
-    let its_config_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
+    let its_root_account = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
+    let payer_account = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
@@ -1013,21 +812,21 @@ pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> 
     let origin_roles_account = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
 
-    let its_config = InterchainTokenService::load(its_config_pda)?;
+    let its_config = InterchainTokenService::load(its_root_account)?;
     let token_manager = TokenManager::load(token_manager_account)?;
 
-    validate_system_account_key(system_account.key)?;
-    assert_valid_its_root_pda(its_config_pda, its_config.bump)?;
+    validate_system_account_key(system_program_account.key)?;
+    assert_valid_its_root_pda(its_root_account, its_config.bump)?;
     assert_valid_token_manager_pda(
         token_manager_account,
-        its_config_pda.key,
+        its_root_account.key,
         &token_manager.token_id,
         token_manager.bump,
     )?;
 
     let role_management_accounts = RoleTransferWithProposalAccounts {
-        system_account,
-        payer,
+        system_account: system_program_account,
+        payer: payer_account,
         resource: token_manager_account,
         destination_user_account,
         destination_roles_account,

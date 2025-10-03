@@ -146,10 +146,8 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
     /// 8. [] The Associated Token Account program account (`spl_associated_token_account`)
     /// 9. [] The rent sysvar account
-    /// 10. [] The ITS program account
-    /// 11. [] The ITS program account (duplicate)
-    /// 12. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
-    /// 13. [] The ITS program account.
+    /// 10. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
+    /// 11. [] The ITS program account.
     RegisterCanonicalInterchainToken,
 
     /// Deploys a canonical interchain token on a remote chain.
@@ -159,15 +157,15 @@ pub enum InterchainTokenServiceInstruction {
     /// 0. [writable,signer] The account which is paying for the transaction
     /// 1. [] The mint account (token address) to deploy
     /// 2. [] The Metaplex metadata account associated with the mint
-    /// 3. [] The token manager account associated with the interchain token
-    /// 4. [] The GMP gateway root account
-    /// 5. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 6. [] The GMP gateway program account
-    /// 7. [writable] The GMP gas configuration account
-    /// 8. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 9. [] The GMP gas service program account
-    /// 10. [] The system program account
-    /// 11. [] The ITS root account
+    /// 3. [] The ITS root account
+    /// 4. [] The token manager account associated with the interchain token
+    /// 5. [] The GMP gateway root account
+    /// 6. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 7. [] The GMP gateway program account
+    /// 8. [writable] The GMP gas configuration account
+    /// 9. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 10. [] The GMP gas service program account
+    /// 11. [] The system program account
     /// 12. [] The GMP call contract signing account
     /// 13. [] The ITS program account
     /// 14. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
@@ -189,23 +187,22 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [writable] The mint account (token address)
-    /// 4. [writable] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [] The GMP gateway root account
-    /// 8. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 12. [] The GMP gas service program account
-    /// 13. [] The system program account
-    /// 14. [] The ITS root account
-    /// 15. [] The GMP call contract signing account
-    /// 16. [] The ITS program account
-    /// 17. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
-    /// 18. [] The ITS program account.
+    /// 2. [] The ITS root account
+    /// 3. [writable] The source account from which the tokens are being transferred
+    /// 4. [writable] The mint account (token address)
+    /// 5. [writable] The token manager account associated with the interchain token
+    /// 6. [writable] The token manager Associated Token Account associated with the mint
+    /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 8. [] The system program account
+    /// 9. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
+    /// 10. [] The ITS program account.
+    /// 11. [] The GMP gateway root account
+    /// 12. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 13. [] The GMP gateway program account
+    /// 14. [writable] The GMP gas configuration account
+    /// 15. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 16. [] The GMP gas service program account
+    /// 17. [] The GMP call contract signing account
     InterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -236,23 +233,22 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [writable] The mint account (token address)
-    /// 4. [writable] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [] The GMP gateway root account
-    /// 8. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 12. [] The GMP gas service program account
-    /// 13. [] The system program account
-    /// 14. [] The ITS root account
-    /// 15. [] The GMP call contract signing account
-    /// 16. [] The ITS program account
-    /// 17. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
-    /// 18. [] The ITS program account.
+    /// 2. [] The ITS root account
+    /// 3. [writable] The source account from which the tokens are being transferred
+    /// 4. [writable] The mint account (token address)
+    /// 5. [writable] The token manager account associated with the interchain token
+    /// 6. [writable] The token manager Associated Token Account associated with the mint
+    /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 8. [] The system program account
+    /// 9. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
+    /// 10. [] The ITS program account.
+    /// 11. [] The GMP gateway root account
+    /// 12. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 13. [] The GMP gateway program account
+    /// 14. [writable] The GMP gas configuration account
+    /// 15. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 16. [] The GMP gas service program account
+    /// 17. [] The GMP call contract signing account
     CpiInterchainTransfer {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -328,15 +324,15 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [signer] The account of the deployer
     /// 2. [] The mint account (token address)
     /// 3. [] The Metaplex metadata account associated with the mint
-    /// 4. [] The token manager account associated with the interchain token
-    /// 5. [] The GMP gateway root account
-    /// 6. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 7. [] The GMP gateway program account
-    /// 8. [writable] The GMP gas configuration account
-    /// 9. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 10. [] The GMP gas service program account
-    /// 11. [] The system program account
-    /// 12. [] The ITS root account
+    /// 4. [] The ITS root account
+    /// 5. [] The token manager account associated with the interchain token
+    /// 6. [] The GMP gateway root account
+    /// 7. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 8. [] The GMP gateway program account
+    /// 9. [writable] The GMP gas configuration account
+    /// 10. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 11. [] The GMP gas service program account
+    /// 12. [] The system program account
     /// 13. [] The GMP call contract signing account
     /// 14. [] The ITS program account
     /// 15. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
@@ -363,18 +359,18 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [signer] The account of the deployer
     /// 2. [] The mint account (token address)
     /// 3. [] The Metaplex metadata account associated with the mint
-    /// 4. [] The token manager account associated with the interchain token
-    /// 5. [] The account of the minter that approved the deployment
-    /// 6. [writable] The account holding the approval for the deployment
-    /// 7. [] The account holding the roles of the minter on the token manager
-    /// 8. [] The GMP gateway root account
-    /// 9. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 10. [] The GMP gateway program account
-    /// 11. [writable] The GMP gas configuration account
-    /// 12. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 13. [] The GMP gas service program account
-    /// 14. [] The system program account
-    /// 15. [] The ITS root account
+    /// 4. [] The ITS root account
+    /// 5. [] The token manager account associated with the interchain token
+    /// 6. [] The account of the minter that approved the deployment
+    /// 7. [writable] The account holding the approval for the deployment
+    /// 8. [] The account holding the roles of the minter on the token manager
+    /// 9. [] The GMP gateway root account
+    /// 10. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 11. [] The GMP gateway program account
+    /// 12. [writable] The GMP gas configuration account
+    /// 13. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 14. [] The GMP gas service program account
+    /// 15. [] The system program account
     /// 16. [] The GMP call contract signing account
     /// 17. [] The ITS program account
     /// 18. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
@@ -402,14 +398,14 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The address of the payer
     /// 1. [] The mint account (token address)
-    /// 2. [] The GMP gateway root account
-    /// 3. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 4. [] The GMP gateway program account
-    /// 5. [writable] The GMP gas configuration account
-    /// 6. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 7. [] The GMP gas service program account
-    /// 8. [] The system program account
-    /// 9. [] The ITS root account
+    /// 2. [] The ITS root account
+    /// 3. [] The GMP gateway root account
+    /// 4. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 5. [] The GMP gateway program account
+    /// 6. [writable] The GMP gas configuration account
+    /// 7. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 8. [] The GMP gas service program account
+    /// 9. [] The system program account
     /// 10. [] The GMP call contract signing account
     /// 11. [] The ITS program account
     /// 12. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
@@ -455,15 +451,15 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [writable,signer] The account which is paying for the transaction
     /// 1. [signer] The account of the deployer
-    /// 2. [] The `TokenManager` account associated with the token being linked
-    /// 3. [] The GMP gateway root account
-    /// 4. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 5. [] The GMP gateway program account
-    /// 6. [writable] The GMP gas configuration account
-    /// 7. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 8. [] The GMP gas service program account
-    /// 9. [] The system program account
-    /// 10. [] The ITS root account
+    /// 2. [] The ITS root account
+    /// 3. [] The `TokenManager` account associated with the token being linked
+    /// 4. [] The GMP gateway root account
+    /// 5. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 6. [] The GMP gateway program account
+    /// 7. [writable] The GMP gas configuration account
+    /// 8. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 9. [] The GMP gas service program account
+    /// 10. [] The system program account
     /// 11. [] The GMP call contract signing account
     /// 12. [] The ITS program account
     /// 13. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
@@ -495,23 +491,22 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [writable] The mint account (token address)
-    /// 4. [] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [] The GMP gateway root account
-    /// 8. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 12. [] The GMP gas service program account
-    /// 13. [] The system program account
-    /// 14. [] The ITS root account
-    /// 15. [] The GMP call contract signing account
-    /// 16. [] The ITS program account
-    /// 17. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
-    /// 18. [] The ITS program account.
+    /// 2. [] The ITS root account
+    /// 3. [writable] The source account from which the tokens are being transferred
+    /// 4. [writable] The mint account (token address)
+    /// 5. [writable] The token manager account associated with the interchain token
+    /// 6. [writable] The token manager Associated Token Account associated with the mint
+    /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 8. [] The system program account
+    /// 9. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
+    /// 10. [] The ITS program account.
+    /// 11. [] The GMP gateway root account
+    /// 12. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 13. [] The GMP gateway program account
+    /// 14. [writable] The GMP gas configuration account
+    /// 15. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 16. [] The GMP gas service program account
+    /// 17. [] The GMP call contract signing account
     CallContractWithInterchainToken {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -545,23 +540,22 @@ pub enum InterchainTokenServiceInstruction {
     /// 1. [signer] The address of the owner or delegate of the source account of the
     ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
     ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [writable] The mint account (token address)
-    /// 4. [writable] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [] The GMP gateway root account
-    /// 8. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
-    /// 12. [] The GMP gas service program account
-    /// 13. [] The system program account
-    /// 14. [] The ITS root account
-    /// 15. [] The GMP call contract signing account
-    /// 16. [] The ITS program account
-    /// 17. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
-    /// 18. [] The ITS program account.
+    /// 2. [] The ITS root account
+    /// 3. [writable] The source account from which the tokens are being transferred
+    /// 4. [writable] The mint account (token address)
+    /// 5. [writable] The token manager account associated with the interchain token
+    /// 6. [writable] The token manager Associated Token Account associated with the mint
+    /// 7. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
+    /// 8. [] The system program account
+    /// 9. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
+    /// 10. [] The ITS program account.
+    /// 11. [] The GMP gateway root account
+    /// 12. [] The gateway event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gateway program ID).
+    /// 13. [] The GMP gateway program account
+    /// 14. [writable] The GMP gas configuration account
+    /// 15. [] The gas service event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and gas service program ID).
+    /// 16. [] The GMP gas service program account
+    /// 17. [] The GMP call contract signing account
     CpiCallContractWithInterchainToken {
         /// The token id associated with the token
         token_id: [u8; 32],
@@ -684,6 +678,8 @@ pub enum InterchainTokenServiceInstruction {
     /// 3. [writable] The [`TokenManager`] PDA account.
     /// 4. [] The PDA account with the flow limiter's roles on the [`TokenManager`].
     /// 5. [] System program account.
+    /// 6. [] The event authority PDA (derived from event_cpi::EVENT_AUTHORITY_SEED and ITS program ID).
+    /// 7. [] The ITS program account.
     SetTokenManagerFlowLimit {
         /// The new flow limit.
         flow_limit: Option<u64>,
@@ -1147,8 +1143,6 @@ pub fn register_canonical_interchain_token(
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(spl_associated_token_account::ID, false),
         AccountMeta::new_readonly(sysvar::rent::ID, false),
-        AccountMeta::new_readonly(crate::ID, false),
-        AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
         AccountMeta::new_readonly(crate::ID, false),
     ];
@@ -1197,6 +1191,7 @@ pub fn deploy_remote_canonical_interchain_token(
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -1205,7 +1200,6 @@ pub fn deploy_remote_canonical_interchain_token(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1338,6 +1332,7 @@ pub fn deploy_remote_interchain_token(
         AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -1346,7 +1341,6 @@ pub fn deploy_remote_interchain_token(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1413,6 +1407,7 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new_readonly(deployer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(minter, false),
         AccountMeta::new(deploy_approval, false),
@@ -1424,7 +1419,6 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1477,6 +1471,7 @@ pub fn register_token_metadata(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
@@ -1484,7 +1479,6 @@ pub fn register_token_metadata(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1539,6 +1533,7 @@ pub fn register_custom_token(
         AccountMeta::new_readonly(sysvar::rent::ID, false),
     ];
 
+    // Add optional operator accounts (uses program_id as sentinel for None)
     if let Some(operator) = operator {
         let (operator_roles_pda, _) =
             role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &operator);
@@ -1549,6 +1544,7 @@ pub fn register_custom_token(
         accounts.push(AccountMeta::new_readonly(crate::ID, false));
     }
 
+    // Event CPI accounts
     accounts.push(AccountMeta::new_readonly(event_authority, false));
     accounts.push(AccountMeta::new_readonly(crate::ID, false));
 
@@ -1601,6 +1597,7 @@ pub fn link_token(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(deployer, true),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -1609,7 +1606,6 @@ pub fn link_token(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1673,6 +1669,7 @@ pub fn interchain_transfer(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1685,7 +1682,6 @@ pub fn interchain_transfer(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1751,6 +1747,7 @@ pub fn cpi_interchain_transfer(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1763,7 +1760,6 @@ pub fn cpi_interchain_transfer(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1829,9 +1825,10 @@ pub fn call_contract_with_interchain_token(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(token_manager_pda, false),
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
@@ -1841,7 +1838,6 @@ pub fn call_contract_with_interchain_token(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -1911,6 +1907,7 @@ pub fn cpi_call_contract_with_interchain_token(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new(token_manager_pda, false),
@@ -1923,7 +1920,6 @@ pub fn cpi_call_contract_with_interchain_token(
         AccountMeta::new_readonly(gas_service_event_authority, false),
         AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(crate::ID, false),
         AccountMeta::new_readonly(event_authority, false),
