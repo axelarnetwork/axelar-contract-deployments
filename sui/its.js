@@ -658,7 +658,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             destinationAddress,
             tokenManagerType,
             // TODO: evaluate / test encoding of linkParams
-            bcs.string().serialize(linkParams).toBytes()
+            bcs.string().serialize(linkParams).toBytes(),
         ],
     });
 
