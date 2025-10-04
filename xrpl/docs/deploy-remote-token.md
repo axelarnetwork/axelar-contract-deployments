@@ -80,17 +80,6 @@ Once the first leg of the remote token deployment has succeeded, register the re
 ts-node xrpl/register-remote-token.js -n $DESTINATION_CHAIN --tokenId $TOKEN_ID --currency $XRPL_CURRENCY_CODE
 ```
 
-### 3. XRPL Token Instance Registration
-
-Finally, register the token instance on the `XRPLGateway` contract to enable transferring this newly-deployed token between the remote source chain and XRPL.
-
-```bash
-ts-node xrpl/register-token-instance.js -n $DESTINATION_CHAIN --tokenId $TOKEN_ID --sourceChain $SOURCE_CHAIN --decimals $DECIMALS
-```
-
-To be able to transfer this token from the XRPL directly to other chains where the token has been deployed to,
-re-run the token instance registration script, passing the relevant chain as source chain and the decimals that the token has been deployed with on that chain.
-
 ## Cross-Chain Transfer Testing
 
 To test the newly deployed token, refer to [2025-02-v.1.0.0.md](../../releases/xrpl/2025-02-v.1.0.0.md).

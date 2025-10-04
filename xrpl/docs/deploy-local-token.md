@@ -144,17 +144,7 @@ Note that manual executation of the proof might be necessary if relayer fails to
 ts-node evm/gateway.js -n <destination chain> --action execute --messageId $MESSAGE_ID --sourceChain axelar  --sourceAddress <itsHubAddress>   --destination <destination gateway contract address>   --payload 0x$PAYLOAD
 ```
 
-### 8. Token Instance Registration
-
-Once both legs of the remote token deployment have succeeded, register the token instance
-to enable bridging this newly-deployed token between XRPL and the remote destination chain.
-Note that XRPL tokens are always deployed to remote chains with `15` decimals of precision.
-
-```bash
-ts-node xrpl/register-token-instance.js --tokenId $TOKEN_ID --sourceChain $DESTINATION_CHAIN --decimals 15
-```
-
-Repeat steps 4-8 for every `DESTINATION_CHAIN` that you want the XRPL token to be deployed to.
+Repeat steps 4-7 for every `DESTINATION_CHAIN` that you want the XRPL token to be deployed to.
 
 ## Cross-Chain Transfer Testing
 
