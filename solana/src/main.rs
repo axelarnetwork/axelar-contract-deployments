@@ -6,7 +6,6 @@ mod gas_service;
 mod gateway;
 mod generate;
 mod governance;
-mod its;
 mod memo;
 mod misc;
 mod multisig_prover_types;
@@ -151,9 +150,6 @@ enum InstructionSubcommand {
     #[clap(subcommand)]
     GasService(gas_service::Commands),
 
-    /// Commands to interface with the InterchainTokenService program on Solana
-    #[clap(subcommand)]
-    Its(its::Commands),
 
     /// Commands to interface with the InterchainGovernance program on Solana
     #[clap(subcommand)]
@@ -225,9 +221,7 @@ enum QueryInstructionSubcommand {
     #[clap(subcommand)]
     Gateway(gateway::QueryCommands),
 
-    // Commands to query data from InterchainTokenService program on Solana
-    #[clap(subcommand)]
-    Its(its::QueryCommands),
+    
 }
 
 #[tokio::main]
@@ -339,9 +333,6 @@ async fn run() -> eyre::Result<()> {
             QueryInstructionSubcommand::Gateway(command) => {
                 gateway::query(command, &config)?;
             }
-            QueryInstructionSubcommand::Its(command) => {
-                its::query(command, &config)?;
-            }
         },
     }
     Ok(())
@@ -359,7 +350,6 @@ async fn build_transaction(
         InstructionSubcommand::GasService(command) => {
             gas_service::build_transaction(fee_payer, command, config)
         }
-        InstructionSubcommand::Its(command) => its::build_transaction(fee_payer, command, config),
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
         }

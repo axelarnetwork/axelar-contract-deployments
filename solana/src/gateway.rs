@@ -892,37 +892,7 @@ async fn execute(
             incoming_message_pda,
         );
 
-        // Handle special destination addresses
-        if destination_address == axelar_solana_its::id() {
-            let ix = its_instruction_builder::build_execute_instruction(
-                *fee_payer,
-                incoming_message_pda,
-                message_payload_pda,
-                message.clone(),
-                payload.clone(),
-                &solana_client::nonblocking::rpc_client::RpcClient::new(config.url.clone()),
-            )
-            .await?;
-            instructions.push(ix);
-        } else if destination_address == axelar_solana_governance::id() {
-            let ix = axelar_solana_governance::instructions::builder::calculate_gmp_ix(
-                *fee_payer,
-                incoming_message_pda,
-                message_payload_pda,
-                &message,
-                &payload,
-            )?;
-            instructions.push(ix);
-        } else {
-            let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
-                *fee_payer,
-                &message,
-                &payload,
-                incoming_message_pda,
-                message_payload_pda,
-            )?;
-            instructions.push(ix);
-        }
+        
     }
 
     instructions.push(axelar_solana_gateway::instructions::close_message_payload(

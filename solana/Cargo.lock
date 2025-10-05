@@ -643,8 +643,6 @@ dependencies = [
  "borsh 1.5.7",
  "bytemuck",
  "ed25519-dalek 2.1.1",
- "event-cpi",
- "event-cpi-macros",
  "event-utils",
  "hex",
  "itertools 0.12.1",
@@ -677,6 +675,7 @@ name = "axelar-solana-its"
 version = "0.1.0"
 dependencies = [
  "alloy-primitives",
+ "alloy-sol-types",
  "axelar-message-primitives",
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
@@ -701,15 +700,12 @@ name = "axelar-solana-memo-program"
 version = "0.1.0"
 dependencies = [
  "axelar-solana-encoding",
- "axelar-solana-gas-service",
  "axelar-solana-gateway",
  "axelar-solana-its",
  "borsh 1.5.7",
- "hex",
  "mpl-token-metadata",
  "program-utils",
  "solana-program",
- "spl-associated-token-account 6.0.0",
 ]
 
 [[package]]
@@ -2176,27 +2172,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bfcf67fea2815c2fc3b90873fae90957be12ff417335dfadc7f52927feb03b2"
 
 [[package]]
-name = "event-cpi"
-version = "0.1.0"
-dependencies = [
- "borsh 1.5.7",
- "bs58",
- "serde",
- "sha2 0.10.9",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "event-cpi-macros"
-version = "0.1.0"
-dependencies = [
- "event-cpi",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3123,6 +3098,7 @@ dependencies = [
  "axelar-solana-encoding",
  "axelar-solana-gateway",
  "axelar-solana-its",
+ "bincode 1.3.3",
  "borsh 1.5.7",
  "interchain-token-transfer-gmp",
  "solana-client",

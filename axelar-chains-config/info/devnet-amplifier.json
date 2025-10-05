@@ -1406,13 +1406,13 @@
       },
       "contracts": {
         "AxelarGateway": {
-          "address": "gtwLmC1UUvmkVCN4NoXobHbLpQN2AZEZrWyqc7Q13QA",
+          "address": "3jSHFCZkd3B751yP1qK2MYF8rvGFgaAACzb2GKsxM7m7",
           "connectionType": "amplifier",
           "domainSeparator": "0x020345c4bdac04b3ea1e3108ad3260cf201e3da0ecdf9899a0bc451a85c97053",
           "minimumRotationDelay": 0,
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": 15,
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "9YQpLCcHhBHXxz5pWUZq6n33fFsKmfDZ8wicx4voJvH8"
         },
         "AxelarGasService": {
           "address": "gasfiUSLzSZEKQiH4Nsm5Yk2rjzWWEtsk3Ji3qs1Ryw",
