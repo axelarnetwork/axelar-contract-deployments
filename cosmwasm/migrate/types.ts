@@ -5,7 +5,7 @@ export interface MigrationOptions extends Options {
     address: string;
     deposit: string;
     dry?: boolean;
-    proposal?: boolean;
+    direct?: boolean;
     ignoreChains?: string;
 }
 
