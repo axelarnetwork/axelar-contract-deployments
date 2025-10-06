@@ -182,9 +182,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 _axelar,
             );
 
-
             console.log('gasValue', gasValue);
-            
+
             validateParameters({
                 isNonEmptyString: { destinationChain },
                 isValidNumber: { gasValue },
@@ -295,14 +294,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             const { env } = options;
 
-            const { gasValue, gasFeeValue } = await estimateITSFee(
-                chain,
-                destinationChain,
-                env,
-                'LinkToken',
-                options.gasValue,
-                _axelar,
-            );
+            const { gasValue, gasFeeValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
             const deploymentSalt = getDeploymentSalt(options);
 
             if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
