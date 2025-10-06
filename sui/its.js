@@ -670,7 +670,9 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         arguments: [txSalt],
     });
 
-    const linkParams = options.destinationOperator ? encodeITSDestination(config.chains, destinationChain, options.destinationOperator) : '0x';
+    const linkParams = options.destinationOperator
+        ? encodeITSDestination(config.chains, destinationChain, options.destinationOperator)
+        : '0x';
 
     const messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::link_coin`,
