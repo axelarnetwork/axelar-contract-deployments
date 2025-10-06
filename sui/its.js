@@ -587,7 +587,6 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     };
 
     const destinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
-    const destinationTokenManager = options.destinationTokenManagerMode ? options.destinationTokenManagerMode : 'lock_unlock';
 
     if (options.salt) {
         unvalidatedParams.isHexString = { salt: options.salt };
