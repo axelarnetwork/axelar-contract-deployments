@@ -24,6 +24,7 @@ mod transfer_operatorship;
 ///
 /// # Errors
 /// - if the ix processing resulted in an error
+#[allow(clippy::too_many_lines)]
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
@@ -84,7 +85,15 @@ pub fn process_instruction(
             event_ix_index,
             fees,
             decimals,
-        } => refund_spl(program_id, accounts, tx_hash, ix_index, event_ix_index, fees, decimals),
+        } => refund_spl(
+            program_id,
+            accounts,
+            tx_hash,
+            ix_index,
+            event_ix_index,
+            fees,
+            decimals,
+        ),
 
         // Native token instructions
         GasServiceInstruction::PayNativeForContractCall {
@@ -125,6 +134,13 @@ pub fn process_instruction(
             ix_index,
             event_ix_index,
             fees,
-        } => refund_native(program_id, accounts, tx_hash, ix_index, event_ix_index, fees),
+        } => refund_native(
+            program_id,
+            accounts,
+            tx_hash,
+            ix_index,
+            event_ix_index,
+            fees,
+        ),
     }
 }
