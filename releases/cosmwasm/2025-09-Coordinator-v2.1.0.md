@@ -130,7 +130,6 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
       --address $COORDINATOR_ADDRESS \
       -m $MNEMONIC \
       -d $DEPOSIT_VALUE \
-      --proposal
    ```
 
    This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
