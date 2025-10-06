@@ -606,6 +606,8 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const treasuryCap = coin.objects.TreasuryCap;
     const tokenManager = options.tokenManagerMode;
 
+    const destinationTokenManager = options.destinationTokenManagerMode ? options.destinationTokenManagerMode : tokenManager;
+
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
     let txSalt = options.salt ? options.salt : null;
@@ -640,7 +642,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // Token manager type
     const tokenManagerType = await txBuilder.moveCall({
-        target: `${itsConfig.address}::token_manager_type::${tokenManager}`,
+        target: `${itsConfig.address}::token_manager_type::${destinationTokenManager}`,
     });
 
     // Salt
@@ -1155,6 +1157,9 @@ if (require.main === module) {
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
+        )
+        .addOption(
+            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode').choices(['lock_unlock', 'mint_burn']),
         )
         .addOption(
             new Option(
