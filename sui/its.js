@@ -557,7 +557,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     });
 
     // Pay gas for register coin metadata cross-chain message
-    const { gasValue } = await estimateITSFee(
+    const { gasFeeValue } = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -566,7 +566,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
         config.axelar,
     );
 
-    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasFeeValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
@@ -687,7 +687,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     });
 
     // Pay gas for link coin cross-chain message
-    const { gasValue } = await estimateITSFee(
+    const { gasFeeValue } = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -696,7 +696,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         config.axelar,
     );
 
-    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasValue]);
+    const [gas] = txBuilder.tx.splitCoins(txBuilder.tx.gas, [gasFeeValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
@@ -917,7 +917,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
     });
 
-    const { gasValue } = await estimateITSFee(
+    const { gasFeeValue } = await estimateITSFee(
         config.chains[options.chainName],
         destinationChain,
         options.env,
@@ -926,7 +926,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         config.axelar,
     );
 
-    const [gas] = tx.splitCoins(tx.gas, [gasValue]);
+    const [gas] = tx.splitCoins(tx.gas, [gasFeeValue]);
 
     await txBuilder.moveCall({
         target: `${contracts.GasService.address}::gas_service::pay_gas`,
