@@ -693,7 +693,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // Linked tokens (source / destination)
     const sourceToken = { metadata, packageId, tokenType, treasuryCap };
     const linkedTokens = Array.isArray(coin.linkedTokens)
-        ? coin.linkedTokens.push({ destinationChain, destinationAddress })
+        ? [...coin.linkedTokens, { destinationChain, destinationAddress }]
         : [{ destinationChain, destinationAddress }];
 
     // Save deployed tokens
