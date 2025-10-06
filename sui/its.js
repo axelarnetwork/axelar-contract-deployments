@@ -11,6 +11,7 @@ const {
     validateDestinationChain,
     estimateITSFee,
     encodeITSDestinationToken,
+    encodeITSDestination,
 } = require('../common/utils');
 const {
     addBaseOptions,
@@ -660,8 +661,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             destinationChain, // This assumes the chain is already added as a trusted chain
             destinationTokenAddress,
             tokenManagerType,
-            // TODO: evaluate / test encoding of linkParams
-            bcs.string().serialize(linkParams).toBytes(),
+            encodeITSDestination(config.chains, destinationChain, linkParams),
         ],
     });
 
