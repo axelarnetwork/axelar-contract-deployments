@@ -229,10 +229,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const deployConfig = { client, keypair, options, walletAddress };
     const [symbol, name, decimals] = args;
 
-    const unvalidatedParams = {
-        isNonEmptyString: { symbol, name },
-        isValidNumber: { decimals },
-    };
+    const unvalidatedParams = { isNonEmptyString: { symbol, name } };
 
     if (options.salt) {
         unvalidatedParams.isHexString = { salt: options.salt };
