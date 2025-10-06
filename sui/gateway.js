@@ -8,7 +8,15 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig, validateParameters, encodeITSDestinationToken } = require('../common/utils');
+const {
+    saveConfig,
+    printInfo,
+    loadConfig,
+    getMultisigProof,
+    getChainConfig,
+    validateParameters,
+    encodeITSDestinationToken,
+} = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -108,7 +116,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
 
     const [destinationChain, destinationAddress, payload] = args;
-    
+
     validateParameters({
         isNonEmptyString: { destinationChain, destinationAddress, payload },
     });
