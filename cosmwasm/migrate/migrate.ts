@@ -8,6 +8,7 @@ import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, mainProcessor } from '../processor';
 import { getContractInfo } from '../query';
 import { migrate as migrateCoordinator } from './coordinator';
+import { migrate as migrateMultisig } from './multisig';
 import { MigrationOptions } from './types';
 
 async function migrate(
@@ -31,6 +32,9 @@ async function migrate(
     switch (contractInfo.contract) {
         case 'coordinator':
             await migrateCoordinator(client, options, config, senderAddress, contractAddress, contractInfo.version, codeId, fee);
+            break;
+        case 'multisig':
+            await migrateMultisig(client, options, config, senderAddress, contractAddress, contractInfo.version, codeId, fee);
             break;
     }
 }

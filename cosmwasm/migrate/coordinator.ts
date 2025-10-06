@@ -151,8 +151,8 @@ async function coordinatorToVersion2_1_0(
     const migrateOptions = {
         contractName: 'Coordinator',
         msg: JSON.stringify(migrationMsg),
-        title: 'Migrate Coordinator v2.1.0',
-        description: 'Migrate Coordinator v2.1.0',
+        title: 'Migrate Coordinator v2.1.1',
+        description: 'Migrate Coordinator v2.1.1',
         runAs: senderAddress,
         codeId: codeId,
         deposit: options.deposit,
