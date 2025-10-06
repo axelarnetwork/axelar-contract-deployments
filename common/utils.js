@@ -804,7 +804,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
 
     const payload = {
         sourceChain: chain.axelarId,
-        destinationChain: destinationChain,
+        destinationChain,
         event: eventType,
     };
 
