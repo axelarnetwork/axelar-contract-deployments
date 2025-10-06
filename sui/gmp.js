@@ -26,7 +26,9 @@ async function sendCommand(keypair, client, chains, chain, args, options) {
         isValidNumber: { feeAmount },
     });
 
-    const destinationAddressEnc = encodeITSDestination(chains, destinationChain, destinationAddress);
+    const destinationAddressEnc = chains[destinationChain]
+        ? encodeITSDestination(chains, destinationChain, destinationAddress)
+        : bcs.string().serialize(destinationAddress).toBytes();
 
     if (!chains[destinationChain]) {
         printWarn(`Chain ${destinationChain} not found in the config`);
