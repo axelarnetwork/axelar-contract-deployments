@@ -720,6 +720,27 @@ function solanaAddressBytesFromBase58(string) {
 }
 
 /**
+ * Encodes the destination token address for Interchain Token Service (ITS) link token operations.
+ * This function handles token address encoding differently from recipient addresses.
+ * Note:
+ * - Token addresses are encoded as ASCII strings for X -> Sui transfers
+ * - Destination addresses (recipients) are encoded as bytes (already hex strings)
+ */
+function encodeITSDestinationToken(chains, destinationChain, destinationTokenAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'sui':
+            // For Sui token addresses (X -> Sui), encode as ASCII string
+            return asciiToBytes(destinationTokenAddress);
+        
+        default:
+            // For all other chains, use the same encoding as destination addresses
+            return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+    }
+}
+
+/**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
  * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
@@ -756,6 +777,8 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
             return destinationAddress;
     }
 }
+
+
 
 /**
  * Validates if a chain is valid in the config.
@@ -893,6 +916,7 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
+    encodeITSDestinationToken,
     tokenManagerTypes,
     validateLinkType,
     validateChain,

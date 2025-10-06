@@ -10,6 +10,7 @@ const {
     isValidNumber,
     validateDestinationChain,
     estimateITSFee,
+    encodeITSDestinationToken,
 } = require('../common/utils');
 const {
     addBaseOptions,
@@ -584,6 +585,8 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
     };
 
+    const destinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
+
     if (options.salt) {
         unvalidatedParams.isHexString = { salt: options.salt };
     }
@@ -655,7 +658,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             channel,
             salt,
             destinationChain, // This assumes the chain is already added as a trusted chain
-            destinationAddress,
+            destinationTokenAddress,
             tokenManagerType,
             // TODO: evaluate / test encoding of linkParams
             bcs.string().serialize(linkParams).toBytes(),
