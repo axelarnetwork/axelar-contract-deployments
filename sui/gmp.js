@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
-const { loadConfig, saveConfig, printWarn, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, printWarn, getChainConfig, validateParameters, encodeITSDestination } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -20,6 +20,13 @@ const {
 
 async function sendCommand(keypair, client, chains, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
+
+    validateParameters({
+        isNonEmptyString: { destinationChain, destinationAddress },
+        isValidNumber: { feeAmount },
+    });
+
+    const destinationAddressEnc = encodeITSDestination(chains, destinationChain, destinationAddress);
 
     if (!chains[destinationChain]) {
         printWarn(`Chain ${destinationChain} not found in the config`);
@@ -44,7 +51,7 @@ async function sendCommand(keypair, client, chains, chain, args, options) {
             tx.object(gatewayObjectId),
             tx.object(gasServiceObjectId),
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
+            tx.pure(destinationAddressEnc),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
             tx.pure.address(refundAddress),
             coin,

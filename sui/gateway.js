@@ -8,7 +8,7 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig } = require('../common/utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig, validateParameters, encodeITSDestinationToken } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -105,9 +105,15 @@ function getProof(keypair, commandType, data, contractConfig, options) {
 async function callContract(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
 
-    const [destinationChain, destinationAddress, payload] = args;
-
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+
+    const [destinationChain, destinationAddress, payload] = args;
+    
+    validateParameters({
+        isNonEmptyString: { destinationChain, destinationAddress, payload },
+    });
+
+    const destinationContractAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
 
     let channel = options.channel;
 
@@ -126,7 +132,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         arguments: [
             channel,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
+            tx.pure(destinationContractAddress),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
         ],
     });

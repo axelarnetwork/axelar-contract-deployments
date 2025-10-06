@@ -6,7 +6,7 @@ const { SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
-const { saveConfig, loadConfig, printError, getChainConfig } = require('../common/utils');
+const { saveConfig, loadConfig, printError, getChainConfig, validateParameters, encodeITSDestination } = require('../common/utils');
 const {
     getWallet,
     printWalletInfo,
@@ -18,6 +18,7 @@ const {
 } = require('./utils');
 
 async function payGas(keypair, client, gasServiceConfig, args, options, contracts) {
+    const config = loadConfig(options.env);
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
@@ -27,6 +28,13 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
     const refundAddress = options.refundAddress || walletAddress;
 
     const [destinationChain, destinationAddress, payload] = args;
+
+    validateParameters({
+        isNonEmptyString: { destinationChain, destinationAddress, payload },
+    });
+
+    const destinationAddressEnc = encodeITSDestination(config.chains, destinationChain, destinationAddress);
+
     const unitAmount = options.amount;
 
     let channel = options.channel;
@@ -48,7 +56,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
         arguments: [
             channel,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
+            tx.pure(destinationAddressEnc), // Destination address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
         ],
     });
