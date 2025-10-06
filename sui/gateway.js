@@ -121,7 +121,9 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         isNonEmptyString: { destinationChain, destinationAddress, payload },
     });
 
-    const destinationContractAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
+    const destinationContractAddress = config.chains[destinationChain]
+        ? encodeITSDestinationToken(config.chains, destinationChain, destinationAddress)
+        : bcs.string().serialize(destinationAddress).toBytes();
 
     let channel = options.channel;
 
