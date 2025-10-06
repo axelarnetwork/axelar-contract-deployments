@@ -56,11 +56,69 @@ async function sendToken(keypair, client, contracts, args, options) {
         arguments: [ItsToken.objects.TokenId],
     });
 
-    const Coin = await txBuilder.moveCall({
-        target: `${SUI_PACKAGE_ID}::coin::mint`,
-        arguments: [ItsToken.objects.TreasuryCap, unitAmount],
-        typeArguments: [ItsToken.typeArgument],
-    });
+    let Coin;
+    const tokenManagerMode = ItsToken.tokenManagerMode || 'lock_unlock';
+    const isOrigin = ItsToken.objects.origin;
+
+    if (isOrigin && tokenManagerMode === 'mint_burn') {
+        // For origin tokens with mint_burn mode, TreasuryCap is transferred to InterchainTokenService
+        // Use existing coins from wallet instead of minting
+        const coins = await client.getCoins({
+            owner: walletAddress,
+            coinType: ItsToken.typeArgument,
+        });
+
+        if (!coins.data.length) {
+            throw new Error(
+                `No ${symbol} tokens found in wallet. Make sure tokens were minted during deployment or use mint-token command.`,
+            );
+        }
+
+        // Find a coin with sufficient balance or merge coins
+        let selectedCoin = null;
+        let totalBalance = 0n;
+
+        for (const coin of coins.data) {
+            totalBalance += BigInt(coin.balance);
+            if (BigInt(coin.balance) >= BigInt(unitAmount)) {
+                selectedCoin = coin;
+                break;
+            }
+        }
+
+        if (totalBalance < BigInt(unitAmount)) {
+            throw new Error(`Insufficient ${symbol} balance. Required: ${unitAmount}, Available: ${totalBalance}`);
+        }
+
+        if (selectedCoin && BigInt(selectedCoin.balance) >= BigInt(unitAmount)) {
+            // Use existing coin directly if it has enough balance
+            if (BigInt(selectedCoin.balance) > BigInt(unitAmount)) {
+                // Split the coin to get exact amount
+                const coinObject = tx.object(selectedCoin.coinObjectId);
+                Coin = tx.splitCoins(coinObject, [unitAmount]);
+            } else {
+                // Use the whole coin
+                Coin = tx.object(selectedCoin.coinObjectId);
+            }
+        } else {
+            // Merge multiple coins to get the required amount
+            const coinObjects = coins.data.map((coin) => tx.object(coin.coinObjectId));
+            const primaryCoin = coinObjects[0];
+
+            if (coinObjects.length > 1) {
+                tx.mergeCoins(primaryCoin, coinObjects.slice(1));
+            }
+
+            Coin = tx.splitCoins(primaryCoin, [unitAmount]);
+        }
+    } else {
+        // For non-origin tokens or lock_unlock mode, mint new coins using TreasuryCap
+        Coin = await txBuilder.moveCall({
+            target: `${SUI_PACKAGE_ID}::coin::mint`,
+            arguments: [ItsToken.objects.TreasuryCap, unitAmount],
+            typeArguments: [ItsToken.typeArgument],
+        });
+    }
 
     await txBuilder.moveCall({
         target: `${Example.address}::its::send_interchain_transfer_call`,
@@ -190,6 +248,24 @@ async function deployToken(keypair, client, contracts, args, options) {
     const postDeployTxBuilder = new TxBuilder(client);
 
     if (options.origin) {
+        // Mint tokens before registration (while user still holds the TreasuryCap)
+        const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+        if (amount) {
+            const unitAmount = getUnitAmount(options.mintAmount, decimals);
+
+            const mintTxBuilder = new TxBuilder(client);
+
+            const coin = await mintTxBuilder.moveCall({
+                target: `${SUI_PACKAGE_ID}::coin::mint`,
+                arguments: [TreasuryCap, unitAmount],
+                typeArguments: [tokenType],
+            });
+
+            mintTxBuilder.tx.transferObjects([coin], walletAddress);
+
+            await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
+        }
+
         if (options.tokenManagerMode === 'lock_unlock') {
             await postDeployTxBuilder.moveCall({
                 target: `${Example.address}::its::register_coin`,
@@ -242,6 +318,7 @@ async function deployToken(keypair, client, contracts, args, options) {
             TokenId: tokenId,
             origin: options.origin,
         },
+        tokenManagerMode: options.tokenManagerMode || 'lock_unlock', // default to lock_unlock
     };
 }
 
@@ -369,6 +446,7 @@ if (require.main === module) {
                 .default('lock_unlock')
                 .choices(['lock_unlock', 'mint_burn']),
         )
+        .addOption(new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer (must be origin).').default('1000'))
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);

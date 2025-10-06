@@ -161,7 +161,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     let result;
     try {
         result = await client.queryContractSmart(coordinatorAddress, {
-            deployed_contracts: {
+            deployment: {
                 deployment_name: deploymentName,
             },
         });
@@ -172,11 +172,11 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     }
 
     if (
-        !result.verifier ||
+        !result.verifier_address ||
         !config.axelar.contracts.VotingVerifier?.[chainName] ||
-        !result.prover ||
+        !result.prover_address ||
         !config.axelar.contracts.MultisigProver?.[chainName] ||
-        !result.gateway
+        !result.gateway_address
     ) {
         return printWarn(
             `Missing config for ${chainName}.`,
@@ -184,29 +184,17 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         );
     }
 
-    config.axelar.contracts.VotingVerifier[chainName] = {
-        ...config.axelar.contracts.VotingVerifier[chainName],
-        address: result.verifier,
-    };
-    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
+    config.initContractConfig('VotingVerifier', chainName);
+    config.initContractConfig('MultisigProver', chainName);
+    config.initContractConfig('Gateway', chainName);
 
-    if (!config.axelar.contracts.Gateway) {
-        config.axelar.contracts.Gateway = {};
-    }
-    if (!config.axelar.contracts.Gateway[chainName]) {
-        config.axelar.contracts.Gateway[chainName] = {};
-    }
-    config.axelar.contracts.Gateway[chainName] = {
-        ...config.axelar.contracts.Gateway[chainName],
-        address: result.gateway,
-    };
-    printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
+    config.axelar.contracts.VotingVerifier[chainName].address = result.verifier_address;
+    config.axelar.contracts.MultisigProver[chainName].address = result.prover_address;
+    config.axelar.contracts.Gateway[chainName].address = result.gateway_address;
 
-    config.axelar.contracts.MultisigProver[chainName] = {
-        ...config.axelar.contracts.MultisigProver[chainName],
-        address: result.prover,
-    };
-    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
+    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier_address);
+    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover_address);
+    printInfo(`Updated Gateway[${chainName}].address`, result.gateway_address);
     printInfo(`Config updated successfully for ${chainName}`);
 }
 

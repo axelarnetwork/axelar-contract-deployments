@@ -20,7 +20,7 @@ const getVerifierSetStatus = async (config, chain, client, verifierStatus) => {
 const updateVerifierSet = async (client, config, _options, [chain], fee) => {
     const [account] = client.accounts;
 
-    const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain, client);
+    const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain);
     printInfo('Current verifier set', currentVerifierSet);
 
     const { transactionHash, events } = await executeTransaction(
