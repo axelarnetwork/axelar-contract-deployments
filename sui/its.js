@@ -587,6 +587,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     };
 
     const destinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
+    const destinationTokenManager = options.destinationTokenManagerMode ? options.destinationTokenManagerMode : 'lock_unlock';
 
     if (options.salt) {
         unvalidatedParams.isHexString = { salt: options.salt };
@@ -621,7 +622,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             symbol,
             metadata,
             tokenType,
-            tokenManager === 'mint_burn' ? treasuryCap : null,
+            tokenManager === 'mint_burn' ? treasuryCap : null, // Token manager type (souce chain)
             options.salt ? options.salt : null,
         );
 
@@ -640,7 +641,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // This submits a LinkToken msg type to ITS Hub.
     const txBuilder = new TxBuilder(client);
 
-    // Token manager type
+    // Token manager type (destination chain)
     const tokenManagerType = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_manager_type::${destinationTokenManager}`,
     });
