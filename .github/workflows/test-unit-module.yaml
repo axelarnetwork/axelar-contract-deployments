@@ -1,4 +1,4 @@
-name: Run Axelar Chains Config Tests
+name: Run Axelar Unit And Module Tests
 
 on: pull_request
 
@@ -18,12 +18,9 @@ jobs:
 
       - name: Install
         run: npm ci
-        working-directory: axelar-chains-config
 
       - name: Build
         run: npm run build
-        working-directory: axelar-chains-config
 
       - name: Test
         run: npm run test
-        working-directory: axelar-chains-config
