@@ -608,13 +608,13 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
     };
 
-    const destinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
-
     if (options.salt) {
         unvalidatedParams.isHexString = { salt: options.salt };
     }
 
     validateParameters(unvalidatedParams);
+
+    const destinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationAddress);
 
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
