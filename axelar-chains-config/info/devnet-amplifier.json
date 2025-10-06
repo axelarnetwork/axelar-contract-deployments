@@ -972,6 +972,7 @@
       "axelarId": "xrpl-evm-devnet",
       "chainId": 1440002,
       "rpc": "https://rpc.xrplevm.org",
+      "decimals": 18,
       "tokenSymbol": "XRP",
       "confirmations": 1,
       "finality": "finalized",
