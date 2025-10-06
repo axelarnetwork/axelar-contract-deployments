@@ -733,7 +733,7 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
         case 'sui':
             // For Sui token addresses (X -> Sui), encode as ASCII string
             return asciiToBytes(destinationTokenAddress);
-        
+
         default:
             // For all other chains, use the same encoding as destination addresses
             return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
@@ -773,12 +773,10 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
 
         case 'evm':
         case 'sui':
-        default: // EVM, Sui, and other chains (return as-is)
+        default: // EVM, Sui (non-token addresses), and other chains return as-is
             return destinationAddress;
     }
 }
-
-
 
 /**
  * Validates if a chain is valid in the config.
