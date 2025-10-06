@@ -8,7 +8,7 @@
 //!    by other Solana addresses.
 
 use axelar_solana_gateway::executable::validate_with_gmp_metadata;
-use gmp::{ProcessGMPContext, PROGRAM_ACCOUNTS_SPLIT_AT};
+use gmp::ProcessGMPContext;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -71,7 +71,7 @@ impl Processor {
                 let (gateway_accounts, gmp_accounts) = accounts
                     .iter()
                     .as_slice()
-                    .split_at(PROGRAM_ACCOUNTS_SPLIT_AT);
+                    .split_at(axelar_solana_gateway::executable::PROGRAM_ACCOUNTS_START_INDEX);
 
                 validate_with_gmp_metadata(gateway_accounts, &message)?;
 

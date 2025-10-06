@@ -46,10 +46,6 @@ pub use cancel_operator_approval::CancelOperatorApprovalMeta;
 pub use cancel_time_lock_proposal::CancelTimeLockProposalMeta;
 pub use schedule_time_lock_proposal::ScheduleTimeLockProposalMeta;
 
-/// The index of the first account that is expected to be passed to the
-/// destination program.
-pub const PROGRAM_ACCOUNTS_SPLIT_AT: usize = 5;
-
 /// The index of the root PDA account in the accounts slice.
 const ROOT_PDA_ACCOUNT_INDEX: usize = 1;
 

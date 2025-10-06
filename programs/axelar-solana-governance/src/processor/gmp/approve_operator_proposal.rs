@@ -66,12 +66,12 @@ pub(crate) fn process(
         return Err(ProgramError::InvalidArgument);
     }
 
-    program_utils::pda::init_pda_raw(
+    program_utils::pda::init_pda_raw_bytes(
         payer,
         operator_proposal_pda,
         program_id,
         system_account,
-        1,
+        &[1], // We store a single non-zero byte to indicate initialization
         &[
             seed_prefixes::OPERATOR_MANAGED_PROPOSAL,
             &ctx.proposal_hash,

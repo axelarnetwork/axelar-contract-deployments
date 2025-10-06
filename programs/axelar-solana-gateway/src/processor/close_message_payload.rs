@@ -1,3 +1,4 @@
+use crate::assert_initialized_and_valid_gateway_root_pda;
 use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
 
@@ -42,7 +43,7 @@ impl Processor {
         }
 
         // Check: Gateway root PDA
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        assert_initialized_and_valid_gateway_root_pda(gateway_root_pda)?;
 
         // Check: Message Payload account is initialized
         message_payload_account.check_initialized_pda_without_deserialization(&crate::ID)?;

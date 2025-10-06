@@ -109,6 +109,9 @@ impl Processor {
 
         let (_, bump) = get_gateway_root_config_pda();
 
+        // Check: Gateway Root PDA is uninitialized
+        gateway_root_pda.check_uninitialized_pda()?;
+
         // Check: Gateway Config account uses the canonical bump.
         assert_valid_gateway_root_pda(bump, gateway_root_pda.key)?;
 

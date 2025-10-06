@@ -70,8 +70,8 @@ impl Processor {
 
         validate_system_account_key(system_program.key)?;
 
-        // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        // Check: Gateway Root PDA is initialized and valid.
+        gateway_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
         let gateway_data = gateway_root_pda.try_borrow_data()?;
         let gateway_config =
             GatewayConfig::read(&gateway_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;

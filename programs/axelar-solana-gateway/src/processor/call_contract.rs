@@ -1,5 +1,4 @@
 use event_utils::{read_array, read_string, EventParseError};
-use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
@@ -7,8 +6,9 @@ use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::error::GatewayError;
-use crate::state::GatewayConfig;
-use crate::{assert_valid_gateway_root_pda, create_call_contract_signing_pda, event_prefixes};
+use crate::{
+    assert_initialized_and_valid_gateway_root_pda, create_call_contract_signing_pda, event_prefixes,
+};
 
 impl Processor {
     /// This function initializes a cross-chain message by emitting an event containing the call details.
@@ -39,7 +39,7 @@ impl Processor {
     /// * Destination contract address
     /// * Raw payload data
     pub fn process_call_contract(
-        program_id: &Pubkey,
+        _program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         destination_chain: &str,
         destination_contract_address: &str,
@@ -52,11 +52,7 @@ impl Processor {
         let gateway_root_pda = next_account_info(accounts_iter)?;
 
         // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = gateway_root_pda.try_borrow_data()?;
-        let gateway_config =
-            GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
+        assert_initialized_and_valid_gateway_root_pda(gateway_root_pda)?;
 
         if sender.is_signer {
             // Direct signer, so not a program, continue

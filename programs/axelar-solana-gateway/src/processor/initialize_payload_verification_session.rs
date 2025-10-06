@@ -9,8 +9,7 @@ use solana_program::system_program;
 use super::Processor;
 use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::state::GatewayConfig;
-use crate::{assert_valid_gateway_root_pda, seed_prefixes};
+use crate::{assert_initialized_and_valid_gateway_root_pda, seed_prefixes};
 
 impl Processor {
     /// Initializes a signature verification session PDA account for a given Axelar payload (former
@@ -71,11 +70,7 @@ impl Processor {
         }
 
         // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = gateway_root_pda.try_borrow_data()?;
-        let gateway_config =
-            GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
+        assert_initialized_and_valid_gateway_root_pda(gateway_root_pda)?;
 
         // Check: Verification PDA can be derived from provided seeds.
         // using canonical bump for the session account

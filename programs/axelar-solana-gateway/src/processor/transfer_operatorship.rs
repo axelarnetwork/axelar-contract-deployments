@@ -40,11 +40,11 @@ impl Processor {
         let programdata_account = next_account_info(&mut accounts_iter)?;
         let new_operator = next_account_info(&mut accounts_iter)?;
 
-        // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let mut data = gateway_root_pda.try_borrow_mut_data()?;
-        let gateway_config =
-            GatewayConfig::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        // Check: Gateway Root PDA is initialized and valid.
+        gateway_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
+        let mut gateway_data = gateway_root_pda.try_borrow_mut_data()?;
+        let gateway_config = GatewayConfig::read_mut(&mut gateway_data)
+            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: programdata account derived correctly (it holds the upgrade authority

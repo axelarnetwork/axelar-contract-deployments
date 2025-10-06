@@ -1911,11 +1911,14 @@ fn prefix_accounts(
     let (gateway_approved_message_signing_pda, _) =
         axelar_solana_gateway::get_validate_message_signing_pda(crate::ID, command_id);
 
+    let gateway_root_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
+
     vec![
         AccountMeta::new(*payer, true),
         AccountMeta::new(*gateway_incoming_message_pda, false),
         AccountMeta::new_readonly(*gateway_message_payload_pda, false),
         AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
     ]
 }

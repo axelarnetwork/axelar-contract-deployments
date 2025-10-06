@@ -11,6 +11,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+use crate::get_gateway_root_config_pda;
 use crate::state::config::{RotationDelaySecs, VerifierSetEpoch};
 use crate::state::verifier_set_tracker::VerifierSetHash;
 
@@ -460,9 +461,12 @@ pub fn validate_message(
     signing_pda: &Pubkey,
     message: Message,
 ) -> Result<Instruction, ProgramError> {
+    let gateway_root_pda = get_gateway_root_config_pda().0;
+
     let accounts = vec![
         AccountMeta::new(*incoming_message_pda, false),
         AccountMeta::new_readonly(*signing_pda, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::ValidateMessage { message })?;

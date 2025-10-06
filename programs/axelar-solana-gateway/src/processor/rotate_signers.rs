@@ -16,14 +16,13 @@ use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 
 use super::Processor;
-use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::GatewayConfig;
+use crate::{assert_valid_gateway_root_pda, error::GatewayError};
 use crate::{
-    assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
-    assert_valid_verifier_set_tracker_pda, event_prefixes, get_verifier_set_tracker_pda,
-    seed_prefixes,
+    assert_valid_signature_verification_pda, assert_valid_verifier_set_tracker_pda, event_prefixes,
+    get_verifier_set_tracker_pda, seed_prefixes,
 };
 
 impl Processor {
@@ -74,9 +73,10 @@ impl Processor {
         validate_system_account_key(system_account.key)?;
 
         // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let mut gateway_config_data = gateway_root_pda.try_borrow_mut_data()?;
-        let gateway_config = GatewayConfig::read_mut(&mut gateway_config_data)
+        // Check: Gateway Root PDA is initialized and valid.
+        gateway_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
+        let mut gateway_data = gateway_root_pda.try_borrow_mut_data()?;
+        let gateway_config = GatewayConfig::read_mut(&mut gateway_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 

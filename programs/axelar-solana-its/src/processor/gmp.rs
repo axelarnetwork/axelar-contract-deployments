@@ -36,6 +36,7 @@ pub(crate) fn process_execute<'a>(
     let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
     let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
+    let _gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
     let its_root_pda_account = next_account_info(accounts_iter)?;

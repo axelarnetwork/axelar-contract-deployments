@@ -41,11 +41,11 @@ impl Processor {
         let verification_session_account = next_account_info(accounts_iter)?;
         let verifier_set_tracker_account = next_account_info(accounts_iter)?;
 
-        // Check: Gateway Root PDA is initialized.
-        gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = gateway_root_pda.try_borrow_data()?;
+        // Check: Gateway Root PDA is initialized and valid.
+        gateway_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
+        let gateway_data = gateway_root_pda.try_borrow_data()?;
         let gateway_config =
-            GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+            GatewayConfig::read(&gateway_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: Verification session PDA is initialized.

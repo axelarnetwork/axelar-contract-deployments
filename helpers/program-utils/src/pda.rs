@@ -191,6 +191,9 @@ pub trait ValidPDA {
 
     /// Check if the account is an initialized PDA with a data check
     fn is_initialized_pda(&self, expected_owner_program_id: &Pubkey) -> bool;
+
+    /// Check if the account has meaningful data (i.e., not all zeros)
+    fn has_meaningful_data(&self) -> bool;
 }
 
 impl<'a> ValidPDA for &AccountInfo<'a> {
@@ -212,6 +215,10 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
         if !has_lamports {
             msg!("account does not have enough lamports");
             return Err(ProgramError::InsufficientFunds);
+        }
+        if !self.has_meaningful_data() {
+            msg!("account does not have data or is all zeroed");
+            return Err(ProgramError::InvalidAccountData);
         }
         let has_correct_owner = self.owner == expected_owner_program_id;
         if !has_correct_owner {
@@ -235,15 +242,31 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
     }
 
     fn is_initialized_pda(&self, expected_owner_program_id: &Pubkey) -> bool {
-        let data_is_empty = self
-            .try_borrow_data()
-            .expect("to borrow the data")
-            .is_empty();
         let has_correct_owner = self.owner == expected_owner_program_id;
-        !data_is_empty && has_correct_owner
+        self.has_meaningful_data() && has_correct_owner
+    }
+
+    fn has_meaningful_data(&self) -> bool {
+        let data = self.try_borrow_data().expect("to borrow the data");
+        if data.is_empty() {
+            return false;
+        }
+        !is_zeroed(&data)
     }
 }
 
+/// Code borrowed from https://github.com/anza-xyz/agave/blob/master/transaction-context/src/lib.rs#L1068C1-L1078C2
+fn is_zeroed(buf: &[u8]) -> bool {
+    const ZEROS_LEN: usize = 1024;
+    const ZEROS: [u8; ZEROS_LEN] = [0; ZEROS_LEN];
+    let mut chunks = buf.chunks_exact(ZEROS_LEN);
+
+    #[allow(clippy::indexing_slicing)]
+    {
+        chunks.all(|chunk| chunk == &ZEROS[..])
+            && chunks.remainder() == &ZEROS[..chunks.remainder().len()]
+    }
+}
 /// Convenience trait to store and load borsh serialized data to/from an account.
 pub trait BorshPda
 where
@@ -417,4 +440,95 @@ macro_rules! account_array_structs {
             }
         }
     };
+}
+
+#[cfg(test)]
+#[allow(clippy::indexing_slicing)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_zeroed_empty() {
+        assert!(is_zeroed(&[]));
+    }
+
+    #[test]
+    fn is_zeroed_small_all_zero() {
+        assert!(is_zeroed(&[0u8; 17]));
+    }
+
+    #[test]
+    fn is_zeroed_small_non_zero() {
+        let mut v = vec![0u8; 17];
+        v[5] = 1;
+        assert!(!is_zeroed(&v));
+    }
+
+    #[test]
+    fn is_zeroed_exact_chunk() {
+        assert!(is_zeroed(&vec![0u8; 1024]));
+    }
+
+    #[test]
+    fn is_zeroed_exact_chunk_non_zero() {
+        let mut v = vec![0u8; 1024];
+        v[1023] = 9;
+        assert!(!is_zeroed(&v));
+    }
+
+    #[test]
+    fn is_zeroed_multi_chunk_all_zero() {
+        assert!(is_zeroed(&vec![0u8; 1024 * 3 + 11]));
+    }
+
+    #[test]
+    fn is_zeroed_multi_chunk_non_zero_middle_chunk() {
+        let mut v = vec![0u8; 1024 * 2 + 11];
+        v[1024 + 123] = 2;
+        assert!(!is_zeroed(&v));
+    }
+
+    #[test]
+    fn is_zeroed_just_below_chunk_all_zero() {
+        assert!(is_zeroed(&vec![0u8; 1023]));
+    }
+
+    #[test]
+    fn is_zeroed_just_below_chunk_non_zero() {
+        let mut v = vec![0u8; 1023];
+        v[1022] = 1;
+        assert!(!is_zeroed(&v));
+    }
+
+    #[test]
+    fn is_zeroed_just_above_chunk_all_zero() {
+        assert!(is_zeroed(&vec![0u8; 1025]));
+    }
+
+    #[test]
+    fn is_zeroed_just_above_chunk_non_zero_last() {
+        let mut v = vec![0u8; 1025];
+        v[1024] = 3;
+        assert!(!is_zeroed(&v));
+    }
+
+    #[test]
+    fn is_zeroed_large_all_zero() {
+        assert!(is_zeroed(&vec![0u8; 1024 * 5]));
+    }
+
+    #[test]
+    fn is_zeroed_large_last_byte_non_zero() {
+        let mut v = vec![0u8; 1024 * 5];
+        let last = v.len() - 1;
+        v[last] = 0xFF;
+        assert!(!is_zeroed(&v));
+    }
+
+    #[test]
+    fn is_zeroed_large_only_first_byte_non_zero() {
+        let mut v = vec![0u8; 1024 * 4 + 17];
+        v[0] = 0xAB;
+        assert!(!is_zeroed(&v));
+    }
 }

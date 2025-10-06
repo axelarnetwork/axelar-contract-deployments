@@ -3,7 +3,10 @@
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage};
 use crate::state::message_payload::ImmutMessagePayload;
-use crate::{create_message_payload_pda, get_validate_message_signing_pda, BytemuckedPda};
+use crate::{
+    create_message_payload_pda, get_gateway_root_config_pda, get_validate_message_signing_pda,
+    BytemuckedPda,
+};
 use axelar_solana_encoding::types::messages::Message;
 use core::str::FromStr;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -24,7 +27,7 @@ pub const AXELAR_EXECUTE: &[u8; 16] = b"axelar-execute__";
 
 /// The index of the first account that is expected to be passed to the
 /// destination program.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 6;
 
 /// Perform CPI call to the Axelar Gateway to ensure that the given message is
 /// approved.
@@ -202,7 +205,8 @@ fn validate_message_internal(
     let gateway_incoming_message = next_account_info(account_info_iter)?;
     let _message_payload_pda = next_account_info(account_info_iter)?; // skip this one, we don't need it
     let signing_pda = next_account_info(account_info_iter)?;
-    let _gateway_program_id = next_account_info(account_info_iter)?;
+    let gateway_root_pda = next_account_info(account_info_iter)?;
+    let gateway_program_id = next_account_info(account_info_iter)?;
 
     // Build the actual Message we are going to use
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
@@ -220,7 +224,12 @@ fn validate_message_internal(
             signing_pda.key,
             message.clone(),
         )?,
-        &[gateway_incoming_message.clone(), signing_pda.clone()],
+        &[
+            gateway_incoming_message.clone(),
+            signing_pda.clone(),
+            gateway_root_pda.clone(),
+            gateway_program_id.clone(),
+        ],
         &[&[
             crate::seed_prefixes::VALIDATE_MESSAGE_SIGNING_SEED,
             &command_id,
@@ -267,12 +276,15 @@ pub fn construct_axelar_executable_ix(
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let (signing_pda, _) = get_validate_message_signing_pda(destination_address, command_id);
 
+    let gateway_root_pda = get_gateway_root_config_pda().0;
+
     // The expected accounts for the `ValidateMessage` ix
     let mut accounts = vec![
         AccountMeta::new_readonly(message_payload_payer, false),
         AccountMeta::new(gateway_incoming_message, false),
         AccountMeta::new_readonly(gateway_message_payload, false),
         AccountMeta::new_readonly(signing_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(crate::id(), false),
     ];
     accounts.extend(passed_in_accounts);

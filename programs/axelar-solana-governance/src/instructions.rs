@@ -1132,11 +1132,13 @@ pub mod builder {
                 command_id,
             );
 
+        let gateway_root_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
         let mut new_accounts = vec![
             AccountMeta::new_readonly(payer, false),
             AccountMeta::new(gw_incoming_message, false),
             AccountMeta::new_readonly(gw_message_payload, false),
             AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
+            AccountMeta::new_readonly(gateway_root_pda, false),
             AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
         ];
         // Append the new accounts to the existing ones.

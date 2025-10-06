@@ -15,7 +15,8 @@ use super::Processor;
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::{
-    assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
+    assert_initialized_and_valid_gateway_root_pda, assert_valid_incoming_message_pda,
+    create_validate_message_signing_pda, event_prefixes,
 };
 
 impl Processor {
@@ -42,6 +43,10 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let caller = next_account_info(accounts_iter)?;
+        let gateway_root_pda = next_account_info(accounts_iter)?;
+
+        // Check: Gateway Root PDA is initialized.
+        assert_initialized_and_valid_gateway_root_pda(gateway_root_pda)?;
 
         // compute the message hash
         let message_hash = message.hash::<SolanaSyscallHasher>();
@@ -49,7 +54,6 @@ impl Processor {
         // compute the command id
         let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
 
-        // Check: Gateway Root PDA is initialized.
         incoming_message_pda.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
         let incoming_message =

@@ -14,9 +14,14 @@ pub use program_utils::pda::BytemuckedPda;
 // Export current sdk types for downstream users building with a different sdk
 // version.
 pub use solana_program;
+use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::{Pubkey, PubkeyError};
+
+use crate::error::GatewayError;
+use crate::state::GatewayConfig;
+use program_utils::pda::ValidPDA;
 
 ensure_single_feature!("devnet-amplifier", "stagenet", "testnet", "mainnet");
 
@@ -95,6 +100,17 @@ pub fn get_gateway_root_config_pda() -> (Pubkey, u8) {
     get_gateway_root_config_internal(&crate::ID)
 }
 
+/// Assert that the gateway PDA has been initialized and is valid
+pub fn assert_initialized_and_valid_gateway_root_pda(
+    gw_root_pda: &AccountInfo<'_>,
+) -> Result<(), ProgramError> {
+    gw_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
+    let gateway_data = gw_root_pda.try_borrow_data()?;
+    let gateway_config =
+        GatewayConfig::read(&gateway_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+    assert_valid_gateway_root_pda(gateway_config.bump, gw_root_pda.key)
+}
+
 /// Assert that the gateway PDA has been derived correctly
 ///
 /// # Panics
@@ -106,10 +122,7 @@ pub fn get_gateway_root_config_pda() -> (Pubkey, u8) {
 /// Returns [`ProgramError::IncorrectProgramId`] if the derived PDA does not match the expected pubkey.
 #[inline]
 #[track_caller]
-pub fn assert_valid_gateway_root_pda(
-    bump: u8,
-    expected_pubkey: &Pubkey,
-) -> Result<(), ProgramError> {
+fn assert_valid_gateway_root_pda(bump: u8, expected_pubkey: &Pubkey) -> Result<(), ProgramError> {
     let derived_pubkey =
         Pubkey::create_program_address(&[seed_prefixes::GATEWAY_SEED, &[bump]], &crate::ID)
             .expect("invalid bump for the root pda");
