@@ -34,8 +34,8 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
     });
 
     const destinationAddressEnc = config.chains[destinationChain]
-     ? encodeITSDestination(config.chains, destinationChain, destinationAddress)
-     : bcs.string().serialize(destinationAddress).toBytes();
+        ? encodeITSDestination(config.chains, destinationChain, destinationAddress)
+        : bcs.string().serialize(destinationAddress).toBytes();
 
     const unitAmount = options.amount;
 
