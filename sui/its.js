@@ -629,7 +629,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
-    let txSalt = options.salt ? options.salt : null;
+    let txSalt = options.salt ? options.salt : coin.saltAddress;
     let tokenId = coin.objects.TokenId ? coin.objects.TokenId : null;
     let channelId = options.channel ? options.channel : null;
     if (!options.registered) {
