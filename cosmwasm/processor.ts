@@ -2,7 +2,7 @@ import { CosmWasmClient, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate
 import { AccountData, DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { GasPrice, StdFee } from '@cosmjs/stargate';
 
-import { ConfigManager, FullConfig } from '../common/config';
+import { ConfigManager } from '../common/config';
 
 export type Options = {
     env: string;
@@ -14,10 +14,16 @@ export type Options = {
     instantiateAddresses?: string[];
 };
 
-type ProcessorFn = (client: ClientManager, config: FullConfig, options: Options, args?: string[], fee?: string | StdFee) => Promise<void>;
+type ProcessorFn = (
+    client: ClientManager,
+    config: ConfigManager,
+    options: Options,
+    args?: string[],
+    fee?: string | StdFee,
+) => Promise<void>;
 type ProcessorQueryFn = (
     client: CosmWasmClient,
-    config: FullConfig,
+    config: ConfigManager,
     options: Options,
     args?: string[],
     fee?: string | StdFee,
@@ -50,20 +56,16 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
         throw new Error('Mnemonic is required');
     }
 
-    const client = await prepareClient(
-        options.mnemonic,
-        configManager.getFullConfig().axelar.rpc,
-        GasPrice.fromString(configManager.getFullConfig().axelar.gasPrice),
-    );
+    const client = await prepareClient(options.mnemonic, configManager.axelar.rpc, GasPrice.fromString(configManager.axelar.gasPrice));
 
-    await processorFn(client, configManager.getFullConfig(), options, args, fee);
+    await processorFn(client, configManager, options, args, fee);
     configManager.saveConfig();
 }
 
 export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
     const { configManager, fee } = prepareProcessor(options);
-    const client = await CosmWasmClient.connect(configManager.getFullConfig().axelar.rpc);
-    await processorQueryFn(client, configManager.getFullConfig(), options, args, fee);
+    const client = await CosmWasmClient.connect(configManager.axelar.rpc);
+    await processorQueryFn(client, configManager, options, args, fee);
     configManager.saveConfig();
 }
 

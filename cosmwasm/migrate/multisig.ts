@@ -41,7 +41,7 @@ async function multisigToVersion2_3_1(
     codeId: number,
     fee: string | StdFee,
 ) {
-    const coordinatorAddress = config.axelar.contracts.Router.address;
+    const coordinatorAddress = config.axelar.contracts.Coordinator.address;
 
     const migrationMsg = {
         coordinator: coordinatorAddress,

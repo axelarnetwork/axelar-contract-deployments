@@ -23,7 +23,6 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
-    getInstantiateChainContractsMessage,
     validateItsChainChange,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
@@ -40,6 +39,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { mainProcessor } = require('./processor');
+const { CoordinatorManager } = require('./coordinator');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -264,14 +264,58 @@ const migrate = async (client, config, options, _args, fee) => {
 };
 
 const instantiateChainContracts = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
+    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
     if (!coordinatorAddress) {
         throw new Error('Coordinator contract address not found in config');
     }
 
-    const message = await getInstantiateChainContractsMessage(client, config, options);
+    if (!admin) {
+        throw new Error('Admin address is required when instantiating chain contracts');
+    }
+
+    if (!salt) {
+        throw new Error('Salt is required when instantiating chain contracts');
+    }
+
+    // validate that the contract configs exist
+    config.getContractConfigByChain('Gateway', chainName);
+    config.getContractConfigByChain('VotingVerifier', chainName);
+    config.getContractConfigByChain('MultisigProver', chainName);
+
+    if (options.fetchCodeId) {
+        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
+        const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
+        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
+        config.axelar.contracts.Gateway[chainName].codeId = gatewayCode;
+        config.axelar.contracts.VotingVerifier[chainName].codeId = verifierCode;
+        config.axelar.contracts.MultisigProver[chainName].codeId = proverCode;
+    } else {
+        if (!config.axelar.contracts.Gateway[chainName].codeId && !gatewayCodeId) {
+            throw new Error(
+                'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
+            );
+        }
+        if (!config.axelar.contracts.VotingVerifier[chainName].codeId && !verifierCodeId) {
+            throw new Error(
+                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
+            );
+        }
+        if (!config.axelar.contracts.MultisigProver[chainName].codeId && !proverCodeId) {
+            throw new Error(
+                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
+            );
+        }
+
+        config.axelar.contracts.Gateway[chainName].codeId = gatewayCodeId || config.axelar.contracts.Gateway[chainName].codeId;
+        config.axelar.contracts.VotingVerifier[chainName].codeId =
+            verifierCodeId || config.axelar.contracts.VotingVerifier[chainName].codeId;
+        config.axelar.contracts.MultisigProver[chainName].codeId = proverCodeId || config.axelar.contracts.MultisigProver[chainName].codeId;
+    }
+
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
 
     const proposalId = await execute(
         client,
@@ -290,7 +334,7 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     }
     config.axelar.contracts.Coordinator.deployments[chainName] = {
         deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: options.salt,
+        salt: salt,
         proposalId,
     };
 };
