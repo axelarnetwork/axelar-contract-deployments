@@ -661,7 +661,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             destinationChain, // This assumes the chain is already added as a trusted chain
             destinationTokenAddress,
             tokenManagerType,
-            encodeITSDestination(config.chains, destinationChain, linkParams),
+            linkParams ? encodeITSDestination(config.chains, destinationChain, linkParams) : [],
         ],
     });
 
