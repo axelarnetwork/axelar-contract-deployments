@@ -96,10 +96,10 @@ ts-node evm/its.js checks -n $CHAIN -y
 
 ```bash
 # Create a token on `<ChainName>`
-ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-interchain-token [name]  [symbol] [decimals] [initial-supply] [minter] --salt "salt1234" -n $CHAIN 
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination-chain] --salt "salt1234" -n $CHAIN
 
 # Transfer token to remote chain
 ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
