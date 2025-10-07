@@ -11,6 +11,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -785,6 +786,52 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
+    if (env === 'devnet-amplifier') {
+        return 0;
+    }
+
+    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
+        throw new Error(`Invalid gas value: ${gasValue}`);
+    }
+
+    if (isValidNumber(gasValue)) {
+        const gasFeeValue = scaleGasValue(chain, gasValue);
+        return { gasValue, gasFeeValue };
+    }
+
+    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+
+    const payload = {
+        sourceChain: chain.axelarId,
+        destinationChain,
+        event: eventType,
+    };
+
+    const rawEstimate = await httpPost(url, payload);
+
+    if (rawEstimate.error || rawEstimate === 0) {
+        throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
+    }
+
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER ? rawEstimate.toString() : rawEstimate;
+
+    const ethValue = scaleGasValue(chain, estimate, false);
+    return { gasValue: ethValue, gasFeeValue: estimate };
+}
+
+function scaleGasValue(chain, gasValue, up = true) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        if (up) {
+            return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        } else {
+            return BigNumber.from(gasValue).div(BigNumber.from(10).pow(chain.gasScalingFactor));
+        }
+    }
+
+    return gasValue;
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -853,4 +900,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
+    estimateITSFee,
 };

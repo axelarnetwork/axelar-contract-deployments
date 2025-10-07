@@ -116,30 +116,18 @@ const executeTransaction = async (client, account, contractAddress, message, fee
     return tx;
 };
 
-const uploadContract = async (client, config, options) => {
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-
+const uploadContract = async (client, options, uploadFee) => {
     const [account] = client.accounts;
     const wasm = readContractCode(options);
-
-    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options, initFee) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
     const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-
     const contractLabel = getLabel(options);
 
     const { contractAddress } = instantiate2
@@ -159,15 +147,10 @@ const instantiateContract = async (client, initMsg, config, options) => {
     return contractAddress;
 };
 
-const migrateContract = async (client, config, options) => {
+const migrateContract = async (client, config, options, migrateFee) => {
     const { msg } = options;
     const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
@@ -988,13 +971,17 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config.chains, chainName);
+    let contractConfig;
+    let chainConfig;
+    if (!options.address || !options.codeId) {
+        contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+        chainConfig = getChainConfig(config.chains, chainName);
+    }
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
-        codeId: contractConfig.codeId,
+        contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+        codeId: options.codeId ?? contractConfig.codeId,
         msg: Buffer.from(msg),
     };
 };
@@ -1086,17 +1073,34 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, config, options, content) => {
-    const [account] = client.accounts;
+// Retries sign-and-broadcast on transient RPC socket closures
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3) => {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await client.signAndBroadcast(signerAddress, msgs, fee, memo);
+        } catch (error) {
+            lastError = error;
+            const code = error?.cause?.code || error?.code;
+            const message = error?.message || '';
 
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+            // Confirm err is socket error
+            const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
+            if (!isTransient || attempt === maxAttempts - 1) {
+                throw error;
+            }
+
+            printInfo('Retrying proposal submission..... 🔄');
+        }
+    }
+};
+
+const submitProposal = async (client, config, options, content, fee) => {
+    const [account] = client.accounts;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
@@ -1137,10 +1141,6 @@ const getContractCodePath = async (options, contractName) => {
 
 const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
     return {};
-};
-
-const generateDeploymentName = (chainName, codeId) => {
-    return `${chainName}-${codeId}`;
 };
 
 const getVerifierInstantiateMsg = (config, chainName) => {
@@ -1297,52 +1297,6 @@ const getProverInstantiateMsg = (config, chainName) => {
     };
 };
 
-const getInstantiateChainContractsMessage = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    if (!chainName) {
-        throw new Error('Chain name is required');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required');
-    }
-
-    const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
-    const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
-    const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
-
-    const verifierMsg = getVerifierInstantiateMsg(config, chainName);
-    const proverMsg = getProverInstantiateMsg(config, chainName);
-
-    return {
-        instantiate_chain_contracts: {
-            chain: chainName,
-            deployment_name: generateDeploymentName(chainName, `${gatewayCode}-${verifierCode}-${proverCode}`),
-            salt: salt,
-            params: {
-                gateway: {
-                    code_id: Number(gatewayCode),
-                    label: `Gateway ${chainName}`,
-                    contract_admin: admin,
-                },
-                verifier: {
-                    code_id: Number(verifierCode),
-                    label: `VotingVerifier ${chainName}`,
-                    msg: verifierMsg,
-                    contract_admin: admin,
-                },
-                prover: {
-                    code_id: Number(proverCode),
-                    label: `MultisigProver ${chainName}`,
-                    msg: proverMsg,
-                    contract_admin: admin,
-                },
-            },
-        },
-    };
-};
-
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
     const chainConfig = getChainConfig(config.chains, chainName);
 
@@ -1366,6 +1320,24 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
 
     if (!hasChanges) {
         throw new Error(`No changes detected for chain '${chainName}'.`);
+    }
+};
+
+const initContractConfig = (config, options) => {
+    const { contractName, chainName } = options;
+
+    if (!contractName) {
+        return;
+    }
+
+    if (!config.axelar.contracts[contractName]) {
+        config.axelar.contracts[contractName] = {};
+    }
+
+    if (chainName) {
+        if (!config.axelar.contracts[contractName][chainName]) {
+            config.axelar.contracts[contractName][chainName] = {};
+        }
     }
 };
 
@@ -1480,9 +1452,8 @@ module.exports = {
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
-    generateDeploymentName,
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
-    getInstantiateChainContractsMessage,
     validateItsChainChange,
+    initContractConfig,
 };

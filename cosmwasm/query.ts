@@ -1,9 +1,17 @@
 'use strict';
 
-const { printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
-const { mainQueryProcessor } = require('./processor');
-const { Command } = require('commander');
-const { addAmplifierQueryOptions } = require('./cli-utils');
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { Command } from 'commander';
+
+import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../common';
+import { FullConfig } from '../common/config';
+import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
+import { Options, mainQueryProcessor } from './processor';
+
+export interface ContractInfo {
+    contract: string;
+    version: string;
+}
 
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
@@ -31,7 +39,7 @@ async function rewards(client, config, _options, args, _fee) {
     }
 }
 
-async function getItsChainConfig(client, config, chainName) {
+export async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
 
     if (!chainConfig) {
@@ -153,7 +161,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     let result;
     try {
         result = await client.queryContractSmart(coordinatorAddress, {
-            deployed_contracts: {
+            deployment: {
                 deployment_name: deploymentName,
             },
         });
@@ -164,11 +172,11 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     }
 
     if (
-        !result.verifier ||
+        !result.verifier_address ||
         !config.axelar.contracts.VotingVerifier?.[chainName] ||
-        !result.prover ||
+        !result.prover_address ||
         !config.axelar.contracts.MultisigProver?.[chainName] ||
-        !result.gateway
+        !result.gateway_address
     ) {
         return printWarn(
             `Missing config for ${chainName}.`,
@@ -176,30 +184,38 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         );
     }
 
-    config.axelar.contracts.VotingVerifier[chainName] = {
-        ...config.axelar.contracts.VotingVerifier[chainName],
-        address: result.verifier,
-    };
-    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
+    config.initContractConfig('VotingVerifier', chainName);
+    config.initContractConfig('MultisigProver', chainName);
+    config.initContractConfig('Gateway', chainName);
 
-    if (!config.axelar.contracts.Gateway) {
-        config.axelar.contracts.Gateway = {};
-    }
-    if (!config.axelar.contracts.Gateway[chainName]) {
-        config.axelar.contracts.Gateway[chainName] = {};
-    }
-    config.axelar.contracts.Gateway[chainName] = {
-        ...config.axelar.contracts.Gateway[chainName],
-        address: result.gateway,
-    };
-    printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
+    config.axelar.contracts.VotingVerifier[chainName].address = result.verifier_address;
+    config.axelar.contracts.MultisigProver[chainName].address = result.prover_address;
+    config.axelar.contracts.Gateway[chainName].address = result.gateway_address;
 
-    config.axelar.contracts.MultisigProver[chainName] = {
-        ...config.axelar.contracts.MultisigProver[chainName],
-        address: result.prover,
-    };
-    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
+    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier_address);
+    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover_address);
+    printInfo(`Updated Gateway[${chainName}].address`, result.gateway_address);
     printInfo(`Config updated successfully for ${chainName}`);
+}
+
+export async function getContractInfo(client: CosmWasmClient, contract_address: string): Promise<ContractInfo> {
+    const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
+    const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
+    return contract_info;
+}
+
+async function contractInfo(client: CosmWasmClient, config: FullConfig, options: Options): Promise<void> {
+    try {
+        const address = config.axelar.contracts[options.contractName]?.address;
+        if (!address) {
+            throw new Error(`No address configured for contract '${options.contractName}'`);
+        }
+
+        const contract_info: ContractInfo = await getContractInfo(client, address);
+        console.log(contract_info);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 const programHandler = () => {
@@ -249,12 +265,20 @@ const programHandler = () => {
             mainQueryProcessor(saveDeployedContracts, options, [chainName]);
         });
 
+    const contractInfoCmd = program
+        .command('contract-info')
+        .description('Query contract info')
+        .action((options: Options) => {
+            mainQueryProcessor(contractInfo, options, []);
+        });
+
     addAmplifierQueryOptions(rewardsCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
     addAmplifierQueryOptions(customTokenMetadataCmd);
     addAmplifierQueryOptions(tokenInstanceCmd);
     addAmplifierQueryOptions(itsChainConfigCmd);
     addAmplifierQueryOptions(saveDeployedContractsCmd);
+    addAmplifierQueryContractOptions(contractInfoCmd);
 
     program.parse();
 };
@@ -262,7 +286,3 @@ const programHandler = () => {
 if (require.main === module) {
     programHandler();
 }
-
-module.exports = {
-    getItsChainConfig,
-};
