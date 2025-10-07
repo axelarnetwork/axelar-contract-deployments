@@ -194,7 +194,7 @@ async function coordinatorStoresMultisigAddress(
 ): Promise<boolean> {
     const res = await client.queryContractRaw(coordinatorAddress, Buffer.from('protocol'));
     const protocolContracts: ProtocolContracts = JSON.parse(Buffer.from(res).toString('ascii'));
-    if (protocolContracts.multisig != multisigAddress) {
+    if (protocolContracts.multisig !== multisigAddress) {
         printError(`Coordinator stores incorrect multisig address: expected ${multisigAddress}, saw ${protocolContracts.multisig}`);
         return false;
     }
@@ -224,7 +224,7 @@ async function coordinatorToVersion2_1_0(
         chain_contracts: chainContracts,
     };
 
-    printInfo(`Migration Msg: ${migrationMsg}`);
+    printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
     const migrateOptions = {
         contractName: 'Coordinator',
@@ -281,7 +281,9 @@ async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, co
 
             const proverSeen = multisigMap.get(chain);
             if (proverSeen !== prover) {
-                printInfo(`Coordinator's prover does not match multisig's for chain ${chain}: prover in multisig ${proverSeen}, prover in coordinator ${prover}`);
+                printInfo(
+                    `Coordinator's prover does not match multisig's for chain ${chain}: prover in multisig ${proverSeen}, prover in coordinator ${prover}`,
+                );
                 stateIsConsistent = false;
                 continue;
             }

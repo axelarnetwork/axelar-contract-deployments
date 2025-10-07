@@ -49,7 +49,7 @@ async function multisigToVersion2_3_1(
         default_authorized_provers: extractDefaultProversFromConfig(config),
     };
 
-    printInfo(`Migration Msg: ${migrationMsg}`);
+    printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
     const migrateOptions = {
         contractName: 'Multisig',
@@ -67,9 +67,9 @@ async function multisigToVersion2_3_1(
 
     if (!options.dry) {
         try {
-            printInfo(`Executing migration...\n${migrateOptions}`);
+            printInfo(`Executing migration...\n${JSON.stringify(migrateOptions)}`);
             if (options.direct) {
-                await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
+                await client.migrate(senderAddress, multisigAddress, Number(codeId), migrationMsg, fee);
                 printInfo('Migration succeeded');
             } else {
                 await submitProposal(client, config, migrateOptions, proposal, fee);
