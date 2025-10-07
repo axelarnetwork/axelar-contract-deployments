@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Run Axelar Chains Config Tests
 
 on:
   pull_request:
@@ -7,8 +7,7 @@ on:
       - main
 
 jobs:
-  unit-tests:
-    name: Run Unit Tests
+  test:
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
@@ -23,9 +22,12 @@ jobs:
 
       - name: Install
         run: npm ci
+        working-directory: axelar-chains-config
 
       - name: Build
         run: npm run build
+        working-directory: axelar-chains-config
 
       - name: Test
         run: npm run test
+        working-directory: axelar-chains-config
