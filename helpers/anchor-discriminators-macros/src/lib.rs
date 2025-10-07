@@ -2,7 +2,7 @@
 extern crate proc_macro;
 
 use convert_case::{Case, Casing};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::parse_macro_input;
 
 use anchor_discriminators::{sighash, SIGHASH_GLOBAL_NAMESPACE};
@@ -222,6 +222,10 @@ pub fn account(
 ) -> proc_macro::TokenStream {
     let account_strct = parse_macro_input!(input as syn::ItemStruct);
     let account_name = &account_strct.ident;
+    let is_zero_copy = account_strct.attrs.iter().any(|attr| {
+        attr.path.to_token_stream().to_string() == "repr"
+            && attr.tokens.to_token_stream().to_string() == "(C)"
+    });
 
     let discriminator = gen_discriminator(
         anchor_discriminators::SIGHASH_ACCOUNT_NAMESPACE,
@@ -241,6 +245,51 @@ pub fn account(
         }
     };
 
+    let borsh_impls = if is_zero_copy {
+        quote!()
+    } else {
+        quote! {
+            #[automatically_derived]
+            impl borsh::BorshSerialize for #account_name {
+                fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+                    writer.write_all(#account_name::DISCRIMINATOR)?;
+                    #(borsh::BorshSerialize::serialize(&self.#field_names, writer)?;)*
+                    Ok(())
+                }
+            }
+
+            #[automatically_derived]
+            impl borsh::BorshDeserialize for #account_name {
+                fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+                    // Read and verify discriminator
+                    let mut discriminator = [0u8; 8];
+                    reader.read_exact(&mut discriminator)?;
+
+                    if discriminator != #account_name::DISCRIMINATOR {
+                        return Err(std::io::Error::new(
+                            std::io::ErrorKind::InvalidData,
+                            format!(
+                                "Invalid account discriminator for {}: expected {:?}, got {:?}",
+                                stringify!(#account_name),
+                                #account_name::DISCRIMINATOR,
+                                discriminator
+                            ),
+                        ));
+                    }
+
+                    // Deserialize each field
+                    #(
+                        let #field_names = <#field_types as borsh::BorshDeserialize>::deserialize_reader(reader)?;
+                    )*
+
+                    Ok(Self {
+                        #(#field_names),*
+                    })
+                }
+            }
+        }
+    };
+
     let ret = quote! {
         #account_strct
 
@@ -249,45 +298,7 @@ pub fn account(
             const DISCRIMINATOR: &'static [u8] = &#discriminator;
         }
 
-        #[automatically_derived]
-        impl borsh::BorshSerialize for #account_name {
-            fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-                writer.write_all(#account_name::DISCRIMINATOR)?;
-                #(borsh::BorshSerialize::serialize(&self.#field_names, writer)?;)*
-                Ok(())
-            }
-        }
-
-        #[automatically_derived]
-        impl borsh::BorshDeserialize for #account_name {
-            fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
-                // Read and verify discriminator
-                let mut discriminator = [0u8; 8];
-                reader.read_exact(&mut discriminator)?;
-
-                if discriminator != #account_name::DISCRIMINATOR {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        format!(
-                            "Invalid account discriminator for {}: expected {:?}, got {:?}",
-                            stringify!(#account_name),
-                            #account_name::DISCRIMINATOR,
-                            discriminator
-                        ),
-                    ));
-                }
-
-                // Deserialize each field
-                #(
-                    let #field_names = <#field_types as borsh::BorshDeserialize>::deserialize_reader(reader)?;
-                )*
-
-                Ok(Self {
-                    #(#field_names),*
-                })
-            }
-        }
-
+        #borsh_impls
     };
 
     #[allow(unreachable_code)]

@@ -1,10 +1,11 @@
 #![cfg(test)]
+#![allow(clippy::indexing_slicing)]
 
 pub(crate) mod v1_tests {
     use anchor_discriminators::Discriminator;
     use anchor_discriminators_macros::account;
     use borsh::{from_slice, to_vec};
-    use bytemuck::{Pod, Zeroable};
+    use bytemuck::{bytes_of, from_bytes, Pod, Zeroable};
     use program_utils::pda::BytemuckedPda;
     use solana_program::pubkey::Pubkey;
 
@@ -34,20 +35,37 @@ pub(crate) mod v1_tests {
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
-    fn test_account_serde_bytemuck() {
-        let config = Config {
-            operator: Pubkey::new_unique(),
-            bump: 1,
-        };
-        let bytes = to_vec(&config).unwrap();
-        assert_eq!(&bytes[..8], Config::DISCRIMINATOR);
-        let deserialized: Config = from_slice(&bytes).unwrap();
-        assert_eq!(config, deserialized);
+    fn test_account_bytemuck_init() {
+        let operator = Pubkey::new_unique();
+        let bump = 1;
+
+        // Create a buffer like an actual account would have
+        let mut data = vec![0u8; Config::pda_size()];
+
+        // Initialize with discriminator
+        let config_ref = Config::init_mut(&mut data).unwrap();
+        *config_ref = Config { operator, bump };
+
+        // Verify discriminator was written
+        assert_eq!(&data[..8], Config::DISCRIMINATOR);
+
+        // Verify we can read it back
+        let read_config = Config::read(&data).unwrap();
+        assert_eq!(read_config.operator, operator);
+        assert_eq!(read_config.bump, bump);
+
+        // Verify we can mutate fields
+        let config_mut = Config::read_mut(&mut data).unwrap();
+        let new_operator = Pubkey::new_unique();
+        config_mut.operator = new_operator;
+
+        // Verify mutation worked
+        let read_config = Config::read(&data).unwrap();
+        assert_eq!(read_config.operator, new_operator);
+        assert_eq!(read_config.bump, bump);
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
     fn test_account_serde() {
         let flow = FlowState {
             flow_limit: Some(100),
@@ -74,11 +92,11 @@ pub(crate) mod compat_tests {
     use anchor_discriminators::Discriminator as V1Discriminator;
     use anchor_lang::{
         prelude::{
-            account, borsh, zero_copy, AccountDeserialize, AccountSerialize, AnchorDeserialize,
-            AnchorSerialize,
+            account, borsh, zero_copy, AccountSerialize, AnchorDeserialize, AnchorSerialize,
         },
         Discriminator,
     };
+    use bytemuck::bytes_of;
 
     #[account(zero_copy)]
     pub(crate) struct Config {
@@ -108,10 +126,7 @@ pub(crate) mod compat_tests {
         let v1_config = v1_tests::Config { operator, bump };
         let v2_config = Config { operator, bump };
 
-        let mut v2_bytes = vec![];
-        v2_config.try_serialize(&mut v2_bytes).unwrap();
-
-        assert_eq!(v1_borsh::to_vec(&v1_config).unwrap(), v2_bytes);
+        assert_eq!(bytes_of(&v1_config), bytes_of(&v2_config));
     }
 
     #[test]

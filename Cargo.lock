@@ -956,6 +956,7 @@ dependencies = [
 name = "axelar-solana-gas-service"
 version = "0.1.0"
 dependencies = [
+ "anchor-discriminators",
  "anchor-discriminators-macros",
  "axelar-solana-gas-service-events",
  "axelar-solana-gateway-test-fixtures",
@@ -5879,6 +5880,7 @@ dependencies = [
 name = "program-utils"
 version = "0.1.0"
 dependencies = [
+ "anchor-discriminators",
  "axelar-solana-gateway-test-fixtures",
  "borsh 1.5.7",
  "bytemuck",

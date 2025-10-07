@@ -8,6 +8,7 @@ license.workspace = true
 edition.workspace = true
 
 [dependencies]
+anchor-discriminators.workspace = true
 anchor-discriminators-macros.workspace = true
 solana-program.workspace = true
 spl-token = { workspace = true, features = ["no-entrypoint"] }
