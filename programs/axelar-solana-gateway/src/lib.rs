@@ -5,6 +5,7 @@ pub mod executable;
 pub mod instructions;
 pub mod processor;
 pub mod state;
+pub mod types;
 
 pub use bytemuck;
 pub use num_traits;

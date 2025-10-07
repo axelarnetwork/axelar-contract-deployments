@@ -1,5 +1,6 @@
 //! Module for the signature verification session PDA data layout type.
 
+use anchor_discriminators_macros::account;
 use bytemuck::{Pod, Zeroable};
 use program_utils::pda::BytemuckedPda;
 
@@ -11,6 +12,7 @@ use super::signature_verification::SignatureVerification;
 ///
 /// Ideally, the payload merkle root should be a part of its seeds.
 #[repr(C)]
+#[account]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Copy, Clone, Default, PartialEq, Eq, Debug)]
 pub struct SignatureVerificationSessionData {
@@ -28,6 +30,8 @@ impl BytemuckedPda for SignatureVerificationSessionData {}
 mod tests {
     use core::mem::size_of;
 
+    use crate::types::U128;
+
     use super::*;
 
     #[test]
@@ -36,7 +40,10 @@ mod tests {
         let from_pod: &SignatureVerificationSessionData = bytemuck::cast_ref(&buffer);
         let default = &SignatureVerificationSessionData::default();
         assert_eq!(from_pod, default);
-        assert_eq!(from_pod.signature_verification.accumulated_threshold, 0);
+        assert_eq!(
+            from_pod.signature_verification.accumulated_threshold,
+            U128::ZERO
+        );
         assert_eq!(from_pod.signature_verification.signature_slots, [0_u8; 32]);
         assert!(!from_pod.signature_verification.is_valid());
     }
@@ -52,10 +59,10 @@ mod tests {
             let deserialized: &mut SignatureVerificationSessionData =
                 bytemuck::cast_mut(&mut buffer);
             original_state = *deserialized;
-            let (new_threshold, _) = deserialized
+            let new_threshold = deserialized
                 .signature_verification
                 .accumulated_threshold
-                .overflowing_add(1);
+                .saturating_add(U128::new(1));
             deserialized.signature_verification.accumulated_threshold = new_threshold;
             *deserialized
         };

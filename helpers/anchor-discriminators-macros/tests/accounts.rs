@@ -5,7 +5,7 @@ pub(crate) mod v1_tests {
     use anchor_discriminators::Discriminator;
     use anchor_discriminators_macros::account;
     use borsh::{from_slice, to_vec};
-    use bytemuck::{bytes_of, from_bytes, Pod, Zeroable};
+    use bytemuck::{Pod, Zeroable};
     use program_utils::pda::BytemuckedPda;
     use solana_program::pubkey::Pubkey;
 

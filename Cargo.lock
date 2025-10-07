@@ -986,6 +986,7 @@ name = "axelar-solana-gateway"
 version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
+ "anchor-discriminators",
  "anchor-discriminators-macros",
  "axelar-message-primitives",
  "axelar-solana-encoding",

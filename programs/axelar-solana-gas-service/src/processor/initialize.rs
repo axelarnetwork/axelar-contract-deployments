@@ -1,5 +1,3 @@
-use core::mem::size_of;
-
 use program_utils::pda::BytemuckedPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;

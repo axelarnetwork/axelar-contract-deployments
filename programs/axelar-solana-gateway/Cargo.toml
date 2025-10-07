@@ -33,6 +33,7 @@ mainnet = [
 default = ["devnet-amplifier"]
 
 [dependencies]
+anchor-discriminators.workspace = true
 anchor-discriminators-macros.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding = { workspace = true, features = ["solana"] }

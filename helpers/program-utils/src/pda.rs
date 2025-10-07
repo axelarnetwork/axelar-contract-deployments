@@ -454,11 +454,13 @@ pub trait BytemuckedPda: Discriminator + Sized + NoUninit + AnyBitPattern {
     /// provided mutable byte slice. It ensures that the destination slice is of the correct
     /// length to hold the data.
     fn write(&self, data: &mut [u8]) -> Option<()> {
-        let self_bytes = bytemuck::bytes_of(self);
-        if data.len() != self_bytes.len() {
+        if data.len() != Self::pda_size() {
             return None;
         }
-        data.copy_from_slice(self_bytes);
+        let disc = Self::DISCRIMINATOR;
+        let self_bytes = bytemuck::bytes_of(self);
+        data[..disc.len()].copy_from_slice(disc);
+        data[disc.len()..].copy_from_slice(self_bytes);
         Some(())
     }
 }

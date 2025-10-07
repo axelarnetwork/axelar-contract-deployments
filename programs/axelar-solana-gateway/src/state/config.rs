@@ -1,5 +1,6 @@
 //! Module for the `GatewayConfig` account type.
 
+use anchor_discriminators_macros::account;
 use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
 use program_utils::pda::BytemuckedPda;
@@ -16,6 +17,7 @@ pub type VerifierSetEpoch = U256;
 
 /// Gateway configuration type.
 #[repr(C)]
+#[account]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Pod, Zeroable, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GatewayConfig {
