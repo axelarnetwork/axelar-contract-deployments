@@ -4,7 +4,7 @@ use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::state::signature_verification::verify_ecdsa_signature;
+use axelar_solana_gateway::state::signature_verification::verify_ecdsa_signature_with_prefix;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{
     make_verifier_set, random_bytes, random_message, GetGatewayError,
@@ -425,7 +425,7 @@ fn can_verify_signatures_with_ecrecover_recovery_id() {
         panic!("unexpected pubkey type");
     };
 
-    let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
+    let is_valid = verify_ecdsa_signature_with_prefix(&pubkey, &signature, &message_hash);
     assert!(is_valid);
 }
 
@@ -443,7 +443,7 @@ fn can_verify_signatures_with_standard_recovery_id() {
         panic!("unexpected pubkey type");
     };
 
-    let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
+    let is_valid = verify_ecdsa_signature_with_prefix(&pubkey, &signature, &message_hash);
     assert!(is_valid);
 }
 
