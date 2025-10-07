@@ -112,13 +112,10 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    Provide coordinator address to the multisig.
 
    ```bash
-   ts-node cosmwasm/submit-proposal.js migrate \
-     -c Multisig \
-     -t "Migrate Multisig to v2.3.0" \
-     -d "Multisig to v2.3.0" \
-     --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\", \"default_authorized_provers\": {\"chain1\": \"prover1\", \"chain2\":\"prover2\",...}}" \
-     --fetchCodeId \
-     --deposit $DEPOSIT_VALUE
+   ts-node cosmwasm/migrate/migrate.ts migrate <multisig_code_id> \
+      --address $MULTISIG_ADDRESS \
+      -m $MNEMONIC \
+      -d $DEPOSIT_VALUE \
    ```
 
    The `default_authorized_provers` object should correspond to the chain/prover pairs located at `axelar.contracts.MultisigProver` in `$ENV.json`.
