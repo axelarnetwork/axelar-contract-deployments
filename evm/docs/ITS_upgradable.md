@@ -8,10 +8,10 @@ This document presents possible flows for upgrading custom ERC20 token contracts
 
 ### Assumptions
 
-Developer team will have deployed a custom ERC20 contract that is directly upgradable.
-The existing ERC20 will have already been connected to ITS by registering the token as a canonical token and remotely deployed to other chains as a standard ITS Tokens using ITS portal.
-Only a single chain (the source chain) has the custom contract deployed to it, and all other connected chains have standard ITS tokens deployed to them.
-Token liquidity should be preserved post upgrade of the ERC20 on the source chain. 
+ * Developer team will have deployed a custom ERC20 contract that is directly upgradable.
+ * The existing ERC20 will have already been connected to ITS by registering the token as a canonical token and remotely deployed to other chains as a standard ITS Tokens using ITS portal.
+ * Only a single chain (the source chain) has the custom contract deployed to it, and all other connected chains have standard ITS tokens deployed to them.
+ * Token liquidity should be preserved post upgrade of the ERC20 on the source chain. 
 
 ### Procedure
 
