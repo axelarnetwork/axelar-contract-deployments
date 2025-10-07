@@ -386,35 +386,25 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
 }
 
 // give_unlinked_coin
-async function giveUnlinkedCoin(keypair, client, config, contracts, args, options) {
-    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
+async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
     const walletAddress = keypair.toSuiAddress();
-    const deployConfig = { client, keypair, options, walletAddress };
-    const [symbol, name, decimals] = args;
+    const [symbol, tokenId] = args;
     const txBuilder = new TxBuilder(client);
 
-    if (options.salt) {
-        validateParameters({
-            isHexString: { salt: options.salt },
-        });
-    }
+    validateParameters({
+        isHexString: { tokenId },
+    });
 
-    // Deploy token on Sui
-    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const coin = contracts[symbol.toUpperCase()];
+    if (!coin) throw new Error(`Cannot find coin with symbol ${symbol} in config`);
 
-    // Register deployed token (custom)
-    const [tokenId, _channelId, saltAddress, _result] = await registerCustomCoinUtil(
-        deployConfig,
-        itsConfig,
-        AxelarGateway,
-        symbol,
-        metadata,
-        tokenType,
-        null,
-        options.salt ? options.salt : null,
-    );
-    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
+    const decimals = coin.decimals;
+    const metadata = coin.objects.Metadata;
+    const packageId = coin.address;
+    const tokenType = coin.typeArgument;
+    const treasuryCap = coin.objects.TreasuryCap;
 
     // TokenId
     const tokenIdObject = await txBuilder.moveCall({
@@ -456,7 +446,7 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const result = await broadcastFromTxBuilder(txBuilder, keypair, `Give Unlinked Coin (${symbol})`, options);
 
     // Save the deployed token
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata, [], saltAddress);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata, [], '');
 
     // Save TreasuryCapReclaimer to coin config (if exists)
     if (options.treasuryCapReclaimer && contracts[symbol.toUpperCase()]) {
@@ -1146,12 +1136,11 @@ if (require.main === module) {
 
     const giveUnlinkedCoinProgram = new Command()
         .name('give-unlinked-coin')
-        .command('give-unlinked-coin <symbol> <name> <decimals>')
-        .description(`Deploy a coin on Sui, register it as custom coin and give its treasury capability to ITS.`)
+        .command('give-unlinked-coin <symbol> <tokenId>')
+        .description(`Call give unlinked coin and give its treasury capability to ITS.`)
         .addOption(new Option('--treasuryCapReclaimer', 'Pass this flag to retain the ability to reclaim the treasury capability'))
-        .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
-        .action((symbol, name, decimals, options) => {
-            mainProcessor(giveUnlinkedCoin, options, [symbol, name, decimals], processCommand);
+        .action((symbol, tokenId, options) => {
+            mainProcessor(giveUnlinkedCoin, options, [symbol, tokenId], processCommand);
         });
 
     const removeUnlinkedCoinProgram = new Command()
