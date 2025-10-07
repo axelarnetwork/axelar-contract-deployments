@@ -1,4 +1,4 @@
-use axelar_solana_gas_service::events::NativeGasRefundedEvent;
+use axelar_solana_gas_service::events::GasRefundedEvent;
 use axelar_solana_gateway_test_fixtures::{assert_msg_present_in_logs, base::TestFixture};
 use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
@@ -27,15 +27,11 @@ async fn test_refund_native() {
 
     // Action
     let gas_amount = 1_000_000;
-    let tx_hash = [42; 64];
-    let ix_index = 1;
-    let event_ix_index = 2;
+    let message_id = "tx-sig-2.1".to_owned();
     let ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
         &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
-        tx_hash,
-        ix_index,
-        event_ix_index,
+        message_id.clone(),
         gas_amount,
     )
     .unwrap();
@@ -65,13 +61,13 @@ async fn test_refund_native() {
         .unwrap();
     assert!(!inner_ixs.is_empty());
 
-    let expected_event = NativeGasRefundedEvent {
-        config_pda: gas_utils.config_pda,
-        tx_hash,
-        ix_index,
-        event_ix_index,
+    let expected_event = GasRefundedEvent {
         receiver: refunded_user.pubkey(),
-        fees: gas_amount,
+        message_id,
+        amount: gas_amount,
+        mint: None,
+        token_program_id: None,
+        receiver_token_account: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);
@@ -125,15 +121,11 @@ async fn test_refund_native_fails_if_not_signed_by_authority() {
     // Action
     let refunded_user = Keypair::new();
     let gas_amount = 1_000_000;
-    let tx_hash = [42; 64];
-    let ix_index = 1;
-    let event_ix_index = 2;
+    let message_id = "tx-sig-2.1".to_owned();
     let mut ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
         &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
-        tx_hash,
-        ix_index,
-        event_ix_index,
+        message_id,
         gas_amount,
     )
     .unwrap();
@@ -167,15 +159,11 @@ async fn test_refund_native_fails_with_zero_fee() {
     // Action - attempt to refund with zero fee
     let refunded_user = Keypair::new();
     let gas_amount = 0; // Zero fee should fail
-    let tx_hash = [42; 64];
-    let ix_index = 1;
-    let event_ix_index = 2;
+    let message_id = "tx-sig-2.1".to_owned();
     let ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
         &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
-        tx_hash,
-        ix_index,
-        event_ix_index,
+        message_id,
         gas_amount,
     )
     .unwrap();

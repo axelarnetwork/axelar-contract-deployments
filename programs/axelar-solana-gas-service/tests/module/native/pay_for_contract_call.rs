@@ -1,4 +1,4 @@
-use axelar_solana_gas_service::events::NativeGasPaidForContractCallEvent;
+use axelar_solana_gas_service::events::GasPaidEvent;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
@@ -71,13 +71,16 @@ async fn test_pay_native_for_contract_call() {
         .unwrap();
     assert!(!inner_ixs.is_empty());
 
-    let expected_event = NativeGasPaidForContractCallEvent {
-        config_pda: gas_utils.config_pda,
+    let expected_event = GasPaidEvent {
+        sender: payer.pubkey(),
         destination_chain: destination_chain.clone(),
         destination_address: destination_addr.clone(),
         payload_hash,
+        amount: gas_amount,
         refund_address,
-        gas_fee_amount: gas_amount,
+        mint: None,
+        token_program_id: None,
+        sender_token_account: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);

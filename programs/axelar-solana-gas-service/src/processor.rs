@@ -46,7 +46,7 @@ pub fn process_instruction(
             destination_chain,
             destination_address,
             payload_hash,
-            gas_fee_amount,
+            amount,
             decimals,
             refund_address,
         } => process_pay_spl_for_contract_call(
@@ -56,23 +56,19 @@ pub fn process_instruction(
             destination_address,
             payload_hash,
             refund_address,
-            gas_fee_amount,
+            amount,
             decimals,
         ),
         GasServiceInstruction::AddSplGas {
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            gas_fee_amount,
+            message_id,
+            amount,
             decimals,
             refund_address,
         } => add_spl_gas(
             program_id,
             accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            gas_fee_amount,
+            message_id,
+            amount,
             refund_address,
             decimals,
         ),
@@ -80,20 +76,10 @@ pub fn process_instruction(
             collect_fees_spl(program_id, accounts, amount, decimals)
         }
         GasServiceInstruction::RefundSplFees {
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            fees,
+            message_id,
+            amount,
             decimals,
-        } => refund_spl(
-            program_id,
-            accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            fees,
-            decimals,
-        ),
+        } => refund_spl(program_id, accounts, message_id, amount, decimals),
 
         // Native token instructions
         GasServiceInstruction::PayNativeForContractCall {
@@ -101,7 +87,7 @@ pub fn process_instruction(
             destination_address,
             payload_hash,
             refund_address,
-            gas_fee_amount,
+            amount,
         } => process_pay_native_for_contract_call(
             program_id,
             accounts,
@@ -109,38 +95,19 @@ pub fn process_instruction(
             destination_address,
             payload_hash,
             refund_address,
-            gas_fee_amount,
+            amount,
         ),
         GasServiceInstruction::AddNativeGas {
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            gas_fee_amount,
+            message_id,
+            amount,
             refund_address,
-        } => add_native_gas(
-            program_id,
-            accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            gas_fee_amount,
-            refund_address,
-        ),
+        } => add_native_gas(program_id, accounts, message_id, amount, refund_address),
         GasServiceInstruction::CollectNativeFees { amount } => {
             collect_fees_native(program_id, accounts, amount)
         }
         GasServiceInstruction::RefundNativeFees {
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            fees,
-        } => refund_native(
-            program_id,
-            accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            fees,
-        ),
+            message_id,
+            amount,
+        } => refund_native(program_id, accounts, message_id, amount),
     }
 }

@@ -1,7 +1,5 @@
 use crate::assert_valid_config_pda;
-use crate::events::{
-    NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
-};
+use crate::events::{GasAddedEvent, GasCollectedEvent, GasPaidEvent, GasRefundedEvent};
 use crate::state::Config;
 use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::{
@@ -23,9 +21,9 @@ pub(crate) fn process_pay_native_for_contract_call(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    gas_fee_amount: u64,
+    amount: u64,
 ) -> ProgramResult {
-    if gas_fee_amount == 0 {
+    if amount == 0 {
         msg!("Gas fee amount cannot be zero");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -41,18 +39,21 @@ pub(crate) fn process_pay_native_for_contract_call(
     try_load_config(program_id, config_pda)?;
 
     invoke(
-        &system_instruction::transfer(sender.key, config_pda.key, gas_fee_amount),
+        &system_instruction::transfer(sender.key, config_pda.key, amount),
         &[sender.clone(), config_pda.clone(), system_program.clone()],
     )?;
 
     // Emit an event
-    emit_cpi!(NativeGasPaidForContractCallEvent {
-        config_pda: *config_pda.key,
+    emit_cpi!(GasPaidEvent {
+        sender: *sender.key,
         destination_chain,
         destination_address,
         payload_hash,
+        amount,
         refund_address,
-        gas_fee_amount,
+        mint: None,
+        token_program_id: None,
+        sender_token_account: None,
     });
 
     Ok(())
@@ -73,13 +74,11 @@ fn try_load_config(
 pub(crate) fn add_native_gas(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    gas_fee_amount: u64,
+    message_id: String,
+    amount: u64,
     refund_address: Pubkey,
 ) -> ProgramResult {
-    if gas_fee_amount == 0 {
+    if amount == 0 {
         msg!("Gas fee amount cannot be zero");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -95,18 +94,19 @@ pub(crate) fn add_native_gas(
     try_load_config(program_id, config_pda)?;
 
     invoke(
-        &system_instruction::transfer(sender.key, config_pda.key, gas_fee_amount),
+        &system_instruction::transfer(sender.key, config_pda.key, amount),
         &[sender.clone(), config_pda.clone(), system_program.clone()],
     )?;
 
     // Emit an event
-    emit_cpi!(NativeGasAddedEvent {
-        config_pda: *config_pda.key,
-        tx_hash,
-        ix_index,
-        event_ix_index,
+    emit_cpi!(GasAddedEvent {
+        sender: *sender.key,
+        message_id,
+        amount,
         refund_address,
-        gas_fee_amount,
+        mint: None,
+        token_program_id: None,
+        sender_token_account: None,
     });
 
     Ok(())
@@ -119,33 +119,46 @@ pub(crate) fn collect_fees_native(
 ) -> ProgramResult {
     send_native(program_id, accounts, amount)?;
 
+    let accounts = &mut accounts.iter();
+    let _operator = next_account_info(accounts)?;
+    let receiver = next_account_info(accounts)?;
+    let _config_pda = next_account_info(accounts)?;
+    event_cpi_accounts!(accounts);
+
+    // Emit an event
+    emit_cpi!(GasCollectedEvent {
+        receiver: *receiver.key,
+        amount,
+        mint: None,
+        token_program_id: None,
+        receiver_token_account: None,
+    });
+
     Ok(())
 }
 
 pub(crate) fn refund_native(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    fees: u64,
+    message_id: String,
+    amount: u64,
 ) -> ProgramResult {
-    send_native(program_id, accounts, fees)?;
+    send_native(program_id, accounts, amount)?;
 
     let accounts = &mut accounts.iter();
     let _operator = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
-    let config_pda = next_account_info(accounts)?;
+    let _config_pda = next_account_info(accounts)?;
     event_cpi_accounts!(accounts);
 
     // Emit an event
-    emit_cpi!(NativeGasRefundedEvent {
-        tx_hash,
-        config_pda: *config_pda.key,
-        ix_index,
-        event_ix_index,
+    emit_cpi!(GasRefundedEvent {
         receiver: *receiver.key,
-        fees,
+        message_id,
+        amount,
+        mint: None,
+        token_program_id: None,
+        receiver_token_account: None,
     });
 
     Ok(())
@@ -194,7 +207,7 @@ mod tests {
         let destination_address = "destination_address".to_owned();
         let payload_hash = [0; 32];
         let refund_address = Pubkey::new_unique();
-        let gas_fee_amount = 0;
+        let amount = 0;
 
         let result = process_pay_native_for_contract_call(
             &program_id,
@@ -203,7 +216,7 @@ mod tests {
             destination_address,
             payload_hash,
             refund_address,
-            gas_fee_amount,
+            amount,
         );
 
         assert_eq!(result, Err(ProgramError::InvalidInstructionData));
@@ -213,21 +226,11 @@ mod tests {
     fn test_add_native_gas_cannot_accept_zero_amount() {
         let program_id = Pubkey::new_unique();
         let accounts = vec![];
-        let tx_hash = [0; 64];
-        let ix_index = 0;
-        let event_ix_index = 0;
-        let gas_fee_amount = 0;
+        let message_id = "tx-sig-2.1".to_owned();
+        let amount = 0;
         let refund_address = Pubkey::new_unique();
 
-        let result = add_native_gas(
-            &program_id,
-            &accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            gas_fee_amount,
-            refund_address,
-        );
+        let result = add_native_gas(&program_id, &accounts, message_id, amount, refund_address);
 
         assert_eq!(result, Err(ProgramError::InvalidInstructionData));
     }

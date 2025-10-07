@@ -1,4 +1,4 @@
-use axelar_solana_gas_service::events::NativeGasAddedEvent;
+use axelar_solana_gas_service::events::GasAddedEvent;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
@@ -33,14 +33,10 @@ async fn test_add_native_gas() {
     // Action
     let refund_address = Pubkey::new_unique();
     let gas_amount = 1_000_000;
-    let tx_hash = [42; 64];
-    let ix_index = 1;
-    let event_ix_index = 2;
+    let message_id = "tx-sig-2.1".to_owned();
     let ix = axelar_solana_gas_service::instructions::add_native_gas_instruction(
         &payer.pubkey(),
-        tx_hash,
-        ix_index,
-        event_ix_index,
+        message_id.clone(),
         gas_amount,
         refund_address,
     )
@@ -71,13 +67,14 @@ async fn test_add_native_gas() {
         .unwrap();
     assert!(!inner_ixs.is_empty());
 
-    let expected_event = NativeGasAddedEvent {
-        config_pda: gas_utils.config_pda,
-        tx_hash,
-        ix_index,
-        event_ix_index,
+    let expected_event = GasAddedEvent {
+        sender: payer.pubkey(),
+        message_id,
+        amount: gas_amount,
         refund_address,
-        gas_fee_amount: gas_amount,
+        mint: None,
+        token_program_id: None,
+        sender_token_account: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);
@@ -134,14 +131,10 @@ async fn fails_if_payer_not_signer() {
     // Action
     let refund_address = Pubkey::new_unique();
     let gas_amount = 1_000_000;
-    let tx_hash = [42; 64];
-    let ix_index = 1;
-    let event_ix_index = 2;
+    let message_id = "tx-sig-2.1".to_owned();
     let mut ix = axelar_solana_gas_service::instructions::add_native_gas_instruction(
         &payer.pubkey(),
-        tx_hash,
-        ix_index,
-        event_ix_index,
+        message_id,
         gas_amount,
         refund_address,
     )

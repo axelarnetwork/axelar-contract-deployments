@@ -49,7 +49,7 @@ pub enum GasServiceInstruction {
         /// A 32-byte hash representing the payload.
         payload_hash: [u8; 32],
         /// The amount of tokens to be paid as gas fees.
-        gas_fee_amount: u64,
+        amount: u64,
         /// The decimals for the mint
         decimals: u8,
         /// Where refunds should be sent
@@ -67,14 +67,10 @@ pub enum GasServiceInstruction {
     /// 5. `[readonly]` The `token_program` account.
     /// 6+ `[signer, readonly]` Additional signer accounts if required.
     AddSplGas {
-        /// A 64-byte unique transaction identifier.
-        tx_hash: [u8; 64],
-        /// Index of the CallContract instruction
-        ix_index: u8,
-        /// Index of the CPI event inside inner instructions
-        event_ix_index: u8,
+        /// Message Id
+        message_id: String,
         /// The additional SPL tokens to add as gas.
-        gas_fee_amount: u64,
+        amount: u64,
         /// The decimals for the mint
         decimals: u8,
         /// Where refunds should be sent.
@@ -107,14 +103,10 @@ pub enum GasServiceInstruction {
     /// 4. `[readonly]` The `mint` account for the SPL token.
     /// 5. `[readonly]` The `token_program` account.
     RefundSplFees {
-        /// A 64-byte unique transaction identifier
-        tx_hash: [u8; 64],
-        /// Index of the CallContract instruction
-        ix_index: u8,
-        /// Index of the CPI event inside inner instructions
-        event_ix_index: u8,
+        /// Message Id
+        message_id: String,
         /// The amount of SPL tokens to be refunded
-        fees: u64,
+        amount: u64,
         /// The decimals for the mint
         decimals: u8,
     },
@@ -122,7 +114,7 @@ pub enum GasServiceInstruction {
     /// Pay gas fees for a contract call using native SOL.
     ///
     /// Accounts expected:
-    /// 0. `[signer, writable]` The account (`payer`) paying the gas fee in lamports.
+    /// 0. `[signer, writable]` The account (`sender`) paying the gas fee in lamports.
     /// 1. `[writable]` The `config_pda` account that receives the lamports.
     /// 2. `[]` The `system_program` account.
     PayNativeForContractCall {
@@ -133,7 +125,7 @@ pub enum GasServiceInstruction {
         /// A 32-byte hash representing the payload.
         payload_hash: [u8; 32],
         /// The amount of SOL to pay as gas fees.
-        gas_fee_amount: u64,
+        amount: u64,
         /// Where refunds should be sent.
         refund_address: Pubkey,
     },
@@ -145,14 +137,10 @@ pub enum GasServiceInstruction {
     /// 2. `[writable]` The `config_pda` account that receives the additional lamports.
     /// 3. `[]` The `system_program` account.
     AddNativeGas {
-        /// A 64-byte unique transaction identifier.
-        tx_hash: [u8; 64],
-        /// Index of the CallContract instruction
-        ix_index: u8,
-        /// Index of the CPI event inside inner instructions
-        event_ix_index: u8,
+        /// Message Id
+        message_id: String,
         /// The additional SOL to add as gas.
-        gas_fee_amount: u64,
+        amount: u64,
         /// Where refunds should be sent.
         refund_address: Pubkey,
     },
@@ -175,14 +163,10 @@ pub enum GasServiceInstruction {
     /// 2. `[writable]` The `receiver` account that will receive the refunded lamports.
     /// 3. `[writable]` The `config_pda` account from which lamports are refunded.
     RefundNativeFees {
-        /// A 64-byte unique transaction identifier.
-        tx_hash: [u8; 64],
-        /// Index of the CallContract instruction
-        ix_index: u8,
-        /// Index of the CPI event inside inner instructions
-        event_ix_index: u8,
+        /// Message Id
+        message_id: String,
         /// The amount of SOL to be refunded.
-        fees: u64,
+        amount: u64,
     },
 }
 
@@ -238,19 +222,19 @@ pub fn transfer_operatorship(
 /// - ix data cannot be serialized
 #[allow(clippy::too_many_arguments)]
 pub fn pay_native_for_contract_call_instruction(
-    payer: &Pubkey,
+    sender: &Pubkey,
     destination_chain: String,
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    gas_fee_amount: u64,
+    amount: u64,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::PayNativeForContractCall {
         destination_chain,
         destination_address,
         payload_hash,
         refund_address,
-        gas_fee_amount,
+        amount,
     })?;
     let (config_pda, _bump) = crate::get_config_pda();
 
@@ -258,7 +242,7 @@ pub fn pay_native_for_contract_call_instruction(
         Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
 
     let accounts = vec![
-        AccountMeta::new(*payer, true),
+        AccountMeta::new(*sender, true),
         AccountMeta::new(config_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(event_authority, false),
@@ -278,17 +262,13 @@ pub fn pay_native_for_contract_call_instruction(
 /// - ix data cannot be serialized
 pub fn add_native_gas_instruction(
     sender: &Pubkey,
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    gas_fee_amount: u64,
+    message_id: String,
+    amount: u64,
     refund_address: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::AddNativeGas {
-        tx_hash,
-        ix_index,
-        event_ix_index,
-        gas_fee_amount,
+        message_id,
+        amount,
         refund_address,
     })?;
     let (config_pda, _bump) = crate::get_config_pda();
@@ -323,10 +303,15 @@ pub fn collect_native_fees_instruction(
     let ix_data = borsh::to_vec(&GasServiceInstruction::CollectNativeFees { amount })?;
     let (config_pda, _bump) = crate::get_config_pda();
 
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
+
     let accounts = vec![
         AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*receiver, false),
         AccountMeta::new(config_pda, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     Ok(Instruction {
@@ -343,16 +328,12 @@ pub fn collect_native_fees_instruction(
 pub fn refund_native_fees_instruction(
     operator: &Pubkey,
     receiver: &Pubkey,
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    fees: u64,
+    message_id: String,
+    amount: u64,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::RefundNativeFees {
-        tx_hash,
-        ix_index,
-        event_ix_index,
-        fees,
+        message_id,
+        amount,
     })?;
     let (config_pda, _) = crate::get_config_pda();
 
@@ -388,7 +369,7 @@ pub fn pay_spl_for_contract_call_instruction(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    gas_fee_amount: u64,
+    amount: u64,
     signer_pubkeys: &[Pubkey],
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
@@ -398,7 +379,7 @@ pub fn pay_spl_for_contract_call_instruction(
         payload_hash,
         refund_address,
         decimals,
-        gas_fee_amount,
+        amount,
     })?;
     let (config_pda, _bump) = crate::get_config_pda();
     let config_pda_token_account =
@@ -444,19 +425,15 @@ pub fn add_spl_gas_instruction(
     mint: &Pubkey,
     token_program_id: &Pubkey,
     signer_pubkeys: &[Pubkey],
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    gas_fee_amount: u64,
+    message_id: String,
+    amount: u64,
     refund_address: Pubkey,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::AddSplGas {
-        tx_hash,
-        ix_index,
-        event_ix_index,
+        message_id,
         decimals,
-        gas_fee_amount,
+        amount,
         refund_address,
     })?;
     let (config_pda, _bump) = crate::get_config_pda();
@@ -513,6 +490,9 @@ pub fn collect_spl_fees_instruction(
             token_program_id,
         );
 
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
+
     let accounts = vec![
         AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*receiver, false),
@@ -520,6 +500,8 @@ pub fn collect_spl_fees_instruction(
         AccountMeta::new(config_pda_token_account, false),
         AccountMeta::new_readonly(*mint, false),
         AccountMeta::new_readonly(*token_program_id, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     Ok(Instruction {
@@ -539,18 +521,14 @@ pub fn refund_spl_fees_instruction(
     token_program_id: &Pubkey,
     mint: &Pubkey,
     receiver: &Pubkey,
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    fees: u64,
+    message_id: String,
+    amount: u64,
     decimals: u8,
 ) -> Result<Instruction, ProgramError> {
     let ix_data = borsh::to_vec(&GasServiceInstruction::RefundSplFees {
         decimals,
-        tx_hash,
-        ix_index,
-        event_ix_index,
-        fees,
+        message_id,
+        amount,
     })?;
     let (config_pda, _bump) = crate::get_config_pda();
     let config_pda_token_account =

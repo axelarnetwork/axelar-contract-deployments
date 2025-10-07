@@ -1,4 +1,4 @@
-use crate::events::{SplGasAddedEvent, SplGasPaidForContractCallEvent, SplGasRefundedEvent};
+use crate::events::{GasAddedEvent, GasCollectedEvent, GasPaidEvent, GasRefundedEvent};
 use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -74,10 +74,10 @@ pub(crate) fn process_pay_spl_for_contract_call(
     destination_address: String,
     payload_hash: [u8; 32],
     refund_address: Pubkey,
-    gas_fee_amount: u64,
+    amount: u64,
     decimals: u8,
 ) -> ProgramResult {
-    if gas_fee_amount == 0 {
+    if amount == 0 {
         msg!("Gas fee amount cannot be zero");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -115,7 +115,7 @@ pub(crate) fn process_pay_spl_for_contract_call(
         config_pda_token_account,
         sender,
         signer_pubkeys,
-        gas_fee_amount,
+        amount,
         decimals,
     )?;
 
@@ -131,16 +131,16 @@ pub(crate) fn process_pay_spl_for_contract_call(
     )?;
 
     // Emit an event
-    emit_cpi!(SplGasPaidForContractCallEvent {
-        config_pda: *config_pda.key,
-        config_pda_ata: *config_pda_token_account.key,
-        mint: *mint.key,
-        token_program_id: *token_program.key,
+    emit_cpi!(GasPaidEvent {
+        sender: *sender.key,
         destination_chain,
         destination_address,
         payload_hash,
+        amount,
         refund_address,
-        gas_fee_amount,
+        mint: Some(*mint.key),
+        token_program_id: Some(*token_program.key),
+        sender_token_account: Some(*sender_token_account.key),
     });
 
     Ok(())
@@ -150,14 +150,12 @@ pub(crate) fn process_pay_spl_for_contract_call(
 pub(crate) fn add_spl_gas(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    gas_fee_amount: u64,
+    message_id: String,
+    amount: u64,
     refund_address: Pubkey,
     decimals: u8,
 ) -> ProgramResult {
-    if gas_fee_amount == 0 {
+    if amount == 0 {
         msg!("Gas fee amount cannot be zero");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -195,7 +193,7 @@ pub(crate) fn add_spl_gas(
         config_pda_token_account,
         sender,
         signer_pubkeys,
-        gas_fee_amount,
+        amount,
         decimals,
     )?;
 
@@ -211,16 +209,14 @@ pub(crate) fn add_spl_gas(
     )?;
 
     // Emit an event
-    emit_cpi!(SplGasAddedEvent {
-        config_pda: *config_pda.key,
-        config_pda_ata: *config_pda_token_account.key,
-        mint: *mint.key,
-        token_program_id: *token_program.key,
-        tx_hash,
-        ix_index,
-        event_ix_index,
+    emit_cpi!(GasAddedEvent {
+        sender: *sender.key,
+        message_id,
+        amount,
         refund_address,
-        gas_fee_amount,
+        mint: Some(*mint.key),
+        token_program_id: Some(*token_program.key),
+        sender_token_account: Some(*sender_token_account.key),
     });
 
     Ok(())
@@ -234,40 +230,53 @@ pub(crate) fn collect_fees_spl(
 ) -> ProgramResult {
     send_spl(program_id, accounts, amount, decimals)?;
 
+    let accounts_iter = &mut accounts.iter();
+    let _operator = next_account_info(accounts_iter)?;
+    let receiver_token_account = next_account_info(accounts_iter)?;
+    let _config_pda = next_account_info(accounts_iter)?;
+    let _config_pda_token_account = next_account_info(accounts_iter)?;
+    let mint = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
+    event_cpi_accounts!(accounts_iter);
+
+    // Emit an event
+    emit_cpi!(GasCollectedEvent {
+        receiver: *receiver_token_account.key,
+        amount,
+        mint: Some(*mint.key),
+        token_program_id: Some(*token_program.key),
+        receiver_token_account: Some(*receiver_token_account.key),
+    });
+
     Ok(())
 }
 
 pub(crate) fn refund_spl(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    tx_hash: [u8; 64],
-    ix_index: u8,
-    event_ix_index: u8,
-    fees: u64,
+    message_id: String,
+    amount: u64,
     decimals: u8,
 ) -> ProgramResult {
-    send_spl(program_id, accounts, fees, decimals)?;
+    send_spl(program_id, accounts, amount, decimals)?;
 
     let accounts_iter = &mut accounts.iter();
     let _operator = next_account_info(accounts_iter)?;
     let receiver_token_account = next_account_info(accounts_iter)?;
-    let config_pda = next_account_info(accounts_iter)?;
-    let config_pda_token_account = next_account_info(accounts_iter)?;
+    let _config_pda = next_account_info(accounts_iter)?;
+    let _config_pda_token_account = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
     event_cpi_accounts!(accounts_iter);
 
     // Emit an event
-    emit_cpi!(SplGasRefundedEvent {
-        config_pda_ata: *config_pda_token_account.key,
-        mint: *mint.key,
-        token_program_id: *token_program.key,
-        tx_hash,
-        config_pda: *config_pda.key,
-        ix_index,
-        event_ix_index,
+    emit_cpi!(GasRefundedEvent {
         receiver: *receiver_token_account.key,
-        fees,
+        message_id,
+        amount,
+        mint: Some(*mint.key),
+        token_program_id: Some(*token_program.key),
+        receiver_token_account: Some(*receiver_token_account.key),
     });
 
     Ok(())
@@ -350,7 +359,7 @@ mod tests {
         let destination_address = "destination_address".to_owned();
         let payload_hash = [0; 32];
         let refund_address = Pubkey::new_unique();
-        let gas_fee_amount = 0;
+        let amount = 0;
         let decimals = 0;
 
         let result = process_pay_spl_for_contract_call(
@@ -360,7 +369,7 @@ mod tests {
             destination_address,
             payload_hash,
             refund_address,
-            gas_fee_amount,
+            amount,
             decimals,
         );
 
@@ -371,20 +380,16 @@ mod tests {
     fn test_add_spl_gas_cannot_add_zero_gas_fee() {
         let program_id = Pubkey::new_unique();
         let accounts = vec![];
-        let tx_hash = [0; 64];
-        let ix_index = 0;
-        let event_ix_index = 0;
-        let gas_fee_amount = 0;
+        let message_id = "tx-sig-2.1".to_owned();
+        let amount = 0;
         let refund_address = Pubkey::new_unique();
         let decimals = 0;
 
         let result = add_spl_gas(
             &program_id,
             &accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            gas_fee_amount,
+            message_id,
+            amount,
             refund_address,
             decimals,
         );
@@ -408,21 +413,11 @@ mod tests {
     fn test_refund_spl_cannot_refund_zero_gas_fee() {
         let program_id = Pubkey::new_unique();
         let accounts = vec![];
-        let tx_hash = [0; 64];
-        let ix_index = 0;
-        let event_ix_index = 0;
-        let fees = 0;
+        let message_id = "tx-sig-2.1".to_owned();
+        let amount = 0;
         let decimals = 0;
 
-        let result = refund_spl(
-            &program_id,
-            &accounts,
-            tx_hash,
-            ix_index,
-            event_ix_index,
-            fees,
-            decimals,
-        );
+        let result = refund_spl(&program_id, &accounts, message_id, amount, decimals);
 
         assert_eq!(result, Err(ProgramError::InvalidInstructionData));
     }
