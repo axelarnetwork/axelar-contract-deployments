@@ -4,6 +4,7 @@ on: pull_request
 
 jobs:
   unit-tests:
+    name: Run Unit Tests
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
@@ -26,6 +27,7 @@ jobs:
         run: npm run test
 
   chains-config-tests:
+    name: Run Axelar Chains Config Tests
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:
