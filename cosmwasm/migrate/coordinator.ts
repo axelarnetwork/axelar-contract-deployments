@@ -242,7 +242,7 @@ async function coordinatorToVersion2_1_0(
 
     if (!options.dry) {
         try {
-            printInfo(`Executing migration...\n${migrateOptions}`);
+            printInfo(`Executing migration...\n${JSON.stringify(migrateOptions)}`);
             if (options.direct) {
                 await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
                 printInfo('Migration succeeded');
@@ -281,7 +281,7 @@ async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, co
 
             const proverSeen = multisigMap.get(chain);
             if (proverSeen !== prover) {
-                printInfo(`Coordinator's prover does not match multisig's for chain ${chain}: expected ${proverSeen}, saw ${prover}`);
+                printInfo(`Coordinator's prover does not match multisig's for chain ${chain}: prover in multisig ${proverSeen}, prover in coordinator ${prover}`);
                 stateIsConsistent = false;
                 continue;
             }
