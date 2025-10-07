@@ -260,11 +260,15 @@ pub fn assert_valid_verifier_set_tracker_pda(
 /// Get the PDA and bump seed for a given payload hash.
 #[inline]
 #[must_use]
-pub fn get_signature_verification_pda(payload_merkle_root: &[u8; 32]) -> (Pubkey, u8) {
+pub fn get_signature_verification_pda(
+    payload_merkle_root: &[u8; 32],
+    signing_verifier_set: &[u8; 32],
+) -> (Pubkey, u8) {
     let (pubkey, bump) = Pubkey::find_program_address(
         &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
             payload_merkle_root,
+            signing_verifier_set,
         ],
         &crate::ID,
     );
@@ -285,6 +289,7 @@ pub fn get_signature_verification_pda(payload_merkle_root: &[u8; 32]) -> (Pubkey
 #[track_caller]
 pub fn assert_valid_signature_verification_pda(
     payload_merkle_root: &[u8; 32],
+    signing_verifier_set: &[u8; 32],
     bump: u8,
     expected_pubkey: &Pubkey,
 ) -> Result<(), ProgramError> {
@@ -292,6 +297,7 @@ pub fn assert_valid_signature_verification_pda(
         &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
             payload_merkle_root,
+            signing_verifier_set,
             &[bump],
         ],
         &crate::ID,
@@ -313,12 +319,14 @@ pub fn assert_valid_signature_verification_pda(
 #[inline]
 pub fn create_signature_verification_pda(
     payload_merkle_root: &[u8; 32],
+    signing_verifier_set: &[u8; 32],
     bump: u8,
 ) -> Result<Pubkey, PubkeyError> {
     Pubkey::create_program_address(
         &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
             payload_merkle_root,
+            signing_verifier_set,
             &[bump],
         ],
         &crate::ID,
@@ -446,8 +454,12 @@ mod tests {
     #[test]
     fn test_get_and_create_signature_verification_pda_bump_reuse() {
         let payload_merkle_root = rand::random();
-        let (found_pda, bump) = get_signature_verification_pda(&payload_merkle_root);
-        let created_pda = create_signature_verification_pda(&payload_merkle_root, bump).unwrap();
+        let signing_verifier_set = rand::random();
+        let (found_pda, bump) =
+            get_signature_verification_pda(&payload_merkle_root, &signing_verifier_set);
+        let created_pda =
+            create_signature_verification_pda(&payload_merkle_root, &signing_verifier_set, bump)
+                .unwrap();
         assert_eq!(found_pda, created_pda);
     }
 

@@ -91,23 +91,15 @@ impl SignatureVerification {
         // Update state
         self.accumulate_threshold(&verifier_info.leaf);
         self.mark_slot_done(&verifier_info.leaf)?;
-        self.verify_or_initialize_verifier_set(verifier_set_merkle_root)?;
+        self.verify_verifier_set(verifier_set_merkle_root)?;
 
         Ok(())
     }
 
-    /// Verifies or initializes the verifier set hash.
-    /// Returns an error if the hash is already set and doesn't match.
+    /// Verifies that the expected verifier set hash matches the stored signing verifier set hash.
+    /// Returns an error if they don't match.
     #[inline]
-    fn verify_or_initialize_verifier_set(
-        &mut self,
-        expected_hash: &[u8; 32],
-    ) -> Result<(), GatewayError> {
-        if self.signing_verifier_set_hash == [0; 32] {
-            self.signing_verifier_set_hash = *expected_hash;
-            return Ok(());
-        }
-
+    fn verify_verifier_set(&self, expected_hash: &[u8; 32]) -> Result<(), GatewayError> {
         if self.signing_verifier_set_hash != *expected_hash {
             return Err(GatewayError::InvalidDigitalSignature);
         }
@@ -312,43 +304,32 @@ mod tests {
     use rand::Rng;
 
     #[test]
-    fn test_initialize_when_hash_is_zero() {
-        let mut verification = SignatureVerification::default();
-        let new_hash = [42_u8; 32];
-
-        let result = verification.verify_or_initialize_verifier_set(&new_hash);
-
-        assert!(result.is_ok());
-        assert_eq!(verification.signing_verifier_set_hash, new_hash);
-    }
-
-    #[test]
     fn test_verify_success_when_hashes_match() {
         let expected_hash = [42_u8; 32];
-        let mut verification = SignatureVerification {
+        let verification = SignatureVerification {
             signing_verifier_set_hash: expected_hash,
             ..Default::default()
         };
 
-        let result = verification.verify_or_initialize_verifier_set(&expected_hash);
+        let result = verification.verify_verifier_set(&expected_hash);
 
         assert!(result.is_ok());
-        assert_eq!(verification.signing_verifier_set_hash, expected_hash);
     }
 
     #[test]
     fn test_verify_fails_when_hashes_mismatch() {
         let initial_hash = [42_u8; 32];
         let different_hash = [24_u8; 32];
-        let mut verification = SignatureVerification {
+        let verification = SignatureVerification {
             signing_verifier_set_hash: initial_hash,
             ..Default::default()
         };
 
-        let result = verification.verify_or_initialize_verifier_set(&different_hash);
+        let result = verification.verify_verifier_set(&different_hash);
 
         assert_eq!(result, Err(GatewayError::InvalidDigitalSignature));
-        // Hash should remain unchanged after failure
+
+        // Confidence check: Hash should remain unchanged after failure
         assert_eq!(verification.signing_verifier_set_hash, initial_hash);
     }
 
@@ -432,7 +413,10 @@ mod tests {
             merkle_proof: proof_bytes,
         };
 
-        let mut verification = SignatureVerification::default();
+        let mut verification = SignatureVerification {
+            signing_verifier_set_hash: merkle_root,
+            ..Default::default()
+        };
 
         // First call should succeed and mark the slot as verified
         assert!(verification

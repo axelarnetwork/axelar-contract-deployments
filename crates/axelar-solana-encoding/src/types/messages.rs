@@ -50,7 +50,6 @@ impl LeafHash for Message {}
 pub(crate) fn merkle_tree_leaves(
     messages: Messages,
     domain_separator: [u8; 32],
-    signing_verifier_set: [u8; 32],
 ) -> Result<impl Iterator<Item = MessageLeaf>, EncodingError> {
     let set_size = messages
         .0
@@ -68,7 +67,6 @@ pub(crate) fn merkle_tree_leaves(
                 .expect("position guaranteed to equal set size"),
             set_size,
             message,
-            signing_verifier_set,
         });
     Ok(iterator)
 }
@@ -77,8 +75,7 @@ pub(crate) fn merkle_tree_leaves(
 ///
 /// The `MessageLeaf` struct includes the message itself along with metadata
 /// required for Merkle tree operations, such as its position within the tree,
-/// the total size of the set, a domain separator, and the Merkle root of the
-/// signing verifier set.
+/// the total size of the set, and a domain separator.
 #[derive(
     Clone, PartialEq, Eq, Debug, udigest::Digestable, borsh::BorshDeserialize, borsh::BorshSerialize,
 )]
@@ -95,10 +92,6 @@ pub struct MessageLeaf {
     /// A domain separator used to ensure the uniqueness of hashes across
     /// different contexts.
     pub domain_separator: [u8; 32],
-
-    /// The Merkle root of the signing verifier set, used for verifying
-    /// signatures.
-    pub signing_verifier_set: [u8; 32],
 }
 
 impl LeafHash for MessageLeaf {}

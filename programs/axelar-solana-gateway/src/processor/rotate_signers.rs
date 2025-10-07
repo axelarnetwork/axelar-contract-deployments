@@ -2,7 +2,6 @@ use core::convert::TryInto;
 use core::mem::size_of;
 
 use axelar_message_primitives::U256;
-use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use event_utils::{read_array, EventParseError};
 use program_utils::{
     pda::{BytemuckedPda, ValidPDA},
@@ -86,19 +85,11 @@ impl Processor {
         let session = SignatureVerificationSessionData::read_mut(&mut session_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
 
-        // New verifier set merkle root can be transformed into the payload hash
-        let rotate_verifier_set_hash =
-            axelar_solana_encoding::types::verifier_set::construct_payload_hash::<
-                SolanaSyscallHasher,
-            >(
-                new_verifier_set_merkle_root,
-                session.signature_verification.signing_verifier_set_hash,
-            );
-
         // Check: Verification PDA can be derived from seeds stored into the account
-        // data itself.
+        // data itself. New verifier set merkle root is used directly as the payload hash.
         assert_valid_signature_verification_pda(
-            &rotate_verifier_set_hash,
+            &new_verifier_set_merkle_root,
+            &session.signature_verification.signing_verifier_set_hash,
             session.bump,
             verification_session_account.key,
         )?;

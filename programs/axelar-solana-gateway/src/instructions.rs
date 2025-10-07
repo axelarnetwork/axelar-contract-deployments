@@ -89,6 +89,8 @@ pub enum GatewayInstruction {
     InitializePayloadVerificationSession {
         /// The Merkle root for the Payload being verified.
         payload_merkle_root: [u8; 32],
+        /// The hash of the verifier set that signed the payload.
+        signing_verifier_set_hash: [u8; 32],
     },
 
     /// Verifies a signature within a Payload verification session
@@ -397,18 +399,25 @@ pub fn initialize_payload_verification_session(
     payer: Pubkey,
     gateway_config_pda: Pubkey,
     payload_merkle_root: [u8; 32],
+    signing_verifier_set_hash: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (verification_session_pda, _) = crate::get_signature_verification_pda(&payload_merkle_root);
+    let (verification_session_pda, _) =
+        crate::get_signature_verification_pda(&payload_merkle_root, &signing_verifier_set_hash);
+
+    let (verifier_set_tracker_pda, _) =
+        crate::get_verifier_set_tracker_pda(signing_verifier_set_hash);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_config_pda, false),
         AccountMeta::new(verification_session_pda, false),
+        AccountMeta::new(verifier_set_tracker_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
     let data = to_vec(&GatewayInstruction::InitializePayloadVerificationSession {
         payload_merkle_root,
+        signing_verifier_set_hash,
     })?;
 
     Ok(Instruction {
@@ -427,12 +436,10 @@ pub fn initialize_payload_verification_session(
 pub fn verify_signature(
     gateway_config_pda: Pubkey,
     verifier_set_tracker_pda: Pubkey,
+    verification_session_pda: Pubkey,
     payload_merkle_root: [u8; 32],
     verifier_info: SigningVerifierSetInfo,
 ) -> Result<Instruction, ProgramError> {
-    let (verification_session_pda, _bump) =
-        crate::get_signature_verification_pda(&payload_merkle_root);
-
     let accounts = vec![
         AccountMeta::new_readonly(gateway_config_pda, false),
         AccountMeta::new(verification_session_pda, false),

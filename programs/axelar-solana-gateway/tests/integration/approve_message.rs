@@ -1,9 +1,11 @@
 use core::str::FromStr;
+use std::iter;
 
-use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+use axelar_solana_encoding::hasher::{NativeHasher, SolanaSyscallHasher};
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedPayload};
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
+use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
 use axelar_solana_encoding::LeafHash;
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::approve_message;
@@ -11,11 +13,13 @@ use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::gateway::{
-    get_gateway_events, make_messages, make_verifier_set, GetGatewayError, ProgramInvocationState,
+    get_gateway_events, make_messages, make_verifier_set, random_message, GetGatewayError,
+    ProgramInvocationState,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use itertools::Itertools;
 use pretty_assertions::assert_eq;
+use rand::Rng;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
@@ -319,53 +323,6 @@ async fn fails_to_approve_message_not_in_payload() {
     }
 }
 
-// cannot approve a message signed by a different verifier set
-#[tokio::test]
-async fn fails_to_approve_message_from_different_verifier_set() {
-    // Setup
-    let mut metadata = SolanaAxelarIntegration::builder()
-        .initial_signer_weights(vec![42, 42])
-        .build()
-        .setup()
-        .await;
-
-    // Create a payload with messages signed by the registered verifier set
-    let payload = Payload::Messages(Messages(make_messages(1)));
-    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload.clone());
-
-    // Initialize and sign the payload session with registered verifier set
-    let verification_session_pda = metadata
-        .init_payload_session_and_verify(&execute_data)
-        .await
-        .unwrap();
-
-    // Create a message signed byte a different verifier set (not registered with the gateway, but
-    // this shoulnd't affect this test)
-    let different_verifier_set = make_verifier_set(&[100, 200], 999, metadata.domain_separator);
-    let different_execute_data = metadata.construct_execute_data(&different_verifier_set, payload);
-    let MerkleisedPayload::NewMessages {
-        messages: different_messages,
-    } = different_execute_data.payload_items
-    else {
-        unreachable!();
-    };
-
-    // Attempt to approve message from different verifier set using the registered session
-    let different_message_info = different_messages.into_iter().next().unwrap();
-    let tx_result = metadata
-        .approve_message(
-            execute_data.payload_merkle_root, // Using registered payload merkle root
-            different_message_info,           // But message from different verifier set
-            verification_session_pda,
-        )
-        .await
-        .unwrap_err();
-
-    // Should fail due to verifier set hash mismatch
-    let gateway_error = tx_result.get_gateway_error().unwrap();
-    assert_eq!(gateway_error, GatewayError::InvalidVerificationSessionPDA);
-}
-
 // cannot approve a message using verifier set payload hash
 #[tokio::test]
 async fn fails_to_approve_message_using_verifier_set_as_the_root() {
@@ -469,4 +426,98 @@ async fn fails_to_approve_message_with_invalid_domain_separator() {
     // Should fail due to domain separator mismatch
     let gateway_error = tx_result.get_gateway_error().unwrap();
     assert_eq!(gateway_error, GatewayError::InvalidDomainSeparator);
+}
+
+/// Test that old (but still active) verifier sets can fully process a message approval cycle
+#[tokio::test]
+#[rstest::rstest]
+#[case(1)]
+#[case(3)]
+#[case(10)]
+async fn test_old_verifier_set_message_approval(#[case] rotation_count: usize) {
+    // Setup with sufficient retention to keep old verifier sets active
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42, 55, 33])
+        .previous_signers_retention(1 + rotation_count as u64) // Ensure old verifier sets remain active
+        .build()
+        .setup()
+        .await;
+
+    // Store the original verifier set for later testing
+    let original_verifier_set = metadata.signers.clone();
+    let mut current_verifier_set = original_verifier_set.clone();
+
+    // Perform the specified number of signer rotations
+    for i in 0..rotation_count {
+        let weights: Vec<u128> = iter::repeat_with(|| rand::thread_rng().gen_range(50..200))
+            .take(3)
+            .collect();
+        let new_verifier_set =
+            make_verifier_set(&weights, (i + 1) as u64, metadata.domain_separator);
+
+        // Perform signer rotation
+        let (_verification_session_pda, rotate_result) = metadata
+            .sign_session_and_rotate_signers(
+                &current_verifier_set,
+                &new_verifier_set.verifier_set(),
+            )
+            .await
+            .unwrap(); // init signing session succeeded
+
+        rotate_result.unwrap(); // signer rotation succeeded
+        current_verifier_set = new_verifier_set;
+    }
+
+    // Now test that the original (old) verifier set can still process message approval
+    let test_message = random_message();
+
+    // Step 1: Initialize verification session with old verifier set
+    let payload = Payload::Messages(Messages(vec![test_message.clone()]));
+    let execute_data = metadata.construct_execute_data(&original_verifier_set, payload);
+
+    // Step 2: Initialize and verify payload session manually
+    let verification_session_pda = metadata
+        .init_payload_session_and_verify(&execute_data)
+        .await
+        .expect("Should be able to initialize and verify with old verifier set");
+
+    // Step 3: Extract the message to approve
+    let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items else {
+        unreachable!("we constructed a message batch");
+    };
+
+    let message_to_approve = messages.into_iter().next().unwrap();
+
+    // Step 4: Approve the message using the old verifier set
+    metadata
+        .approve_message(
+            execute_data.payload_merkle_root,
+            message_to_approve.clone(),
+            verification_session_pda,
+        )
+        .await
+        .expect("Old verifier set should be able to approve messages");
+
+    // Step 5: Verify the message was properly approved
+    let command_id = command_id(&test_message.cc_id.chain, &test_message.cc_id.id);
+    let (incoming_message_pda, _) = get_incoming_message_pda(&command_id);
+
+    let incoming_message = metadata.incoming_message(incoming_message_pda).await;
+    assert_eq!(incoming_message.status, MessageStatus::approved());
+    assert_eq!(incoming_message.payload_hash, test_message.payload_hash);
+
+    // Additional verification: check the message hash matches what was used in the approval
+    let expected_message_hash = message_to_approve.leaf.message.hash::<NativeHasher>();
+    assert_eq!(incoming_message.message_hash, expected_message_hash);
+
+    // Verify we used the correct (old) verifier set by checking the execute data
+    let original_verifier_set_hash = verifier_set_hash::<NativeHasher>(
+        &original_verifier_set.verifier_set(),
+        &metadata.domain_separator,
+    )
+    .unwrap();
+    assert_eq!(
+        execute_data.signing_verifier_set_merkle_root,
+        original_verifier_set_hash
+    );
 }

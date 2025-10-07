@@ -7,9 +7,12 @@ use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
 use super::Processor;
+use crate::assert_initialized_and_valid_gateway_root_pda;
 use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::{assert_initialized_and_valid_gateway_root_pda, seed_prefixes};
+use crate::state::verifier_set_tracker::VerifierSetTracker;
+use crate::state::GatewayConfig;
+use crate::{assert_valid_verifier_set_tracker_pda, get_verifier_set_tracker_pda, seed_prefixes};
 
 impl Processor {
     /// Initializes a signature verification session PDA account for a given Axelar payload (former
@@ -39,12 +42,14 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         merkle_root: [u8; 32],
+        signing_verifier_set_hash: [u8; 32],
     ) -> ProgramResult {
         // Accounts
         let accounts_iter = &mut accounts.iter();
         let payer = next_account_info(accounts_iter)?;
         let gateway_root_pda = next_account_info(accounts_iter)?;
         let verification_session_account = next_account_info(accounts_iter)?;
+        let verifier_set_tracker_account = next_account_info(accounts_iter)?;
         let system_program = next_account_info(accounts_iter)?;
 
         // Check payer account requirements
@@ -72,9 +77,43 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         assert_initialized_and_valid_gateway_root_pda(gateway_root_pda)?;
 
+        // Check: Signing verifier set is valid and sufficiently recent
+        {
+            let (expected_verifier_set_tracker_pda, _) =
+                get_verifier_set_tracker_pda(signing_verifier_set_hash);
+            if *verifier_set_tracker_account.key != expected_verifier_set_tracker_pda {
+                return Err(GatewayError::InvalidVerifierSetTrackerProvided.into());
+            }
+
+            verifier_set_tracker_account
+                .check_initialized_pda_without_deserialization(program_id)?;
+            let verifier_set_data = verifier_set_tracker_account.try_borrow_data()?;
+            let verifier_set_tracker = VerifierSetTracker::read(&verifier_set_data)
+                .ok_or(GatewayError::BytemuckDataLenInvalid)?;
+            assert_valid_verifier_set_tracker_pda(
+                verifier_set_tracker,
+                verifier_set_tracker_account.key,
+            )?;
+
+            // Check: Verifier set isn't expired
+            gateway_root_pda.try_borrow_data().map(|data| {
+                GatewayConfig::read(&data)
+                    .ok_or(GatewayError::BytemuckDataLenInvalid)
+                    .and_then(|gateway_config| {
+                        gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)
+                    })
+            })??;
+
+            // Check: Verifier set hash matches what we expect
+            if verifier_set_tracker.verifier_set_hash != signing_verifier_set_hash {
+                return Err(GatewayError::InvalidVerifierSetTrackerProvided.into());
+            }
+        }
+
         // Check: Verification PDA can be derived from provided seeds.
         // using canonical bump for the session account
-        let (verification_session_pda, bump) = crate::get_signature_verification_pda(&merkle_root);
+        let (verification_session_pda, bump) =
+            crate::get_signature_verification_pda(&merkle_root, &signing_verifier_set_hash);
         if verification_session_pda != *verification_session_account.key {
             return Err(GatewayError::InvalidVerificationSessionPDA.into());
         }
@@ -89,6 +128,7 @@ impl Processor {
         let signers_seeds = &[
             seed_prefixes::SIGNATURE_VERIFICATION_SEED,
             &merkle_root,
+            &signing_verifier_set_hash,
             &[bump],
         ];
 
@@ -110,6 +150,7 @@ impl Processor {
         let session = SignatureVerificationSessionData::read_mut(&mut data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         session.bump = bump;
+        session.signature_verification.signing_verifier_set_hash = signing_verifier_set_hash;
 
         Ok(())
     }

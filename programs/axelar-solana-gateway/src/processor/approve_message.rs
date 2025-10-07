@@ -84,6 +84,7 @@ impl Processor {
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_signature_verification_pda(
             &payload_merkle_root,
+            &session.signature_verification.signing_verifier_set_hash,
             session.bump,
             verification_session_account.key,
         )?;
@@ -96,13 +97,6 @@ impl Processor {
         // Check: signature verification session is complete
         if !session.signature_verification.is_valid() {
             return Err(GatewayError::SigningSessionNotValid.into());
-        }
-
-        // Check: message signing verifier set matches the verification session verifier set
-        if merkleised_message.leaf.signing_verifier_set
-            != session.signature_verification.signing_verifier_set_hash
-        {
-            return Err(GatewayError::InvalidVerificationSessionPDA.into());
         }
 
         // Check: message domain separator matches the gateway's domain separator

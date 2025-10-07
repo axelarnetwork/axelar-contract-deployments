@@ -97,12 +97,14 @@ impl Processor {
 
             GatewayInstruction::InitializePayloadVerificationSession {
                 payload_merkle_root,
+                signing_verifier_set_hash,
             } => {
                 msg!("Instruction: Initialize Verification Session");
                 Self::process_initialize_payload_verification_session(
                     program_id,
                     accounts,
                     payload_merkle_root,
+                    signing_verifier_set_hash,
                 )
             }
 

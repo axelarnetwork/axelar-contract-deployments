@@ -11,7 +11,6 @@ use std::collections::BTreeMap;
 
 use super::pubkey::PublicKey;
 use crate::error::EncodingError;
-use crate::hasher::HashvSupport;
 use crate::LeafHash;
 
 /// Represents a set of verifiers, each with an associated weight, and a quorum
@@ -38,26 +37,6 @@ pub struct VerifierSet {
     pub quorum: u128,
 }
 
-/// Constructs a hash for a payload involving a new verifier set and the current
-/// signing verifier set.
-///
-/// The `construct_payload_hash` function creates a unique hash by combining a
-/// prefix with the Merkle roots of the new verifier set and the current signing
-/// verifier set. This hash can be used to authenticate and verify the integrity
-/// of payloads related to verifier set rotations.
-#[must_use]
-pub fn construct_payload_hash<T: HashvSupport>(
-    new_verifier_set_merkle_root: [u8; 32],
-    signing_verifier_set_merkle_root: [u8; 32],
-) -> [u8; 32] {
-    const HASH_PREFIX: &[u8] = b"new verifier set";
-    T::hashv(&[
-        HASH_PREFIX,
-        &new_verifier_set_merkle_root,
-        &signing_verifier_set_merkle_root,
-    ])
-}
-
 /// Generates the Merkle root hash for a given verifier set.
 ///
 /// The `verifier_set_hash` function constructs a Merkle tree from the leaves
@@ -66,15 +45,15 @@ pub fn construct_payload_hash<T: HashvSupport>(
 /// the set.
 ///
 /// # Errors
-/// - if the verifier set has no entiers in it
+/// - if the verifier set has no entries in it
 pub fn verifier_set_hash<T: rs_merkle::Hasher>(
     verifier_set: &VerifierSet,
     domain_separator: &[u8; 32],
 ) -> Result<T::Hash, EncodingError> {
     let leaves = merkle_tree_leaves(verifier_set, domain_separator)?.collect::<Vec<_>>();
-    let mt = crate::merkle_tree::<T, VerifierSetLeaf>(leaves.iter());
+    let tree = crate::merkle_tree::<T, VerifierSetLeaf>(leaves.iter());
 
-    mt.root()
+    tree.root()
         .ok_or(EncodingError::CannotMerkeliseEmptyVerifierSet)
 }
 
@@ -100,7 +79,7 @@ pub(crate) fn merkle_tree_leaves<'a>(
                     signer_weight: *signer_weight,
                     position: position
                         .try_into()
-                        .expect("position and set size ar guaranteed to be equal"),
+                        .expect("position and set size are guaranteed to be equal"),
                     set_size,
                 },
             );

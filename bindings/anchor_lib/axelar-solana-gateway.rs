@@ -351,7 +351,6 @@ pub struct MessageLeaf {
     pub position: u16,
     pub set_size: u16,
     pub domain_separator: [u8; 32],
-    pub signing_verifier_set: [u8; 32],
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
