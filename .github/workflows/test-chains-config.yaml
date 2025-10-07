@@ -2,9 +2,13 @@ name: Run Axelar Chains Config Tests
 
 on:
   pull_request:
+    paths:
+      - 'axelar-chains-config/**'
   push:
     branches:
       - main
+    paths:
+      - 'axelar-chains-config/**'
 
 jobs:
   test:
