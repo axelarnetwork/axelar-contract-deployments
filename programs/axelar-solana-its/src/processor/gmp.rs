@@ -169,7 +169,7 @@ fn pay_gas<'a>(
     gas_value: u64,
 ) -> ProgramResult {
     let gas_payment_ix =
-        axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
+        axelar_solana_gas_service::instructions::pay_gas_instruction(
             payer.key,
             crate::ITS_HUB_CHAIN_NAME.to_owned(),
             its_hub_address,

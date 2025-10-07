@@ -28,7 +28,7 @@ async fn test_refund_native() {
     // Action
     let gas_amount = 1_000_000;
     let message_id = "tx-sig-2.1".to_owned();
-    let ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
+    let ix = axelar_solana_gas_service::instructions::refund_fees_instruction(
         &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
         message_id.clone(),
@@ -122,7 +122,7 @@ async fn test_refund_native_fails_if_not_signed_by_authority() {
     let refunded_user = Keypair::new();
     let gas_amount = 1_000_000;
     let message_id = "tx-sig-2.1".to_owned();
-    let mut ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
+    let mut ix = axelar_solana_gas_service::instructions::refund_fees_instruction(
         &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
         message_id,
@@ -160,7 +160,7 @@ async fn test_refund_native_fails_with_zero_fee() {
     let refunded_user = Keypair::new();
     let gas_amount = 0; // Zero fee should fail
     let message_id = "tx-sig-2.1".to_owned();
-    let ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
+    let ix = axelar_solana_gas_service::instructions::refund_fees_instruction(
         &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
         message_id,

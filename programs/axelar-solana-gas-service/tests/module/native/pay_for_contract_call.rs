@@ -36,7 +36,7 @@ async fn test_pay_native_for_contract_call() {
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let ix = axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
+    let ix = axelar_solana_gas_service::instructions::pay_gas_instruction(
         &payer.pubkey(),
         destination_chain.clone(),
         destination_addr.clone(),
@@ -140,7 +140,7 @@ async fn fails_if_payer_not_signer() {
     let destination_chain = "ethereum".to_owned();
     let destination_addr = "destination addr 123".to_owned();
     let payload_hash = [42; 32];
-    let mut ix = axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
+    let mut ix = axelar_solana_gas_service::instructions::pay_gas_instruction(
         &payer.pubkey(),
         destination_chain.clone(),
         destination_addr.clone(),

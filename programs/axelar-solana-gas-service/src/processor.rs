@@ -11,13 +11,11 @@ use self::{
     native::{
         add_native_gas, collect_fees_native, process_pay_native_for_contract_call, refund_native,
     },
-    spl::{add_spl_gas, collect_fees_spl, process_pay_spl_for_contract_call, refund_spl},
     transfer_operatorship::process_transfer_operatorship,
 };
 
 mod initialize;
 mod native;
-mod spl;
 mod transfer_operatorship;
 
 /// Processes an instruction.
@@ -41,48 +39,9 @@ pub fn process_instruction(
         GasServiceInstruction::TransferOperatorship => {
             process_transfer_operatorship(program_id, accounts)
         }
-        // Spl token instructions
-        GasServiceInstruction::PaySplForContractCall {
-            destination_chain,
-            destination_address,
-            payload_hash,
-            amount,
-            decimals,
-            refund_address,
-        } => process_pay_spl_for_contract_call(
-            program_id,
-            accounts,
-            destination_chain,
-            destination_address,
-            payload_hash,
-            refund_address,
-            amount,
-            decimals,
-        ),
-        GasServiceInstruction::AddSplGas {
-            message_id,
-            amount,
-            decimals,
-            refund_address,
-        } => add_spl_gas(
-            program_id,
-            accounts,
-            message_id,
-            amount,
-            refund_address,
-            decimals,
-        ),
-        GasServiceInstruction::CollectSplFees { amount, decimals } => {
-            collect_fees_spl(program_id, accounts, amount, decimals)
-        }
-        GasServiceInstruction::RefundSplFees {
-            message_id,
-            amount,
-            decimals,
-        } => refund_spl(program_id, accounts, message_id, amount, decimals),
 
         // Native token instructions
-        GasServiceInstruction::PayNativeForContractCall {
+        GasServiceInstruction::PayGas {
             destination_chain,
             destination_address,
             payload_hash,
@@ -97,17 +56,19 @@ pub fn process_instruction(
             refund_address,
             amount,
         ),
-        GasServiceInstruction::AddNativeGas {
+
+        GasServiceInstruction::AddGas {
             message_id,
             amount,
             refund_address,
         } => add_native_gas(program_id, accounts, message_id, amount, refund_address),
-        GasServiceInstruction::CollectNativeFees { amount } => {
+
+        GasServiceInstruction::CollectFees { amount } => {
             collect_fees_native(program_id, accounts, amount)
         }
-        GasServiceInstruction::RefundNativeFees {
-            message_id,
-            amount,
-        } => refund_native(program_id, accounts, message_id, amount),
+
+        GasServiceInstruction::RefundFees { message_id, amount } => {
+            refund_native(program_id, accounts, message_id, amount)
+        }
     }
 }
