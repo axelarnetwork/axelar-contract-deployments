@@ -107,6 +107,11 @@
             "deploymentName": "flow-19-18-20",
             "salt": "flow-v1",
             "proposalId": "33"
+          },
+          "berachain": {
+            "deploymentName": "berachain-23-21-22",
+            "salt": "v1.0.0-test",
+            "proposalId": "37"
           }
         }
       },
@@ -146,16 +151,33 @@
           "addressFormat": "eip55",
           "address": "axelar1ga26e74kdckg8zk67usskwx8ynzu3w23x6vhptd4ysrhjdcxzmys4udqzs"
         },
-        "lastUploadedCodeId": 18,
-        "storeCodeProposalId": "16",
+        "berachain": {
+          "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xE7AFF44CA61E67aAb25946C3B57E4cdC271CD702",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "address": "axelar1ggxnrldq5dp6tg73e66d8wl54pcu0grde67ln9vz9duev07srg9s03jfx3"
+        },
+        "lastUploadedCodeId": 21,
+        "storeCodeProposalId": "34",
         "storeCodeProposalCodeHash": "0b6dfd992e6254e22dc0f5eeb77f8ed0d2797a8bebad5a55da6c5b30728ecdb1"
       },
       "Gateway": {
         "flow": {
           "address": "axelar1lag8g4p0vhw6pn2n4qrplmzh6zwlhne8hc8vgz8scmkfkpfg84fsvvss64"
         },
-        "lastUploadedCodeId": 19,
-        "storeCodeProposalId": "17",
+        "berachain": {
+          "address": "axelar16mjdultga78z36wewsy6me4xrcxmzjup6hhl66h624vrwlpk8g5qdufrzf"
+        },
+        "lastUploadedCodeId": 23,
+        "storeCodeProposalId": "36",
         "storeCodeProposalCodeHash": "01e73658193431828bc9451df6387b70997735e69d4105de1074859b8da9bd90"
       },
       "MultisigProver": {
@@ -172,8 +194,21 @@
           "keyType": "ecdsa",
           "address": "axelar1w5djd6ek4ntcdp9cl92uev90qzv06znrm8md2awj058yhrhyq84qh4yz24"
         },
-        "lastUploadedCodeId": 20,
-        "storeCodeProposalId": "18",
+        "berachain": {
+          "governanceAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+          "adminAddress": "axelar1gf0z5hruh78qslt2la8786nsuh6xf65kdzcrl5",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "address": "axelar1dx5adzj7sz6ulrumvvq2m9tc3dz557qd6zh9k3pjll63zzk64ygq8lcwkc"
+        },
+        "lastUploadedCodeId": 22,
+        "storeCodeProposalId": "35",
         "storeCodeProposalCodeHash": "85ace8a5ec63cd8fceb5642f187dc25b3de0ac3b78f04d32f61804939fba58ad"
       },
       "ItsAbiTranslator": {
@@ -182,7 +217,8 @@
         "codeId": 8
       },
       "undefined": {
-        "flow": {}
+        "flow": {},
+        "berachain": {}
       }
     },
     "id": "axelar",

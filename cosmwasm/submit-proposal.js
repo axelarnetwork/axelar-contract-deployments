@@ -141,11 +141,18 @@ const callSubmitProposal = async (client, config, options, proposal, fee) => {
 
 // V0.50!
 const storeCode = async (client, config, options, _args, fee) => {
-    const { contractName } = options;
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const { contractName, contractCodePaths } = options;
+    const contractNames = Array.isArray(contractName) ? contractName : [contractName];
 
-    const storeMsg = encodeStoreCodeMessageV50(options);
-    const messages = [storeMsg];
+    const messages = contractNames.map((name) => {
+        const contractOptions = {
+            ...options,
+            contractName: name,
+            // Use pre-computed path from hook, fallback to original for single contract
+            contractCodePath: contractCodePaths ? contractCodePaths[name] : options.contractCodePath,
+        };
+        return encodeStoreCodeMessageV50(contractOptions);
+    });
 
     if (!confirmProposalSubmissionV50(options, messages)) {
         return;
@@ -154,8 +161,20 @@ const storeCode = async (client, config, options, _args, fee) => {
     const proposalId = await submitProposalV50(client, config, options, messages, fee);
     printInfo('Proposal submitted', proposalId);
 
-    contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
+    // Update config for all contracts
+    contractNames.forEach((name) => {
+        const contractBaseConfig = getAmplifierBaseContractConfig(config, name);
+        contractBaseConfig.storeCodeProposalId = proposalId;
+        const contractOptions = {
+            ...options,
+            contractName: name,
+            contractCodePath: contractCodePaths ? contractCodePaths[name] : options.contractCodePath,
+        };
+        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+            .update(readContractCode(contractOptions))
+            .digest()
+            .toString('hex');
+    });
 
     return proposalId;
 };
