@@ -184,15 +184,13 @@ async function processListCommand(keypair, client, args, options) {
 async function publishCoinCommand(keypair, client, args, options, contracts) {
     const [symbol, name, decimals] = args;
 
-    validateParameters({ 
-        isNonEmptyString: { 
+    validateParameters({
+        isNonEmptyString: {
             symbol: symbol,
             name: name,
             decimals: decimals,
-        } 
+        },
     });
-
-    console.log({symbol, name, decimals});
 
     const walletAddress = keypair.toSuiAddress();
 
@@ -214,12 +212,12 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenService, InterchainTokenServicev0 } = itsConfig.objects;
 
     if (options.createCoin) {
-        validateParameters({ 
-            isNonEmptyString: { 
+        validateParameters({
+            isNonEmptyString: {
                 symbol: options.createCoin,
                 decimals: options.decimals,
-                name: options.name
-            } 
+                name: options.name,
+            },
         });
 
         const config = loadConfig(options.env);
