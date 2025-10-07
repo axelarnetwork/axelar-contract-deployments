@@ -387,7 +387,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
 
 // give_unlinked_coin
 async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
-    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
     const walletAddress = keypair.toSuiAddress();
     const [symbol, tokenId] = args;
@@ -419,7 +419,7 @@ async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
     const treasuryCapOption = await txBuilder.moveCall({ target, arguments: callArguments, typeArguments });
 
     // give_unlinked_coin<T>
-    const treasuryCapReclaimerOption = await txBuilder.moveCall({
+    const [treasuryCapReclaimerOption, channelOption] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::give_unlinked_coin`,
         arguments: [InterchainTokenService, tokenIdObject, metadata, treasuryCapOption],
         typeArguments: [tokenType],
@@ -427,6 +427,7 @@ async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
 
     // TreasuryCapReclaimer<T>
     const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('');
+    const channelType = AxelarGateway.structs.Channel;
     if (options.treasuryCapReclaimer) {
         const treasuryCapReclaimer = await txBuilder.moveCall({
             target: `${STD_PACKAGE_ID}::option::extract`,
@@ -434,13 +435,25 @@ async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
             typeArguments: [treasuryCapReclaimerType],
         });
 
-        txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+        const channel = await txBuilder.moveCall({
+            target: `${STD_PACKAGE_ID}::option::extract`,
+            arguments: [channelOption],
+            typeArguments: [channelType],
+        });
+
+        txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
     }
 
     await txBuilder.moveCall({
         target: `${STD_PACKAGE_ID}::option::destroy_none`,
         arguments: [treasuryCapReclaimerOption],
         typeArguments: [treasuryCapReclaimerType],
+    });
+
+    await txBuilder.moveCall({
+        target: `${STD_PACKAGE_ID}::option::destroy_none`,
+        arguments: [channelOption],
+        typeArguments: [channelType],
     });
 
     const result = await broadcastFromTxBuilder(txBuilder, keypair, `Give Unlinked Coin (${symbol})`, options);
