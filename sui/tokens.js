@@ -181,14 +181,46 @@ async function processListCommand(keypair, client, args, options) {
     await CoinManager.printCoins(client, coinTypeToCoins);
 }
 
+async function publishCoinCommand(keypair, client, args, options, contracts) {
+    const [symbol, name, decimals] = args;
+
+    validateParameters({ 
+        isNonEmptyString: { 
+            symbol: symbol,
+            name: name,
+            decimals: decimals,
+        } 
+    });
+
+    console.log({symbol, name, decimals});
+
+    const walletAddress = keypair.toSuiAddress();
+
+    const config = loadConfig(options.env);
+    const chain = getChainConfig(config.chains, options.chainName);
+    await printWalletInfo(keypair, client, chain, options);
+
+    const deployConfig = { client, keypair, options, walletAddress };
+
+    // Deploy token on Sui
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+    // Save the deployed token
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, null, treasuryCap, metadata);
+}
+
 async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService, InterchainTokenServicev0 } = itsConfig.objects;
 
     if (options.createCoin) {
-        validateParameters({ isNonEmptyString: { symbol: options.createCoin } });
-        validateParameters({ isNonEmptyString: { decimals: options.decimals } });
-        validateParameters({ isNonEmptyString: { name: options.name } });
+        validateParameters({ 
+            isNonEmptyString: { 
+                symbol: options.createCoin,
+                decimals: options.decimals,
+                name: options.name
+            } 
+        });
 
         const config = loadConfig(options.env);
         const chain = getChainConfig(config.chains, options.chainName);
@@ -313,6 +345,9 @@ if (require.main === module) {
     const legacyCoinsProgram = new Command('legacy-coins').description(
         'Save a list of legacy coins to be migrated to public coin metadata; and / or, create a legacy coin using the createCoin flag.',
     );
+    const publishCoinProgram = new Command('publish-coin').description(
+        'Deploy a coin on Sui by specifying coin symbol, name and decimal precision',
+    );
 
     // Define options, arguments, and actions for each sub-program
     mergeProgram.option('--coin-type <coinType>', 'Coin type to merge').action((options) => {
@@ -340,11 +375,20 @@ if (require.main === module) {
             mainProcessor(options, legacyCoinsCommand);
         });
 
+    publishCoinProgram
+        .argument('<symbol>', 'Coin symbol')
+        .argument('<name>', 'Coin name')
+        .argument('<decimals>', 'Coin decimal precision')
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(options, publishCoinCommand, [symbol, name, decimals]);
+        });
+
     // Add sub-programs to the main program
     program.addCommand(mergeProgram);
     program.addCommand(splitProgram);
     program.addCommand(listProgram);
     program.addCommand(legacyCoinsProgram);
+    program.addCommand(publishCoinProgram);
 
     // Add base options to all sub-programs
     addOptionsToCommands(program, addBaseOptions);
