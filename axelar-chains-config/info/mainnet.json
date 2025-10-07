@@ -3304,7 +3304,7 @@
       "chainType": "evm",
       "explorer": {
         "name": "Hyperliquid Explorer",
-        "url": "https://app.hyperliquid.xyz/explorer"
+        "url": "https://hyperevmscan.io/"
       },
       "hypercore": {
         "domain": {

@@ -11,6 +11,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -795,46 +796,37 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     }
 
     if (isValidNumber(gasValue)) {
-        return scaleGasValue(chain, gasValue);
+        const gasFeeValue = scaleGasValue(chain, gasValue);
+        return { gasValue, gasFeeValue };
     }
 
     const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
-        destinationChain: destinationChain,
+        destinationChain,
         event: eventType,
     };
 
-    const res = await httpPost(url, payload);
+    const rawEstimate = await httpPost(url, payload);
 
-    if (res.error) {
-        throw new Error(`Error querying gas amount: ${res.error}`);
+    if (rawEstimate.error || rawEstimate === 0) {
+        throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
     }
-    return res;
+
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER ? rawEstimate.toString() : rawEstimate;
+
+    const ethValue = scaleGasValue(chain, estimate, false);
+    return { gasValue: ethValue, gasFeeValue: estimate };
 }
 
-/**
- * Scales a gas value up to 18 decimals when required.
- *
- * Hedera uses a lower decimal precision for gas/fees, while EVM ecosystems
- * standardize on 18 decimals. For EVM interactions we need to scale Hedera
- * values up so that on-chain math uses the same 18-decimal base. Chains that
- * require scaling should set `gasScalingFactor` to the number of missing
- * decimals to reach 18.
- *
- * Example: if a chain uses 8 decimals, set `gasScalingFactor = 10` so
- * `gasValue * 10^10` yields an 18-decimal value.
- *
- * When `gasScalingFactor` is not a number, no scaling is applied.
- *
- * @param {Object} chain - Chain config, may include `gasScalingFactor`.
- * @param {string|number|BigNumber} gasValue - Raw gas value to scale.
- * @returns {BigNumber|*} Scaled gas if factor provided; original otherwise.
- */
-function scaleGasValue(chain, gasValue) {
+function scaleGasValue(chain, gasValue, up = true) {
     if (typeof chain.gasScalingFactor === 'number') {
-        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        if (up) {
+            return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        } else {
+            return BigNumber.from(gasValue).div(BigNumber.from(10).pow(chain.gasScalingFactor));
+        }
     }
 
     return gasValue;
