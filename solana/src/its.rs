@@ -961,7 +961,7 @@ fn init(
         String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
     let its_root_config = axelar_solana_its::find_its_root_pda().0;
 
-    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_its::id().to_string(),
         CONFIG_ACCOUNT_KEY: its_root_config.to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
@@ -973,7 +973,7 @@ fn init(
     Ok(vec![axelar_solana_its::instruction::initialize(
         *fee_payer,
         init_args.operator,
-        config.chain_id.to_owned(),
+        config.chain.to_owned(),
         its_hub_address,
     )?])
 }

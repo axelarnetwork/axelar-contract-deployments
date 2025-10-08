@@ -206,14 +206,14 @@ pub(crate) fn print_transaction_result(
 pub(crate) fn domain_separator(
     chains_info: &serde_json::Value,
     network_type: NetworkType,
-    chain_id: &str,
+    chain: &str,
 ) -> eyre::Result<[u8; 32]> {
     if network_type == NetworkType::Local {
         return Ok([0; 32]);
     }
 
     let from_multisig_prover = String::deserialize(
-        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain_id]
+        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain]
             [DOMAIN_SEPARATOR_KEY],
     )?;
 
@@ -322,11 +322,11 @@ pub(crate) fn serialized_transactions_filename_from_arg_matches(matches: &ArgMat
 
 pub(crate) fn try_infer_program_id_from_env(
     env: &Value,
-    chain_id: &str,
+    chain: &str,
     program_key: &str,
 ) -> eyre::Result<Pubkey> {
     let id = Pubkey::from_str(&String::deserialize(
-        &env[CHAINS_KEY][chain_id][CONTRACTS_KEY][program_key][ADDRESS_KEY],
+        &env[CHAINS_KEY][chain][CONTRACTS_KEY][program_key][ADDRESS_KEY],
     )?)
     .map_err(|_| {
         eyre!(
