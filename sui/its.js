@@ -502,7 +502,7 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
 }
 
-// regiser_coin_metadata
+// register_coin_metadata
 async function registerCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
