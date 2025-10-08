@@ -15,7 +15,6 @@ const {
     getMultisigProof,
     getChainConfig,
     validateParameters,
-    encodeITSDestinationToken,
 } = require('../common/utils');
 const {
     addBaseOptions,
@@ -121,10 +120,6 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         isNonEmptyString: { destinationChain, destinationAddress, payload },
     });
 
-    const destinationContractAddress = config.chains[destinationChain]
-        ? encodeITSDestinationToken(config.chains, destinationChain, destinationAddress)
-        : bcs.string().serialize(destinationAddress).toBytes();
-
     let channel = options.channel;
 
     const tx = new Transaction();
@@ -142,7 +137,7 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         arguments: [
             channel,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()),
-            tx.pure(destinationContractAddress),
+            tx.pure(bcs.string().serialize(destinationAddress).toBytes()),
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()),
         ],
     });
