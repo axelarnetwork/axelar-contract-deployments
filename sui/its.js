@@ -649,11 +649,13 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         }
     }
 
-    const channel = options.channel ? options.channel : channelId;
-
     // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
     // This submits a LinkToken msg type to ITS Hub.
     const txBuilder = new TxBuilder(client);
+
+    const channel = channelId ? channelId : await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::channel::new`,
+    });
 
     // Token manager type (destination chain)
     const tokenManagerType = await txBuilder.moveCall({
@@ -705,6 +707,10 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         target: `${AxelarGateway.address}::gateway::send_message`,
         arguments: [Gateway, messageTicket],
     });
+
+    if (!channelId) {
+        txBuilder.tx.transferObjects([channel], walletAddress);
+    }
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (${symbol})`, options);
 
