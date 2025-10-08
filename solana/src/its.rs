@@ -324,6 +324,10 @@ pub(crate) struct SetPauseStatusArgs {
 pub(crate) struct TrustedChainArgs {
     /// The name of the chain to set as trusted
     chain_name: String,
+    
+    /// The authority account (ITS operator or upgrade authority)
+    #[clap(long)]
+    authority: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -343,6 +347,10 @@ pub(crate) struct ApproveDeployRemoteInterchainTokenArgs {
     /// The address to receive the minter role on the token deployed on destination chain
     #[clap(long)]
     destination_minter: String,
+    
+    /// The account with minter role on the token manager
+    #[clap(long)]
+    minter: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -358,6 +366,10 @@ pub(crate) struct RevokeDeployRemoteInterchainTokenArgs {
     /// The chain which the remote interchain token would be deployed on
     #[clap(long)]
     destination_chain: String,
+    
+    /// The account with minter role on the token manager
+    #[clap(long)]
+    minter: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -415,6 +427,10 @@ pub(crate) struct DeployInterchainTokenArgs {
     /// Optional mint account for the interchain token. Required if initial_supply is zero
     #[clap(long)]
     minter: Option<Pubkey>,
+    
+    /// The account that will deploy the interchain token
+    #[clap(long)]
+    deployer: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -438,6 +454,10 @@ pub(crate) struct DeployRemoteInterchainTokenArgs {
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
     gas_config_account: Option<Pubkey>,
+    
+    /// The account that will deploy the remote interchain token
+    #[clap(long)]
+    deployer: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -469,6 +489,10 @@ pub(crate) struct DeployRemoteInterchainTokenWithMinterArgs {
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
     gas_config_account: Option<Pubkey>,
+    
+    /// The account that will deploy the remote interchain token
+    #[clap(long)]
+    deployer: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -507,6 +531,10 @@ pub(crate) struct RegisterCustomTokenArgs {
     /// An optional account to receive the operator role on the TokenManager associated with the token
     #[clap(long)]
     operator: Option<Pubkey>,
+    
+    /// The account that will register the custom token
+    #[clap(long)]
+    deployer: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -542,6 +570,10 @@ pub(crate) struct LinkTokenArgs {
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
     gas_config_account: Option<Pubkey>,
+    
+    /// The account that will link the token
+    #[clap(long)]
+    deployer: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -584,6 +616,10 @@ pub(crate) struct InterchainTransferArgs {
     /// transaction will be broadcasted.
     #[clap(long)]
     timestamp: Option<i64>,
+    
+    /// The authority account (owner or delegate of the source account)
+    #[clap(long)]
+    authority: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -631,6 +667,10 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
     /// transaction will be broadcasted.
     #[clap(long)]
     timestamp: Option<i64>,
+    
+    /// The authority account (owner or delegate of the source account)
+    #[clap(long)]
+    authority: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -957,6 +997,7 @@ fn set_trusted_chain(
         eyre::bail!("Chain name cannot be empty");
     }
 
+    let authority = set_trusted_chain_args.authority.unwrap_or(*fee_payer);
     let mut instructions = Vec::new();
     if set_trusted_chain_args.chain_name == "all" {
         let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
@@ -966,7 +1007,7 @@ fn set_trusted_chain(
                 println!("Creating instruction to set {chain} as trusted on Solana ITS");
                 instructions.push(axelar_solana_its::instruction::set_trusted_chain(
                     *fee_payer,
-                    *fee_payer,
+                    authority,
                     chain.clone(),
                 )?);
             }
@@ -976,7 +1017,7 @@ fn set_trusted_chain(
     } else {
         instructions.push(axelar_solana_its::instruction::set_trusted_chain(
             *fee_payer,
-            *fee_payer,
+            authority,
             set_trusted_chain_args.chain_name,
         )?);
     }
@@ -988,9 +1029,10 @@ fn remove_trusted_chain(
     fee_payer: &Pubkey,
     remove_trusted_chain_args: TrustedChainArgs,
 ) -> eyre::Result<Vec<Instruction>> {
+    let authority = remove_trusted_chain_args.authority.unwrap_or(*fee_payer);
     Ok(vec![axelar_solana_its::instruction::remove_trusted_chain(
         *fee_payer,
-        *fee_payer,
+        authority,
         remove_trusted_chain_args.chain_name,
     )?])
 }
@@ -1007,10 +1049,11 @@ fn approve_deploy_remote_interchain_token(
         args.destination_minter,
     )?;
 
+    let minter = args.minter.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             *fee_payer,
-            *fee_payer,
+            minter,
             args.deployer,
             args.salt,
             args.destination_chain,
@@ -1023,10 +1066,11 @@ fn revoke_deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: RevokeDeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
+    let minter = args.minter.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::revoke_deploy_remote_interchain_token(
             *fee_payer,
-            *fee_payer,
+            minter,
             args.deployer,
             args.salt,
             args.destination_chain,
@@ -1108,10 +1152,11 @@ fn deploy_interchain_token(
     println!("- Decimals: {}", args.decimals);
     println!("------------------------------------------");
 
+    let deployer = args.deployer.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::deploy_interchain_token(
             *fee_payer,
-            *fee_payer,
+            deployer,
             args.salt,
             args.name,
             args.symbol,
@@ -1126,10 +1171,11 @@ fn deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
+    let deployer = args.deployer.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token(
             *fee_payer,
-            *fee_payer,
+            deployer,
             args.salt,
             args.destination_chain,
             args.gas_value,
@@ -1148,10 +1194,11 @@ fn deploy_remote_interchain_token_with_minter(
         &args.destination_chain,
         args.destination_minter,
     )?;
+    let deployer = args.deployer.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
             *fee_payer,
-            *fee_payer,
+            deployer,
             args.salt,
             args.minter,
             args.destination_chain,
@@ -1190,9 +1237,10 @@ fn register_custom_token(
     println!("- Token Program: {token_program}");
     println!("------------------------------------------");
 
+    let deployer = args.deployer.unwrap_or(*fee_payer);
     Ok(vec![axelar_solana_its::instruction::register_custom_token(
         *fee_payer,
-        *fee_payer,
+        deployer,
         args.salt,
         args.mint,
         args.token_manager_type,
@@ -1202,9 +1250,10 @@ fn register_custom_token(
 }
 
 fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instruction>> {
+    let deployer = args.deployer.unwrap_or(*fee_payer);
     Ok(vec![axelar_solana_its::instruction::link_token(
         *fee_payer,
-        *fee_payer,
+        deployer,
         args.salt,
         args.destination_chain,
         args.destination_token_address,
@@ -1257,9 +1306,10 @@ fn interchain_transfer(
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
 
+    let authority = args.authority.unwrap_or(*fee_payer);
     Ok(vec![axelar_solana_its::instruction::interchain_transfer(
         *fee_payer,
-        *fee_payer,
+        authority,
         args.source_account,
         args.token_id,
         args.destination_chain,
@@ -1314,10 +1364,11 @@ fn call_contract_with_interchain_token(
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
 
+    let authority = args.authority.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::call_contract_with_interchain_token(
             *fee_payer,
-            *fee_payer,
+            authority,
             args.source_account,
             args.token_id,
             args.destination_chain,
@@ -1451,7 +1502,7 @@ fn token_manager_add_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::add_flow_limiter(
             *fee_payer,
-            *fee_payer, // adder
+            args.adder,
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1465,7 +1516,7 @@ fn token_manager_remove_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::remove_flow_limiter(
             *fee_payer,
-            *fee_payer, // remover
+            args.remover,
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1479,7 +1530,7 @@ fn token_manager_transfer_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::transfer_operatorship(
             *fee_payer,
-            *fee_payer, // sender
+            args.sender,
             args.token_id,
             args.to,
         )?,
@@ -1493,7 +1544,7 @@ fn token_manager_propose_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::propose_operatorship(
             *fee_payer,
-            *fee_payer, // proposer
+            args.proposer,
             args.token_id,
             args.to,
         )?,
@@ -1507,7 +1558,7 @@ fn token_manager_accept_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::accept_operatorship(
             *fee_payer,
-            *fee_payer, // accepter
+            args.accepter,
             args.token_id,
             args.from,
         )?,
@@ -1558,7 +1609,7 @@ fn interchain_token_transfer_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::transfer_mintership(
             *fee_payer,
-            *fee_payer, // sender
+            args.sender,
             args.token_id,
             args.to,
         )?,
@@ -1572,7 +1623,7 @@ fn interchain_token_propose_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::propose_mintership(
             *fee_payer,
-            *fee_payer, // proposer
+            args.proposer,
             args.token_id,
             args.to,
         )?,
@@ -1586,7 +1637,7 @@ fn interchain_token_accept_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::accept_mintership(
             *fee_payer,
-            *fee_payer, // accepter
+            args.accepter,
             args.token_id,
             args.from,
         )?,
