@@ -8,14 +8,7 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const {
-    saveConfig,
-    printInfo,
-    loadConfig,
-    getMultisigProof,
-    getChainConfig,
-    validateParameters,
-} = require('../common/utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
