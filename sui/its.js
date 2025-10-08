@@ -147,7 +147,6 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Chains', options);
 }
 
-// register_coin_from_info
 async function registerCoinFromInfo(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -185,7 +184,6 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 }
 
-// register_coin_from_metadata
 async function registerCoinFromMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -222,7 +220,6 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 }
 
-// register_custom_coin
 async function registerCustomCoin(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const walletAddress = keypair.toSuiAddress();
@@ -281,7 +278,6 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     }
 }
 
-// migrate_coin_metadata (all)
 async function migrateAllCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
@@ -361,7 +357,6 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     } else delete contracts.InterchainTokenService.legacyCoins;
 }
 
-// migrate_coin_metadata (single)
 async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
@@ -385,7 +380,6 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
 }
 
-// give_unlinked_coin
 async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -470,7 +464,6 @@ async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
     }
 }
 
-// remove_unlinked_coin
 async function removeUnlinkedCoin(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -504,7 +497,6 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
 }
 
-// register_coin_metadata
 async function registerCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -598,7 +590,6 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
     }
 }
 
-// link_coin
 async function linkCoin(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -739,7 +730,6 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     );
 }
 
-// deploy_remote_coin
 async function deployRemoteCoin(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const walletAddress = keypair.toSuiAddress();
@@ -798,7 +788,6 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
     }
 }
 
-// remove_treasury_cap
 async function removeTreasuryCap(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -833,7 +822,6 @@ async function removeTreasuryCap(keypair, client, config, contracts, args, optio
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
 }
 
-// restore_treasury_cap
 async function restoreTreasuryCap(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
@@ -875,7 +863,6 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
 }
 
-// interchain transfer
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
