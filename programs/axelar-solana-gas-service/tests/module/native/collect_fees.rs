@@ -62,7 +62,7 @@ async fn test_receive_funds() {
     let expected_event = GasCollectedEvent {
         receiver: receiver.pubkey(),
         amount: sol_amount,
-        spl_token_info: None,
+        spl_token_account: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);
