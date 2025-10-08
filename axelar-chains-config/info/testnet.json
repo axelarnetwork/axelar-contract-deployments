@@ -3077,7 +3077,43 @@
               "TokenType": "0x2::coin::CoinMetadata<0x51b34ae3a272cc3adebff01f7328800a3e8dbf8653a401efe477473a08d4db34::testgas::TESTGAS>",
               "symbol": "testgas"
             }
-          ]
+          ],
+          "disallowedFunctions": {
+            "versions": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "functionNames": [
+              "deploy_remote_interchain_token",
+              "send_interchain_transfer",
+              "receive_interchain_transfer",
+              "receive_interchain_transfer_with_data",
+              "receive_deploy_interchain_token",
+              "give_unregistered_coin",
+              "mint_as_distributor",
+              "mint_to_as_distributor",
+              "burn_as_distributor",
+              "add_trusted_chains",
+              "remove_trusted_chains",
+              "set_flow_limit",
+              "set_flow_limit_as_token_operator",
+              "transfer_distributorship",
+              "transfer_operatorship"
+            ]
+          }
         },
         "Example": {
           "address": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64",
