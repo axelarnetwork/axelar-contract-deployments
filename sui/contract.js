@@ -33,10 +33,8 @@ const CONTRACT_INFO = {
         singletonName: 'InterchainTokenService',
         moduleName: 'interchain_token_service',
         defaultFunctions: {
-            versions: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            versions: [0, 0, 0, 0, 0, 0, 0, 0],
             functionNames: [
-                'register_coin_from_info',
-                'register_coin_from_metadata',
                 'deploy_remote_interchain_token',
                 'send_interchain_transfer',
                 'receive_interchain_transfer',
