@@ -731,8 +731,23 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
 
     switch (chainType) {
         case 'sui':
+            const coinTypePieces = destinationTokenAddress.split("::");
+            const packageId = coinTypePieces[0].replace('0x','');
+            const packageName = coinTypePieces[1];
+            const coinSymbol = coinTypePieces[2];
+
+            if (coinTypePieces !== 3) {
+                throw new Error(`Invalid Sui coin type, got ${destinationTokenAddress}`);
+            } else if (packageId.length !== 64) {
+                throw new Error(`Invalid Sui coin package id, got ${packageId}`);
+            } else if (packageName.toUpperCase() !== coinSymbol.toUpperCase()) {
+                throw new Error(`Unexpected package or module name, got ${packageName} and ${coinSymbol}`);
+            }
+
+            const coinType = `${packageId}::${packageName}::${coinSymbol}`;
+
             // For Sui token addresses (X -> Sui), encode as ASCII string
-            return asciiToBytes(destinationTokenAddress);
+            return asciiToBytes(coinType);
 
         default:
             // For all other chains, use the same encoding as destination addresses
