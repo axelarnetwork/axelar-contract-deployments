@@ -3116,25 +3116,27 @@
           }
         },
         "Example": {
-          "address": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64",
+          "address": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34",
           "versions": {
-            "0": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64"
+            "0": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34"
           },
-          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "deployer": "0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88",
           "structs": {
-            "Singleton": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::Singleton",
-            "Executed": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::gmp::Executed",
-            "ExecutedWithToken": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::ExecutedWithToken",
-            "TOKEN": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token::TOKEN",
-            "TOKEN_A": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_a::TOKEN_A",
-            "TOKEN_B": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_b::TOKEN_B",
-            "TOKEN_C": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_c::TOKEN_C"
+            "Singleton": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::its::Singleton",
+            "Executed": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::gmp::Executed",
+            "ExecutedWithToken": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::its::ExecutedWithToken",
+            "MultiMinter": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::operators::MultiMinter",
+            "OwnerCap": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::operators::OwnerCap",
+            "TOKEN": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token::TOKEN",
+            "TOKEN_A": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_a::TOKEN_A",
+            "TOKEN_B": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_b::TOKEN_B",
+            "TOKEN_C": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0xf1803cd8ea30c1fa7ac4a8d7062483dfe0ff266d0f11d232d7cd9387a6de8dcf",
-            "GmpChannelId": "0xe1903707becbbe8ee6e96e6f4f179c7fd1a30f9147a111c50e32afec6dc65f18",
-            "ItsSingleton": "0xb05ef95bcc7f51f32af0647de0736f4d0e267b95ea464617cbd4e7ce39519023",
-            "ItsChannelId": "0xf4d96b9d30326a213df4f51aee73f9f44fc612a88498646b5cf78e84d478ef56"
+            "GmpSingleton": "0xd2fabdbdfd05dfdd618405e9a60e8cd57f2b6d43ffd0429edcc1f7ca7836e8f7",
+            "GmpChannelId": "0x746f555d09f9e89e1d25be596d2e756a65bd48377524a109b955ba2f5bcb53eb",
+            "ItsSingleton": "0x9926aca1bc1fcaf38db6b5570dd16e7ad265c1d7f621dbb0efdc49d61b6471dd",
+            "ItsChannelId": "0xeadff6a48792bdb8ca1216bab78c502244152fc3632abac5f67e150da5e09315"
           }
         }
       }
