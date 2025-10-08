@@ -33,10 +33,6 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
         isNonEmptyString: { destinationChain, destinationAddress, payload },
     });
 
-    const destinationAddressEnc = config.chains[destinationChain]
-        ? encodeITSDestination(config.chains, destinationChain, destinationAddress)
-        : bcs.string().serialize(destinationAddress).toBytes();
-
     const unitAmount = options.amount;
 
     let channel = options.channel;
@@ -58,7 +54,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
         arguments: [
             channel,
             tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
-            tx.pure(destinationAddressEnc), // Destination address
+            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
         ],
     });
