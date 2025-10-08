@@ -1,3 +1,9 @@
+AVAX TOKEN: 0x0C099c2c25Be469b19453e84aB393FEd6cb39De9
+AVAX SAFE: 0xa3B4FB1e7E859f8eaAd00B860d5eB03bCa0d53AE
+ETH TOKEN: 0x7242AF0123ff786E0Ca951423E217FCCe35eD352
+
+
+
 # CrossChain Burn Demo
 
 
@@ -11,7 +17,7 @@ Note: `safeDeploymentConfig` needs to have unique salt when deploying
 
 ### Deploy Tokens
 ```bash
-node evm/deploy-contract.js \
+ts-node evm/deploy-contract.js \
   --contractName CrossChainBurn \
   --artifactPath "$PWD/artifacts/evm/solidity/" \
   --chainNames "ethereum-sepolia,avalanche" \
@@ -74,8 +80,12 @@ node evm/its.js interchain-transfer ethereum-sepolia 0xdf6334c5d94db1d5b4d8e15a6
 ```
 - Interchain Transfer Ex -> https://testnet.axelarscan.io/gmp/0xc727c9a9a51140b8447bfe0d3ffbcd707cc3c2879bcc5353575c26c7a3274f76
 
-### Setup CrossChain Burn
+### Check Balance To Confirm Successful Transfer
+```bash
+node evm/demo/index.js balance --chainNames ethereum-sepolia --tokenAddress 0x3f4d2D6727ab6D5cd1dEcEa39930390FfCA3959d --env testnet
+```
 
+### Setup CrossChain Burn
 ```bash
 node evm/demo/index.js setup-burn 0x7b921F39dcdBA1B84ed305cFdAFa0857ffc645fc --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet --yes
 ```
@@ -83,8 +93,20 @@ node evm/demo/index.js setup-burn 0x7b921F39dcdBA1B84ed305cFdAFa0857ffc645fc --c
 - Setup Burn Tx -> https://testnet.snowtrace.io/tx/0xf240809afae2c61ff24da156ec0052cd9a5323964754ad1e15e29fbeebb63e80
 
 ### Cross-Chain Burn
+
+**IMPORTANT**
+Before this function can be called, make sure you have funded the gnosis safe with enough tokens to execute the cross-chain burn.
+
 ```bash
 node evm/demo/index.js cross-chain-burn 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 1 0x7b921F39dcdBA1B84ed305cFdAFa0857ffc645fc --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet --yes --destinationChain ethereum-sepolia --destinationChainTokenAddress 0x3f4d2D6727ab6D5cd1dEcEa39930390FfCA3959d
 ```
 - Ex -> https://testnet.axelarscan.io/gmp/0x4eaa1ff0a59b979275c793b2f32a77ee0379f8c37f192ca90a9c41aa55036742
 
+## Cross-chain Freeze
+
+**IMPORTANT**
+Before this function can be called, make sure you have funded the gnosis safe with enough tokens to execute the cross-chain freeze.
+
+```bash
+node evm/demo/index.js cross-chain-freeze 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 0x7b921F39dcdBA1B84ed305cFdAFa0857ffc645fc --chainNames avalanche --tokenAddress 0xb0cf7E20CA9aD11a2a7E5c3c7A27654470524fab --env testnet --yes --destinationChain ethereum-sepolia --destinationChainTokenAddress 0x3f4d2D6727ab6D5cd1dEcEa39930390FfCA3959d
+```

@@ -22,8 +22,13 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
 
     string public homeChain;
 
+    uint256 private constant MESSAGE_TYPE_CROSS_CHAIN_FREEZE = 0;
+    uint256 private constant MESSAGE_TYPE_CROSS_CHAIN_BURN = 1;
+
     mapping(string => bool) public crossChainAdmins;
     mapping(address => bool) public frozenAccounts;
+
+
 
     constructor(
         string memory name,
@@ -37,7 +42,7 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         gasService = IAxelarGasService(gasService_);
     }
 
-    event TokenBurnedCrossChain(address indexed account, string sourceChain, string sourceAddress, address token, uint256 amount);
+    event TokenBurnedCrossChain(address indexed account, address token, uint256 amount);
     event AccountFrozen(address indexed account, bool frozen);
 
     function burn(address account, uint256 amount) external {
@@ -50,16 +55,18 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     }
 
     function burnFromCrossChain(
-        bytes calldata account,
+        address account,
         uint256 amount,
         string calldata destinationChain,
         string calldata destinationAddress
     ) external payable onlyOwner {
 
         //TODO: uncomment once we have memento chainId
-        // require(_getChainID() == mementoChainId, 'Cross-chain burn can only be performed on Memento');
+        // require(_getChainID() == mementoChainId, 'Token.burnFromCrossChain: Cross-chain burn can only be performed on Memento');
 
-        bytes memory payload = abi.encodePacked(amount, account, 1);
+        // bytes memory payload = abi.encodePacked(amount, account, MESSAGE_TYPE_CROSS_CHAIN_BURN);
+         bytes memory payload = abi.encode(MESSAGE_TYPE_CROSS_CHAIN_BURN, account, amount);
+
 
         gasService.payNativeGasForContractCall{ value: msg.value }(
             address(this),
@@ -73,15 +80,17 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
 
 
     function freezeAccountCrossChain(
-        bytes calldata account,
+        address account,
         string calldata destinationChain,
-        string calldata destinationAddress,
+        string calldata destinationAddress
     ) external payable onlyOwner {
 
         //TODO: uncomment once we have memento chainId
-        // require(_getChainID() == mementoChainId, 'Cross-chain burn can only be performed on Memento');
+        // require(_getChainID() == mementoChainId, 'Token.freezeAccountCrossChain: Cross-chain burn can only be performed on Memento');
 
-        bytes memory payload = abi.encodePacked(account, 2);
+        // bytes memory payload = abi.encode(account, MESSAGE_TYPE_CROSS_CHAIN_FREEZE);
+        bytes memory payload = abi.encode(MESSAGE_TYPE_CROSS_CHAIN_FREEZE, account);
+
 
         gasService.payNativeGasForContractCall{ value: msg.value }(
             address(this),
@@ -110,25 +119,23 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
 
     // Override transfer functions to check for frozen accounts
     function transfer(address to, uint256 amount) public override returns (bool) {
-        require(!frozenAccounts[msg.sender], 'Account is frozen');
-        require(!frozenAccounts[to], 'Recipient account is frozen');
+        require(!frozenAccounts[msg.sender], 'Token.Transfer: Account is frozen');
+        require(!frozenAccounts[to], 'Token.Transfer: Recipient account is frozen');
         return super.transfer(to, amount);
     }
 
     function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
-        require(!frozenAccounts[from], 'Sender account is frozen');
-        require(!frozenAccounts[to], 'Recipient account is frozen');
+        require(!frozenAccounts[from], 'Token.TransferFrom: Sender account is frozen');
+        require(!frozenAccounts[to], 'Token.TransferFrom: Recipient account is frozen');
         return super.transferFrom(from, to, amount);
     }
 
     function approve(address spender, uint256 amount) public override returns (bool) {
-        require(!frozenAccounts[msg.sender], 'Account is frozen');
-        require(!frozenAccounts[spender], 'Spender account is frozen');
+        require(!frozenAccounts[msg.sender], 'Token.Approve: Account is frozen');
+        require(!frozenAccounts[spender], 'Token.Approve: Spender account is frozen');
         return super.approve(spender, amount);
     }
 
-
-    // Functions
     function setCrossChainAdmin(string calldata sourceAddress, bool isAllowed) external onlyOwner {
         crossChainAdmins[sourceAddress] = isAllowed;
     }
@@ -138,20 +145,25 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     }
 
     function _execute(bytes32, string calldata sourceChain, string calldata sourceAddress, bytes calldata payload) internal override {
-        // TODO uncomment
-        // require(_stringsEqual(sourceChain, homeChain));
-
-        // Decodes the encodePacked encoded payload, which should be easy to create from other chains without abi support
-        uint256 amount = payload.toUint256(0);
-        address account = payload.toAddress(32);
-
-        _burn(account, amount);
-
-        emit TokenBurnedCrossChain(account, sourceChain, sourceAddress, address(this), amount);
+        (uint256 msgType) = abi.decode(payload, (uint256));
+        if (msgType == MESSAGE_TYPE_CROSS_CHAIN_BURN) {
+            _crossChainBurn(payload);
+        } else if (msgType == MESSAGE_TYPE_CROSS_CHAIN_FREEZE) {
+            _crossChainFreeze(payload);
+        }
     }
 
-    function _stringsEqual(string memory a, string memory b) internal pure returns (bool) {
-        return bytes(a).length == bytes(b).length && keccak256(bytes(a)) == keccak256(bytes(b));
+    function _crossChainFreeze(bytes memory payload) internal {
+        (, address acct) = abi.decode(payload, (uint256, address));
+        frozenAccounts[acct] = true;
+        emit AccountFrozen(acct, true);
+    }
+    
+
+    function _crossChainBurn(bytes memory payload) internal {
+        (, address acct, uint256 amt) = abi.decode(payload, (uint256, address, uint256));
+        _burn(acct, amt);
+        emit TokenBurnedCrossChain(acct, address(this), amt);
     }
 
     function _getChainID() internal view returns (uint256) {

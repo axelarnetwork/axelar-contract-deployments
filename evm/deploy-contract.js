@@ -203,7 +203,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
                 };
 
                 const safeDeploymentConfig = {
-                    saltNonce: Date.now().toString(), 
+                    saltNonce: Date.now().toString(),
                 };
 
                 const predictedSafe = {

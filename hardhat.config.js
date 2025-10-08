@@ -39,7 +39,7 @@ const config = {
         sources: './evm/solidity',
         artifacts: './artifacts',
         cache: './cache',
-        tests: './test'
+        tests: './test',
     },
     defaultNetwork: 'hardhat',
     networks,
