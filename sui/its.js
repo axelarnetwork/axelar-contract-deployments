@@ -653,9 +653,11 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // This submits a LinkToken msg type to ITS Hub.
     const txBuilder = new TxBuilder(client);
 
-    const channel = channelId ? channelId : await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::channel::new`,
-    });
+    const channel = channelId
+        ? channelId
+        : await txBuilder.moveCall({
+              target: `${AxelarGateway.address}::channel::new`,
+          });
 
     // Token manager type (destination chain)
     const tokenManagerType = await txBuilder.moveCall({
