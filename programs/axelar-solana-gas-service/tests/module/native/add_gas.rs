@@ -72,9 +72,7 @@ async fn test_add_native_gas() {
         message_id,
         amount: gas_amount,
         refund_address,
-        mint: None,
-        token_program_id: None,
-        sender_token_account: None,
+        spl_token_info: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);

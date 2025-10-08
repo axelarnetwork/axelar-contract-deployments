@@ -78,9 +78,7 @@ async fn test_pay_native_for_contract_call() {
         payload_hash,
         amount: gas_amount,
         refund_address,
-        mint: None,
-        token_program_id: None,
-        sender_token_account: None,
+        spl_token_info: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);

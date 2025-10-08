@@ -51,9 +51,7 @@ pub(crate) fn process_pay_native_for_contract_call(
         payload_hash,
         amount,
         refund_address,
-        mint: None,
-        token_program_id: None,
-        sender_token_account: None,
+        spl_token_info: None,
     });
 
     Ok(())
@@ -104,9 +102,7 @@ pub(crate) fn add_native_gas(
         message_id,
         amount,
         refund_address,
-        mint: None,
-        token_program_id: None,
-        sender_token_account: None,
+        spl_token_info: None,
     });
 
     Ok(())
@@ -129,9 +125,7 @@ pub(crate) fn collect_fees_native(
     emit_cpi!(GasCollectedEvent {
         receiver: *receiver.key,
         amount,
-        mint: None,
-        token_program_id: None,
-        receiver_token_account: None,
+        spl_token_info: None,
     });
 
     Ok(())
@@ -156,9 +150,7 @@ pub(crate) fn refund_native(
         receiver: *receiver.key,
         message_id,
         amount,
-        mint: None,
-        token_program_id: None,
-        receiver_token_account: None,
+        spl_token_info: None,
     });
 
     Ok(())

@@ -65,9 +65,7 @@ async fn test_refund_native() {
         receiver: refunded_user.pubkey(),
         message_id,
         amount: gas_amount,
-        mint: None,
-        token_program_id: None,
-        receiver_token_account: None,
+        spl_token_info: None,
     };
 
     assert_event_cpi(&expected_event, &inner_ixs);

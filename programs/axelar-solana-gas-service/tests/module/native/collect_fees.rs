@@ -1,4 +1,6 @@
+use axelar_solana_gas_service::events::GasCollectedEvent;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{signature::Keypair, signer::Signer};
 
@@ -31,6 +33,39 @@ async fn test_receive_funds() {
         sol_amount,
     )
     .unwrap();
+
+    // First simulate to check events
+    let simulation_result = test_fixture
+        .simulate_tx_with_custom_signers(
+            &[ix.clone()],
+            &[
+                // pays for tx
+                &test_fixture.payer.insecure_clone(),
+                // operator for config pda deduction
+                &gas_utils.operator,
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(!inner_ixs.is_empty());
+
+    let expected_event = GasCollectedEvent {
+        receiver: receiver.pubkey(),
+        amount: sol_amount,
+        spl_token_info: None,
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
 
     test_fixture
         .send_tx_with_custom_signers(
