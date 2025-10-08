@@ -398,7 +398,9 @@ async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
     });
 
     const coin = contracts[symbol.toUpperCase()];
-    if (!coin) throw new Error(`Cannot find coin with symbol ${symbol} in config`);
+    if (!coin) {
+        throw new Error(`Cannot find coin with symbol ${symbol} in config`);
+    }
 
     const decimals = coin.decimals;
     const metadata = coin.objects.Metadata;

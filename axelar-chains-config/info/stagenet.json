@@ -1960,17 +1960,6 @@
             "ItsSingleton": "0x6820a95d12727c5fde66a5f4a1ca91481733372200a51b1fcdf065cbcc404313",
             "ItsChannelId": "0xf0b041d8f718ba483e17e340e133dc866f410c2b80bf85899c5e4bda5361209f"
           }
-        },
-        "DTCOIN": {
-          "address": "0x9776dc0d846aba1129a5b9006f6e8298954e7ae31038cda76653083ce38b12be",
-          "typeArgument": "0x9776dc0d846aba1129a5b9006f6e8298954e7ae31038cda76653083ce38b12be::dtcoin::DTCOIN",
-          "decimals": "9",
-          "objects": {
-            "TokenId": "0xd3554c2cb1c06d5a51ad9bab11db69ce2ea6c92c96297c2ba1ef96fe3bbf9568",
-            "TreasuryCap": "0xd1cd02da087654658194a3a2043d948e716dedbfbbf23cae8e744c34a2a154f5",
-            "Metadata": "0x8e047ce17d4a9be2ffe7c65b7435bc65c8c6a9c8aff7f6328ffcec494d2445e8",
-            "TreasuryCapReclaimer": "0x3e6347c0213235bd383d9363115dfcb8fd340a5e8d88128ce631751d552458af"
-          }
         }
       },
       "finality": "1",
