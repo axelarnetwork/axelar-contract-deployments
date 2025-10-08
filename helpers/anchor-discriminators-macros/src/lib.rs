@@ -253,7 +253,7 @@ pub fn account(
             #[automatically_derived]
             impl #impl_gen borsh::BorshSerialize for #account_name #type_gen #where_clause {
                 fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-                    writer.write_all(#account_name::DISCRIMINATOR)?;
+                    writer.write_all(Self::DISCRIMINATOR)?;
                     #(borsh::BorshSerialize::serialize(&self.#field_names, writer)?;)*
                     Ok(())
                 }
@@ -266,13 +266,13 @@ pub fn account(
                     let mut discriminator = [0u8; 8];
                     reader.read_exact(&mut discriminator)?;
 
-                    if discriminator != #account_name::DISCRIMINATOR {
+                    if discriminator != Self::DISCRIMINATOR {
                         return Err(std::io::Error::new(
                             std::io::ErrorKind::InvalidData,
                             format!(
                                 "Invalid account discriminator for {}: expected {:?}, got {:?}",
                                 stringify!(#account_name),
-                                #account_name::DISCRIMINATOR,
+                                Self::DISCRIMINATOR,
                                 discriminator
                             ),
                         ));

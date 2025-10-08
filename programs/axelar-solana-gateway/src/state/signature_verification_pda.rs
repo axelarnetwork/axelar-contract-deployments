@@ -28,6 +28,7 @@ impl BytemuckedPda for SignatureVerificationSessionData {}
 
 #[cfg(test)]
 mod tests {
+    use anchor_discriminators::Discriminator;
     use core::mem::size_of;
 
     use crate::types::U128;
@@ -70,5 +71,30 @@ mod tests {
 
         let deserialized: &SignatureVerificationSessionData = bytemuck::cast_ref(&buffer);
         assert_eq!(&updated_state, deserialized);
+    }
+
+    #[test]
+    #[allow(clippy::indexing_slicing)]
+    fn test_pda_serialization() {
+        let mut buffer = vec![0u8; SignatureVerificationSessionData::pda_size()];
+
+        {
+            let session = SignatureVerificationSessionData::init_mut(&mut buffer).unwrap();
+
+            *session = SignatureVerificationSessionData {
+                signature_verification: SignatureVerification {
+                    accumulated_threshold: U128::new(100),
+                    signature_slots: [1; 32],
+                    signing_verifier_set_hash: [2; 32],
+                },
+                bump: 255,
+                _pad: [0; 15],
+            };
+        }
+
+        assert_eq!(
+            &buffer[..SignatureVerificationSessionData::DISCRIMINATOR.len()],
+            SignatureVerificationSessionData::DISCRIMINATOR
+        );
     }
 }
