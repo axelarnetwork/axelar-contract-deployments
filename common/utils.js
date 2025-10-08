@@ -731,8 +731,8 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
 
     switch (chainType) {
         case 'sui':
-            const coinTypePieces = destinationTokenAddress.split("::");
-            const packageId = coinTypePieces[0].replace('0x','');
+            const coinTypePieces = destinationTokenAddress.split('::');
+            const packageId = coinTypePieces[0].replace('0x', '');
             const packageName = coinTypePieces[1];
             const coinSymbol = coinTypePieces[2];
 
