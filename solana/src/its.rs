@@ -258,7 +258,7 @@ pub(crate) struct InterchainTokenMintArgs {
 
     /// The amount of tokens to mint
     #[clap(long)]
-    amount: u64,
+    amount: String,
 }
 
 #[derive(Parser, Debug)]
@@ -422,7 +422,7 @@ pub(crate) struct DeployInterchainTokenArgs {
 
     /// Initial supply of the interchain token
     #[clap(long)]
-    initial_supply: f64,
+    initial_supply: u64,
 
     /// Optional mint account for the interchain token. Required if initial_supply is zero
     #[clap(long)]
@@ -594,9 +594,9 @@ pub(crate) struct InterchainTransferArgs {
     #[clap(long)]
     destination_address: String,
 
-    /// The amount of tokens to transfer
+    /// The amount of tokens to transfer (supports fractional amounts like 123.55)
     #[clap(long)]
-    amount: u64,
+    amount: String,
 
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
@@ -643,7 +643,7 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
 
     /// The amount of tokens to transfer
     #[clap(long)]
-    amount: u64,
+    amount: String,
 
     /// The call data to be sent to the contract on the destination chain
     #[clap(long, value_parser = parse_hex_vec)]
@@ -694,7 +694,7 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
 
     /// The amount of tokens to transfer
     #[clap(long)]
-    amount: u64,
+    amount: String,
 
     /// The call data to be sent to the contract on the destination chain
     #[clap(long, value_parser = parse_hex_vec)]
@@ -1121,22 +1121,8 @@ fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    // Convert human-readable supply to raw units with overflow protection
-    let multiplier = 10_f64.powi(args.decimals as i32);
-    let raw_supply_f64 = args.initial_supply * multiplier;
-    
-    // Check for overflow
-    if raw_supply_f64 > u64::MAX as f64 {
-        return Err(eyre::eyre!(
-            "Initial supply too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
-            args.initial_supply,
-            args.decimals,
-            raw_supply_f64,
-            u64::MAX
-        ));
-    }
-    
-    let raw_supply = raw_supply_f64 as u64;
+    // Convert human-readable supply to raw units using safe integer arithmetic
+    let raw_supply = crate::utils::safe_token_conversion(args.initial_supply as f64, args.decimals)?;
     
     let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
@@ -1272,22 +1258,8 @@ fn interchain_transfer(
     let token_program = get_token_program_from_mint(&mint, config)?;
     let decimals = get_token_decimals(&mint, config)?;
 
-    // Convert human-readable amount to raw units with overflow protection
-    let multiplier = 10_f64.powi(decimals as i32);
-    let raw_amount_f64 = args.amount as f64 * multiplier;
-    
-    // Check for overflow
-    if raw_amount_f64 > u64::MAX as f64 {
-        return Err(eyre::eyre!(
-            "Amount too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
-            args.amount,
-            decimals,
-            raw_amount_f64,
-            u64::MAX
-        ));
-    }
-    
-    let raw_amount = raw_amount_f64 as u64;
+    // Convert human-readable amount to raw units using safe integer arithmetic
+    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
@@ -1330,22 +1302,8 @@ fn call_contract_with_interchain_token(
     let token_program = get_token_program_from_mint(&mint, config)?;
     let decimals = get_token_decimals(&mint, config)?;
 
-    // Convert human-readable amount to raw units with overflow protection
-    let multiplier = 10_f64.powi(decimals as i32);
-    let raw_amount_f64 = args.amount as f64 * multiplier;
-    
-    // Check for overflow
-    if raw_amount_f64 > u64::MAX as f64 {
-        return Err(eyre::eyre!(
-            "Amount too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
-            args.amount,
-            decimals,
-            raw_amount_f64,
-            u64::MAX
-        ));
-    }
-    
-    let raw_amount = raw_amount_f64 as u64;
+    // Convert human-readable amount to raw units using safe integer arithmetic
+    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
@@ -1391,22 +1349,8 @@ fn call_contract_with_interchain_token_offchain_data(
     let token_program = get_token_program_from_mint(&mint, config)?;
     let decimals = get_token_decimals(&mint, config)?;
 
-    // Convert human-readable amount to raw units with overflow protection
-    let multiplier = 10_f64.powi(decimals as i32);
-    let raw_amount_f64 = args.amount as f64 * multiplier;
-    
-    // Check for overflow
-    if raw_amount_f64 > u64::MAX as f64 {
-        return Err(eyre::eyre!(
-            "Amount too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
-            args.amount,
-            decimals,
-            raw_amount_f64,
-            u64::MAX
-        ));
-    }
-    
-    let raw_amount = raw_amount_f64 as u64;
+    // Convert human-readable amount to raw units using safe integer arithmetic
+    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
@@ -1590,6 +1534,11 @@ fn interchain_token_mint(
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
+
+    // Parse decimal string to raw units using precise string-based arithmetic
+    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
+
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::mint(
             args.token_id,
@@ -1597,7 +1546,7 @@ fn interchain_token_mint(
             args.to,
             *fee_payer, // Payer is the minter in this context
             token_program,
-            args.amount,
+            raw_amount,
         )?,
     ])
 }

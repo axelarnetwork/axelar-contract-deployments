@@ -336,3 +336,159 @@ pub(crate) fn try_infer_program_id_from_env(
 
     Ok(id)
 }
+
+pub(crate) fn safe_token_conversion(human_amount: f64, decimals: u8) -> eyre::Result<u64> {
+    // Validate input
+    if human_amount < 0.0 {
+        return Err(eyre::eyre!("Token amount cannot be negative: {}", human_amount));
+    }
+    
+    if decimals > 19 {
+        return Err(eyre::eyre!("Too many decimals: {} (maximum 19)", decimals));
+    }
+    
+    // Handle zero amount
+    if human_amount == 0.0 {
+        return Ok(0);
+    }
+    
+    // Convert to string to avoid floating-point precision issues
+    let amount_str = format!("{:.19}", human_amount);
+    let parts: Vec<&str> = amount_str.split('.').collect();
+    
+    let integer_part = parts[0].parse::<u64>()
+        .map_err(|_| eyre::eyre!("Invalid integer part: {}", parts[0]))?;
+    
+    let fractional_part = if parts.len() > 1 {
+        let frac_str = parts[1];
+        let frac_len = frac_str.len().min(decimals as usize);
+        let truncated_frac = &frac_str[..frac_len];
+        
+        // Pad with zeros if necessary
+        let padded_frac = format!("{:0<width$}", truncated_frac, width = decimals as usize);
+        padded_frac.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid fractional part: {}", truncated_frac))?
+    } else {
+        0
+    };
+    
+    // Calculate the multiplier as a u64 to avoid floating-point issues
+    let multiplier = 10_u64.pow(decimals as u32);
+    
+    // Check for overflow before multiplication
+    if integer_part > u64::MAX / multiplier {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            human_amount,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    let integer_contribution = integer_part * multiplier;
+    
+    // Check if adding fractional part would overflow
+    if integer_contribution > u64::MAX - fractional_part {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            human_amount,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    Ok(integer_contribution + fractional_part)
+}
+
+/// Parses a decimal string and converts it to raw units with specified decimals.
+/// This function avoids floating-point precision issues by working directly with strings.
+/// 
+/// # Arguments
+/// * `s` - The decimal string to parse (e.g., "123.55", "1000", "0.001")
+/// * `decimals` - The number of decimal places for the token
+///
+/// # Returns
+/// * `Ok(u64)` - The raw amount in smallest units
+/// * `Err(eyre::Error)` - If parsing fails
+///
+/// # Example
+/// ```
+/// let raw_amount = parse_decimal_string_to_raw_units("123.55", 9)?; // Returns 123550000000
+/// ```
+pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
+    // Validate input
+    if s.is_empty() {
+        return Err(eyre::eyre!("Amount cannot be empty"));
+    }
+    
+    if decimals > 19 {
+        return Err(eyre::eyre!("Too many decimals: {} (maximum 19)", decimals));
+    }
+    
+    // Handle negative amounts
+    if s.starts_with('-') {
+        return Err(eyre::eyre!("Amount cannot be negative: {}", s));
+    }
+    
+    // Split by decimal point
+    let parts: Vec<&str> = s.split('.').collect();
+    
+    if parts.len() > 2 {
+        return Err(eyre::eyre!("Invalid decimal format: {}", s));
+    }
+    
+    let integer_part = parts[0];
+    let fractional_part = if parts.len() > 1 { parts[1] } else { "" };
+    
+    // Parse integer part
+    let integer_value = if integer_part.is_empty() {
+        0
+    } else {
+        integer_part.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part))?
+    };
+    
+    // Parse fractional part
+    let fractional_value = if fractional_part.is_empty() {
+        0
+    } else {
+        // Truncate fractional part to fit within decimals
+        let truncated_frac = if fractional_part.len() > decimals as usize {
+            &fractional_part[..decimals as usize]
+        } else {
+            fractional_part
+        };
+        
+        // Pad with zeros if necessary
+        let padded_frac = format!("{:0<width$}", truncated_frac, width = decimals as usize);
+        padded_frac.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid fractional part: {}", truncated_frac))?
+    };
+    
+    // Calculate the multiplier as a u64 to avoid floating-point issues
+    let multiplier = 10_u64.pow(decimals as u32);
+    
+    // Check for overflow before multiplication
+    if integer_value > u64::MAX / multiplier {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            s,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    let integer_contribution = integer_value * multiplier;
+    
+    // Check if adding fractional part would overflow
+    if integer_contribution > u64::MAX - fractional_value {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            s,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    Ok(integer_contribution + fractional_value)
+}
