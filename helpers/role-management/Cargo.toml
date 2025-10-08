@@ -10,6 +10,8 @@ crate-type = ["cdylib", "lib"]
 workspace = true
 
 [dependencies]
+anchor-discriminators.workspace = true
+anchor-discriminators-macros.workspace = true
 bincode.workspace = true
 bitflags.workspace = true
 borsh.workspace = true

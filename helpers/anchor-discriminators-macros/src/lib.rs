@@ -226,6 +226,7 @@ pub fn account(
         attr.path.to_token_stream().to_string() == "repr"
             && attr.tokens.to_token_stream().to_string() == "(C)"
     });
+    let (impl_gen, type_gen, where_clause) = account_strct.generics.split_for_impl();
 
     let discriminator = gen_discriminator(
         anchor_discriminators::SIGHASH_ACCOUNT_NAMESPACE,
@@ -250,7 +251,7 @@ pub fn account(
     } else {
         quote! {
             #[automatically_derived]
-            impl borsh::BorshSerialize for #account_name {
+            impl #impl_gen borsh::BorshSerialize for #account_name #type_gen #where_clause {
                 fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
                     writer.write_all(#account_name::DISCRIMINATOR)?;
                     #(borsh::BorshSerialize::serialize(&self.#field_names, writer)?;)*
@@ -259,7 +260,7 @@ pub fn account(
             }
 
             #[automatically_derived]
-            impl borsh::BorshDeserialize for #account_name {
+            impl #impl_gen borsh::BorshDeserialize for #account_name #type_gen #where_clause {
                 fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
                     // Read and verify discriminator
                     let mut discriminator = [0u8; 8];
@@ -294,7 +295,7 @@ pub fn account(
         #account_strct
 
         #[automatically_derived]
-        impl anchor_discriminators::Discriminator for #account_name {
+        impl #impl_gen anchor_discriminators::Discriminator for #account_name #type_gen #where_clause {
             const DISCRIMINATOR: &'static [u8] = &#discriminator;
         }
 

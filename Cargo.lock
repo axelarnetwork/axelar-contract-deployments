@@ -1078,6 +1078,7 @@ name = "axelar-solana-its"
 version = "0.1.0"
 dependencies = [
  "alloy-primitives",
+ "anchor-discriminators",
  "anchor-discriminators-macros",
  "anyhow",
  "axelar-message-primitives",
@@ -6465,6 +6466,8 @@ dependencies = [
 name = "role-management"
 version = "0.1.0"
 dependencies = [
+ "anchor-discriminators",
+ "anchor-discriminators-macros",
  "bincode",
  "bitflags 2.9.0",
  "borsh 1.5.7",

@@ -211,7 +211,7 @@ async fn test_deployment_with_token_manager_mismatch(
 
         let error_tx = result.unwrap_err();
         assert!(
-            error_tx.find_log("Warning: failed to deserialize account as axelar_solana_its::state::deploy_approval::DeployApproval: Unexpected length of input. The account might not have been initialized.").is_some(),
+            error_tx.find_log("Warning: failed to deserialize account as axelar_solana_its::state::deploy_approval::DeployApproval: failed to fill whole buffer. The account might not have been initialized.").is_some(),
             "Expected deserialization error message because the account doesn't exist (because no approval was created for TokenB)"
         );
     }
