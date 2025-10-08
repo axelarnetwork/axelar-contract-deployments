@@ -152,6 +152,7 @@ pub struct InitializePayloadVerificationSession<'info> {
     gateway_config_pda: AccountInfo<'info>,
     #[account(mut)]
     verification_session_pda: AccountInfo<'info>,
+    verifier_set_tracker_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
 }
 
