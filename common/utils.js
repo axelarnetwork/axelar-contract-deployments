@@ -736,7 +736,7 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
             const packageName = coinTypePieces[1];
             const coinSymbol = coinTypePieces[2];
 
-            if (coinTypePieces !== 3) {
+            if (coinTypePieces.length !== 3) {
                 throw new Error(`Invalid Sui coin type, got ${destinationTokenAddress}`);
             } else if (packageId.length !== 64) {
                 throw new Error(`Invalid Sui coin package id, got ${packageId}`);
