@@ -23,6 +23,7 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     string public homeChain;
 
     mapping(string => bool) public crossChainAdmins;
+    mapping(address => bool) public frozenAccounts;
 
     constructor(
         string memory name,
@@ -37,6 +38,7 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     }
 
     event TokenBurnedCrossChain(address indexed account, string sourceChain, string sourceAddress, address token, uint256 amount);
+    event AccountFrozen(address indexed account, bool frozen);
 
     function burn(address account, uint256 amount) external {
         _burn(account, amount);
@@ -53,9 +55,11 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         string calldata destinationChain,
         string calldata destinationAddress
     ) external payable onlyOwner {
-        // Burn from other chain
-        // Use encodePacked so it is easier to decode on another chain without abi support
-        bytes memory payload = abi.encodePacked(amount, account);
+
+        //TODO: uncomment once we have memento chainId
+        // require(_getChainID() == mementoChainId, 'Cross-chain burn can only be performed on Memento');
+
+        bytes memory payload = abi.encodePacked(amount, account, 1);
 
         gasService.payNativeGasForContractCall{ value: msg.value }(
             address(this),
@@ -66,6 +70,63 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         );
         gateway().callContract(destinationChain, destinationAddress, payload);
     }
+
+
+    function freezeAccountCrossChain(
+        bytes calldata account,
+        string calldata destinationChain,
+        string calldata destinationAddress,
+    ) external payable onlyOwner {
+
+        //TODO: uncomment once we have memento chainId
+        // require(_getChainID() == mementoChainId, 'Cross-chain burn can only be performed on Memento');
+
+        bytes memory payload = abi.encodePacked(account, 2);
+
+        gasService.payNativeGasForContractCall{ value: msg.value }(
+            address(this),
+            destinationChain,
+            destinationAddress,
+            payload,
+            msg.sender
+        );
+        gateway().callContract(destinationChain, destinationAddress, payload);
+    }
+
+    // Freeze/Unfreeze functions
+    function freezeAccount(address account) external onlyOwner {
+        frozenAccounts[account] = true;
+        emit AccountFrozen(account, true);
+    }
+
+    function unfreezeAccount(address account) external onlyOwner {
+        frozenAccounts[account] = false;
+        emit AccountFrozen(account, false);
+    }
+
+    function isAccountFrozen(address account) external view returns (bool) {
+        return frozenAccounts[account];
+    }
+
+    // Override transfer functions to check for frozen accounts
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        require(!frozenAccounts[msg.sender], 'Account is frozen');
+        require(!frozenAccounts[to], 'Recipient account is frozen');
+        return super.transfer(to, amount);
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        require(!frozenAccounts[from], 'Sender account is frozen');
+        require(!frozenAccounts[to], 'Recipient account is frozen');
+        return super.transferFrom(from, to, amount);
+    }
+
+    function approve(address spender, uint256 amount) public override returns (bool) {
+        require(!frozenAccounts[msg.sender], 'Account is frozen');
+        require(!frozenAccounts[spender], 'Spender account is frozen');
+        return super.approve(spender, amount);
+    }
+
 
     // Functions
     function setCrossChainAdmin(string calldata sourceAddress, bool isAllowed) external onlyOwner {
@@ -89,10 +150,15 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         emit TokenBurnedCrossChain(account, sourceChain, sourceAddress, address(this), amount);
     }
 
-    /**
-     * @dev Returns true if the two strings are equal.
-     */
     function _stringsEqual(string memory a, string memory b) internal pure returns (bool) {
         return bytes(a).length == bytes(b).length && keccak256(bytes(a)) == keccak256(bytes(b));
+    }
+
+    function _getChainID() internal view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
     }
 }
