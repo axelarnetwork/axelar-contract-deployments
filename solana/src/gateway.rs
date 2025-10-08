@@ -395,7 +395,6 @@ fn construct_execute_data(
 ) -> eyre::Result<ExecuteData> {
     let message_hash = hash_payload(
         &domain_separator,
-        &signer_set.verifier_set(),
         payload.clone(),
     )?;
     let signatures = signer_set
@@ -456,6 +455,7 @@ fn append_verification_flow_instructions(
             *fee_payer,
             *gateway_config_pda,
             execute_data.payload_merkle_root,
+            execute_data.signing_verifier_set_merkle_root,
         )?,
     );
 
@@ -463,17 +463,18 @@ fn append_verification_flow_instructions(
         execute_data.signing_verifier_set_merkle_root,
     );
 
+    let (verification_session_pda, _bump) =
+        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root, &execute_data.signing_verifier_set_merkle_root);
+
     for signature_leaf in &execute_data.signing_verifier_set_leaves {
         instructions.push(axelar_solana_gateway::instructions::verify_signature(
             *gateway_config_pda,
             verifier_set_tracker_pda,
+            verification_session_pda,
             execute_data.payload_merkle_root,
             signature_leaf.clone(),
         )?);
     }
-
-    let (verification_session_pda, _bump) =
-        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root);
 
     Ok(verification_session_pda)
 }
@@ -894,7 +895,7 @@ async fn execute(
 
         // Handle special destination addresses
         if destination_address == axelar_solana_its::id() {
-            let ix = its_instruction_builder::build_its_gmp_instruction(
+            let ix = its_instruction_builder::build_execute_instruction(
                 *fee_payer,
                 incoming_message_pda,
                 message_payload_pda,
@@ -915,6 +916,7 @@ async fn execute(
             instructions.push(ix);
         } else {
             let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
+                *fee_payer,
                 &message,
                 &payload,
                 incoming_message_pda,

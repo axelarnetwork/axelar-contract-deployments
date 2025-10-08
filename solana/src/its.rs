@@ -410,7 +410,7 @@ pub(crate) struct DeployInterchainTokenArgs {
 
     /// Initial supply of the interchain token
     #[clap(long)]
-    initial_supply: u64,
+    initial_supply: f64,
 
     /// Optional mint account for the interchain token. Required if initial_supply is zero
     #[clap(long)]
@@ -749,6 +749,32 @@ fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<P
     Ok(mint_account.owner)
 }
 
+fn get_token_decimals(mint: &Pubkey, config: &Config) -> eyre::Result<u8> {
+    use spl_token_2022::state::Mint as Token2022Mint;
+    use spl_token::state::Mint as TokenMint;
+    use solana_sdk::program_pack::Pack;
+    
+    let rpc_client = RpcClient::new(config.url.clone());
+    let mint_account = rpc_client.get_account(mint)?;
+    
+    // Try to parse as Token-2022 first, then fall back to standard SPL Token
+    match mint_account.owner.to_string().as_str() {
+        "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" => {
+            // Token-2022
+            let mint_data = Token2022Mint::unpack(&mint_account.data)
+                .map_err(|_| eyre!("Failed to parse Token-2022 mint data"))?;
+            Ok(mint_data.decimals)
+        }
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {
+            // Standard SPL Token
+            let mint_data = TokenMint::unpack(&mint_account.data)
+                .map_err(|_| eyre!("Failed to parse SPL Token mint data"))?;
+            Ok(mint_data.decimals)
+        }
+        _ => Err(eyre!("Unsupported token program: {}", mint_account.owner))
+    }
+}
+
 fn get_mint_from_token_manager(token_id: &[u8; 32], config: &Config) -> eyre::Result<Pubkey> {
     use borsh::BorshDeserialize as _;
 
@@ -940,6 +966,7 @@ fn set_trusted_chain(
                 println!("Creating instruction to set {chain} as trusted on Solana ITS");
                 instructions.push(axelar_solana_its::instruction::set_trusted_chain(
                     *fee_payer,
+                    *fee_payer,
                     chain.clone(),
                 )?);
             }
@@ -948,6 +975,7 @@ fn set_trusted_chain(
         }
     } else {
         instructions.push(axelar_solana_its::instruction::set_trusted_chain(
+            *fee_payer,
             *fee_payer,
             set_trusted_chain_args.chain_name,
         )?);
@@ -961,6 +989,7 @@ fn remove_trusted_chain(
     remove_trusted_chain_args: TrustedChainArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::remove_trusted_chain(
+        *fee_payer,
         *fee_payer,
         remove_trusted_chain_args.chain_name,
     )?])
@@ -981,6 +1010,7 @@ fn approve_deploy_remote_interchain_token(
     Ok(vec![
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             *fee_payer,
+            *fee_payer,
             args.deployer,
             args.salt,
             args.destination_chain,
@@ -995,6 +1025,7 @@ fn revoke_deploy_remote_interchain_token(
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![
         axelar_solana_its::instruction::revoke_deploy_remote_interchain_token(
+            *fee_payer,
             *fee_payer,
             args.deployer,
             args.salt,
@@ -1046,6 +1077,23 @@ fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
+    // Convert human-readable supply to raw units with overflow protection
+    let multiplier = 10_f64.powi(args.decimals as i32);
+    let raw_supply_f64 = args.initial_supply * multiplier;
+    
+    // Check for overflow
+    if raw_supply_f64 > u64::MAX as f64 {
+        return Err(eyre::eyre!(
+            "Initial supply too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
+            args.initial_supply,
+            args.decimals,
+            raw_supply_f64,
+            u64::MAX
+        ));
+    }
+    
+    let raw_supply = raw_supply_f64 as u64;
+    
     let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
@@ -1055,16 +1103,20 @@ fn deploy_interchain_token(
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {mint}");
+    println!("- Human Amount: {} {}", args.initial_supply, args.symbol);
+    println!("- Raw Amount: {} (smallest units)", raw_supply);
+    println!("- Decimals: {}", args.decimals);
     println!("------------------------------------------");
 
     Ok(vec![
         axelar_solana_its::instruction::deploy_interchain_token(
             *fee_payer,
+            *fee_payer,
             args.salt,
             args.name,
             args.symbol,
             args.decimals,
-            args.initial_supply,
+            raw_supply,
             args.minter,
         )?,
     ])
@@ -1076,6 +1128,7 @@ fn deploy_remote_interchain_token(
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token(
+            *fee_payer,
             *fee_payer,
             args.salt,
             args.destination_chain,
@@ -1097,6 +1150,7 @@ fn deploy_remote_interchain_token_with_minter(
     )?;
     Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            *fee_payer,
             *fee_payer,
             args.salt,
             args.minter,
@@ -1138,6 +1192,7 @@ fn register_custom_token(
 
     Ok(vec![axelar_solana_its::instruction::register_custom_token(
         *fee_payer,
+        *fee_payer,
         args.salt,
         args.mint,
         args.token_manager_type,
@@ -1148,6 +1203,7 @@ fn register_custom_token(
 
 fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::link_token(
+        *fee_payer,
         *fee_payer,
         args.salt,
         args.destination_chain,
@@ -1165,21 +1221,50 @@ fn interchain_transfer(
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
+
+    // Convert human-readable amount to raw units with overflow protection
+    let multiplier = 10_f64.powi(decimals as i32);
+    let raw_amount_f64 = args.amount as f64 * multiplier;
+    
+    // Check for overflow
+    if raw_amount_f64 > u64::MAX as f64 {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
+            args.amount,
+            decimals,
+            raw_amount_f64,
+            u64::MAX
+        ));
+    }
+    
+    let raw_amount = raw_amount_f64 as u64;
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
         &args.destination_chain,
-        args.destination_address,
+        args.destination_address.clone(),
     )?;
 
+    println!("------------------------------------------");
+    println!("\u{1FA99} Transfer details:");
+    println!();
+    println!("- Human Amount: {} tokens", args.amount);
+    println!("- Raw Amount: {} (smallest units)", raw_amount);
+    println!("- Decimals: {}", decimals);
+    println!("- Destination Chain: {}", args.destination_chain);
+    println!("- Destination Address: {}", args.destination_address);
+    println!("------------------------------------------");
+
     Ok(vec![axelar_solana_its::instruction::interchain_transfer(
+        *fee_payer,
         *fee_payer,
         args.source_account,
         args.token_id,
         args.destination_chain,
         destination_address,
-        args.amount,
+        raw_amount,
         mint,
         token_program,
         args.gas_value,
@@ -1193,20 +1278,51 @@ fn call_contract_with_interchain_token(
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
+
+    // Convert human-readable amount to raw units with overflow protection
+    let multiplier = 10_f64.powi(decimals as i32);
+    let raw_amount_f64 = args.amount as f64 * multiplier;
+    
+    // Check for overflow
+    if raw_amount_f64 > u64::MAX as f64 {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
+            args.amount,
+            decimals,
+            raw_amount_f64,
+            u64::MAX
+        ));
+    }
+    
+    let raw_amount = raw_amount_f64 as u64;
+
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
         &args.destination_chain,
-        args.destination_address,
+        args.destination_address.clone(),
     )?;
+
+    println!("------------------------------------------");
+    println!("\u{1FA99} Contract call details:");
+    println!();
+    println!("- Human Amount: {} tokens", args.amount);
+    println!("- Raw Amount: {} (smallest units)", raw_amount);
+    println!("- Decimals: {}", decimals);
+    println!("- Destination Chain: {}", args.destination_chain);
+    println!("- Destination Address: {}", args.destination_address);
+    println!("------------------------------------------");
+
     Ok(vec![
         axelar_solana_its::instruction::call_contract_with_interchain_token(
+            *fee_payer,
             *fee_payer,
             args.source_account,
             args.token_id,
             args.destination_chain,
             destination_address,
-            args.amount,
+            raw_amount,
             mint,
             args.data,
             token_program,
@@ -1222,20 +1338,50 @@ fn call_contract_with_interchain_token_offchain_data(
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
+
+    // Convert human-readable amount to raw units with overflow protection
+    let multiplier = 10_f64.powi(decimals as i32);
+    let raw_amount_f64 = args.amount as f64 * multiplier;
+    
+    // Check for overflow
+    if raw_amount_f64 > u64::MAX as f64 {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} = {} exceeds maximum u64 value ({})",
+            args.amount,
+            decimals,
+            raw_amount_f64,
+            u64::MAX
+        ));
+    }
+    
+    let raw_amount = raw_amount_f64 as u64;
+
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
         &args.destination_chain,
-        args.destination_address,
+        args.destination_address.clone(),
     )?;
 
+    println!("------------------------------------------");
+    println!("\u{1FA99} Offchain contract call details:");
+    println!();
+    println!("- Human Amount: {} tokens", args.amount);
+    println!("- Raw Amount: {} (smallest units)", raw_amount);
+    println!("- Decimals: {}", decimals);
+    println!("- Destination Chain: {}", args.destination_chain);
+    println!("- Destination Address: {}", args.destination_address);
+    println!("------------------------------------------");
+
     let instruction = axelar_solana_its::instruction::call_contract_with_interchain_token(
+        *fee_payer,
         *fee_payer,
         args.source_account,
         args.token_id,
         args.destination_chain,
         destination_address,
-        args.amount,
+        raw_amount,
         mint,
         args.data,
         token_program,
@@ -1251,8 +1397,9 @@ fn call_contract_with_interchain_token_offchain_data(
 fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::set_flow_limit(
         *fee_payer,
+        *fee_payer,
         args.token_id,
-        args.flow_limit,
+        Some(args.flow_limit),
     )?])
 }
 
@@ -1261,7 +1408,7 @@ fn transfer_operatorship(
     args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::transfer_operatorship(
-        *fee_payer, args.to,
+        *fee_payer, *fee_payer, args.to,
     )?])
 }
 
@@ -1270,7 +1417,7 @@ fn propose_operatorship(
     args: TransferOperatorshipArgs, // Reuses args from transfer
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::propose_operatorship(
-        *fee_payer, args.to,
+        *fee_payer, *fee_payer, args.to,
     )?])
 }
 
@@ -1279,7 +1426,7 @@ fn accept_operatorship(
     args: AcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::accept_operatorship(
-        *fee_payer, args.from,
+        *fee_payer, *fee_payer, args.from,
     )?])
 }
 
@@ -1290,8 +1437,9 @@ fn token_manager_set_flow_limit(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::set_flow_limit(
             *fee_payer,
+            *fee_payer, // flow_limiter
             args.token_id,
-            args.flow_limit,
+            Some(args.flow_limit),
         )?,
     ])
 }
@@ -1303,6 +1451,7 @@ fn token_manager_add_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::add_flow_limiter(
             *fee_payer,
+            *fee_payer, // adder
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1316,6 +1465,7 @@ fn token_manager_remove_flow_limiter(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::remove_flow_limiter(
             *fee_payer,
+            *fee_payer, // remover
             args.token_id,
             args.flow_limiter,
         )?,
@@ -1329,6 +1479,7 @@ fn token_manager_transfer_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::transfer_operatorship(
             *fee_payer,
+            *fee_payer, // sender
             args.token_id,
             args.to,
         )?,
@@ -1342,6 +1493,7 @@ fn token_manager_propose_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::propose_operatorship(
             *fee_payer,
+            *fee_payer, // proposer
             args.token_id,
             args.to,
         )?,
@@ -1355,6 +1507,7 @@ fn token_manager_accept_operatorship(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::accept_operatorship(
             *fee_payer,
+            *fee_payer, // accepter
             args.token_id,
             args.from,
         )?,
@@ -1371,6 +1524,7 @@ fn token_manager_handover_mint_authority(
     Ok(vec![
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             *fee_payer,
+            *fee_payer, // authority
             args.token_id,
             mint,
             token_program,
@@ -1404,6 +1558,7 @@ fn interchain_token_transfer_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::transfer_mintership(
             *fee_payer,
+            *fee_payer, // sender
             args.token_id,
             args.to,
         )?,
@@ -1417,6 +1572,7 @@ fn interchain_token_propose_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::propose_mintership(
             *fee_payer,
+            *fee_payer, // proposer
             args.token_id,
             args.to,
         )?,
@@ -1430,6 +1586,7 @@ fn interchain_token_accept_mintership(
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::accept_mintership(
             *fee_payer,
+            *fee_payer, // accepter
             args.token_id,
             args.from,
         )?,
@@ -1461,7 +1618,7 @@ fn get_token_manager(args: TokenManagerArgs, config: &Config) -> eyre::Result<()
     println!("- Interchain Token ID: {}", args.token_id);
     println!("- Mint Address: {}", token_manager.token_address);
     println!("- Type: {:#?}", token_manager.ty);
-    println!("- Flow Limit: {}", token_manager.flow_slot.flow_limit);
+    println!("- Flow Limit: {:?}", token_manager.flow_slot.flow_limit);
     println!("------------------------------------------");
 
     Ok(())

@@ -318,10 +318,12 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize Gas Service:
 
     ```sh
-    solana/cli --chain-id $CHAIN send gas-service init \
+    solana/cli --chain-id $CHAIN send --signer-keys $OPERATOR_KEYPAIR_PATH gas-service init \
         --operator $OPERATOR_PDA \
         --salt "[version] $ENV"
     ```
+
+    **Note**: The `--signer-keys` parameter must be set to the keypair file that corresponds to the operator address specified in `--operator`. The gas service init instruction requires the operator to sign the transaction to prove they are the legitimate operator for the gas service.
 
 1. Initialize Governance:
 
@@ -357,7 +359,7 @@ The following check should be performed after the rollout. It will send a GMP me
 1. Initialize the `Memo` program:
 
     ```sh
-    solana/cli send memo init
+    solana/cli --chain-id $CHAIN send memo init
     ```
 
     You should see the `Memo` program id and it's `Counter Account` address in the output, as in the example below. You're going to need them in the next steps.

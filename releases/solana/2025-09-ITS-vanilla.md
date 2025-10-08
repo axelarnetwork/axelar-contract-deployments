@@ -180,7 +180,7 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize ITS:
 
     ```sh
-    solana/cli send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
+    solana/cli --chain-id $CHAIN send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
     ```
 
 1. Register Solana ITS on ITS Hub:
@@ -270,6 +270,14 @@ The following checks should be performed after the rollout.
     --amount <AMOUNT> \
     --gas-value <GAS_VALUE>
     ```
+
+    **Note:** To get the `SOURCE_ACCOUNT_ADDRESS`, use the following command to find your token account address:
+    
+    ```sh
+    spl-token accounts --owner <YOUR_WALLET_ADDRESS> --url devnet
+    ```
+    
+    This will show all token accounts owned by your wallet. The `SOURCE_ACCOUNT_ADDRESS` is the token account address (not the mint address) that holds the tokens you want to transfer. Look for the account that corresponds to your token's mint address.
 
 1. Deploy Remote Canonical Token:
 

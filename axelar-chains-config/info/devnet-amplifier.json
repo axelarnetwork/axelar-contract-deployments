@@ -1406,28 +1406,34 @@
       },
       "contracts": {
         "AxelarGateway": {
-          "address": "gtwRtcJ6CT8a7bsymztPEDzaMM5d3h6PN6vXeHtkESq",
+          "address": "JAE2g3ni8TM26jYcaEfZKp2JvNuuQjd97eDTBmoWVvbp",
           "connectionType": "amplifier",
           "domainSeparator": "0x020345c4bdac04b3ea1e3108ad3260cf201e3da0ecdf9899a0bc451a85c97053",
           "minimumRotationDelay": 0,
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": 15,
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "9YQpLCcHhBHXxz5pWUZq6n33fFsKmfDZ8wicx4voJvH8"
         },
         "AxelarGasService": {
-          "address": "gasfiUSLzSZEKQiH4Nsm5Yk2rjzWWEtsk3Ji3qs1Ryw",
+          "address": "7CZtVa3eonMfwfE6qPNDuFJNBCb9sEo94PAVeKjrMeB8",
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
-          "configAccount": "4W49irSfWZsM428BH1XJSygzmuVxJaYD8ZRZwdHseLTm",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "configAccount": "3fZbdQoQQ4AU6Gb1DMCSKSfToe3poLgLLMWY91fLWS1E",
+          "upgradeAuthority": "9YQpLCcHhBHXxz5pWUZq6n33fFsKmfDZ8wicx4voJvH8"
         },
         "InterchainGovernance": {
-          "address": "govWBE74GceA32mcz9CXuFV1zLvtSgkqXh4czqondBi",
-          "configAccount": "2mvM8Cm2FNv1Y3H9D7YXFvghmozGiwcX4eD28um7iAYY",
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "address": "AgTZzXv1jHeU7x9ny5EC2h6FPPvS9amGyQ2a19dk6UES",
+          "configAccount": "2pV36pw589rnrWGn62eMmAvsYu4QbH3kDKeRdkWy3w7u",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "governanceChain": "Axelarnet",
           "minimumTimeDelay": 3600,
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "9YQpLCcHhBHXxz5pWUZq6n33fFsKmfDZ8wicx4voJvH8"
+        },
+        "InterchainTokenService": {
+          "address": "3z8ABS8RodjqYnHHwqN77CggfKq1DBpD5v8hLZvbpd8k",
+          "configAccount": "ELDyLbFRgHNfwUzLRGtysPzRUhSvYUapeXRxbmgDWi32",
+          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "upgradeAuthority": "9YQpLCcHhBHXxz5pWUZq6n33fFsKmfDZ8wicx4voJvH8"
         }
       }
     }
@@ -1518,6 +1524,10 @@
           "maxDecimalsWhenTruncating": 6
         },
         "solana-2": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "solana-5": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 255
         },
