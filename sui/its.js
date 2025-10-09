@@ -1179,10 +1179,10 @@ if (require.main === module) {
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
-            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).default('lock_unlock'),
         )
         .addOption(
-            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode').choices(['lock_unlock', 'mint_burn']),
+            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(
             new Option(
