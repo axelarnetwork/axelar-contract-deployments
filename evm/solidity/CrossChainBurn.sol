@@ -28,8 +28,6 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     mapping(string => bool) public crossChainAdmins;
     mapping(address => bool) public frozenAccounts;
 
-
-
     constructor(
         string memory name,
         string memory symbol,
@@ -60,13 +58,10 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         string calldata destinationChain,
         string calldata destinationAddress
     ) external payable onlyOwner {
-
         //TODO: uncomment once we have memento chainId
         // require(_getChainID() == mementoChainId, 'Token.burnFromCrossChain: Cross-chain burn can only be performed on Memento');
 
-        // bytes memory payload = abi.encodePacked(amount, account, MESSAGE_TYPE_CROSS_CHAIN_BURN);
-         bytes memory payload = abi.encode(MESSAGE_TYPE_CROSS_CHAIN_BURN, account, amount);
-
+        bytes memory payload = abi.encode(MESSAGE_TYPE_CROSS_CHAIN_BURN, account, amount);
 
         gasService.payNativeGasForContractCall{ value: msg.value }(
             address(this),
@@ -78,19 +73,15 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         gateway().callContract(destinationChain, destinationAddress, payload);
     }
 
-
     function freezeAccountCrossChain(
         address account,
         string calldata destinationChain,
         string calldata destinationAddress
     ) external payable onlyOwner {
-
         //TODO: uncomment once we have memento chainId
         // require(_getChainID() == mementoChainId, 'Token.freezeAccountCrossChain: Cross-chain burn can only be performed on Memento');
 
-        // bytes memory payload = abi.encode(account, MESSAGE_TYPE_CROSS_CHAIN_FREEZE);
         bytes memory payload = abi.encode(MESSAGE_TYPE_CROSS_CHAIN_FREEZE, account);
-
 
         gasService.payNativeGasForContractCall{ value: msg.value }(
             address(this),
@@ -117,7 +108,6 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         return frozenAccounts[account];
     }
 
-    // Override transfer functions to check for frozen accounts
     function transfer(address to, uint256 amount) public override returns (bool) {
         require(!frozenAccounts[msg.sender], 'Token.Transfer: Account is frozen');
         require(!frozenAccounts[to], 'Token.Transfer: Recipient account is frozen');
@@ -145,7 +135,7 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
     }
 
     function _execute(bytes32, string calldata sourceChain, string calldata sourceAddress, bytes calldata payload) internal override {
-        (uint256 msgType) = abi.decode(payload, (uint256));
+        uint256 msgType = abi.decode(payload, (uint256));
         if (msgType == MESSAGE_TYPE_CROSS_CHAIN_BURN) {
             _crossChainBurn(payload);
         } else if (msgType == MESSAGE_TYPE_CROSS_CHAIN_FREEZE) {
@@ -158,7 +148,6 @@ contract CrossChainBurn is Ownable, ERC20, AxelarExecutable {
         frozenAccounts[acct] = true;
         emit AccountFrozen(acct, true);
     }
-    
 
     function _crossChainBurn(bytes memory payload) internal {
         (, address acct, uint256 amt) = abi.decode(payload, (uint256, address, uint256));

@@ -143,16 +143,16 @@
           "homeChain": "ethereum-sepolia"
         },
         "CrossChainBurn": {
-          "name": "CrossChain Token36",
-          "symbol": "CCT36",
+          "name": "CrossChain Token37",
+          "symbol": "CCT37",
           "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
           "homeChain": "Avalanche",
-          "address": "0x7242AF0123ff786E0Ca951423E217FCCe35eD352",
-          "predeployCodehash": "0x6ccf14545e1af1d60c1876e4769a902d48a0e1b2a3eb967aee5248ac016b79cb",
+          "address": "0xFdb59e85ed3d79F846eB6D4e5653D25a48033ee5",
+          "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
           "deployer": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
           "deploymentMethod": "create2",
-          "codehash": "0x63df06152bf3296e6aa0beaa7405aca431165cd06c61ff9b13abfa76dfa5fe3c",
-          "salt": "salt36"
+          "codehash": "0xa480b6a50969d653788488b2e4e663cc47cb8dd55e93e30ffcf5998a03c01bcf",
+          "salt": "salt37"
         }
       },
       "explorer": {
@@ -296,16 +296,16 @@
           "homeChain": "ethereum-sepolia"
         },
         "CrossChainBurn": {
-          "name": "CrossChain Token36",
-          "symbol": "CCT36",
+          "name": "CrossChain Token37",
+          "symbol": "CCT37",
           "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
           "homeChain": "Avalanche",
-          "address": "0x0C099c2c25Be469b19453e84aB393FEd6cb39De9",
-          "predeployCodehash": "0x6ccf14545e1af1d60c1876e4769a902d48a0e1b2a3eb967aee5248ac016b79cb",
+          "address": "0xE195fCdcFF72F054E64d95e84fD039957405ED06",
+          "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
           "deployer": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
           "deploymentMethod": "create2",
-          "codehash": "0xde0bb6328034a9ee21838ca68dcad7cbc16be974b7257a27ac024ba72723b712",
-          "salt": "salt36"
+          "codehash": "0x490c785904d86898850cd9fd76a8fab1a8cb12072613e360cd0aec380708f4df",
+          "salt": "salt37"
         }
       },
       "explorer": {

@@ -6,8 +6,7 @@ const { getDefaultProvider, Wallet, Contract, utils } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, printWarn, printError, prompt, printWalletInfo, mainProcessor, validateParameters } = require('../utils');
 const { addEvmOptions } = require('../cli-utils');
-const SafeModule = require('@safe-global/protocol-kit');
-const Safe = SafeModule?.default || SafeModule.Safe;
+const { executeSafeTransaction } = require('./utils');
 const CROSSCHAIN_BURN_ABI = require('../../artifacts/evm/solidity/CrossChainBurn.sol/CrosschainBurn.json').abi;
 
 async function processCommand(chain, action, options) {
@@ -114,28 +113,19 @@ async function processCommand(chain, action, options) {
             // Validate multisig address (owner of token)
             validateParameters({ isValidAddress: { multisigAddress } });
 
-            // Owner 1 creates and signs Safe tx
-            const safe1 = await Safe.init({ provider: chain.rpc, signer: process.env.PRIVATE_KEY, safeAddress: multisigAddress });
-            const safeTx = await safe1.createTransaction({
-                transactions: [{ to: tokenAddress, data: burnFromCrossChainFunctionCall, value: gasPayment.toString() }],
-                options: {
-                    safeTxGas: 300000, 
-                },
+            // Execute Safe transaction
+            const result = await executeSafeTransaction({
+                rpc: chain.rpc,
+                multisigAddress,
+                tokenAddress,
+                functionCall: burnFromCrossChainFunctionCall,
+                gasPayment: gasPayment.toString(),
+                privateKey1: process.env.PRIVATE_KEY,
+                privateKey2: process.env.PRIVATE_KEY_SIGNER_TWO,
             });
-            const safeTxSignedBy1 = await safe1.signTransaction(safeTx);
 
-            // Owner 2 adds signature and executes
-            const safe2 = await Safe.init({
-                provider: chain.rpc,
-                signer: process.env.PRIVATE_KEY_SIGNER_TWO,
-                safeAddress: multisigAddress,
-            });
-            const safeTxSignedBy2 = await safe2.signTransaction(safeTxSignedBy1);
-            const exec = await safe2.executeTransaction(safeTxSignedBy2);
-            const execReceipt = await exec.transactionResponse.wait();
-
-            printInfo('Transaction hash', exec.hash);
-            printInfo('Transaction confirmed', `Block ${execReceipt.blockNumber}`);
+            printInfo('Transaction hash', result.hash);
+            printInfo('Transaction confirmed', `Block ${result.blockNumber}`);
 
             break;
         }
@@ -159,28 +149,19 @@ async function processCommand(chain, action, options) {
             // Validate multisig address (owner of token)
             validateParameters({ isValidAddress: { multisigAddress } });
 
-            // Owner 1 creates and signs Safe tx
-            const safe1 = await Safe.init({ provider: chain.rpc, signer: process.env.PRIVATE_KEY, safeAddress: multisigAddress });
-            const safeTx = await safe1.createTransaction({
-                transactions: [{ to: tokenAddress, data: freezeAccountCrossChainFunctionCall, value: gasPayment.toString() }],
-                options: {
-                    safeTxGas: 300000,
-                },
+            // Execute Safe transaction
+            const result = await executeSafeTransaction({
+                rpc: chain.rpc,
+                multisigAddress,
+                tokenAddress,
+                functionCall: freezeAccountCrossChainFunctionCall,
+                gasPayment: gasPayment.toString(),
+                privateKey1: process.env.PRIVATE_KEY,
+                privateKey2: process.env.PRIVATE_KEY_SIGNER_TWO,
             });
-            const safeTxSignedBy1 = await safe1.signTransaction(safeTx);
 
-            // Owner 2 adds signature and executes
-            const safe2 = await Safe.init({
-                provider: chain.rpc,
-                signer: process.env.PRIVATE_KEY_SIGNER_TWO,
-                safeAddress: multisigAddress,
-            });
-            const safeTxSignedBy2 = await safe2.signTransaction(safeTxSignedBy1);
-            const exec = await safe2.executeTransaction(safeTxSignedBy2);
-            const execReceipt = await exec.transactionResponse.wait();
-
-            printInfo('Transaction hash', exec.hash);
-            printInfo('Transaction confirmed', `Block ${execReceipt.blockNumber}`);
+            printInfo('Transaction hash', result.hash);
+            printInfo('Transaction confirmed', `Block ${result.blockNumber}`);
 
             break;
         }
