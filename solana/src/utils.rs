@@ -378,11 +378,7 @@ pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::
         0
     } else {
         // Truncate fractional part to fit within decimals
-        let truncated_frac = if fractional_part.len() > decimals as usize {
-            &fractional_part[..decimals as usize]
-        } else {
-            fractional_part
-        };
+        let truncated_frac = &fractional_part[..usize::min(decimals as usize, fractional_part.len())];
         
         // Pad with zeros if necessary
         let padded_frac = format!("{:0<width$}", truncated_frac, width = decimals as usize);
@@ -393,27 +389,10 @@ pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::
     // Calculate the multiplier as a u64 to avoid floating-point issues
     let multiplier = 10_u64.pow(decimals as u32);
     
-    // Check for overflow before multiplication
-    if integer_value > u64::MAX / multiplier {
-        return Err(eyre::eyre!(
-            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
-            s,
-            decimals,
-            u64::MAX
-        ));
-    }
-    
-    let integer_contribution = integer_value * multiplier;
-    
-    // Check if adding fractional part would overflow
-    if integer_contribution > u64::MAX - fractional_value {
-        return Err(eyre::eyre!(
-            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
-            s,
-            decimals,
-            u64::MAX
-        ));
-    }
-    
-    Ok(integer_contribution + fractional_value)
+    integer_value
+        .checked_mul(multiplier)
+        .and_then(|v| v.checked_add(fractional_value))
+        .ok_or(eyre::eyre!(
+            "Amount too large: {s} * 10^{decimals} would overflow u64::MAX ({u64::MAX})"
+        ))
 }
