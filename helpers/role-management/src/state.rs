@@ -98,7 +98,7 @@ mod tests {
     use super::*;
 
     bitflags! {
-        /// Roles that can be as`gned to a user.
+        /// Roles that can be assigned to a user.
         #[derive(Debug, Eq, PartialEq, Clone, Copy)]
         pub struct Roles: u8 {
             /// Can mint new tokens.
