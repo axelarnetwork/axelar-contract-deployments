@@ -124,7 +124,7 @@ async function constructChainContracts(
     }
 }
 
-async function coordinatorToVersion2_1_0(
+async function coordinatorToVersion2_1_1(
     client: typeof SigningCosmWasmClient,
     options: MigrationOptions,
     config,
@@ -190,7 +190,7 @@ export async function migrate(
 ) {
     switch (version) {
         case '1.1.0':
-            return coordinatorToVersion2_1_0(client, options, config, senderAddress, coordinatorAddress, codeId, fee);
+            return coordinatorToVersion2_1_1(client, options, config, senderAddress, coordinatorAddress, codeId, fee);
         default:
             console.error(`no migration script found for coordinator ${version}`);
     }

@@ -68,7 +68,7 @@ async function multisigToVersion2_3_1(
         try {
             console.log('Executing migration...', migrateOptions);
             if (options.direct) {
-                await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
+                await client.migrate(senderAddress, multisigAddress, Number(codeId), migrationMsg, fee);
                 console.log('Migration succeeded');
             } else {
                 await submitProposal(client, config, migrateOptions, proposal, fee);
