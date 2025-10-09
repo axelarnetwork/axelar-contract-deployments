@@ -244,7 +244,7 @@ const getBagContents = async function (client, bagId, retrieveFunction) {
     } while (cursor);
 
     return bagItems;
-}
+};
 
 const getTransactionList = async (client, discoveryObjectId) => {
     const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);

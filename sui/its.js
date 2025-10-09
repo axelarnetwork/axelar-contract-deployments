@@ -295,11 +295,12 @@ async function listTrustedChains(_keypair, client, _config, contracts, _args, _o
     }
 
     const loadChainName = (entry) => {
-        const name = entry?.name && typeof entry.name === 'object' && 'value' in entry.name
-            ? entry.name.value
-            : typeof entry.name === 'string'
-                ? entry.name
-                : JSON.stringify(entry.name);
+        const name =
+            entry?.name && typeof entry.name === 'object' && 'value' in entry.name
+                ? entry.name.value
+                : typeof entry.name === 'string'
+                  ? entry.name
+                  : JSON.stringify(entry.name);
         return name;
     };
 
