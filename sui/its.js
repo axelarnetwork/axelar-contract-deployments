@@ -277,6 +277,43 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
     }
 }
+async function listTrustedChains(_keypair, client, _config, contracts, _args, _options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+
+    // Use the v0 value object to read on-chain state
+    const { InterchainTokenServicev0 } = itsConfig.objects;
+
+    const itsObject = await client.getObject({
+        id: InterchainTokenServicev0,
+        options: { showContent: true },
+    });
+
+    // trusted_chains: TrustedChains { trusted_chains: Bag { id } }
+    const bagId = itsObject?.data?.content?.fields?.value?.fields?.trusted_chains?.fields?.trusted_chains?.fields?.id?.id;
+
+    if (!bagId) {
+        throw new Error(`Unable to locate trusted_chains bag for ITS object ${InterchainTokenServicev0}`);
+    }
+    let cursor = null;
+    const chains = [];
+    do {
+        const page = await client.getDynamicFields({ parentId: bagId, cursor });
+        for (const entry of page.data || []) {
+            // Sui returns dynamic field key in `entry.name`; prefer `.value` if present
+            const name =
+                entry?.name && typeof entry.name === 'object' && 'value' in entry.name
+                    ? entry.name.value
+                    : typeof entry.name === 'string'
+                      ? entry.name
+                      : JSON.stringify(entry.name);
+            chains.push(name);
+        }
+        cursor = page.hasNextPage ? page.nextCursor : null;
+    } while (cursor);
+
+    printInfo('Trusted chains', chains.join(', '));
+    return chains;
+}
 
 async function migrateAllCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
@@ -1250,6 +1287,14 @@ if (require.main === module) {
             },
         );
 
+    const listTrustedChainsProgram = new Command()
+        .name('list-trusted-chains')
+        .command('list-trusted-chains')
+        .description('List the trusted chains configured in InterchainTokenService')
+        .action((options) => {
+            mainProcessor(listTrustedChains, options, null, processCommand);
+        });
+
     const mintCoinsProgram = new Command()
         .name('mint-coins')
         .command('mint-coins <coinPackageId> <coinPackageName> <coinModName> <amount> <receiver>')
@@ -1278,6 +1323,7 @@ if (require.main === module) {
     program.addCommand(checkVersionControlProgram);
     program.addCommand(interchainTransferProgram);
 
+    program.addCommand(listTrustedChainsProgram);
     program.addCommand(mintCoinsProgram);
 
     // finalize program
