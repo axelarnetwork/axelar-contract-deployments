@@ -52,6 +52,7 @@ async function saveTokenDeployment(
     Metadata, // sui::coin::CoinMetadata
     linkedTokens = [], // [{chain, address, linkParams}]
     saltAddress = null, // address used for Bytes32::new for custom coin registrations and link_coin
+    tokenManagerType = null,
 ) {
     contracts[symbol.toUpperCase()] = {
         address,
@@ -65,6 +66,7 @@ async function saveTokenDeployment(
     };
     if (linkedTokens.length) contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
     if (saltAddress) contracts[symbol.toUpperCase()].saltAddress = saltAddress;
+    if (tokenManagerType) contracts[symbol.toUpperCase()].tokenManagerType = tokenManagerType;
 }
 
 async function checkIfCoinExists(client, coinPackageId, coinType) {
@@ -75,12 +77,20 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
     }
 }
 
-async function checkIfCoinIsMinted(client, coinObjectId, coinType) {
-    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
-    const objectType = coinObject?.data?.type;
-    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
-    if (objectType !== expectedObjectType) {
-        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
+async function checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount) {
+    const coins = await client.getCoins({
+        owner: walletAddress,
+        coinType,
+    });
+
+    const coin = coins.data.find((c) => c.coinObjectId === coinObjectId);
+    if (!coin) {
+        throw new Error(`Coin with ID ${coinObjectId} not found for owner ${walletAddress}`);
+    }
+
+    const balance = Number(coin.balance);
+    if (balance < amount) {
+        throw new Error(`User does not have sufficient balance. Expected ${amount}, got ${balance}`);
     }
 }
 
@@ -89,5 +99,5 @@ module.exports = {
     createLockedCoinManagement,
     saveTokenDeployment,
     checkIfCoinExists,
-    checkIfCoinIsMinted,
+    checkIfSenderHasSufficientBalance,
 };

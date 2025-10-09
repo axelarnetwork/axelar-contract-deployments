@@ -142,22 +142,13 @@ GAS_FEE=
 ts-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action linkToken --destinationChain $DESTINATION_CHAIN --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue $GAS_FEE
 ```
 
-### 6. XRPL Token Instance Registration
-
-**_NOTE:_**
-The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of XRPL contracts will use the ITS Hub instance directly.
-
-```bash
-ts-node xrpl/register-token-instance.js -n $DESTINATION_CHAIN --tokenId $TOKEN_ID --sourceChain $SOURCE_CHAIN --decimals 15
-```
-
-### 7. XRPL Remote Token Registration
+### 6. XRPL Remote Token Registration
 
 ```bash
 ts-node xrpl/register-remote-token.js -n $DESTINATION_CHAIN --tokenId $TOKEN_ID --currency $XRPL_CURRENCY_CODE
 ```
 
-## 8. Grant Mint Role to Token Manager
+## 7. Grant Mint Role to Token Manager
 
 After linking is complete, if you selected the `MintBurn` token manager type, then it is necessary to
 grant the token manager minting and burning permissions. Since this logic is token-specific, you'll need to determine the right method to execute for your token.
