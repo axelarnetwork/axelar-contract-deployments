@@ -422,7 +422,7 @@ pub(crate) struct DeployInterchainTokenArgs {
 
     /// Initial supply of the interchain token
     #[clap(long)]
-    initial_supply: u64,
+    initial_supply: String,
 
     /// Optional mint account for the interchain token. Required if initial_supply is zero
     #[clap(long)]
@@ -797,16 +797,13 @@ fn get_token_decimals(mint: &Pubkey, config: &Config) -> eyre::Result<u8> {
     let rpc_client = RpcClient::new(config.url.clone());
     let mint_account = rpc_client.get_account(mint)?;
     
-    // Try to parse as Token-2022 first, then fall back to standard SPL Token
     match mint_account.owner.to_string().as_str() {
-        "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" => {
-            // Token-2022
+        crate::utils::TOKEN_2022_PROGRAM_ID => {
             let mint_data = Token2022Mint::unpack(&mint_account.data)
                 .map_err(|_| eyre!("Failed to parse Token-2022 mint data"))?;
             Ok(mint_data.decimals)
         }
-        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {
-            // Standard SPL Token
+        crate::utils::SPL_TOKEN_PROGRAM_ID => {
             let mint_data = TokenMint::unpack(&mint_account.data)
                 .map_err(|_| eyre!("Failed to parse SPL Token mint data"))?;
             Ok(mint_data.decimals)
@@ -1121,8 +1118,7 @@ fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    // Convert human-readable supply to raw units using safe integer arithmetic
-    let raw_supply = crate::utils::safe_token_conversion(args.initial_supply as f64, args.decimals)?;
+    let raw_supply = crate::utils::parse_decimal_string_to_raw_units(&args.initial_supply, args.decimals)?;
     
     let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();

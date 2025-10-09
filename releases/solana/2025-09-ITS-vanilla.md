@@ -275,12 +275,12 @@ The following checks should be performed after the rollout.
     
     **Step 1:** List all your token accounts:
     ```sh
-    spl-token accounts --owner <YOUR_WALLET_ADDRESS> --url devnet
+    spl-token accounts --owner <YOUR_WALLET_ADDRESS>
     ```
     
     **Step 2:** For each account that might be your token, verify it's a token account (not a mint):
     ```sh
-    spl-token account-info <ACCOUNT_ADDRESS> --url devnet
+    spl-token account-info <ACCOUNT_ADDRESS>
     ```
     
     **Step 3:** Look for the output that shows:
