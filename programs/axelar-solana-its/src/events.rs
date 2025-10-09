@@ -109,7 +109,7 @@ pub struct RevokeRemoteInterchainTokenApproval {
 pub struct FlowLimitSet {
     pub token_id: [u8; 32],
     pub operator: Pubkey,
-    pub flow_limit: u64,
+    pub flow_limit: Option<u64>,
 }
 
 #[event]

@@ -485,13 +485,11 @@ pub(crate) fn process_set_flow_limit<'a>(
         flow_limit,
     )?;
 
-    if let Some(limit) = flow_limit {
-        emit_cpi!(events::FlowLimitSet {
-            token_id: token_manager.token_id,
-            operator: *flow_limiter.key,
-            flow_limit: limit,
-        });
-    }
+    emit_cpi!(events::FlowLimitSet {
+        token_id: token_manager.token_id,
+        operator: *flow_limiter.key,
+        flow_limit,
+    });
 
     Ok(())
 }

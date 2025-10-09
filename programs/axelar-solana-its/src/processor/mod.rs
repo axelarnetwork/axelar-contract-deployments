@@ -252,13 +252,11 @@ pub fn process_instruction<'a>(
                 flow_limit,
             )?;
 
-            if let Some(limit) = flow_limit {
-                emit_cpi!(events::FlowLimitSet {
-                    token_id: token_manager.token_id,
-                    operator: *operator_account.key,
-                    flow_limit: limit,
-                });
-            }
+            emit_cpi!(events::FlowLimitSet {
+                token_id: token_manager.token_id,
+                operator: *operator_account.key,
+                flow_limit,
+            });
 
             Ok(())
         }
