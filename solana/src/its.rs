@@ -233,6 +233,10 @@ pub(crate) struct TokenManagerHandoverMintAuthorityArgs {
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The authority account
+    #[clap(long)]
+    authority: Option<Pubkey>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -737,6 +741,10 @@ pub(crate) struct SetFlowLimitArgs {
     /// The flow limit to set for the Interchain Token
     #[clap(long)]
     flow_limit: u64,
+
+    /// The operator account
+    #[clap(long)]
+    operator: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -1395,9 +1403,10 @@ fn call_contract_with_interchain_token_offchain_data(
 }
 
 fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
+    let operator = args.operator.unwrap_or(*fee_payer);
     Ok(vec![axelar_solana_its::instruction::set_flow_limit(
         *fee_payer,
-        *fee_payer,
+        operator,
         args.token_id,
         Some(args.flow_limit),
     )?])
@@ -1522,10 +1531,11 @@ fn token_manager_handover_mint_authority(
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
     let token_program = get_token_program_from_mint(&mint, config)?;
+    let authority = args.authority.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             *fee_payer,
-            *fee_payer, // authority
+            authority,
             args.token_id,
             mint,
             token_program,

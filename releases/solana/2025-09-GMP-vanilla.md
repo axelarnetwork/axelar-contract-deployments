@@ -307,7 +307,7 @@ The initialization steps can only be performed by the upgrade authority.
     | **Mainnet**          | `86400`                | `15`                       | `3600`                           |
 
     ```sh
-    solana/cli  send gateway init \
+    solana/cli send gateway init \
         --previous-signers-retention [previousSignersRetention] \
         --minimum-rotation-delay [minimumRotationDelay] \
         --operator $OPERATOR_PDA
@@ -318,7 +318,7 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize Gas Service:
 
     ```sh
-    solana/cli  send --signer-keys $OPERATOR_KEYPAIR_PATH gas-service init \
+    solana/cli send --signer-keys $OPERATOR_KEYPAIR_PATH gas-service init \
         --operator $OPERATOR_PDA \
         --salt "[version] $ENV"
     ```
@@ -328,7 +328,7 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize Governance:
 
     ```sh
-    solana/cli  send governance init \
+    solana/cli send governance init \
         --governance-chain 'Axelarnet' \
         --governance-address [axelarnet governance address] \
         --minimum-proposal-eta-delay [minimumProposalEtaDelaySeconds] \
@@ -359,7 +359,7 @@ The following check should be performed after the rollout. It will send a GMP me
 1. Initialize the `Memo` program:
 
     ```sh
-    solana/cli  send memo init
+    solana/cli send memo init
     ```
 
     You should see the `Memo` program id and it's `Counter Account` address in the output, as in the example below. You're going to need them in the next steps.
@@ -384,7 +384,7 @@ The following check should be performed after the rollout. It will send a GMP me
 1. Perform the `call-contract` to the `Memo` program using the payload:
 
     ```sh
-    solana/cli  send gateway call-contract \
+    solana/cli send gateway call-contract \
         --destination-chain $CHAIN \
         --destination-address $MEMO_PDA \
         --payload $GMP_PAYLOAD
