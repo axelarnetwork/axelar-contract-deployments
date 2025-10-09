@@ -619,9 +619,10 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const packageId = coin.address;
     const tokenType = coin.typeArgument;
     const treasuryCap = coin.objects.TreasuryCap;
-    const tokenManager = options.tokenManagerMode;
 
-    const destinationTokenManager = options.destinationTokenManagerMode ? options.destinationTokenManagerMode : tokenManager;
+    // Token Manager settings
+    const tokenManager = options.tokenManagerMode;
+    const destinationTokenManager = options.destinationTokenManagerMode;
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
