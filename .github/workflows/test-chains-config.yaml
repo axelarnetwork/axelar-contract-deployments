@@ -1,6 +1,9 @@
 name: Run Axelar Chains Config Tests
 
-on: pull_request
+on:
+  pull_request:
+    paths:
+      - 'axelar-chains-config/**'
 
 jobs:
   test:
