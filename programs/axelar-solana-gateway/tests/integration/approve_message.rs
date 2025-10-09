@@ -12,7 +12,7 @@ use axelar_solana_gateway::events::MessageApprovedEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::gateway::{
-    get_gateway_events, make_messages, make_verifier_set, random_message, GetGatewayError,
+    make_messages, make_verifier_set, random_message, GetGatewayError,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use event_cpi_test_utils::{assert_event_cpi, contains_event_cpi};
