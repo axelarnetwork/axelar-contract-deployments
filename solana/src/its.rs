@@ -147,6 +147,10 @@ pub(crate) struct TokenManagerSetFlowLimitArgs {
     /// The flow limit to set for the Interchain Token
     #[clap(long)]
     flow_limit: u64,
+
+    /// The account with operator role on the TokenManager
+    #[clap(long)]
+    operator: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -1430,10 +1434,11 @@ fn token_manager_set_flow_limit(
     fee_payer: &Pubkey,
     args: TokenManagerSetFlowLimitArgs,
 ) -> eyre::Result<Vec<Instruction>> {
+    let operator = args.operator.unwrap_or(*fee_payer);
     Ok(vec![
         axelar_solana_its::instruction::token_manager::set_flow_limit(
             *fee_payer,
-            *fee_payer, // flow_limiter
+            operator,
             args.token_id,
             Some(args.flow_limit),
         )?,
