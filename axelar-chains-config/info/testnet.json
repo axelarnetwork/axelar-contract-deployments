@@ -2586,18 +2586,6 @@
             "ItsSingleton": "0x9926aca1bc1fcaf38db6b5570dd16e7ad265c1d7f621dbb0efdc49d61b6471dd",
             "ItsChannelId": "0xeadff6a48792bdb8ca1216bab78c502244152fc3632abac5f67e150da5e09315"
           }
-        },
-        "CASE2": {
-          "address": "0xcb0a183ce115debc1d647a1fd7d5b022971ec091b4ea5af8dc5576325ea2f1e7",
-          "typeArgument": "0xcb0a183ce115debc1d647a1fd7d5b022971ec091b4ea5af8dc5576325ea2f1e7::case2::CASE2",
-          "decimals": "6",
-          "objects": {
-            "TokenId": "0x8c8673ccaf99475d486b1a4fea70a99fa673f779bc7c1a4a984a5cbc8f249fd7",
-            "TreasuryCap": "0xdc073f2f2d42f7f0b889b04d6c38a9f05bc38d1cf9c7bb3acb7c2e179dbae02f",
-            "Metadata": "0xdab4f449a4c52262ab1ccd102b563828b2e33fe8da8a0d37221130dbe42f67a0",
-            "TreasuryCapReclaimer": "0xaab5f4ae55ab2d680905b8a9e64fc8cb9f4cb2d7a68920faea88e7a84501290a"
-          },
-          "saltAddress": "0x584466526e7a6d64231b24c1e505ce85a332b563b561c96f8b544217ca612023"
         }
       }
     },
