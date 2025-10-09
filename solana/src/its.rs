@@ -718,6 +718,10 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
     /// transaction will be broadcasted.
     #[clap(long)]
     timestamp: Option<i64>,
+    
+    /// The authority account (owner or delegate of the source account)
+    #[clap(long)]
+    authority: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -1365,9 +1369,10 @@ fn call_contract_with_interchain_token_offchain_data(
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
 
+    let authority = args.authority.unwrap_or(*fee_payer);
     let instruction = axelar_solana_its::instruction::call_contract_with_interchain_token(
         *fee_payer,
-        *fee_payer,
+        authority,
         args.source_account,
         args.token_id,
         args.destination_chain,
