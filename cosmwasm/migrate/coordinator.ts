@@ -9,10 +9,10 @@ import { MigrationOptions, ProtocolContracts } from './types';
 export const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 interface ChainContracts {
-    chainName: string;
-    proverAddress?: string;
-    gatewayAddress: string;
-    verifierAddress: string;
+    chain_name: string;
+    prover_address?: string;
+    gateway_address: string;
+    verifier_address: string;
 }
 
 export interface ChainEndpoint {
@@ -37,22 +37,22 @@ function checkForDuplicates(chains: ChainContracts[]) {
     const gateways: Map<string, string[]> = new Map();
 
     chains.forEach((c) => {
-        if (c.proverAddress && !provers.has(c.proverAddress)) {
-            provers.set(c.proverAddress, [c.chainName]);
-        } else if (provers.has(c.proverAddress)) {
-            provers.set(c.proverAddress, provers.get(c.proverAddress).concat([c.chainName]));
+        if (c.prover_address && !provers.has(c.prover_address)) {
+            provers.set(c.prover_address, [c.chain_name]);
+        } else if (provers.has(c.prover_address)) {
+            provers.set(c.prover_address, provers.get(c.prover_address).concat([c.chain_name]));
         }
 
-        if (!verifiers.has(c.verifierAddress)) {
-            verifiers.set(c.verifierAddress, [c.chainName]);
-        } else if (verifiers.has(c.verifierAddress)) {
-            verifiers.set(c.verifierAddress, verifiers.get(c.verifierAddress).concat([c.chainName]));
+        if (!verifiers.has(c.verifier_address)) {
+            verifiers.set(c.verifier_address, [c.chain_name]);
+        } else if (verifiers.has(c.verifier_address)) {
+            verifiers.set(c.verifier_address, verifiers.get(c.verifier_address).concat([c.chain_name]));
         }
 
-        if (!gateways.has(c.gatewayAddress)) {
-            gateways.set(c.gatewayAddress, [c.chainName]);
-        } else if (gateways.has(c.gatewayAddress)) {
-            gateways.set(c.gatewayAddress, gateways.get(c.gatewayAddress).concat([c.chainName]));
+        if (!gateways.has(c.gateway_address)) {
+            gateways.set(c.gateway_address, [c.chain_name]);
+        } else if (gateways.has(c.gateway_address)) {
+            gateways.set(c.gateway_address, gateways.get(c.gateway_address).concat([c.chain_name]));
         }
     });
 
@@ -107,10 +107,10 @@ async function constructChainContracts(
                     });
 
                     chainContracts.push({
-                        chainName: endpoint.name,
-                        gatewayAddress: endpoint.gateway.address,
-                        verifierAddress: config.verifier,
-                        proverAddress: authorizedProvers ?? '',
+                        chain_name: endpoint.name,
+                        gateway_address: endpoint.gateway.address,
+                        verifier_address: config.verifier,
+                        prover_address: authorizedProvers ?? '',
                     });
                 }
             } catch (e) {
@@ -146,11 +146,11 @@ async function constructCoordinatorChainProverPairs(
             continue;
         }
 
-        if (!chainInfo.proverAddress) {
+        if (!chainInfo.prover_address) {
             throw new Error(`missing prover for chain ${endpoint.name}`);
         }
 
-        chainProverPairs.set(endpoint.name, chainInfo.proverAddress);
+        chainProverPairs.set(endpoint.name, chainInfo.prover_address);
     }
 
     return chainProverPairs;
@@ -256,7 +256,7 @@ async function coordinatorToVersion2_1_1(
     }
 }
 
-async function checkCoordinatorToVersion2_1_0(client: CosmWasmClient, config, coordinatorAddress?: string, multisigAddress?: string) {
+async function checkCoordinatorToVersion2_1(client: CosmWasmClient, config, coordinatorAddress?: string, multisigAddress?: string) {
     coordinatorAddress = coordinatorAddress ?? config.axelar.contracts.Coordinator.address;
     multisigAddress = multisigAddress ?? config.axelar.contracts.Multisig.address;
     const routerAddress = config.axelar.contracts.Router.address;
@@ -326,10 +326,11 @@ export async function checkMigration(
     coordinatorAddress?: string,
     multisigAddress?: string,
 ) {
-    switch (version) {
-        case '2.1.0':
-            return checkCoordinatorToVersion2_1_0(client, config, coordinatorAddress, multisigAddress);
-        default:
-            printError(`no migration check script found for coordinator ${version}`);
+    const v2_1_re = /2\.1\.\d+/;
+
+    if (version.match(v2_1_re)) {
+        return checkCoordinatorToVersion2_1(client, config, coordinatorAddress, multisigAddress);
+    } else {
+        printError(`no migration check script found for coordinator ${version}`);
     }
 }
