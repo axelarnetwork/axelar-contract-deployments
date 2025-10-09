@@ -463,7 +463,7 @@ ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 List trusted chains 
 
 ```bash
-ts-node sui/its list-trusted-chains    
+ts-node sui/its list-trusted-chains
 ```
 
 ## Registering Coins
