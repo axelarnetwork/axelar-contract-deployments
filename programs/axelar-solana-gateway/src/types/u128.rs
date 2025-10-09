@@ -1,7 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 
-/// Custom u128 type with 8-byte alignment instead of the default 16-byte alignment.
+/// Custom u128 type with 1-byte alignment instead of the default 16-byte alignment.
 ///
 /// This type is required for zero-copy accounts. The standard `u128` type
 /// has 16-byte alignment, which creates a misalignment issue with Anchor style
