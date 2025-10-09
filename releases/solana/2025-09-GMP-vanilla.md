@@ -376,7 +376,7 @@ The following check should be performed after the rollout. It will send a GMP me
 1. Build a `Memo` program payload:
 
     ```sh
-    GMP_PAYLOAD=$(solana/cli  misc build-axelar-message \
+    GMP_PAYLOAD=$(solana/cli misc build-axelar-message \
         --accounts "[counter program ID]:false:true" \
         --payload "48656C6C6F21") # "Hello!" in hex
     ```

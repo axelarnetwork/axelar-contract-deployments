@@ -180,7 +180,7 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize ITS:
 
     ```sh
-    solana/cli --chain-id $CHAIN send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
+    solana/cli send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
     ```
 
 1. Register Solana ITS on ITS Hub:
