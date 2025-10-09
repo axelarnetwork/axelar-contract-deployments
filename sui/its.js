@@ -29,6 +29,7 @@ const {
     suiClockAddress,
     suiCoinId,
     getUnitAmount,
+    getBagContents,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
@@ -292,24 +293,19 @@ async function listTrustedChains(_keypair, client, _config, contracts, _args, _o
     if (!bagId) {
         throw new Error(`Unable to locate trusted_chains bag for ITS object ${InterchainTokenServicev0}`);
     }
-    let cursor = null;
-    const chains = [];
-    do {
-        const page = await client.getDynamicFields({ parentId: bagId, cursor });
-        for (const entry of page.data || []) {
-            // Sui returns dynamic field key in `entry.name`; prefer `.value` if present
-            const name =
-                entry?.name && typeof entry.name === 'object' && 'value' in entry.name
-                    ? entry.name.value
-                    : typeof entry.name === 'string'
-                      ? entry.name
-                      : JSON.stringify(entry.name);
-            chains.push(name);
-        }
-        cursor = page.hasNextPage ? page.nextCursor : null;
-    } while (cursor);
 
-    printInfo('Trusted chains', chains.join(', '));
+    const loadChainName = (entry) => {
+        const name = entry?.name && typeof entry.name === 'object' && 'value' in entry.name
+            ? entry.name.value
+            : typeof entry.name === 'string'
+                ? entry.name
+                : JSON.stringify(entry.name);
+        return name;
+    };
+
+    const chains = await getBagContents(client, bagId, loadChainName);
+
+    printInfo('Trusted chains', chains);
     return chains;
 }
 
@@ -689,11 +685,9 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // This submits a LinkToken msg type to ITS Hub.
     const txBuilder = new TxBuilder(client);
 
-    const channel = channelId
-        ? channelId
-        : await txBuilder.moveCall({
-              target: `${AxelarGateway.address}::channel::new`,
-          });
+    if (!channelId) {
+        throw new Error(`error deriving channel that registered custom token ${tokenId}, got ${channelId}`);
+    }
 
     // Token manager type (destination chain)
     const tokenManagerType = await txBuilder.moveCall({
@@ -714,7 +708,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         target: `${itsConfig.address}::interchain_token_service::link_coin`,
         arguments: [
             InterchainTokenService,
-            channel,
+            channelId,
             salt,
             destinationChain, // chain must be already added as a trusted chain
             destinationTokenAddress,
@@ -745,10 +739,6 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         target: `${AxelarGateway.address}::gateway::send_message`,
         arguments: [Gateway, messageTicket],
     });
-
-    if (!channelId) {
-        txBuilder.tx.transferObjects([channel], walletAddress);
-    }
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (${symbol})`, options);
 

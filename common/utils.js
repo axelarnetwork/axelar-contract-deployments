@@ -19,6 +19,7 @@ const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
 const { cvToHex, principalCV } = require('@stacks/transactions');
+const { isValidNamedType } = require('@mysten/sui/utils');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -731,23 +732,11 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
 
     switch (chainType) {
         case 'sui':
-            const coinTypePieces = destinationTokenAddress.split('::');
-            const packageId = coinTypePieces[0].replace('0x', '');
-            const packageName = coinTypePieces[1];
-            const coinSymbol = coinTypePieces[2];
-
-            if (coinTypePieces.length !== 3) {
-                throw new Error(`Invalid Sui coin type, got ${destinationTokenAddress}`);
-            } else if (packageId.length !== 64) {
-                throw new Error(`Invalid Sui coin package id, got ${packageId}`);
-            } else if (packageName.toUpperCase() !== coinSymbol.toUpperCase()) {
-                throw new Error(`Unexpected package or module name, got ${packageName} and ${coinSymbol}`);
+            if (!isValidNamedType(destinationTokenAddress)) {
+                throw new Error(`Destination token address invalid, got ${destinationTokenAddress}`);
             }
-
-            const coinType = `${packageId}::${packageName}::${coinSymbol}`;
-
             // For Sui token addresses (X -> Sui), encode as ASCII string
-            return asciiToBytes(coinType);
+            return asciiToBytes(destinationTokenAddress.replace('0x', ''));
 
         default:
             // For all other chains, use the same encoding as destination addresses
