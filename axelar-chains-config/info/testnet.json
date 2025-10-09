@@ -2191,6 +2191,18 @@
           "symbol": "CCT",
           "masterChain": "ethereum-sepolia",
           "initialSupply": "0"
+        },
+        "CrossChainBurn": {
+          "name": "CrossChain Token50",
+          "symbol": "CCT50",
+          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
+          "homeChain": "memento-demo",
+          "address": "0xf772f82ee684AB38c27A0c4b867073F61c4c56C2",
+          "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xa480b6a50969d653788488b2e4e663cc47cb8dd55e93e30ffcf5998a03c01bcf",
+          "salt": "salt50"
         }
       },
       "explorer": {

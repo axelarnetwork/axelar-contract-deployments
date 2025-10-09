@@ -183,8 +183,8 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
         }
 
         case 'CrossChainBurn': {
-            const name = contractConfig.name || 'CrossChain Token';
-            const symbol = contractConfig.symbol || 'CCT';
+            const name = contractConfig.name;
+            const symbol = contractConfig.symbol;
             const admin = contractConfig.admin || wallet.address;
             const homeChain = contractConfig.homeChain || 'avalanche';
             const gateway = contracts.AxelarGateway?.address;
@@ -196,7 +196,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             });
 
             // Only deploy Safe multisig if this chain is the homeChain
-            if (chain.name === homeChain) {
+            if (chain.name != 'memento-demo') {
                 const safeAccountConfig = {
                     owners: ['0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f', '0xC165CbEc276C26c57F1b1Cbc499109AbeCbA4474'],
                     threshold: 2,
@@ -217,8 +217,19 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
                     predictedSafe: predictedSafe,
                 });
 
-                //Create multisig
+                //Create multisig with proper gas settings
                 const createSafeTx = await protocolKit.createSafeDeploymentTransaction();
+                
+                // Override gas settings for the Safe deployment
+                const gasOptions = await getGasOptions(chain, options, 'CrossChainBurn');
+                createSafeTx.gasPrice = gasOptions.gasPrice;
+                if (gasOptions.maxFeePerGas) {
+                    createSafeTx.maxFeePerGas = gasOptions.maxFeePerGas;
+                }
+                if (gasOptions.maxPriorityFeePerGas) {
+                    createSafeTx.maxPriorityFeePerGas = gasOptions.maxPriorityFeePerGas;
+                }
+                
                 const createSafeTxResponse = await wallet.sendTransaction(createSafeTx);
                 await createSafeTxResponse.wait();
                 console.log('Safe deployment tx sent:', createSafeTxResponse.hash);

@@ -37,6 +37,7 @@ async function processCommand(chain, action, options) {
             const balance = await token.balanceOf(targetAddress);
             const decimals = await token.decimals();
             const symbol = await token.symbol();
+            
 
             printInfo(`Balance of ${targetAddress}`, `${ethers.utils.formatUnits(balance, decimals)} ${symbol}`);
 
@@ -78,6 +79,7 @@ async function processCommand(chain, action, options) {
 
             break;
         }
+        //not needed if using memento as gnosis not deployed there yet.
         case 'setup-burn': {
             const [multisigAddress] = args;
             validateParameters({ isValidAddress: { multisigAddress } });
@@ -110,19 +112,35 @@ async function processCommand(chain, action, options) {
                 destinationChain,
                 destinationChainTokenAddress,
             ]);
-            // Validate multisig address (owner of token)
-            validateParameters({ isValidAddress: { multisigAddress } });
 
-            // Execute Safe transaction
-            const result = await executeSafeTransaction({
-                rpc: chain.rpc,
-                multisigAddress,
-                tokenAddress,
-                functionCall: burnFromCrossChainFunctionCall,
-                gasPayment: gasPayment.toString(),
-                privateKey1: process.env.PRIVATE_KEY,
-                privateKey2: process.env.PRIVATE_KEY_SIGNER_TWO,
-            });
+            let result;
+
+            if (chain.name === 'memento-demo') {
+                //memento does not have gnosis safe deployed yet.
+
+                const tx = await token.burnFromCrossChain(account, burnAmount, destinationChain, destinationChainTokenAddress, {
+                    value: gasPayment,
+                });
+                const receipt = await tx.wait();
+                result = {
+                    hash: tx.hash,
+                    blockNumber: receipt.blockNumber,
+                };
+            } else {
+                //gnosis safe deployed on other chains (eventually use this for memento too).
+
+                validateParameters({ isValidAddress: { multisigAddress } });
+
+                result = await executeSafeTransaction({
+                    rpc: chain.rpc,
+                    multisigAddress,
+                    tokenAddress,
+                    functionCall: burnFromCrossChainFunctionCall,
+                    gasPayment: gasPayment.toString(),
+                    privateKey1: process.env.PRIVATE_KEY,
+                    privateKey2: process.env.PRIVATE_KEY_SIGNER_TWO,
+                });
+            }
 
             printInfo('Transaction hash', result.hash);
             printInfo('Transaction confirmed', `Block ${result.blockNumber}`);
@@ -146,19 +164,34 @@ async function processCommand(chain, action, options) {
                 destinationChainTokenAddress,
             ]);
 
-            // Validate multisig address (owner of token)
-            validateParameters({ isValidAddress: { multisigAddress } });
+            let result;
 
-            // Execute Safe transaction
-            const result = await executeSafeTransaction({
-                rpc: chain.rpc,
-                multisigAddress,
-                tokenAddress,
-                functionCall: freezeAccountCrossChainFunctionCall,
-                gasPayment: gasPayment.toString(),
-                privateKey1: process.env.PRIVATE_KEY,
-                privateKey2: process.env.PRIVATE_KEY_SIGNER_TWO,
-            });
+            if (chain.name === 'memento-demo') {
+                //memento does not have gnosis safe deployed yet.
+
+                const tx = await token.freezeAccountCrossChain(account, destinationChain, destinationChainTokenAddress, {
+                    value: gasPayment,
+                });
+                const receipt = await tx.wait();
+                result = {
+                    hash: tx.hash,
+                    blockNumber: receipt.blockNumber,
+                };
+            } else {
+                //gnosis safe deployed on other chains (eventually use this for memento too).
+
+                validateParameters({ isValidAddress: { multisigAddress } });
+
+                result = await executeSafeTransaction({
+                    rpc: chain.rpc,
+                    multisigAddress,
+                    tokenAddress,
+                    functionCall: freezeAccountCrossChainFunctionCall,
+                    gasPayment: gasPayment.toString(),
+                    privateKey1: process.env.PRIVATE_KEY,
+                    privateKey2: process.env.PRIVATE_KEY_SIGNER_TWO,
+                });
+            }
 
             printInfo('Transaction hash', result.hash);
             printInfo('Transaction confirmed', `Block ${result.blockNumber}`);
