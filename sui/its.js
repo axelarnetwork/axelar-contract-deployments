@@ -1183,7 +1183,9 @@ if (require.main === module) {
             new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).default('lock_unlock'),
         )
         .addOption(
-            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
+            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode')
+                .choices(['lock_unlock', 'mint_burn'])
+                .makeOptionMandatory(true),
         )
         .addOption(
             new Option(
