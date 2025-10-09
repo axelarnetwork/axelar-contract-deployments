@@ -10,6 +10,7 @@ use k256::{Secp256k1, SecretKey};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use regex::Regex;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::account_utils::StateMut;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -27,6 +28,7 @@ pub(crate) use solana_sdk::instruction::AccountMeta;
 
 pub(crate) const DEFAULT_COMPUTE_UNITS: u32 = 1_400_000; // Maximum allowed is 1.4M compute units
 pub(crate) const DEFAULT_PRIORITY_FEE: u64 = 10_000; // 10,000 micro-lamports per compute unit
+pub(crate) const MAX_DECIMALS: u8 = 19; // Maximum number of decimal places allowed
 
 pub(crate) fn create_compute_budget_instructions(
     compute_units: u32,
@@ -37,6 +39,11 @@ pub(crate) fn create_compute_budget_instructions(
         ComputeBudgetInstruction::set_compute_unit_price(priority_fee),
     ]
 }
+
+lazy_static::lazy_static! {
+    static ref POSITIVE_DECIMAL_REGEX: Regex = Regex::new(r"^\d*\.?\d+$").unwrap();
+}
+
 
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
@@ -341,31 +348,28 @@ pub(crate) fn try_infer_program_id_from_env(
 
 
 pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
-    // Validate input
-    if s.is_empty() {
-        return Err(eyre::eyre!("Amount cannot be empty"));
+    if !POSITIVE_DECIMAL_REGEX.is_match(s) {
+        return Err(eyre::eyre!("Invalid decimal format: {} (must be a positive number)", s));
     }
     
-    if decimals > 19 {
-        return Err(eyre::eyre!("Too many decimals: {} (maximum 19)", decimals));
+    if decimals > MAX_DECIMALS {
+        return Err(eyre::eyre!("Too many decimals: {} (maximum {})", decimals, MAX_DECIMALS));
     }
     
-    // Handle negative amounts
-    if s.starts_with('-') {
-        return Err(eyre::eyre!("Amount cannot be negative: {}", s));
+    let decimal_pos = s.find('.');
+    let (integer_part, fractional_part) = match decimal_pos {
+        Some(pos) => (&s[..pos], &s[pos + 1..]),
+        None => (s, ""),
+    };
+    
+    if decimals == 0 {
+        if !fractional_part.is_empty() {
+            return Err(eyre::eyre!("Cannot have fractional part when decimals is 0: {}", s));
+        }
+        return integer_part.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part));
     }
     
-    // Split by decimal point
-    let parts: Vec<&str> = s.split('.').collect();
-    
-    if parts.len() > 2 {
-        return Err(eyre::eyre!("Invalid decimal format: {}", s));
-    }
-    
-    let integer_part = parts[0];
-    let fractional_part = if parts.len() > 1 { parts[1] } else { "" };
-    
-    // Parse integer part
     let integer_value = if integer_part.is_empty() {
         0
     } else {
@@ -373,26 +377,83 @@ pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::
             .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part))?
     };
     
-    // Parse fractional part
+    let multiplier = 10_u64.pow(decimals as u32);
+    
+    if integer_value > u64::MAX / multiplier {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            s,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    let integer_contribution = integer_value * multiplier;
+    
     let fractional_value = if fractional_part.is_empty() {
         0
     } else {
-        // Truncate fractional part to fit within decimals
-        let truncated_frac = &fractional_part[..usize::min(decimals as usize, fractional_part.len())];
+        let truncated_len = fractional_part.len().min(decimals as usize);
+        let truncated_frac = &fractional_part[..truncated_len];
         
-        // Pad with zeros if necessary
-        let padded_frac = format!("{:0<width$}", truncated_frac, width = decimals as usize);
-        padded_frac.parse::<u64>()
-            .map_err(|_| eyre::eyre!("Invalid fractional part: {}", truncated_frac))?
+        let frac_value = truncated_frac.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid fractional part: {}", truncated_frac))?;
+        
+        let remaining_decimals = decimals as usize - truncated_len;
+        if remaining_decimals > 0 {
+            let frac_multiplier = 10_u64.pow(remaining_decimals as u32);
+            frac_value * frac_multiplier
+        } else {
+            frac_value
+        }
     };
     
-    // Calculate the multiplier as a u64 to avoid floating-point issues
-    let multiplier = 10_u64.pow(decimals as u32);
+    if integer_contribution > u64::MAX - fractional_value {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            s,
+            decimals,
+            u64::MAX
+        ));
+    }
     
-    integer_value
-        .checked_mul(multiplier)
-        .and_then(|v| v.checked_add(fractional_value))
-        .ok_or(eyre::eyre!(
-            "Amount too large: {s} * 10^{decimals} would overflow u64::MAX ({u64::MAX})"
-        ))
+    Ok(integer_contribution + fractional_value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_basic() {
+        assert_eq!(parse_decimal_string_to_raw_units("123", 0).unwrap(), 123);
+        assert_eq!(parse_decimal_string_to_raw_units("1.5", 1).unwrap(), 15);
+        assert_eq!(parse_decimal_string_to_raw_units("123.45", 2).unwrap(), 12345);
+        assert_eq!(parse_decimal_string_to_raw_units(".5", 1).unwrap(), 5);
+        assert_eq!(parse_decimal_string_to_raw_units("123", 2).unwrap(), 12300);
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_edge_cases() {
+        assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
+        assert_eq!(parse_decimal_string_to_raw_units("1.56789", 2).unwrap(), 156);
+        assert_eq!(parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(), 11234567890123456789);
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_errors() {
+        assert!(parse_decimal_string_to_raw_units("", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("abc", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("-1.5", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("1.5", 20).is_err());
+        assert!(parse_decimal_string_to_raw_units("1.5", 0).is_err());
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_overflow() {
+        let max_u64 = u64::MAX;
+        let max_str = max_u64.to_string();
+        assert_eq!(parse_decimal_string_to_raw_units(&max_str, 0).unwrap(), max_u64);
+        assert!(parse_decimal_string_to_raw_units(&max_str, 1).is_err());
+    }
 }

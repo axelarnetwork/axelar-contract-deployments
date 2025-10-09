@@ -1314,6 +1314,8 @@ dependencies = [
  "hex",
  "its-instruction-builder",
  "k256",
+ "lazy_static",
+ "regex",
  "serde",
  "serde_json",
  "solana-clap-v3-utils",
