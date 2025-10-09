@@ -1390,46 +1390,6 @@
         }
       },
       "initialContractsDeployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
-    },
-    "solana-5": {
-      "name": "Solana Devnet Amplifier",
-      "axelarId": "solana-5",
-      "rpc": "https://api.devnet.solana.com",
-      "chainType": "svm",
-      "decimals": 9,
-      "finality": "31",
-      "approxFinalityWaitTime": 1,
-      "tokenSymbol": "SOL",
-      "explorer": {
-        "name": "Solana devnet Explorer",
-        "url": "https://explorer.solana.com/?cluster=devnet"
-      },
-      "contracts": {
-        "AxelarGateway": {
-          "address": "gtwRtcJ6CT8a7bsymztPEDzaMM5d3h6PN6vXeHtkESq",
-          "connectionType": "amplifier",
-          "domainSeparator": "0x020345c4bdac04b3ea1e3108ad3260cf201e3da0ecdf9899a0bc451a85c97053",
-          "minimumRotationDelay": 0,
-          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
-          "previousSignersRetention": 15,
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
-        },
-        "AxelarGasService": {
-          "address": "gasfiUSLzSZEKQiH4Nsm5Yk2rjzWWEtsk3Ji3qs1Ryw",
-          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
-          "configAccount": "4W49irSfWZsM428BH1XJSygzmuVxJaYD8ZRZwdHseLTm",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
-        },
-        "InterchainGovernance": {
-          "address": "govWBE74GceA32mcz9CXuFV1zLvtSgkqXh4czqondBi",
-          "configAccount": "2mvM8Cm2FNv1Y3H9D7YXFvghmozGiwcX4eD28um7iAYY",
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "governanceChain": "Axelarnet",
-          "minimumTimeDelay": 3600,
-          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
-        }
-      }
     }
   },
   "axelar": {
@@ -1919,11 +1879,7 @@
         },
         "lastUploadedCodeId": 1528,
         "storeCodeProposalId": "1147",
-        "storeCodeProposalCodeHash": "efa37c79eb04499f4c45e4500ca5baca9f7d3226f8b5efb588004ede8a002a3c",
-        "solana-5": {
-          "codeId": 1528,
-          "address": "axelar1mv7fmkarzvkwpgy7fj2zxqrfe50gq0y5l37s5carlpmajm5unxnqh2j869"
-        }
+        "storeCodeProposalCodeHash": "efa37c79eb04499f4c45e4500ca5baca9f7d3226f8b5efb588004ede8a002a3c"
       },
       "SolanaVotingVerifier": {
         "solana-2": {
@@ -1943,22 +1899,7 @@
         },
         "storeCodeProposalId": "1150",
         "storeCodeProposalCodeHash": "a7b14150253b0e1f0a78bbe846afd1ddff8247645d6f2959b653cd924a714e99",
-        "lastUploadedCodeId": 1527,
-        "solana-5": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "serviceName": "validators",
-          "sourceGatewayAddress": "gtwRtcJ6CT8a7bsymztPEDzaMM5d3h6PN6vXeHtkESq",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 31,
-          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-          "addressFormat": "base58_solana",
-          "codeId": 1527,
-          "address": "axelar1sz3w5zuwpystywn5ne9cjh3fcd8suthvvq9xxd875qgrc79tgnyq6tqha3"
-        }
+        "lastUploadedCodeId": 1527
       },
       "SolanaMultisigProver": {
         "solana-2": {
@@ -1978,22 +1919,7 @@
         },
         "lastUploadedCodeId": 1529,
         "storeCodeProposalId": "1148",
-        "storeCodeProposalCodeHash": "09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6",
-        "solana-5": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
-          "serviceName": "validators",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "solana",
-          "keyType": "ecdsa",
-          "codeId": 1529,
-          "domainSeparator": "0x020345c4bdac04b3ea1e3108ad3260cf201e3da0ecdf9899a0bc451a85c97053",
-          "address": "axelar1fkn2k2rc9d463k5xm5h3hks54fte9t05q5k9lkdhnzyf98yxpkwqk2uesq"
-        }
+        "storeCodeProposalCodeHash": "09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6"
       }
     },
     "axelarId": "axelar",

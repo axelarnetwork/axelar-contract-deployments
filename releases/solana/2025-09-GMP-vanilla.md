@@ -307,7 +307,7 @@ The initialization steps can only be performed by the upgrade authority.
     | **Mainnet**          | `86400`                | `15`                       | `3600`                           |
 
     ```sh
-    solana/cli --chain-id $CHAIN send gateway init \
+    solana/cli send gateway init \
         --previous-signers-retention [previousSignersRetention] \
         --minimum-rotation-delay [minimumRotationDelay] \
         --operator $OPERATOR_PDA
@@ -318,15 +318,17 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize Gas Service:
 
     ```sh
-    solana/cli --chain-id $CHAIN send gas-service init \
+    solana/cli send --signer-keys $OPERATOR_KEYPAIR_PATH gas-service init \
         --operator $OPERATOR_PDA \
         --salt "[version] $ENV"
     ```
 
+    **Note**: The `--signer-keys` parameter must be set to the keypair file that corresponds to the operator address specified in `--operator`. The gas service init instruction requires the operator to sign the transaction to prove they are the legitimate operator for the gas service.
+
 1. Initialize Governance:
 
     ```sh
-    solana/cli --chain-id $CHAIN send governance init \
+    solana/cli send governance init \
         --governance-chain 'Axelarnet' \
         --governance-address [axelarnet governance address] \
         --minimum-proposal-eta-delay [minimumProposalEtaDelaySeconds] \

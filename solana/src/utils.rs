@@ -10,6 +10,7 @@ use k256::{Secp256k1, SecretKey};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use regex::Regex;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::account_utils::StateMut;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -27,6 +28,7 @@ pub(crate) use solana_sdk::instruction::AccountMeta;
 
 pub(crate) const DEFAULT_COMPUTE_UNITS: u32 = 1_400_000; // Maximum allowed is 1.4M compute units
 pub(crate) const DEFAULT_PRIORITY_FEE: u64 = 10_000; // 10,000 micro-lamports per compute unit
+pub(crate) const MAX_DECIMALS: u8 = 19; // Maximum number of decimal places allowed
 
 pub(crate) fn create_compute_budget_instructions(
     compute_units: u32,
@@ -37,6 +39,11 @@ pub(crate) fn create_compute_budget_instructions(
         ComputeBudgetInstruction::set_compute_unit_price(priority_fee),
     ]
 }
+
+lazy_static::lazy_static! {
+    static ref POSITIVE_DECIMAL_REGEX: Regex = Regex::new(r"^\d*\.?\d+$").unwrap();
+}
+
 
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
@@ -60,6 +67,8 @@ pub(crate) const MULTISIG_PROVER_KEY: &str = "SolanaMultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
+pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+pub(crate) const SPL_TOKEN_PROGRAM_ID: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
     let reader = std::io::BufReader::new(file);
@@ -206,14 +215,14 @@ pub(crate) fn print_transaction_result(
 pub(crate) fn domain_separator(
     chains_info: &serde_json::Value,
     network_type: NetworkType,
-    chain_id: &str,
+    chain: &str,
 ) -> eyre::Result<[u8; 32]> {
     if network_type == NetworkType::Local {
         return Ok([0; 32]);
     }
 
     let from_multisig_prover = String::deserialize(
-        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain_id]
+        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain]
             [DOMAIN_SEPARATOR_KEY],
     )?;
 
@@ -322,11 +331,11 @@ pub(crate) fn serialized_transactions_filename_from_arg_matches(matches: &ArgMat
 
 pub(crate) fn try_infer_program_id_from_env(
     env: &Value,
-    chain_id: &str,
+    chain: &str,
     program_key: &str,
 ) -> eyre::Result<Pubkey> {
     let id = Pubkey::from_str(&String::deserialize(
-        &env[CHAINS_KEY][chain_id][CONTRACTS_KEY][program_key][ADDRESS_KEY],
+        &env[CHAINS_KEY][chain][CONTRACTS_KEY][program_key][ADDRESS_KEY],
     )?)
     .map_err(|_| {
         eyre!(
@@ -335,4 +344,116 @@ pub(crate) fn try_infer_program_id_from_env(
     })?;
 
     Ok(id)
+}
+
+
+pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
+    if !POSITIVE_DECIMAL_REGEX.is_match(s) {
+        return Err(eyre::eyre!("Invalid decimal format: {} (must be a positive number)", s));
+    }
+    
+    if decimals > MAX_DECIMALS {
+        return Err(eyre::eyre!("Too many decimals: {} (maximum {})", decimals, MAX_DECIMALS));
+    }
+    
+    let decimal_pos = s.find('.');
+    let (integer_part, fractional_part) = match decimal_pos {
+        Some(pos) => (&s[..pos], &s[pos + 1..]),
+        None => (s, ""),
+    };
+    
+    if decimals == 0 {
+        if !fractional_part.is_empty() {
+            return Err(eyre::eyre!("Cannot have fractional part when decimals is 0: {}", s));
+        }
+        return integer_part.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part));
+    }
+    
+    let integer_value = if integer_part.is_empty() {
+        0
+    } else {
+        integer_part.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part))?
+    };
+    
+    let multiplier = 10_u64.pow(decimals as u32);
+    
+    if integer_value > u64::MAX / multiplier {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            s,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    let integer_contribution = integer_value * multiplier;
+    
+    let fractional_value = if fractional_part.is_empty() {
+        0
+    } else {
+        let truncated_len = fractional_part.len().min(decimals as usize);
+        let truncated_frac = &fractional_part[..truncated_len];
+        
+        let frac_value = truncated_frac.parse::<u64>()
+            .map_err(|_| eyre::eyre!("Invalid fractional part: {}", truncated_frac))?;
+        
+        let remaining_decimals = decimals as usize - truncated_len;
+        if remaining_decimals > 0 {
+            let frac_multiplier = 10_u64.pow(remaining_decimals as u32);
+            frac_value * frac_multiplier
+        } else {
+            frac_value
+        }
+    };
+    
+    if integer_contribution > u64::MAX - fractional_value {
+        return Err(eyre::eyre!(
+            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
+            s,
+            decimals,
+            u64::MAX
+        ));
+    }
+    
+    Ok(integer_contribution + fractional_value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_basic() {
+        assert_eq!(parse_decimal_string_to_raw_units("123", 0).unwrap(), 123);
+        assert_eq!(parse_decimal_string_to_raw_units("1.5", 1).unwrap(), 15);
+        assert_eq!(parse_decimal_string_to_raw_units("123.45", 2).unwrap(), 12345);
+        assert_eq!(parse_decimal_string_to_raw_units(".5", 1).unwrap(), 5);
+        assert_eq!(parse_decimal_string_to_raw_units("123", 2).unwrap(), 12300);
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_edge_cases() {
+        assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
+        assert_eq!(parse_decimal_string_to_raw_units("1.56789", 2).unwrap(), 156);
+        assert_eq!(parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(), 11234567890123456789);
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_errors() {
+        assert!(parse_decimal_string_to_raw_units("", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("abc", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("-1.5", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("1.5", 20).is_err());
+        assert!(parse_decimal_string_to_raw_units("1.5", 0).is_err());
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_overflow() {
+        let max_u64 = u64::MAX;
+        let max_str = max_u64.to_string();
+        assert_eq!(parse_decimal_string_to_raw_units(&max_str, 0).unwrap(), max_u64);
+        assert!(parse_decimal_string_to_raw_units(&max_str, 1).is_err());
+    }
 }

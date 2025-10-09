@@ -197,7 +197,7 @@ The initialization steps can only be performed by the upgrade authority.
                 "InterchainTokenService": {
                     "$CHAIN": {
                         "maxUintBits": 64,
-                        "maxDecimalsWhenTruncating": 255
+                        "maxDecimalsWhenTruncating": 6
                     }
                 }
             }

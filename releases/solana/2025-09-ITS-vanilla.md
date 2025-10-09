@@ -195,7 +195,7 @@ The initialization steps can only be performed by the upgrade authority.
                 "InterchainTokenService": {
                     "$CHAIN": {
                         "maxUintBits": 64,
-                        "maxDecimalsWhenTruncating": 255
+                        "maxDecimalsWhenTruncating": 6
                     }
                 }
             }
@@ -270,6 +270,25 @@ The following checks should be performed after the rollout.
     --amount <AMOUNT> \
     --gas-value <GAS_VALUE>
     ```
+
+    **Note:** To get the `SOURCE_ACCOUNT_ADDRESS`, follow these steps:
+    
+    **Step 1:** List all your token accounts:
+    ```sh
+    spl-token accounts --owner <YOUR_WALLET_ADDRESS>
+    ```
+    
+    **Step 2:** For each account that might be your token, verify it's a token account (not a mint):
+    ```sh
+    spl-token account-info <ACCOUNT_ADDRESS>
+    ```
+    
+    **Step 3:** Look for the output that shows:
+    - `Address: <TOKEN_ACCOUNT_ADDRESS>` ← This is your SOURCE_ACCOUNT_ADDRESS
+    - `Mint: <MINT_ADDRESS>` ← This should match your token's mint
+    - `Balance: <AMOUNT>` ← This shows how many tokens you have
+    
+    **Important:** The `SOURCE_ACCOUNT_ADDRESS` is the **token account address** (where your tokens are stored), NOT the mint address (the token type). The `spl-token accounts` command sometimes shows mint addresses, so always verify with `spl-token account-info`.
 
 1. Deploy Remote Canonical Token:
 
