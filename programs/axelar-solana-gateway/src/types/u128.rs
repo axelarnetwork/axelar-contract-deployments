@@ -11,7 +11,7 @@ use bytemuck::{Pod, Zeroable};
 /// - With 16-byte alignment, the data at byte 8 is not properly aligned for `u128`
 /// - This causes `bytemuck::from_bytes` to fail during deserialization
 ///
-/// By using `[u8; 16]` as the underlying representation, we achieve 8-byte alignment
+/// By using `[u8; 16]` as the underlying representation, we achieve 1-byte alignment
 /// while maintaining the same byte layout as `u128` (little-endian).
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Pod, Zeroable)]
 #[repr(C)]
