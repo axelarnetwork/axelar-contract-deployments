@@ -29,10 +29,6 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
 
     const [destinationChain, destinationAddress, payload] = args;
 
-    validateParameters({
-        isNonEmptyString: { destinationChain, destinationAddress, payload },
-    });
-
     const unitAmount = options.amount;
 
     let channel = options.channel;

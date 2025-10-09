@@ -22,7 +22,6 @@ async function sendCommand(keypair, client, chains, chain, args, options) {
     const [destinationChain, destinationAddress, feeAmount, payload] = args;
 
     validateParameters({
-        isNonEmptyString: { destinationChain, destinationAddress },
         isValidNumber: { feeAmount },
     });
 

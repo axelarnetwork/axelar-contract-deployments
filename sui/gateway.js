@@ -109,10 +109,6 @@ async function callContract(keypair, client, config, chain, contractConfig, args
 
     const [destinationChain, destinationAddress, payload] = args;
 
-    validateParameters({
-        isNonEmptyString: { destinationChain, destinationAddress, payload },
-    });
-
     let channel = options.channel;
 
     const tx = new Transaction();
