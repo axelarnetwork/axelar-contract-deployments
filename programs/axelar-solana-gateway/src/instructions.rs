@@ -85,12 +85,11 @@ pub enum GatewayInstruction {
     /// 0. [WRITE, SIGNER] Funding account
     /// 1. [] Gateway Root Config PDA account
     /// 2. [WRITE] Verification session PDA buffer account
-    /// 3. [] System Program account
+    /// 3. [] Verifier Set Tracker PDA account
+    /// 4. [] System Program account
     InitializePayloadVerificationSession {
         /// The Merkle root for the Payload being verified.
         payload_merkle_root: [u8; 32],
-        /// The hash of the verifier set that signed the payload.
-        signing_verifier_set_hash: [u8; 32],
     },
 
     /// Verifies a signature within a Payload verification session
@@ -411,13 +410,12 @@ pub fn initialize_payload_verification_session(
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_config_pda, false),
         AccountMeta::new(verification_session_pda, false),
-        AccountMeta::new(verifier_set_tracker_pda, false),
+        AccountMeta::new_readonly(verifier_set_tracker_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
 
     let data = to_vec(&GatewayInstruction::InitializePayloadVerificationSession {
         payload_merkle_root,
-        signing_verifier_set_hash,
     })?;
 
     Ok(Instruction {
