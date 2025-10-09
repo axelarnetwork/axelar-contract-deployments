@@ -227,7 +227,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [symbol, name, decimals] = args;
 
     validateParameters({
-        isHexString: { salt: options.salt }
+        isHexString: { salt: options.salt },
     });
 
     // Deploy token on Sui
