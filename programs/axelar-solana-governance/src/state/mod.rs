@@ -101,7 +101,8 @@ pub struct GovernanceConfigUpdate {
 impl Sealed for GovernanceConfig {}
 
 impl Pack for GovernanceConfig {
-    const LEN: usize = size_of::<u8>()
+    const LEN: usize = GovernanceConfig::DISCRIMINATOR.len()
+        + size_of::<u8>()
         + size_of::<Hash>()
         + size_of::<Hash>()
         + size_of::<u32>()

@@ -425,7 +425,10 @@ impl ExecutableProposal {
 impl Sealed for ExecutableProposal {}
 
 impl Pack for ExecutableProposal {
-    const LEN: usize = size_of::<u64>() + size_of::<u8>() + size_of::<u8>();
+    const LEN: usize = ExecutableProposal::DISCRIMINATOR.len()
+        + size_of::<u64>()
+        + size_of::<u8>()
+        + size_of::<u8>();
 
     fn pack_into_slice(&self, mut dst: &mut [u8]) {
         self.serialize(&mut dst)
