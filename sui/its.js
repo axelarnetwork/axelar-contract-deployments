@@ -226,9 +226,11 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const deployConfig = { client, keypair, options, walletAddress };
     const [symbol, name, decimals] = args;
 
-    validateParameters({
-        isHexString: { salt: options.salt },
-    });
+    if (options.salt) {
+        validateParameters({
+            isHexString: { salt: options.salt },
+        });
+    }
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
