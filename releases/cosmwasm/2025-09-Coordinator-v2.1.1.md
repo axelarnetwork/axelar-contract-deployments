@@ -1,4 +1,4 @@
-# Cosmwasm Coordinator v2.1.0
+# Cosmwasm Coordinator v2.1.1
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
@@ -12,11 +12,11 @@
 | **Mainnet**          | -                     | TBD        |
 
 
-[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.0)
+[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.1)
 
 ## Background
 
-The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.0 require the router to be upgraded to version v1.3.0, and the multisig to be upgraded to v2.3.1. Listed below are the relevant changes made to each contract.
+The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. These new functionalities introduced in coordinator v2.1.1 require the router to be upgraded to version v1.3.0, and the multisig to be upgraded to v2.3.1. Listed below are the relevant changes made to each contract.
 
 ### Contract Version Info
 
@@ -27,7 +27,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 | `Router`             | `1.2.0`      | `1.2.0`     | `1.2.0`      | `1.2.0`     |
 
 
-### Coordinator v2.1.0
+### Coordinator v2.1.1
 
 1. The coordinator now stores both the router and multisig contract addresses in its state. This information will be given to the coordinator after it is instantiated using the *RegisterProtocol* message. The service registry address will also be registered using *RegisterProtocol*, where it was previously in the coordinator's instantiate message.
 1. Previously, registering a chain with the coordinator involved specifying only the multisig prover's address. Now, registration must also include the corresponding gateway and voting verifier addresses.
@@ -44,7 +44,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 
 ## Deployment
 
-- This rollout upgrades the amplifier coordinator contract from `v1.1.0` to `v2.1.0`, the multisig contract from `v2.1.0` to `v2.3.0`, and the router from `v1.2.0` to `v1.3.0`.
+- This rollout upgrades the amplifier coordinator contract from `v1.1.0` to `v2.1.1`, the multisig contract from `v2.1.0` to `v2.3.1`, and the router from `v1.2.0` to `v1.3.0`.
 - State migration is required for all three contracts.
 
 1. Retrieve coordinator address from the appropriate config file for the environment. (ENV: devnet, testnet, stagenet or mainnet)
@@ -87,12 +87,12 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
       -c Coordinator \
-      -t "Upload Coordinator contract v2.1.0" \
-      -d "Upload Coordinator contract v2.1.0" \
+      -t "Upload Coordinator contract v2.1.1" \
+      -d "Upload Coordinator contract v2.1.1" \
       -r $RUN_AS_ACCOUNT \
       --deposit $DEPOSIT_VALUE \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.1.0
+      --version 2.1.1
     ```
 
 1. Upgrade the router and multisig before upgrading the coordinator
@@ -112,18 +112,15 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    Provide coordinator address to the multisig.
 
    ```bash
-   ts-node cosmwasm/submit-proposal.js migrate \
-     -c Multisig \
-     -t "Migrate Multisig to v2.3.0" \
-     -d "Multisig to v2.3.0" \
-     --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\", \"default_authorized_provers\": {\"chain1\": \"prover1\", \"chain2\":\"prover2\",...}}" \
-     --fetchCodeId \
-     --deposit $DEPOSIT_VALUE
+   ts-node cosmwasm/migrate/migrate.ts migrate <multisig_code_id> \
+      --address $MULTISIG_ADDRESS \
+      -m $MNEMONIC \
+      -d $DEPOSIT_VALUE \
    ```
 
    The `default_authorized_provers` object should correspond to the chain/prover pairs located at `axelar.contracts.MultisigProver` in `$ENV.json`.
 
-1. Migrate to Coordinator v2.1.0 using the contract deployment scripts
+1. Migrate to Coordinator v2.1.1 using the contract deployment scripts
 
    ```bash
    ts-node cosmwasm/migrate/migrate.ts migrate <coordinator_code_id> \
@@ -204,7 +201,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    Expected output
 
    ```bash
-   {contract: 'coordinator', version: '2.1.0'}
+   {contract: 'coordinator', version: '2.1.1'}
    ```
 
 1. Check that the coordinator uses the same provers that the multisig uses for each chain.
