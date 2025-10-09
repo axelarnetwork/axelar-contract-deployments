@@ -40,6 +40,7 @@ mainnet = [
 default = ["devnet-amplifier"]
 
 [dependencies]
+anchor-discriminators.workspace = true
 anchor-discriminators-macros.workspace = true
 solana-program.workspace = true
 program-utils = { workspace = true, default-features = false }

@@ -1053,6 +1053,7 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
+ "anchor-discriminators",
  "anchor-discriminators-macros",
  "axelar-solana-encoding",
  "axelar-solana-gateway",

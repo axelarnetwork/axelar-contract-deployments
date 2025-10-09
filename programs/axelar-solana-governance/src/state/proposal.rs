@@ -22,6 +22,9 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
+
 type Uint256 = [u8; 32];
 type Hash = [u8; 32];
 
@@ -29,7 +32,8 @@ type Hash = [u8; 32];
 /// RKYV as de/se technology, this represents the write model, while the read
 /// model is implemented at [`ArchivedExecutableProposal`], which is generated
 /// by RKYV derive traits.
-#[derive(Debug, Eq, PartialEq, Clone, Copy, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ExecutableProposal {
     /// Represent the le bytes containing unix timestamp from when the proposal
@@ -441,7 +445,8 @@ impl Pack for ExecutableProposal {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 /// Represents the data required to execute a proposal.
 /// This struct is only used by the execute proposal instruction (See
 /// [`crate::instructions::send_execute_proposal`]).
