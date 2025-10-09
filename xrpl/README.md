@@ -474,20 +474,6 @@ Here's an example:
 ts-node xrpl/register-remote-token.js -e devnet-amplifier -n xrpl-dev --tokenId d059cbf3cf520f4d96064e094cb5e8fbb501bc4744034a5ca840dc2beb658aaa --currency FOO
 ```
 
-### Register Token Instance
-
-Add support for bridging a token from/to some remote chain. Decimals should be set to the decimal representation of the relevant token on the given remote chain.
-
-```bash
-ts-node xrpl/register-token-instance.js -e <env> -n <chain-name> --tokenId <token-id> --sourceChain <source-chain> --decimals <token-decimals>
-```
-
-Here's an example:
-
-```bash
-ts-node xrpl/register-token-instance.js -e devnet-amplifier -n xrpl-dev --tokenId fc00a5a83e7c6814a85ba59222e35a15a3c2b45b318b3c837e5c4aafc0b301ca --sourceChain xrpl-evm-devnet --decimals 6
-```
-
 ### Register Token Metadata
 
 Register an XRPL token's metadata on ITS Hub.
