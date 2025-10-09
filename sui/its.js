@@ -226,13 +226,11 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const deployConfig = { client, keypair, options, walletAddress };
     const [symbol, name, decimals] = args;
 
-    const unvalidatedParams = { isNonEmptyString: { symbol, name } };
-
     if (options.salt) {
-        unvalidatedParams.isHexString = { salt: options.salt };
+        validateParameters({
+            isHexString: { salt: options.salt },
+        });
     }
-
-    validateParameters(unvalidatedParams);
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
@@ -656,9 +654,10 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     const packageId = coin.address;
     const tokenType = coin.typeArgument;
     const treasuryCap = coin.objects.TreasuryCap;
-    const tokenManager = options.tokenManagerMode;
 
-    const destinationTokenManager = options.destinationTokenManagerMode ? options.destinationTokenManagerMode : tokenManager;
+    // Token Manager settings
+    const tokenManager = options.tokenManagerMode;
+    const destinationTokenManager = options.destinationTokenManagerMode;
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
@@ -1216,10 +1215,12 @@ if (require.main === module) {
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(
-            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).default('lock_unlock'),
         )
         .addOption(
-            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode').choices(['lock_unlock', 'mint_burn']),
+            new Option('--destinationTokenManagerMode <mode>', ' Destination Token Manager Mode')
+                .choices(['lock_unlock', 'mint_burn'])
+                .makeOptionMandatory(true),
         )
         .addOption(
             new Option(
