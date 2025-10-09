@@ -460,6 +460,12 @@ Remove trusted chains
 ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+List trusted chains 
+
+```bash
+ts-node sui/its list-trusted-chains    
+```
+
 ## Registering Coins
 
 ### Register Coin from Info (symbol, name and decimals)
