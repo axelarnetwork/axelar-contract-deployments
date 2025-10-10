@@ -773,30 +773,18 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     const tx = txBuilder.tx;
 
-    const [coinPackageId, tokenId, destinationChain] = args;
+    const [tokenId, destinationChain] = args;
 
     validateParameters({
-        isHexString: { coinPackageId, tokenId },
+        isHexString: { tokenId },
     });
 
     validateDestinationChain(config.chains, destinationChain);
 
-    // TODO: find a better way to fetch coinType this is hacky
-    let coinPackageName, coinModName;
-    try {
-        const packageData = await client.getObject({
-            id: coinPackageId,
-            options: { showContent: true },
-        });
-        coinPackageName = Object.keys(packageData.data.content.disassembled)[0];
-        coinModName = coinPackageName.toUpperCase();
-    } catch {
-        throw new Error(`Failed parsing package ${coinPackageId}`);
-    }
-
-    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
-
-    await checkIfCoinExists(client, coinPackageId, coinType);
+    const coinType = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::registered_coin_type`,
+        arguments: [itsConfig.objects.InterchainTokenService, tokenId],
+    });
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -1210,10 +1198,10 @@ if (require.main === module) {
 
     const deployRemoteCoinProgram = new Command()
         .name('deploy-remote-coin')
-        .command('deploy-remote-coin <coinPackageId> <tokenId> <destinationChain>')
+        .command('deploy-remote-coin <tokenId> <destinationChain>')
         .description(`Deploy an interchain token on a remote chain`)
-        .action((coinPackageId, tokenId, destinationChain, options) => {
-            mainProcessor(deployRemoteCoin, options, [coinPackageId, tokenId, destinationChain], processCommand);
+        .action((tokenId, destinationChain, options) => {
+            mainProcessor(deployRemoteCoin, options, [tokenId, destinationChain], processCommand);
         });
 
     const removeTreasuryCapProgram = new Command()
