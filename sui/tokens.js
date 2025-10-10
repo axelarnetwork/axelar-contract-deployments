@@ -427,7 +427,7 @@ if (require.main === module) {
         'Deploy a coin on Sui by specifying coin symbol, name and decimal precision',
     );
     const mintCoinsProgram = new Command('mint-coins').description(
-        'Mint coins for the given symbol on Sui. The token must be deployed on Sui first.'
+        'Mint coins for the given symbol on Sui. The token must be deployed on Sui first.',
     );
 
     // Define options, arguments, and actions for each sub-program
@@ -463,7 +463,7 @@ if (require.main === module) {
         .action((symbol, name, decimals, options) => {
             mainProcessor(options, publishCoinCommand, [symbol, name, decimals]);
         });
-    
+
     mintCoinsProgram
         .argument('<symbol>', 'Coin symbol')
         .argument('<amount>', 'Amount of coins to be minted')

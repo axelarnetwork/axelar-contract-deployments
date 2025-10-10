@@ -948,10 +948,12 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [tokenId],
     });
 
-    const gatewayChannelId = options.channel ? options.channel : await txBuilder.moveCall({
-        target: `${contracts.AxelarGateway.address}::channel::new`,
-        arguments: [],
-    });
+    const gatewayChannelId = options.channel
+        ? options.channel
+        : await txBuilder.moveCall({
+              target: `${contracts.AxelarGateway.address}::channel::new`,
+              arguments: [],
+          });
 
     await checkIfCoinExists(client, coinPackageId, coinType);
     await checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount);
