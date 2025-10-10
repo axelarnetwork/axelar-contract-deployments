@@ -2,7 +2,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrateContractProposal, submitProposal } from '../utils';
+import { encodeMigrateContractProposal, encodeUpdateInstantiateConfigProposal, submitProposal } from '../utils';
 import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -332,5 +332,50 @@ export async function checkMigration(
         return checkCoordinatorToVersion2_1(client, config, coordinatorAddress, multisigAddress);
     } else {
         printError(`no migration check script found for coordinator ${version}`);
+    }
+}
+
+export async function instantiatePermissions(
+    client: typeof SigningCosmWasmClient,
+    options: MigrationOptions,
+    config,
+    senderAddress: string,
+    coordinatorAddress: string,
+    permittedAddresses: string[],
+    codeId: number,
+    fee: string | StdFee,
+) {
+    permittedAddresses.push(coordinatorAddress);
+
+    const updateMsg: string = JSON.stringify([
+        {
+            codeId: codeId,
+            instantiatePermission: {
+                permission: 4,
+                addresses: permittedAddresses,
+            },
+        },
+    ]);
+
+    printInfo(`Update Msg: ${JSON.stringify(updateMsg)}`);
+
+    const updateOptions = {
+        msg: updateMsg,
+        title: options.title,
+        description: options.description,
+        runAs: senderAddress,
+        deposit: options.deposit,
+    };
+
+    const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
+
+    if (!options.dry) {
+        try {
+            printInfo(`Executing migration...\n${JSON.stringify(updateOptions)}`);
+            await submitProposal(client, config, updateOptions, proposal, fee);
+            printInfo('Migration proposal successfully submitted');
+        } catch (e) {
+            printError(`Error: ${e}`);
+        }
     }
 }
