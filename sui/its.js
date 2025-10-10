@@ -22,7 +22,6 @@ const {
     getObjectIdsByObjectTypes,
     getWallet,
     getFormattedAmount,
-    getUnitAmount,
     itsFunctions,
     printWalletInfo,
     registerCustomCoinUtil,
