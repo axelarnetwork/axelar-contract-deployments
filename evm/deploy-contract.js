@@ -196,7 +196,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             });
 
             // Only deploy Safe multisig if this chain is the homeChain
-            if (chain.name != 'memento-demo') {
+            if (chain.name !== 'memento-demo' && chain.name !== 'Memento') {
                 const safeAccountConfig = {
                     owners: ['0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f', '0xC165CbEc276C26c57F1b1Cbc499109AbeCbA4474'],
                     threshold: 2,
