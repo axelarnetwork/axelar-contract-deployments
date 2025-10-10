@@ -776,7 +776,6 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
     const [coinPackageId, tokenId, destinationChain] = args;
 
     validateParameters({
-        isNonEmptyString: { destinationChain },
         isHexString: { coinPackageId, tokenId },
     });
 
