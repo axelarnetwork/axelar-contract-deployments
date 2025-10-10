@@ -13,6 +13,7 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
+    UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
@@ -968,6 +969,16 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
+const getUpdateInstantiateParams = (options) => {
+    const { msg } = options;
+    console.log(`MSG: ${msg}`);
+
+    return {
+        ...getSubmitProposalParams(options),
+        accessConfigUpdates: JSON.parse(msg),
+    };
+};
+
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
@@ -1045,6 +1056,16 @@ const encodeParameterChangeProposal = (options) => {
     return {
         typeUrl: '/cosmos.params.v1beta1.ParameterChangeProposal',
         value: Uint8Array.from(ParameterChangeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeUpdateInstantiateConfigProposal = (options) => {
+    const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
+    // console.log("Proposal down:", JSON.stringify(proposal));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
+        value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
     };
 };
 
@@ -1448,6 +1469,7 @@ module.exports = {
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
+    encodeUpdateInstantiateConfigProposal,
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
