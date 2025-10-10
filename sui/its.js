@@ -1123,8 +1123,6 @@ async function mintCoins(keypair, client, config, contracts, args, options) {
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
     printInfo('New coin object id:', coinChanged.objectId);
-
-    return [balance, coinChanged.objectId];
 }
 
 async function processCommand(command, config, chain, args, options) {
