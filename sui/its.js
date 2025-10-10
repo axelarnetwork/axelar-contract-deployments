@@ -1356,6 +1356,7 @@ if (require.main === module) {
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(interchainTransferProgram);
     program.addCommand(linkCoinProgram);
+    program.addCommand(listTrustedChainsProgram);
     program.addCommand(mintCoinsProgram);
     program.addCommand(migrateAllCoinMetadataProgram);
     program.addCommand(migrateCoinMetadataProgram);
@@ -1368,7 +1369,6 @@ if (require.main === module) {
     program.addCommand(removeTrustedChainsProgram);
     program.addCommand(restoreTreasuryCapProgram);
     program.addCommand(setFlowLimitsProgram);
-    program.addCommand(listTrustedChainsProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
