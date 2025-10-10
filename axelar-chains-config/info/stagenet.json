@@ -1674,22 +1674,24 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
+          "salt": "ITS v2.1.1",
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0x835AF4Fa00f7D7E90e878A5Ed72c309fEA3CB675",
-          "interchainTokenDeployer": "0x48ca274849c3CBfAB152b46d88c52C7740cb1007",
-          "tokenManager": "0x377F8af458d247E6B92a988b015997De053a98ae",
-          "tokenHandler": "0x358f38620e86fBBDA786A1a1500241b3AFf2a973",
-          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
+          "tokenManagerDeployer": "0xFa71E6789d5e0833Dd2BAa312D811597b8B9C4C3",
+          "interchainTokenDeployer": "0xD3f5f5517650463C4875B4ECAD0fbcf13ACC9214",
+          "tokenManager": "0x914dc2eAc9C867E167325ABeD5e3c66723687d4f",
+          "tokenHandler": "0x725161e51F724F7E967630a4Ba097e0331A9fE7E",
+          "implementation": "0xFF882Ade63338494Fdab578c2046208dB2cA08EA",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
+          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5",
+          "version": "2.1.0"
         },
         "InterchainTokenFactory": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
-          "implementation": "0x3296D09c102447ECEE9E469c83b22Bbec8e87a95",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "implementation": "0xb7b033b301D461b8eDB6fC05400d90B9F7675094",
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.0"
         }
       }
     },
@@ -1697,7 +1699,7 @@
       "name": "Sui",
       "axelarId": "sui",
       "networkType": "testnet",
-      "rpc": "https://sui-testnet.gateway.tatum.io/",
+      "rpc": "https://sui-testnet-rpc.publicnode.com",
       "tokenSymbol": "SUI",
       "decimals": 9,
       "chainType": "sui",
