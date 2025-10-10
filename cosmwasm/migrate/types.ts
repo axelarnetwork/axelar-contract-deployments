@@ -8,3 +8,15 @@ export interface MigrationOptions extends Options {
     direct?: boolean;
     ignoreChains?: string;
 }
+
+export interface MigrationCheckOptions extends Options {
+    address?: string;
+    coordinator?: string;
+    multisig?: string;
+}
+
+export interface ProtocolContracts {
+    service_registry: string;
+    router: string;
+    multisig: string;
+}

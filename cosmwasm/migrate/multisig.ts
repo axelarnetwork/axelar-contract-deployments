@@ -2,6 +2,7 @@
 
 import { StdFee } from '@cosmjs/stargate';
 
+import { printError, printInfo } from '../../common';
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
@@ -48,7 +49,7 @@ async function multisigToVersion2_3_1(
         default_authorized_provers: extractDefaultProversFromConfig(config),
     };
 
-    console.log('Migration Msg:', migrationMsg);
+    printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
     const migrateOptions = {
         contractName: 'Multisig',
@@ -66,16 +67,16 @@ async function multisigToVersion2_3_1(
 
     if (!options.dry) {
         try {
-            console.log('Executing migration...', migrateOptions);
+            printInfo(`Executing migration...\n${JSON.stringify(migrateOptions)}`);
             if (options.direct) {
                 await client.migrate(senderAddress, multisigAddress, Number(codeId), migrationMsg, fee);
-                console.log('Migration succeeded');
+                printInfo('Migration succeeded');
             } else {
                 await submitProposal(client, config, migrateOptions, proposal, fee);
-                console.log('Migration proposal successfully submitted');
+                printInfo('Migration proposal successfully submitted');
             }
         } catch (e) {
-            console.log('Error:', e);
+            printError(`Error: ${e}`);
         }
     }
 }
@@ -94,6 +95,6 @@ export async function migrate(
         case '2.1.0':
             return multisigToVersion2_3_1(client, options, config, senderAddress, multisigAddress, codeId, fee);
         default:
-            console.error(`no migration script found for coordinator ${version}`);
+            printError(`no migration script found for coordinator ${version}`);
     }
 }

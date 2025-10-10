@@ -1,16 +1,18 @@
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 
+import { printError, printInfo } from '../../common';
 import { encodeMigrateContractProposal, submitProposal } from '../utils';
-import { MigrationOptions } from './types';
+import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 export const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 interface ChainContracts {
-    chainName: string;
-    proverAddress?: string;
-    gatewayAddress: string;
-    verifierAddress: string;
+    chain_name: string;
+    prover_address?: string;
+    gateway_address: string;
+    verifier_address: string;
 }
 
 export interface ChainEndpoint {
@@ -20,7 +22,7 @@ export interface ChainEndpoint {
     };
 }
 
-export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient, routerAddress: string): Promise<ChainEndpoint[]> {
+export async function queryChainsFromRouter(client: CosmWasmClient, routerAddress: string): Promise<ChainEndpoint[]> {
     try {
         const res: ChainEndpoint[] = await client.queryContractSmart(routerAddress, { chains: {} });
         return res;
@@ -35,22 +37,22 @@ function checkForDuplicates(chains: ChainContracts[]) {
     const gateways: Map<string, string[]> = new Map();
 
     chains.forEach((c) => {
-        if (c.proverAddress && !provers.has(c.proverAddress)) {
-            provers.set(c.proverAddress, [c.chainName]);
-        } else if (provers.has(c.proverAddress)) {
-            provers.set(c.proverAddress, provers.get(c.proverAddress).concat([c.chainName]));
+        if (c.prover_address && !provers.has(c.prover_address)) {
+            provers.set(c.prover_address, [c.chain_name]);
+        } else if (provers.has(c.prover_address)) {
+            provers.set(c.prover_address, provers.get(c.prover_address).concat([c.chain_name]));
         }
 
-        if (!verifiers.has(c.verifierAddress)) {
-            verifiers.set(c.verifierAddress, [c.chainName]);
-        } else if (verifiers.has(c.verifierAddress)) {
-            verifiers.set(c.verifierAddress, verifiers.get(c.verifierAddress).concat([c.chainName]));
+        if (!verifiers.has(c.verifier_address)) {
+            verifiers.set(c.verifier_address, [c.chain_name]);
+        } else if (verifiers.has(c.verifier_address)) {
+            verifiers.set(c.verifier_address, verifiers.get(c.verifier_address).concat([c.chain_name]));
         }
 
-        if (!gateways.has(c.gatewayAddress)) {
-            gateways.set(c.gatewayAddress, [c.chainName]);
-        } else if (gateways.has(c.gatewayAddress)) {
-            gateways.set(c.gatewayAddress, gateways.get(c.gatewayAddress).concat([c.chainName]));
+        if (!gateways.has(c.gateway_address)) {
+            gateways.set(c.gateway_address, [c.chain_name]);
+        } else if (gateways.has(c.gateway_address)) {
+            gateways.set(c.gateway_address, gateways.get(c.gateway_address).concat([c.chain_name]));
         }
     });
 
@@ -59,21 +61,21 @@ function checkForDuplicates(chains: ChainContracts[]) {
     provers.forEach((v, k) => {
         if (v.length > 1) {
             duplicatesFound = true;
-            console.log(`Prover ${k} duplicated between ${v}`);
+            printInfo(`Prover ${k} duplicated between ${v}`);
         }
     });
 
     verifiers.forEach((v, k) => {
         if (v.length > 1) {
             duplicatesFound = true;
-            console.log(`Verifier ${k} duplicated between ${v}`);
+            printInfo(`Verifier ${k} duplicated between ${v}`);
         }
     });
 
     gateways.forEach((v, k) => {
         if (v.length > 1) {
             duplicatesFound = true;
-            console.log(`Gateway ${k} duplicated between ${v}`);
+            printInfo(`Gateway ${k} duplicated between ${v}`);
         }
     });
 
@@ -105,14 +107,14 @@ async function constructChainContracts(
                     });
 
                     chainContracts.push({
-                        chainName: endpoint.name,
-                        gatewayAddress: endpoint.gateway.address,
-                        verifierAddress: config.verifier,
-                        proverAddress: authorizedProvers ?? '',
+                        chain_name: endpoint.name,
+                        gateway_address: endpoint.gateway.address,
+                        verifier_address: config.verifier,
+                        prover_address: authorizedProvers ?? '',
                     });
                 }
             } catch (e) {
-                console.log(`Warning: ${e}`);
+                printError(`Warning: ${e}`);
             }
         }
 
@@ -122,6 +124,82 @@ async function constructChainContracts(
     } catch (e) {
         throw e;
     }
+}
+
+async function constructCoordinatorChainProverPairs(
+    client: CosmWasmClient,
+    coordinatorAddress: string,
+    routerAddress: string,
+): Promise<Map<string, string>> {
+    const allChains = await queryChainsFromRouter(client, routerAddress);
+    const chainProverPairs: Map<string, string> = new Map();
+
+    for (const endpoint of allChains) {
+        let chainInfo: ChainContracts;
+        try {
+            chainInfo = await client.queryContractSmart(coordinatorAddress, {
+                chain_contracts_info: { chain_name: endpoint.name },
+            });
+        } catch (e) {
+            // Chain exists in router, but does not exist in the coordinator
+            // This is not a critical/migration error, so continue
+            continue;
+        }
+
+        if (!chainInfo.prover_address) {
+            throw new Error(`missing prover for chain ${endpoint.name}`);
+        }
+
+        chainProverPairs.set(endpoint.name, chainInfo.prover_address);
+    }
+
+    return chainProverPairs;
+}
+
+async function constructMultisigChainProverPairs(
+    client: CosmWasmClient,
+    multisigAddress: string,
+    routerAddress: string,
+): Promise<Map<string, string>> {
+    const allChains = await queryChainsFromRouter(client, routerAddress);
+    const chainProverPairs: Map<string, string> = new Map();
+
+    for (const endpoint of allChains) {
+        let proverAddr: string;
+
+        try {
+            proverAddr = await client.queryContractSmart(multisigAddress, {
+                authorized_caller: { chain_name: endpoint.name },
+            });
+        } catch (e) {
+            if (e.toString().includes('unknown variant')) {
+                throw new Error('Multisig version must be >=2.3.0. please check multisig address');
+            }
+
+            // Chain exists in router, but does not exist in the multisig
+            // This is not a critical/migration error, so continue
+            continue;
+        }
+
+        chainProverPairs.set(endpoint.name, proverAddr);
+    }
+
+    return chainProverPairs;
+}
+
+async function coordinatorStoresMultisigAddress(
+    client: CosmWasmClient,
+    coordinatorAddress: string,
+    multisigAddress: string,
+): Promise<boolean> {
+    const res = await client.queryContractRaw(coordinatorAddress, Buffer.from('protocol'));
+    const protocolContracts: ProtocolContracts = JSON.parse(Buffer.from(res).toString('ascii'));
+    if (protocolContracts.multisig !== multisigAddress) {
+        printError(`Coordinator stores incorrect multisig address: expected ${multisigAddress}, saw ${protocolContracts.multisig}`);
+        return false;
+    }
+
+    return true;
 }
 
 async function coordinatorToVersion2_1_1(
@@ -146,7 +224,7 @@ async function coordinatorToVersion2_1_1(
         chain_contracts: chainContracts,
     };
 
-    console.log('Migration Msg:', migrationMsg);
+    printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
     const migrateOptions = {
         contractName: 'Coordinator',
@@ -164,17 +242,62 @@ async function coordinatorToVersion2_1_1(
 
     if (!options.dry) {
         try {
-            console.log('Executing migration...', migrateOptions);
+            printInfo(`Executing migration...\n${JSON.stringify(migrateOptions)}`);
             if (options.direct) {
                 await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
-                console.log('Migration succeeded');
+                printInfo('Migration succeeded');
             } else {
                 await submitProposal(client, config, migrateOptions, proposal, fee);
-                console.log('Migration proposal successfully submitted');
+                printInfo('Migration proposal successfully submitted');
             }
         } catch (e) {
-            console.log('Error:', e);
+            printError(`Error: ${e}`);
         }
+    }
+}
+
+async function checkCoordinatorToVersion2_1(client: CosmWasmClient, config, coordinatorAddress?: string, multisigAddress?: string) {
+    coordinatorAddress = coordinatorAddress ?? config.axelar.contracts.Coordinator.address;
+    multisigAddress = multisigAddress ?? config.axelar.contracts.Multisig.address;
+    const routerAddress = config.axelar.contracts.Router.address;
+    let stateIsConsistent = true;
+
+    try {
+        const coordinatorMapPromise = constructCoordinatorChainProverPairs(client, coordinatorAddress, routerAddress);
+        const multisigMap = await constructMultisigChainProverPairs(client, multisigAddress, routerAddress);
+
+        if (!(await coordinatorStoresMultisigAddress(client, coordinatorAddress, multisigAddress))) {
+            stateIsConsistent = false;
+        }
+
+        const coordinatorMap = await coordinatorMapPromise;
+
+        for (const [chain, prover] of coordinatorMap.entries()) {
+            if (!multisigMap.has(chain)) {
+                printInfo(`Multisig Missing chain ${chain}`);
+                stateIsConsistent = false;
+                continue;
+            }
+
+            const proverSeen = multisigMap.get(chain);
+            if (proverSeen !== prover) {
+                printInfo(
+                    `Coordinator's prover does not match multisig's for chain ${chain}: prover in multisig ${proverSeen}, prover in coordinator ${prover}`,
+                );
+                stateIsConsistent = false;
+                continue;
+            }
+        }
+
+        if (!stateIsConsistent) {
+            printError(`❌ State of coordinator v2 is not consistent with the rest of the protocol`);
+        } else {
+            printInfo(`✅ Migration succeeded!`);
+        }
+    } catch (e) {
+        // These errors should never happen, as it would indicate a critical problem in the
+        // Amplifier that would likely require manual intervention.
+        printError(`Critical - ${e}`);
     }
 }
 
@@ -192,6 +315,22 @@ export async function migrate(
         case '1.1.0':
             return coordinatorToVersion2_1_1(client, options, config, senderAddress, coordinatorAddress, codeId, fee);
         default:
-            console.error(`no migration script found for coordinator ${version}`);
+            printError(`no migration script found for coordinator ${version}`);
+    }
+}
+
+export async function checkMigration(
+    client: CosmWasmClient,
+    config,
+    version: string,
+    coordinatorAddress?: string,
+    multisigAddress?: string,
+) {
+    const v2_1_re = /2\.1\.\d+/;
+
+    if (version.match(v2_1_re)) {
+        return checkCoordinatorToVersion2_1(client, config, coordinatorAddress, multisigAddress);
+    } else {
+        printError(`no migration check script found for coordinator ${version}`);
     }
 }
