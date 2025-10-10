@@ -219,7 +219,7 @@ async function mintCoinsCommand(keypair, client, args, options, contracts) {
         })
     ).totalBalance;
 
-    printInfo('💰 recipient token balance', getFormattedAmount(balance));
+    printInfo('💰 recipient token balance', getFormattedAmount(balance, coinDecimals));
 
     const coinChanged = response.objectChanges.find((c) => c.type === 'created');
 
