@@ -2,28 +2,28 @@ import { calculateDomainSeparator, isKeccak256Hash, printError, printInfo } from
 import { ConfigManager } from '../common/config';
 import { getSalt } from './utils';
 
-const getGatewayContractForChain = (chainName: string): string => {
+const getGatewayContractForChainType = (chainType: string): string => {
     const chainGatewayMapping: Record<string, string> = {
-        solana: 'SolanaGateway',
+        svm: 'SolanaGateway',
         stacks: 'StacksGateway',
     };
-    return chainGatewayMapping[chainName] || 'Gateway';
+    return chainGatewayMapping[chainType] || 'Gateway';
 };
 
-const getVerifierContractForChain = (chainName: string): string => {
+const getVerifierContractForChainType = (chainType: string): string => {
     const chainVerifierMapping: Record<string, string> = {
-        solana: 'SolanaVotingVerifier',
+        svm: 'SolanaVotingVerifier',
         stacks: 'StacksVotingVerifier',
     };
-    return chainVerifierMapping[chainName] || 'VotingVerifier';
+    return chainVerifierMapping[chainType] || 'VotingVerifier';
 };
 
-const getProverContractForChain = (chainName: string): string => {
+const getProverContractForChainType = (chainType: string): string => {
     const chainProverMapping: Record<string, string> = {
-        solana: 'SolanaMultisigProver',
+        svm: 'SolanaMultisigProver',
         stacks: 'StacksMultisigProver',
     };
-    return chainProverMapping[chainName] || 'MultisigProver';
+    return chainProverMapping[chainType] || 'MultisigProver';
 };
 
 export interface GatewayParams {
@@ -158,9 +158,9 @@ export class CoordinatorManager {
                 return value;
             };
 
-            const gatewayContractName = getGatewayContractForChain(chainName);
-            const verifierContractName = getVerifierContractForChain(chainName);
-            const proverContractName = getProverContractForChain(chainName);
+            const gatewayContractName = getGatewayContractForChainType(chainConfig.chainType);
+            const verifierContractName = getVerifierContractForChainType(chainConfig.chainType);
+            const proverContractName = getProverContractForChainType(chainConfig.chainType);
 
             const votingVerifierConfig = this.configManager.getContractConfigByChain(
                 verifierContractName,
