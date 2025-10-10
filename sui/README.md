@@ -521,14 +521,13 @@ Deploy an interchain coin on a destination chain corresponding with a registered
 
 Command:
 ```bash
-ts-node sui/its deploy-remote-coin [options] <coinPackageId> <tokenId> <destinationChain>
+ts-node sui/its deploy-remote-coin [options] <tokenId> <destinationChain>
 ```
 
 Example: 
 ```bash
-ts-node sui/its deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia
+ts-node sui/its deploy-remote-coin 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia
 ```
-Response: `Deploy remote coin: Ec1pnBpwxrv26WdJt5wXifj7N66vQ1zCabqKRgtz3ktK`
 
 ## Treasury Management
 
