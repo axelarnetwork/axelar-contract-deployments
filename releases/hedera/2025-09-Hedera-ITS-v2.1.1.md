@@ -18,7 +18,7 @@ Upgrade of the Hedera-fork of Interchain Token Service. Contracts impacted: `Tok
 
 Changes in the release:
 
-1. Lower the approval amount to the max supply of a token with finite supply. This prevents issues when registering tokens with finite max supply. [See commit.](https://github.com/commonprefix/interchain-token-service/commit/c6fda1781dfb0a00d9e74e420cca7beba9bbcda8)
+1. Lower the approval amount to the max supply of a token with finite supply. This prevents issues when registering tokens with finite max supply. [See commit.](https://github.com/commonprefix/interchain-token-service/commit/c6fda1781dfb0a00d9e74e420cca7beba9bbcda8) # skip-check
 
 ## Deployment
 
@@ -26,7 +26,7 @@ Ensure that [Hedera ITS](./2025-07-Hedera-ITS-v2.1.0) is deployed first.
 
 Follow `hedera/README.md` for Hedera account setup and in-depth `.env` configuration.
 
-Make sure to checkout [c6fda1781dfb0a00d9e74e420cca7beba9bbcda8](https://github.com/commonprefix/interchain-token-service/commit/c6fda1781dfb0a00d9e74e420cca7beba9bbcda8), run `npx hardhat compile` in `interchain-token-service`, and run `npm i` in this repo after changing the `package.json`.
+Make sure to checkout [c6fda1781dfb0a00d9e74e420cca7beba9bbcda8](https://github.com/commonprefix/interchain-token-service/commit/c6fda1781dfb0a00d9e74e420cca7beba9bbcda8), run `npx hardhat compile` in `interchain-token-service`, and run `npm i` in this repo after changing the `package.json`. # skip-check
 
 Create an `.env` config
 
