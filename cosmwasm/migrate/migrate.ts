@@ -4,6 +4,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
+import { addEnvOption } from '../../common/cli-utils';
 import { FullConfig } from '../../common/config';
 import { addAmplifierOptions, addAmplifierQueryContractOptions } from '../cli-utils';
 import { ClientManager, mainProcessor, mainQueryProcessor } from '../processor';
