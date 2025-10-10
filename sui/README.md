@@ -182,13 +182,6 @@ ts-node sui/its interchain-transfer [options] <coinObjectId> <tokenId> <destinat
 ts-node sui/its interchain-transfer 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1
 ```
 
-
-Example Response:
-
-````bash
-Interchain Transfer: [HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo](https://testnet.axelarscan.io/gmp/HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo)
-````
-
 ### Squid
 
 ```bash
@@ -553,27 +546,6 @@ Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mi
 
 ```bash
 ts-node sui/its restore-treasury-cap [options] <symbol>
-```
-
-### Mint Coin
-
-Mint coins for the given symbol on Sui. The token must be deployed on Sui first.
-
-Command:
-```bash
-ts-node sui/its mint-coins [options] <symbol> <amount> <recipient>
-```
-
-
-Example:
-```bash
-ts-node sui/its mint-coins MY_CUSTOM_COIN 1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 --coinPackageId 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b --coinPackageName my_custom_coin --coinDecimals 9
-```
-
-Example Response:
-```bash
-💰 my token balance 1
-New coin object id: 0x7eb1b5a01b679380d9fc0553293d81acbfc7f9485c10f01b92cf38dfb5b76b92
 ```
 
 ## Sui Contract Verification

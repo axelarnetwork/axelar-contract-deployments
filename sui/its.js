@@ -1045,86 +1045,6 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     }
 }
 
-async function mintCoins(keypair, client, config, contracts, args, options) {
-    const [symbol, amount, recipient] = args;
-
-    const walletAddress = keypair.toSuiAddress();
-
-    validateParameters({
-        isNonEmptyString: { symbol, amount, recipient },
-    });
-
-    if (isNaN(amount)) {
-        throw new Error(`Amount to be minted must be a valid number, found: ${amount}`);
-    }
-
-    const coin = contracts[symbol.toUpperCase()];
-
-    if (!coin) {
-        if (!options.coinPackageId || !options.coinPackageName || !options.coinDecimals) {
-            throw new Error(
-                `Options coinPackageId, coinPackageName and coinDecimals are required for coins not saved in config, found: ${JSON.stringify(
-                    [options.coinPackageId, options.coinPackageName, options.coinDecimals],
-                )}`,
-            );
-        }
-    }
-
-    const coinType = coin ? coin.typeArgument : `${options.coinPackageId}::${options.coinPackageName}::${symbol.toUpperCase()}`;
-    const coinPackageId = coin ? coin.address : options.coinPackageId;
-    const coinPackageName = coin ? coinType.split('::')[1] : options.coinPackageName;
-    const coinDecimals = coin ? coin.decimals : options.coinDecimals;
-
-    if (!coinPackageName) {
-        throw new Error(`Invalid coin type, found: ${coinType}`);
-    }
-
-    if (!coinDecimals) {
-        throw new Error(`Coin decimals are required, found: ${coinDecimals}`);
-    }
-
-    await checkIfCoinExists(client, coinPackageId, coinType);
-
-    const { data } = await client.getOwnedObjects({
-        owner: walletAddress,
-        filter: { StructType: `${SUI_PACKAGE_ID}::coin::TreasuryCap<${coinType}>` },
-        options: { showType: true },
-    });
-
-    if (!Array.isArray(data) || data.length === 0) {
-        throw new Error('TreasuryCap object not found for the specified coin type.');
-    }
-
-    const treasury = data[0].data?.objectId ?? data[0].objectId;
-
-    const txBuilder = new TxBuilder(client);
-
-    const unitAmount = getUnitAmount(amount, coinDecimals);
-
-    const mintedCoins = await txBuilder.moveCall({
-        target: `${SUI_PACKAGE_ID}::coin::mint`,
-        arguments: [treasury, unitAmount],
-        typeArguments: [coinType],
-    });
-
-    txBuilder.tx.transferObjects([mintedCoins], recipient);
-
-    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${symbol}`, options);
-
-    const balance = (
-        await client.getBalance({
-            owner: recipient,
-            coinType,
-        })
-    ).totalBalance;
-
-    printInfo('💰 recipient token balance', getFormattedAmount(balance));
-
-    const coinChanged = response.objectChanges.find((c) => c.type === 'created');
-
-    printInfo('New coin object id:', coinChanged.objectId);
-}
-
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -1338,17 +1258,6 @@ if (require.main === module) {
             mainProcessor(listTrustedChains, options, null, processCommand);
         });
 
-    const mintCoinsProgram = new Command()
-        .name('mint-coins')
-        .command('mint-coins <symbol> <amount> <recipient>')
-        .description('Mint coins for the given symbol on Sui. The token must be deployed on Sui first.')
-        .addOption(new Option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved in config)'))
-        .addOption(new Option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved in config)'))
-        .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimal precision (mandatory if coin is not saved in config)'))
-        .action((symbol, amount, recipient, options) => {
-            mainProcessor(mintCoins, options, [symbol, amount, recipient], processCommand);
-        });
-
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(checkVersionControlProgram);
     program.addCommand(deployRemoteCoinProgram);
@@ -1356,7 +1265,6 @@ if (require.main === module) {
     program.addCommand(interchainTransferProgram);
     program.addCommand(linkCoinProgram);
     program.addCommand(listTrustedChainsProgram);
-    program.addCommand(mintCoinsProgram);
     program.addCommand(migrateAllCoinMetadataProgram);
     program.addCommand(migrateCoinMetadataProgram);
     program.addCommand(registerCoinFromInfoProgram);
