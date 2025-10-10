@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, printInfo, getChainConfig, validateParameters, encodeITSDestination } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -22,9 +22,16 @@ const {
 } = ethers;
 
 async function sendToken(keypair, client, contracts, args, options) {
+    const config = loadConfig(options.env);
+    const { Example, GasService, AxelarGateway, InterchainTokenService } = contracts;
     const [symbol, destinationChain, destinationAddress, feeAmount, amount] = args;
 
-    const { Example, GasService, AxelarGateway, InterchainTokenService } = contracts;
+    validateParameters({
+        isValidNumber: { amount, feeAmount },
+    });
+
+    const destinationAddressEnc = encodeITSDestination(config.chains, destinationChain, destinationAddress);
+
     const ItsToken = contracts[symbol.toUpperCase()];
 
     if (!ItsToken) {
@@ -130,7 +137,7 @@ async function sendToken(keypair, client, contracts, args, options) {
             TokenId,
             Coin,
             destinationChain,
-            destinationAddress,
+            destinationAddressEnc,
             '0x', // its token metadata
             walletAddress,
             gas,
