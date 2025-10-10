@@ -949,7 +949,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [tokenId],
     });
 
-    const gatewayChannelId = await txBuilder.moveCall({
+    const gatewayChannelId = options.channel ? options.channel : await txBuilder.moveCall({
         target: `${contracts.AxelarGateway.address}::channel::new`,
         arguments: [],
     });
@@ -993,10 +993,12 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [contracts.AxelarGateway.objects.Gateway, interchainTransferTicket],
     });
 
-    await txBuilder.moveCall({
-        target: `${contracts.AxelarGateway.address}::channel::destroy`,
-        arguments: [gatewayChannelId],
-    });
+    if (!options.channel) {
+        await txBuilder.moveCall({
+            target: `${contracts.AxelarGateway.address}::channel::destroy`,
+            arguments: [gatewayChannelId],
+        });
+    }
 
     if (options.offline) {
         const tx = txBuilder.tx;
@@ -1321,6 +1323,7 @@ if (require.main === module) {
         .name('interchain-transfer')
         .command('interchain-transfer <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('Send interchain transfer from sui to a chain where token is linked')
+        .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
             mainProcessor(
                 interchainTransfer,
