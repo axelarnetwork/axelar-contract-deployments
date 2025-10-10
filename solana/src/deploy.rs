@@ -28,7 +28,7 @@ pub(crate) struct UpgradeArgs {
 pub(crate) fn upgrade_program(args: UpgradeArgs, config: crate::Config) -> eyre::Result<()> {
     // Read the environment JSON file
     let env: Value = read_json_file_from_path(&config.chains_info_file)?;
-    let chain_id = &config.chain_id;
+    let chain = &config.chain;
 
     let program_key = match args.program {
         Programs::Gateway => GATEWAY_KEY,
@@ -38,7 +38,7 @@ pub(crate) fn upgrade_program(args: UpgradeArgs, config: crate::Config) -> eyre:
         Programs::Multicall => MULTICALL_KEY,
     };
 
-    let program_id = try_infer_program_id_from_env(&env, chain_id, program_key)?;
+    let program_id = try_infer_program_id_from_env(&env, chain, program_key)?;
 
     println!(
         "Upgrading program {:?} with ID {} using authority {}",

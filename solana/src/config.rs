@@ -13,7 +13,7 @@ pub(crate) struct Config {
     pub(crate) output_dir: PathBuf,
     pub(crate) network_type: NetworkType,
     pub(crate) chains_info_file: PathBuf,
-    pub(crate) chain_id: String,
+    pub(crate) chain: String,
 }
 
 impl Config {
@@ -22,7 +22,7 @@ impl Config {
         output_dir: PathBuf,
         chains_info_dir: PathBuf,
         axelar_network: AxelarNetwork,
-        chain_id: String,
+        chain: String,
     ) -> eyre::Result<Self> {
         if !output_dir.exists() {
             fs::create_dir_all(&output_dir)
@@ -46,7 +46,7 @@ impl Config {
             output_dir,
             network_type,
             chains_info_file,
-            chain_id,
+            chain,
         })
     }
 }

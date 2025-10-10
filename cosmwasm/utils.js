@@ -1455,5 +1455,6 @@ module.exports = {
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
     validateItsChainChange,
+    getVerifierContractForChain,
     initContractConfig,
 };

@@ -47,9 +47,9 @@ struct Cli {
     #[clap(subcommand)]
     command: Command,
 
-    /// Axelar chainId to be used in chain config files.
-    #[clap(long, env = "CHAIN_ID")]
-    chain_id: String,
+    /// Axelar chain to be used in chain config files.
+    #[clap(long, env = "CHAIN")]
+    chain: String,
 
     /// URL for Solana's JSON RPC or moniker (or their first letter):  [mainnet-beta, testnet,
     /// devnet, localhost]". Defaults to the value set in the Solana CLI config.
@@ -269,7 +269,7 @@ async fn run() -> eyre::Result<()> {
         cli.output_dir,
         cli.chains_info_dir,
         axelar_env,
-        cli.chain_id,
+        cli.chain,
     )?;
 
     match cli.command {

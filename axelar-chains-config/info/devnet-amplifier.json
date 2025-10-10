@@ -2001,9 +2001,9 @@
           "codeId": 1426,
           "address": "axelar178fcq0m477wg7q0sf79v822ju8sarpzkm3f829dpf2xsmh8elcesceu79q"
         },
-        "lastUploadedCodeId": 1426,
-        "storeCodeProposalId": "1006",
-        "storeCodeProposalCodeHash": "31572a174679ebbf31ac63fdfb99d7a99199d873b4558d61b8cfdf5800174fee"
+        "lastUploadedCodeId": 1528,
+        "storeCodeProposalId": "1147",
+        "storeCodeProposalCodeHash": "efa37c79eb04499f4c45e4500ca5baca9f7d3226f8b5efb588004ede8a002a3c"
       },
       "SolanaVotingVerifier": {
         "solana-2": {
@@ -2021,9 +2021,9 @@
           "codeId": 1425,
           "address": "axelar1lts2hclvjcm898r53st0shr2qrlg3p2t3s8a8dkn2sxek9jh204ql0k8f6"
         },
-        "storeCodeProposalId": "1005",
-        "storeCodeProposalCodeHash": "52af1024c7548a724ec97728a1748bd1ce4ccb80bfb5c2a0ed7e57ee5ce5275c",
-        "lastUploadedCodeId": 1425
+        "storeCodeProposalId": "1150",
+        "storeCodeProposalCodeHash": "a7b14150253b0e1f0a78bbe846afd1ddff8247645d6f2959b653cd924a714e99",
+        "lastUploadedCodeId": 1527
       },
       "SolanaMultisigProver": {
         "solana-2": {
@@ -2041,9 +2041,9 @@
           "codeId": 1427,
           "address": "axelar109wjfgdx63num4xyvzhrt2djuvd7zdu3zv4m0hcjvt55r0mvhszssxl8gg"
         },
-        "lastUploadedCodeId": 1427,
-        "storeCodeProposalId": "1007",
-        "storeCodeProposalCodeHash": "20c38aff9c725424cd71e7f85e357fb8a078954c11302f6d5e325060de9dac5c"
+        "lastUploadedCodeId": 1529,
+        "storeCodeProposalId": "1148",
+        "storeCodeProposalCodeHash": "09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6"
       }
     },
     "axelarId": "axelar",
