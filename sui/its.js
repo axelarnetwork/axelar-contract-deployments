@@ -921,27 +921,28 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         options: { showContent: true },
     });
 
-    let coinType, coinPackageId;
+    let coinType, coinPackageId, coinDecimals;
     try {
         const coinDataType = coinData.data ? coinData.data.content.type : null;
         coinType = coinDataType.split('<')[1].replace('>', '');
+        const coinMetadata = await client.getCoinMetadata({ coinType });
+        coinDecimals = coinMetadata.decimals;
         coinPackageId = coinType.split('::')[0];
     } catch {
-        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${coinData.data.content.type}`);
+        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${JSON.stringify(coinData)}`);
     }
 
-    const walletAddress = keypair.toSuiAddress();
-
-    const txBuilder = new TxBuilder(client);
-    const tx = txBuilder.tx;
-
     validateParameters({
-        isNonEmptyString: { destinationChain, destinationAddress },
         isHexString: { coinObjectId, tokenId, coinPackageId },
         isValidNumber: { amount },
     });
 
     validateDestinationChain(config.chains, destinationChain);
+
+    const walletAddress = keypair.toSuiAddress();
+
+    const txBuilder = new TxBuilder(client);
+    const tx = txBuilder.tx;
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -958,7 +959,8 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     await checkIfCoinExists(client, coinPackageId, coinType);
     await checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount);
 
-    const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
+    const unitAmount = getUnitAmount(amount, coinDecimals);
+    const [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
 
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::prepare_interchain_transfer`,
