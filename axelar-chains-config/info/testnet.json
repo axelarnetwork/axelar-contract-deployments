@@ -2476,9 +2476,10 @@
           }
         },
         "InterchainTokenService": {
-          "address": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce",
+          "address": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0",
           "versions": {
-            "0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce"
+            "0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce",
+            "1": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0"
           },
           "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
           "structs": {
@@ -2487,7 +2488,9 @@
             "CoinInfo": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_info::CoinInfo",
             "CoinData": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_data::CoinData",
             "CreatorCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::creator_cap::CreatorCap",
+            "TokenManagerType": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::token_manager_type::TokenManagerType",
             "TokenId": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::token_id::TokenId",
+            "UnlinkedTokenId": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::token_id::UnlinkedTokenId",
             "UnregisteredTokenId": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::token_id::UnregisteredTokenId",
             "UnregisteredCoinData": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::unregistered_coin_data::UnregisteredCoinData",
             "CoinRegistered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::CoinRegistered",
@@ -2495,13 +2498,20 @@
             "InterchainTokenDeploymentStarted": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTokenDeploymentStarted",
             "InterchainTransferReceived": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTransferReceived",
             "UnregisteredCoinReceived": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::UnregisteredCoinReceived",
+            "UnlinkedCoinReceived": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::UnlinkedCoinReceived",
+            "UnlinkedCoinRemoved": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::UnlinkedCoinRemoved",
             "TrustedChainAdded": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::TrustedChainAdded",
             "TrustedChainRemoved": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::TrustedChainRemoved",
             "FlowLimitSet": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::FlowLimitSet",
             "DistributorshipTransfered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::DistributorshipTransfered",
             "OperatorshipTransfered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::OperatorshipTransfered",
+            "InterchainTokenIdClaimed": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::InterchainTokenIdClaimed",
+            "LinkTokenStarted": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::LinkTokenStarted",
+            "LinkTokenReceived": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::LinkTokenReceived",
+            "CoinMetadataRegistered": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::CoinMetadataRegistered",
             "TrustedChain": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::trusted_chains::TrustedChain",
             "TrustedChains": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::trusted_chains::TrustedChains",
+            "TreasuryCapReclaimer": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::treasury_cap_reclaimer::TreasuryCapReclaimer",
             "InterchainTransferTicket": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_transfer_ticket::InterchainTransferTicket",
             "InterchainTokenService_v0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_token_service_v0::InterchainTokenService_v0",
             "OwnerCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::owner_cap::OwnerCap",
@@ -2515,28 +2525,66 @@
             "OwnerCap": "0x0878df5c58f0d14a54ad5363cb81803e7075914821f2954f6141b40e878d35be",
             "OperatorCap": "0xff1e6be4d0904970c0fbec31e8390a7fb227a3d2b9b5bd2d1fa9ce24f9994982",
             "UpgradeCap": "0x5c7ce319e54e55442fe915b487db458bcfe00f2521e23eeb8fe05d46920b6b40"
+          },
+          "disallowedFunctions": {
+            "versions": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "functionNames": [
+              "deploy_remote_interchain_token",
+              "send_interchain_transfer",
+              "receive_interchain_transfer",
+              "receive_interchain_transfer_with_data",
+              "receive_deploy_interchain_token",
+              "give_unregistered_coin",
+              "mint_as_distributor",
+              "mint_to_as_distributor",
+              "burn_as_distributor",
+              "add_trusted_chains",
+              "remove_trusted_chains",
+              "set_flow_limit",
+              "set_flow_limit_as_token_operator",
+              "transfer_distributorship",
+              "transfer_operatorship"
+            ]
           }
         },
         "Example": {
-          "address": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64",
+          "address": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34",
           "versions": {
-            "0": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64"
+            "0": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34"
           },
-          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "deployer": "0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88",
           "structs": {
-            "Singleton": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::Singleton",
-            "Executed": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::gmp::Executed",
-            "ExecutedWithToken": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::ExecutedWithToken",
-            "TOKEN": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token::TOKEN",
-            "TOKEN_A": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_a::TOKEN_A",
-            "TOKEN_B": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_b::TOKEN_B",
-            "TOKEN_C": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_c::TOKEN_C"
+            "Singleton": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::its::Singleton",
+            "Executed": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::gmp::Executed",
+            "ExecutedWithToken": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::its::ExecutedWithToken",
+            "MultiMinter": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::operators::MultiMinter",
+            "OwnerCap": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::operators::OwnerCap",
+            "TOKEN": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token::TOKEN",
+            "TOKEN_A": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_a::TOKEN_A",
+            "TOKEN_B": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_b::TOKEN_B",
+            "TOKEN_C": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0xf1803cd8ea30c1fa7ac4a8d7062483dfe0ff266d0f11d232d7cd9387a6de8dcf",
-            "GmpChannelId": "0xe1903707becbbe8ee6e96e6f4f179c7fd1a30f9147a111c50e32afec6dc65f18",
-            "ItsSingleton": "0xb05ef95bcc7f51f32af0647de0736f4d0e267b95ea464617cbd4e7ce39519023",
-            "ItsChannelId": "0xf4d96b9d30326a213df4f51aee73f9f44fc612a88498646b5cf78e84d478ef56"
+            "GmpSingleton": "0xd2fabdbdfd05dfdd618405e9a60e8cd57f2b6d43ffd0429edcc1f7ca7836e8f7",
+            "GmpChannelId": "0x746f555d09f9e89e1d25be596d2e756a65bd48377524a109b955ba2f5bcb53eb",
+            "ItsSingleton": "0x9926aca1bc1fcaf38db6b5570dd16e7ad265c1d7f621dbb0efdc49d61b6471dd",
+            "ItsChannelId": "0xeadff6a48792bdb8ca1216bab78c502244152fc3632abac5f67e150da5e09315"
           }
         }
       }
@@ -3251,7 +3299,7 @@
       "name": "Memento",
       "axelarId": "memento-demo",
       "chainId": 2129,
-      "rpc": "",
+      "rpc": "https://memento-demo.common-prefix.workers.dev/",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "finality": "1",
