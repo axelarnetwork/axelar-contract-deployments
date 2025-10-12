@@ -3,7 +3,8 @@
 
 use std::collections::HashSet;
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
 use program_utils::pda::BorshPda;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -15,7 +16,8 @@ pub mod interchain_transfer_execute;
 pub mod token_manager;
 
 /// Struct containing state of the ITS program.
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct InterchainTokenService {
     /// The address of the Axelar ITS Hub contract.
     pub its_hub_address: String,
