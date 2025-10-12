@@ -1,6 +1,5 @@
 //! Multi-step signature verification.
 
-use anchor_discriminators_macros::account;
 use axelar_solana_encoding::hasher::{Hasher, SolanaSyscallHasher};
 use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
@@ -18,7 +17,6 @@ use super::verifier_set_tracker::VerifierSetHash;
 
 /// Controls the signature verification session for a given payload.
 #[repr(C)]
-#[account]
 #[derive(Zeroable, Pod, Clone, Default, Copy, PartialEq, Eq, Debug)]
 pub struct SignatureVerification {
     /// Accumulated signer threshold required to validate the payload.
