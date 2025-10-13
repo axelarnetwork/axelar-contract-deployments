@@ -121,7 +121,7 @@
           "deploymentMethod": "create",
           "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
-          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x3d6CB9D16FD5ff33511d630FC1E98a8F5f93dD85"
         }
       },
@@ -2989,7 +2989,7 @@
           "deploymentMethod": "create",
           "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
-          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0xD54096E46E8438d753A749639d11397EF3BA28f5"
         }
       }
@@ -3299,7 +3299,7 @@
       "name": "Memento",
       "axelarId": "memento-demo",
       "chainId": 2129,
-      "rpc": "",
+      "rpc": "https://memento-demo.common-prefix.workers.dev/",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "finality": "1",

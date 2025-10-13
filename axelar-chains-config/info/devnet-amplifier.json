@@ -1495,12 +1495,12 @@
       "Router": {
         "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "codeId": 850,
-        "lastUploadedCodeId": 888,
+        "codeId": 1546,
+        "lastUploadedCodeId": 1546,
         "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
         "executeProposalId": "54",
-        "storeCodeProposalId": "101",
-        "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
+        "storeCodeProposalId": "1225",
+        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "axelar": {
           "codeId": 888,
           "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y"
@@ -1509,25 +1509,25 @@
       "Multisig": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "blockExpiry": 10,
-        "codeId": 1302,
-        "lastUploadedCodeId": 1302,
+        "codeId": 1541,
+        "lastUploadedCodeId": 1541,
         "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
         "executeProposalId": "55",
-        "storeCodeProposalId": "580",
-        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec"
+        "storeCodeProposalId": "1159",
+        "storeCodeProposalCodeHash": "c6045b0782280349d7651b1c990b7951d18d5b21de167ac9948fd7522b06dc55"
       },
       "Coordinator": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "codeId": 615,
-        "lastUploadedCodeId": 846,
+        "codeId": 1542,
+        "lastUploadedCodeId": 1542,
         "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g",
         "executeProposalId": "56",
         "axelar": {
-          "codeId": 846,
+          "codeId": 1542,
           "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g"
         },
-        "storeCodeProposalId": "62",
-        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217"
+        "storeCodeProposalId": "1188",
+        "storeCodeProposalCodeHash": "dc9d7f18a03970e0d7a6d81b2307d76eec2114a6f8bf27dc4336e1813f362bc9"
       },
       "Rewards": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
