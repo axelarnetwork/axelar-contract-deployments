@@ -33,9 +33,8 @@ const CONTRACT_INFO = {
         singletonName: 'InterchainTokenService',
         moduleName: 'interchain_token_service',
         defaultFunctions: {
-            versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            versions: [0, 0, 0, 0, 0, 0, 0, 0],
             functionNames: [
-                'register_coin',
                 'deploy_remote_interchain_token',
                 'send_interchain_transfer',
                 'receive_interchain_transfer',
@@ -216,7 +215,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--functions <functions>',
-                'The functions to allow. Use use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
+                'The functions to allow. Use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
             ).default('default'),
         )
         .addOption(new Option('--version, <version>', 'The version to pause. Use all to pause all versions').default('all'))
