@@ -2,7 +2,7 @@ use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::{
     assert_msg_present_in_logs, SolanaAxelarIntegrationMetadata,
 };
-use axelar_solana_governance::events::GovernanceEvent;
+use axelar_solana_governance::events;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
@@ -12,7 +12,8 @@ use solana_sdk::signer::Signer;
 
 use crate::gmp::gmp_sample_metadata;
 use crate::helpers::{
-    approve_ix_at_gateway, events, ix_builder_with_sample_proposal_data, setup_programs,
+    approve_ix_at_gateway, find_first_cpi_event_unchecked, ix_builder_with_sample_proposal_data,
+    setup_programs,
 };
 
 #[tokio::test]
@@ -45,6 +46,12 @@ async fn test_successfully_process_gmp_approve_operator_proposal() {
         .build();
 
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let simulation_event = find_first_cpi_event_unchecked::<events::OperatorProposalApproved>(
+        &mut sol_integration,
+        &gmp_call_data.ix,
+    )
+    .await
+    .unwrap();
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
     assert!(res.is_ok());
 
@@ -56,16 +63,15 @@ async fn test_successfully_process_gmp_approve_operator_proposal() {
 
     assert!(approved_operator.is_some());
 
-    // Assert event was emitted
-    let mut emitted_events = events(&res.unwrap());
-    assert_eq!(emitted_events.len(), 1);
+    // Assert correct event was emitted
     let expected_event = operator_proposal_approved_event(&ix_builder);
-    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
-    assert_eq!(expected_event, got_event);
+    assert_eq!(expected_event, simulation_event);
 }
 
-fn operator_proposal_approved_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceEvent {
-    GovernanceEvent::OperatorProposalApproved {
+fn operator_proposal_approved_event(
+    builder: &IxBuilder<ProposalRelated>,
+) -> events::OperatorProposalApproved {
+    events::OperatorProposalApproved {
         hash: builder.proposal_hash(),
         target_address: builder.proposal_target_address().to_bytes(),
         call_data: to_vec(&builder.proposal_call_data()).unwrap(),

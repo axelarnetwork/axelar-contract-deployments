@@ -1,4 +1,4 @@
-use axelar_solana_gateway::executable::EncodingScheme;
+use axelar_solana_gateway::{events::MessageExecutedEvent, executable::EncodingScheme};
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
 use axelar_solana_memo_program::state::Counter;
@@ -55,9 +55,10 @@ async fn test_multicall_different_encodings() {
             .clone();
 
         let tx = solana_chain
-            .execute_on_axelar_executable(
+            .execute_on_axelar_executable::<MessageExecutedEvent>(
                 merkelised_message.leaf.message,
                 &payload.encode().unwrap(),
+                None,
             )
             .await
             .unwrap();
@@ -110,9 +111,10 @@ async fn test_empty_multicall_should_succeed() {
             .clone();
 
         let _tx = solana_chain
-            .execute_on_axelar_executable(
+            .execute_on_axelar_executable::<MessageExecutedEvent>(
                 merkelised_message.leaf.message,
                 &payload.encode().unwrap(),
+                None,
             )
             .await
             .unwrap();

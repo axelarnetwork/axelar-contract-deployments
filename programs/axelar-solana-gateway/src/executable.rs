@@ -283,6 +283,8 @@ pub fn construct_axelar_executable_ix(
     let (signing_pda, _) = get_validate_message_signing_pda(destination_address, command_id);
 
     let gateway_root_pda = get_gateway_root_config_pda().0;
+    let gateway_event_authority =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::id()).0;
 
     // The expected accounts for the `ValidateMessage` ix
     let mut accounts = vec![
@@ -291,6 +293,7 @@ pub fn construct_axelar_executable_ix(
         AccountMeta::new_readonly(gateway_message_payload, false),
         AccountMeta::new_readonly(signing_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(gateway_event_authority, false),
         AccountMeta::new_readonly(crate::id(), false),
     ];
     accounts.extend(passed_in_accounts);

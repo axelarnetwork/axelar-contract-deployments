@@ -1,6 +1,7 @@
 use crate::{axelar_evm_setup, axelar_solana_setup, MemoProgramWrapper};
 use anyhow::{bail, Context, Result};
 use axelar_solana_encoding::types::messages::{CrossChainId, Message};
+use axelar_solana_gateway::events::MessageExecutedEvent;
 use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_memo_program::state::Counter;
 use borsh::BorshDeserialize;
@@ -252,11 +253,12 @@ async fn test_send_from_evm_to_solana_single_case(test_case: MemoTestCase) -> Re
         .ok_or(MemoTestError::NoMerkleisedMessage)?;
 
     let tx = solana_chain
-        .execute_on_axelar_executable(
+        .execute_on_axelar_executable::<MessageExecutedEvent>(
             merkelised_message.leaf.message,
             &decoded_payload
                 .encode()
                 .context(MemoTestError::PayloadEncodingError)?,
+            None,
         )
         .await
         .or_else(|error| {

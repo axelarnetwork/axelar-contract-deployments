@@ -5,19 +5,21 @@ edition = "2021"
 
 [dependencies]
 axelar-solana-encoding.workspace = true
-tokio.workspace = true
-solana-program.workspace = true
-solana-program-test.workspace = true
-bincode.workspace = true
+axelar-solana-gas-service = { workspace = true, default-features = false, features = ["no-entrypoint"] }
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
-typed-builder.workspace = true
-solana-sdk.workspace = true
+bincode.workspace = true
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
+event-cpi.workspace = true
+event-cpi-test-utils.workspace = true
+libsecp-rand.workspace = true
 libsecp256k1.workspace = true
 rand.workspace = true
-libsecp-rand.workspace = true
-axelar-solana-gas-service = { workspace = true, default-features = false, features = ["no-entrypoint"] }
+solana-program-test.workspace = true
+solana-program.workspace = true
+solana-sdk.workspace = true
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+tokio.workspace = true
+typed-builder.workspace = true
 spl-associated-token-account = { workspace = true, features = [
     "no-entrypoint",
 ] }

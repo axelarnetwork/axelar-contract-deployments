@@ -424,6 +424,8 @@ pub mod builder {
                 system_account: AccountMeta::new_readonly(system_program::ID, false),
                 operator_account: AccountMeta::new_readonly(*operator_pda, true),
                 config_pda: AccountMeta::new(*config_pda, false),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -493,6 +495,8 @@ pub mod builder {
                 system_account: AccountMeta::new_readonly(system_program::ID, false),
                 operator_account: AccountMeta::new_readonly(*operator_pda, false),
                 config_pda: AccountMeta::new(*config_pda, true),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -569,6 +573,8 @@ pub mod builder {
                 system_account: AccountMeta::new_readonly(system_program::ID, false),
                 config_pda: AccountMeta::new(*config_pda, false),
                 proposal_account: AccountMeta::new(self.prop_pda.unwrap(), false),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -633,6 +639,8 @@ pub mod builder {
                     self.prop_operator_pda.unwrap(),
                     false,
                 ),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -746,6 +754,8 @@ pub mod builder {
                 payer: AccountMeta::new(*payer, true),
                 root_pda: AccountMeta::new(*config_pda, false),
                 proposal_pda: AccountMeta::new(self.prop_pda.unwrap(), false),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -780,6 +790,8 @@ pub mod builder {
                 system_account: AccountMeta::new_readonly(system_program::ID, false),
                 root_pda: AccountMeta::new(*config_pda, false),
                 proposal_pda: AccountMeta::new(self.prop_pda.unwrap(), false),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -816,6 +828,8 @@ pub mod builder {
                 root_pda: AccountMeta::new_readonly(*config_pda, false),
                 proposal_pda: AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
                 operator_proposal_pda: AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -847,6 +861,8 @@ pub mod builder {
                 root_pda: AccountMeta::new(*config_pda, false),
                 proposal_pda: AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
                 operator_proposal_pda: AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+                event_cpi_authority: event_authority_account_info(),
+                event_cpi_program_account: AccountMeta::new_readonly(crate::ID, false),
             }
             .to_account_vec();
 
@@ -1133,18 +1149,33 @@ pub mod builder {
             );
 
         let gateway_root_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
+
+        let (event_authority, _bump) = Pubkey::find_program_address(
+            &[event_cpi::EVENT_AUTHORITY_SEED],
+            &axelar_solana_gateway::ID,
+        );
+
         let mut new_accounts = vec![
             AccountMeta::new_readonly(payer, false),
             AccountMeta::new(gw_incoming_message, false),
             AccountMeta::new_readonly(gw_message_payload, false),
             AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
             AccountMeta::new_readonly(gateway_root_pda, false),
+            AccountMeta::new_readonly(event_authority, false),
             AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
         ];
         // Append the new accounts to the existing ones.
         new_accounts.extend_from_slice(&ix.accounts);
         ix.accounts = new_accounts;
     }
+
+    fn event_authority_account_info() -> AccountMeta {
+        AccountMeta::new_readonly(
+            Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID).0,
+            false,
+        )
+    }
+
     #[cfg(test)]
     #[allow(clippy::shadow_unrelated)]
     mod test {

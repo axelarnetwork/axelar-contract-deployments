@@ -8,6 +8,7 @@
 //!    by other Solana addresses.
 
 use axelar_solana_gateway::executable::validate_with_gmp_metadata;
+use event_cpi_macros::event_cpi_handler;
 use gmp::ProcessGMPContext;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -53,6 +54,8 @@ impl Processor {
         instruction_data: &[u8],
     ) -> ProgramResult {
         check_program_account(*program_id)?;
+
+        event_cpi_handler!(instruction_data);
 
         let governance_instruction = borsh::from_slice(instruction_data).map_err(|err| {
             msg!("Could not decode program input data: {}", err);

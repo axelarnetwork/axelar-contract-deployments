@@ -7,6 +7,7 @@ use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1Builder;
 use mpl_token_metadata::types::TokenStandard;
 use solana_program_test::tokio;
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -1068,7 +1069,12 @@ async fn test_source_address_stays_consistent_through_the_transfer(
         Some(ctx.solana_wallet),
     )?;
 
-    ctx.send_solana_tx(&[deploy_local_ix]).await.unwrap();
+    ctx.send_solana_tx(&[
+        ComputeBudgetInstruction::set_compute_unit_limit(260_000),
+        deploy_local_ix,
+    ])
+    .await
+    .unwrap();
 
     let token_id = axelar_solana_its::interchain_token_id(&ctx.solana_wallet, &salt);
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();

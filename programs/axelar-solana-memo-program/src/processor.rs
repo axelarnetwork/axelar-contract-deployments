@@ -137,6 +137,8 @@ pub fn process_native_ix(
             let counter_pda = next_account_info(account_info_iter)?;
             let signing_pda_acc = next_account_info(account_info_iter)?;
             let gateway_root_pda = next_account_info(account_info_iter)?;
+            let gateway_event_authority = next_account_info(account_info_iter)?;
+
             let gateway_program = next_account_info(account_info_iter)?;
 
             let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
@@ -160,6 +162,8 @@ pub fn process_native_ix(
                     program_account.clone(),
                     signing_pda_acc.clone(),
                     gateway_root_pda.clone(),
+                    gateway_event_authority.clone(),
+                    gateway_program.clone(),
                 ],
                 &[&[
                     axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,

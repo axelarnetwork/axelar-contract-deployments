@@ -13,7 +13,6 @@ use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
 use axelar_solana_encoding::{borsh, hash_payload};
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::events::GatewayEvent;
 use axelar_solana_gateway::instructions::InitialVerifierSet;
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
@@ -24,6 +23,8 @@ use axelar_solana_gateway::{
     get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
     BytemuckedPda,
 };
+use event_cpi::CpiEvent;
+use event_cpi_test_utils::assert_event_cpi;
 use rand::Rng as _;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
@@ -421,10 +422,11 @@ impl SolanaAxelarIntegrationMetadata {
     }
 
     /// Call `execute` on an axelar-executable program
-    pub async fn execute_on_axelar_executable(
+    pub async fn execute_on_axelar_executable<T: CpiEvent + std::fmt::Debug + PartialEq>(
         &mut self,
         message: Message,
         raw_payload: &[u8],
+        event_to_assert_on_execute: Option<T>,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
         let message_payload_pda = self.upload_message_payload(&message, raw_payload).await?;
 
@@ -438,6 +440,21 @@ impl SolanaAxelarIntegrationMetadata {
             message_payload_pda,
         )
         .unwrap();
+        if let Some(event_to_assert) = event_to_assert_on_execute {
+            let execute_simulation_results = self
+                .simulate_tx(&[ix.clone()])
+                .await
+                .expect("simulation of axelar execute failed");
+            let inner_ixs = execute_simulation_results
+                .simulation_details
+                .unwrap()
+                .inner_instructions
+                .unwrap()
+                .first()
+                .cloned()
+                .unwrap();
+            assert_event_cpi(&event_to_assert, &inner_ixs);
+        }
         let execute_results = self.send_tx(&[ix]).await;
 
         // Close message payload and reclaim lamports
@@ -710,27 +727,6 @@ impl SolanaAxelarIntegration {
             minimum_rotate_signers_delay_seconds: self.minimum_rotate_signers_delay_seconds,
         }
     }
-}
-
-// TODO remove this once all programs switch to CPI events
-/// Represents the state of a program invocation along with associated events.
-#[derive(Debug, PartialEq, Eq)]
-pub enum ProgramInvocationState<T> {
-    /// The program invocation is currently in progress, holding a list of events and their indexes.
-    InProgress(Vec<(usize, T)>),
-    /// The program invocation has succeeded, holding a list of events and their indexes.
-    Succeeded(Vec<(usize, T)>),
-    /// The program invocation has failed, holding a list of events and their indexes.
-    Failed(Vec<(usize, T)>),
-}
-
-/// Get events emitted by the Gateway
-// TODO remove this once all programs switch to CPI events
-#[must_use]
-pub fn get_gateway_events(
-    _tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<ProgramInvocationState<GatewayEvent>> {
-    vec![]
 }
 
 /// Utility for extracting the `GatewayError` from the tx metadata

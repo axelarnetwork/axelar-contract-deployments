@@ -161,6 +161,14 @@ pub fn call_gateway_with_memo(
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(signing_pda.0, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(
+            Pubkey::find_program_address(
+                &[event_cpi::EVENT_AUTHORITY_SEED],
+                &axelar_solana_gateway::ID,
+            )
+            .0,
+            false,
+        ),
         AccountMeta::new_readonly(*gateway_program_id, false),
     ];
     Ok(Instruction {

@@ -168,15 +168,14 @@ fn pay_gas<'a>(
     its_hub_address: String,
     gas_value: u64,
 ) -> ProgramResult {
-    let gas_payment_ix =
-        axelar_solana_gas_service::instructions::pay_gas_instruction(
-            payer.key,
-            crate::ITS_HUB_CHAIN_NAME.to_owned(),
-            its_hub_address,
-            payload_hash,
-            *payer.key,
-            gas_value,
-        )?;
+    let gas_payment_ix = axelar_solana_gas_service::instructions::pay_gas_instruction(
+        payer.key,
+        crate::ITS_HUB_CHAIN_NAME.to_owned(),
+        its_hub_address,
+        payload_hash,
+        *payer.key,
+        gas_value,
+    )?;
 
     invoke(
         &gas_payment_ix,
