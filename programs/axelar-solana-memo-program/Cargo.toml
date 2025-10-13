@@ -37,6 +37,7 @@ mainnet = [
 default = ["devnet-amplifier"]
 
 [dependencies]
+anchor-discriminators.workspace = true
 anchor-discriminators-macros.workspace = true
 axelar-solana-encoding.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }

@@ -1,12 +1,14 @@
 //! All PDAs owned by the memo program
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
 use std::mem::size_of;
 
-use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::program_pack::{Pack, Sealed};
 
 /// A counter PDA that keeps track of how many memos have been received from the
 /// gateway
-#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Counter {
     /// the counter of how many memos have been received from the gateway
     pub counter: u64,
@@ -15,7 +17,7 @@ pub struct Counter {
 }
 
 impl Pack for Counter {
-    const LEN: usize = size_of::<u64>() + size_of::<u8>();
+    const LEN: usize = Self::DISCRIMINATOR.len() + size_of::<u64>() + size_of::<u8>();
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         borsh::to_writer(dst, self).unwrap();
