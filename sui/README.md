@@ -168,6 +168,25 @@ ts-node sui/deploy-contract.js deploy RelayerDiscovery
 ts-node sui/deploy-contract.js deploy ITS
 ```
 
+#### Interchain Transfer
+
+```bash
+ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 --env <your-env> --signatureScheme <your-signature-scheme>
+```
+
+- Example Command: 
+
+```bash
+ts-node sui/its.js interchain-transfer 0x5d693cebdbba9fdcc8a5990858998a2f7bee87ef2d537e9dd4588a30ec615ad7 my_custom_coin MY_CUSTOM_COIN 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1 --env testnet --signatureScheme ed25519
+```
+
+
+Example Response:
+
+````bash
+Interchain Transfer: [HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo](https://testnet.axelarscan.io/gmp/HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo)
+````
+
 ### Squid
 
 ```bash
@@ -228,6 +247,15 @@ policy should be one of the following:
 -   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
+
+### Migrating Post-Upgrade
+
+After upgrading a package, state migrations (e.g. for [versioned](https://docs.sui.io/references/framework/sui/versioned) packages) can be called using the `migrate` command.
+
+
+```bash
+ts-node sui/deploy-contract.js migrate AxelarGateway
+```
 
 ### Multisig Operations
 
@@ -430,6 +458,120 @@ Remove trusted chains
 
 ```bash
 ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
+```
+
+## Registering Coins
+
+### Register Coin from Info (symbol, name and decimals)
+
+```bash
+ts-node sui/its.js register-coin-from-info <symbol> <name> <decimals>
+```
+
+### Register Coin from Metadata 
+
+(see: [sui::coin::CoinMetadata](https://docs.sui.io/references/sui-api/sui-graphql/reference/types/objects/coin-metadata))
+
+```bash
+ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
+```
+
+### Register Custom Coin
+
+If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the registration transaction will automatically be created.
+
+```bash
+ts-node sui/its.js register-custom-coin <symbol> <name> <decimals>
+```
+
+## Migrating Legacy Coin Registrations
+
+### Migrate Coin Metadata
+
+_Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned by ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
+
+```bash
+ts-node sui/its.js migrate-coin-metadata <symbol>
+```
+
+## Coin Linking
+
+### Give Unlinked Coin
+
+Deploys a coin on Sui, registers it as custom coin and gives its treasury capability to ITS. Treasury capability will be reclaimable if the `--treasuryCapReclaimer` flag is passed to the command options.
+
+```bash
+ts-node sui/its give-unlinked-coin [options] <symbol> <name> <decimals>
+```
+
+### Remove Unlinked Coin
+
+Removes a coin from ITS and returns its TreasuryCap to the caller. Caller must own the coin's TreasuryCapReclaimer.
+
+```bash
+ts-node sui/its remove-unlinked-coin [options] <symbol>
+```
+
+### Link Coin
+
+Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transactions will automatically be created.
+
+```bash
+ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
+```
+
+### Deploy Remote Interchain Coin
+
+Deploy an interchain coin on a destination chain corresponding with a registered coin on the Sui blockchain.
+
+Command:
+```bash
+ts-node sui/its.js deploy-remote-coin <coin-package-id> <coin-package-name> <coin-mod-name> <token-id> <destination-chain> <env> <signature-scheme>
+```
+
+Example: 
+```bash
+ts-node sui/its.js deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 my_custom_coin MY_CUSTOM_COIN 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia --env testnet --signatureScheme ed25519
+```
+Response: `Deploy remote coin: Ec1pnBpwxrv26WdJt5wXifj7N66vQ1zCabqKRgtz3ktK`
+
+## Treasury Management
+
+### Remove Treasury Cap
+
+Transfers the coin's `TreasuryCap` to the coin deployer and reclaims mint/burn permission from ITS.
+
+```bash
+ts-node sui/its remove-treasury-cap [options] <symbol>
+```
+
+### Restore Treasury Cap
+
+Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mint/burn permission back to ITS.
+
+```bash
+ts-node sui/its restore-treasury-cap [options] <symbol>
+```
+
+### Mint Coin
+
+Mint new Sui Coin
+
+Command:
+```bash
+ts-node sui/its.js mint-coins <coin-package-id> <coin-package-name> <coin-mod-name> <amount> <receiver> <env> <signature-scheme>
+```
+
+
+Example:
+```bash
+ts-node sui/its.js mint-coins 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b my_custom_coin MY_CUSTOM_COIN  1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 -e testnet --signatureScheme ed25519
+```
+
+Example Response:
+```bash
+💰 my token balance 1
+New coin object id: 0x7eb1b5a01b679380d9fc0553293d81acbfc7f9485c10f01b92cf38dfb5b76b92
 ```
 
 ## Sui Contract Verification

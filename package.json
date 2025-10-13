@@ -12,7 +12,8 @@
     "test": "mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js'",
     "test:evm": "mocha 'evm/test/**/*.js'",
     "test:unit": "mocha -r ts-node/register 'test/**/*.ts'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "safe-chain setup"
   },
   "repository": {
     "type": "git",
@@ -30,18 +31,19 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
-    "@axelar-network/axelar-cgp-sui": "1.1.3",
+    "@axelar-network/axelar-cgp-sui": "1.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
     "@axelar-network/interchain-token-service": "2.2.0",
     "@axelar-network/interchain-token-service-v2.1.1": "npm:@axelar-network/interchain-token-service@2.1.1",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
+    "@hashgraph/sdk": "^2.67.0",
     "@ledgerhq/hw-app-eth": "6.32.2",
     "@mysten/ledgerjs-hw-app-sui": "^0.4.1",
     "@mysten/sui": "^1.3.0",
     "@stacks/common": "^7.0.2",
     "@stacks/transactions": "^7.0.6",
     "@stacks/wallet-sdk": "^7.0.6",
-    "@stellar/stellar-sdk": "v14.0.0-rc.3",
+    "@stellar/stellar-sdk": "v14.2.0",
     "abort-controller": "^3.0.0",
     "axios": "^1.7.2",
     "bs58": "^6.0.0",
@@ -52,6 +54,7 @@
     "xrpl": "4.2.5"
   },
   "devDependencies": {
+    "@aikidosec/safe-chain": "1.0.18",
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
@@ -65,13 +68,13 @@
     "@typescript-eslint/eslint-plugin": "^8.30.1",
     "@typescript-eslint/parser": "^8.30.1",
     "chai": "^4.3.7",
-    "chalk": "^4.1.2",
+    "chalk": "4.1.2",
     "commander": "^11.0.0",
     "dotenv": "^16.0.1",
     "eslint": "^8.57.0",
     "form-data": "^4.0.0",
     "fs-extra": "^11.1.1",
-    "hardhat": "~2.19.5",
+    "hardhat": "~2.26.0",
     "husky": "^9.1.7",
     "jszip": "^3.10.1",
     "mocha": "^10.2.0",
@@ -83,5 +86,20 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "overrides": {
+    "strip-ansi": "6.0.1",
+    "color-convert": "2.0.1",
+    "color-name": "1.1.4",
+    "is-core-module": "2.13.1",
+    "error-ex": "1.3.2",
+    "has-ansi": "5.0.1",
+    "debug": "4.4.1",
+    "ansi-styles": "4.3.0",
+    "supports-color": "7.2.0",
+    "wrap-ansi": "7.0.0",
+    "slice-ansi": "4.0.0",
+    "is-arrayish": "0.2.1",
+    "ansi-regex": "5.0.1"
   }
 }

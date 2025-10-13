@@ -11,6 +11,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -18,6 +19,7 @@ const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
 const { cvToHex, principalCV } = require('@stacks/transactions');
+const { isValidNamedType } = require('@mysten/sui/utils');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -113,6 +115,11 @@ function printLog(log) {
 
 const isString = (arg) => {
     return typeof arg === 'string';
+};
+
+const isNonArrayObject = (arg) => {
+    if (!arg) return false;
+    return typeof arg === 'object' && Array.isArray(arg) === false;
 };
 
 const isNonEmptyString = (arg) => {
@@ -426,6 +433,7 @@ function isValidSvmAddressFormat(address) {
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
@@ -625,10 +633,10 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (axelar, chain, multisigSessionId) => {
+const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(axelar.rpc);
-    const value = await client.queryContractSmart(axelar.contracts.MultisigProver[chain].address, query);
+    const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
@@ -713,6 +721,30 @@ function solanaAddressBytesFromBase58(string) {
 }
 
 /**
+ * Encodes the destination token address for Interchain Token Service (ITS) link token operations.
+ * This function handles token address encoding differently from recipient addresses.
+ * Note:
+ * - Token addresses are encoded as ASCII strings for X -> Sui transfers
+ * - Destination addresses (recipients) are encoded as bytes (already hex strings)
+ */
+function encodeITSDestinationToken(chains, destinationChain, destinationTokenAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'sui':
+            if (!isValidNamedType(destinationTokenAddress)) {
+                throw new Error(`Destination token address invalid, got ${destinationTokenAddress}`);
+            }
+            // For Sui token addresses (X -> Sui), encode as ASCII string
+            return asciiToBytes(destinationTokenAddress.replace('0x', ''));
+
+        default:
+            // For all other chains, use the same encoding as destination addresses
+            return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+    }
+}
+
+/**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
  * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
@@ -745,20 +777,10 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
 
         case 'evm':
         case 'sui':
-        default: // EVM, Sui, and other chains (return as-is)
+        default: // EVM, Sui (non-token addresses), and other chains return as-is
             return destinationAddress;
     }
 }
-
-const getProposalConfig = (config, env, key) => {
-    try {
-        const value = config.axelar?.[key];
-        if (value === undefined) throw new Error(`Key "${key}" not found in config for ${env}`);
-        return value;
-    } catch (error) {
-        throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
-    }
-};
 
 /**
  * Validates if a chain is valid in the config.
@@ -789,6 +811,52 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
+    if (env === 'devnet-amplifier') {
+        return 0;
+    }
+
+    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
+        throw new Error(`Invalid gas value: ${gasValue}`);
+    }
+
+    if (isValidNumber(gasValue)) {
+        const gasFeeValue = scaleGasValue(chain, gasValue);
+        return { gasValue, gasFeeValue };
+    }
+
+    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+
+    const payload = {
+        sourceChain: chain.axelarId,
+        destinationChain,
+        event: eventType,
+    };
+
+    const rawEstimate = await httpPost(url, payload);
+
+    if (rawEstimate.error || rawEstimate === 0) {
+        throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
+    }
+
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER ? rawEstimate.toString() : rawEstimate;
+
+    const ethValue = scaleGasValue(chain, estimate, false);
+    return { gasValue: ethValue, gasFeeValue: estimate };
+}
+
+function scaleGasValue(chain, gasValue, up = true) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        if (up) {
+            return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        } else {
+            return BigNumber.from(gasValue).div(BigNumber.from(10).pow(chain.gasScalingFactor));
+        }
+    }
+
+    return gasValue;
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -805,6 +873,7 @@ module.exports = {
     isStringArray,
     isStringLowercase,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
@@ -849,7 +918,7 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
-    getProposalConfig,
+    encodeITSDestinationToken,
     tokenManagerTypes,
     validateLinkType,
     validateChain,
@@ -857,4 +926,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
+    estimateITSFee,
 };

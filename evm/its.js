@@ -33,6 +33,7 @@ const {
     validateChain,
     tokenManagerTypes,
     validateLinkType,
+    estimateITSFee,
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -121,7 +122,7 @@ function compare(contractValue, configValue, variableName) {
 }
 
 function compareToConfig(contractConfig, contractName, toCheck) {
-    for (const [key, value] of Object.entries(toCheck)) {
+    for (const [key, value] of Object.entries(toCheck).filter(([_key, value]) => typeof value !== 'undefined')) {
         if (contractConfig[key]) {
             const configValue = contractConfig[key];
             compare(value, configValue, key);
@@ -201,17 +202,23 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
+            // Check if interchainTokenAddress function exists (predictable token address)
+            const predictableAddress = 'interchainTokenAddress' in interchainTokenService;
+
+            if (predictableAddress) {
+                const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
+                printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
+            }
 
             try {
-                await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+                const interchainTokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
                 printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
+                return interchainTokenAddress;
             } catch (error) {
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
             }
 
-            return interchainTokenAddress;
+            return;
         }
 
         case 'interchain-token-id': {
@@ -312,7 +319,17 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { gasValue, metadata } = options;
+            const { metadata, env } = options;
+
+            const { gasValue, gasFeeValue } = await estimateITSFee(
+                chain,
+                destinationChain,
+                env,
+                'InterchainTransfer',
+                options.gasValue,
+                _axelar,
+            );
+
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
@@ -359,21 +376,33 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 amountInUnits,
                 metadata,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: gasFeeValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
         }
 
-        case 'register-token-metadata': {
+        case 'register-token-metadata':
             const [tokenAddress] = args;
-            const { gasValue } = options;
+            const { env } = options;
+
+            const { gasValue, gasFeeValue } = await estimateITSFee(
+                chain,
+                'axelar',
+                env,
+                'TokenMetadataRegistered',
+                options.gasValue,
+                _axelar,
+            );
+
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
-            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, { value: gasValue, ...gasOptions });
+            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
+                value: gasFeeValue,
+                ...gasOptions,
+            });
             await handleTx(tx, chain, interchainTokenService, action);
             break;
-        }
 
         case 'set-flow-limits': {
             const [tokenIdsArg, flowLimitsArg] = args;
@@ -447,7 +476,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 }
             }
 
-            const multicall = await interchainTokenService.multicall(data);
+            const multicall = await interchainTokenService.multicall(data, gasOptions);
             await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressSet', 'TrustedChainSet');
 
             break;
@@ -473,7 +502,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 }
             }
 
-            const multicall = await interchainTokenService.multicall(data);
+            const multicall = await interchainTokenService.multicall(data, gasOptions);
             await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressRemoved', 'TrustedChainRemoved');
 
             break;
@@ -521,7 +550,19 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
-            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+
+            // Note: only get `interchainToken` if the contract supports it
+            let interchainToken;
+            if ('implementationAddress' in interchainTokenDeployerContract) {
+                try {
+                    interchainToken = await interchainTokenDeployerContract.implementationAddress();
+                } catch (error) {
+                    printWarn(`Warning: implementationAddress() method not implemented in deployed contract at ${interchainTokenDeployer}`);
+                    interchainToken = undefined;
+                }
+            } else {
+                interchainToken = undefined;
+            }
 
             const trustedChains = await getTrustedChains(chains, interchainTokenService, itsVersion);
             printInfo('Trusted chains', trustedChains);
@@ -574,6 +615,62 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        case 'mint-token': {
+            const [tokenId, to, amount] = args;
+            validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { to }, isValidNumber: { amount } });
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+
+            // Get token manager address
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
+
+            // Get token address
+            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+            printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const amountInUnits = ethers.BigNumber.from(amount.toString());
+
+            if (prompt(`Proceed with minting ${amount} to ${to}?`, yes)) {
+                return;
+            }
+
+            // Execute mint
+            const tx = await tokenManager.mintToken(tokenAddress, to, amountInUnits, gasOptions);
+            await handleTx(tx, chain, tokenManager, action);
+
+            break;
+        }
+
+        case 'approve': {
+            const [tokenId, spender, amount] = args;
+            validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { spender }, isValidNumber: { amount } });
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+
+            // Get token address
+            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+            printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
+
+            // Create token contract instance
+            const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, wallet);
+
+            const amountInUnits = ethers.BigNumber.from(amount.toString());
+            printInfo(`Approving ${spender} to spend ${amount} of token ${tokenId}`);
+
+            if (prompt(`Proceed with approving ${spender} to spend ${amount}?`, yes)) {
+                return;
+            }
+
+            // Execute approval
+            const tx = await token.approve(spender, amountInUnits, gasOptions);
+            await handleTx(tx, chain, token, action, 'Approval');
+
+            break;
+        }
+
         case 'transfer-mintership': {
             const [tokenAddress, minter] = args;
             validateParameters({ isValidAddress: { tokenAddress, minter } });
@@ -588,8 +685,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'link-token': {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
-            const { gasValue } = options;
+            const { env } = options;
             const deploymentSalt = getDeploymentSalt(options);
+
+            const { gasValue, gasFeeValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             validateParameters({
                 isValidTokenId: { tokenId },
@@ -628,7 +727,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 tokenManagerType,
                 linkParams,
                 gasValue,
-                gasOptions,
+                { value: gasFeeValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'LinkTokenStarted');
             break;
@@ -741,7 +840,7 @@ if (require.main === module) {
         .argument('<amount>', 'Amount')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((destinationChain, tokenId, destinationAddress, amount, options, cmd) => {
             main(cmd.name(), [destinationChain, tokenId, destinationAddress, amount], options);
         });
@@ -750,7 +849,7 @@ if (require.main === module) {
         .command('register-token-metadata')
         .description('Register token metadata')
         .argument('<token-address>', 'Token address')
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((tokenAddress, options, cmd) => {
             main(cmd.name(), [tokenAddress], options);
         });
@@ -823,6 +922,26 @@ if (require.main === module) {
         });
 
     program
+        .command('mint-token')
+        .description('Mint tokens using token manager')
+        .argument('<token-id>', 'Token ID')
+        .argument('<to>', 'Recipient address')
+        .argument('<amount>', 'Amount to mint')
+        .action((tokenId, to, amount, options, cmd) => {
+            main(cmd.name(), [tokenId, to, amount], options);
+        });
+
+    program
+        .command('approve')
+        .description('Approve spender to spend tokens')
+        .argument('<token-id>', 'Token ID')
+        .argument('<spender>', 'Spender address')
+        .argument('<amount>', 'Amount to approve (in wei)')
+        .action((tokenId, spender, amount, options, cmd) => {
+            main(cmd.name(), [tokenId, spender, amount], options);
+        });
+
+    program
         .command('transfer-mintership')
         .description('Transfer mintership')
         .argument('<token-address>', 'Token address')
@@ -840,7 +959,7 @@ if (require.main === module) {
         .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
             main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });

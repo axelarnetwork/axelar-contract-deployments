@@ -39,7 +39,7 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
-const { XRPLClient } = require('../xrpl/utils');
+const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
@@ -47,20 +47,7 @@ const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
-const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
-
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
-
-const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
-
-const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareDummyWallet = async () => {
-    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
-};
-
-const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
-    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -77,20 +64,6 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
-
-const initContractConfig = (config, { contractName, chainName }) => {
-    if (!contractName) {
-        return;
-    }
-
-    config.axelar = config.axelar || {};
-    config.axelar.contracts = config.axelar.contracts || {};
-    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
-
-    if (chainName) {
-        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
-    }
-};
 
 const getAmplifierBaseContractConfig = (config, contractName) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
@@ -138,30 +111,23 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const uploadContract = async (client, wallet, config, options) => {
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+const executeTransaction = async (client, account, contractAddress, message, fee) => {
+    const tx = await client.execute(account.address, contractAddress, message, fee, '');
+    return tx;
+};
 
-    const [account] = await wallet.getAccounts();
+const uploadContract = async (client, options, uploadFee) => {
+    const [account] = client.accounts;
     const wasm = readContractCode(options);
-
-    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, wallet, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options, initFee) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-
     const contractLabel = getLabel(options);
 
     const { contractAddress } = instantiate2
@@ -181,15 +147,10 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
     return contractAddress;
 };
 
-const migrateContract = async (client, wallet, config, options) => {
+const migrateContract = async (client, config, options, migrateFee) => {
     const { msg } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
@@ -1010,13 +971,17 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config.chains, chainName);
+    let contractConfig;
+    let chainConfig;
+    if (!options.address || !options.codeId) {
+        contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+        chainConfig = getChainConfig(config.chains, chainName);
+    }
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
-        codeId: contractConfig.codeId,
+        contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+        codeId: options.codeId ?? contractConfig.codeId,
         msg: Buffer.from(msg),
     };
 };
@@ -1108,17 +1073,34 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, wallet, config, options, content) => {
-    const [account] = await wallet.getAccounts();
+// Retries sign-and-broadcast on transient RPC socket closures
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3) => {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await client.signAndBroadcast(signerAddress, msgs, fee, memo);
+        } catch (error) {
+            lastError = error;
+            const code = error?.cause?.code || error?.code;
+            const message = error?.message || '';
 
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+            // Confirm err is socket error
+            const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
+            if (!isTransient || attempt === maxAttempts - 1) {
+                throw error;
+            }
+
+            printInfo('Retrying proposal submission..... 🔄');
+        }
+    }
+};
+
+const submitProposal = async (client, config, options, content, fee) => {
+    const [account] = client.accounts;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
@@ -1161,6 +1143,160 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
+const getVerifierInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: {
+            contracts: {
+                ServiceRegistry: { address: serviceRegistryAddress },
+                Rewards: { address: rewardsAddress },
+                VotingVerifier: { [chainName]: verifierConfig },
+            },
+        },
+    } = config;
+
+    if (!verifierConfig) {
+        throw new Error(`VotingVerifier config not found for chain ${chainName}`);
+    }
+
+    const {
+        governanceAddress,
+        serviceName,
+        sourceGatewayAddress,
+        votingThreshold,
+        blockExpiry,
+        confirmationHeight,
+        msgIdFormat,
+        addressFormat,
+    } = verifierConfig;
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(rewardsAddress)) {
+        throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isString(sourceGatewayAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
+    }
+
+    if (!isStringArray(votingThreshold)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
+    }
+
+    if (!isNumber(blockExpiry)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
+    }
+
+    if (!isNumber(confirmationHeight)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
+    }
+
+    if (!isString(msgIdFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
+    }
+
+    if (!isString(addressFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
+    }
+
+    return {
+        service_registry_address: serviceRegistryAddress,
+        governance_address: governanceAddress,
+        service_name: serviceName,
+        source_gateway_address: sourceGatewayAddress,
+        voting_threshold: votingThreshold,
+        block_expiry: toBigNumberString(blockExpiry),
+        confirmation_height: confirmationHeight,
+        source_chain: chainName,
+        rewards_address: rewardsAddress,
+        msg_id_format: msgIdFormat,
+        address_format: addressFormat,
+    };
+};
+
+const getProverInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: {
+            contracts: {
+                MultisigProver: { [chainName]: proverConfig },
+            },
+            chainId: axelarChainId,
+        },
+    } = config;
+
+    if (!proverConfig) {
+        throw new Error(`MultisigProver config not found for chain ${chainName}`);
+    }
+
+    const { governanceAddress, adminAddress, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType, domainSeparator } =
+        proverConfig;
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!isStringArray(signingThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
+    }
+
+    if (!isString(encoder)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
+    }
+
+    if (!isString(keyType)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
+    }
+
+    const routerAddress = config.axelar.contracts.Router?.address;
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+
+    if (!isKeccak256Hash(separator)) {
+        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
+    }
+
+    return {
+        governance_address: governanceAddress,
+        admin_address: adminAddress,
+        signing_threshold: signingThreshold,
+        service_name: serviceName,
+        chain_name: chainName,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
+        encoder,
+        key_type: keyType,
+        domain_separator: separator.replace('0x', ''),
+    };
+};
+
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
     const chainConfig = getChainConfig(config.chains, chainName);
 
@@ -1184,6 +1320,24 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
 
     if (!hasChanges) {
         throw new Error(`No changes detected for chain '${chainName}'.`);
+    }
+};
+
+const initContractConfig = (config, options) => {
+    const { contractName, chainName } = options;
+
+    if (!contractName) {
+        return;
+    }
+
+    if (!config.axelar.contracts[contractName]) {
+        config.axelar.contracts[contractName] = {};
+    }
+
+    if (chainName) {
+        if (!config.axelar.contracts[contractName][chainName]) {
+            config.axelar.contracts[contractName][chainName] = {};
+        }
     }
 };
 
@@ -1274,17 +1428,13 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    governanceAddress,
-    prepareWallet,
-    prepareDummyWallet,
-    prepareClient,
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    executeTransaction,
     uploadContract,
     instantiateContract,
     migrateContract,
@@ -1302,5 +1452,8 @@ module.exports = {
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
+    getVerifierInstantiateMsg,
+    getProverInstantiateMsg,
     validateItsChainChange,
+    initContractConfig,
 };

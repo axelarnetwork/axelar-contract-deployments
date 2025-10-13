@@ -126,12 +126,6 @@ const getItsChannelId = async (client, itsObjectId) => {
     return '0x' + channelId;
 };
 
-const getSquidChannelId = async (client, squidObjectId) => {
-    const bcsBytes = await getBcsBytesByObjectId(client, squidObjectId);
-    const data = bcsStructs.squid.Squid.parse(bcsBytes);
-    return '0x' + data.channel.id;
-};
-
 const getSigners = async (keypair, config, chain, options) => {
     if (options.signers === 'wallet') {
         const pubKey = keypair.getPublicKey().toRawBytes();
@@ -231,6 +225,25 @@ const getBagContentId = async (client, objectType, bagId, bagName) => {
     });
 
     return objectDetails.data.content.fields.value.fields.id.id;
+};
+
+const getBagContents = async function (client, bagId, retrieveFunction) {
+    if (typeof retrieveFunction !== 'function') {
+        throw new Error(`Expected function, got ${typeof retrieveFunction}`);
+    }
+
+    let cursor = null;
+    const bagItems = [];
+    do {
+        const page = await client.getDynamicFields({ parentId: bagId, cursor });
+        for (const entry of page.data || []) {
+            const bagItem = retrieveFunction(entry);
+            bagItems.push(bagItem);
+        }
+        cursor = page.hasNextPage ? page.nextCursor : null;
+    } while (cursor);
+
+    return bagItems;
 };
 
 const getTransactionList = async (client, discoveryObjectId) => {
@@ -351,6 +364,23 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
     return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
 };
 
+const selectSuiNetwork = (env) => {
+    let network;
+    switch (env) {
+        case 'devnet':
+        case 'testnet':
+        case 'mainnet': {
+            network = env;
+            break;
+        }
+        default: {
+            network = 'testnet';
+        }
+    }
+
+    return network;
+};
+
 module.exports = {
     suiCoinId,
     isGasToken,
@@ -366,9 +396,9 @@ module.exports = {
     getObjectIdsByObjectTypes,
     getSingletonChannelId,
     getItsChannelId,
-    getSquidChannelId,
     getSigners,
     getBagContentId,
+    getBagContents,
     moveDir,
     getTransactionList,
     parseDiscoveryInfo,
@@ -376,6 +406,7 @@ module.exports = {
     checkTrustedAddresses,
     getStructs,
     saveGeneratedTx,
+    selectSuiNetwork,
     isAllowed,
     getAllowedFunctions,
 };
