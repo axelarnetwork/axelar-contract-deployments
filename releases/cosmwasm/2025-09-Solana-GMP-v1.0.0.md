@@ -6,7 +6,7 @@
 | **Deployment** | @nbayindirli |
 
 | **Axelar Env**       | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | ---------|
+| -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | Pending               | TBD      |
 | **Stagenet**         | Pending               | TBD      |
 | **Testnet**          | Pending               | TBD      |

@@ -7,7 +7,7 @@
 
 | **Axelar Env**       | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-09-18 |
+| **Devnet Amplifier** | Pending               | TBD        |
 | **Stagenet**         | Pending               | TBD        |
 | **Testnet**          | Pending               | TBD        |
 | **Mainnet**          | Pending               | TBD        |
