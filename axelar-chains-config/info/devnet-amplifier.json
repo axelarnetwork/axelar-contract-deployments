@@ -1495,12 +1495,12 @@
       "Router": {
         "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "codeId": 1533,
-        "lastUploadedCodeId": 1533,
+        "codeId": 1546,
+        "lastUploadedCodeId": 1546,
         "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
         "executeProposalId": "54",
-        "storeCodeProposalId": "1134",
-        "storeCodeProposalCodeHash": "1444b7333018584a316bd6e056083668a9d4351aab395b90ab5ec18ea3a8a208",
+        "storeCodeProposalId": "1225",
+        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "axelar": {
           "codeId": 888,
           "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y"
