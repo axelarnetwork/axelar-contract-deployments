@@ -351,73 +351,38 @@ pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::
     if !POSITIVE_DECIMAL_REGEX.is_match(s) {
         return Err(eyre::eyre!("Invalid decimal format: {} (must be a positive number)", s));
     }
-    
+
     if decimals > MAX_DECIMALS {
         return Err(eyre::eyre!("Too many decimals: {} (maximum {})", decimals, MAX_DECIMALS));
     }
-    
-    let decimal_pos = s.find('.');
-    let (integer_part, fractional_part) = match decimal_pos {
-        Some(pos) => (&s[..pos], &s[pos + 1..]),
-        None => (s, ""),
-    };
-    
-    if decimals == 0 {
-        if !fractional_part.is_empty() {
-            return Err(eyre::eyre!("Cannot have fractional part when decimals is 0: {}", s));
-        }
-        return integer_part.parse::<u64>()
-            .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part));
-    }
-    
-    let integer_value = if integer_part.is_empty() {
-        0
-    } else {
-        integer_part.parse::<u64>()
-            .map_err(|_| eyre::eyre!("Invalid integer part: {}", integer_part))?
-    };
-    
-    let multiplier = 10_u64.pow(decimals as u32);
-    
-    if integer_value > u64::MAX / multiplier {
+
+    let decimals = decimals as usize;
+    let decimal_pos = s.find('.').unwrap_or(s.len());
+    let str_without_decimals = s.replace(".", "");
+    let actual_decimals = str_without_decimals.len() - decimal_pos;
+    if decimals < actual_decimals {
         return Err(eyre::eyre!(
+            "Actual decimals: {} is greater than decimals: {}",
+            actual_decimals,
+            decimals
+        ));
+    }
+    let decimals_to_pad: usize = decimals.checked_sub(actual_decimals).unwrap_or(0);
+    let decimals_to_trim: usize = actual_decimals.checked_sub(decimals).unwrap_or(0);
+    let padded_str = format!(
+        "{:0<1$}",
+        str_without_decimals,
+        decimals_to_pad + str_without_decimals.len()
+    );
+    let trimmed_str = &padded_str[..padded_str.len() - decimals_to_trim];
+    trimmed_str.parse::<u64>().map_err(|_| {
+        eyre::eyre!(
             "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
             s,
             decimals,
             u64::MAX
-        ));
-    }
-    
-    let integer_contribution = integer_value * multiplier;
-    
-    let fractional_value = if fractional_part.is_empty() {
-        0
-    } else {
-        let truncated_len = fractional_part.len().min(decimals as usize);
-        let truncated_frac = &fractional_part[..truncated_len];
-        
-        let frac_value = truncated_frac.parse::<u64>()
-            .map_err(|_| eyre::eyre!("Invalid fractional part: {}", truncated_frac))?;
-        
-        let remaining_decimals = decimals as usize - truncated_len;
-        if remaining_decimals > 0 {
-            let frac_multiplier = 10_u64.pow(remaining_decimals as u32);
-            frac_value * frac_multiplier
-        } else {
-            frac_value
-        }
-    };
-    
-    if integer_contribution > u64::MAX - fractional_value {
-        return Err(eyre::eyre!(
-            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
-            s,
-            decimals,
-            u64::MAX
-        ));
-    }
-    
-    Ok(integer_contribution + fractional_value)
+        )
+    })
 }
 
 #[cfg(test)]
@@ -436,7 +401,6 @@ mod tests {
     #[test]
     fn test_parse_decimal_string_to_raw_units_edge_cases() {
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
-        assert_eq!(parse_decimal_string_to_raw_units("1.56789", 2).unwrap(), 156);
         assert_eq!(parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(), 11234567890123456789);
     }
 
