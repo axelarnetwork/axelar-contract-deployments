@@ -12,7 +12,7 @@ use super::signature_verification::SignatureVerification;
 ///
 /// Ideally, the payload merkle root should be a part of its seeds.
 #[repr(C)]
-#[account]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Copy, Clone, Default, PartialEq, Eq, Debug)]
 pub struct SignatureVerificationSessionData {

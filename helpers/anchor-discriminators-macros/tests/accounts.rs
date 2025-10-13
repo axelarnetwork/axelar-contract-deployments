@@ -13,7 +13,7 @@ pub(crate) mod v1_tests {
 
     /// Keep track of the gas collector for aggregating gas payments
     #[repr(C)]
-    #[account]
+    #[account(zero_copy)]
     #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
     pub(crate) struct Config {
         /// Operator with permission to give refunds & withdraw funds

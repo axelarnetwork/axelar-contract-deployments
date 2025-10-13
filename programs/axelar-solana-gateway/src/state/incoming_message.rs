@@ -6,7 +6,7 @@ use program_utils::pda::BytemuckedPda;
 
 /// Data for the incoming message (from Axelar to Solana) PDA.
 #[repr(C)]
-#[account]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct IncomingMessage {

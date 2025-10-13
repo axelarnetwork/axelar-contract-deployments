@@ -14,7 +14,7 @@ pub type VerifierSetHash = [u8; 32];
 /// We keep the track of the hash + epoch (sequential order of which verifier
 /// set this is)
 #[repr(C)]
-#[account]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq)]
 pub struct VerifierSetTracker {

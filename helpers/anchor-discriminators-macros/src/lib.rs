@@ -2,8 +2,11 @@
 extern crate proc_macro;
 
 use convert_case::{Case, Casing};
-use quote::{quote, ToTokens};
-use syn::parse_macro_input;
+use quote::quote;
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, Token,
+};
 
 use anchor_discriminators::{sighash, SIGHASH_GLOBAL_NAMESPACE};
 
@@ -214,18 +217,55 @@ pub fn derive_instruction_discriminator(input: proc_macro::TokenStream) -> proc_
     proc_macro::TokenStream::from(expanded)
 }
 
+// Define a struct to parse the attribute arguments
+#[derive(Debug, Default)]
+struct AccountArgs {
+    zero_copy: bool,
+}
+
+impl Parse for AccountArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut zero_copy = false;
+
+        // Parse comma-separated idents
+        while !input.is_empty() {
+            let ident: syn::Ident = input.parse()?;
+            if ident == "zero_copy" {
+                zero_copy = true;
+            } else {
+                return Err(syn::Error::new_spanned(
+                    ident,
+                    "Unknown argument. Valid arguments: zero_copy",
+                ));
+            }
+
+            // Parse trailing comma if present
+            if !input.is_empty() {
+                input.parse::<Token![,]>()?;
+            }
+        }
+
+        Ok(AccountArgs { zero_copy })
+    }
+}
+
 #[proc_macro_attribute]
 #[allow(clippy::wildcard_enum_match_arm)]
 pub fn account(
-    _attr: proc_macro::TokenStream,
+    args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let account_strct = parse_macro_input!(input as syn::ItemStruct);
     let account_name = &account_strct.ident;
-    let is_zero_copy = account_strct.attrs.iter().any(|attr| {
-        attr.path.to_token_stream().to_string() == "repr"
-            && attr.tokens.to_token_stream().to_string() == "(C)"
-    });
+
+    // Parse arguments using our custom Parse implementation
+    let args = if args.is_empty() {
+        AccountArgs::default()
+    } else {
+        parse_macro_input!(args as AccountArgs)
+    };
+    let is_zero_copy = args.zero_copy;
+
     let (impl_gen, type_gen, where_clause) = account_strct.generics.split_for_impl();
 
     let discriminator = gen_discriminator(

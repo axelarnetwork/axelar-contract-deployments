@@ -17,7 +17,7 @@ pub type VerifierSetEpoch = U256;
 
 /// Gateway configuration type.
 #[repr(C)]
-#[account]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Pod, Zeroable, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GatewayConfig {
