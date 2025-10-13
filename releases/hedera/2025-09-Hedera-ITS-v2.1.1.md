@@ -62,6 +62,7 @@ ts-node evm/deploy-its.js -s "v2.1.1" -m create2 --reuseProxy
 ts-node evm/deploy-its.js --upgrade
 ```
 
+
 ## Checklist
 
 The following checks should be performed after the rollout.
@@ -74,7 +75,7 @@ ts-node evm/its.js checks -n $CHAIN -y
 
 - Verify the token manager proxy contract once an ITS token is deployed on `<ChainName>` and then mark it as a proxy.
 
-> Note: before transferring any tokens to an account on Hedera, that account must be associated with the token. Use the `associate-token.js` script to associate the token with the account, see `hedera/README.md` for more details. Use `gas-value` in in tinybars (8 decimals).
+> Note: before transferring any tokens to an account on Hedera, that account must be associated with the token. Use the `associate-token.js` script to associate the token with the account, see `hedera/README.md` for more details. Use `gas-value` in in tinybars (8 decimals). 
 
 - EVM Checklist
 
