@@ -1,544 +1,4 @@
 {
-  "axelar": {
-    "contracts": {
-      "ServiceRegistry": {
-        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "261",
-        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
-        "codeId": 66,
-        "lastUploadedCodeId": 66,
-        "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
-        "executeProposalId": "14"
-      },
-      "Router": {
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "276",
-        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
-        "codeId": 28,
-        "lastUploadedCodeId": 1,
-        "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
-        "executeProposalId": "16",
-        "flow": {
-          "executeProposalId": "44"
-        },
-        "hedera": {
-          "executeProposalId": "48"
-        }
-      },
-      "NexusGateway": {
-        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
-        "storeCodeProposalId": "4",
-        "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
-        "codeId": 2,
-        "lastUploadedCodeId": 2,
-        "address": "axelar1aqun445kcqth3aunxlvly8grgyqt4c68q0g0df99nccs72plgh0s0eptw9"
-      },
-      "Rewards": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "rewardsDenom": "uaxl",
-        "params": {
-          "epoch_duration": "14400",
-          "rewards_per_epoch": "10000000",
-          "participation_threshold": [
-            "7",
-            "10"
-          ]
-        },
-        "storeCodeProposalId": "71",
-        "storeCodeProposalCodeHash": "095c1caca4f9b7381519bd8395f3f558202fd4d4ad03f223dd8a2e991c568bd6",
-        "codeId": 23,
-        "lastUploadedCodeId": 4,
-        "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at"
-      },
-      "Coordinator": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "66",
-        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
-        "codeId": 18,
-        "lastUploadedCodeId": 5,
-        "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y",
-        "executeProposalId": "20",
-        "flow": {
-          "executeProposalId": "46"
-        },
-        "hedera": {
-          "executeProposalId": "49"
-        }
-      },
-      "Multisig": {
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "blockExpiry": 10,
-        "storeCodeProposalId": "166",
-        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
-        "codeId": 42,
-        "lastUploadedCodeId": 42,
-        "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
-        "executeProposalId": "18",
-        "flow": {
-          "executeProposalId": "45"
-        },
-        "hedera": {
-          "executeProposalId": "47"
-        }
-      },
-      "MultisigProver": {
-        "flow": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
-          "codeId": 21,
-          "address": "axelar1u8cmvyq54fepjlt77vqnwyxhf4rqn5j5axgta7py34zlwue3v5fsy2pvhf"
-        },
-        "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "domainSeparator": "0xfbfcd8a4d93cdf3dc1099795eefb83c109414406fc09015f4d0758ed6b99c43c",
-          "codeId": 21,
-          "address": "axelar1x3xd2z2p3703cdwu98tc27x5j9tgq60lyxdwtnggx05zj3egg0wqsnckd0"
-        },
-        "sui": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "bcs",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0x254a1ae90417f8649798698e95a1140808a701c38c8f5723a930b9d0666e54b4",
-          "address": "axelar1ktjfpfrlgmh8s76ltjhhv0xcj0st0d0xrjh5rvm3gr5u66x9xvpsm0juw8"
-        },
-        "xrpl-evm": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0x9b077bbbf84a1710619620d5bbcf2c3d42f5b4dce40d135bf1d86f6a42b8f9e0",
-          "address": "axelar18emrfkkz45zuxgk7v2gqrnm59wnnupdakqnmejh0t6krltwzjnxqreejwk"
-        },
-        "plume": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0x2dbc42136ba0394d31cf1f35344a182ecf00210b42b9b8bf3234c3da201a9ca6",
-          "address": "axelar1vs8rvpuyhq40tn4suq4jamx3fe9gqlszds0z8s39ta4txz95ryws8xnpk0"
-        },
-        "hyperliquid": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0x55effa6536498e73caa573e7ad8326d3d4628878a9e4dc8b461ed5706ad585c2",
-          "address": "axelar12cmpmynpn38tvg0t57lc8wd8cvw724sz95kr80a08mhghztex5lqfk2yv5"
-        },
-        "monad": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0xc2cf3ea0ca094471edf3b8d4c6d31799069863a0181f5ff3801644796310d0e6",
-          "address": "axelar1xvqw6ts27k74ak0av7rszmedcz2rprqenayqk2gptfjhnl7rw3lqylln83"
-        },
-        "berachain": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0x500160c7def19100fa590da323c3c796b53dd4a4bd68b5f971c516545f3f7051",
-          "address": "axelar1zwg52tslcf5vq5ge4yc2lqslc9v6z0ynxu59jnwdw7spy00je0dsn2g93z"
-        },
-        "stellar-2025-q3": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "stellar_xdr",
-          "keyType": "ed25519",
-          "codeId": 59,
-          "domainSeparator": "0x5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
-          "address": "axelar1960k48ezdumanv3hjf22cvp2a9zwr5skn34xgtrkhfjjhk7k4htsd4l8ze"
-        },
-        "celo-sepolia": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 21,
-          "domainSeparator": "0xb741e91bfa150b641059e6fc4b0f63086bf7714a4367712928f2f248a4489fe0",
-          "address": "axelar1x8jqrc49pqrn7arxxsyaa57egpwllu3kes4576y7djrlyygp7dqsdnalyc"
-        },
-        "storeCodeProposalId": "69",
-        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
-        "lastUploadedCodeId": 21
-      },
-      "Gateway": {
-        "flow": {
-          "codeId": 22,
-          "address": "axelar1t6ksvsckf48j5fey7cqhsu482yemaf8tcecterc4d38rw75vfvcsz85aum"
-        },
-        "hedera": {
-          "codeId": 22,
-          "address": "axelar1zyr567z9v779kcdmf7rq624zk3ea4nq0s948r83h2f5xqzvhxyqs5vq7p7"
-        },
-        "sui": {
-          "codeId": 22,
-          "address": "axelar1yklflthhfxy5dtd2nzg83n0nxgh3e04w6fn2fd9v0eqselu32lxq0gyv6w"
-        },
-        "xrpl-evm": {
-          "codeId": 22,
-          "address": "axelar1u6t0zgqc3y8qdymrr7t95vp6gkgdg5lekcgt8r46w5w36kqcp8csy4k93j"
-        },
-        "plume": {
-          "codeId": 22,
-          "address": "axelar1mnu5s858ptnwqt9dkr2u7v3u4pa5z27arwzxlp9smf64n3xp4u3qyhvgj5"
-        },
-        "storeCodeProposalId": "70",
-        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
-        "lastUploadedCodeId": 22,
-        "hyperliquid": {
-          "codeId": 22,
-          "address": "axelar1um4eyzmkpxhkpv3ytzaawqjzjxfddv2cjlep936glj87jg24zccqw86q2w"
-        },
-        "monad": {
-          "codeId": 22,
-          "address": "axelar1em05zd725semt9hu58fu47vuc5lcv8z35vn5dg3auclsd8u5j6qq6rrn4v"
-        },
-        "berachain": {
-          "codeId": 22,
-          "address": "axelar1ecwslrpm2qvs6cahe4r2n5e3vugqaz9scqyga8y8t59vppvwjaqq0w65t2"
-        },
-        "stellar-2025-q3": {
-          "codeId": 58,
-          "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a"
-        },
-        "celo-sepolia": {
-          "codeId": 22,
-          "address": "axelar1v08w6ajkrjjd8t0g5kc3lr7dtsxjxrulfq5clstgg4zrqpumrxaqe7s3s3"
-        }
-      },
-      "VotingVerifier": {
-        "flow": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr"
-        },
-        "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1h8gx392pzlj6ff5lv3kc9jwegu0wwqjrur7ht93frus5czape9ns3j3d0a"
-        },
-        "sui": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853",
-          "msgIdFormat": "base58_tx_digest_and_event_index",
-          "addressFormat": "sui",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "codeId": 24,
-          "address": "axelar1x8rqw5l5gzye7d063zupr5zlelfvjxq5z6rr7wy643ufuflhl6xqhgr5wt"
-        },
-        "xrpl-evm": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1hmdnsrs8c8v8mr7vxg3rzdzxasxdpfj09muxakhth73sywg929qsczjscj"
-        },
-        "plume": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1t49krzwl0sc6z8qwdst5d7kmgn3xutjtp4ku8u2c06quy7w8hp4q5zsqn2"
-        },
-        "hyperliquid": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1n72sdsdclpffc0jw5mf7vc97zpy6czqw9glmcqhm8sp73nczu57sn3kplc"
-        },
-        "monad": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1000000,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1v72l84ar9nhl7xt44hn374xm60a7huhfnulh65aagtk55x8uzpsqfdr6tq"
-        },
-        "berachain": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar18xzlzgjcypassfs3sglfn7u8re3kuafxf233c2e8fyu7muxe8xmskeyg92"
-        },
-        "stellar-2025-q3": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "CDTJW72QN6NDH626I2HRRWV7PVQ47G36ZJXYQN4NP646PNI4FYW5BCGS",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "stellar",
-          "codeId": 57,
-          "address": "axelar1jgp9mfalnwk0p9xfycyrrc69e9kw5l2qytvs0tz6znv5ke89q0psgcyarh"
-        },
-        "celo-sepolia": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1000000,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 24,
-          "address": "axelar1pexeladrveekp689w67j94ftcvxhcqwy2ly6w4ntn8caz26r3waqxy54kz"
-        },
-        "storeCodeProposalId": "72",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
-        "lastUploadedCodeId": 24
-      },
-      "InterchainTokenService": {
-        "storeCodeProposalId": "239",
-        "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "codeId": 61,
-        "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
-        "sui": {
-          "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 6
-        },
-        "stellar-2025-q3": {
-          "maxUintBits": 127,
-          "maxDecimalsWhenTruncating": 255
-        },
-        "hedera": {
-          "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 6
-        },
-        "lastUploadedCodeId": 61
-      },
-      "AxelarnetGateway": {
-        "storeCodeProposalId": "68",
-        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
-        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
-        "address": "axelar1s9amtxejrdlsunwdf0cclhjtezdp6wmurxxnh45gfvtpa2jrsusqv934n6",
-        "codeId": 20,
-        "lastUploadedCodeId": 20
-      },
-      "XrplGateway": {
-        "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "codeId": 67,
-          "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57"
-        },
-        "storeCodeProposalId": "270",
-        "storeCodeProposalCodeHash": "c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a",
-        "lastUploadedCodeId": 67
-      },
-      "XrplVotingVerifier": {
-        "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "codeId": 50,
-          "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6"
-        },
-        "storeCodeProposalId": "184",
-        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
-        "lastUploadedCodeId": 50
-      },
-      "XrplMultisigProver": {
-        "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "xrplTransactionFee": 5000,
-          "ticketCountThreshold": 5,
-          "codeId": 60,
-          "address": "axelar17mnfwue8mw5t2q9gmndz3m50070fmm0ffa0tunh2dujmuy398rtsrjyw2k"
-        },
-        "storeCodeProposalId": "231",
-        "storeCodeProposalCodeHash": "94d8bbf002b97cc586b584f7cfc12caa812bc5ee47581df209dbd8298b6b9ec5",
-        "lastUploadedCodeId": 60
-      },
-      "ItsAbiTranslator": {
-        "storeCodeProposalId": "240",
-        "storeCodeProposalCodeHash": "7d34c8ce53c21d8e461a556264311903981c8a350964bd532791db8d4ebbd758",
-        "lastUploadedCodeId": 62,
-        "codeId": 62,
-        "instantiateProposalId": "241",
-        "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
-      }
-    },
-    "axelarId": "axelar",
-    "chainId": "axelar-stagenet-724",
-    "rpc": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:26657",
-    "lcd": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:1317",
-    "grpc": "k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:9090",
-    "tokenSymbol": "AXL",
-    "axelarscanApi": "https://stagenet.api.axelarscan.io",
-    "gasPrice": "0.007uaxl",
-    "gasLimit": "auto",
-    "govProposalDepositAmount": "100000000",
-    "govProposalInstantiateAddresses": [
-      "axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm",
-      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-      "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
-    ]
-  },
   "chains": {
     "avalanche": {
       "name": "Avalanche",
@@ -3189,5 +2649,545 @@
         }
       }
     }
+  },
+  "axelar": {
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "261",
+        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
+        "codeId": 66,
+        "lastUploadedCodeId": 66,
+        "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
+        "executeProposalId": "14"
+      },
+      "Router": {
+        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "276",
+        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
+        "codeId": 28,
+        "lastUploadedCodeId": 1,
+        "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
+        "executeProposalId": "16",
+        "flow": {
+          "executeProposalId": "44"
+        },
+        "hedera": {
+          "executeProposalId": "48"
+        }
+      },
+      "NexusGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "storeCodeProposalId": "4",
+        "storeCodeProposalCodeHash": "3f0fd354823ec5d85f051a7c54bd020498a2e37866cbf480e0c107aceae1b84d",
+        "codeId": 2,
+        "lastUploadedCodeId": 2,
+        "address": "axelar1aqun445kcqth3aunxlvly8grgyqt4c68q0g0df99nccs72plgh0s0eptw9"
+      },
+      "Rewards": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "rewardsDenom": "uaxl",
+        "params": {
+          "epoch_duration": "14400",
+          "rewards_per_epoch": "10000000",
+          "participation_threshold": [
+            "7",
+            "10"
+          ]
+        },
+        "storeCodeProposalId": "71",
+        "storeCodeProposalCodeHash": "095c1caca4f9b7381519bd8395f3f558202fd4d4ad03f223dd8a2e991c568bd6",
+        "codeId": 23,
+        "lastUploadedCodeId": 4,
+        "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at"
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "storeCodeProposalId": "66",
+        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
+        "codeId": 18,
+        "lastUploadedCodeId": 5,
+        "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y",
+        "executeProposalId": "20",
+        "flow": {
+          "executeProposalId": "46"
+        },
+        "hedera": {
+          "executeProposalId": "49"
+        }
+      },
+      "Multisig": {
+        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "blockExpiry": 10,
+        "storeCodeProposalId": "166",
+        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
+        "codeId": 42,
+        "lastUploadedCodeId": 42,
+        "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
+        "executeProposalId": "18",
+        "flow": {
+          "executeProposalId": "45"
+        },
+        "hedera": {
+          "executeProposalId": "47"
+        }
+      },
+      "MultisigProver": {
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x3dad2b901117c30d4f601c3b9e9ee89cec4371e79e9908122e8e1da1904347ee",
+          "codeId": 21,
+          "address": "axelar1u8cmvyq54fepjlt77vqnwyxhf4rqn5j5axgta7py34zlwue3v5fsy2pvhf"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "domainSeparator": "0xfbfcd8a4d93cdf3dc1099795eefb83c109414406fc09015f4d0758ed6b99c43c",
+          "codeId": 21,
+          "address": "axelar1x3xd2z2p3703cdwu98tc27x5j9tgq60lyxdwtnggx05zj3egg0wqsnckd0"
+        },
+        "sui": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0x254a1ae90417f8649798698e95a1140808a701c38c8f5723a930b9d0666e54b4",
+          "address": "axelar1ktjfpfrlgmh8s76ltjhhv0xcj0st0d0xrjh5rvm3gr5u66x9xvpsm0juw8"
+        },
+        "xrpl-evm": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0x9b077bbbf84a1710619620d5bbcf2c3d42f5b4dce40d135bf1d86f6a42b8f9e0",
+          "address": "axelar18emrfkkz45zuxgk7v2gqrnm59wnnupdakqnmejh0t6krltwzjnxqreejwk"
+        },
+        "plume": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0x2dbc42136ba0394d31cf1f35344a182ecf00210b42b9b8bf3234c3da201a9ca6",
+          "address": "axelar1vs8rvpuyhq40tn4suq4jamx3fe9gqlszds0z8s39ta4txz95ryws8xnpk0"
+        },
+        "hyperliquid": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0x55effa6536498e73caa573e7ad8326d3d4628878a9e4dc8b461ed5706ad585c2",
+          "address": "axelar12cmpmynpn38tvg0t57lc8wd8cvw724sz95kr80a08mhghztex5lqfk2yv5"
+        },
+        "monad": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0xc2cf3ea0ca094471edf3b8d4c6d31799069863a0181f5ff3801644796310d0e6",
+          "address": "axelar1xvqw6ts27k74ak0av7rszmedcz2rprqenayqk2gptfjhnl7rw3lqylln83"
+        },
+        "berachain": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0x500160c7def19100fa590da323c3c796b53dd4a4bd68b5f971c516545f3f7051",
+          "address": "axelar1zwg52tslcf5vq5ge4yc2lqslc9v6z0ynxu59jnwdw7spy00je0dsn2g93z"
+        },
+        "stellar-2025-q3": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "stellar_xdr",
+          "keyType": "ed25519",
+          "codeId": 59,
+          "domainSeparator": "0x5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
+          "address": "axelar1960k48ezdumanv3hjf22cvp2a9zwr5skn34xgtrkhfjjhk7k4htsd4l8ze"
+        },
+        "celo-sepolia": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0xb741e91bfa150b641059e6fc4b0f63086bf7714a4367712928f2f248a4489fe0",
+          "address": "axelar1x8jqrc49pqrn7arxxsyaa57egpwllu3kes4576y7djrlyygp7dqsdnalyc"
+        },
+        "storeCodeProposalId": "69",
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
+        "lastUploadedCodeId": 21
+      },
+      "Gateway": {
+        "flow": {
+          "codeId": 22,
+          "address": "axelar1t6ksvsckf48j5fey7cqhsu482yemaf8tcecterc4d38rw75vfvcsz85aum"
+        },
+        "hedera": {
+          "codeId": 22,
+          "address": "axelar1zyr567z9v779kcdmf7rq624zk3ea4nq0s948r83h2f5xqzvhxyqs5vq7p7"
+        },
+        "sui": {
+          "codeId": 22,
+          "address": "axelar1yklflthhfxy5dtd2nzg83n0nxgh3e04w6fn2fd9v0eqselu32lxq0gyv6w"
+        },
+        "xrpl-evm": {
+          "codeId": 22,
+          "address": "axelar1u6t0zgqc3y8qdymrr7t95vp6gkgdg5lekcgt8r46w5w36kqcp8csy4k93j"
+        },
+        "plume": {
+          "codeId": 22,
+          "address": "axelar1mnu5s858ptnwqt9dkr2u7v3u4pa5z27arwzxlp9smf64n3xp4u3qyhvgj5"
+        },
+        "storeCodeProposalId": "70",
+        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
+        "lastUploadedCodeId": 22,
+        "hyperliquid": {
+          "codeId": 22,
+          "address": "axelar1um4eyzmkpxhkpv3ytzaawqjzjxfddv2cjlep936glj87jg24zccqw86q2w"
+        },
+        "monad": {
+          "codeId": 22,
+          "address": "axelar1em05zd725semt9hu58fu47vuc5lcv8z35vn5dg3auclsd8u5j6qq6rrn4v"
+        },
+        "berachain": {
+          "codeId": 22,
+          "address": "axelar1ecwslrpm2qvs6cahe4r2n5e3vugqaz9scqyga8y8t59vppvwjaqq0w65t2"
+        },
+        "stellar-2025-q3": {
+          "codeId": 58,
+          "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a"
+        },
+        "celo-sepolia": {
+          "codeId": 22,
+          "address": "axelar1v08w6ajkrjjd8t0g5kc3lr7dtsxjxrulfq5clstgg4zrqpumrxaqe7s3s3"
+        }
+      },
+      "VotingVerifier": {
+        "flow": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr"
+        },
+        "hedera": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1h8gx392pzlj6ff5lv3kc9jwegu0wwqjrur7ht93frus5czape9ns3j3d0a"
+        },
+        "sui": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853",
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "codeId": 24,
+          "address": "axelar1x8rqw5l5gzye7d063zupr5zlelfvjxq5z6rr7wy643ufuflhl6xqhgr5wt"
+        },
+        "xrpl-evm": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1hmdnsrs8c8v8mr7vxg3rzdzxasxdpfj09muxakhth73sywg929qsczjscj"
+        },
+        "plume": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1t49krzwl0sc6z8qwdst5d7kmgn3xutjtp4ku8u2c06quy7w8hp4q5zsqn2"
+        },
+        "hyperliquid": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1n72sdsdclpffc0jw5mf7vc97zpy6czqw9glmcqhm8sp73nczu57sn3kplc"
+        },
+        "monad": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1v72l84ar9nhl7xt44hn374xm60a7huhfnulh65aagtk55x8uzpsqfdr6tq"
+        },
+        "berachain": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar18xzlzgjcypassfs3sglfn7u8re3kuafxf233c2e8fyu7muxe8xmskeyg92"
+        },
+        "stellar-2025-q3": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "CDTJW72QN6NDH626I2HRRWV7PVQ47G36ZJXYQN4NP646PNI4FYW5BCGS",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stellar",
+          "codeId": 57,
+          "address": "axelar1jgp9mfalnwk0p9xfycyrrc69e9kw5l2qytvs0tz6znv5ke89q0psgcyarh"
+        },
+        "celo-sepolia": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1pexeladrveekp689w67j94ftcvxhcqwy2ly6w4ntn8caz26r3waqxy54kz"
+        },
+        "storeCodeProposalId": "72",
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
+        "lastUploadedCodeId": 24
+      },
+      "InterchainTokenService": {
+        "storeCodeProposalId": "239",
+        "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
+        "codeId": 61,
+        "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
+        "sui": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
+        },
+        "stellar-2025-q3": {
+          "maxUintBits": 127,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "hedera": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
+        },
+        "lastUploadedCodeId": 61
+      },
+      "AxelarnetGateway": {
+        "storeCodeProposalId": "68",
+        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "address": "axelar1s9amtxejrdlsunwdf0cclhjtezdp6wmurxxnh45gfvtpa2jrsusqv934n6",
+        "codeId": 20,
+        "lastUploadedCodeId": 20
+      },
+      "XrplGateway": {
+        "xrpl": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "codeId": 67,
+          "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57"
+        },
+        "storeCodeProposalId": "270",
+        "storeCodeProposalCodeHash": "c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a",
+        "lastUploadedCodeId": 67
+      },
+      "XrplVotingVerifier": {
+        "xrpl": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "codeId": 50,
+          "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6"
+        },
+        "storeCodeProposalId": "184",
+        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
+        "lastUploadedCodeId": 50
+      },
+      "XrplMultisigProver": {
+        "xrpl": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "xrplTransactionFee": 5000,
+          "ticketCountThreshold": 5,
+          "codeId": 60,
+          "address": "axelar17mnfwue8mw5t2q9gmndz3m50070fmm0ffa0tunh2dujmuy398rtsrjyw2k"
+        },
+        "storeCodeProposalId": "231",
+        "storeCodeProposalCodeHash": "94d8bbf002b97cc586b584f7cfc12caa812bc5ee47581df209dbd8298b6b9ec5",
+        "lastUploadedCodeId": 60
+      },
+      "ItsAbiTranslator": {
+        "storeCodeProposalId": "240",
+        "storeCodeProposalCodeHash": "7d34c8ce53c21d8e461a556264311903981c8a350964bd532791db8d4ebbd758",
+        "lastUploadedCodeId": 62,
+        "codeId": 62,
+        "instantiateProposalId": "241",
+        "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
+      }
+    },
+    "axelarId": "axelar",
+    "chainId": "axelar-stagenet-724",
+    "rpc": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:1317",
+    "grpc": "k8s-stagenet-axelarco-4bb4e0e8b1-82679c0fe4e33c5f.elb.us-east-2.amazonaws.com:9090",
+    "tokenSymbol": "AXL",
+    "axelarscanApi": "https://stagenet.api.axelarscan.io",
+    "gasPrice": "0.007uaxl",
+    "gasLimit": "auto",
+    "govProposalDepositAmount": "100000000",
+    "govProposalInstantiateAddresses": [
+      "axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm",
+      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
+    ]
   }
 }
