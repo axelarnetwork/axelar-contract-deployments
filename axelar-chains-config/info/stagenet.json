@@ -2664,10 +2664,10 @@
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "276",
-        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
-        "codeId": 28,
-        "lastUploadedCodeId": 1,
+        "storeCodeProposalId": "277",
+        "storeCodeProposalCodeHash": "1444b7333018584a316bd6e056083668a9d4351aab395b90ab5ec18ea3a8a208",
+        "codeId": 69,
+        "lastUploadedCodeId": 69,
         "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
         "executeProposalId": "16",
         "flow": {
