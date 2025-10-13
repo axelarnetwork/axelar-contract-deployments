@@ -5,12 +5,12 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-09-18 |
-| **Stagenet**         | Pending               | TBD        |
-| **Testnet**          | Pending               | TBD        |
-| **Mainnet**          | Pending               | TBD        |
+| **Axelar Env**       | **Deployment Status** | **Date** |
+| -------------------- | --------------------- | ---------|
+| **Devnet Amplifier** | Pending               | TBD      |
+| **Stagenet**         | Pending               | TBD      |
+| **Testnet**          | Pending               | TBD      |
+| **Mainnet**          | Pending               | TBD      |
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
