@@ -393,10 +393,7 @@ fn construct_execute_data(
     payload: Payload,
     domain_separator: [u8; 32],
 ) -> eyre::Result<ExecuteData> {
-    let message_hash = hash_payload(
-        &domain_separator,
-        payload.clone(),
-    )?;
+    let message_hash = hash_payload(&domain_separator, payload.clone())?;
     let signatures = signer_set
         .signers
         .iter()
@@ -463,8 +460,10 @@ fn append_verification_flow_instructions(
         execute_data.signing_verifier_set_merkle_root,
     );
 
-    let (verification_session_pda, _bump) =
-        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root, &execute_data.signing_verifier_set_merkle_root);
+    let (verification_session_pda, _bump) = axelar_solana_gateway::get_signature_verification_pda(
+        &execute_data.payload_merkle_root,
+        &execute_data.signing_verifier_set_merkle_root,
+    );
 
     for signature_leaf in &execute_data.signing_verifier_set_leaves {
         instructions.push(axelar_solana_gateway::instructions::verify_signature(

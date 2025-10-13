@@ -7,10 +7,10 @@ use eyre::eyre;
 use k256::elliptic_curve::FieldBytes;
 use k256::pkcs8::DecodePrivateKey;
 use k256::{Secp256k1, SecretKey};
+use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use regex::Regex;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::account_utils::StateMut;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -43,7 +43,6 @@ pub(crate) fn create_compute_budget_instructions(
 lazy_static::lazy_static! {
     static ref POSITIVE_DECIMAL_REGEX: Regex = Regex::new(r"^\d*\.?\d+$").unwrap();
 }
-
 
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
@@ -222,8 +221,7 @@ pub(crate) fn domain_separator(
     }
 
     let from_multisig_prover = String::deserialize(
-        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain]
-            [DOMAIN_SEPARATOR_KEY],
+        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain][DOMAIN_SEPARATOR_KEY],
     )?;
 
     let domain_separator: [u8; 32] = hex::decode(from_multisig_prover.trim_start_matches("0x"))?
@@ -346,14 +344,20 @@ pub(crate) fn try_infer_program_id_from_env(
     Ok(id)
 }
 
-
 pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
     if !POSITIVE_DECIMAL_REGEX.is_match(s) {
-        return Err(eyre::eyre!("Invalid decimal format: {} (must be a positive number)", s));
+        return Err(eyre::eyre!(
+            "Invalid decimal format: {} (must be a positive number)",
+            s
+        ));
     }
 
     if decimals > MAX_DECIMALS {
-        return Err(eyre::eyre!("Too many decimals: {} (maximum {})", decimals, MAX_DECIMALS));
+        return Err(eyre::eyre!(
+            "Too many decimals: {} (maximum {})",
+            decimals,
+            MAX_DECIMALS
+        ));
     }
 
     let decimals = decimals as usize;
@@ -393,7 +397,10 @@ mod tests {
     fn test_parse_decimal_string_to_raw_units_basic() {
         assert_eq!(parse_decimal_string_to_raw_units("123", 0).unwrap(), 123);
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 1).unwrap(), 15);
-        assert_eq!(parse_decimal_string_to_raw_units("123.45", 2).unwrap(), 12345);
+        assert_eq!(
+            parse_decimal_string_to_raw_units("123.45", 2).unwrap(),
+            12345
+        );
         assert_eq!(parse_decimal_string_to_raw_units(".5", 1).unwrap(), 5);
         assert_eq!(parse_decimal_string_to_raw_units("123", 2).unwrap(), 12300);
     }
@@ -401,7 +408,10 @@ mod tests {
     #[test]
     fn test_parse_decimal_string_to_raw_units_edge_cases() {
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
-        assert_eq!(parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(), 11234567890123456789);
+        assert_eq!(
+            parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(),
+            11234567890123456789
+        );
     }
 
     #[test]
@@ -417,7 +427,10 @@ mod tests {
     fn test_parse_decimal_string_to_raw_units_overflow() {
         let max_u64 = u64::MAX;
         let max_str = max_u64.to_string();
-        assert_eq!(parse_decimal_string_to_raw_units(&max_str, 0).unwrap(), max_u64);
+        assert_eq!(
+            parse_decimal_string_to_raw_units(&max_str, 0).unwrap(),
+            max_u64
+        );
         assert!(parse_decimal_string_to_raw_units(&max_str, 1).is_err());
     }
 }

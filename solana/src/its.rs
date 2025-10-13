@@ -332,7 +332,7 @@ pub(crate) struct SetPauseStatusArgs {
 pub(crate) struct TrustedChainArgs {
     /// The name of the chain to set as trusted
     chain_name: String,
-    
+
     /// The authority account (ITS operator or upgrade authority)
     #[clap(long)]
     authority: Option<Pubkey>,
@@ -355,7 +355,7 @@ pub(crate) struct ApproveDeployRemoteInterchainTokenArgs {
     /// The address to receive the minter role on the token deployed on destination chain
     #[clap(long)]
     destination_minter: String,
-    
+
     /// The account with minter role on the token manager
     #[clap(long)]
     minter: Option<Pubkey>,
@@ -374,7 +374,7 @@ pub(crate) struct RevokeDeployRemoteInterchainTokenArgs {
     /// The chain which the remote interchain token would be deployed on
     #[clap(long)]
     destination_chain: String,
-    
+
     /// The account with minter role on the token manager
     #[clap(long)]
     minter: Option<Pubkey>,
@@ -435,7 +435,7 @@ pub(crate) struct DeployInterchainTokenArgs {
     /// Optional mint account for the interchain token. Required if initial_supply is zero
     #[clap(long)]
     minter: Option<Pubkey>,
-    
+
     /// The account that will deploy the interchain token
     #[clap(long)]
     deployer: Option<Pubkey>,
@@ -462,7 +462,7 @@ pub(crate) struct DeployRemoteInterchainTokenArgs {
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
     gas_config_account: Option<Pubkey>,
-    
+
     /// The account that will deploy the remote interchain token
     #[clap(long)]
     deployer: Option<Pubkey>,
@@ -497,7 +497,7 @@ pub(crate) struct DeployRemoteInterchainTokenWithMinterArgs {
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
     gas_config_account: Option<Pubkey>,
-    
+
     /// The account that will deploy the remote interchain token
     #[clap(long)]
     deployer: Option<Pubkey>,
@@ -539,7 +539,7 @@ pub(crate) struct RegisterCustomTokenArgs {
     /// An optional account to receive the operator role on the TokenManager associated with the token
     #[clap(long)]
     operator: Option<Pubkey>,
-    
+
     /// The account that will register the custom token
     #[clap(long)]
     deployer: Option<Pubkey>,
@@ -578,7 +578,7 @@ pub(crate) struct LinkTokenArgs {
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
     gas_config_account: Option<Pubkey>,
-    
+
     /// The account that will link the token
     #[clap(long)]
     deployer: Option<Pubkey>,
@@ -624,7 +624,7 @@ pub(crate) struct InterchainTransferArgs {
     /// transaction will be broadcasted.
     #[clap(long)]
     timestamp: Option<i64>,
-    
+
     /// The authority account (owner or delegate of the source account)
     #[clap(long)]
     authority: Option<Pubkey>,
@@ -675,7 +675,7 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
     /// transaction will be broadcasted.
     #[clap(long)]
     timestamp: Option<i64>,
-    
+
     /// The authority account (owner or delegate of the source account)
     #[clap(long)]
     authority: Option<Pubkey>,
@@ -726,7 +726,7 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
     /// transaction will be broadcasted.
     #[clap(long)]
     timestamp: Option<i64>,
-    
+
     /// The authority account (owner or delegate of the source account)
     #[clap(long)]
     authority: Option<Pubkey>,
@@ -806,13 +806,13 @@ fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<P
 }
 
 fn get_token_decimals(mint: &Pubkey, config: &Config) -> eyre::Result<u8> {
-    use spl_token_2022::state::Mint as Token2022Mint;
-    use spl_token::state::Mint as TokenMint;
     use solana_sdk::program_pack::Pack;
-    
+    use spl_token::state::Mint as TokenMint;
+    use spl_token_2022::state::Mint as Token2022Mint;
+
     let rpc_client = RpcClient::new(config.url.clone());
     let mint_account = rpc_client.get_account(mint)?;
-    
+
     match mint_account.owner.to_string().as_str() {
         crate::utils::TOKEN_2022_PROGRAM_ID => {
             let mint_data = Token2022Mint::unpack(&mint_account.data)
@@ -824,7 +824,7 @@ fn get_token_decimals(mint: &Pubkey, config: &Config) -> eyre::Result<u8> {
                 .map_err(|_| eyre!("Failed to parse SPL Token mint data"))?;
             Ok(mint_data.decimals)
         }
-        _ => Err(eyre!("Unsupported token program: {}", mint_account.owner))
+        _ => Err(eyre!("Unsupported token program: {}", mint_account.owner)),
     }
 }
 
@@ -1134,8 +1134,9 @@ fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let raw_supply = crate::utils::parse_decimal_string_to_raw_units(&args.initial_supply, args.decimals)?;
-    
+    let raw_supply =
+        crate::utils::parse_decimal_string_to_raw_units(&args.initial_supply, args.decimals)?;
+
     let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
