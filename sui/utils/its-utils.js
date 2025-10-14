@@ -111,10 +111,7 @@ async function tokenIdToCoinType(client, config, tokenId = '') {
                 const tx = new Transaction();
                 tx.moveCall({
                     target: `${config.itsConfig.address}::interchain_token_service::registered_coin_type`,
-                    arguments: [
-                        tx.object(config.itsConfig.objects.InterchainTokenService),
-                        tx.pure.address(tokenId)
-                    ],
+                    arguments: [tx.object(config.itsConfig.objects.InterchainTokenService), tx.pure.address(tokenId)],
                 });
                 return tx;
             })(),
@@ -191,10 +188,10 @@ const itsFunctions = {
     ],
 };
 
-module.exports = { 
+module.exports = {
     createSaltAddress,
     extractCoinTypeFromDevInspect,
     registerCustomCoinUtil,
     tokenIdToCoinType,
-    itsFunctions 
+    itsFunctions,
 };
