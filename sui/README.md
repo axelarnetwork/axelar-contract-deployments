@@ -547,6 +547,15 @@ Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mi
 ts-node sui/its restore-treasury-cap [options] <symbol>
 ```
 
+### Mint Coin
+
+Mint coins for the given symbol on Sui. The token must be deployed on Sui first.
+
+Command:
+```bash
+ts-node sui/tokens mint-coins <symbol> <amount> <recipient>
+```
+
 ## Sui Contract Verification
 
 This script generates a `verification` folder inside the `move` directory, which contains ZIP files for each contract to be used for verification. Before zipping, a `deps` subdirectory is added to each contract, and the local dependency paths in the `Move.toml` file are updated to reference the `deps` folder. 
