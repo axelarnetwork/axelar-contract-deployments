@@ -919,7 +919,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         coinDecimals = coinMetadata.decimals;
         coinPackageId = coinType.split('::')[0];
     } catch {
-        throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${JSON.stringify(coinData)}`);
+        throw new Error(`Error parsing coin metadata for coin ${coinType}`);
     }
 
     const txBuilder = new TxBuilder(client);
