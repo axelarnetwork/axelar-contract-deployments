@@ -66,6 +66,16 @@ const programHandler = () => {
             .option('--dry', 'only generate migration msg')
             .description('Migrate contract')
             .action((options: MigrationOptions) => {
+                if (options.codeId !== undefined) {
+                    const parsedCodeId = Number(options.codeId);
+
+                    if (isNaN(parsedCodeId) || !Number.isInteger(parsedCodeId) || parsedCodeId <= 0) {
+                        console.error(`Error: Invalid codeId '${options.codeId}'. CodeId must be a positive integer.`);
+                        process.exit(1);
+                    }
+
+                    options.codeId = parsedCodeId;
+                }
                 mainProcessor(migrate, options, []);
             }),
         {},
