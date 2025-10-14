@@ -4,13 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axelar-solana-gateway = { path = "./axelar-amplifier-solana/programs/axelar-solana-gateway", features = [
-    "no-entrypoint",
-], default-features = false }
-axelar-solana-memo-program = { path = "./axelar-amplifier-solana/programs/axelar-solana-memo-program", features = [
-    "no-entrypoint",
-], default-features = false }
+axelar-solana-encoding = { path = "./axelar-amplifier-solana/crates/axelar-solana-encoding" }
 axelar-solana-gas-service = { path = "./axelar-amplifier-solana/programs/axelar-solana-gas-service", features = [
+    "no-entrypoint",
+], default-features = false }
+axelar-solana-gateway = { path = "./axelar-amplifier-solana/programs/axelar-solana-gateway", features = [
     "no-entrypoint",
 ], default-features = false }
 axelar-solana-governance = { path = "./axelar-amplifier-solana/programs/axelar-solana-governance", features = [
@@ -19,9 +17,9 @@ axelar-solana-governance = { path = "./axelar-amplifier-solana/programs/axelar-s
 axelar-solana-its = { path = "./axelar-amplifier-solana/programs/axelar-solana-its", features = [
     "no-entrypoint"
 ], default-features = false }
-axelar-solana-encoding = { path = "./axelar-amplifier-solana/crates/axelar-solana-encoding" }
-gateway-event-stack = { path = "./axelar-amplifier-solana/crates/gateway-event-stack", default-features = false }
-its-instruction-builder = { path = "./axelar-amplifier-solana/helpers/its-instruction-builder", default-features = false }
+axelar-solana-memo-program = { path = "./axelar-amplifier-solana/programs/axelar-solana-memo-program", features = [
+    "no-entrypoint",
+], default-features = false }
 
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
 
@@ -33,12 +31,14 @@ cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 eyre = "0.6.11"
+gateway-event-stack = { path = "./axelar-amplifier-solana/crates/gateway-event-stack", default-features = false }
 hex = { version = "0.4.3", features = ["serde"] }
+its-instruction-builder = { path = "./axelar-amplifier-solana/helpers/its-instruction-builder", default-features = false }
 k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
 lazy_static = "1.4"
+regex = "1.10"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
-regex = "1.10"
 solana-clap-v3-utils = "2"
 solana-cli-config = "2"
 solana-client = "2"

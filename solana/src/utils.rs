@@ -40,9 +40,8 @@ pub(crate) fn create_compute_budget_instructions(
     ]
 }
 
-lazy_static::lazy_static! {
-    static ref POSITIVE_DECIMAL_REGEX: Regex = Regex::new(r"^\d*\.?\d+$").unwrap();
-}
+static POSITIVE_DECIMAL_REGEX: std::sync::LazyLock<Regex> =
+    std::sync::LazyLock::new(|| Regex::new(r"^\d*\.?\d+$").unwrap());
 
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
@@ -362,7 +361,7 @@ pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::
 
     let decimals = decimals as usize;
     let decimal_pos = s.find('.').unwrap_or(s.len());
-    let str_without_decimals = s.replace(".", "");
+    let str_without_decimals = s.replace('.', "");
     let actual_decimals = str_without_decimals.len() - decimal_pos;
     if decimals < actual_decimals {
         return Err(eyre::eyre!(
@@ -371,20 +370,20 @@ pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::
             decimals
         ));
     }
-    let decimals_to_pad: usize = decimals.checked_sub(actual_decimals).unwrap_or(0);
-    let decimals_to_trim: usize = actual_decimals.checked_sub(decimals).unwrap_or(0);
+    let decimals_to_pad = decimals.saturating_sub(actual_decimals);
+    let decimals_to_trim = actual_decimals.saturating_sub(decimals);
     let padded_str = format!(
         "{:0<1$}",
         str_without_decimals,
         decimals_to_pad + str_without_decimals.len()
     );
-    let trimmed_str = &padded_str[..padded_str.len() - decimals_to_trim];
+    let trimmed_str = padded_str
+        .get(..padded_str.len().saturating_sub(decimals_to_trim))
+        .unwrap_or(&padded_str);
     trimmed_str.parse::<u64>().map_err(|_| {
         eyre::eyre!(
-            "Amount too large: {} * 10^{} would overflow u64::MAX ({})",
-            s,
-            decimals,
-            u64::MAX
+            "Failed to parse '{}' as u64 (possible overflow)",
+            trimmed_str
         )
     })
 }

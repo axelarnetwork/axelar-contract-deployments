@@ -1147,7 +1147,7 @@ fn deploy_interchain_token(
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {mint}");
     println!("- Human Amount: {} {}", args.initial_supply, args.symbol);
-    println!("- Raw Amount: {} (smallest units)", raw_supply);
+    println!("- Raw Amount: {raw_supply} (smallest units)");
     println!("- Decimals: {}", args.decimals);
     println!("------------------------------------------");
 
@@ -1285,8 +1285,8 @@ fn interchain_transfer(
     println!("\u{1FA99} Transfer details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {} (smallest units)", raw_amount);
-    println!("- Decimals: {}", decimals);
+    println!("- Raw Amount: {raw_amount} (smallest units)");
+    println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
@@ -1329,8 +1329,8 @@ fn call_contract_with_interchain_token(
     println!("\u{1FA99} Contract call details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {} (smallest units)", raw_amount);
-    println!("- Decimals: {}", decimals);
+    println!("- Raw Amount: {raw_amount} (smallest units)");
+    println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
@@ -1376,8 +1376,8 @@ fn call_contract_with_interchain_token_offchain_data(
     println!("\u{1FA99} Offchain contract call details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {} (smallest units)", raw_amount);
-    println!("- Decimals: {}", decimals);
+    println!("- Raw Amount: {raw_amount} (smallest units)");
+    println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
