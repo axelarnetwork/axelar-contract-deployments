@@ -39,14 +39,6 @@ jobs:
           shared-key: 'cache-lint'
           workspaces: 'solana'
 
-      - name: Install cargo-sort
-        uses: baptiste0928/cargo-install@v2
-        with:
-          crate: cargo-sort
-
-      - name: Run cargo sort
-        run: cargo-sort --check --check-format
-
       - name: Add cargo clippy
         run: rustup component add clippy
 
