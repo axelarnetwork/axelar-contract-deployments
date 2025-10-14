@@ -45,7 +45,7 @@ jobs:
           crate: cargo-sort
 
       - name: Run cargo sort
-        run: cargo-sort --workspace --check --check-format
+        run: cargo-sort --check --check-format
 
       - name: Add cargo clippy
         run: rustup component add clippy
