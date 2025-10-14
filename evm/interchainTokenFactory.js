@@ -182,8 +182,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 _axelar,
             );
 
-            console.log('gasValue', gasValue);
-
             validateParameters({
                 isNonEmptyString: { destinationChain },
                 isValidNumber: { gasValue },
