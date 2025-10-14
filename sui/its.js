@@ -944,9 +944,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const unitAmount = getUnitAmount(amount, coinDecimals);
 
     // Check balance and load valid coin id
-    const { coinObjectId } =  await senderHasSufficientBalance(
-        client, walletAddress, coinType, unitAmount
-    );
+    const { coinObjectId } = await senderHasSufficientBalance(client, walletAddress, coinType, unitAmount);
 
     // Split coins
     const [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
@@ -1235,12 +1233,7 @@ if (require.main === module) {
         .description('Send interchain transfer from sui to a chain where token is linked')
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((tokenId, destinationChain, destinationAddress, amount, options) => {
-            mainProcessor(
-                interchainTransfer,
-                options,
-                [tokenId, destinationChain, destinationAddress, amount],
-                processCommand,
-            );
+            mainProcessor(interchainTransfer, options, [tokenId, destinationChain, destinationAddress, amount], processCommand);
         });
 
     const listTrustedChainsProgram = new Command()

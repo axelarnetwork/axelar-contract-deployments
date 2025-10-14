@@ -78,7 +78,7 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
 }
 
 /**
- * Get a coin object id for a coin held by the user and meeting a given threshold. 
+ * Get a coin object id for a coin held by the user and meeting a given threshold.
  * Returns `undefined` if balance threshold criteria are not met.
  * @param {Object} client : Sui client
  * @param {String} walletAddress : Sui wallet address
