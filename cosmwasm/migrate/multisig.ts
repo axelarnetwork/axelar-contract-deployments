@@ -48,7 +48,7 @@ async function multisigToVersion2_3_1(
         default_authorized_provers: extractDefaultProversFromConfig(config),
     };
 
-    const codeId = await getCodeId(client, config, { contractName: 'Multisig', fetchCodeId: true });
+    const codeId = await getCodeId(client, config, { contractName: 'Multisig', fetchCodeId: true, codeId: options.codeId });
 
     printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 

@@ -223,7 +223,7 @@ async function coordinatorToVersion2_1_1(
         chain_contracts: chainContracts,
     };
 
-    const codeId = await getCodeId(client, config, { contractName: 'Coordinator', fetchCodeId: true });
+    const codeId = await getCodeId(client, config, { contractName: 'Coordinator', fetchCodeId: true, codeId: options.codeId });
 
     printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
