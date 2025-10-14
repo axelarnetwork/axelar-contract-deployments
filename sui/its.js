@@ -31,6 +31,7 @@ const {
     suiCoinId,
     getUnitAmount,
     getBagContents,
+    tokenIdToCoinType,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
@@ -781,10 +782,9 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     validateDestinationChain(config.chains, destinationChain);
 
-    const coinType = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::registered_coin_type`,
-        arguments: [itsConfig.objects.InterchainTokenService, tokenId],
-    });
+    // Fetch CoinType from TokenID on-chain
+    const callerParams = { walletAddress, itsConfig };
+    const coinType = await tokenIdToCoinType(client, callerParams, tokenId);
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
