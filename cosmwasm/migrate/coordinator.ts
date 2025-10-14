@@ -1,5 +1,6 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
+import { AccessType } from 'cosmjs-types/cosmwasm/wasm/v1/types';
 
 import { printError, printInfo } from '../../common';
 import { encodeMigrateContractProposal, encodeUpdateInstantiateConfigProposal, submitProposal } from '../utils';
@@ -351,7 +352,7 @@ export async function instantiatePermissions(
         {
             codeId: codeId,
             instantiatePermission: {
-                permission: 4,
+                permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
                 addresses: permittedAddresses,
             },
         },

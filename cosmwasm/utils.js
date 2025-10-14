@@ -971,7 +971,6 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
 
 const getUpdateInstantiateParams = (options) => {
     const { msg } = options;
-    console.log(`MSG: ${msg}`);
 
     return {
         ...getSubmitProposalParams(options),
@@ -1061,7 +1060,6 @@ const encodeParameterChangeProposal = (options) => {
 
 const encodeUpdateInstantiateConfigProposal = (options) => {
     const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
-    // console.log("Proposal down:", JSON.stringify(proposal));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',

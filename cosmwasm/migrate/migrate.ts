@@ -85,7 +85,7 @@ async function coordinatorInstantiatePermissions(
         throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
     }
 
-    instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
+    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
 }
 
 const programHandler = () => {
@@ -125,12 +125,12 @@ const programHandler = () => {
         program
             .command('coordinator-instantiate-permissions')
             .argument('<code_id>', 'coordinator will have instantiate permissions for this code id')
-            .argument('<current_premissions>', 'current instantiate permissions for given contract')
+            .argument('<current_permissions>', 'current instantiate permissions for given contract')
             .addOption(new Option('--address <address>', 'contract address (overrides config)'))
             .option('--dry', 'only generate migration msg')
             .description('Give coordinator instantiate permissions for the given code id')
-            .action((codeId: string, currentPremissions: string, options: MigrationOptions) => {
-                mainProcessor(coordinatorInstantiatePermissions, options, [codeId, currentPremissions]);
+            .action((codeId: string, currentPermissions: string, options: MigrationOptions) => {
+                mainProcessor(coordinatorInstantiatePermissions, options, [codeId, currentPermissions]);
             }),
         {
             proposalOptions: true,
