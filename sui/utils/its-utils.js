@@ -119,6 +119,8 @@ async function tokenIdToCoinType(client, config, tokenId = '') {
         });
 
         const coinType = extractCoinTypeFromDevInspect(coinTypeResult);
+
+        return coinType;
     } catch {
         throw new Error(`Failed parsing coin type for token id ${tokenId}`);
     }
