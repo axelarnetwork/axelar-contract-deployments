@@ -112,10 +112,10 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    Provide coordinator address to the multisig.
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts migrate <multisig_code_id> \
+   ts-node cosmwasm/migrate/migrate.ts migrate \
       --address $MULTISIG_ADDRESS \
       -m $MNEMONIC \
-      -d $DEPOSIT_VALUE \
+      --deposit $DEPOSIT_VALUE
    ```
 
    The `default_authorized_provers` object should correspond to the chain/prover pairs located at `axelar.contracts.MultisigProver` in `$ENV.json`.
@@ -123,10 +123,10 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. Migrate to Coordinator v2.1.1 using the contract deployment scripts
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts migrate <coordinator_code_id> \
+   ts-node cosmwasm/migrate/migrate.ts migrate \
       --address $COORDINATOR_ADDRESS \
       -m $MNEMONIC \
-      -d $DEPOSIT_VALUE \
+      --deposit $DEPOSIT_VALUE
    ```
 
    This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
@@ -172,7 +172,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    Expected output
 
    ```bash
-   {contract: 'multisig', version: '2.3.0'}
+   {contract: 'multisig', version: '2.3.1'}
    ```
 
 1. Verify the coordinator address is stored on the multisig

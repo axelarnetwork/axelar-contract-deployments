@@ -2,7 +2,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrateContractProposal, submitProposal } from '../utils';
+import { encodeMigrateContractProposal, getCodeId, submitProposal } from '../utils';
 import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -208,7 +208,6 @@ async function coordinatorToVersion2_1_1(
     config,
     senderAddress: string,
     coordinatorAddress: string,
-    codeId: number,
     fee: string | StdFee,
 ) {
     const routerAddress = config.axelar.contracts.Router.address;
@@ -223,6 +222,8 @@ async function coordinatorToVersion2_1_1(
         multisig: multisigAddress,
         chain_contracts: chainContracts,
     };
+
+    const codeId = await getCodeId(client, config, { contractName: 'Coordinator', fetchCodeId: true });
 
     printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
@@ -308,12 +309,11 @@ export async function migrate(
     senderAddress: string,
     coordinatorAddress: string,
     version: string,
-    codeId: number,
     fee: string | StdFee,
 ) {
     switch (version) {
         case '1.1.0':
-            return coordinatorToVersion2_1_1(client, options, config, senderAddress, coordinatorAddress, codeId, fee);
+            return coordinatorToVersion2_1_1(client, options, config, senderAddress, coordinatorAddress, fee);
         default:
             printError(`no migration script found for coordinator ${version}`);
     }
