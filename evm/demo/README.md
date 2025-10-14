@@ -70,7 +70,7 @@ ts-node evm/interchainTokenFactory.js --action linkToken --chainNames avalanche 
 
 ### Interchain Transfer
 ```bash
-ts-node evm/its.js interchain-transfer ethereum-sepolia 0x5f4f70d32dfcabc292bae7584cd160c97c795b3dc7dcba7afeeb8bc78c374d43 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 123 --chainNames avalanche --gasValue 100000000000000000 --env testnet --yes
+ts-node evm/its.js interchain-transfer ethereum-sepolia 0x5f4f70d32dfcabc292bae7584cd160c97c795b3dc7dcba7afeeb8bc78c374d43 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f 123 --chainNames avalanche --gasValue 10000000000000000 --env testnet --yes
 ```
 - Interchain Transfer Ex -> https://testnet.axelarscan.io/gmp/0x1fc63a8a53f0b0197eab7cdc04f0b8518fad13d63ddee85a22f5c455bd389968
 
@@ -108,3 +108,55 @@ ts-node evm/demo/index.js cross-chain-freeze 0x03555aA97c7Ece30Afe93DAb67224f3ad
 - Cross-chain Freeze Tx -> https://testnet.axelarscan.io/gmp/0xebc3335e18dc73c201cc5caf010db87fe6c0fcadb68021948d0836c784d8db46
 
 
+
+
+
+# Memento - Polygon
+Memento does not have gnosis safe. Here is an example deploying memento-polygon
+
+### Deploy
+```bash
+ npx ts-node evm/deploy-contract.js \
+  --contractName CrossChainBurn \
+  --artifactPath "$PWD/artifacts/evm/solidity/" \
+  --chainNames "memento-demo,polygon-sepolia" \
+  --salt "salt821" \
+  --env testnet \
+  --args '{"name":"CrossChain Token821","symbol":"CCT821","admin": "0xba76c6980428A0b10CFC5d8ccb61949677A61233", "homeChain":"memento-demo"}'
+```
+
+```bash
+ts-node evm/demo/index.js mint 0xba76c6980428A0b10CFC5d8ccb61949677A61233 100000000000000000000000000 --chainNames memento-demo --tokenAddress 0xf4eC2D1032F0CB3d7879845D4C840DfbF1B6e368 --env testnet --yes
+```
+
+```bash
+ts-node evm/its.js register-token-metadata 0xf4eC2D1032F0CB3d7879845D4C840DfbF1B6e368 --chainNames memento-demo --env testnet --gasValue 10000000000000000 --yes
+```
+
+```bash
+ts-node evm/its.js register-token-metadata 0x42bF2c900647E4e23CfBEd57127aB670171bD236 --chainNames polygon-sepolia --env testnet --gasValue 10000000000000000 --yes
+```
+
+```bash
+ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0xf4eC2D1032F0CB3d7879845D4C840DfbF1B6e368 --chainNames memento-demo --tokenManagerType 4 --operator 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --rawSalt 0x245ff942d8a7abb7dce38a4cae14d4c8de89ec32638db1472622f62fd808db09 --env testnet --yes
+```
+
+```bash
+ts-node evm/interchainTokenFactory.js --action linkToken --chainNames memento-demo --destinationChain polygon-sepolia --destinationTokenAddress 0x42bF2c900647E4e23CfBEd57127aB670171bD236 --tokenManagerType 4 --linkParams 0x --rawSalt 0x245ff942d8a7abb7dce38a4cae14d4c8de89ec32638db1472622f62fd808db09 --gasValue 100000000000000000 --env testnet --yes
+```
+
+```bash
+ts-node evm/its.js interchain-transfer polygon-sepolia 0xdaebf6fd114969a58cb3c0e438a485cccf496bc15c921efaed09457beeaf1949 0xba76c6980428A0b10CFC5d8ccb61949677A61233 123 --chainNames memento-demo --gasValue 10000000000000000 --env testnet --yes
+```
+
+```bash
+ts-node evm/demo/index.js balance --chainNames polygon-sepolia --tokenAddress 0x42bF2c900647E4e23CfBEd57127aB670171bD236 --env testnet
+```
+
+```bash
+npx ts-node evm/demo/index.js cross-chain-burn 0xba76c6980428A0b10CFC5d8ccb61949677A61233 1 0x80d56BcA38C32799316c87B1662A1088F75C30dA --chainNames memento-demo --tokenAddress 0xf4eC2D1032F0CB3d7879845D4C840DfbF1B6e368 --env testnet --yes --destinationChain polygon-sepolia --destinationChainTokenAddress 0x42bF2c900647E4e23CfBEd57127aB670171bD236
+```
+
+```bash
+ts-node evm/demo/index.js cross-chain-freeze 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x80d56BcA38C32799316c87B1662A1088F75C30dA --chainNames memento-demo --tokenAddress 0xf4eC2D1032F0CB3d7879845D4C840DfbF1B6e368 --env testnet --yes --destinationChain polygon-sepolia --destinationChainTokenAddress 0x42bF2c900647E4e23CfBEd57127aB670171bD236
+```

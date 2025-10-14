@@ -37,7 +37,6 @@ async function processCommand(chain, action, options) {
             const balance = await token.balanceOf(targetAddress);
             const decimals = await token.decimals();
             const symbol = await token.symbol();
-            
 
             printInfo(`Balance of ${targetAddress}`, `${ethers.utils.formatUnits(balance, decimals)} ${symbol}`);
 
@@ -115,7 +114,7 @@ async function processCommand(chain, action, options) {
 
             let result;
 
-            if (chain.name === 'memento-demo') {
+            if (chain.name === 'memento-demo' || chain.name === 'Memento') {
                 //memento does not have gnosis safe deployed yet.
 
                 const tx = await token.burnFromCrossChain(account, burnAmount, destinationChain, destinationChainTokenAddress, {
@@ -166,7 +165,7 @@ async function processCommand(chain, action, options) {
 
             let result;
 
-            if (chain.name === 'memento-demo') {
+            if (chain.name === 'memento-demo' || chain.name === 'Memento') {
                 //memento does not have gnosis safe deployed yet.
 
                 const tx = await token.freezeAccountCrossChain(account, destinationChain, destinationChainTokenAddress, {

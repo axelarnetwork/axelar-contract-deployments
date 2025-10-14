@@ -135,24 +135,6 @@
           "deploymentMethod": "create2",
           "codehash": "0x608d14cd4ed5c9efb89835d6c92c60bcf78c89b0d732ce7e179ee3e3eae83197",
           "salt": "salt4"
-        },
-        "CrosschainBurn": {
-          "name": "CrossChain Token",
-          "symbol": "CCT",
-          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
-          "homeChain": "ethereum-sepolia"
-        },
-        "CrossChainBurn": {
-          "name": "CrossChain Token800",
-          "symbol": "CCT800",
-          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
-          "homeChain": "Avalanche",
-          "address": "0xA3dD5C34753EdA5c7D4c031cd0f01826D9c6C9ce",
-          "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xa480b6a50969d653788488b2e4e663cc47cb8dd55e93e30ffcf5998a03c01bcf",
-          "salt": "salt800"
         }
       },
       "explorer": {
@@ -288,24 +270,6 @@
           "deploymentMethod": "create2",
           "codehash": "0xe106272177fb94ba6ef1a20ec3e6659de35400b2df070dff5c9f6042e92b11cc",
           "salt": "salt4"
-        },
-        "CrosschainBurn": {
-          "name": "CrossChain Token",
-          "symbol": "CCT",
-          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
-          "homeChain": "ethereum-sepolia"
-        },
-        "CrossChainBurn": {
-          "name": "CrossChain Token800",
-          "symbol": "CCT800",
-          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
-          "homeChain": "Avalanche",
-          "address": "0x449935A537bf66A532675F0f420c73E1DA04921d",
-          "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0x490c785904d86898850cd9fd76a8fab1a8cb12072613e360cd0aec380708f4df",
-          "salt": "salt800"
         }
       },
       "explorer": {
@@ -2193,16 +2157,16 @@
           "initialSupply": "0"
         },
         "CrossChainBurn": {
-          "name": "CrossChain Token805",
-          "symbol": "CCT805",
-          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
+          "name": "CrossChain Token822",
+          "symbol": "CCT822",
+          "admin": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "homeChain": "memento-demo",
-          "address": "0x97711b4DEfD0F3f0e72483B8114Ab54EFdfdb655",
+          "address": "0x4fD0BceAAfb5a98b65601E397df5c5eeb9B17e6E",
           "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0xa480b6a50969d653788488b2e4e663cc47cb8dd55e93e30ffcf5998a03c01bcf",
-          "salt": "salt804"
+          "salt": "salt822"
         }
       },
       "explorer": {
@@ -3342,7 +3306,7 @@
       "name": "Memento",
       "axelarId": "memento-demo",
       "chainId": 2129,
-      "rpc": "",
+      "rpc": "PRIVATE",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "finality": "1",
@@ -3427,16 +3391,16 @@
           "implementation": "0x9d712a17416d2aa69e042743b7AA60BCF717602E"
         },
         "CrossChainBurn": {
-          "name": "CrossChain Token805",
-          "symbol": "CCT805",
-          "admin": "0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f",
+          "name": "CrossChain Token822",
+          "symbol": "CCT822",
+          "admin": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "homeChain": "memento-demo",
-          "address": "0x0c28355ef75B37F093c8894B370a20143Cdb3b95",
+          "address": "0x4353ff070C852E1265F4656beFB0B848e2B8dC9D",
           "predeployCodehash": "0xfbb28ae6256ea34ccb8b89e9b3bf4d8151fea05850e651038be650ecb22fb4c7",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0x651c05f65e9f38165409645356f2b0bb5ceec0692dd1c4581316e0e7b60b1a1b",
-          "salt": "salt805"
+          "salt": "salt822"
         }
       }
     }

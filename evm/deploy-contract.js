@@ -219,7 +219,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
 
                 //Create multisig with proper gas settings
                 const createSafeTx = await protocolKit.createSafeDeploymentTransaction();
-                
+
                 // Override gas settings for the Safe deployment
                 const gasOptions = await getGasOptions(chain, options, 'CrossChainBurn');
                 createSafeTx.gasPrice = gasOptions.gasPrice;
@@ -229,7 +229,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
                 if (gasOptions.maxPriorityFeePerGas) {
                     createSafeTx.maxPriorityFeePerGas = gasOptions.maxPriorityFeePerGas;
                 }
-                
+
                 const createSafeTxResponse = await wallet.sendTransaction(createSafeTx);
                 await createSafeTxResponse.wait();
                 console.log('Safe deployment tx sent:', createSafeTxResponse.hash);
