@@ -38,7 +38,7 @@ const chalk = require('chalk');
 const {
     utils: { arrayify, parseUnits },
 } = require('hardhat').ethers;
-const { checkIfCoinExists, checkIfSenderHasSufficientBalance } = require('./utils/token-utils');
+const { checkIfCoinExists, senderHasSufficientBalance } = require('./utils/token-utils');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -782,9 +782,8 @@ async function deployRemoteCoin(keypair, client, config, contracts, args, option
 
     validateDestinationChain(config.chains, destinationChain);
 
-    // Fetch CoinType from TokenID on-chain
-    const callerParams = { walletAddress, itsConfig };
-    const coinType = await tokenIdToCoinType(client, callerParams, tokenId);
+    // Fetch CoinType from on-chain TokenID
+    const coinType = await tokenIdToCoinType(client, walletAddress, itsConfig, tokenId);
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -901,33 +900,27 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
+    const [tokenId, destinationChain, destinationAddress, amount] = args;
+    const walletAddress = keypair.toSuiAddress();
 
-    const [coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
-
-    const coinData = await client.getObject({
-        id: coinObjectId,
-        options: { showContent: true },
+    validateParameters({
+        isHexString: { tokenId },
+        isValidNumber: { amount },
     });
 
-    let coinType, coinPackageId, coinDecimals;
+    validateDestinationChain(config.chains, destinationChain);
+
+    // Fetch CoinType from on-chain TokenID
+    const coinType = await tokenIdToCoinType(client, walletAddress, itsConfig, tokenId);
+
+    let coinPackageId, coinDecimals;
     try {
-        const coinDataType = coinData.data ? coinData.data.content.type : null;
-        coinType = coinDataType.split('<')[1].replace('>', '');
         const coinMetadata = await client.getCoinMetadata({ coinType });
         coinDecimals = coinMetadata.decimals;
         coinPackageId = coinType.split('::')[0];
     } catch {
         throw new Error(`Expected valid coin object for ${coinObjectId}, received: ${JSON.stringify(coinData)}`);
     }
-
-    validateParameters({
-        isHexString: { coinObjectId, tokenId, coinPackageId },
-        isValidNumber: { amount },
-    });
-
-    validateDestinationChain(config.chains, destinationChain);
-
-    const walletAddress = keypair.toSuiAddress();
 
     const txBuilder = new TxBuilder(client);
     const tx = txBuilder.tx;
@@ -944,10 +937,18 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
               arguments: [],
           });
 
+    // Coin must exist
     await checkIfCoinExists(client, coinPackageId, coinType);
-    await checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount);
 
+    // Convert human readable coin amount to send value
     const unitAmount = getUnitAmount(amount, coinDecimals);
+
+    // Check balance and load valid coin id
+    const { coinObjectId } =  await senderHasSufficientBalance(
+        client, walletAddress, coinType, unitAmount
+    );
+
+    // Split coins
     const [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
 
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
@@ -1230,14 +1231,14 @@ if (require.main === module) {
 
     const interchainTransferProgram = new Command()
         .name('interchain-transfer')
-        .command('interchain-transfer <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>')
+        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('Send interchain transfer from sui to a chain where token is linked')
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
-        .action((coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
+        .action((tokenId, destinationChain, destinationAddress, amount, options) => {
             mainProcessor(
                 interchainTransfer,
                 options,
-                [coinObjectId, tokenId, destinationChain, destinationAddress, amount],
+                [tokenId, destinationChain, destinationAddress, amount],
                 processCommand,
             );
         });

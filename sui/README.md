@@ -173,13 +173,13 @@ ts-node sui/deploy-contract.js deploy ITS
 Send interchain transfer from sui to a chain where token is linked
 
 ```bash
-ts-node sui/its interchain-transfer [options] <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>
+ts-node sui/its interchain-transfer [options] <tokenId> <destinationChain> <destinationAddress> <amount>
 ```
 
 - Example Command: 
 
 ```bash
-ts-node sui/its interchain-transfer 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1
+ts-node sui/its interchain-transfer 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1
 ```
 
 ### Squid

@@ -104,23 +104,23 @@ function createSaltAddress(keypair = null) {
     return address;
 }
 
-async function tokenIdToCoinType(client, config, tokenId = '') {
+async function tokenIdToCoinType(client, walletAddress, itsConfig, tokenId = '') {
     try {
         const coinTypeResult = await client.devInspectTransactionBlock({
             transactionBlock: (() => {
                 const tx = new Transaction();
                 tx.moveCall({
-                    target: `${config.itsConfig.address}::interchain_token_service::registered_coin_type`,
-                    arguments: [tx.object(config.itsConfig.objects.InterchainTokenService), tx.pure.address(tokenId)],
+                    target: `${itsConfig.address}::interchain_token_service::registered_coin_type`,
+                    arguments: [tx.object(itsConfig.objects.InterchainTokenService), tx.pure.address(tokenId)],
                 });
                 return tx;
             })(),
-            sender: config.walletAddress,
+            sender: walletAddress,
         });
 
         const coinType = extractCoinTypeFromDevInspect(coinTypeResult);
 
-        return coinType;
+        return '0x' + coinType;
     } catch {
         throw new Error(`Failed parsing coin type for token id ${tokenId}`);
     }

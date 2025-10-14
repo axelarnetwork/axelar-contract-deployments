@@ -77,21 +77,27 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
     }
 }
 
-async function checkIfSenderHasSufficientBalance(client, walletAddress, coinType, coinObjectId, amount) {
+/**
+ * Get a coin object id for a coin held by the user and meeting a given threshold. 
+ * Returns `undefined` if balance threshold criteria are not met.
+ * @param {Object} client : Sui client
+ * @param {String} walletAddress : Sui wallet address
+ * @param {String} coinType : Named type of the Sui coin
+ * @param {String | Number} : Balance threshold required, in unit amount format (@see getUnitAmount)
+ * @returns Coin Object ID held by user which has sufficient balance
+ */
+async function senderHasSufficientBalance(client, walletAddress, coinType, amount) {
     const coins = await client.getCoins({
         owner: walletAddress,
         coinType,
     });
 
-    const coin = coins.data.find((c) => c.coinObjectId === coinObjectId);
+    const coin = coins.data.find((c) => parseInt(c.balance) > parseInt(amount));
     if (!coin) {
-        throw new Error(`Coin with ID ${coinObjectId} not found for owner ${walletAddress}`);
+        throw new Error(`Insufficient balance of coin ${coinType} using wallet ${walletAddress}`);
     }
 
-    const balance = Number(coin.balance);
-    if (balance < amount) {
-        throw new Error(`User does not have sufficient balance. Expected ${amount}, got ${balance}`);
-    }
+    return coin;
 }
 
 module.exports = {
@@ -99,5 +105,5 @@ module.exports = {
     createLockedCoinManagement,
     saveTokenDeployment,
     checkIfCoinExists,
-    checkIfSenderHasSufficientBalance,
+    senderHasSufficientBalance,
 };
