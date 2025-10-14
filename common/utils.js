@@ -18,7 +18,6 @@ const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
-const { cvToHex, principalCV } = require('@stacks/transactions');
 const { isValidNamedType } = require('@mysten/sui/utils');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
@@ -771,9 +770,6 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
         case 'xrpl':
             // TODO: validate XRPL address format
             return asciiToBytes(destinationAddress);
-
-        case 'stacks':
-            return cvToHex(principalCV(destinationAddress));
 
         case 'evm':
         case 'sui':
