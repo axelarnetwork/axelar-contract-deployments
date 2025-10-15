@@ -949,9 +949,9 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     // Split coins (if required)
     let coinsToSend;
     if (parseInt(balance) === parseInt(unitAmount)) {
-        [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
-    } else {
         coinsToSend = coinObjectId;
+    } else {
+        [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
     }
 
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
