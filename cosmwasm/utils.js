@@ -1,5 +1,6 @@
 'use strict';
 
+const fetch = require('node-fetch');
 const zlib = require('zlib');
 const { createHash } = require('crypto');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
@@ -64,6 +65,55 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
+
+const getSDKVersion = async (config) => {
+    if (!config.axelar?.lcd) {
+        throw new Error('LCD endpoint not found in config');
+    }
+    
+    const url = `${config.axelar.lcd}/cosmos/base/tendermint/v1beta1/node_info`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const sdkVersion = data?.application_version?.cosmos_sdk_version;
+        
+        if (!sdkVersion) {
+            throw new Error('cosmos_sdk_version not found in response');
+        }
+        
+        return sdkVersion;
+    } catch (error) {
+        throw new Error(`Failed to fetch SDK version from ${url}: ${error.message}`);
+    }
+};
+
+const isPreV50SDK = async (config) => {
+    const version = await getSDKVersion(config);
+    
+    // Remove 'v' prefix if present
+    const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
+    
+    // Parse version parts
+    const parts = cleanVersion.split('.');
+    if (parts.length < 2) {
+        throw new Error(`Invalid SDK version format: ${version}`);
+    }
+    
+    const major = parseInt(parts[0], 10);
+    const minor = parseInt(parts[1], 10);
+    
+    if (isNaN(major) || isNaN(minor)) {
+        throw new Error(`Invalid SDK version format: ${version}`);
+    }
+    
+    // Returns true if version is BEFORE 0.50 (legacy)
+    return major === 0 && minor < 50;
+};
 
 const getAmplifierBaseContractConfig = (config, contractName) => {
     const contractBaseConfig = config.axelar.contracts[contractName];
@@ -1437,4 +1487,5 @@ module.exports = {
     getProverInstantiateMsg,
     validateItsChainChange,
     initContractConfig,
+    isPreV50SDK,
 };
