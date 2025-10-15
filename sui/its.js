@@ -114,10 +114,8 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     let trustedChains = parseTrustedChains(config.chains, args);
 
-    // Get currently trusted chains
     const alreadyTrustedChains = await listTrustedChains(keypair, client, config, contracts, args, options);
 
-    // Filter out chains that are already trusted
     trustedChains = trustedChains.filter((chain) => !alreadyTrustedChains.includes(chain));
 
     if (trustedChains.length === 0) {

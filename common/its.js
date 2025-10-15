@@ -77,8 +77,8 @@ async function setTrustedChainsAll(config, args, options) {
     printInfo('Setting trusted chains on all EVM chains...\n');
     await callEvmSetTrustedChains(config, evmPrivateKey, options.env);
 
-    // printInfo('Setting trusted chains for Sui...');
-    // await callSuiAddTrustedChains(config, 'sui', suiPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType);
+    printInfo('Setting trusted chains for Sui...');
+    await callSuiAddTrustedChains(config, 'sui', suiPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType);
 
     printInfo('Setting trusted chains for Stellar...');
     await callStellarAddTrustedChains(config, 'stellar', stellarPrivateKey, yes);
