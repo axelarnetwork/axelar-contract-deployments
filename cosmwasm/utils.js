@@ -484,27 +484,27 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => {
+const getVerifierContractForChain = (chainType) => {
     const chainVerifierMapping = {
-        solana: 'SolanaVotingVerifier',
+        svm: 'SolanaVotingVerifier',
     };
 
-    return chainVerifierMapping[chainName] || 'VotingVerifier';
+    return chainVerifierMapping[chainType] || 'VotingVerifier';
 };
 
-const getGatewayContractForChain = (chainName) => {
+const getGatewayContractForChain = (chainType) => {
     const chainGatewayMapping = {
-        solana: 'SolanaGateway',
+        svm: 'SolanaGateway',
     };
 
-    return chainGatewayMapping[chainName] || 'Gateway';
+    return chainGatewayMapping[chainType] || 'Gateway';
 };
 
 const getAxelarGatewayContractForChain = () => 'AxelarGateway';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
-    const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
+    const { chainName, chainType } = options;
+    const verifierContract = getVerifierContractForChain(chainType);
 
     const {
         axelar: {
@@ -652,9 +652,9 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 };
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
-    const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContractName = getGatewayContractForChain(chainName);
+    const { chainName, chainType } = options;
+    const verifierContract = getVerifierContractForChain(chainType);
+    const gatewayContractName = getGatewayContractForChain(chainType);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
