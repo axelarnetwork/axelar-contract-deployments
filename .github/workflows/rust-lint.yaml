@@ -1,0 +1,52 @@
+name: Rust Linting
+
+on:
+  pull_request:
+    paths:
+      - 'solana/**'
+      - '.github/workflows/rust-lint.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-lints:
+    runs-on: blacksmith-4vcpu-ubuntu-2204
+    defaults:
+      run:
+        working-directory: solana
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone axelar-amplifier-solana
+        run: |
+          git clone https://github.com/axelarnetwork/axelar-amplifier-solana.git
+        working-directory: solana
+
+      - name: Install Rust nightly toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rustfmt
+
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: Rust Cache
+        uses: useblacksmith/rust-cache@v3.0.1
+        with:
+          shared-key: 'cache-lint'
+          workspaces: 'solana'
+
+      - name: Add cargo clippy
+        run: rustup component add clippy
+
+      - name: Run cargo clippy (devnet-amplifier)
+        run: cargo clippy --workspace --allow-dirty --fix -- -D warnings
+
+      - name: Run cargo doc
+        run: cargo doc --no-deps --workspace
+
+      - name: Check for uncommitted changes
+        run: git diff --exit-code
