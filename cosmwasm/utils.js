@@ -484,21 +484,9 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => {
-    const chainVerifierMapping = {
-        solana: 'SolanaVotingVerifier',
-    };
+const getVerifierContractForChain = (chainName) => 'VotingVerifier';
 
-    return chainVerifierMapping[chainName] || 'VotingVerifier';
-};
-
-const getGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        solana: 'SolanaGateway',
-    };
-
-    return chainGatewayMapping[chainName] || 'Gateway';
-};
+const getGatewayContractForChain = (chainName) => 'Gateway';
 
 const getAxelarGatewayContractForChain = () => 'AxelarGateway';
 
@@ -1363,10 +1351,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
-    SolanaVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1374,10 +1358,6 @@ const CONTRACTS = {
     XrplGateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
-    },
-    SolanaGateway: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeGatewayInstantiateMsg,
     },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,

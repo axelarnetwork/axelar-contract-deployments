@@ -2,19 +2,9 @@ import { calculateDomainSeparator, isKeccak256Hash, printError, printInfo } from
 import { ConfigManager } from '../common/config';
 import { getSalt } from './utils';
 
-const getGatewayContractForChainType = (chainType: string): string => {
-    const chainGatewayMapping: Record<string, string> = {
-        svm: 'SolanaGateway',
-    };
-    return chainGatewayMapping[chainType] || 'Gateway';
-};
+const getGatewayContractForChainType = (chainType: string): string => 'Gateway';
 
-const getVerifierContractForChainType = (chainType: string): string => {
-    const chainVerifierMapping: Record<string, string> = {
-        svm: 'SolanaVotingVerifier',
-    };
-    return chainVerifierMapping[chainType] || 'VotingVerifier';
-};
+const getVerifierContractForChainType = (chainType: string): string => 'VotingVerifier';
 
 const getProverContractForChainType = (chainType: string): string => {
     const chainProverMapping: Record<string, string> = {

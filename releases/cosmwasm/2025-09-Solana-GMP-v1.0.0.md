@@ -14,8 +14,6 @@
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-  - SolanaVotingVerifier: `a7b14150253b0e1f0a78bbe846afd1ddff8247645d6f2959b653cd924a714e99`
-  - SolanaGateway: `efa37c79eb04499f4c45e4500ca5baca9f7d3226f8b5efb588004ede8a002a3c`
   - SolanaMultisigProver: `09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6`
 
 ## Background
@@ -86,30 +84,6 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
 RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 ```
 
-1. Store SolanaVotingVerifier:
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-        -c SolanaVotingVerifier \
-        -t "Upload VotingVerifier contract for Solana" \
-        -d "Upload VotingVerifier contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
-        --chainName $CHAIN \
-        -m $MNEMONIC
-    ```
-
-1. Store SolanaGateway:
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-        -c SolanaGateway \
-        -t "Upload Gateway contract for Solana" \
-        -d "Upload Gateway contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
-        --chainName $CHAIN \
-        -m $MNEMONIC
-    ```
-
 1. Store SolanaMultisigProver:
 
     ```bash
@@ -141,19 +115,6 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 | **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       |
 
 ```bash
-# Add under `config.axelar.contracts.SolanaVotingVerifier` based on Network
-# External gateway address can be checked at pre-requisites section.
-\"$CHAIN\" : {
-  "governanceAddress": "[governance address]",
-  "serviceName": "[service name]",
-  "sourceGatewayAddress": "[external gateway address]",
-  "votingThreshold": "[voting threshold]",
-  "blockExpiry": 10,
-  "confirmationHeight": 31,
-  "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-  "addressFormat": "base58_solana"
-}
-
 # Add under `config.axelar.contracts.SolanaMultisigProver` based on Network
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
@@ -181,16 +142,16 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based on network]
 ```
 
-1. Instantiate `SolanaVotingVerifier`
+1. Instantiate `VotingVerifier`
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaVotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
     ```
 
-1. Instantiate `SolanaGateway`
+1. Instantiate `Gateway`
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaGateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
+    ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
     ```
 
 1. Instantiate `SolanaMultisigProver`
@@ -204,8 +165,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     - Env-specific environment variables: These variables need to be updated by the env.
 
     ```bash
-    VOTING_VERIFIER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaVotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-    GATEWAY=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaGateway[\"$CHAIN\"].address" | tr -d '"')
+    VOTING_VERIFIER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+    GATEWAY=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
     MULTISIG_PROVER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaMultisigProver[\"$CHAIN\"].address" | tr -d '"')
     MULTISIG=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
     REWARDS=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
@@ -411,7 +372,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY_ADDRESS '{"active_verifiers": {"service_name": "validators", "chain_name": "solana-5"}}' --node [axelar rpc url]
+    axelard query wasm contract-state smart $SERVICE_REGISTRY_ADDRESS '{"active_verifiers": {"service_name": "validators", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
     ```
 
 1. Create genesis verifier set
