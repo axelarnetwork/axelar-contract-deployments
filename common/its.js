@@ -26,8 +26,7 @@ async function encodeRecipient(config, args, _) {
 async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
     const allEvmChains = Object.values(config.chains)
         .filter((c) => c.contracts?.InterchainTokenService?.address)
-        .filter((c) => c.chainType === 'evm')
-        .map((c) => c.axelarId);
+        .filter((c) => c.chainType === 'evm');
 
     for (const chain of allEvmChains) {
         printInfo(`\n--- Setting trusted chains on ${chain.name} (${chain.axelarId}) ---`);
@@ -44,7 +43,7 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
 
 //SUI
 async function callSuiAddTrustedChains(config, chain, suiPrivateKey, yes = false, suiSignatureScheme, suiPrivateKeyType) {
-    const chainConfig = getChainConfig(config, chain);
+    const chainConfig = getChainConfig(config.chains, chain);
 
     const [keypair, client] = getSuiWallet(chainConfig, {
         privateKey: suiPrivateKey,
@@ -69,9 +68,7 @@ async function callStellarAddTrustedChains(config, chain, stellarPrivateKey, yes
 }
 
 async function setTrustedChainsAll(config, args, options) {
-    const { chain, evmPrivateKey, suiPrivateKey, stellarPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType } = options;
-
-    if (!chain) throw new Error('Missing required option: --chain');
+    const { evmPrivateKey, suiPrivateKey, stellarPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType } = options;
 
     if (!evmPrivateKey) throw new Error('Missing required option: --evmPrivateKey');
     if (!suiPrivateKey) throw new Error('Missing required option: --suiPrivateKey');
@@ -80,8 +77,8 @@ async function setTrustedChainsAll(config, args, options) {
     printInfo('Setting trusted chains on all EVM chains...\n');
     await callEvmSetTrustedChains(config, evmPrivateKey, options.env);
 
-    printInfo('Setting trusted chains for Sui...');
-    await callSuiAddTrustedChains(config, 'sui', suiPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType);
+    // printInfo('Setting trusted chains for Sui...');
+    // await callSuiAddTrustedChains(config, 'sui', suiPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType);
 
     printInfo('Setting trusted chains for Stellar...');
     await callStellarAddTrustedChains(config, 'stellar', stellarPrivateKey, yes);
@@ -108,7 +105,6 @@ if (require.main === module) {
     program
         .command('set-trusted-chains-all')
         .description('Set trusted chains for all chains')
-        .addOption(new Option('-c, --chain <chain>', 'ITS chain to trust (axelarId or alias)').env('CHAIN').makeOptionMandatory(true))
         .addOption(
             new Option('--evmPrivateKey <evmPrivateKey>', 'Private key for EVM scripts').env('PRIVATE_KEY_EVM').makeOptionMandatory(true),
         )

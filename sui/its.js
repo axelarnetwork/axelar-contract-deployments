@@ -1322,3 +1322,5 @@ if (require.main === module) {
     addOptionsToCommands(program, addBaseOptions, { offline: true });
     program.parse();
 }
+
+module.exports = { addTrustedChains, removeTrustedChains, setFlowLimits };
