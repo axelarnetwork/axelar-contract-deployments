@@ -26,6 +26,9 @@ axelar-solana-gateway-test-fixtures.workspace = true
 gateway-event-stack.workspace = true
 rstest.workspace = true
 
+[package.metadata.cargo-machete]
+ignored = ["anchor-discriminators"]
+
 [lints]
 workspace = true
 
