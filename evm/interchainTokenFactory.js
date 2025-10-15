@@ -91,7 +91,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({ isValidAddress: { deployer } });
-            validateParameters({ isValidAddress: { deployer } });
 
             const interchainTokenDeploySalt = await interchainTokenFactory.interchainTokenDeploySalt(deployer, deploymentSalt);
 
