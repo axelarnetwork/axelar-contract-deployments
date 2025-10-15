@@ -944,10 +944,15 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const unitAmount = getUnitAmount(amount, coinDecimals);
 
     // Check balance and load valid coin id
-    const { coinObjectId } = await senderHasSufficientBalance(client, walletAddress, coinType, unitAmount);
+    const { coinObjectId, balance } = await senderHasSufficientBalance(client, keypair, coinType, unitAmount);
 
-    // Split coins
-    const [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
+    // Split coins (if required)
+    let coinsToSend;
+    if (parseInt(balance) === parseInt(unitAmount)) {
+        [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
+    } else {
+        coinsToSend = coinObjectId;
+    }
 
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::prepare_interchain_transfer`,

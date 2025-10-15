@@ -86,15 +86,44 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
  * @param {String | Number} : Balance threshold required, in unit amount format (@see getUnitAmount)
  * @returns Coin Object ID held by user which has sufficient balance
  */
-async function senderHasSufficientBalance(client, walletAddress, coinType, amount) {
+async function senderHasSufficientBalance(client, keypair, coinType, amount) {
+    const walletAddress = keypair.toSuiAddress();
+
     const coins = await client.getCoins({
         owner: walletAddress,
         coinType,
     });
 
-    const coin = coins.data.find((c) => parseInt(c.balance) > parseInt(amount));
+    const insufficientBalanceMsg = `Insufficient balance of coin ${coinType} using wallet ${walletAddress}`;    
+    if (!Array.isArray(coins.data || !coins.data.length)) {
+        throw new Error(insufficientBalanceMsg);
+    }
+
+    let coin = coins.data.find((c) => parseInt(c.balance) >= parseInt(amount));
+
+    // Merge coins to reach required threshold if possible
     if (!coin) {
-        throw new Error(`Insufficient balance of coin ${coinType} using wallet ${walletAddress}`);
+        const txBuilder = new TxBuilder(client);
+
+        let totalBalance = 0;
+        coins.data.forEach((coin) => {
+            const { balance } = coin;
+            totalBalance += parseInt(balance);
+        });
+
+        if (totalBalance < parseInt(amount)) {
+            throw new Error(insufficientBalanceMsg);
+        }
+
+        const coinObjectIds = coins.data.map((coin) => coin.coinObjectId);
+        const firstCoin = coinObjectIds.shift();
+        const remainingCoins = coinObjectIds.map((id) => tx.object(id));
+
+        txBuilder.tx.mergeCoins(firstCoin, remainingCoins);
+
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Merge coins', options);
+        
+        coin = coins.data.find((c) => c.coinObjectId === firstCoin);
     }
 
     return coin;
