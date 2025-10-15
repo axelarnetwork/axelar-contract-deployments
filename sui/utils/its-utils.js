@@ -120,7 +120,7 @@ async function tokenIdToCoinType(client, walletAddress, itsConfig, tokenId = '')
 
         const coinType = extractCoinTypeFromDevInspect(coinTypeResult);
 
-        return coinType.slice(0,2) === '0x' ? coinType : '0x' + coinType;
+        return coinType.slice(0, 2) === '0x' ? coinType : '0x' + coinType;
     } catch {
         throw new Error(`Failed parsing coin type for token id ${tokenId}`);
     }

@@ -94,7 +94,7 @@ async function senderHasSufficientBalance(client, keypair, coinType, amount) {
         coinType,
     });
 
-    const insufficientBalanceMsg = `Insufficient balance of coin ${coinType} using wallet ${walletAddress}`;    
+    const insufficientBalanceMsg = `Insufficient balance of coin ${coinType} using wallet ${walletAddress}`;
     if (!Array.isArray(coins.data || !coins.data.length)) {
         throw new Error(insufficientBalanceMsg);
     }
@@ -122,7 +122,7 @@ async function senderHasSufficientBalance(client, keypair, coinType, amount) {
         txBuilder.tx.mergeCoins(firstCoin, remainingCoins);
 
         await broadcastFromTxBuilder(txBuilder, keypair, 'Merge coins', options);
-        
+
         coin = coins.data.find((c) => c.coinObjectId === firstCoin);
     }
 
