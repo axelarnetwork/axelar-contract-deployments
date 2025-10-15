@@ -944,7 +944,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const unitAmount = getUnitAmount(amount, coinDecimals);
 
     // Check balance and load valid coin id
-    const { coinObjectId, balance } = await senderHasSufficientBalance(client, keypair, coinType, unitAmount);
+    const { coinObjectId, balance } = await senderHasSufficientBalance(client, keypair, options, coinType, unitAmount);
 
     // Split coins (if required)
     let coinsToSend;
