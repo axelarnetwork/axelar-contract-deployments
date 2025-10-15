@@ -112,9 +112,22 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     const { OwnerCap, InterchainTokenService } = itsConfig.objects;
 
-    const txBuilder = new TxBuilder(client);
+    let trustedChains = parseTrustedChains(config.chains, args);
 
-    const trustedChains = parseTrustedChains(config.chains, args);
+    // Get currently trusted chains
+    const alreadyTrustedChains = await listTrustedChains(keypair, client, config, contracts, args, options);
+
+    // Filter out chains that are already trusted
+    trustedChains = trustedChains.filter((chain) => !alreadyTrustedChains.includes(chain));
+
+    if (trustedChains.length === 0) {
+        printInfo('All specified chains are already trusted. No action needed.');
+        return;
+    }
+
+    printInfo('Chains to add as trusted', trustedChains);
+
+    const txBuilder = new TxBuilder(client);
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
@@ -130,7 +143,6 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
         await broadcastFromTxBuilder(txBuilder, keypair, 'Add Trusted Chains', options);
     }
 }
-
 async function removeTrustedChains(keypair, client, config, contracts, args, options) {
     const trustedChains = args;
 
