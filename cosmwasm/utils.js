@@ -503,7 +503,9 @@ const getGatewayContractForChain = (chainType) => {
 const getAxelarGatewayContractForChain = () => 'AxelarGateway';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
-    const { chainName, chainType } = options;
+    const { chainName } = options;
+    const chainConfig = config.chains[chainName];
+    const chainType = chainConfig?.chainType;
     const verifierContract = getVerifierContractForChain(chainType);
 
     const {
