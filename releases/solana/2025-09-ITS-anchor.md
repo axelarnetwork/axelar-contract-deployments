@@ -249,52 +249,82 @@ The following checks should be performed after the rollout.
 
     ```sh
     solana/cli send its deploy-interchain-token \
-    --salt <SALT_STRING> \
-    --name <TOKEN_NAME> \
-    --symbol <TOKEN_SYMBOL> \
-    --decimals <DECIMALS> \
-    --initial-supply <INITIAL_SUPPLY>
+        --salt <SALT_STRING> \
+        --name <TOKEN_NAME> \
+        --symbol <TOKEN_SYMBOL> \
+        --decimals <DECIMALS> \
+        --initial-supply <INITIAL_SUPPLY>
 
     solana/cli send its deploy-remote-interchain-token \
-    --salt <SALT_STRING> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --gas-value <GAS_VALUE>
+        --salt <SALT_STRING> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --gas-value <GAS_VALUE>
     ```
 
 1. Interchain Token Transfer for Native Interchain Token:
 
     ```sh
     solana/cli send its interchain-transfer \
-    --source-account <SOURCE_ACCOUNT_ADDRESS> \
-    --token-id <TOKEN_ID_HEX> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --destination-address <DESTINATION_ADDRESS> \
-    --amount <AMOUNT> \
-    --gas-value <GAS_VALUE>
+        --source-account <SOURCE_ACCOUNT_ADDRESS> \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-address <DESTINATION_ADDRESS> \
+        --amount <AMOUNT> \
+        --gas-value <GAS_VALUE>
     ```
 
 1. Deploy Remote Canonical Token:
 
     ```sh
     solana/cli send its register-canonical-interchain-token \
-    --mint <MINT_ADDRESS>
+        --mint <MINT_ADDRESS>
 
     solana/cli send its deploy-remote-canonical-interchain-token \
-    --mint <MINT_ADDRESS> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --gas-value <GAS_VALUE>
+        --mint <MINT_ADDRESS> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --gas-value <GAS_VALUE>
     ```
 
 1. Interchain Token Transfer for Canonical Token:
 
     ```sh
     solana/cli send its interchain-transfer \
-    --source-account <SOURCE_ACCOUNT_ADDRESS> \
-    --token-id <TOKEN_ID_HEX> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --destination-address <DESTINATION_ADDRESS> \
-    --amount <AMOUNT> \
-    --gas-value <GAS_VALUE>
+        --source-account <SOURCE_ACCOUNT_ADDRESS> \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-address <DESTINATION_ADDRESS> \
+        --amount <AMOUNT> \
+        --gas-value <GAS_VALUE>
+    ```
+
+1. Link Custom Token:
+
+    Register an existing token on Solana:
+
+    ```sh
+    solana/cli send its register-canonical-interchain-token --mint <SOLANA_MINT_ADDRESS>
+    ```
+
+    Link the Solana token to an existing token on the destination chain:
+
+    ```sh
+    solana/cli send its link-token \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-token-address <DESTINATION_TOKEN_ADDRESS> \
+        --gas-value <GAS_VALUE>
+    ```
+
+    Verify the link by performing an interchain transfer:
+
+    ```sh
+    solana/cli send its interchain-transfer \
+        --source-account <SOURCE_ACCOUNT_ADDRESS> \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-address <DESTINATION_ADDRESS> \
+        --amount <AMOUNT> \
+        --gas-value <GAS_VALUE>
     ```
 
 ### EVM to Solana

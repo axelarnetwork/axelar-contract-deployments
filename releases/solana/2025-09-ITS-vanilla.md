@@ -247,71 +247,104 @@ The following checks should be performed after the rollout.
 
     ```sh
     solana/cli send its deploy-interchain-token \
-    --salt <SALT_STRING> \
-    --name <TOKEN_NAME> \
-    --symbol <TOKEN_SYMBOL> \
-    --decimals <DECIMALS> \
-    --initial-supply <INITIAL_SUPPLY>
+        --salt <SALT_STRING> \
+        --name <TOKEN_NAME> \
+        --symbol <TOKEN_SYMBOL> \
+        --decimals <DECIMALS> \
+        --initial-supply <INITIAL_SUPPLY>
 
     solana/cli send its deploy-remote-interchain-token \
-    --salt <SALT_STRING> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --gas-value <GAS_VALUE>
+        --salt <SALT_STRING> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --gas-value <GAS_VALUE>
     ```
 
 1. Interchain Token Transfer for Native Interchain Token:
 
     ```sh
     solana/cli send its interchain-transfer \
-    --source-account <SOURCE_ACCOUNT_ADDRESS> \
-    --token-id <TOKEN_ID_HEX> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --destination-address <DESTINATION_ADDRESS> \
-    --amount <AMOUNT> \
-    --gas-value <GAS_VALUE>
+        --source-account <SOURCE_ACCOUNT_ADDRESS> \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-address <DESTINATION_ADDRESS> \
+        --amount <AMOUNT> \
+        --gas-value <GAS_VALUE>
     ```
 
     **Note:** To get the `SOURCE_ACCOUNT_ADDRESS`, follow these steps:
-    
+
     **Step 1:** List all your token accounts:
+
     ```sh
     spl-token accounts --owner <YOUR_WALLET_ADDRESS>
     ```
-    
+
     **Step 2:** For each account that might be your token, verify it's a token account (not a mint):
+
     ```sh
     spl-token account-info <ACCOUNT_ADDRESS>
     ```
-    
+
     **Step 3:** Look for the output that shows:
     - `Address: <TOKEN_ACCOUNT_ADDRESS>` ← This is your SOURCE_ACCOUNT_ADDRESS
     - `Mint: <MINT_ADDRESS>` ← This should match your token's mint
     - `Balance: <AMOUNT>` ← This shows how many tokens you have
-    
+
     **Important:** The `SOURCE_ACCOUNT_ADDRESS` is the **token account address** (where your tokens are stored), NOT the mint address (the token type). The `spl-token accounts` command sometimes shows mint addresses, so always verify with `spl-token account-info`.
 
 1. Deploy Remote Canonical Token:
 
     ```sh
     solana/cli send its register-canonical-interchain-token \
-    --mint <MINT_ADDRESS>
+        --mint <MINT_ADDRESS>
 
     solana/cli send its deploy-remote-canonical-interchain-token \
-    --mint <MINT_ADDRESS> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --gas-value <GAS_VALUE>
+        --mint <MINT_ADDRESS> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --gas-value <GAS_VALUE>
     ```
 
 1. Interchain Token Transfer for Canonical Token:
 
     ```sh
     solana/cli send its interchain-transfer \
-    --source-account <SOURCE_ACCOUNT_ADDRESS> \
-    --token-id <TOKEN_ID_HEX> \
-    --destination-chain <DESTINATION_CHAIN_NAME> \
-    --destination-address <DESTINATION_ADDRESS> \
-    --amount <AMOUNT> \
-    --gas-value <GAS_VALUE>
+        --source-account <SOURCE_ACCOUNT_ADDRESS> \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-address <DESTINATION_ADDRESS> \
+        --amount <AMOUNT> \
+        --gas-value <GAS_VALUE>
+    ```
+
+1. Link Custom Token:
+
+    Register an existing token on Solana:
+
+    ```sh
+    solana/cli send its register-canonical-interchain-token \
+        --mint <SOLANA_MINT_ADDRESS>
+    ```
+
+    Link the Solana token to an existing token on the destination chain:
+
+    ```sh
+    solana/cli send its link-token \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-token-address <DESTINATION_TOKEN_ADDRESS> \
+        --gas-value <GAS_VALUE>
+    ```
+
+    Verify the link by performing an interchain transfer:
+
+    ```sh
+    solana/cli send its interchain-transfer \
+        --source-account <SOURCE_ACCOUNT_ADDRESS> \
+        --token-id <TOKEN_ID_HEX> \
+        --destination-chain <DESTINATION_CHAIN_NAME> \
+        --destination-address <DESTINATION_ADDRESS> \
+        --amount <AMOUNT> \
+        --gas-value <GAS_VALUE>
     ```
 
 ### EVM to Solana
