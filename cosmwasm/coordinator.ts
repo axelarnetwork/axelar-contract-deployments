@@ -2,6 +2,27 @@ import { calculateDomainSeparator, isKeccak256Hash, printError, printInfo } from
 import { ConfigManager } from '../common/config';
 import { getSalt } from './utils';
 
+const getGatewayContractForChainType = (chainType: string): string => {
+    const chainGatewayMapping: Record<string, string> = {
+        svm: 'SolanaGateway',
+    };
+    return chainGatewayMapping[chainType] || 'Gateway';
+};
+
+const getVerifierContractForChainType = (chainType: string): string => {
+    const chainVerifierMapping: Record<string, string> = {
+        svm: 'SolanaVotingVerifier',
+    };
+    return chainVerifierMapping[chainType] || 'VotingVerifier';
+};
+
+const getProverContractForChainType = (chainType: string): string => {
+    const chainProverMapping: Record<string, string> = {
+        svm: 'SolanaMultisigProver',
+    };
+    return chainProverMapping[chainType] || 'MultisigProver';
+};
+
 export interface GatewayParams {
     code_id: number;
     label: string;
@@ -134,46 +155,56 @@ export class CoordinatorManager {
                 return value;
             };
 
+            const gatewayContractName = getGatewayContractForChainType(chainConfig.chainType);
+            const verifierContractName = getVerifierContractForChainType(chainConfig.chainType);
+            const proverContractName = getProverContractForChainType(chainConfig.chainType);
+
             const votingVerifierConfig = this.configManager.getContractConfigByChain(
-                'VotingVerifier',
+                verifierContractName,
                 chainName,
             ) as VotingVerifierChainConfig;
             const multisigProverConfig = this.configManager.getContractConfigByChain(
-                'MultisigProver',
+                proverContractName,
                 chainName,
             ) as MultisigProverChainConfig;
-            const gatewayConfig = this.configManager.getContractConfigByChain('Gateway', chainName) as GatewayChainConfig;
+            const gatewayConfig = this.configManager.getContractConfigByChain(gatewayContractName, chainName) as GatewayChainConfig;
 
-            const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `Gateway.codeId`);
-            const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `VotingVerifier.codeId`);
-            const proverCodeId: number = validateRequired(multisigProverConfig.codeId, `MultisigProver.codeId`);
+            const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `${gatewayContractName}.codeId`);
+            const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `${verifierContractName}.codeId`);
+            const proverCodeId: number = validateRequired(multisigProverConfig.codeId, `${proverContractName}.codeId`);
             const deploymentName = this.generateDeploymentName(chainName, `${gatewayCodeId}-${verifierCodeId}-${proverCodeId}`);
 
             const governanceAddress = validateRequired(
                 votingVerifierConfig.governanceAddress,
-                `VotingVerifier[${chainName}].governanceAddress`,
+                `${verifierContractName}[${chainName}].governanceAddress`,
             );
-            const serviceName = validateRequired(votingVerifierConfig.serviceName, `VotingVerifier[${chainName}].serviceName`);
+            const serviceName = validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`);
             const rewardsAddress = validateRequired(rewardsConfig.address, `Rewards.address`);
             const sourceGatewayAddress = validateRequired(
                 votingVerifierConfig.sourceGatewayAddress,
-                `VotingVerifier[${chainName}].sourceGatewayAddress`,
+                `${verifierContractName}[${chainName}].sourceGatewayAddress`,
             );
-            const votingThreshold = validateThreshold(votingVerifierConfig.votingThreshold, `VotingVerifier[${chainName}].votingThreshold`);
-            const blockExpiry = validateRequired(votingVerifierConfig.blockExpiry, `VotingVerifier[${chainName}].blockExpiry`);
+            const votingThreshold = validateThreshold(
+                votingVerifierConfig.votingThreshold,
+                `${verifierContractName}[${chainName}].votingThreshold`,
+            );
+            const blockExpiry = validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`);
             const confirmationHeight = validateRequired(
                 votingVerifierConfig.confirmationHeight,
-                `VotingVerifier[${chainName}].confirmationHeight`,
+                `${verifierContractName}[${chainName}].confirmationHeight`,
             );
-            const msgIdFormat = validateRequired(votingVerifierConfig.msgIdFormat, `VotingVerifier[${chainName}].msgIdFormat`);
-            const addressFormat = validateRequired(votingVerifierConfig.addressFormat, `VotingVerifier[${chainName}].addressFormat`);
-            const encoder = validateRequired(multisigProverConfig.encoder, `MultisigProver[${chainName}].encoder`);
-            const keyType = validateRequired(multisigProverConfig.keyType, `MultisigProver[${chainName}].keyType`);
+            const msgIdFormat = validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
+            const addressFormat = validateRequired(
+                votingVerifierConfig.addressFormat,
+                `${verifierContractName}[${chainName}].addressFormat`,
+            );
+            const encoder = validateRequired(multisigProverConfig.encoder, `${proverContractName}[${chainName}].encoder`);
+            const keyType = validateRequired(multisigProverConfig.keyType, `${proverContractName}[${chainName}].keyType`);
 
             const routerAddress = validateRequired(routerConfig.address, `Router.address`);
             const domainSeparator = calculateDomainSeparator(chainName, routerAddress, this.configManager.axelar.chainId);
             if (!isKeccak256Hash(domainSeparator)) {
-                throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
+                throw new Error(`Invalid ${proverContractName}[${chainName}].domainSeparator in axelar info`);
             }
             multisigProverConfig.domainSeparator = domainSeparator;
 
@@ -184,15 +215,18 @@ export class CoordinatorManager {
             multisigProverConfig.contractAdmin = multisigContractAdminAddress;
             gatewayConfig.contractAdmin = gatewayContractAdminAddress;
 
-            const multisigAdminAddress = validateRequired(multisigProverConfig.adminAddress, `MultisigProver[${chainName}].adminAddress`);
+            const multisigAdminAddress = validateRequired(
+                multisigProverConfig.adminAddress,
+                `${proverContractName}[${chainName}].adminAddress`,
+            );
             const multisigAddress = validateRequired(multisigConfig.address, `Multisig.address`);
             const verifierSetDiffThreshold = validateRequired(
                 multisigProverConfig.verifierSetDiffThreshold,
-                `MultisigProver[${chainName}].verifierSetDiffThreshold`,
+                `${proverContractName}[${chainName}].verifierSetDiffThreshold`,
             );
             const signingThreshold = validateThreshold(
                 multisigProverConfig.signingThreshold,
-                `MultisigProver[${chainName}].signingThreshold`,
+                `${proverContractName}[${chainName}].signingThreshold`,
             );
             const validSalt = validateRequired(salt, 'CLI option --salt');
             const saltUint8Array = getSalt(validSalt, 'Coordinator', chainName);
@@ -207,13 +241,13 @@ export class CoordinatorManager {
                         manual: {
                             gateway: {
                                 code_id: gatewayCodeId,
-                                label: `Gateway-${chainName}`,
+                                label: `${gatewayContractName}-${chainName}`,
                                 msg: null,
                                 contract_admin: gatewayContractAdminAddress,
                             },
                             verifier: {
                                 code_id: verifierCodeId,
-                                label: `Verifier-${chainName}`,
+                                label: `${verifierContractName}-${chainName}`,
                                 msg: {
                                     governance_address: governanceAddress,
                                     service_name: serviceName,
@@ -230,7 +264,7 @@ export class CoordinatorManager {
                             },
                             prover: {
                                 code_id: proverCodeId,
-                                label: `Prover-${chainName}`,
+                                label: `${proverContractName}-${chainName}`,
                                 msg: {
                                     governance_address: governanceAddress,
                                     admin_address: multisigAdminAddress,
