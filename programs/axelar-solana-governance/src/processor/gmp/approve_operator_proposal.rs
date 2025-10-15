@@ -3,6 +3,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L17).
 
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::pda::ValidPDA;
 use program_utils::{account_array_structs, validate_system_account_key};
 use solana_program::account_info::AccountInfo;
@@ -11,9 +12,8 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::ProcessGMPContext;
-use crate::events::GovernanceEvent;
-use crate::seed_prefixes;
 use crate::state::operator;
+use crate::{events, seed_prefixes};
 
 account_array_structs! {
     // Struct whose attributes are of type `AccountInfo`
@@ -28,7 +28,9 @@ account_array_structs! {
     root_pda,
     payer,
     proposal_pda,
-    operator_proposal_pda
+    operator_proposal_pda,
+    event_cpi_authority,
+    event_cpi_program_account
 }
 
 /// Processes a Governance GMP `ApproveOperatorProposal` command.
@@ -51,7 +53,12 @@ pub(crate) fn process(
         root_pda: _,
         proposal_pda,
         operator_proposal_pda,
+        event_cpi_authority,
+        event_cpi_program_account,
     } = ApproveOperatorProposalInfo::from_account_iter(&mut accounts.iter())?;
+
+    let event_cpi_accounts = &mut [event_cpi_authority, event_cpi_program_account].into_iter();
+    event_cpi_accounts!(event_cpi_accounts);
 
     validate_system_account_key(system_account.key)?;
 
@@ -80,12 +87,12 @@ pub(crate) fn process(
     )?;
 
     // Send event
-    let event = GovernanceEvent::OperatorProposalApproved {
+    emit_cpi!(events::OperatorProposalApproved {
         hash: ctx.proposal_hash,
         target_address: ctx.target.to_bytes(),
         call_data: ctx.cmd_payload.call_data.into(),
         native_value: ctx.cmd_payload.native_value.to_le_bytes(),
-    };
+    });
 
-    event.emit()
+    Ok(())
 }

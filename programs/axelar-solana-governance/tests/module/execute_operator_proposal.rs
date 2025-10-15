@@ -1,7 +1,7 @@
 use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
-use axelar_solana_governance::events::GovernanceEvent;
+use axelar_solana_governance::events;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
 use solana_program_test::{tokio, ProgramTest};
@@ -10,9 +10,10 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 
 use crate::fixtures::operator_keypair;
+use crate::helpers::find_first_cpi_event_with_custom_signers_unchecked;
 use crate::helpers::{
-    approve_ix_at_gateway, deploy_governance_program, events, gmp_memo_metadata,
-    gmp_sample_metadata, init_contract_with_operator, ix_builder_with_memo_proposal_data,
+    approve_ix_at_gateway, deploy_governance_program, gmp_memo_metadata, gmp_sample_metadata,
+    init_contract_with_operator, ix_builder_with_memo_proposal_data,
     ix_builder_with_sample_proposal_data, setup_programs,
 };
 
@@ -37,6 +38,14 @@ async fn test_full_flow_operator_proposal_execution() {
         AccountMeta::new_readonly(counter_pda, false),
         AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
+        AccountMeta::new_readonly(
+            Pubkey::find_program_address(
+                &[event_cpi::EVENT_AUTHORITY_SEED],
+                &axelar_solana_gateway::ID,
+            )
+            .0,
+            false,
+        ),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
@@ -75,6 +84,17 @@ async fn test_full_flow_operator_proposal_execution() {
         .execute_operator_proposal(&config_pda, &operator.pubkey())
         .build();
 
+    let payer = sol_integration.fixture.payer.insecure_clone();
+
+    let simulation_event =
+        find_first_cpi_event_with_custom_signers_unchecked::<events::OperatorProposalExecuted>(
+            &mut sol_integration,
+            &ix,
+            &[operator.insecure_clone(), payer],
+        )
+        .await
+        .unwrap();
+
     let res = sol_integration
         .fixture
         .send_tx_with_custom_signers(
@@ -86,11 +106,8 @@ async fn test_full_flow_operator_proposal_execution() {
     assert!(res.is_ok());
 
     // Assert event was emitted
-    let mut emitted_events = events(&res.clone().unwrap());
-    assert_eq!(emitted_events.len(), 1);
     let expected_event = operator_proposal_executed_event(&ix_builder);
-    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
-    assert_eq!(expected_event, got_event);
+    assert_eq!(expected_event, simulation_event);
     assert_msg_present_in_logs(res.unwrap(), "Instruction: SendToGateway");
 
     // Ensure the proposal account is closed
@@ -107,8 +124,10 @@ async fn test_full_flow_operator_proposal_execution() {
     assert!(proposal_marker_account.is_none());
 }
 
-fn operator_proposal_executed_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceEvent {
-    GovernanceEvent::OperatorProposalExecuted {
+fn operator_proposal_executed_event(
+    builder: &IxBuilder<ProposalRelated>,
+) -> events::OperatorProposalExecuted {
+    events::OperatorProposalExecuted {
         hash: builder.proposal_hash(),
         target_address: builder.proposal_target_address().to_bytes(),
         call_data: to_vec(&builder.proposal_call_data()).unwrap(),

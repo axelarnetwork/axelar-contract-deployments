@@ -1,14 +1,12 @@
 use std::str::FromStr;
 
-use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
-use axelar_solana_gateway_test_fixtures::{
-    base::TestFixture,
-    gateway::{get_gateway_events, ProgramInvocationState},
-};
+use axelar_solana_gateway::events::CallContractEvent;
+use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::utils::hex::ToHex;
 use ethers_core::utils::keccak256;
+use event_cpi_test_utils::get_first_event_cpi_occurrence;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::ReceivedMemoFilter;
 use solana_program_test::tokio;
 
@@ -133,7 +131,7 @@ fn evm_prepare_approve_contract_call(
         evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Message {
             source_chain: solana_id.to_string(),
             message_id: "message555".to_string(),
-            source_address: call_contract.sender_key.to_string(),
+            source_address: call_contract.sender.to_string(),
             contract_address: ethers_core::types::Address::from_str(
                 call_contract.destination_contract_address.as_str(),
             )
@@ -159,9 +157,30 @@ async fn call_solana_gateway(
     destination_chain: String,
     destination_address: &ethers_core::types::H160,
 ) -> CallContractEvent {
-    let destination_address = destination_address.encode_hex();
+    let destination_address: String = destination_address.encode_hex();
 
     let (counter, ..) = get_counter_pda();
+    let tx_simulation = solana_fixture
+        .simulate_tx(&[call_gateway_with_memo(
+            gateway_root_pda,
+            &counter,
+            memo.to_string(),
+            destination_chain.clone(),
+            destination_address.clone(),
+            &axelar_solana_gateway::ID,
+        )
+        .unwrap()])
+        .await
+        .unwrap();
+    let inner_ixs = tx_simulation
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+
     let tx = solana_fixture
         .send_tx(&[call_gateway_with_memo(
             gateway_root_pda,
@@ -179,13 +198,5 @@ async fn call_solana_gateway(
         panic!("failed to call solana gateway: {error}")
     }
 
-    let event = get_gateway_events(&tx).into_iter().next().unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = event else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::CallContract(event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    event.clone()
+    get_first_event_cpi_occurrence::<CallContractEvent>(&inner_ixs).unwrap()
 }

@@ -24,6 +24,8 @@ pub fn set_flow_limit(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (token_manager_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetTokenManagerFlowLimit { flow_limit })?;
 
@@ -34,6 +36,8 @@ pub fn set_flow_limit(
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(token_manager_user_roles_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     Ok(solana_program::instruction::Instruction {

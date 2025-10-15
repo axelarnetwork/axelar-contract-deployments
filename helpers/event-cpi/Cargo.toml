@@ -9,3 +9,4 @@ workspace = true
 [dependencies]
 anchor-discriminators.workspace = true
 borsh.workspace = true
+solana-program.workspace = true

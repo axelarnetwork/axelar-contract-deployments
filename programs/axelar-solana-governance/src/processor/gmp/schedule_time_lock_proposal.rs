@@ -2,6 +2,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L15).
 
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::{
     account_array_structs, checked_from_u256_le_bytes_to_u64, current_time,
     from_u64_to_u256_le_bytes, validate_system_account_key,
@@ -11,7 +12,7 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
 use super::ProcessGMPContext;
-use crate::events::GovernanceEvent;
+use crate::events;
 use crate::state::operator;
 use crate::state::proposal::ExecutableProposal;
 
@@ -27,7 +28,9 @@ account_array_structs! {
     #[allow(dead_code)]
     root_pda,
     payer,
-    proposal_pda
+    proposal_pda,
+    event_cpi_authority,
+    event_cpi_program_account
 }
 
 /// Processes a Governance GMP `ScheduleTimeLockProposal` command.
@@ -45,7 +48,12 @@ pub(crate) fn process(
         // Validated by the `ProcessGMPContext`, not needed here.
         root_pda: _,
         proposal_pda,
+        event_cpi_authority,
+        event_cpi_program_account,
     } = ScheduleTimeLockProposalInfo::from_account_iter(&mut accounts.iter())?;
+
+    let event_cpi_accounts = &mut [event_cpi_authority, event_cpi_program_account].into_iter();
+    event_cpi_accounts!(event_cpi_accounts);
 
     validate_system_account_key(system_account.key)?;
 
@@ -80,15 +88,14 @@ pub(crate) fn process(
     )?;
 
     // Send event
-    let event = GovernanceEvent::ProposalScheduled {
+    emit_cpi!(events::ProposalScheduled {
         hash: ctx.proposal_hash,
         target_address: ctx.target.to_bytes(),
         call_data: ctx.cmd_payload.call_data.into(),
         native_value: ctx.cmd_payload.native_value.to_le_bytes(),
         eta: from_u64_to_u256_le_bytes(proposal_time),
-    };
-
-    event.emit()
+    });
+    Ok(())
 }
 
 // Enforce config ETA delay in case input eta is below.

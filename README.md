@@ -42,7 +42,6 @@ cargo xtask --help
 
 #### Utility crates
 - [**Axelar Solana Encoding**](solana/crates/axelar-solana-encoding/README.md): Encoding used by the Multisig Prover to encode the data in a way that the relayer & the Solana Gateway can interpret.
-- [**Gateway Event Stack**](solana/crates/gateway-event-stack): The Relayer uses this crate to parse Gas Service & Gateway events.
 
 ### EVM Smart Contracts
 - [**Axelar Memo**](evm-contracts/src/AxelarMemo.sol): A counterpart of the `axelar-solana-memo` program that acts as an example program used to send GMP messages back and forth Solana.

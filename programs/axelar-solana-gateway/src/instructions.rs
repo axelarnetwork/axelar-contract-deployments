@@ -254,12 +254,17 @@ pub fn approve_message(
         payload_merkle_root,
     })?;
 
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
+
     let accounts = vec![
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(verification_session_pda, false),
         AccountMeta::new(incoming_message_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     Ok(Instruction {
@@ -288,18 +293,28 @@ pub fn rotate_signers(
         new_verifier_set_merkle_root,
     })?;
 
-    let mut accounts = vec![
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
+
+    let accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new_readonly(verification_session_account, false),
         AccountMeta::new_readonly(current_verifier_set_tracker_pda, false),
         AccountMeta::new(new_verifier_set_tracker_pda, false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        // either push the operator as signer
+        // or push the payer as non-signer
+        if let Some(operator) = operator {
+            AccountMeta::new(operator, true)
+        } else {
+            // Pushing the program id as the default value
+            // See https://github.com/solana-foundation/anchor/blob/d5d7eb97979234eb1e9e32fcef66ce171a928b62/lang/syn/src/codegen/accounts/to_account_metas.rs#L27
+            AccountMeta::new_readonly(crate::ID, false)
+        },
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
-
-    if let Some(operator) = operator {
-        accounts.push(AccountMeta::new(operator, true));
-    }
 
     Ok(Instruction {
         program_id: crate::id(),
@@ -330,6 +345,9 @@ pub fn call_contract(
         signing_pda_bump: sender_call_contract_pda.map_or(0, |(_, bump)| bump),
     })?;
 
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
+
     let accounts = vec![
         AccountMeta::new_readonly(sender, sender_call_contract_pda.is_none()),
         AccountMeta::new_readonly(
@@ -337,6 +355,8 @@ pub fn call_contract(
             sender_call_contract_pda.is_some(),
         ),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     Ok(Instruction {
@@ -467,11 +487,15 @@ pub fn validate_message(
     message: Message,
 ) -> Result<Instruction, ProgramError> {
     let gateway_root_pda = get_gateway_root_config_pda().0;
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
 
     let accounts = vec![
         AccountMeta::new(*incoming_message_pda, false),
         AccountMeta::new_readonly(*signing_pda, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::ValidateMessage { message })?;
@@ -616,11 +640,17 @@ pub fn transfer_operatorship(
     let (programdata_pubkey, _) =
         Pubkey::try_find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id())
             .ok_or(ProgramError::IncorrectProgramId)?;
+
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &crate::ID);
+
     let accounts = vec![
         AccountMeta::new(gateway_root_pda, false),
         AccountMeta::new_readonly(current_operator_or_gateway_program_owner, true),
         AccountMeta::new_readonly(programdata_pubkey, false),
         AccountMeta::new_readonly(new_operator, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship)?;

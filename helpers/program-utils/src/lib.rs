@@ -39,6 +39,25 @@ pub fn check_program_account(program_id: &Pubkey, check_f: fn(&Pubkey) -> bool) 
     Ok(())
 }
 
+/// Tries to fetch the next account as an optional account from the account iterator
+///
+/// By convention, when an account is set to be the `program_id`, it's interpreted as
+/// [`Option::None`]
+pub fn next_optional_account_info<'a, 'b, I: Iterator<Item = &'a AccountInfo<'b>>>(
+    iter: &mut I,
+    program_id: &Pubkey,
+) -> Result<Option<I::Item>, ProgramError> {
+    iter.next()
+        .ok_or(ProgramError::NotEnoughAccountKeys)
+        .map(|account| {
+            if account.key == program_id {
+                None
+            } else {
+                Some(account)
+            }
+        })
+}
+
 /// Macro to ensure exactly one feature from a list is enabled
 #[macro_export]
 macro_rules! ensure_single_feature {

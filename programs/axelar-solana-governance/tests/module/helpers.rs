@@ -6,16 +6,17 @@ use axelar_solana_gateway_test_fixtures::base::{workspace_root_dir, TestFixture}
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
-use axelar_solana_governance::events::{EventContainer, GovernanceEvent};
 use axelar_solana_governance::instructions::builder::{
     prepend_gateway_accounts_to_ix, GmpCallData, IxBuilder,
 };
 use axelar_solana_governance::state::GovernanceConfig;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
 use borsh::to_vec;
+use event_cpi::CpiEvent;
+use event_cpi_test_utils::get_first_event_cpi_occurrence;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::bpf_loader_upgradeable;
-use solana_sdk::instruction::AccountMeta;
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
@@ -198,16 +199,47 @@ pub(crate) fn gmp_memo_metadata() -> Message {
     }
 }
 
-pub(crate) fn events(
-    tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<EventContainer> {
-    tx.metadata
-        .as_ref()
+pub(crate) async fn find_first_cpi_event_unchecked<E: CpiEvent>(
+    ctx: &mut TestFixture,
+    ix: &Instruction,
+) -> Result<E, anyhow::Error> {
+    let simulation_result = ctx.simulate_tx(&[ix.clone()]).await;
+    let simulation_result =
+        simulation_result.map_err(|e| anyhow::anyhow!("Simulation failed: {:?}", e))?;
+
+    let inner_ixs = simulation_result
+        .simulation_details
         .unwrap()
-        .log_messages
-        .iter()
-        .filter_map(GovernanceEvent::parse_log)
-        .collect::<Vec<_>>()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    get_first_event_cpi_occurrence::<E>(&inner_ixs)
+        .ok_or_else(|| anyhow::anyhow!("To find event in ix simulation result"))
+}
+
+pub(crate) async fn find_first_cpi_event_with_custom_signers_unchecked<E: CpiEvent>(
+    ctx: &mut TestFixture,
+    ix: &Instruction,
+    signers: &[Keypair],
+) -> Result<E, anyhow::Error> {
+    let simulation_result = ctx
+        .simulate_tx_with_custom_signers(&[ix.clone()], signers)
+        .await;
+    let simulation_result =
+        simulation_result.map_err(|e| anyhow::anyhow!("Simulation failed: {:?}", e))?;
+
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    get_first_event_cpi_occurrence::<E>(&inner_ixs)
+        .ok_or_else(|| anyhow::anyhow!("To find event in ix simulation result"))
 }
 
 pub(crate) async fn approve_ix_at_gateway(

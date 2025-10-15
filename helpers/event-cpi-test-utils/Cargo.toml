@@ -1,0 +1,11 @@
+[package]
+name = "event-cpi-test-utils"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[dependencies]
+event-cpi.workspace = true
+solana-sdk.workspace = true

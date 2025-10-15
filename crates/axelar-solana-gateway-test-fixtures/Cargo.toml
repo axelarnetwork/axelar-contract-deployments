@@ -5,25 +5,26 @@ edition = "2021"
 
 [dependencies]
 axelar-solana-encoding.workspace = true
-axelar-solana-gas-service-events.workspace = true
-tokio.workspace = true
-solana-program.workspace = true
-solana-program-test.workspace = true
-bincode.workspace = true
+axelar-solana-gas-service = { workspace = true, default-features = false, features = ["no-entrypoint"] }
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
-typed-builder.workspace = true
-solana-sdk.workspace = true
+bincode.workspace = true
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
+event-cpi.workspace = true
+event-cpi-test-utils.workspace = true
+libsecp-rand.workspace = true
 libsecp256k1.workspace = true
 rand.workspace = true
-libsecp-rand.workspace = true
-gateway-event-stack = { workspace = true, default-features = false }
-axelar-solana-gas-service = { workspace = true, default-features = false, features = ["no-entrypoint"] }
+solana-program-test.workspace = true
+solana-program.workspace = true
+solana-sdk.workspace = true
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+tokio.workspace = true
+typed-builder.workspace = true
 spl-associated-token-account = { workspace = true, features = [
     "no-entrypoint",
 ] }
 
+solana-banks-interface = { workspace = true }
 solana-test-validator = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 
@@ -34,21 +35,17 @@ workspace = true
 devnet-amplifier = [
     "axelar-solana-gas-service/devnet-amplifier",
     "axelar-solana-gateway/devnet-amplifier",
-    "gateway-event-stack/devnet-amplifier"
 ]
 stagenet = [
     "axelar-solana-gas-service/stagenet",
     "axelar-solana-gateway/stagenet",
-    "gateway-event-stack/stagenet"
 ]
 testnet = [
     "axelar-solana-gas-service/testnet",
     "axelar-solana-gateway/testnet",
-    "gateway-event-stack/testnet"
 ]
 mainnet = [
     "axelar-solana-gas-service/mainnet",
     "axelar-solana-gateway/mainnet",
-    "gateway-event-stack/mainnet"
 ]
 default = ["devnet-amplifier"]

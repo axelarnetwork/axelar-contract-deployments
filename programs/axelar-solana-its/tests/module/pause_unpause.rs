@@ -60,7 +60,7 @@ async fn test_its_gmp_payload_fail_when_paused(ctx: &mut ItsTestContext) {
     })
     .encode();
 
-    let tx_metadata = ctx.relay_to_solana(&payload, None, token_program_id).await;
+    let (_inner_ixs, tx_metadata) = ctx.relay_to_solana(&payload, None, token_program_id).await;
     assert_msg_present_in_logs(
         tx_metadata,
         "The Interchain Token Service is currently paused.",
@@ -234,7 +234,7 @@ async fn test_inbound_deploy_interchain_token_fails_when_paused(ctx: &mut ItsTes
         .expect("Should have contract call");
 
     // Relay the deployment message to Solana (should fail due to pause)
-    let tx_metadata = ctx
+    let (_inner_ixs, tx_metadata) = ctx
         .relay_to_solana(log.payload.as_ref(), None, spl_token_2022::id())
         .await;
 

@@ -2,13 +2,14 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L75).
 use borsh::to_vec;
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::{account_array_structs, pda::ValidPDA, validate_system_account_key};
 use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::events::GovernanceEvent;
+use crate::events;
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalData};
 use crate::state::{operator, GovernanceConfig};
 
@@ -22,7 +23,9 @@ account_array_structs! {
     config_pda,
     proposal_account,
     operator_account,
-    operator_pda_marker_account
+    operator_pda_marker_account,
+    event_cpi_authority,
+    event_cpi_program_account
 }
 
 /// Executes a previously proposal whitelisted for execution by the operator.
@@ -41,7 +44,12 @@ pub(crate) fn process(
         proposal_account,
         operator_account,
         operator_pda_marker_account,
+        event_cpi_authority,
+        event_cpi_program_account,
     } = ExecuteOperatorProposalInfo::from_account_iter(&mut accounts.iter())?;
+
+    let event_cpi_accounts = &mut [event_cpi_authority, event_cpi_program_account].into_iter();
+    event_cpi_accounts!(event_cpi_accounts);
 
     validate_system_account_key(system_account.key)?;
 
@@ -93,13 +101,13 @@ pub(crate) fn process(
     )?;
 
     // Send event
-    let event = GovernanceEvent::OperatorProposalExecuted {
+    emit_cpi!(events::OperatorProposalExecuted {
         hash,
         target_address: execute_proposal_data.target_address,
         call_data: to_vec(&execute_proposal_data.call_data).expect("Should serialize call data"),
         native_value: execute_proposal_data.native_value,
-    };
-    event.emit()?;
+    });
+
     ExecutableProposal::remove(proposal_account, config_pda)?;
     program_utils::pda::close_pda(config_pda, operator_pda_marker_account, &crate::id())
 }

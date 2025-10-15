@@ -100,7 +100,7 @@ async fn attempt_deployment_with_specific_token_manager(
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let fake_token_manager_pda =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &manager_token_id).0;
-    deploy_remote_ix.accounts[4].pubkey = fake_token_manager_pda;
+    deploy_remote_ix.accounts[5].pubkey = fake_token_manager_pda;
 
     ctx.solana_chain
         .fixture

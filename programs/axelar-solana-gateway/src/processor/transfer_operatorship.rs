@@ -1,15 +1,15 @@
-use event_utils::{read_array, EventParseError};
+use event_cpi_macros::{emit_cpi, event_cpi_accounts};
 use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::log::sol_log_data;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
+use crate::assert_valid_gateway_root_pda;
 use crate::error::GatewayError;
+use crate::events::OperatorshipTransferredEvent;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
     /// Transfers gateway operatorship to a new address, authorized by
@@ -34,11 +34,12 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
     ) -> ProgramResult {
-        let mut accounts_iter = accounts.iter();
-        let gateway_root_pda = next_account_info(&mut accounts_iter)?;
-        let operator_or_upgrade_authority = next_account_info(&mut accounts_iter)?;
-        let programdata_account = next_account_info(&mut accounts_iter)?;
-        let new_operator = next_account_info(&mut accounts_iter)?;
+        let accounts_iter = &mut accounts.iter();
+        let gateway_root_pda = next_account_info(accounts_iter)?;
+        let operator_or_upgrade_authority = next_account_info(accounts_iter)?;
+        let programdata_account = next_account_info(accounts_iter)?;
+        let new_operator = next_account_info(accounts_iter)?;
+        event_cpi_accounts!(accounts_iter);
 
         // Check: Gateway Root PDA is initialized and valid.
         gateway_root_pda.check_initialized_pda_without_deserialization(&crate::ID)?;
@@ -90,43 +91,10 @@ impl Processor {
         // Update the operator field
         gateway_config.operator = *new_operator.key;
 
-        // Emit an event
-        sol_log_data(&[
-            event_prefixes::OPERATORSHIP_TRANSFERRED,
-            &new_operator.key.to_bytes(),
-        ]);
+        emit_cpi!(OperatorshipTransferredEvent {
+            new_operator: *new_operator.key,
+        });
 
         Ok(())
-    }
-}
-
-/// Event for the `TransferOperatorship` instruction
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OperatorshipTransferredEvent {
-    /// The pubkey of the new operator
-    pub new_operator: Pubkey,
-}
-
-impl OperatorshipTransferredEvent {
-    /// Constructs a new `OperatorshipTransferredEvent` with the provided data slice.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`EventParseError`] if:
-    /// * No data is provided for new operator
-    /// * Public key data is not exactly 32 bytes
-    pub fn new<I>(mut data: I) -> Result<Self, EventParseError>
-    where
-        I: Iterator<Item = Vec<u8>>,
-    {
-        // Read known-size elements
-        let new_operator = data
-            .next()
-            .ok_or(EventParseError::MissingData("new_operator"))?;
-        let new_operator = read_array("new_operator", &new_operator)?;
-
-        Ok(Self {
-            new_operator: Pubkey::new_from_array(new_operator),
-        })
     }
 }
