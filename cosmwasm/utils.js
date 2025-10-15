@@ -654,7 +654,9 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 };
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
-    const { chainName, chainType } = options;
+    const { chainName } = options;
+    const chainConfig = config.chains[chainName];
+    const chainType = chainConfig?.chainType;
     const verifierContract = getVerifierContractForChain(chainType);
     const gatewayContractName = getGatewayContractForChain(chainType);
 
