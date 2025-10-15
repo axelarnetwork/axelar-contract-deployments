@@ -9,7 +9,7 @@
 
 | **Axelar Env**       | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Pending               | TBD        |
+| **Devnet Amplifier** | Completed             | 2025-10-15 |
 | **Stagenet**         | Pending               | TBD        |
 | **Testnet**          | Pending               | TBD        |
 | **Mainnet**          | Pending               | TBD        |
@@ -18,7 +18,7 @@
 
 | **Axelar Env**       | **Solana Env** | **PDA**                                       |
 | -------------------- | -------------- | --------------------------------------------- |
-| **Devnet Amplifier** | **Devnet**     | `` |
+| **Devnet Amplifier** | **Devnet**     | `itsTG9feBwsQRDS4qPR8R3a5KR4n9tvbFgANTUY6LgE` |
 | **Stagenet**         | **Testnet**    | `` |
 | **Testnet**          | **Testnet**    | `` |
 | **Mainnet**          | **Mainnet**    | `` |
@@ -177,10 +177,17 @@ This is the vanilla Solana ITS release.
 
 The initialization steps can only be performed by the upgrade authority.
 
+1. Based on the PDA tables, set the following variables:
+
+    ```sh
+    OPERATOR_PDA="[operator-pda]"
+    ITS_PDA="[its-pda]"
+    ```
+
 1. Initialize ITS:
 
     ```sh
-    solana/cli send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
+    solana/cli send its init --operator $OPERATOR_PDA
     ```
 
 1. Register Solana ITS on ITS Hub:

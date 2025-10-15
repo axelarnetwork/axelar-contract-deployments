@@ -5,12 +5,12 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | Pending               | TBD      |
-| **Stagenet**         | Pending               | TBD      |
-| **Testnet**          | Pending               | TBD      |
-| **Mainnet**          | Pending               | TBD      |
+| **Axelar Env**       | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-10-15 |
+| **Stagenet**         | Pending               | TBD        |
+| **Testnet**          | Pending               | TBD        |
+| **Mainnet**          | Pending               | TBD        |
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
@@ -117,17 +117,15 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 ```bash
 # Add under `config.axelar.contracts.SolanaMultisigProver` based on Network
 \"$CHAIN\" : {
-  "governanceAddress": "[governance address]",
-  "adminAddress": "[admin address]",
-  "signingThreshold": "[signing threshold]",
-  "serviceName": "[service name]",
-  "verifierSetDiffThreshold": 0,
-  "encoder": "solana",
-  "keyType": "ecdsa"
+    "governanceAddress": "[governance address]",
+    "adminAddress": "[admin address]",
+    "signingThreshold": "[signing threshold]",
+    "serviceName": "[service name]",
+    "verifierSetDiffThreshold": 0,
+    "encoder": "solana",
+    "keyType": "ecdsa"
 }
 ```
-
-- Return to 'Initialization Steps' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
 
 ### Instantiate Amplifier Contracts
 
@@ -385,6 +383,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     # Query the multisig prover for active verifier set
     axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
     ```
+
+- Return to 'Initialization Steps:Initialize Gateway' in the [Solana GMP](../solana/2025-09-GMP-vanilla.md)
 
 ## Checklist
 

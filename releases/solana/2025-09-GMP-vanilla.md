@@ -9,7 +9,7 @@
 
 | **Axelar Env**       | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Pending               | TBD        |
+| **Devnet Amplifier** | Completed             | 2025-10-15 |
 | **Stagenet**         | Pending               | TBD        |
 | **Testnet**          | Pending               | TBD        |
 | **Mainnet**          | Pending               | TBD        |
@@ -22,10 +22,10 @@
 
 | **Axelar Env**       | **Program** | **Solana Env** | **PDA**                                       |
 | -------------------- | ----------- | -------------- | --------------------------------------------- |
-| **Devnet Amplifier** | Gateway     | **Devnet**     | `` |
-| **Devnet Amplifier** | Gas Service | **Devnet**     | `` |
-| **Devnet Amplifier** | Governance  | **Devnet**     | `` |
-| **Devnet Amplifier** | Multicall   | **Devnet**     | `` |
+| **Devnet Amplifier** | Gateway     | **Devnet**     | `gtwhwn1M6VnYY9y1W3WBNRSpXN3QPW8kR5HgEvdBNVS` |
+| **Devnet Amplifier** | Gas Service | **Devnet**     | `gasCUBEiWuRapA5suZeWDPBm6TybtHnkoLQsBRCgMiA` |
+| **Devnet Amplifier** | Governance  | **Devnet**     | `govzikT5tcgyrdZEkFuDfSroYhmSjgAd4NcB4dpQBBy` |
+| **Devnet Amplifier** | Multicall   | **Devnet**     | `mc3aKMzAiKMGwkSgmdHaCnDPC2qxrPBGBfWH515V3NU` |
 
 ### Stagenet
 
@@ -164,9 +164,7 @@ This is the vanilla Solana GMP release.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Check out the `upstream` branch.
-
-    - Note: This will change for real V1 release.
+1. Check out the `main` branch.
 
 1. Compile the Solana programs:
 
@@ -280,8 +278,6 @@ This is the vanilla Solana GMP release.
     solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_memo_program -- --no-default-features --features $ENV
     ```
 
-1. After deploying Solana contracts, deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
-
 ### Initialization Steps
 
 The initialization steps can only be performed by the upgrade authority.
@@ -297,14 +293,31 @@ The initialization steps can only be performed by the upgrade authority.
     MEMO_PDA="[memo-pda]"
     ```
 
-1. Initialize Gateway:
-
     | Axelar Env           | `minimumRotationDelay` | `previousSignersRetention` | `minimumProposalEtaDelaySeconds` |
     | -------------------- | ---------------------- | -------------------------- | -------------------------------- |
     | **Devnet-amplifier** | `0`                    | `15`                       | `3600`                           |
     | **Stagenet**         | `300`                  | `15`                       | `3600`                           |
     | **Testnet**          | `3600`                 | `15`                       | `3600`                           |
     | **Mainnet**          | `86400`                | `15`                       | `3600`                           |
+
+1. Add AxelarGateway:
+
+    ```bash
+    # Add under `config.axelar.contracts.AxelarGateway` based on Network
+    "$CHAIN" : {
+        "address": "$GATEWAY_PDA",
+        "connectionType": "amplifier",
+        "domainSeparator": "TBD",
+        "minimumRotationDelay": "[minimumRotationDelay]",
+        "operator": "$OPERATOR_PDA",
+        "previousSignersRetention": "[previousSignersRetention]",
+        "upgradeAuthority": "$UPGRADE_AUTHORITY_PDA"
+    }
+    ```
+
+1. Now deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
+
+1. Initialize Gateway:
 
     ```sh
     solana/cli send gateway init \
