@@ -95,7 +95,7 @@ async function senderHasSufficientBalance(client, keypair, coinType, amount) {
     });
 
     const insufficientBalanceMsg = `Insufficient balance of coin ${coinType} using wallet ${walletAddress}`;
-    if (!Array.isArray(coins.data || !coins.data.length)) {
+    if (!Array.isArray(coins.data) || !coins.data.length) {
         throw new Error(insufficientBalanceMsg);
     }
 
