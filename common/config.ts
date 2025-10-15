@@ -173,7 +173,7 @@ export class ConfigManager implements FullConfig {
             'approxFinalityWaitTime',
             'contracts',
         ];
-        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'stacks', 'hedera'];
+        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'hedera'];
 
         requiredFields.forEach((field) => {
             if (chainConfig[field] === undefined || chainConfig[field] === null) {
