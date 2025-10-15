@@ -1,9 +1,8 @@
-use axelar_solana_gateway::processor::{CallContractEvent, GatewayEvent};
-use axelar_solana_gateway_test_fixtures::gateway::{get_gateway_events, ProgramInvocationState};
+use axelar_solana_gateway::events::CallContractEvent;
 use axelar_solana_memo_program::get_counter_pda;
 use axelar_solana_memo_program::instruction::call_gateway_with_memo;
 use ethers_core::abi::AbiEncode;
-use pretty_assertions::assert_eq;
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::tokio;
 use solana_sdk::signer::Signer;
 
@@ -34,29 +33,33 @@ async fn test_successfully_send_to_gateway() {
         &axelar_solana_gateway::ID,
     )
     .unwrap();
-    let tx = solana_chain
-        .send_tx(&[call_gateway_with_memo])
+    let simulate_tx = solana_chain
+        .simulate_tx(&[call_gateway_with_memo.clone()])
         .await
         .unwrap();
-
+    let inner_ixs = simulate_tx
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
     // Assert
     // We can get the memo from the logs
-    let emitted_events = get_gateway_events(&tx).pop().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    assert_eq!(
-        emitted_event,
+    assert_event_cpi(
         &CallContractEvent {
-            sender_key: axelar_solana_memo_program::ID,
+            sender: axelar_solana_memo_program::ID,
             destination_chain,
             destination_contract_address: destination_address,
             payload: memo.as_bytes().to_vec(),
-            payload_hash: solana_sdk::keccak::hash(memo.as_bytes()).0
+            payload_hash: solana_sdk::keccak::hash(memo.as_bytes()).0,
         },
-        "Mismatched gateway event"
+        &inner_ixs,
     );
+
+    let _tx = solana_chain
+        .send_tx(&[call_gateway_with_memo])
+        .await
+        .unwrap();
 }

@@ -161,6 +161,14 @@ pub fn call_gateway_with_memo(
         AccountMeta::new(*memo_counter_pda, false),
         AccountMeta::new_readonly(signing_pda.0, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
+        AccountMeta::new_readonly(
+            Pubkey::find_program_address(
+                &[event_cpi::EVENT_AUTHORITY_SEED],
+                &axelar_solana_gateway::ID,
+            )
+            .0,
+            false,
+        ),
         AccountMeta::new_readonly(*gateway_program_id, false),
     ];
     Ok(Instruction {
@@ -210,6 +218,16 @@ pub fn send_interchain_transfer(
     let (call_contract_signing_pda, _) =
         axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_its::id());
     let its_program = axelar_solana_its::id();
+    let (its_event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &axelar_solana_its::ID);
+    let (gateway_event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gateway::ID,
+    );
+    let (gas_service_event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gas_service::ID,
+    );
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -227,6 +245,9 @@ pub fn send_interchain_transfer(
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(its_program, false),
         AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_event_authority, false),
+        AccountMeta::new_readonly(gateway_event_authority, false),
+        AccountMeta::new_readonly(gas_service_event_authority, false),
     ];
 
     Ok(Instruction {
@@ -278,6 +299,16 @@ pub fn send_interchain_transfer_with_wrong_seeds(
     let (call_contract_signing_pda, _) =
         axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_its::id());
     let its_program = axelar_solana_its::id();
+    let (its_event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &axelar_solana_its::ID);
+    let (gateway_event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gateway::ID,
+    );
+    let (gas_service_event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gas_service::ID,
+    );
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -295,6 +326,9 @@ pub fn send_interchain_transfer_with_wrong_seeds(
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(its_program, false),
         AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_event_authority, false),
+        AccountMeta::new_readonly(gateway_event_authority, false),
+        AccountMeta::new_readonly(gas_service_event_authority, false),
     ];
 
     Ok(Instruction {
@@ -346,6 +380,16 @@ pub fn call_contract_with_interchain_token(
     let (call_contract_signing_pda, _) =
         axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_its::id());
     let its_program = axelar_solana_its::id();
+    let (its_event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &axelar_solana_its::ID);
+    let (gateway_event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gateway::ID,
+    );
+    let (gas_service_event_authority, _bump) = Pubkey::find_program_address(
+        &[event_cpi::EVENT_AUTHORITY_SEED],
+        &axelar_solana_gas_service::ID,
+    );
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -363,6 +407,9 @@ pub fn call_contract_with_interchain_token(
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(its_program, false),
         AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_event_authority, false),
+        AccountMeta::new_readonly(gateway_event_authority, false),
+        AccountMeta::new_readonly(gas_service_event_authority, false),
     ];
 
     Ok(Instruction {

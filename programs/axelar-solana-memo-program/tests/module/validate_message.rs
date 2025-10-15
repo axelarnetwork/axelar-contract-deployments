@@ -1,12 +1,16 @@
+use std::str::FromStr;
+
+use axelar_solana_gateway::events::MessageExecutedEvent;
 use axelar_solana_gateway::executable::EncodingScheme;
 use axelar_solana_gateway::get_incoming_message_pda;
-use axelar_solana_gateway::processor::MessageEvent;
-use axelar_solana_gateway::state::incoming_message::command_id;
+use axelar_solana_gateway::state::incoming_message;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
+use axelar_solana_memo_program::state::Counter;
 use borsh::BorshDeserialize;
 use solana_program_test::tokio;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 
 use crate::program_test;
@@ -16,16 +20,7 @@ use crate::program_test;
 #[case(EncodingScheme::AbiEncoding)]
 #[tokio::test]
 async fn test_successful_validate_message(#[case] encoding_scheme: EncodingScheme) {
-    use std::str::FromStr;
-
-    use axelar_solana_gateway::processor::GatewayEvent;
     // Setup
-    use axelar_solana_gateway_test_fixtures::gateway::{
-        get_gateway_events, ProgramInvocationState,
-    };
-    use axelar_solana_memo_program::state::Counter;
-    use solana_sdk::pubkey::Pubkey;
-
     let mut solana_chain = program_test().await;
     let (counter_pda, counter_bump) = axelar_solana_memo_program::get_counter_pda();
     solana_chain
@@ -69,7 +64,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         .unwrap();
 
     // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id(
+    let (incoming_message_pda, ..) = get_incoming_message_pda(&incoming_message::command_id(
         &message_to_execute.cc_id.chain,
         &message_to_execute.cc_id.id,
     ));
@@ -78,10 +73,28 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         .find(|x| x.leaf.message.cc_id == message_to_execute.cc_id)
         .unwrap()
         .clone();
+
+    // Event was logged
+    let command_id = incoming_message::command_id(
+        &merkelised_message.leaf.message.cc_id.chain,
+        &merkelised_message.leaf.message.cc_id.id,
+    );
+    let expected_event = MessageExecutedEvent {
+        command_id,
+        source_chain: merkelised_message.leaf.message.cc_id.chain.clone(),
+        cc_id: merkelised_message.leaf.message.cc_id.id.clone(),
+        source_address: merkelised_message.leaf.message.source_address.clone(),
+        destination_address: Pubkey::from_str(&merkelised_message.leaf.message.destination_address)
+            .unwrap(),
+        payload_hash: merkelised_message.leaf.message.payload_hash,
+        destination_chain: merkelised_message.leaf.message.destination_chain.clone(),
+    };
+
     let tx = solana_chain
         .execute_on_axelar_executable(
-            merkelised_message.leaf.message.clone(),
+            merkelised_message.leaf.message,
             &message_payload.encode().unwrap(),
+            Some(expected_event),
         )
         .await
         .unwrap();
@@ -92,7 +105,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     assert!(gateway_approved_message.status.is_executed());
 
     // The second message is still in Approved status
-    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id(
+    let (incoming_message_pda, ..) = get_incoming_message_pda(&incoming_message::command_id(
         &other_message_in_the_batch.cc_id.chain,
         &other_message_in_the_batch.cc_id.id,
     ));
@@ -122,29 +135,4 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         .await;
     let counter = Counter::try_from_slice(&counter_account.data).unwrap();
     assert_eq!(counter.counter, 1);
-
-    // Event was logged
-    let emitted_events = get_gateway_events(&tx).pop().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::MessageExecuted(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    let command_id = command_id(
-        &merkelised_message.leaf.message.cc_id.chain,
-        &merkelised_message.leaf.message.cc_id.id,
-    );
-    let expected_event = MessageEvent {
-        command_id,
-        cc_id_chain: merkelised_message.leaf.message.cc_id.chain,
-        cc_id_id: merkelised_message.leaf.message.cc_id.id,
-        source_address: merkelised_message.leaf.message.source_address,
-        destination_address: Pubkey::from_str(&merkelised_message.leaf.message.destination_address)
-            .unwrap(),
-        payload_hash: merkelised_message.leaf.message.payload_hash,
-        destination_chain: merkelised_message.leaf.message.destination_chain,
-    };
-
-    assert_eq!(emitted_event, &expected_event);
 }

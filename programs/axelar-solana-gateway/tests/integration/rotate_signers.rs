@@ -1,3 +1,5 @@
+use std::ops::IndexMut;
+
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedPayload;
@@ -5,14 +7,14 @@ use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
 use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::events::VerifierSetRotatedEvent;
 use axelar_solana_gateway::get_verifier_set_tracker_pda;
-use axelar_solana_gateway::processor::{GatewayEvent, VerifierSetRotated};
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
-    get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
-    GetGatewayError, ProgramInvocationState,
+    make_messages, make_verifier_set, random_bytes, random_message, GetGatewayError,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
+use event_cpi_test_utils::assert_event_cpi;
 use solana_program_test::tokio;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -34,10 +36,7 @@ async fn successfully_rotates_signers() {
         &metadata.domain_separator,
     )
     .unwrap();
-    let MerkleisedPayload::VerifierSetRotation {
-        new_verifier_set_merkle_root,
-    } = execute_data.payload_items
-    else {
+    let MerkleisedPayload::VerifierSetRotation { .. } = execute_data.payload_items else {
         unreachable!()
     };
     let verification_session_account = metadata
@@ -45,40 +44,45 @@ async fn successfully_rotates_signers() {
         .await
         .unwrap();
 
-    let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-        metadata.gateway_root_pda,
-        verification_session_account,
-        metadata.signers.verifier_set_tracker().0,
-        axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_merkle_root).0,
-        metadata.payer.pubkey(),
-        None,
-        new_verifier_set_hash,
-    )
-    .unwrap();
-
-    let tx_result = metadata
-        .send_tx(&[
-            // native digital signature verification won't work without bumping the compute budget.
-            rotate_signers_ix,
-        ])
+    // First simulate to check events
+    let simulation_result = metadata
+        .simulate_rotate_signers(
+            &metadata.signers.clone(),
+            &new_verifier_set.verifier_set(),
+            verification_session_account,
+        )
         .await
         .unwrap();
 
     let new_epoch: U256 = 2_u128.into();
 
-    // - expected events
-    let emitted_events = get_gateway_events(&tx_result).pop().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::VerifierSetRotated(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    let expected_event = VerifierSetRotated {
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(!inner_ixs.is_empty());
+
+    let expected_event = VerifierSetRotatedEvent {
         epoch: new_epoch,
         verifier_set_hash: new_verifier_set_hash,
     };
-    assert_eq!(emitted_event, &expected_event);
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Now execute the transaction
+    metadata
+        .rotate_signers(
+            &metadata.signers.clone(),
+            &new_verifier_set.verifier_set(),
+            verification_session_account,
+        )
+        .await
+        .unwrap();
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_config(metadata.gateway_root_pda).await;
@@ -253,6 +257,39 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     .unwrap();
     let (new_vs_tracker_pda, new_vs_tracker_bump) =
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
+
+    // First simulate to check events
+    let simulation_result = metadata
+        .simulate_rotate_signers_with_operator(
+            &metadata.signers.clone(),
+            &new_verifier_set.verifier_set(),
+            signing_session_pda,
+            metadata.operator.pubkey(),
+        )
+        .await
+        .unwrap();
+
+    let new_epoch: U256 = 3_u128.into();
+
+    // Assert event emitted
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    assert!(!inner_ixs.is_empty());
+
+    let expected_event = VerifierSetRotatedEvent {
+        epoch: new_epoch,
+        verifier_set_hash: new_verifier_set_hash,
+    };
+
+    assert_event_cpi(&expected_event, &inner_ixs);
+
+    // Now execute the transaction
     let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
         metadata.gateway_root_pda,
         signing_session_pda,
@@ -271,21 +308,8 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
         .await
         .unwrap();
 
-    // Assert
+    // Assert execution succeeded
     assert!(tx.result.is_ok());
-    let new_epoch: U256 = 3_u128.into();
-    let emitted_events = get_gateway_events(&tx).pop().unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::VerifierSetRotated(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-    let expected_event = VerifierSetRotated {
-        epoch: new_epoch,
-        verifier_set_hash: new_verifier_set_hash,
-    };
-    assert_eq!(emitted_event, &expected_event);
 
     // - signers have been updated
     let root_pda_data = metadata.gateway_config(metadata.gateway_root_pda).await;
@@ -416,9 +440,14 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
         new_verifier_set_hash,
     )
     .unwrap();
+
     // set the 'operator' as non-signer to get the tx in, otherwise Solana will
     // reject for missing signatures
-    rotate_signers_ix.accounts.last_mut().unwrap().is_signer = false;
+    rotate_signers_ix
+        .accounts
+        // -3 is the operator account. see the accounts list in the rotate_signers instruction
+        .index_mut(rotate_signers_ix.accounts.len() - 3)
+        .is_signer = false;
 
     let tx = metadata.send_tx(&[rotate_signers_ix]).await.unwrap_err();
 

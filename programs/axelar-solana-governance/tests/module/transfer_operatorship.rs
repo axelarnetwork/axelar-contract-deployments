@@ -1,6 +1,6 @@
 use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
-use axelar_solana_governance::events::GovernanceEvent;
+use axelar_solana_governance::events;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use axelar_solana_governance::state::GovernanceConfig;
 use solana_program_test::{tokio, ProgramTest};
@@ -10,8 +10,9 @@ use solana_sdk::signer::Signer;
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, default_proposal_eta, deploy_governance_program, events,
-    gmp_sample_metadata, init_contract_with_operator, setup_programs,
+    approve_ix_at_gateway, default_proposal_eta, deploy_governance_program,
+    find_first_cpi_event_with_custom_signers_unchecked, gmp_sample_metadata,
+    init_contract_with_operator, setup_programs,
 };
 
 #[tokio::test]
@@ -34,6 +35,16 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
         .transfer_operatorship(&operator.pubkey(), &config_pda, &new_operator)
         .build();
 
+    let payer = fixture.payer.insecure_clone();
+    let simulation_event: events::OperatorshipTransferred =
+        find_first_cpi_event_with_custom_signers_unchecked(
+            &mut fixture,
+            &ix,
+            &[operator.insecure_clone(), payer],
+        )
+        .await
+        .unwrap();
+
     let res = fixture
         .send_tx_with_custom_signers(
             &[ix],
@@ -51,18 +62,15 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
     assert_eq!(new_operator.to_bytes(), config.operator);
 
     // Assert event was emitted
-    let mut emitted_events = events(&res.unwrap());
-    assert_eq!(emitted_events.len(), 1);
     let expected_event = operatorship_transferred_event(&operator.pubkey(), &new_operator);
-    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
-    assert_eq!(expected_event, got_event);
+    assert_eq!(expected_event, simulation_event);
 }
 
 const fn operatorship_transferred_event(
     old_operator: &Pubkey,
     new_operator: &Pubkey,
-) -> GovernanceEvent {
-    GovernanceEvent::OperatorshipTransferred {
+) -> events::OperatorshipTransferred {
+    events::OperatorshipTransferred {
         old_operator: old_operator.to_bytes(),
         new_operator: new_operator.to_bytes(),
     }

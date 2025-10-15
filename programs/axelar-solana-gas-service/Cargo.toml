@@ -11,19 +11,17 @@ edition.workspace = true
 anchor-discriminators.workspace = true
 anchor-discriminators-macros.workspace = true
 solana-program.workspace = true
-spl-token = { workspace = true, features = ["no-entrypoint"] }
-spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
-spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
-axelar-solana-gas-service-events.workspace = true
 bytemuck.workspace = true
 borsh.workspace = true
 program-utils.workspace = true
+event-cpi.workspace = true
+event-cpi-macros.workspace = true
 
 [dev-dependencies]
+event-cpi-test-utils.workspace = true
 solana-sdk.workspace = true
 solana-program-test.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
-gateway-event-stack.workspace = true
 rstest.workspace = true
 
 [package.metadata.cargo-machete]

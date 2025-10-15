@@ -1,4 +1,5 @@
 //! # `InterchainTokenService` program
+
 use bitflags::bitflags;
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::ensure_single_feature;
@@ -13,8 +14,9 @@ use solana_program::pubkey::Pubkey;
 use state::interchain_transfer_execute::InterchainTransferExecute;
 use state::InterchainTokenService;
 
+mod accounts;
 mod entrypoint;
-pub mod event;
+pub mod events;
 pub mod executable;
 pub mod instruction;
 pub mod processor;
@@ -60,33 +62,6 @@ pub const CHAIN_NAME_HASH: [u8; 32] = [
     110, 239, 41, 235, 176, 58, 162, 20, 74, 26, 107, 98, 18, 206, 116, 245, 4, 163, 77, 183, 153,
     184, 22, 26, 33, 20, 0, 23, 232, 13, 61, 138,
 ]; // keccak256("solana")
-
-pub(crate) trait Validate {
-    fn validate(&self) -> Result<(), ProgramError>;
-}
-
-pub(crate) trait FromAccountInfoSlice<'a> {
-    type Context;
-
-    fn from_account_info_slice(
-        accounts: &'a [AccountInfo<'a>],
-        context: &Self::Context,
-    ) -> Result<Self, ProgramError>
-    where
-        Self: Sized + Validate,
-    {
-        let obj = Self::extract_accounts(accounts, context)?;
-        obj.validate()?;
-        Ok(obj)
-    }
-
-    fn extract_accounts(
-        accounts: &'a [AccountInfo<'a>],
-        context: &Self::Context,
-    ) -> Result<Self, ProgramError>
-    where
-        Self: Sized + Validate;
-}
 
 /// Seed prefixes for different PDAs initialized by the program
 pub mod seed_prefixes {
@@ -436,8 +411,8 @@ pub fn find_interchain_transfer_execute_pda(destination_program: &Pubkey) -> (Pu
 }
 
 /// Either create the interchain_transfer_execute PDA or read it, and ensure it is derived properly.
-pub(crate) fn assert_valid_interchain_transfer_execute_pda<'a>(
-    interchain_transfer_execute_pda_account: &AccountInfo<'a>,
+pub(crate) fn assert_valid_interchain_transfer_execute_pda(
+    interchain_transfer_execute_pda_account: &AccountInfo<'_>,
     destination_program: &Pubkey,
 ) -> Result<u8, ProgramError> {
     let bump = if interchain_transfer_execute_pda_account.is_initialized_pda(&crate::id()) {

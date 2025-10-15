@@ -1,9 +1,7 @@
 //! Utilities for working with the Axelar gas service
 
 use crate::base::TestFixture;
-use axelar_solana_gas_service_events::events::GasServiceEvent;
 use axelar_solana_gateway::BytemuckedPda;
-use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::{
     account::ReadableAccount, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
@@ -242,17 +240,4 @@ impl TestFixture {
         let config = axelar_solana_gas_service::state::Config::read(acc.data()).unwrap();
         *config
     }
-}
-
-/// Get events emitted by the `GasService`
-#[must_use]
-pub fn get_gas_service_events(
-    tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<ProgramInvocationState<GasServiceEvent>> {
-    let match_context = MatchContext::new(&axelar_solana_gas_service::ID.to_string());
-    gateway_event_stack::build_program_event_stack(
-        &match_context,
-        tx.metadata.as_ref().unwrap().log_messages.as_slice(),
-        gateway_event_stack::parse_gas_service_log,
-    )
 }

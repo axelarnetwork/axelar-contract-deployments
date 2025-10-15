@@ -1,7 +1,6 @@
 use anyhow::anyhow;
 use axelar_solana_its::instruction::InterchainTokenServiceInstruction;
 use borsh::to_vec;
-use event_utils::Event as _;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::system_program;
 use solana_program_test::tokio;
@@ -14,6 +13,8 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use test_context::test_context;
 
 use axelar_solana_gateway_test_fixtures::base::FindLog;
+
+use event_cpi_test_utils::get_first_event_cpi_occurrence;
 
 use crate::ItsTestContext;
 
@@ -74,18 +75,24 @@ async fn test_deploy_interchain_token_with_minter_but_no_initial_supply(
         Some(ctx.solana_wallet),
     )?;
 
-    let tx = ctx
-        .send_solana_tx(&[deploy_local_ix])
+    let simulation_result = ctx.simulate_solana_tx(&[deploy_local_ix.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    let deploy_event = get_first_event_cpi_occurrence::<
+        axelar_solana_its::events::InterchainTokenDeployed,
+    >(&inner_ixs)
+    .ok_or_else(|| anyhow!("InterchainTokenDeployed not found"))
+    .unwrap();
+
+    ctx.send_solana_tx(&[deploy_local_ix])
         .await
         .expect("InterchainToken deployment failed");
-
-    let deploy_event = tx
-        .metadata
-        .unwrap()
-        .log_messages
-        .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
-        .unwrap();
 
     assert_eq!(
         deploy_event.name, "Zero Supply Token",
@@ -176,18 +183,24 @@ async fn test_deploy_interchain_token_with_large_initial_supply(
         Some(ctx.solana_wallet),
     )?;
 
-    let tx = ctx
-        .send_solana_tx(&[deploy_local_ix])
+    let simulation_result = ctx.simulate_solana_tx(&[deploy_local_ix.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    let deploy_event = get_first_event_cpi_occurrence::<
+        axelar_solana_its::events::InterchainTokenDeployed,
+    >(&inner_ixs)
+    .ok_or_else(|| anyhow!("InterchainTokenDeployed not found"))
+    .unwrap();
+
+    ctx.send_solana_tx(&[deploy_local_ix])
         .await
         .expect("InterchainToken deployment failed");
-
-    let deploy_event = tx
-        .metadata
-        .unwrap()
-        .log_messages
-        .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
-        .unwrap();
 
     assert_eq!(
         deploy_event.name, "Large Supply Token",
@@ -242,18 +255,24 @@ async fn test_deploy_interchain_token_with_no_minter_but_initial_supply(
         None,
     )?;
 
-    let tx = ctx
-        .send_solana_tx(&[deploy_local_ix])
+    let simulation_result = ctx.simulate_solana_tx(&[deploy_local_ix.clone()]).await;
+    let inner_ixs = simulation_result
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap()
+        .first()
+        .cloned()
+        .unwrap();
+    let deploy_event = get_first_event_cpi_occurrence::<
+        axelar_solana_its::events::InterchainTokenDeployed,
+    >(&inner_ixs)
+    .ok_or_else(|| anyhow!("InterchainTokenDeployed not found"))
+    .unwrap();
+
+    ctx.send_solana_tx(&[deploy_local_ix])
         .await
         .expect("InterchainToken deployment failed");
-
-    let deploy_event = tx
-        .metadata
-        .unwrap()
-        .log_messages
-        .iter()
-        .find_map(|log| axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok())
-        .unwrap();
 
     assert_eq!(
         deploy_event.name, "Fixed Supply Token",
@@ -514,6 +533,8 @@ async fn test_prevent_deploy_approval_created_by_anyone(
         &ctx.deployed_interchain_token,
         destination_chain,
     );
+    let (event_authority, _bump) =
+        Pubkey::find_program_address(&[event_cpi::EVENT_AUTHORITY_SEED], &axelar_solana_its::ID);
 
     let accounts = vec![
         AccountMeta::new(alice.pubkey(), true),
@@ -522,6 +543,8 @@ async fn test_prevent_deploy_approval_created_by_anyone(
         AccountMeta::new_readonly(roles_pda, false),
         AccountMeta::new(deploy_approval_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(event_authority, false),
+        AccountMeta::new_readonly(axelar_solana_its::ID, false),
     ];
 
     let data = to_vec(

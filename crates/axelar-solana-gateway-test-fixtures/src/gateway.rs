@@ -15,7 +15,6 @@ use axelar_solana_encoding::{borsh, hash_payload};
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::InitialVerifierSet;
 use axelar_solana_gateway::num_traits::FromPrimitive;
-use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
@@ -24,7 +23,8 @@ use axelar_solana_gateway::{
     get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
     BytemuckedPda,
 };
-pub use gateway_event_stack::{MatchContext, ProgramInvocationState};
+use event_cpi::CpiEvent;
+use event_cpi_test_utils::assert_event_cpi;
 use rand::Rng as _;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
@@ -252,13 +252,13 @@ impl SolanaAxelarIntegrationMetadata {
         borsh::from_slice::<ExecuteData>(&execute_data).unwrap()
     }
 
-    /// Approve a single message on the Gateway
-    pub async fn approve_message(
-        &mut self,
+    /// Build approve_message instruction (private helper)
+    fn build_approve_message_instruction(
+        &self,
         payload_merkle_root: [u8; 32],
         message: MerkleisedMessage,
         verification_session_pda: Pubkey,
-    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+    ) -> solana_sdk::instruction::Instruction {
         let command_id = command_id(
             &message.leaf.message.cc_id.chain,
             &message.leaf.message.cc_id.id,
@@ -267,7 +267,7 @@ impl SolanaAxelarIntegrationMetadata {
         let (incoming_message_pda, _incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
-        let ix = axelar_solana_gateway::instructions::approve_message(
+        axelar_solana_gateway::instructions::approve_message(
             message,
             payload_merkle_root,
             self.gateway_root_pda,
@@ -275,7 +275,39 @@ impl SolanaAxelarIntegrationMetadata {
             verification_session_pda,
             incoming_message_pda,
         )
-        .unwrap();
+        .unwrap()
+    }
+
+    /// Simulate approve_message transaction
+    pub async fn simulate_approve_message(
+        &mut self,
+        payload_merkle_root: [u8; 32],
+        message: MerkleisedMessage,
+        verification_session_pda: Pubkey,
+    ) -> Result<
+        solana_banks_interface::BanksTransactionResultWithSimulation,
+        solana_program_test::BanksClientError,
+    > {
+        let ix = self.build_approve_message_instruction(
+            payload_merkle_root,
+            message,
+            verification_session_pda,
+        );
+        self.simulate_tx(&[ix]).await
+    }
+
+    /// Approve a single message on the Gateway
+    pub async fn approve_message(
+        &mut self,
+        payload_merkle_root: [u8; 32],
+        message: MerkleisedMessage,
+        verification_session_pda: Pubkey,
+    ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        let ix = self.build_approve_message_instruction(
+            payload_merkle_root,
+            message,
+            verification_session_pda,
+        );
         self.send_tx(&[ix]).await
     }
 
@@ -303,6 +335,74 @@ impl SolanaAxelarIntegrationMetadata {
         Ok((verification_session_account, res))
     }
 
+    /// Build rotate_signers instruction (private helper)
+    fn build_rotate_signers_instruction(
+        &self,
+        signers: &SigningVerifierSet,
+        new_verifier_set: &VerifierSet,
+        verification_session_account: Pubkey,
+        operator: Option<Pubkey>,
+    ) -> solana_sdk::instruction::Instruction {
+        let new_verifier_set_hash =
+            verifier_set_hash::<NativeHasher>(new_verifier_set, &self.domain_separator).unwrap();
+        let gateway_config_pda = get_gateway_root_config_pda().0;
+
+        let (new_vs_tracker_pda, _new_vs_tracker_bump) =
+            axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
+        axelar_solana_gateway::instructions::rotate_signers(
+            gateway_config_pda,
+            verification_session_account,
+            signers.verifier_set_tracker().0,
+            new_vs_tracker_pda,
+            self.payer.pubkey(),
+            operator,
+            new_verifier_set_hash,
+        )
+        .unwrap()
+    }
+
+    /// Simulate rotate_signers transaction
+    pub async fn simulate_rotate_signers(
+        &mut self,
+        signers: &SigningVerifierSet,
+        new_verifier_set: &VerifierSet,
+        verification_session_account: Pubkey,
+    ) -> Result<
+        solana_banks_interface::BanksTransactionResultWithSimulation,
+        solana_program_test::BanksClientError,
+    > {
+        let ix = self.build_rotate_signers_instruction(
+            signers,
+            new_verifier_set,
+            verification_session_account,
+            None,
+        );
+        self.simulate_tx(&[ix]).await
+    }
+
+    /// Simulate rotate_signers transaction with operator
+    pub async fn simulate_rotate_signers_with_operator(
+        &mut self,
+        signers: &SigningVerifierSet,
+        new_verifier_set: &VerifierSet,
+        verification_session_account: Pubkey,
+        operator: Pubkey,
+    ) -> Result<
+        solana_banks_interface::BanksTransactionResultWithSimulation,
+        solana_program_test::BanksClientError,
+    > {
+        let ix = self.build_rotate_signers_instruction(
+            signers,
+            new_verifier_set,
+            verification_session_account,
+            Some(operator),
+        );
+        let operator_keypair = self.operator.insecure_clone();
+        let payer_keypair = self.payer.insecure_clone();
+        self.simulate_tx_with_custom_signers(&[ix], &[&operator_keypair, &payer_keypair])
+            .await
+    }
+
     /// Rotate the signers.
     /// The assumption is that the signer verification session is already
     /// complete beforehand.
@@ -312,30 +412,21 @@ impl SolanaAxelarIntegrationMetadata {
         new_verifier_set: &VerifierSet,
         verification_session_account: Pubkey,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
-        let new_verifier_set_hash =
-            verifier_set_hash::<NativeHasher>(new_verifier_set, &self.domain_separator).unwrap();
-        let gateway_config_pda = get_gateway_root_config_pda().0;
-        let (new_vs_tracker_pda, _new_vs_tracker_bump) =
-            axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
-        let rotate_signers_ix = axelar_solana_gateway::instructions::rotate_signers(
-            gateway_config_pda,
+        let ix = self.build_rotate_signers_instruction(
+            signers,
+            new_verifier_set,
             verification_session_account,
-            signers.verifier_set_tracker().0,
-            new_vs_tracker_pda,
-            self.payer.pubkey(),
             None,
-            new_verifier_set_hash,
-        )
-        .unwrap();
-
-        self.send_tx(&[rotate_signers_ix]).await
+        );
+        self.send_tx(&[ix]).await
     }
 
     /// Call `execute` on an axelar-executable program
-    pub async fn execute_on_axelar_executable(
+    pub async fn execute_on_axelar_executable<T: CpiEvent + std::fmt::Debug + PartialEq>(
         &mut self,
         message: Message,
         raw_payload: &[u8],
+        event_to_assert_on_execute: Option<T>,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
         let message_payload_pda = self.upload_message_payload(&message, raw_payload).await?;
 
@@ -349,6 +440,21 @@ impl SolanaAxelarIntegrationMetadata {
             message_payload_pda,
         )
         .unwrap();
+        if let Some(event_to_assert) = event_to_assert_on_execute {
+            let execute_simulation_results = self
+                .simulate_tx(&[ix.clone()])
+                .await
+                .expect("simulation of axelar execute failed");
+            let inner_ixs = execute_simulation_results
+                .simulation_details
+                .unwrap()
+                .inner_instructions
+                .unwrap()
+                .first()
+                .cloned()
+                .unwrap();
+            assert_event_cpi(&event_to_assert, &inner_ixs);
+        }
         let execute_results = self.send_tx(&[ix]).await;
 
         // Close message payload and reclaim lamports
@@ -621,19 +727,6 @@ impl SolanaAxelarIntegration {
             minimum_rotate_signers_delay_seconds: self.minimum_rotate_signers_delay_seconds,
         }
     }
-}
-
-/// Get events emitted by the Gateway
-#[must_use]
-pub fn get_gateway_events(
-    tx: &solana_program_test::BanksTransactionResultWithMetadata,
-) -> Vec<ProgramInvocationState<GatewayEvent>> {
-    let match_context = MatchContext::new(&axelar_solana_gateway::ID.to_string());
-    gateway_event_stack::build_program_event_stack(
-        &match_context,
-        tx.metadata.as_ref().unwrap().log_messages.as_slice(),
-        gateway_event_stack::parse_gateway_logs,
-    )
 }
 
 /// Utility for extracting the `GatewayError` from the tx metadata

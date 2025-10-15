@@ -958,27 +958,17 @@ version = "0.1.0"
 dependencies = [
  "anchor-discriminators",
  "anchor-discriminators-macros",
- "axelar-solana-gas-service-events",
  "axelar-solana-gateway-test-fixtures",
  "borsh 1.5.7",
  "bytemuck",
- "gateway-event-stack",
+ "event-cpi",
+ "event-cpi-macros",
+ "event-cpi-test-utils",
  "program-utils",
  "rstest",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "spl-associated-token-account 6.0.0",
- "spl-token 6.0.0",
- "spl-token-2022 6.0.0",
-]
-
-[[package]]
-name = "axelar-solana-gas-service-events"
-version = "0.1.0"
-dependencies = [
- "event-utils",
- "solana-program",
 ]
 
 [[package]]
@@ -996,7 +986,9 @@ dependencies = [
  "borsh 1.5.7",
  "bytemuck",
  "ed25519-dalek 2.1.1",
- "event-utils",
+ "event-cpi",
+ "event-cpi-macros",
+ "event-cpi-test-utils",
  "evm-contracts-rs",
  "evm-contracts-test-suite",
  "hex",
@@ -1028,14 +1020,15 @@ version = "0.1.0"
 dependencies = [
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
- "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
  "bincode",
  "ed25519-dalek 2.1.1",
- "gateway-event-stack",
+ "event-cpi",
+ "event-cpi-test-utils",
  "libsecp256k1",
  "rand 0.7.3",
  "rand 0.8.5",
+ "solana-banks-interface",
  "solana-program",
  "solana-program-test",
  "solana-rpc-client-api",
@@ -1055,14 +1048,17 @@ dependencies = [
  "alloy-sol-types",
  "anchor-discriminators",
  "anchor-discriminators-macros",
+ "anyhow",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
  "axelar-solana-memo-program",
- "base64 0.21.7",
  "borsh 1.5.7",
  "dummy-axelar-solana-gateway",
  "ethers",
+ "event-cpi",
+ "event-cpi-macros",
+ "event-cpi-test-utils",
  "governance-gmp",
  "program-utils",
  "role-management",
@@ -1090,7 +1086,9 @@ dependencies = [
  "axelar-solana-memo-program",
  "bitflags 2.9.0",
  "borsh 1.5.7",
- "event-utils",
+ "event-cpi",
+ "event-cpi-macros",
+ "event-cpi-test-utils",
  "evm-contracts-test-suite",
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",
@@ -1098,6 +1096,7 @@ dependencies = [
  "program-utils",
  "role-management",
  "rstest",
+ "solana-banks-interface",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
@@ -1122,6 +1121,8 @@ dependencies = [
  "axelar-solana-its",
  "borsh 1.5.7",
  "ethers-core",
+ "event-cpi",
+ "event-cpi-test-utils",
  "evm-contracts-test-suite",
  "hex",
  "itertools 0.12.1",
@@ -2474,6 +2475,7 @@ dependencies = [
  "bs58",
  "event-cpi",
  "event-cpi-macros",
+ "event-cpi-test-utils",
  "hex",
  "pretty_assertions",
  "program-utils",
@@ -3066,6 +3068,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-discriminators",
  "borsh 1.5.7",
+ "solana-program",
 ]
 
 [[package]]
@@ -3082,6 +3085,14 @@ dependencies = [
  "solana-program-test",
  "solana-sdk",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "event-cpi-test-utils"
+version = "0.1.0"
+dependencies = [
+ "event-cpi",
+ "solana-sdk",
 ]
 
 [[package]]
@@ -3473,20 +3484,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
 dependencies = [
  "byteorder",
-]
-
-[[package]]
-name = "gateway-event-stack"
-version = "0.1.0"
-dependencies = [
- "axelar-solana-gas-service-events",
- "axelar-solana-gateway",
- "base64 0.21.7",
- "event-utils",
- "pretty_assertions",
- "solana-sdk",
- "test-log",
- "tracing",
 ]
 
 [[package]]
