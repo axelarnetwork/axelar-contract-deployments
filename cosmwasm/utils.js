@@ -488,7 +488,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                'VotingVerifier': {
+                VotingVerifier: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -640,10 +640,10 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        'VotingVerifier': {
+        VotingVerifier: {
             [chainName]: { address: verifierAddress },
         },
-        'Gateway': {
+        Gateway: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
