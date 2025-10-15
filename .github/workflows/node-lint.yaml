@@ -1,9 +1,9 @@
-name: Linting
+name: Node Linting
 
 on: pull_request
 
 jobs:
-  lint:
+  node-lints:
     runs-on: blacksmith-2vcpu-ubuntu-2204
 
     steps:

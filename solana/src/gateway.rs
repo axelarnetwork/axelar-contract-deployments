@@ -358,7 +358,7 @@ async fn get_verifier_set(
     } else {
         let multisig_prover_address = {
             let address = String::deserialize(
-                &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain_id]
+                &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain]
                     [ADDRESS_KEY],
             )?;
 
@@ -393,11 +393,7 @@ fn construct_execute_data(
     payload: Payload,
     domain_separator: [u8; 32],
 ) -> eyre::Result<ExecuteData> {
-    let message_hash = hash_payload(
-        &domain_separator,
-        &signer_set.verifier_set(),
-        payload.clone(),
-    )?;
+    let message_hash = hash_payload(&domain_separator, payload.clone())?;
     let signatures = signer_set
         .signers
         .iter()
@@ -456,6 +452,7 @@ fn append_verification_flow_instructions(
             *fee_payer,
             *gateway_config_pda,
             execute_data.payload_merkle_root,
+            execute_data.signing_verifier_set_merkle_root,
         )?,
     );
 
@@ -463,17 +460,20 @@ fn append_verification_flow_instructions(
         execute_data.signing_verifier_set_merkle_root,
     );
 
+    let (verification_session_pda, _bump) = axelar_solana_gateway::get_signature_verification_pda(
+        &execute_data.payload_merkle_root,
+        &execute_data.signing_verifier_set_merkle_root,
+    );
+
     for signature_leaf in &execute_data.signing_verifier_set_leaves {
         instructions.push(axelar_solana_gateway::instructions::verify_signature(
             *gateway_config_pda,
             verifier_set_tracker_pda,
+            verification_session_pda,
             execute_data.payload_merkle_root,
             signature_leaf.clone(),
         )?);
     }
-
-    let (verification_session_pda, _bump) =
-        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root);
 
     Ok(verification_session_pda)
 }
@@ -494,7 +494,7 @@ async fn init(
         &chains_info,
     )
     .await?;
-    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
+    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
     let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
         NativeHasher,
     >(&verifier_set, &domain_separator)?;
@@ -503,7 +503,7 @@ async fn init(
     let payer = *fee_payer;
     let upgrade_authority = payer;
 
-    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GATEWAY_KEY] = json!({
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY] = json!({
         ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
         CONNECTION_TYPE_KEY: SOLANA_GATEWAY_CONNECTION_TYPE.to_owned(),
         DOMAIN_SEPARATOR_KEY: format!("0x{}", hex::encode(domain_separator)),
@@ -520,7 +520,10 @@ async fn init(
             payer,
             upgrade_authority,
             domain_separator,
-            vec![(verifier_set_hash, verifier_set_tracker_pda)],
+            axelar_solana_gateway::instructions::InitialVerifierSet {
+                hash: verifier_set_hash,
+                pda: verifier_set_tracker_pda,
+            },
             init_args.minimum_rotation_delay,
             init_args.operator,
             init_args.previous_signers_retention.into(),
@@ -572,7 +575,7 @@ fn approve(
     let mut instructions = vec![];
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let signer_set = build_signing_verifier_set(approve_args.signer.clone(), approve_args.nonce);
-    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
+    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
     let payload_bytes = hex::decode(
         approve_args
             .payload
@@ -586,7 +589,7 @@ fn approve(
             id: approve_args.message_id,
         },
         source_address: approve_args.source_address,
-        destination_chain: config.chain_id.clone(),
+        destination_chain: config.chain.clone(),
         destination_address: approve_args.destination_address,
         payload_hash,
     };
@@ -645,7 +648,7 @@ async fn rotate(
         &chains_info,
     )
     .await?;
-    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
+    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
     let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
         NativeHasher,
     >(&signer_set.verifier_set(), &domain_separator)?;
@@ -687,7 +690,7 @@ async fn submit_proof(
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let multisig_prover_address = {
         let address = String::deserialize(
-            &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain_id]
+            &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain]
                 [ADDRESS_KEY],
         )?;
 
@@ -831,7 +834,7 @@ async fn execute(
             id: execute_args.message_id,
         },
         source_address: execute_args.source_address,
-        destination_chain: config.chain_id.clone(),
+        destination_chain: config.chain.clone(),
         destination_address: execute_args.destination_address,
         payload_hash: solana_sdk::keccak::hashv(&[&hex::decode(
             execute_args
@@ -884,12 +887,14 @@ async fn execute(
     )?);
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
-        let (message_payload_pda, _) =
-            axelar_solana_gateway::find_message_payload_pda(incoming_message_pda);
+        let (message_payload_pda, _) = axelar_solana_gateway::find_message_payload_pda(
+            gateway_config_pda,
+            incoming_message_pda,
+        );
 
         // Handle special destination addresses
         if destination_address == axelar_solana_its::id() {
-            let ix = its_instruction_builder::build_its_gmp_instruction(
+            let ix = its_instruction_builder::build_execute_instruction(
                 *fee_payer,
                 incoming_message_pda,
                 message_payload_pda,
@@ -909,7 +914,8 @@ async fn execute(
             )?;
             instructions.push(ix);
         } else {
-            let ix = axelar_executable::construct_axelar_executable_ix(
+            let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
+                *fee_payer,
                 &message,
                 &payload,
                 incoming_message_pda,
