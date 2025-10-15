@@ -125,7 +125,7 @@ async function senderHasSufficientBalance(client, keypair, options, coinType, am
         await broadcastFromTxBuilder(txBuilder, keypair, 'Merge Coins', options);
 
         coin = coins.data.find((c) => c.coinObjectId === firstCoin);
-        
+
         // Update coin with post-merge balance
         coin.balance = totalBalance;
     }
