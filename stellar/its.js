@@ -636,3 +636,4 @@ if (require.main === module) {
 
     program.parse();
 }
+module.exports = { addTrustedChains, removeTrustedChains, manageTrustedChains };

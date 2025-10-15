@@ -969,4 +969,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, processCommand };
