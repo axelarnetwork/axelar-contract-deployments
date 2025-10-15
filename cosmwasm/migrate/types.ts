@@ -7,6 +7,7 @@ export interface MigrationOptions extends Options {
     dry?: boolean;
     direct?: boolean;
     ignoreChains?: string;
+    codeId?: number;
 }
 
 export interface MigrationCheckOptions extends Options {
