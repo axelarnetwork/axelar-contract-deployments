@@ -6,6 +6,7 @@ use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signi
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{make_messages, GetGatewayError};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
+use program_utils::pda::BytemuckedPda;
 use solana_program_test::tokio;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
@@ -75,7 +76,9 @@ async fn fail_if_message_already_executed() {
     );
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
     let mut incoming_message = metadata.incoming_message(incoming_message_pda).await;
+
     incoming_message.status = MessageStatus::executed(); // source of error
+
     set_existing_incoming_message_state(&mut metadata, incoming_message_pda, incoming_message)
         .await;
 
@@ -188,8 +191,10 @@ async fn set_existing_incoming_message_state(
         .unwrap()
         .unwrap();
 
-    let incoming_message = bytemuck::bytes_of(&incoming_message);
-    raw_account.data = incoming_message.to_vec();
+    incoming_message
+        .write(&mut raw_account.data)
+        .expect("must overwrite PDA");
+
     metadata.set_account_state(&incoming_message_pda, raw_account);
 }
 

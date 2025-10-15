@@ -21,3 +21,6 @@ syn = { version = "1", features = ["full"] }
 solana-program.workspace = true
 solana-sdk.workspace = true
 solana-program-test.workspace = true
+bytemuck.workspace = true
+program-utils.workspace = true
+anchor-lang = "0.31.1"

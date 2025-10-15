@@ -13,6 +13,9 @@ use solana_program::{
     program_pack::{Pack, Sealed},
 };
 
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
+
 pub mod operator;
 pub mod proposal;
 
@@ -24,7 +27,8 @@ type Address = [u8; 32];
 pub const VALID_PROPOSAL_DELAY_RANGE: RangeInclusive<u32> = 3600..=86400;
 
 /// Governance configuration type.
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct GovernanceConfig {
     /// The bump for this account.
     pub bump: u8,
@@ -86,7 +90,8 @@ impl GovernanceConfig {
 }
 
 /// Governance configuration update type.
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct GovernanceConfigUpdate {
     pub chain_hash: Option<Hash>,
     pub address_hash: Option<Hash>,
@@ -96,7 +101,8 @@ pub struct GovernanceConfigUpdate {
 impl Sealed for GovernanceConfig {}
 
 impl Pack for GovernanceConfig {
-    const LEN: usize = size_of::<u8>()
+    const LEN: usize = GovernanceConfig::DISCRIMINATOR.len()
+        + size_of::<u8>()
         + size_of::<Hash>()
         + size_of::<Hash>()
         + size_of::<u32>()

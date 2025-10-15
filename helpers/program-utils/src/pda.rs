@@ -1,5 +1,6 @@
 //! Contains
 
+use anchor_discriminators::Discriminator;
 use borsh::to_vec;
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{AnyBitPattern, NoUninit};
@@ -345,13 +346,39 @@ where
 }
 
 /// A trait for types that can be safely converted to and from byte slices using `bytemuck`.
-pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
+#[allow(clippy::indexing_slicing)]
+pub trait BytemuckedPda: Discriminator + Sized + NoUninit + AnyBitPattern {
+    /// Returns the size of the PDA, including the discriminator.
+    fn pda_size() -> usize {
+        Self::DISCRIMINATOR.len() + core::mem::size_of::<Self>()
+    }
+
     /// Reads an immutable reference to `Self` from a byte slice.
     ///
     /// This method attempts to interpret the provided byte slice as an instance of `Self`.
     /// It checks that the length of the slice matches the size of `Self` to ensure safety.
     fn read(data: &[u8]) -> Option<&Self> {
-        let result: &Self = bytemuck::try_from_bytes(data)
+        let disc = Self::DISCRIMINATOR;
+        if data.len() < disc.len() {
+            msg!(
+                "data length {} is less than discriminator length {}",
+                data.len(),
+                disc.len()
+            );
+            return None;
+        }
+
+        let given_disc = &data[..disc.len()];
+        if given_disc != disc {
+            msg!(
+                "discriminator mismatch: expected {:?}, got {:?}",
+                disc,
+                given_disc
+            );
+            return None;
+        }
+
+        let result: &Self = bytemuck::try_from_bytes(&data[disc.len()..])
             .map_err(|err| {
                 msg!("bytemuck error {:?}", err);
                 err
@@ -365,7 +392,27 @@ pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
     /// Similar to [`read`], but allows for mutation of the underlying data.
     /// This is useful when you need to modify the data in place.
     fn read_mut(data: &mut [u8]) -> Option<&mut Self> {
-        let result: &mut Self = bytemuck::try_from_bytes_mut(data)
+        let disc = Self::DISCRIMINATOR;
+        if data.len() < disc.len() {
+            msg!(
+                "data length {} is less than discriminator length {}",
+                data.len(),
+                disc.len()
+            );
+            return None;
+        }
+
+        let given_disc = &data[..disc.len()];
+        if given_disc != disc {
+            msg!(
+                "discriminator mismatch: expected {:?}, got {:?}",
+                disc,
+                given_disc
+            );
+            return None;
+        }
+
+        let result: &mut Self = bytemuck::try_from_bytes_mut(&mut data[disc.len()..])
             .map_err(|err| {
                 msg!("bytemuck error {:?}", err);
                 err
@@ -374,17 +421,46 @@ pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
         Some(result)
     }
 
+    /// Initializes the data slice by writing the discriminator and returning a mutable reference.
+    ///
+    /// This method writes the discriminator at the beginning of the slice and returns a mutable
+    /// reference to `Self` for the remaining bytes. Use this when initializing a new account.
+    fn init_mut(data: &mut [u8]) -> Option<&mut Self> {
+        let disc = Self::DISCRIMINATOR;
+        if data.len() < Self::pda_size() {
+            msg!(
+                "data length {} is less than required size {}",
+                data.len(),
+                Self::pda_size()
+            );
+            return None;
+        }
+
+        // Write discriminator
+        data[..disc.len()].copy_from_slice(disc);
+
+        // Return mutable reference to the data portion
+        bytemuck::try_from_bytes_mut(&mut data[disc.len()..])
+            .map_err(|err| {
+                msg!("bytemuck error {:?}", err);
+                err
+            })
+            .ok()
+    }
+
     /// Writes the instance of `Self` into a mutable byte slice.
     ///
     /// This method serializes `self` into its byte representation and copies it into the
     /// provided mutable byte slice. It ensures that the destination slice is of the correct
     /// length to hold the data.
     fn write(&self, data: &mut [u8]) -> Option<()> {
-        let self_bytes = bytemuck::bytes_of(self);
-        if data.len() != self_bytes.len() {
+        if data.len() != Self::pda_size() {
             return None;
         }
-        data.copy_from_slice(self_bytes);
+        let disc = Self::DISCRIMINATOR;
+        let self_bytes = bytemuck::bytes_of(self);
+        data[..disc.len()].copy_from_slice(disc);
+        data[disc.len()..].copy_from_slice(self_bytes);
         Some(())
     }
 }

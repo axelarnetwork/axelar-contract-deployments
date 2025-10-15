@@ -1,11 +1,13 @@
 //! State module contains data structures that keep state within the ITS
 //! program.
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
 use program_utils::pda::BorshPda;
 
 /// Signed PDA to prove that ITS called an executable indeed. Only stores it's bump.
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct InterchainTransferExecute {
     /// The interchain transfer execute PDA bump seed.
     pub bump: u8,

@@ -1,5 +1,4 @@
 use core::convert::TryInto;
-use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use event_cpi_macros::{emit_cpi, event_cpi_accounts};
@@ -52,7 +51,7 @@ impl Processor {
     ///
     /// This function will panic if:
     /// * Converting `unix_timestamp` to `u64` results in a negative value (via `expect`)
-    /// * Converting `size_of::<VerifierSetTracker>` to `u64` overflows (via `expect`)
+    /// * Converting `VerifierSetTracker::pda_size` to `u64` overflows (via `expect`)
     pub fn process_rotate_verifier_set(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -202,7 +201,7 @@ fn rotate_signers<'a>(
         new_empty_verifier_set,
         program_id,
         system_account,
-        size_of::<VerifierSetTracker>()
+        VerifierSetTracker::pda_size()
             .try_into()
             .expect("unexpected u64 overflow in struct size"),
         &[
@@ -214,7 +213,7 @@ fn rotate_signers<'a>(
 
     // Store the new verifier set data
     let mut new_verifier_set_data = new_empty_verifier_set.try_borrow_mut_data()?;
-    let new_verifier_set_tracker = VerifierSetTracker::read_mut(&mut new_verifier_set_data)
+    let new_verifier_set_tracker = VerifierSetTracker::init_mut(&mut new_verifier_set_data)
         .ok_or(GatewayError::BytemuckDataLenInvalid)?;
     *new_verifier_set_tracker = VerifierSetTracker::new(
         new_verifier_set_bump,

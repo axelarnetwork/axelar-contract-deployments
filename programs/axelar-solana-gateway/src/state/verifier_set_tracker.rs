@@ -1,5 +1,6 @@
 //! Module for the `VerifierSetTracker` account type.
 
+use anchor_discriminators_macros::account;
 use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
 use program_utils::pda::BytemuckedPda;
@@ -13,6 +14,7 @@ pub type VerifierSetHash = [u8; 32];
 /// We keep the track of the hash + epoch (sequential order of which verifier
 /// set this is)
 #[repr(C)]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq)]
 pub struct VerifierSetTracker {

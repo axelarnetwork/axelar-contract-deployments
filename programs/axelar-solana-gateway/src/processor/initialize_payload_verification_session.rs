@@ -1,4 +1,3 @@
-use core::mem::size_of;
 use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -37,7 +36,7 @@ impl Processor {
     /// # Panics
     ///
     /// This function will panic if:
-    /// * Converting `size_of::<SignatureVerificationSessionData>` to `u64` overflows (via `expect`, unlikely to happen)
+    /// * Converting SignatureVerificationSessionData::pda_size` to `u64` overflows (via `expect`, unlikely to happen)
     pub fn process_initialize_payload_verification_session(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -126,7 +125,7 @@ impl Processor {
             verification_session_account,
             program_id,
             system_program,
-            size_of::<SignatureVerificationSessionData>()
+            SignatureVerificationSessionData::pda_size()
                 .try_into()
                 .map_err(|_err| {
                     solana_program::msg!("Unexpected u64 overflow in struct size");
@@ -135,7 +134,7 @@ impl Processor {
             signers_seeds,
         )?;
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        let session = SignatureVerificationSessionData::read_mut(&mut data)
+        let session = SignatureVerificationSessionData::init_mut(&mut data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         session.bump = bump;
         session.signature_verification.signing_verifier_set_hash = signing_verifier_set_hash;

@@ -9,9 +9,9 @@ use bitvec::order::Lsb0;
 use bitvec::slice::BitSlice;
 use bitvec::view::BitView;
 use bytemuck::{Pod, Zeroable};
-use program_utils::pda::BytemuckedPda;
 
 use crate::error::GatewayError;
+use crate::types::U128;
 
 use super::verifier_set_tracker::VerifierSetHash;
 
@@ -25,7 +25,7 @@ pub struct SignatureVerification {
     ///
     /// Set to [`u128::MAX`] once the accumulated threshold is greater than or
     /// equal the current verifier set threshold.
-    pub accumulated_threshold: u128,
+    pub accumulated_threshold: U128,
 
     /// A bit field used to track which signatures have been verified.
     ///
@@ -46,13 +46,11 @@ pub struct SignatureVerification {
     pub signing_verifier_set_hash: VerifierSetHash,
 }
 
-impl BytemuckedPda for SignatureVerification {}
-
 impl SignatureVerification {
     /// Returns `true` if a sufficient number of signatures have been verified.
     #[must_use]
-    pub const fn is_valid(&self) -> bool {
-        self.accumulated_threshold == u128::MAX
+    pub fn is_valid(&self) -> bool {
+        self.accumulated_threshold == U128::MAX
     }
 
     /// Fully process a submitted signature.
@@ -177,11 +175,11 @@ impl SignatureVerification {
     fn accumulate_threshold(&mut self, signature_node: &VerifierSetLeaf) {
         self.accumulated_threshold = self
             .accumulated_threshold
-            .saturating_add(signature_node.signer_weight);
+            .saturating_add(U128::new(signature_node.signer_weight));
 
         // Check threshold
-        if self.accumulated_threshold >= signature_node.quorum {
-            self.accumulated_threshold = u128::MAX;
+        if self.accumulated_threshold.get() >= signature_node.quorum {
+            self.accumulated_threshold = U128::MAX;
         }
     }
 

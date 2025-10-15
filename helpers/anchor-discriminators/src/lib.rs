@@ -7,6 +7,10 @@ pub mod hash;
 // https://github.com/solana-foundation/anchor/blob/18d0ca0ce9b78c03ef370406c6ba86e28e4591ab/lang/syn/src/codegen/program/common.rs#L5-L7
 pub const SIGHASH_GLOBAL_NAMESPACE: &str = "global";
 
+// https://github.com/solana-foundation/anchor/blob/56b21edd1f4c1865e5f943537fb7f89a0ffe5ede/lang/attribute/account/src/lib.rs#L117
+// Namespace for calculating account sighash
+pub const SIGHASH_ACCOUNT_NAMESPACE: &str = "account";
+
 /// Returns the first 8 bytes of the SHA256 hash of the string
 /// "{namespace}:{name}".
 // https://github.com/solana-foundation/anchor/blob/56b21edd1f4c1865e5f943537fb7f89a0ffe5ede/lang/syn/src/codegen/program/common.rs#L13

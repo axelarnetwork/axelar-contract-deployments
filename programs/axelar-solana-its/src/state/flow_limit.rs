@@ -3,7 +3,8 @@
 
 use core::time::Duration;
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
 use program_utils::pda::BorshPda;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -13,7 +14,8 @@ use solana_program::sysvar::Sysvar;
 
 const EPOCH_TIME: Duration = Duration::from_secs(6 * 60 * 60);
 
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 /// Struct containing flow information for a specific epoch.
 pub struct FlowState {
     pub flow_limit: Option<u64>,

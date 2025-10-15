@@ -147,7 +147,7 @@ impl Processor {
             incoming_message_pda,
             program_id,
             system_program,
-            IncomingMessage::LEN.try_into().map_err(|_err| {
+            IncomingMessage::pda_size().try_into().map_err(|_err| {
                 solana_program::msg!("unexpected u64 overflow in struct size");
                 ProgramError::ArithmeticOverflow
             })?,
@@ -165,7 +165,7 @@ impl Processor {
         // Persist a new incoming message with "in progress" status in the PDA data.
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
         let incoming_message_data =
-            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+            IncomingMessage::init_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         *incoming_message_data = IncomingMessage::new(
             incoming_message_pda_bump,
             signing_pda_bump,

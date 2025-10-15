@@ -682,7 +682,7 @@ async fn test_fail_token_manager_minter_proposal_acceptance(ctx: &mut ItsTestCon
         .unwrap_err();
 
     assert!(tx_metadata
-        .find_log("Warning: failed to deserialize account as role_management::state::RoleProposal<axelar_solana_its::Roles>: Unexpected length of input. The account might not have been initialized.")
+        .find_log("Warning: failed to deserialize account as role_management::state::RoleProposal<axelar_solana_its::Roles>: failed to fill whole buffer. The account might not have been initialized.")
         .is_some());
 
     let data = ctx

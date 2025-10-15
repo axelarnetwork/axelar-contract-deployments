@@ -1,10 +1,12 @@
 //! Module for the `IncomingMessage` account type.
 
+use anchor_discriminators_macros::account;
 use bytemuck::{Pod, Zeroable};
 use program_utils::pda::BytemuckedPda;
 
 /// Data for the incoming message (from Axelar to Solana) PDA.
 #[repr(C)]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct IncomingMessage {
@@ -41,9 +43,6 @@ impl IncomingMessage {
             payload_hash,
         }
     }
-
-    /// Size of this type, in bytes.
-    pub const LEN: usize = core::mem::size_of::<Self>();
 }
 
 impl BytemuckedPda for IncomingMessage {}

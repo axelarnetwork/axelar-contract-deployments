@@ -1,5 +1,3 @@
-use core::mem::size_of;
-
 use program_utils::pda::BytemuckedPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -41,11 +39,11 @@ pub(crate) fn process_initialize_config(
         config_pda,
         program_id,
         system_account,
-        size_of::<Config>().try_into().expect("must be valid u64"),
+        Config::pda_size().try_into().expect("must be valid u64"),
         &[seed_prefixes::CONFIG_SEED, &[bump]],
     )?;
     let mut data = config_pda.try_borrow_mut_data()?;
-    let gateway_config = Config::read_mut(&mut data).ok_or(ProgramError::InvalidAccountData)?;
+    let gateway_config = Config::init_mut(&mut data).ok_or(ProgramError::InvalidAccountData)?;
 
     *gateway_config = Config {
         bump,

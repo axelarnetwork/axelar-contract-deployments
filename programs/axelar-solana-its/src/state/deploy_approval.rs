@@ -1,9 +1,11 @@
 //! Module with data structure definition for approval of remote interchain token deployment.
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use anchor_discriminators::Discriminator;
+use anchor_discriminators_macros::account;
 use program_utils::pda::BorshPda;
 
-#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub(crate) struct DeployApproval {
     pub(crate) approved_destination_minter: [u8; 32],
     pub(crate) bump: u8,

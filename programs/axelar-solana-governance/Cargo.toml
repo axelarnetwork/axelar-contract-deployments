@@ -40,8 +40,8 @@ mainnet = [
 default = ["devnet-amplifier"]
 
 [dependencies]
-anchor-discriminators-macros.workspace = true
 anchor-discriminators.workspace = true
+anchor-discriminators-macros.workspace = true
 event-cpi-macros.workspace = true
 event-cpi.workspace = true
 solana-program.workspace = true

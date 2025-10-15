@@ -4,7 +4,6 @@ use axelar_solana_governance::instructions::builder::IxBuilder;
 use axelar_solana_governance::state::{
     GovernanceConfig, GovernanceConfigUpdate, VALID_PROPOSAL_DELAY_RANGE,
 };
-use borsh::BorshSerialize;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::account::Account;
 use solana_sdk::pubkey::Pubkey;
@@ -73,12 +72,19 @@ async fn test_program_checks_config_pda_successfully_derived() {
 
     let wrong_config_pda = Keypair::new();
 
-    // Store the the config in the wrong pda
+    let fake_config = GovernanceConfig::new(
+        [0_u8; 32],
+        [0_u8; 32],
+        MINIMUM_PROPOSAL_DELAY,
+        fixture.payer.pubkey().to_bytes(),
+    );
+
+    // Store the config in the wrong pda
     let mut fake_config_account =
         Account::new(1_000_000_000, 10000, &axelar_solana_governance::id());
-    config_update
-        .serialize(&mut fake_config_account.data)
-        .unwrap();
+
+    fake_config_account.data = borsh::to_vec(&fake_config).unwrap();
+
     fixture.set_account_state(&wrong_config_pda.pubkey(), fake_config_account);
 
     // fund the wrong config pda so the transaction does not fail because of insufficient funds

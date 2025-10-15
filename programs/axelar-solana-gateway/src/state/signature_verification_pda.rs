@@ -1,5 +1,6 @@
 //! Module for the signature verification session PDA data layout type.
 
+use anchor_discriminators_macros::account;
 use bytemuck::{Pod, Zeroable};
 use program_utils::pda::BytemuckedPda;
 
@@ -11,6 +12,7 @@ use super::signature_verification::SignatureVerification;
 ///
 /// Ideally, the payload merkle root should be a part of its seeds.
 #[repr(C)]
+#[account(zero_copy)]
 #[allow(clippy::partial_pub_fields)]
 #[derive(Zeroable, Pod, Copy, Clone, Default, PartialEq, Eq, Debug)]
 pub struct SignatureVerificationSessionData {
@@ -26,7 +28,10 @@ impl BytemuckedPda for SignatureVerificationSessionData {}
 
 #[cfg(test)]
 mod tests {
+    use anchor_discriminators::Discriminator;
     use core::mem::size_of;
+
+    use crate::types::U128;
 
     use super::*;
 
@@ -36,7 +41,10 @@ mod tests {
         let from_pod: &SignatureVerificationSessionData = bytemuck::cast_ref(&buffer);
         let default = &SignatureVerificationSessionData::default();
         assert_eq!(from_pod, default);
-        assert_eq!(from_pod.signature_verification.accumulated_threshold, 0);
+        assert_eq!(
+            from_pod.signature_verification.accumulated_threshold,
+            U128::ZERO
+        );
         assert_eq!(from_pod.signature_verification.signature_slots, [0_u8; 32]);
         assert!(!from_pod.signature_verification.is_valid());
     }
@@ -52,10 +60,10 @@ mod tests {
             let deserialized: &mut SignatureVerificationSessionData =
                 bytemuck::cast_mut(&mut buffer);
             original_state = *deserialized;
-            let (new_threshold, _) = deserialized
+            let new_threshold = deserialized
                 .signature_verification
                 .accumulated_threshold
-                .overflowing_add(1);
+                .saturating_add(U128::new(1));
             deserialized.signature_verification.accumulated_threshold = new_threshold;
             *deserialized
         };
@@ -63,5 +71,30 @@ mod tests {
 
         let deserialized: &SignatureVerificationSessionData = bytemuck::cast_ref(&buffer);
         assert_eq!(&updated_state, deserialized);
+    }
+
+    #[test]
+    #[allow(clippy::indexing_slicing)]
+    fn test_pda_serialization() {
+        let mut buffer = vec![0u8; SignatureVerificationSessionData::pda_size()];
+
+        {
+            let session = SignatureVerificationSessionData::init_mut(&mut buffer).unwrap();
+
+            *session = SignatureVerificationSessionData {
+                signature_verification: SignatureVerification {
+                    accumulated_threshold: U128::new(100),
+                    signature_slots: [1; 32],
+                    signing_verifier_set_hash: [2; 32],
+                },
+                bump: 255,
+                _pad: [0; 15],
+            };
+        }
+
+        assert_eq!(
+            &buffer[..SignatureVerificationSessionData::DISCRIMINATOR.len()],
+            SignatureVerificationSessionData::DISCRIMINATOR
+        );
     }
 }

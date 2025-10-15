@@ -63,7 +63,6 @@ pub fn event(
         }
     };
 
-    #[allow(unreachable_code)]
     proc_macro::TokenStream::from(ret)
 }
 
