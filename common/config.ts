@@ -299,7 +299,7 @@ export class ConfigManager implements FullConfig {
     }
 
     public saveConfig(): void {
-        saveConfig({ axelar: this.axelar, chains: this.chains }, this.environment);
+        saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
     public getProposalInstantiateAddresses(): string[] {
