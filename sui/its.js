@@ -954,6 +954,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         [coinsToSend] = tx.splitCoins(coinObjectId, [unitAmount]);
     }
 
+    // Interchain transfer
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::prepare_interchain_transfer`,
         typeArguments: [coinType],
@@ -988,6 +989,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [contracts.AxelarGateway.objects.Gateway, interchainTransferTicket],
     });
 
+    // If a temp channel was created, destroy it
     if (!options.channel) {
         await txBuilder.moveCall({
             target: `${contracts.AxelarGateway.address}::channel::destroy`,
