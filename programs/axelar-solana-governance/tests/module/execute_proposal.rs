@@ -2,10 +2,12 @@ use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
+use axelar_solana_memo_program::state::Counter;
 use borsh::to_vec;
 use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
+use solana_sdk::program_pack::Pack;
 use solana_sdk::signature::Signer;
 
 use crate::helpers::{
@@ -212,7 +214,12 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
 
     let target_contract_balance = sol_integration.get_balance(&counter_pda).await;
 
-    assert_eq!(LAMPORTS_PER_SOL + 953_520, target_contract_balance);
+    let deposit_for_counter = solana_sdk::rent::Rent::default().minimum_balance(Counter::LEN);
+
+    assert_eq!(
+        LAMPORTS_PER_SOL + deposit_for_counter,
+        target_contract_balance
+    );
 }
 
 #[tokio::test]
