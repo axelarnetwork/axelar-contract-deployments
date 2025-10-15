@@ -1,0 +1,109 @@
+apiVersion: v1
+data:
+  config.toml: |
+    tm_jsonrpc="http://core-genesis.devnet-attiss50:26657"
+    tm_grpc="tcp://core-genesis.devnet-attiss50:9090"
+    event_buffer_cap=10000
+
+    [service_registry]
+    cosmwasm_contract="axelar16pgdtlqv96a98ny5xjxghws5kjudvdrfu066ht95m0cuyqzhydcqdcpg6x"
+
+    [event_processor]
+    delay="1s"
+    retry_delay="1s"
+    retry_max_attempts="3"
+    stream_buffer_size="100000"
+    stream_timeout="15s"
+    tx_broadcast_buffer_size="10"
+
+    [tm_grpc_timeout]
+    nanos="0"
+    secs="5"
+
+    [broadcast]
+    batch_gas_limit="20000000"
+    broadcast_interval="1s"
+    chain_id="devnet-attiss50"
+    gas_adjustment="2"
+    gas_price="0.00005uattiss"
+    queue_cap="1000"
+    tx_confirmation_buffer_size="10"
+    tx_confirmation_queue_cap="1000"
+    tx_fetch_interval="1000ms"
+    tx_fetch_max_retries="15"
+
+    [tofnd_config]
+    batch_gas_limit="10000000"
+    key_uid="axelar"
+    party_uid="ampd"
+    url="http://127.0.0.1:50051"
+
+    [tofnd_config.timeout]
+    nanos="0"
+    secs="3"
+
+    [monitoring_server]
+    bind_address="0.0.0.0:3000"
+    channel_size="1000"
+    enabled="true"
+
+    [[handlers]]
+    chain_name="axelar"
+    cosmwasm_contract="axelar1jv6msafljq4e02g4g2l24x3jwfunp2chrf8j8ldpcnxeztfx749sz76cjq"
+    type="MultisigSigner"
+
+    [[handlers]]
+    chain_name="flow"
+    cosmwasm_contract="axelar1jv6msafljq4e02g4g2l24x3jwfunp2chrf8j8ldpcnxeztfx749sz76cjq"
+    type="MultisigSigner"
+
+    [[handlers]]
+    chain_finalization="RPCFinalizedBlock"
+    chain_name="flow"
+    chain_rpc_url="https://testnet.evm.nodes.onflow.org"
+    cosmwasm_contract="axelar1spd24zy66lnpvsm6pmsm4wly0qn95m4e3n7s24akz3qqpt52yvpqa2emvh"
+    type="EvmMsgVerifier"
+
+    [[handlers]]
+    chain_finalization="RPCFinalizedBlock"
+    chain_name="flow"
+    chain_rpc_url="https://testnet.evm.nodes.onflow.org"
+    cosmwasm_contract="axelar1spd24zy66lnpvsm6pmsm4wly0qn95m4e3n7s24akz3qqpt52yvpqa2emvh"
+    type="EvmVerifierSetVerifier"
+
+    [[handlers]]
+    chain_name="berachain"
+    cosmwasm_contract="axelar1jv6msafljq4e02g4g2l24x3jwfunp2chrf8j8ldpcnxeztfx749sz76cjq"
+    type="MultisigSigner"
+
+    [[handlers]]
+    chain_finalization="RPCFinalizedBlock"
+    chain_name="berachain"
+    chain_rpc_url="https://bepolia.rpc.berachain.com"
+    cosmwasm_contract="axelar1k7qvv5f6m072qsdfh9yslhgc257mq0p5j8970nn0lqhznlealerqflk05r"
+    type="EvmMsgVerifier"
+
+    [[handlers]]
+    chain_finalization="RPCFinalizedBlock"
+    chain_name="berachain"
+    chain_rpc_url="https://bepolia.rpc.berachain.com"
+    cosmwasm_contract="axelar1k7qvv5f6m072qsdfh9yslhgc257mq0p5j8970nn0lqhznlealerqflk05r"
+    type="EvmVerifierSetVerifier"
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"config.toml":"tm_jsonrpc=\"http://core-genesis.devnet-attiss50:26657\"\ntm_grpc=\"tcp://core-genesis.devnet-attiss50:9090\"\nevent_buffer_cap=10000\n\n[service_registry]\ncosmwasm_contract=\"axelar16pgdtlqv96a98ny5xjxghws5kjudvdrfu066ht95m0cuyqzhydcqdcpg6x\"\n\n[event_processor]\ndelay=\"1s\"\nretry_delay=\"1s\"\nretry_max_attempts=\"3\"\nstream_buffer_size=\"100000\"\nstream_timeout=\"15s\"\ntx_broadcast_buffer_size=\"10\"\n\n[tm_grpc_timeout]\nnanos=\"0\"\nsecs=\"5\"\n\n[broadcast]\nbatch_gas_limit=\"20000000\"\nbroadcast_interval=\"1s\"\nchain_id=\"devnet-attiss50\"\ngas_adjustment=\"2\"\ngas_price=\"0.00005uattiss\"\nqueue_cap=\"1000\"\ntx_confirmation_buffer_size=\"10\"\ntx_confirmation_queue_cap=\"1000\"\ntx_fetch_interval=\"1000ms\"\ntx_fetch_max_retries=\"15\"\n\n[tofnd_config]\nbatch_gas_limit=\"10000000\"\nkey_uid=\"axelar\"\nparty_uid=\"ampd\"\nurl=\"http://127.0.0.1:50051\"\n\n[tofnd_config.timeout]\nnanos=\"0\"\nsecs=\"3\"\n\n[monitoring_server]\nbind_address=\"0.0.0.0:3000\"\nchannel_size=\"1000\"\nenabled=\"true\"\n\n[[handlers]]\nchain_name=\"axelar\"\ncosmwasm_contract=\"axelar1jv6msafljq4e02g4g2l24x3jwfunp2chrf8j8ldpcnxeztfx749sz76cjq\"\ntype=\"MultisigSigner\"\n\n[[handlers]]\nchain_name=\"flow\"\ncosmwasm_contract=\"axelar1jv6msafljq4e02g4g2l24x3jwfunp2chrf8j8ldpcnxeztfx749sz76cjq\"\ntype=\"MultisigSigner\"\n\n[[handlers]]\nchain_finalization=\"RPCFinalizedBlock\"\nchain_name=\"flow\"\nchain_rpc_url=\"https://testnet.evm.nodes.onflow.org\"\ncosmwasm_contract=\"axelar1spd24zy66lnpvsm6pmsm4wly0qn95m4e3n7s24akz3qqpt52yvpqa2emvh\"\ntype=\"EvmMsgVerifier\"\n\n[[handlers]]\nchain_finalization=\"RPCFinalizedBlock\"\nchain_name=\"flow\"\nchain_rpc_url=\"https://testnet.evm.nodes.onflow.org\"\ncosmwasm_contract=\"axelar1spd24zy66lnpvsm6pmsm4wly0qn95m4e3n7s24akz3qqpt52yvpqa2emvh\"\ntype=\"EvmVerifierSetVerifier\"\n"},"kind":"ConfigMap","metadata":{"annotations":{"meta.helm.sh/release-name":"ampd-set-1","meta.helm.sh/release-namespace":"devnet-attiss50"},"creationTimestamp":"2025-10-09T19:45:27Z","labels":{"app.kubernetes.io/instance":"ampd-set-1","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"axelar-amplifier-worker","app.kubernetes.io/version":"1.9.0","helm.sh/chart":"axelar-amplifier-worker-0.2.7-dev_249.1"},"name":"ampd-set-1-axelar-amplifier-worker-config","namespace":"devnet-attiss50","resourceVersion":"1407904904","uid":"de8cec85-8ae6-4053-b795-ec3b359973c2"}}
+    meta.helm.sh/release-name: ampd-set-1
+    meta.helm.sh/release-namespace: devnet-attiss50
+  creationTimestamp: '2025-10-09T19:45:27Z'
+  labels:
+    app.kubernetes.io/instance: ampd-set-1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: axelar-amplifier-worker
+    app.kubernetes.io/version: 1.9.0
+    helm.sh/chart: axelar-amplifier-worker-0.2.7-dev_249.1
+  name: ampd-set-1-axelar-amplifier-worker-config
+  namespace: devnet-attiss50
+  resourceVersion: '1414477490'
+  uid: de8cec85-8ae6-4053-b795-ec3b359973c2

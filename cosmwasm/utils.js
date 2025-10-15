@@ -1367,8 +1367,8 @@ const getProverInstantiateMsg = (config, chainName) => {
 
     return {
         governance_address: governanceAddress,
-        // admin_address: adminAddress,  // TODO: Restore this after custom devnet is updated (currently using buggy Coordinator with multisig_address field)
-        multisig_address: adminAddress, // TEMPORARY: custom devnetCoordinator expects multisig_address instead of admin_address
+        admin_address: adminAddress,
+        multisig_address: config.axelar.contracts.Multisig.address,
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainName,
@@ -1407,16 +1407,19 @@ const getInstantiateChainContractsMessage = async (client, config, options) => {
                         code_id: Number(gatewayCode),
                         label: `Gateway ${chainName}`,
                         msg: null,
+                        contract_admin: options.admin,
                     },
                     verifier: {
                         code_id: Number(verifierCode),
                         label: `VotingVerifier ${chainName}`,
                         msg: verifierMsg,
+                        contract_admin: options.admin,
                     },
                     prover: {
                         code_id: Number(proverCode),
                         label: `MultisigProver ${chainName}`,
                         msg: proverMsg,
+                        contract_admin: options.admin,
                     },
                 },
             },

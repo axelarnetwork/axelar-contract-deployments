@@ -511,6 +511,7 @@ const programHandler = () => {
         )
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
+        .requiredOption('--admin <admin>', 'admin address for instantiated contracts')
         .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
         .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
         .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')

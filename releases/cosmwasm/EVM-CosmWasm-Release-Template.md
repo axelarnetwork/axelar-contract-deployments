@@ -1,7 +1,7 @@
 # &lt; ChainName &gt; GMP Amplifier vX.X.X
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                                |
+| -------------- | ---------------------------------------- |
 | **Created By** | @[github-username] <user@interoplabs.io> |
 | **Deployment** | @[github-username] <user@interoplabs.io> |
 
@@ -122,12 +122,21 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `v1.0.0` |
 | **Mainnet**          | `v1.0.0` |
 
+################### NEED TO ADD THIS STEP #######################
+ts-node cosmwasm/submit-proposal.js execute \
+ -c Coordinator \
+ --msg '{"register_deployment":{"deployment_name":"flow-10-9-11"}}' \
+ -t "Register Flow deployment" \
+ -d "Register Flow chain deployment with Router"
+################################################
+
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
     ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
     -n $CHAIN \
     -s "$SALT" \
+    --admin $CONTRACT_ADMIN \
     --fetchCodeId \
     -t "Instantiate contracts for $CHAIN" \
     -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
@@ -140,7 +149,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Set environment variables
-
     - These variables are network-specific
 
     ```bash
@@ -226,7 +234,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN`config within`ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -261,7 +269,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Confirm proposals have passed
-
     - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
     - "Instantiate contracts for `$CHAIN`"
     - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"

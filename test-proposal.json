@@ -1,0 +1,22 @@
+{
+  "title": "Register Axelar Gateway at Router",
+  "summary": "Register the axelar chain gateway at the Router contract",
+  "deposit": "200000000uattiss",
+  "metadata": "",
+  "expedited": false,
+  "messages": [
+    {
+      "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+      "sender": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "contract": "axelar1w9j02anvgvlv9q55j2r0hdegp67z298htuyy6vrv4sfepjd548vqgdu55h",
+      "msg": {
+        "register_chain": {
+          "chain": "axelar",
+          "gateway_address": "axelar1te2zx5dkn42me3v7awsdy570el0m5gkmmqzc4hrh84g3n0utvv8s4v5wzm",
+          "msg_id_format": "hex_tx_hash_and_event_index"
+        }
+      },
+      "funds": []
+    }
+  ]
+}
