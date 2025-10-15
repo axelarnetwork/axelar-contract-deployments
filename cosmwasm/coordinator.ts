@@ -5,7 +5,6 @@ import { getSalt } from './utils';
 const getGatewayContractForChainType = (chainType: string): string => {
     const chainGatewayMapping: Record<string, string> = {
         svm: 'SolanaGateway',
-        stacks: 'StacksGateway',
     };
     return chainGatewayMapping[chainType] || 'Gateway';
 };
@@ -13,7 +12,6 @@ const getGatewayContractForChainType = (chainType: string): string => {
 const getVerifierContractForChainType = (chainType: string): string => {
     const chainVerifierMapping: Record<string, string> = {
         svm: 'SolanaVotingVerifier',
-        stacks: 'StacksVotingVerifier',
     };
     return chainVerifierMapping[chainType] || 'VotingVerifier';
 };
@@ -21,7 +19,6 @@ const getVerifierContractForChainType = (chainType: string): string => {
 const getProverContractForChainType = (chainType: string): string => {
     const chainProverMapping: Record<string, string> = {
         svm: 'SolanaMultisigProver',
-        stacks: 'StacksMultisigProver',
     };
     return chainProverMapping[chainType] || 'MultisigProver';
 };
