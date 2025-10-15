@@ -1,10 +1,6 @@
 name: Rust Linting
 
-on:
-  pull_request:
-    paths:
-      - 'solana/**'
-      - '.github/workflows/rust-lint.yaml'
+on: pull_request
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,6 +9,9 @@ concurrency:
 jobs:
   rust-lints:
     runs-on: blacksmith-4vcpu-ubuntu-2204
+    if: |
+      contains(github.event.pull_request.files.*.filename, 'solana/') ||
+      contains(github.event.pull_request.files.*.filename, '.github/workflows/rust-lint.yaml')
     defaults:
       run:
         working-directory: solana
