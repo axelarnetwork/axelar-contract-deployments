@@ -3,7 +3,7 @@ import { StdFee } from '@cosmjs/stargate';
 import { AccessType } from 'cosmjs-types/cosmwasm/wasm/v1/types';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrateContractProposal, getCodeId, encodeUpdateInstantiateConfigProposal, submitProposal } from '../utils';
+import { encodeMigrateContractProposal, encodeUpdateInstantiateConfigProposal, getCodeId, submitProposal } from '../utils';
 import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
