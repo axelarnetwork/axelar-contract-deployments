@@ -170,22 +170,17 @@ ts-node sui/deploy-contract.js deploy ITS
 
 #### Interchain Transfer
 
+Send interchain transfer from sui to a chain where token is linked
+
 ```bash
-ts-node sui/its.js interchain-transfer <coin-package-address> <coin-package-name> <coin-mod-name> <coin-object-id> <interchain-token-id> destination-chain <destination-chain-name> destination-address <receiving-address> amount 1 --env <your-env> --signatureScheme <your-signature-scheme>
+ts-node sui/its interchain-transfer [options] <tokenId> <destinationChain> <destinationAddress> <amount>
 ```
 
 - Example Command: 
 
 ```bash
-ts-node sui/its.js interchain-transfer 0x5d693cebdbba9fdcc8a5990858998a2f7bee87ef2d537e9dd4588a30ec615ad7 my_custom_coin MY_CUSTOM_COIN 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1 --env testnet --signatureScheme ed25519
+ts-node sui/its interchain-transfer 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 ethereum-sepolia 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE 1
 ```
-
-
-Example Response:
-
-````bash
-Interchain Transfer: [HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo](https://testnet.axelarscan.io/gmp/HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo)
-````
 
 ### Squid
 
@@ -445,19 +440,19 @@ Note:
 Add trusted chains
 
 ```bash
-ts-node sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
+ts-node sui/its add-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 or Add all chains that have ITS contract deployed
 
 ```bash
-ts-node sui/its.js add-trusted-chains all
+ts-node sui/its add-trusted-chains all
 ```
 
 Remove trusted chains
 
 ```bash
-ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
+ts-node sui/its remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 ## Registering Coins
@@ -465,7 +460,7 @@ ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ### Register Coin from Info (symbol, name and decimals)
 
 ```bash
-ts-node sui/its.js register-coin-from-info <symbol> <name> <decimals>
+ts-node sui/its register-coin-from-info <symbol> <name> <decimals>
 ```
 
 ### Register Coin from Metadata 
@@ -473,7 +468,7 @@ ts-node sui/its.js register-coin-from-info <symbol> <name> <decimals>
 (see: [sui::coin::CoinMetadata](https://docs.sui.io/references/sui-api/sui-graphql/reference/types/objects/coin-metadata))
 
 ```bash
-ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
+ts-node sui/its register-coin-from-metadata <symbol> <name> <decimals>
 ```
 
 ### Register Custom Coin
@@ -481,7 +476,7 @@ ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
 If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the registration transaction will automatically be created.
 
 ```bash
-ts-node sui/its.js register-custom-coin <symbol> <name> <decimals>
+ts-node sui/its register-custom-coin <symbol> <name> <decimals>
 ```
 
 ## Migrating Legacy Coin Registrations
@@ -491,7 +486,7 @@ ts-node sui/its.js register-custom-coin <symbol> <name> <decimals>
 _Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned by ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
 
 ```bash
-ts-node sui/its.js migrate-coin-metadata <symbol>
+ts-node sui/its migrate-coin-metadata <symbol>
 ```
 
 ## Coin Linking
@@ -526,14 +521,13 @@ Deploy an interchain coin on a destination chain corresponding with a registered
 
 Command:
 ```bash
-ts-node sui/its.js deploy-remote-coin <coin-package-id> <coin-package-name> <coin-mod-name> <token-id> <destination-chain> <env> <signature-scheme>
+ts-node sui/its deploy-remote-coin [options] <tokenId> <destinationChain>
 ```
 
 Example: 
 ```bash
-ts-node sui/its.js deploy-remote-coin 0x7ac4bb6fcc9c9dd435fead2f42fe9b495fb728bdc0f9d2902cb220217c180404 my_custom_coin MY_CUSTOM_COIN 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia --env testnet --signatureScheme ed25519
+ts-node sui/its deploy-remote-coin 0x760049c02c0933108b55209ec21e37fd4951af4747d4dd7ec0af9c4bbe3f2ae1 ethereum-sepolia
 ```
-Response: `Deploy remote coin: Ec1pnBpwxrv26WdJt5wXifj7N66vQ1zCabqKRgtz3ktK`
 
 ## Treasury Management
 
@@ -555,23 +549,11 @@ ts-node sui/its restore-treasury-cap [options] <symbol>
 
 ### Mint Coin
 
-Mint new Sui Coin
+Mint coins for the given symbol on Sui. The token must be deployed on Sui first.
 
 Command:
 ```bash
-ts-node sui/its.js mint-coins <coin-package-id> <coin-package-name> <coin-mod-name> <amount> <receiver> <env> <signature-scheme>
-```
-
-
-Example:
-```bash
-ts-node sui/its.js mint-coins 0xe3521d94addba8d1405abf057a897abceedfc973c6c7016fe4e9baaafc14723b my_custom_coin MY_CUSTOM_COIN  1 0xa46ed4032af9ae9c8412dc8294eb9b3ed43277f7222591da331707f747b38bd9 -e testnet --signatureScheme ed25519
-```
-
-Example Response:
-```bash
-💰 my token balance 1
-New coin object id: 0x7eb1b5a01b679380d9fc0553293d81acbfc7f9485c10f01b92cf38dfb5b76b92
+ts-node sui/tokens mint-coins <symbol> <amount> <recipient>
 ```
 
 ## Sui Contract Verification
