@@ -349,95 +349,99 @@ if (require.main === module) {
 
     program
         .command('interchain-token-deploy-salt')
-        .argument('<deployer>', 'Deployer')
         .description('Get interchain token deploy salt')
-        .action((deployer, options, cmd) => {
-            main(cmd.name(), [deployer], options);
+        .requiredOption('--deployer <deployer>', 'Deployer address')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.deployer], options);
         });
 
     program
         .command('canonical-interchain-token-deploy-salt')
         .description('Get canonical interchain token deploy salt')
-        .argument('<tokenAddress>', 'Token address')
-        .action((tokenAddress, options, cmd) => {
-            main(cmd.name(), [tokenAddress], options);
+        .requiredOption('--tokenAddress <tokenAddress>', 'Token address')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.tokenAddress], options);
         });
 
     program
         .command('canonical-interchain-token-id')
         .description('Get canonical interchain token id')
-        .argument('<tokenAddress>', 'Token address')
-        .action((tokenAddress, options, cmd) => {
-            main(cmd.name(), [tokenAddress], options);
+        .requiredOption('--tokenAddress <tokenAddress>', 'Token address')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.tokenAddress], options);
         });
 
     program
         .command('interchain-token-id')
         .description('Get interchain token id')
-        .argument('<deployer>', 'Deployer')
-        .action((deployer, options, cmd) => {
-            main(cmd.name(), [deployer], options);
+        .requiredOption('--deployer <deployer>', 'Deployer')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.deployer], options);
         });
 
     program
         .command('deploy-interchain-token')
         .description('Deploy interchain token')
-        .argument('<name>', 'Name')
-        .argument('<symbol>', 'Symbol')
-        .argument('<decimals>', 'Decimals')
-        .argument('<initialSupply>', 'Initial supply')
-        .argument('<minter>', 'Minter')
-        .action((name, symbol, decimals, initialSupply, minter, options, cmd) => {
-            main(cmd.name(), [name, symbol, decimals, initialSupply, minter], options);
+        .requiredOption('--name <name>', 'Name')
+        .requiredOption('--symbol <symbol>', 'Symbol')
+        .requiredOption('--decimals <decimals>', 'Decimals')
+        .requiredOption('--initialSupply <initialSupply>', 'Initial supply')
+        .requiredOption('--minter <minter>', 'Minter')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.name, options.symbol, options.decimals, options.initialSupply, options.minter], options);
         });
 
     program
         .command('deploy-remote-interchain-token')
         .description('Deploy remote interchain token')
-        .argument('<destinationChain>', 'Destination chain')
+        .requiredOption('--destinationChain <destinationChain>', 'Destination chain')
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
-        .action((destinationChain, options, cmd) => {
-            main(cmd.name(), [destinationChain], options);
+        .action((options, cmd) => {
+            main(cmd.name(), [options.destinationChain], options);
         });
 
     program
         .command('register-canonical-interchain-token')
         .description('Register canonical interchain token')
-        .argument('<tokenAddress>', 'Token address')
-        .action((tokenAddress, options, cmd) => {
-            main(cmd.name(), [tokenAddress], options);
+        .requiredOption('--tokenAddress <tokenAddress>', 'Token address')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.tokenAddress], options);
         });
 
     program
         .command('deploy-remote-canonical-interchain-token')
         .description('Deploy remote canonical interchain token')
-        .argument('<tokenAddress>', 'Token address')
-        .argument('<destinationChain>', 'Destination chain')
+        .requiredOption('--tokenAddress <tokenAddress>', 'Token address')
+        .requiredOption('--destinationChain <destinationChain>', 'Destination chain')
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
-        .action((tokenAddress, destinationChain, options, cmd) => {
-            main(cmd.name(), [tokenAddress, destinationChain], options);
+        .action((options, cmd) => {
+            main(cmd.name(), [options.tokenAddress, options.destinationChain], options);
         });
 
     program
         .command('register-custom-token')
         .description('Register custom token')
-        .argument('<tokenAddress>', 'Token address')
-        .argument('<tokenManagerType>', 'Token manager type')
-        .argument('<operator>', 'Operator')
-        .action((tokenAddress, tokenManagerType, operator, options, cmd) => {
-            main(cmd.name(), [tokenAddress, tokenManagerType, operator], options);
+        .requiredOption('--tokenAddress <tokenAddress>', 'Token address')
+        .requiredOption('--tokenManagerType <tokenManagerType>', 'Token manager type')
+        .requiredOption('--operator <operator>', 'Operator')
+        .action((options, cmd) => {
+            main(cmd.name(), [options.tokenAddress, options.tokenManagerType, options.operator], options);
         });
 
     program
         .command('link-token')
         .description('Link token to token on destination chain')
-        .argument('<destinationChain>', 'Destination chain')
-        .argument('<destinationTokenAddress>', 'Destination token address')
-        .argument('<tokenManagerType>', 'Token manager type')
-        .argument('<linkParams>', 'Link params')
+        .requiredOption('--destinationChain <destinationChain>', 'Destination chain')
+        .requiredOption('--destinationTokenAddress <destinationTokenAddress>', 'Destination token address')
+        .requiredOption('--tokenManagerType <tokenManagerType>', 'Token manager type')
+        .requiredOption('--linkParams <linkParams>', 'Link params')
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
-        .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, options, cmd) => {
-            main(cmd.name(), [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], options);
+        .action((options, cmd) => {
+            main(
+                cmd.name(),
+                [options.destinationChain, options.destinationTokenAddress, options.tokenManagerType, options.linkParams],
+                options,
+            );
         });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
