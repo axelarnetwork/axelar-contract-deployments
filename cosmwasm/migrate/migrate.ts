@@ -68,7 +68,7 @@ async function coordinatorInstantiatePermissions(
     }
 
     const permissions: InstantiatePermission = JSON.parse(args[1]);
-    if (permissions.permission && permissions.permission === 'Everybody') {
+    if ((permissions.permission && permissions.permission === 'Everybody') || permissions?.address === contractAddress) {
         throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
     }
 
