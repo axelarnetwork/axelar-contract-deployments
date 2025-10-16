@@ -1,18 +1,32 @@
 name: Rust Linting
 
-on:
-  pull_request:
-    paths:
-      - 'solana/**'
-      - '.github/workflows/rust-lint.yaml'
+on: pull_request
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: blacksmith-4vcpu-ubuntu-2204
+    outputs:
+      solana: ${{ steps.filter.outputs.solana }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            solana:
+              - 'solana/**'
+            workflow:
+              - '.github/workflows/rust-lint.yaml'
+
   rust-lints:
     runs-on: blacksmith-4vcpu-ubuntu-2204
+    needs: changes
+    if: needs.changes.outputs.solana == 'true' || needs.changes.outputs.workflow == 'true'
     defaults:
       run:
         working-directory: solana

@@ -60,7 +60,6 @@ const programHandler = () => {
             .command('migrate')
             .addOption(new Option('--ignoreChains [chains]', 'chains to ignore'))
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
-            .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
             .addOption(new Option('--codeId <codeId>', 'code id of new contract (default fetch from the chain)'))
             .option('--direct', 'make a direct migration rather than a proposal')
             .option('--dry', 'only generate migration msg')

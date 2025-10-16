@@ -2,9 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
