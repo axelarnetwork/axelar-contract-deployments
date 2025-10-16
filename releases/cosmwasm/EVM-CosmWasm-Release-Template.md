@@ -130,13 +130,25 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     -s "$SALT" \
     --fetchCodeId \
     -t "Instantiate contracts for $CHAIN" \
-    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" \
+    --admin "$CONTRACT_ADMIN" \
+    --runAs "<governanceAddress>"
     ```
 
 1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
     ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
+    ```
+
+1. Register deployment
+
+    ```bash
+    ts-node cosmwasm/submit-proposal register-deployment \
+    -n $CHAIN \
+    -t "Register deployment for $CHAIN" \
+    -d "Register deployment for $CHAIN in the Coordinator" \
+    --runAs "<governanceAddress>"
     ```
 
 1. Set environment variables
@@ -263,10 +275,11 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Confirm proposals have passed
 
     - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
-    - "Instantiate contracts for `$CHAIN`"
-    - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
-    - "Create pool for `$CHAIN` in axelar multisig"
-    - (optional) "Register `$CHAIN` on ITS Hub"
+      - "Instantiate contracts for `$CHAIN`"
+      - "Register deployment for `$CHAIN`"
+      - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
+      - "Create pool for `$CHAIN` in axelar multisig"
+      - (optional) "Register `$CHAIN` on ITS Hub"
 
     - Check Gateway registered at Router
 
