@@ -7,8 +7,8 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-10-01 |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
+| **Stagenet**         | Completed             | 2025-10-14 |
+| **Testnet**          | Completed             | 2025-10-15 |
 | **Mainnet**          | -                     | TBD        |
 
 
@@ -74,7 +74,6 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
       -t "Upload Router contract v1.3.0" \
       -d "Upload Router contract v1.3.0" \
       -r $RUN_AS_ACCOUNT \
-      --deposit $DEPOSIT_VALUE \
       --instantiateAddresses $INIT_ADDRESSES \
       --version 1.3.0
     ```
@@ -85,7 +84,6 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
       -t "Upload Multisig contract v2.3.1" \
       -d "Upload Multisig contract v2.3.1" \
       -r $RUN_AS_ACCOUNT \
-      --deposit $DEPOSIT_VALUE \
       --instantiateAddresses $INIT_ADDRESSES \
       --version 2.3.1
     ```
@@ -96,7 +94,6 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
       -t "Upload Coordinator contract v2.1.1" \
       -d "Upload Coordinator contract v2.1.1" \
       -r $RUN_AS_ACCOUNT \
-      --deposit $DEPOSIT_VALUE \
       --instantiateAddresses $INIT_ADDRESSES \
       --version 2.1.1
     ```
@@ -111,26 +108,23 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
      -t "Migrate Router to v1.3.0" \
      -d "Router to v1.3.0" \
      --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
-     --fetchCodeId \
-     --deposit $DEPOSIT_VALUE
+     --fetchCodeId
    ```
 
    Provide coordinator address to the multisig, and migrate using the contract deployment scripts.
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts migrate <multisig_code_id> \
+   ts-node cosmwasm/migrate/migrate.ts migrate \
       --address $MULTISIG_ADDRESS \
-      -m $MNEMONIC \
-      -d $DEPOSIT_VALUE \
+      -m $MNEMONIC
    ```
 
 1. Migrate to Coordinator v2.1.1 using the contract deployment scripts
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts migrate <coordinator_code_id> \
+   ts-node cosmwasm/migrate/migrate.ts migrate \
       --address $COORDINATOR_ADDRESS \
-      -m $MNEMONIC \
-      -d $DEPOSIT_VALUE \
+      -m $MNEMONIC
    ```
 
    This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.

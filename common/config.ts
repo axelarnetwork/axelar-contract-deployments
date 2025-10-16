@@ -173,7 +173,7 @@ export class ConfigManager implements FullConfig {
             'approxFinalityWaitTime',
             'contracts',
         ];
-        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'stacks', 'hedera'];
+        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'hedera'];
 
         requiredFields.forEach((field) => {
             if (chainConfig[field] === undefined || chainConfig[field] === null) {
@@ -299,7 +299,7 @@ export class ConfigManager implements FullConfig {
     }
 
     public saveConfig(): void {
-        saveConfig({ axelar: this.axelar, chains: this.chains }, this.environment);
+        saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
     public getProposalInstantiateAddresses(): string[] {

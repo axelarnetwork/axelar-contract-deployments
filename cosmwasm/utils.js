@@ -2,9 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
@@ -337,7 +334,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = getAxelarGatewayContractForChain(chainName);
+    const axelarGatewayContract = getAxelarGatewayContractForChain();
     const {
         axelar: { contracts },
         chains: {
@@ -485,30 +482,11 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => {
-    const chainVerifierMapping = {
-        stacks: 'StacksVotingVerifier',
-        solana: 'SolanaVotingVerifier',
-    };
+const getVerifierContractForChain = (chainName) => 'VotingVerifier';
 
-    return chainVerifierMapping[chainName] || 'VotingVerifier';
-};
+const getGatewayContractForChain = (chainName) => 'Gateway';
 
-const getGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        solana: 'SolanaGateway',
-    };
-
-    return chainGatewayMapping[chainName] || 'Gateway';
-};
-
-const getAxelarGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        stacks: 'GatewayStorage',
-    };
-
-    return chainGatewayMapping[chainName] || 'AxelarGateway';
-};
+const getAxelarGatewayContractForChain = () => 'AxelarGateway';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
@@ -1389,14 +1367,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
-    StacksVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
-    SolanaVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1405,10 +1375,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
     },
-    SolanaGateway: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeGatewayInstantiateMsg,
-    },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
@@ -1416,10 +1382,6 @@ const CONTRACTS = {
     XrplMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
-    },
-    StacksMultisigProver: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
     },
     SolanaMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
@@ -1436,10 +1398,6 @@ const CONTRACTS = {
     ItsAbiTranslator: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
-    },
-    ItsStacksTranslator: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: () => ({}),
     },
 };
 
@@ -1475,5 +1433,6 @@ module.exports = {
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
     validateItsChainChange,
+    getVerifierContractForChain,
     initContractConfig,
 };

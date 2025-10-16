@@ -9,6 +9,7 @@ export interface MigrationOptions extends Options {
     ignoreChains?: string;
     title?: string;
     description?: string;
+    codeId?: number;
 }
 
 export interface MigrationCheckOptions extends Options {

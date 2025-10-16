@@ -3,7 +3,7 @@
 import { StdFee } from '@cosmjs/stargate';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrateContractProposal, submitProposal } from '../utils';
+import { encodeMigrateContractProposal, getCodeId, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -39,7 +39,6 @@ async function multisigToVersion2_3_1(
     config,
     senderAddress: string,
     multisigAddress: string,
-    codeId: number,
     fee: string | StdFee,
 ) {
     const coordinatorAddress = config.axelar.contracts.Coordinator.address;
@@ -48,6 +47,8 @@ async function multisigToVersion2_3_1(
         coordinator: coordinatorAddress,
         default_authorized_provers: extractDefaultProversFromConfig(config),
     };
+
+    const codeId = await getCodeId(client, config, { contractName: 'Multisig', fetchCodeId: true, codeId: options.codeId });
 
     printInfo(`Migration Msg: ${JSON.stringify(migrationMsg)}`);
 
@@ -88,12 +89,11 @@ export async function migrate(
     senderAddress: string,
     multisigAddress: string,
     version: string,
-    codeId: number,
     fee: string | StdFee,
 ) {
     switch (version) {
         case '2.1.0':
-            return multisigToVersion2_3_1(client, options, config, senderAddress, multisigAddress, codeId, fee);
+            return multisigToVersion2_3_1(client, options, config, senderAddress, multisigAddress, fee);
         default:
             printError(`no migration script found for multisig ${version}`);
     }
