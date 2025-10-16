@@ -1110,7 +1110,7 @@ if (require.main === module) {
         .name('register-custom-coin')
         .command('register-custom-coin <symbol> <name> <decimals>')
         .description(
-            `Register a custom coin in ITS using token name, symbol and decimals. If no salt is provided, the calling wallet address is used.`,
+            `Register a custom coin in ITS using token name, symbol and decimals. If no salt is provided, it will be automatically created.`,
         )
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .addOption(new Option('--treasuryCap', `Give the coin's TreasuryCap to ITS`))
