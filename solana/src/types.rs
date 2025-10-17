@@ -326,5 +326,5 @@ pub(crate) enum Programs {
     GasService,
     Governance,
     Its,
-    Multicall
+    Multicall,
 }

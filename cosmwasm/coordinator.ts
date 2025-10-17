@@ -2,29 +2,18 @@ import { calculateDomainSeparator, isKeccak256Hash, printError, printInfo } from
 import { ConfigManager } from '../common/config';
 import { getSalt } from './utils';
 
-const getGatewayContractForChainType = (chainType: string): string => {
-    const chainGatewayMapping: Record<string, string> = {
-        svm: 'SolanaGateway',
-        stacks: 'StacksGateway',
-    };
-    return chainGatewayMapping[chainType] || 'Gateway';
-};
-
-const getVerifierContractForChainType = (chainType: string): string => {
-    const chainVerifierMapping: Record<string, string> = {
-        svm: 'SolanaVotingVerifier',
-        stacks: 'StacksVotingVerifier',
-    };
-    return chainVerifierMapping[chainType] || 'VotingVerifier';
-};
-
 const getProverContractForChainType = (chainType: string): string => {
     const chainProverMapping: Record<string, string> = {
         svm: 'SolanaMultisigProver',
-        stacks: 'StacksMultisigProver',
     };
     return chainProverMapping[chainType] || 'MultisigProver';
 };
+
+export interface RegisterDeploymentMsg {
+    register_deployment: {
+        deployment_name: string;
+    };
+}
 
 export interface GatewayParams {
     code_id: number;
@@ -158,8 +147,8 @@ export class CoordinatorManager {
                 return value;
             };
 
-            const gatewayContractName = getGatewayContractForChainType(chainConfig.chainType);
-            const verifierContractName = getVerifierContractForChainType(chainConfig.chainType);
+            const gatewayContractName = 'Gateway';
+            const verifierContractName = 'VotingVerifier';
             const proverContractName = getProverContractForChainType(chainConfig.chainType);
 
             const votingVerifierConfig = this.configManager.getContractConfigByChain(
@@ -290,6 +279,19 @@ export class CoordinatorManager {
             printError(`Error constructing message: ${error}`);
             throw error;
         }
+    }
+
+    public constructRegisterDeploymentMessage(chainName: string): RegisterDeploymentMsg {
+        const coordinatorConfig = this.configManager.getContractConfig('Coordinator');
+        const deploymentName = coordinatorConfig.deployments?.[chainName]?.deploymentName;
+        if (!deploymentName) {
+            throw new Error(`Deployment name not found for chain ${chainName}`);
+        }
+        return {
+            register_deployment: {
+                deployment_name: deploymentName,
+            },
+        };
     }
 
     private generateDeploymentName(chainName: string, codeId: string): string {
