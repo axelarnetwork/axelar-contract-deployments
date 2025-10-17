@@ -46,6 +46,21 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
+const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
+const GATEWAY_CONTRACT_NAME = 'Gateway';
+const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
+const MULTISIG_PROVER_CONTRACT_NAME = 'MultisigProver';
+
+const COORDINATOR_INSTANTIATED_CONTRACTS = [
+    GATEWAY_CONTRACT_NAME,
+    VERIFIER_CONTRACT_NAME,
+    MULTISIG_PROVER_CONTRACT_NAME,
+    'SolanaMultisigProver',
+    'XrplVotingVerifier',
+    'XrplMultisigProver',
+    'XrplGateway'
+];
+
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -469,11 +484,6 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
         xrpl_multisig_address: xrplMultisigAddress,
     };
 };
-
-const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
-const GATEWAY_CONTRACT_NAME = 'Gateway';
-const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
-const MULTISIG_PROVER_CONTRACT_NAME = 'MultisigProver';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
@@ -1203,6 +1213,7 @@ module.exports = {
     GATEWAY_CONTRACT_NAME,
     AXELAR_GATEWAY_CONTRACT_NAME,
     MULTISIG_PROVER_CONTRACT_NAME,
+    COORDINATOR_INSTANTIATED_CONTRACTS,
     fromHex,
     getSalt,
     calculateDomainSeparator,
