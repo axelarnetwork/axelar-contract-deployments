@@ -29,10 +29,8 @@ async function xrplTokenId(client, config, options) {
 }
 
 const mainProcessor = async (processor, options) => {
-    const { env, contractName, chainName } = options;
+    const { env } = options;
     const config = new ConfigManager(env);
-
-    config.initContractConfig(contractName, chainName);
 
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);
