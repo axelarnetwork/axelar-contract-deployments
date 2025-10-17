@@ -333,7 +333,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = getAxelarGatewayContractForChain();
+    const axelarGatewayContract = 'AxelarGateway';
     const {
         axelar: { contracts },
         chains: {
@@ -481,21 +481,14 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => 'VotingVerifier';
-
-const getGatewayContractForChain = (chainName) => 'Gateway';
-
-const getAxelarGatewayContractForChain = () => 'AxelarGateway';
-
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
 
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                [verifierContract]: {
+                VotingVerifier: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -638,8 +631,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContractName = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -649,10 +640,10 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        [verifierContract]: {
+        VotingVerifier: {
             [chainName]: { address: verifierAddress },
         },
-        [gatewayContractName]: {
+        Gateway: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -1413,6 +1404,5 @@ module.exports = {
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
     validateItsChainChange,
-    getVerifierContractForChain,
     initContractConfig,
 };
