@@ -151,7 +151,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         return printWarn(`Coordinator contract address not found in config for ${chainName}`);
     }
 
-    const deploymentName = config.getContractConfigByChain('Coordinator', chainName).deployments?.deploymentName;
+    const deploymentName = config.getContractConfig('Coordinator').deployments?.deploymentName;
     if (!deploymentName) {
         return printWarn(
             `No deployment found for chain ${chainName} in config.`,
@@ -172,16 +172,9 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         return printWarn(`Failed to fetch deployed contracts for ${chainName}`, error?.message || String(error));
     }
 
-    if (
-        !result.verifier_address ||
-        !config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName) ||
-        !result.prover_address ||
-        !config.getContractConfigByChain(MULTISIG_PROVER_CONTRACT_NAME, chainName) ||
-        !result.gateway_address
-    ) {
-        return printWarn(
-            `Missing config for ${chainName}.`,
-            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}'.`,
+    if (!result.verifier_address || !result.prover_address || !result.gateway_address) {
+        throw new Error(
+            `Missing config for ${chainName}. Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
         );
     }
 
