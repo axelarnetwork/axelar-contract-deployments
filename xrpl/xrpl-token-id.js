@@ -2,8 +2,8 @@
 
 const { Command, Option } = require('commander');
 const { addAmplifierQueryOptions } = require('../cosmwasm/cli-utils');
-const { prepareDummyWallet, prepareClient, initContractConfig } = require('../cosmwasm/utils');
-const { loadConfig, printInfo, printWarn, printError } = require('../common');
+const { prepareDummyWallet, prepareClient } = require('../cosmwasm/utils');
+const { printInfo, printWarn, printError, ConfigManager } = require('../common');
 
 async function xrplTokenId(client, config, options) {
     const { chainName, issuer, currency } = options;
@@ -29,10 +29,10 @@ async function xrplTokenId(client, config, options) {
 }
 
 const mainProcessor = async (processor, options) => {
-    const { env } = options;
-    const config = loadConfig(env);
+    const { env, contractName, chainName } = options;
+    const config = new ConfigManager(env);
 
-    initContractConfig(config, options);
+    config.initContractConfig(contractName, chainName);
 
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);

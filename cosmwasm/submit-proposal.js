@@ -10,7 +10,6 @@ const {
     CONTRACTS,
     fromHex,
     getSalt,
-    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
     getChainTruncationParams,
@@ -78,7 +77,7 @@ const callSubmitProposal = async (client, config, options, proposal, fee) => {
 
 const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     const proposal = encodeStoreCodeProposal(options);
 

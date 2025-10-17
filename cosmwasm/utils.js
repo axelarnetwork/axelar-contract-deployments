@@ -62,18 +62,8 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const getAmplifierBaseContractConfig = (config, contractName) => {
-    const contractBaseConfig = config.axelar.contracts[contractName];
-
-    if (!contractBaseConfig) {
-        throw new Error(`Contract ${contractName} not found in config`);
-    }
-
-    return contractBaseConfig;
-};
-
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (!chainName) {
         return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
@@ -91,7 +81,7 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
 const getCodeId = async (client, config, options) => {
     const { fetchCodeId, codeId, contractName } = options;
 
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (codeId) {
         return codeId;
@@ -333,7 +323,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = getAxelarGatewayContractForChain();
+    const axelarGatewayContract = AXELAR_GATEWAY_CONTRACT_NAME;
     const {
         axelar: { contracts },
         chains: {
@@ -481,15 +471,13 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => 'VotingVerifier';
-
-const getGatewayContractForChain = (chainName) => 'Gateway';
-
-const getAxelarGatewayContractForChain = () => 'AxelarGateway';
+const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
+const GATEWAY_CONTRACT_NAME = 'Gateway';
+const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
+    const verifierContract = VERIFIER_CONTRACT_NAME;
 
     const {
         axelar: {
@@ -638,8 +626,8 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContractName = getGatewayContractForChain(chainName);
+    const verifierContract = VERIFIER_CONTRACT_NAME;
+    const gatewayContractName = GATEWAY_CONTRACT_NAME;
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -887,7 +875,7 @@ const getStoreCodeParams = (options) => {
     };
 };
 
-const getStoreInstantiateParams = (config, options, msg) => {
+const getStoreInstantiateParams = (_config, options, msg) => {
     const { admin } = options;
 
     return {
@@ -1147,24 +1135,6 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
     }
 };
 
-const initContractConfig = (config, options) => {
-    const { contractName, chainName } = options;
-
-    if (!contractName) {
-        return;
-    }
-
-    if (!config.axelar.contracts[contractName]) {
-        config.axelar.contracts[contractName] = {};
-    }
-
-    if (chainName) {
-        if (!config.axelar.contracts[contractName][chainName]) {
-            config.axelar.contracts[contractName][chainName] = {};
-        }
-    }
-};
-
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1235,7 +1205,6 @@ module.exports = {
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
     executeTransaction,
@@ -1257,6 +1226,7 @@ module.exports = {
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
-    getVerifierContractForChain,
-    initContractConfig,
+    VERIFIER_CONTRACT_NAME,
+    GATEWAY_CONTRACT_NAME,
+    AXELAR_GATEWAY_CONTRACT_NAME,
 };

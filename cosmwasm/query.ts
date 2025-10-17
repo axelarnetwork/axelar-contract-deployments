@@ -7,7 +7,7 @@ import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../
 import { FullConfig } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
-import { getVerifierContractForChain } from './utils';
+import { VERIFIER_CONTRACT_NAME } from './utils';
 
 export interface ContractInfo {
     contract: string;
@@ -17,7 +17,7 @@ export interface ContractInfo {
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
 
-    const verifierContract = getVerifierContractForChain(chainName);
+    const verifierContract = VERIFIER_CONTRACT_NAME;
 
     const rewardsContractAddresses = {
         multisig: config.axelar.contracts.Multisig.address,
