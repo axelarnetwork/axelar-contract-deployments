@@ -495,7 +495,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid ${verifierContractName}[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${verifierContract}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
