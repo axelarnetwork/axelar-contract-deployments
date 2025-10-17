@@ -137,7 +137,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'deploy-interchain-token': {
-            // const [name, symbol, decimals, initialSupply, minter] = args;
             const { name, symbol, decimals, initialSupply, minter } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
@@ -333,7 +332,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
 }
 
 async function main(action, options) {
-    // options.args = args;
     return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
 }
 
