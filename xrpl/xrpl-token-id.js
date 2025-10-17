@@ -2,20 +2,18 @@
 
 const { Command, Option } = require('commander');
 const { addAmplifierQueryOptions } = require('../cosmwasm/cli-utils');
-const { prepareDummyWallet, prepareClient, initContractConfig } = require('../cosmwasm/utils');
-const { loadConfig, printInfo, printWarn, printError } = require('../common');
+const { prepareDummyWallet, prepareClient } = require('../cosmwasm/utils');
+const { printInfo, printWarn, printError, ConfigManager } = require('../common');
 
 async function xrplTokenId(client, config, options) {
     const { chainName, issuer, currency } = options;
-
-    const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
-    if (!xrplGateway) {
-        printError(`No XRPLGateway contract found on chain ${chainName}`);
-        process.exit(1);
+    const { address } = config.getContractConfigByChain('XrplGateway', chainName);
+    if (!address) {
+        throw new Error(`XrplGateway contract address not found in config for chain ${chainName}`);
     }
 
     try {
-        const result = await client.queryContractSmart(xrplGateway.address, {
+        const result = await client.queryContractSmart(address, {
             xrpl_token_id: {
                 issuer,
                 currency,
@@ -30,9 +28,7 @@ async function xrplTokenId(client, config, options) {
 
 const mainProcessor = async (processor, options) => {
     const { env } = options;
-    const config = loadConfig(env);
-
-    initContractConfig(config, options);
+    const config = new ConfigManager(env);
 
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);
