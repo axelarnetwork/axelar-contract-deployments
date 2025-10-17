@@ -151,7 +151,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         return printWarn(`Coordinator contract address not found in config for ${chainName}`);
     }
 
-    const deploymentName = config.getContractConfig('Coordinator').deployments?.deploymentName;
+    const deploymentName = config.getContractConfig('Coordinator').deployments?.[chainName]?.deploymentName;
     if (!deploymentName) {
         return printWarn(
             `No deployment found for chain ${chainName} in config.`,
