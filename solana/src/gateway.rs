@@ -10,12 +10,12 @@ use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use axelar_solana_gateway::BytemuckedPda;
+use axelar_solana_gateway::events::GatewayEvent;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
-use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::Deserialize;
@@ -28,7 +28,7 @@ use solana_sdk::packet::PACKET_DATA_SIZE;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signature as SolanaSignature;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
-use solana_transaction_status::UiTransactionEncoding;
+use solana_transaction_status::{UiInstruction, UiTransactionEncoding};
 
 use crate::config::Config;
 use crate::multisig_prover_types::Uint128Extensions;
@@ -944,51 +944,111 @@ pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()>
 fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
     let rpc_client = RpcClient::new(config.url.clone());
     let signature = SolanaSignature::from_str(&args.signature)?;
-    let transaction = rpc_client.get_transaction(&signature, UiTransactionEncoding::Base58)?;
+    let transaction = rpc_client.get_transaction(&signature, UiTransactionEncoding::Base64)?;
 
-    let log_messages = transaction
+    let meta = transaction
         .transaction
         .meta
-        .ok_or_else(|| eyre!("Transaction missing metadata"))?
-        .log_messages
-        .ok_or_else(|| eyre!("Transaction missing log messages"))?;
+        .ok_or_else(|| eyre!("Transaction missing metadata"))?;
 
-    let gateway_id_string = axelar_solana_gateway::id().to_string();
-    let gateway_match_ctx = MatchContext::new(&gateway_id_string);
+    let inner_instructions = meta
+        .inner_instructions
+        .ok_or_else(|| eyre!("Transaction missing inner instructions"))?;
 
-    let invocations = gateway_event_stack::build_program_event_stack(
-        &gateway_match_ctx,
-        &log_messages,
-        gateway_event_stack::parse_gateway_logs,
-    );
+    let mut event_count = 0;
 
-    for (i, invocation) in invocations.into_iter().enumerate() {
-        println!("\u{2728} Invocation index [{i}]: ");
-        let events = match invocation {
-            ProgramInvocationState::InProgress(items)
-            | ProgramInvocationState::Failed(items)
-            | ProgramInvocationState::Succeeded(items) => items,
-        };
+    for (invocation_index, inner_ix_set) in inner_instructions.iter().enumerate() {
+        let mut invocation_events = Vec::new();
 
-        if events.is_empty() {
-            println!("\t\u{1F4EA} No gateway events found");
-        }
-
-        for event in events {
-            print!("\t\u{1F4EC} Event index [{}]: ", event.0);
-            let raw_output = format!("{:#?}", event.1);
-
-            let output = if args.full {
-                &raw_output
-            } else {
-                raw_output.split_once('(').unwrap().0
+        for inner_ix in &inner_ix_set.instructions {
+            let data = match inner_ix {
+                UiInstruction::Compiled(compiled_ix) => {
+                    match bs58::decode(&compiled_ix.data).into_vec() {
+                        Ok(d) => d,
+                        Err(_) => continue,
+                    }
+                }
+                UiInstruction::Parsed(_) => continue,
             };
 
-            println!("{output}");
+            if let Some(event) = parse_gateway_event(&data) {
+                invocation_events.push(event);
+            }
+        }
+
+        if !invocation_events.is_empty() {
+            println!("\u{2728} Invocation index [{invocation_index}]: ");
+            for (event_index, event) in invocation_events.iter().enumerate() {
+                print!("\t\u{1F4EC} Event index [{event_index}]: ");
+                let raw_output = format!("{event:#?}");
+
+                let output = if args.full {
+                    raw_output.as_str()
+                } else {
+                    raw_output
+                        .split_once('(')
+                        .map_or(raw_output.as_str(), |(name, _)| name)
+                };
+
+                println!("{output}");
+                event_count += 1;
+            }
         }
     }
 
+    if event_count == 0 {
+        println!("\u{1F4EA} No gateway events found");
+    }
+
     Ok(())
+}
+
+fn parse_gateway_event(data: &[u8]) -> Option<GatewayEvent> {
+    use anchor_discriminators::Discriminator as _;
+    use axelar_solana_gateway::events::{
+        CallContractEvent, MessageApprovedEvent, MessageExecutedEvent,
+        OperatorshipTransferredEvent, VerifierSetRotatedEvent,
+    };
+    use borsh::BorshDeserialize as _;
+
+    if data.len() < 16 {
+        return None;
+    }
+
+    let ev_disc = &data[0..8];
+    if ev_disc != event_cpi::EVENT_IX_TAG_LE {
+        return None;
+    }
+
+    let disc = &data[8..16];
+    let event_data = &data[16..];
+
+    if disc == CallContractEvent::DISCRIMINATOR {
+        let event = CallContractEvent::try_from_slice(event_data).ok()?;
+        return Some(GatewayEvent::CallContract(event));
+    }
+
+    if disc == VerifierSetRotatedEvent::DISCRIMINATOR {
+        let event = VerifierSetRotatedEvent::try_from_slice(event_data).ok()?;
+        return Some(GatewayEvent::VerifierSetRotated(event));
+    }
+
+    if disc == OperatorshipTransferredEvent::DISCRIMINATOR {
+        let event = OperatorshipTransferredEvent::try_from_slice(event_data).ok()?;
+        return Some(GatewayEvent::OperatorshipTransferred(event));
+    }
+
+    if disc == MessageApprovedEvent::DISCRIMINATOR {
+        let event = MessageApprovedEvent::try_from_slice(event_data).ok()?;
+        return Some(GatewayEvent::MessageApproved(event));
+    }
+
+    if disc == MessageExecutedEvent::DISCRIMINATOR {
+        let event = MessageExecutedEvent::try_from_slice(event_data).ok()?;
+        return Some(GatewayEvent::MessageExecuted(event));
+    }
+
+    None
 }
 
 fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> {
