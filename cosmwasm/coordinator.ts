@@ -282,21 +282,16 @@ export class CoordinatorManager {
     }
 
     public constructRegisterDeploymentMessage(chainName: string): RegisterDeploymentMsg {
-        try {
-            const coordinatorConfig = this.configManager.getContractConfig('Coordinator');
-            const deploymentName = coordinatorConfig.deployments?.[chainName]?.deploymentName;
-            if (!deploymentName) {
-                throw new Error(`Deployment name not found for chain ${chainName}`);
-            }
-            return {
-                register_deployment: {
-                    deployment_name: deploymentName,
-                },
-            };
-        } catch (error) {
-            printError(`Error constructing message: ${error}`);
-            throw error;
+        const coordinatorConfig = this.configManager.getContractConfig('Coordinator');
+        const deploymentName = coordinatorConfig.deployments?.[chainName]?.deploymentName;
+        if (!deploymentName) {
+            throw new Error(`Deployment name not found for chain ${chainName}`);
         }
+        return {
+            register_deployment: {
+                deployment_name: deploymentName,
+            },
+        };
     }
 
     private generateDeploymentName(chainName: string, codeId: string): string {
