@@ -1355,9 +1355,9 @@
         }
       }
     },
-    "solana-7": {
+    "solana-8": {
       "name": "Solana Devnet Amplifier",
-      "axelarId": "solana-7",
+      "axelarId": "solana-8",
       "rpc": "https://api.devnet.solana.com",
       "chainType": "svm",
       "decimals": 9,
@@ -1370,7 +1370,7 @@
       },
       "contracts": {
         "AxelarGateway": {
-          "address": "gtwhwn1M6VnYY9y1W3WBNRSpXN3QPW8kR5HgEvdBNVS",
+          "address": "gtwPujEg4xVWR66j4LBeRUZYjiuoRvDrFGpEggegoo7",
           "connectionType": "amplifier",
           "domainSeparator": "TBD",
           "minimumRotationDelay": 0,
@@ -1861,7 +1861,7 @@
         "lastUploadedCodeId": 1529,
         "storeCodeProposalId": "1227",
         "storeCodeProposalCodeHash": "cd0c28f81d0bb735ae9ac442f1d51688582be6d380b8756b6a12aeab8ceb8d92",
-        "solana-7": {
+        "solana-8": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [

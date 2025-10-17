@@ -22,10 +22,10 @@
 
 | **Axelar Env**       | **Program** | **Solana Env** | **PDA**                                       |
 | -------------------- | ----------- | -------------- | --------------------------------------------- |
-| **Devnet Amplifier** | Gateway     | **Devnet**     | `gtwhwn1M6VnYY9y1W3WBNRSpXN3QPW8kR5HgEvdBNVS` |
-| **Devnet Amplifier** | Gas Service | **Devnet**     | `gasCUBEiWuRapA5suZeWDPBm6TybtHnkoLQsBRCgMiA` |
-| **Devnet Amplifier** | Governance  | **Devnet**     | `govzikT5tcgyrdZEkFuDfSroYhmSjgAd4NcB4dpQBBy` |
-| **Devnet Amplifier** | Multicall   | **Devnet**     | `mc3aKMzAiKMGwkSgmdHaCnDPC2qxrPBGBfWH515V3NU` |
+| **Devnet Amplifier** | Gateway     | **Devnet**     | `gtwPujEg4xVWR66j4LBeRUZYjiuoRvDrFGpEggegoo7` |
+| **Devnet Amplifier** | Gas Service | **Devnet**     | `gasvmf5VivSUaWMmLitFNQPrmb6vuMWjt12RtGgCqaV` |
+| **Devnet Amplifier** | Governance  | **Devnet**     | `govqzmew8H7Lu9YAPrESCUzbhDzK1PXuZ5xqMVMQVHq` |
+| **Devnet Amplifier** | Multicall   | **Devnet**     | `mcACg3rCYQLAUKAmpyX9eD4tLMxMV2wbwz2Agc8Hj1A` |
 
 ### Stagenet
 
@@ -67,9 +67,9 @@ This is the vanilla Solana GMP release.
     | Axelar Env           | Authority                                     | Operator                                      |
     | -------------------- | --------------------------------------------- | --------------------------------------------- |
     | **Devnet-amplifier** | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | `gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18` |
-    | **Stagenet**         | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Testnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Mainnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
+    | **Stagenet**         | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Testnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Mainnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
 
 1. Create an `.env` config with the following:
 

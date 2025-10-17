@@ -18,7 +18,7 @@
 
 | **Axelar Env**       | **Solana Env** | **PDA**                                       |
 | -------------------- | -------------- | --------------------------------------------- |
-| **Devnet Amplifier** | **Devnet**     | `itsTG9feBwsQRDS4qPR8R3a5KR4n9tvbFgANTUY6LgE` |
+| **Devnet Amplifier** | **Devnet**     | `its4kG8EeRnWXkMKTvzebfGaexEQVZ4NJDKrZiP8XFM` |
 | **Stagenet**         | **Testnet**    | `` |
 | **Testnet**          | **Testnet**    | `` |
 | **Mainnet**          | **Mainnet**    | `` |
@@ -33,12 +33,12 @@ This is the vanilla Solana ITS release.
 
 1. Ensure you have access to the keypairs for the following accounts, unless you plan to generate new keypairs (below):
 
-    | Axelar Env           | Authority                          | Operator                           |
-    | -------------------- | ---------------------------------- | ---------------------------------- |
-    | **Devnet-amplifier** | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Stagenet**         | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Testnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Mainnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
+    | Axelar Env           | Authority                                     | Operator                                      |
+    | -------------------- | --------------------------------------------- | --------------------------------------------- |
+    | **Devnet-amplifier** | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | `gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18` |
+    | **Stagenet**         | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Testnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Mainnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
 
 1. Create an `.env` config with the following:
 
