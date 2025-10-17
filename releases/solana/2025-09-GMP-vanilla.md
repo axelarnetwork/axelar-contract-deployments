@@ -22,10 +22,10 @@
 
 | **Axelar Env**       | **Program** | **Solana Env** | **PDA**                                       |
 | -------------------- | ----------- | -------------- | --------------------------------------------- |
-| **Devnet Amplifier** | Gateway     | **Devnet**     | `gtwPujEg4xVWR66j4LBeRUZYjiuoRvDrFGpEggegoo7` |
-| **Devnet Amplifier** | Gas Service | **Devnet**     | `gasvmf5VivSUaWMmLitFNQPrmb6vuMWjt12RtGgCqaV` |
-| **Devnet Amplifier** | Governance  | **Devnet**     | `govqzmew8H7Lu9YAPrESCUzbhDzK1PXuZ5xqMVMQVHq` |
-| **Devnet Amplifier** | Multicall   | **Devnet**     | `mcACg3rCYQLAUKAmpyX9eD4tLMxMV2wbwz2Agc8Hj1A` |
+| **Devnet Amplifier** | Gateway     | **Devnet**     | `` |
+| **Devnet Amplifier** | Gas Service | **Devnet**     | `` |
+| **Devnet Amplifier** | Governance  | **Devnet**     | `` |
+| **Devnet Amplifier** | Multicall   | **Devnet**     | `` |
 
 ### Stagenet
 
