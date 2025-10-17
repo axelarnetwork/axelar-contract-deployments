@@ -17,11 +17,9 @@ export interface ContractInfo {
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
 
-    const verifierContract = VERIFIER_CONTRACT_NAME;
-
     const rewardsContractAddresses = {
         multisig: config.axelar.contracts.Multisig.address,
-        voting_verifier: config.axelar.contracts[verifierContract]?.[chainName]?.address,
+        voting_verifier: config.axelar.contracts[VERIFIER_CONTRACT_NAME]?.[chainName]?.address,
     };
 
     for (const [key, address] of Object.entries(rewardsContractAddresses)) {

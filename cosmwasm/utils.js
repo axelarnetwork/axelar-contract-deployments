@@ -323,13 +323,12 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = AXELAR_GATEWAY_CONTRACT_NAME;
     const {
         axelar: { contracts },
         chains: {
             [chainName]: {
                 contracts: {
-                    [axelarGatewayContract]: { address: gatewayAddress },
+                    [AXELAR_GATEWAY_CONTRACT_NAME]: { address: gatewayAddress },
                 },
             },
         },
@@ -474,16 +473,16 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
 const GATEWAY_CONTRACT_NAME = 'Gateway';
 const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
+const MULTISIG_PROVER_CONTRACT_NAME = 'MultisigProver';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = VERIFIER_CONTRACT_NAME;
 
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                [verifierContract]: {
+                [VERIFIER_CONTRACT_NAME]: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -495,7 +494,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid ${verifierContract}[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${VERIFIER_CONTRACT_NAME}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -626,8 +625,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = VERIFIER_CONTRACT_NAME;
-    const gatewayContractName = GATEWAY_CONTRACT_NAME;
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -637,10 +634,10 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        [verifierContract]: {
+        [VERIFIER_CONTRACT_NAME]: {
             [chainName]: { address: verifierAddress },
         },
-        [gatewayContractName]: {
+        [GATEWAY_CONTRACT_NAME]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -1202,6 +1199,10 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
+    VERIFIER_CONTRACT_NAME,
+    GATEWAY_CONTRACT_NAME,
+    AXELAR_GATEWAY_CONTRACT_NAME,
+    MULTISIG_PROVER_CONTRACT_NAME,
     fromHex,
     getSalt,
     calculateDomainSeparator,
@@ -1226,7 +1227,4 @@ module.exports = {
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
-    VERIFIER_CONTRACT_NAME,
-    GATEWAY_CONTRACT_NAME,
-    AXELAR_GATEWAY_CONTRACT_NAME,
 };
