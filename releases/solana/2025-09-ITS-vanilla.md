@@ -18,7 +18,7 @@
 
 | **Axelar Env**       | **Solana Env** | **PDA**                                       |
 | -------------------- | -------------- | --------------------------------------------- |
-| **Devnet Amplifier** | **Devnet**     | `` |
+| **Devnet Amplifier** | **Devnet**     | `itsnw7tLrUvdinCdRzBJRvmxkJQWaSZkb7iJH9EU3sv` |
 | **Stagenet**         | **Testnet**    | `` |
 | **Testnet**          | **Testnet**    | `` |
 | **Mainnet**          | **Mainnet**    | `` |
