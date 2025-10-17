@@ -58,7 +58,7 @@ const COORDINATOR_INSTANTIATED_CONTRACTS = [
     'SolanaMultisigProver',
     'XrplVotingVerifier',
     'XrplMultisigProver',
-    'XrplGateway'
+    'XrplGateway',
 ];
 
 const isValidCosmosAddress = (str) => {
