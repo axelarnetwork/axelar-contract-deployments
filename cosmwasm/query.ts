@@ -178,10 +178,6 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         );
     }
 
-    config.initContractConfig('VotingVerifier', chainName);
-    config.initContractConfig('MultisigProver', chainName);
-    config.initContractConfig('Gateway', chainName);
-
     config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName).address = result.verifier_address;
     config.getContractConfigByChain(MULTISIG_PROVER_CONTRACT_NAME, chainName).address = result.prover_address;
     config.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName).address = result.gateway_address;

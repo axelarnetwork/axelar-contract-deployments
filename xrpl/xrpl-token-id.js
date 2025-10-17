@@ -8,6 +8,9 @@ const { printInfo, printWarn, printError, ConfigManager } = require('../common')
 async function xrplTokenId(client, config, options) {
     const { chainName, issuer, currency } = options;
     const { address } = config.getContractConfigByChain('XrplGateway', chainName);
+    if (!address) {
+        throw new Error(`XrplGateway contract address not found in config for chain ${chainName}`);
+    }
 
     try {
         const result = await client.queryContractSmart(address, {
