@@ -186,8 +186,6 @@ axelar-solana-governance = { path = "programs/axelar-solana-governance", default
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures", default-features = false }
-event-utils = { path = "crates/event-utils" }
-event-macros = { path = "crates/event-macros" }
 event-cpi = { path = "helpers/event-cpi" }
 event-cpi-macros = { path = "helpers/event-cpi-macros" }
 anchor-discriminators = { path = "helpers/anchor-discriminators" }

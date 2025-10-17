@@ -3123,26 +3123,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "event-macros"
-version = "0.1.0"
-dependencies = [
- "keccak-const",
- "quote",
- "syn 2.0.101",
-]
-
-[[package]]
-name = "event-utils"
-version = "0.1.0"
-dependencies = [
- "axelar-message-primitives",
- "base64 0.21.7",
- "event-macros",
- "solana-program",
- "thiserror 1.0.69",
-]
-
-[[package]]
 name = "evm-contracts-rs"
 version = "0.1.0"
 dependencies = [
@@ -4561,12 +4541,6 @@ dependencies = [
  "digest 0.10.7",
  "sha3-asm",
 ]
-
-[[package]]
-name = "keccak-const"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 
 [[package]]
 name = "kernel32-sys"
