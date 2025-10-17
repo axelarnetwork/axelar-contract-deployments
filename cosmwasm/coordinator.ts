@@ -9,6 +9,12 @@ const getProverContractForChainType = (chainType: string): string => {
     return chainProverMapping[chainType] || 'MultisigProver';
 };
 
+export interface RegisterDeploymentMsg {
+    register_deployment: {
+        deployment_name: string;
+    };
+}
+
 export interface GatewayParams {
     code_id: number;
     label: string;
@@ -273,6 +279,19 @@ export class CoordinatorManager {
             printError(`Error constructing message: ${error}`);
             throw error;
         }
+    }
+
+    public constructRegisterDeploymentMessage(chainName: string): RegisterDeploymentMsg {
+        const coordinatorConfig = this.configManager.getContractConfig('Coordinator');
+        const deploymentName = coordinatorConfig.deployments?.[chainName]?.deploymentName;
+        if (!deploymentName) {
+            throw new Error(`Deployment name not found for chain ${chainName}`);
+        }
+        return {
+            register_deployment: {
+                deployment_name: deploymentName,
+            },
+        };
     }
 
     private generateDeploymentName(chainName: string, codeId: string): string {

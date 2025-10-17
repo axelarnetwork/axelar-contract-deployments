@@ -43,7 +43,14 @@ export interface ExplorerConfig {
     api?: string;
 }
 
+export interface DeploymentConfig {
+    deploymentName: string;
+    salt: string;
+    proposalId: string;
+}
+
 export interface ContractConfig {
+    deployments?: Record<string, DeploymentConfig>;
     address?: string;
     codeId?: number;
     storeCodeProposalCodeHash?: string;

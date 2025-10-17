@@ -339,6 +339,20 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     };
 };
 
+const registerDeployment = async (client, config, options, _args, fee) => {
+    const { chainName } = options;
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructRegisterDeploymentMessage(chainName);
+    const proposalId = await execute(
+        client,
+        config,
+        { ...options, contractName: 'Coordinator', msg: JSON.stringify(message) },
+        undefined,
+        fee,
+    );
+    return proposalId;
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -458,6 +472,16 @@ const programHandler = () => {
         runAs: true,
         fetchCodeId: true,
         instantiateOptions: true,
+    });
+
+    const registerDeploymentCmd = program
+        .command('register-deployment')
+        .description('Submit an execute wasm contract proposal to register a deployment')
+        .requiredOption('-n, --chainName <chainName>', 'chain name')
+        .action((options) => mainProcessor(registerDeployment, options));
+    addAmplifierOptions(registerDeploymentCmd, {
+        proposalOptions: true,
+        runAs: true,
     });
 
     program.parse();
