@@ -147,48 +147,45 @@ export class CoordinatorManager {
                 return value;
             };
 
-            const gatewayContractName = GATEWAY_CONTRACT_NAME;
-            const verifierContractName = VERIFIER_CONTRACT_NAME;
             const proverContractName = getProverContractForChainType(chainConfig.chainType);
-
             const votingVerifierConfig = this.configManager.getContractConfigByChain(
-                verifierContractName,
+                VERIFIER_CONTRACT_NAME,
                 chainName,
             ) as VotingVerifierChainConfig;
             const multisigProverConfig = this.configManager.getContractConfigByChain(
                 proverContractName,
                 chainName,
             ) as MultisigProverChainConfig;
-            const gatewayConfig = this.configManager.getContractConfigByChain(gatewayContractName, chainName) as GatewayChainConfig;
+            const gatewayConfig = this.configManager.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
 
-            const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `${gatewayContractName}.codeId`);
-            const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `${verifierContractName}.codeId`);
+            const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `${GATEWAY_CONTRACT_NAME}.codeId`);
+            const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `${VERIFIER_CONTRACT_NAME}.codeId`);
             const proverCodeId: number = validateRequired(multisigProverConfig.codeId, `${proverContractName}.codeId`);
             const deploymentName = this.generateDeploymentName(chainName, `${gatewayCodeId}-${verifierCodeId}-${proverCodeId}`);
 
             const governanceAddress = validateRequired(
                 votingVerifierConfig.governanceAddress,
-                `${verifierContractName}[${chainName}].governanceAddress`,
+                `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`,
             );
-            const serviceName = validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`);
+            const serviceName = validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
             const rewardsAddress = validateRequired(rewardsConfig.address, `Rewards.address`);
             const sourceGatewayAddress = validateRequired(
                 votingVerifierConfig.sourceGatewayAddress,
-                `${verifierContractName}[${chainName}].sourceGatewayAddress`,
+                `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`,
             );
             const votingThreshold = validateThreshold(
                 votingVerifierConfig.votingThreshold,
-                `${verifierContractName}[${chainName}].votingThreshold`,
+                `${VERIFIER_CONTRACT_NAME}[${chainName}].votingThreshold`,
             );
-            const blockExpiry = validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`);
+            const blockExpiry = validateRequired(votingVerifierConfig.blockExpiry, `${VERIFIER_CONTRACT_NAME}[${chainName}].blockExpiry`);
             const confirmationHeight = validateRequired(
                 votingVerifierConfig.confirmationHeight,
-                `${verifierContractName}[${chainName}].confirmationHeight`,
+                `${VERIFIER_CONTRACT_NAME}[${chainName}].confirmationHeight`,
             );
-            const msgIdFormat = validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
+            const msgIdFormat = validateRequired(votingVerifierConfig.msgIdFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].msgIdFormat`);
             const addressFormat = validateRequired(
                 votingVerifierConfig.addressFormat,
-                `${verifierContractName}[${chainName}].addressFormat`,
+                `${VERIFIER_CONTRACT_NAME}[${chainName}].addressFormat`,
             );
             const encoder = validateRequired(multisigProverConfig.encoder, `${proverContractName}[${chainName}].encoder`);
             const keyType = validateRequired(multisigProverConfig.keyType, `${proverContractName}[${chainName}].keyType`);
@@ -233,13 +230,13 @@ export class CoordinatorManager {
                         manual: {
                             gateway: {
                                 code_id: gatewayCodeId,
-                                label: `${gatewayContractName}-${chainName}`,
+                                label: `${GATEWAY_CONTRACT_NAME}-${chainName}`,
                                 msg: null,
                                 contract_admin: gatewayContractAdminAddress,
                             },
                             verifier: {
                                 code_id: verifierCodeId,
-                                label: `${verifierContractName}-${chainName}`,
+                                label: `${VERIFIER_CONTRACT_NAME}-${chainName}`,
                                 msg: {
                                     governance_address: governanceAddress,
                                     service_name: serviceName,
