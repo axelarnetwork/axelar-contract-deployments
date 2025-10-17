@@ -7,15 +7,10 @@ const { printInfo, printWarn, printError, ConfigManager } = require('../common')
 
 async function xrplTokenId(client, config, options) {
     const { chainName, issuer, currency } = options;
-
-    const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
-    if (!xrplGateway) {
-        printError(`No XRPLGateway contract found on chain ${chainName}`);
-        process.exit(1);
-    }
+    const { address } = config.getContractConfigByChain('XrplGateway', chainName);
 
     try {
-        const result = await client.queryContractSmart(xrplGateway.address, {
+        const result = await client.queryContractSmart(address, {
             xrpl_token_id: {
                 issuer,
                 currency,
