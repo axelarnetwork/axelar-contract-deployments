@@ -3299,7 +3299,7 @@
       "name": "Memento",
       "axelarId": "memento-demo",
       "chainId": 2129,
-      "rpc": "https://memento-demo.common-prefix.workers.dev/",
+      "rpc": "",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "finality": "1",
