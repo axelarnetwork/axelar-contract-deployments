@@ -332,7 +332,7 @@ export class ConfigManager implements FullConfig {
         }
 
         if (!axelarContracts[configContractName]) {
-            axelarContracts[configContractName] = {};
+            throw new Error(`Contract '${configContractName}' not found in ${this.environment} config`);
         }
 
         return axelarContracts[configContractName];
@@ -341,7 +341,7 @@ export class ConfigManager implements FullConfig {
     public getContractConfigByChain(configContractName: string, chainName: string): ContractConfig {
         const contractConfig = this.getContractConfig(configContractName);
         if (!contractConfig[chainName]) {
-            contractConfig[chainName] = {};
+            throw new Error(`Contract '${configContractName}' not found on chain '${chainName}' in ${this.environment} config`);
         }
         return contractConfig[chainName];
     }
