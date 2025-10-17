@@ -86,7 +86,7 @@ const storeCode = async (client, config, options, _args, fee) => {
         if (!coordinatorAddress) {
             throw new Error(
                 `Coordinator address not found in config for environment ${options.env}. ` +
-                `This is required for instantiating ${contractName}.`,
+                    `This is required for instantiating ${contractName}.`,
             );
         }
 
