@@ -8,9 +8,9 @@ import { FullConfig } from '../../common/config';
 import { addAmplifierOptions, addAmplifierQueryContractOptions } from '../cli-utils';
 import { ClientManager, mainProcessor, mainQueryProcessor } from '../processor';
 import { getContractInfo } from '../query';
-import { checkMigration as checkMigrationCoordinator, migrate as migrateCoordinator } from './coordinator';
+import { checkMigration as checkMigrationCoordinator, instantiatePermissions, migrate as migrateCoordinator } from './coordinator';
 import { migrate as migrateMultisig } from './multisig';
-import { MigrationCheckOptions, MigrationOptions } from './types';
+import { InstantiatePermission, MigrationCheckOptions, MigrationOptions } from './types';
 
 async function migrate(
     client: ClientManager,
@@ -50,10 +50,40 @@ async function checkMigration(
     }
 }
 
+async function coordinatorInstantiatePermissions(
+    client: ClientManager,
+    config: FullConfig,
+    options: MigrationOptions,
+    args: string[],
+    fee: string | StdFee,
+): Promise<void> {
+    const senderAddress = client.accounts[0].address;
+    const contractAddress = options.address ?? config.axelar.contracts['Coordinator']?.address;
+    if (args.length < 2 || args[0] === undefined || args[1] === undefined) {
+        throw new Error('code_id and current_permissions arguments are required');
+    }
+    const codeId = Number(args[0]);
+    if (isNaN(codeId)) {
+        throw new Error('code_id must be a valid number');
+    }
+
+    const permissions: InstantiatePermission = JSON.parse(args[1]);
+    if (permissions?.permission === 'Everybody' || (permissions?.address === contractAddress && permissions?.permission !== 'Nobody')) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const permitted_addresses = permissions.addresses ?? [];
+    if (permitted_addresses.includes(contractAddress)) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
+}
+
 const programHandler = () => {
     const program = new Command();
 
-    program.name('migrate').version('1.0.0').description('Automation for migrating Amplifier contracts');
+    program.name('migrate').version('1.1.0').description('Automation for migrating Amplifier contracts');
 
     addAmplifierOptions(
         program
@@ -86,10 +116,26 @@ const programHandler = () => {
             .addOption(new Option('--address <address>', 'address of contract to check'))
             .addOption(new Option('--coordinator <coordinator address>', 'coordinator address'))
             .addOption(new Option('--multisig <multisig address>', 'multisig address'))
-            .description('check migration succeeded')
+            .description('Check migration succeeded')
             .action((options: MigrationCheckOptions) => {
                 mainQueryProcessor(checkMigration, options, []);
             }),
+    );
+
+    addAmplifierOptions(
+        program
+            .command('coordinator-instantiate-permissions')
+            .argument('<code_id>', 'coordinator will have instantiate permissions for this code id')
+            .argument('<current_permissions>', 'current instantiate permissions for given contract')
+            .addOption(new Option('--address <address>', 'contract address (overrides config)'))
+            .option('--dry', 'only generate migration msg')
+            .description('Give coordinator instantiate permissions for the given code id')
+            .action((codeId: string, currentPermissions: string, options: MigrationOptions) => {
+                mainProcessor(coordinatorInstantiatePermissions, options, [codeId, currentPermissions]);
+            }),
+        {
+            proposalOptions: true,
+        },
     );
 
     program.parse();

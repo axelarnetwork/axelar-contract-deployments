@@ -95,6 +95,6 @@ export async function migrate(
         case '2.1.0':
             return multisigToVersion2_3_1(client, options, config, senderAddress, multisigAddress, fee);
         default:
-            printError(`no migration script found for coordinator ${version}`);
+            printError(`no migration script found for multisig ${version}`);
     }
 }

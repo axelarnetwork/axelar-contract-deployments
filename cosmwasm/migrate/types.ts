@@ -7,6 +7,8 @@ export interface MigrationOptions extends Options {
     dry?: boolean;
     direct?: boolean;
     ignoreChains?: string;
+    title?: string;
+    description?: string;
     codeId?: number;
 }
 
@@ -20,4 +22,10 @@ export interface ProtocolContracts {
     service_registry: string;
     router: string;
     multisig: string;
+}
+
+export interface InstantiatePermission {
+    permission?: string;
+    address?: string;
+    addresses?: string[];
 }
