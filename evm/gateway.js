@@ -292,6 +292,7 @@ async function processCommand(axelar, chain, _chains, options) {
             if (options.messageId) {
                 // Derive commandID for Amplifier gateway
                 commandID = id(`${sourceChain}_${options.messageId}`);
+                printInfo('Command ID', commandID);
             } else {
                 commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
             }

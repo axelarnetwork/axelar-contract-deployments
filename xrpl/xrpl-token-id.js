@@ -2,10 +2,10 @@
 
 const { Command, Option } = require('commander');
 const { addAmplifierQueryOptions } = require('../cosmwasm/cli-utils');
-const { prepareDummyWallet, prepareClient } = require('../cosmwasm/utils');
-const { printInfo, printWarn, printError, ConfigManager } = require('../common');
+const { printInfo, printWarn, printError } = require('../common');
+const { mainQueryProcessor } = require('../cosmwasm/processor');
 
-async function xrplTokenId(client, config, options) {
+async function xrplTokenId(client, config, options, args, fee) {
     const { chainName, issuer, currency } = options;
     const { address } = config.getContractConfigByChain('XrplGateway', chainName);
     if (!address) {
@@ -26,16 +26,6 @@ async function xrplTokenId(client, config, options) {
     }
 }
 
-const mainProcessor = async (processor, options) => {
-    const { env } = options;
-    const config = new ConfigManager(env);
-
-    const wallet = await prepareDummyWallet(options);
-    const client = await prepareClient(config, wallet);
-
-    await processor(client, config, options);
-};
-
 const programHandler = () => {
     const program = new Command();
 
@@ -48,7 +38,7 @@ const programHandler = () => {
     addAmplifierQueryOptions(program);
 
     program.action((options) => {
-        mainProcessor(xrplTokenId, options);
+        mainQueryProcessor(xrplTokenId, options);
     });
 
     program.parse();
