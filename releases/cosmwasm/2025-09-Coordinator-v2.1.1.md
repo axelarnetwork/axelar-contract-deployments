@@ -142,7 +142,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    We have provided a script that submits a proposal to append the coordinator's address to the list of allowed addresses for a given code id. A proposal will not be created if the coordinator is already allowed to instantiate that contract. To execute that script, run:
 
    ```bash
-   ts-node cosmwasm/migrate/migrate.ts coordinator-instantiate-permissions <code id> --deposit 100000000 -e $ENV -t $TITLE -d $DESCRIPTION -m $MNEMONIC
+   ts-node cosmwasm/submit-proposal.js coordinator-instantiate-permissions <code id> --deposit 100000000 -e $ENV -t $TITLE -d $DESCRIPTION -m $MNEMONIC
    ```
 ## Checklist
 

@@ -340,19 +340,19 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
 };
 
 async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
-    permittedAddresses.push(coordinatorAddress);
+    const addresses = [...permittedAddresses, coordinatorAddress];
 
     const updateMsg = JSON.stringify([
         {
             codeId: codeId,
             instantiatePermission: {
                 permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
-                addresses: permittedAddresses,
+                addresses: addresses,
             },
         },
     ]);
 
-    printInfo(`Update Msg: ${JSON.stringify(updateMsg)}`);
+    printInfo(`Update Msg: ${updateMsg}`);
 
     const updateOptions = {
         msg: updateMsg,
@@ -366,9 +366,9 @@ async function instantiatePermissions(client, options, config, senderAddress, co
 
     if (!options.dry) {
         try {
-            printInfo(`Executing migration...\n${JSON.stringify(updateOptions)}`);
+            printInfo(`Executing instantiate params proposal...\n${JSON.stringify(updateOptions)}`);
             await submitProposal(client, config, updateOptions, proposal, fee);
-            printInfo('Migration proposal successfully submitted');
+            printInfo('Instantiate params proposal successfully submitted');
         } catch (e) {
             printError(`Error: ${e}`);
         }

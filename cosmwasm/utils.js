@@ -1166,6 +1166,8 @@ const getCodeDetails = async (config, codeId) => {
         data: data,
     });
 
+    tendermint_client.disconnect();
+
     let response = QueryCodeResponse.decode(value);
 
     return response?.codeInfo;
