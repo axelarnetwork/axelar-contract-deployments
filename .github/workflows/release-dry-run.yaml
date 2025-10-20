@@ -1,0 +1,118 @@
+name: Release Dry-Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - devnet-amplifier
+          - stagenet
+          - testnet
+          - mainnet
+        default: 'testnet'
+
+jobs:
+  dry-run-build:
+    name: Dry Run Build for ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache Cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-git-
+
+      - name: Cache target directory
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-${{ inputs.environment }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-target-${{ inputs.environment }}-
+
+      - name: Build programs for ${{ inputs.environment }}
+        run: |
+          cargo xtask build --network ${{ inputs.environment }}
+
+      - name: List build artifacts
+        run: |
+          echo "Build artifacts for ${{ inputs.environment }}:"
+          ls -lh target/deploy/
+
+      - name: Generate dry run report
+        run: |
+          echo "## Dry Run Results for ${{ inputs.environment }} ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** \`${{ inputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -lh target/deploy/ >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What Would Be Uploaded" >> $GITHUB_STEP_SUMMARY
+          echo "In a real release, these artifacts would be uploaded to:" >> $GITHUB_STEP_SUMMARY
+          echo "\`releases/solana/${{ inputs.environment }}/{version}/\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Programs Built" >> $GITHUB_STEP_SUMMARY
+          for file in target/deploy/*.so; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+              echo "- ✅ $filename ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo $size bytes))" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Validate build outputs
+        run: |
+          echo "Validating build outputs..."
+          PROGRAMS=(
+            "axelar_solana_gateway"
+            "axelar_solana_its"
+            "axelar_solana_gas_service"
+            "axelar_solana_multicall"
+            "axelar_solana_memo_program"
+            "axelar_solana_governance"
+          )
+
+          for program in "${PROGRAMS[@]}"; do
+            if [ ! -f "target/deploy/${program}.so" ]; then
+              echo "❌ Error: ${program}.so not found!"
+              exit 1
+            else
+              echo "✅ ${program}.so found"
+            fi
+          done
+
+          echo "All program artifacts validated successfully!"
+

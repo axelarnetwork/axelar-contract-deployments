@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment for deployment artifacts'
+        required: true
+        type: choice
+        options:
+          - devnet-amplifier
+          - stagenet
+          - testnet
+          - mainnet
+        default: 'mainnet'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-plz:
+    name: Release with release-plz
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run release-plz
+        uses: release-plz/action@v0.5
+        with:
+          command: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  build:
+    name: Build Solana Programs for Release
+    needs: release-plz
+    if: always() && (needs.release-plz.result == 'success' || needs.release-plz.result == 'skipped')
+    uses: ./.github/workflows/_reusable-build.yaml
+    with:
+      update-ids: false
+      commit-changes: false
+    secrets: inherit
+
+  upload-to-r2:
+    name: Upload Release to R2
+    needs: build
+    strategy:
+      matrix:
+        environment:
+          - devnet-amplifier
+          - stagenet
+          - testnet
+          - mainnet
+    uses: ./.github/workflows/_reusable-upload.yaml
+    with:
+      version: ${{ github.event.inputs.tag || github.ref_name }}
+      environment: ${{ matrix.environment }}
+      artifact-name: solana-programs
+    secrets: inherit
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build, upload-to-r2]
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solana-programs
+          path: release-artifacts
+
+      - name: Create release notes
+        id: release-notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "Creating release notes for ${VERSION}..."
+
+          cat > release-notes.md << 'EOF'
+          ## Solana Program Release ${{ github.ref_name }}
+
+          This release includes the following Solana programs:
+
+          - ✅ axelar-solana-gateway
+          - ✅ axelar-solana-its
+          - ✅ axelar-solana-gas-service
+          - ✅ axelar-solana-multicall
+          - ✅ axelar-solana-memo-program
+          - ✅ axelar-solana-governance
+
+          ### Artifacts
+
+          Build artifacts have been uploaded to Cloudflare R2 for all environments:
+          - devnet-amplifier
+          - stagenet
+          - testnet
+          - mainnet
+
+          Access path: `releases/solana/{environment}/${{ github.ref_name }}/`
+
+          ### Verification
+
+          All programs were built using the Solana verifiable build image: ${{ vars.BASE_IMAGE }}
+
+          ### Deployment
+
+          To deploy these programs:
+          1. Download artifacts from R2
+          2. Use the included keypair JSON files with `solana program deploy`
+
+          EOF
+
+          cat release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-artifacts/*.so
+            release-artifacts/*.json
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [release-plz, build, upload-to-r2, create-github-release]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Release Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ github.event.inputs.tag || github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          echo "- release-plz: ${{ needs.release-plz.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- upload-to-r2: ${{ needs.upload-to-r2.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- create-github-release: ${{ needs.create-github-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts Location" >> $GITHUB_STEP_SUMMARY
+          echo "R2 Path: \`releases/solana/{environment}/${{ github.event.inputs.tag || github.ref_name }}/\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "Deploy the programs using your deployment suite with the artifacts from R2." >> $GITHUB_STEP_SUMMARY
+

@@ -1,0 +1,106 @@
+name: Reusable Upload
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version identifier (e.g., v1.0.0 or commit hash)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment: devnet-amplifier, stagenet, testnet, or mainnet'
+        required: true
+        type: string
+      artifact-name:
+        description: 'Name of the artifact to download'
+        required: false
+        type: string
+        default: 'solana-programs'
+
+env:
+  CF_BUCKET_NAME: axelar-static
+  CF_BUCKET_ROOT_KEY: releases/solana
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find artifacts -type f
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Configure AWS CLI for Cloudflare R2
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.CF_BUCKET_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.CF_BUCKET_SECRET_ACCESS_KEY }}
+          aws configure set default.region auto
+
+      - name: Upload to R2
+        env:
+          ENDPOINT_URL: ${{ secrets.CF_ENDPOINT_URL }}
+        run: |
+          TARGET_PATH="s3://${{ env.CF_BUCKET_NAME }}/${{ env.CF_BUCKET_ROOT_KEY }}/${{ inputs.environment }}/${{ inputs.version }}"
+          echo "Uploading to: $TARGET_PATH"
+
+          # Upload all .so files
+          if ls artifacts/*.so 1> /dev/null 2>&1; then
+            for file in artifacts/*.so; do
+              echo "Uploading $(basename $file)..."
+              aws --endpoint-url="$ENDPOINT_URL" s3 cp "$file" "$TARGET_PATH/$(basename $file)" --no-progress
+            done
+          fi
+
+          # Upload all .json keypair files
+          if ls artifacts/*.json 1> /dev/null 2>&1; then
+            for file in artifacts/*.json; do
+              echo "Uploading $(basename $file)..."
+              aws --endpoint-url="$ENDPOINT_URL" s3 cp "$file" "$TARGET_PATH/$(basename $file)" --no-progress
+            done
+          fi
+
+      - name: List uploaded files
+        env:
+          ENDPOINT_URL: ${{ secrets.CF_ENDPOINT_URL }}
+        run: |
+          TARGET_PATH="s3://${{ env.CF_BUCKET_NAME }}/${{ env.CF_BUCKET_ROOT_KEY }}/${{ inputs.environment }}/${{ inputs.version }}"
+          echo "Files uploaded to R2:"
+          aws --endpoint-url="$ENDPOINT_URL" s3 ls "$TARGET_PATH/" || echo "Could not list files"
+
+      - name: Generate artifact manifest
+        run: |
+          echo "Generating artifact manifest..."
+          cat > artifacts/manifest.json << EOF
+          {
+            "version": "${{ inputs.version }}",
+            "environment": "${{ inputs.environment }}",
+            "uploaded_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit_sha": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "artifacts": [
+          $(find artifacts -name "*.so" -o -name "*.json" | while read file; do
+            echo "      \"$(basename $file)\","
+          done | sed '$ s/,$//')
+            ]
+          }
+          EOF
+          cat artifacts/manifest.json
+
+      - name: Upload manifest
+        env:
+          ENDPOINT_URL: ${{ secrets.CF_ENDPOINT_URL }}
+        run: |
+          TARGET_PATH="s3://${{ env.CF_BUCKET_NAME }}/${{ env.CF_BUCKET_ROOT_KEY }}/${{ inputs.environment }}/${{ inputs.version }}"
+          aws --endpoint-url="$ENDPOINT_URL" s3 cp artifacts/manifest.json "$TARGET_PATH/manifest.json" --no-progress
+

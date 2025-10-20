@@ -1,0 +1,137 @@
+name: Reusable Build
+
+on:
+  workflow_call:
+    inputs:
+      network:
+        description: 'Network environment: devnet-amplifier, stagenet, testnet, or mainnet'
+        required: false
+        type: string
+        default: ''
+      update-ids:
+        description: 'Whether to update program IDs'
+        required: false
+        type: boolean
+        default: false
+      commit-changes:
+        description: 'Whether to commit ID changes back to repo'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      artifacts-path:
+        description: 'Path to build artifacts'
+        value: 'target/deploy'
+
+env:
+  BASE_IMAGE: ${{ vars.BASE_IMAGE}}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.PAT_TOKEN || github.token }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install solana-verify
+        run: |
+          cargo install solana-verify
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache Cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-git-
+
+      - name: Cache target directory
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-target-
+
+      - name: Build xtask
+        run: cargo build -p xtask
+
+      - name: Update program IDs
+        if: inputs.update-ids
+        run: cargo xtask update-ids
+
+      - name: Commit updated IDs
+        if: inputs.update-ids && inputs.commit-changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update program IDs [skip ci]"
+            git push
+          fi
+
+      - name: Build axelar-solana-gateway
+        run: |
+          solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
+
+      - name: Build axelar-solana-its
+        run: |
+          solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
+
+      - name: Build axelar-solana-gas-service
+        run: |
+          solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
+
+      - name: Build axelar-solana-multicall
+        run: |
+          solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
+
+      - name: Build axelar-solana-memo-program
+        run: |
+          solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_memo_program
+
+      - name: Build axelar-solana-governance
+        run: |
+          solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
+
+      - name: List build artifacts
+        run: |
+          echo "Build artifacts:"
+          ls -lh target/deploy/
+          echo "Keypair files:"
+          ls -lh *.json || echo "No keypair files found in root"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: solana-programs
+          path: |
+            target/deploy/*.so
+            *.json
+          retention-days: 90
+

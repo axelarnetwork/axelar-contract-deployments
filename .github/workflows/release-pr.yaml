@@ -1,0 +1,87 @@
+name: Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      update-ids:
+        description: 'Update program IDs before creating release PR'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  update-ids:
+    name: Update Program IDs
+    runs-on: ubuntu-latest
+    if: inputs.update-ids
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.PAT_TOKEN || github.token }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Build xtask
+        run: cargo build -p xtask
+
+      - name: Update program IDs
+        run: cargo xtask update-ids
+
+      - name: Commit updated IDs
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update program IDs"
+            git push
+          fi
+
+  release-pr:
+    name: Create Release PR with release-plz
+    runs-on: ubuntu-latest
+    needs: [update-ids]
+    if: always() && (needs.update-ids.result == 'success' || needs.update-ids.result == 'skipped')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run release-plz
+        uses: release-plz/action@v0.5
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: PR Creation Summary
+        run: |
+          echo "## Release PR Creation Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "A release PR has been created (or updated) with the following:" >> $GITHUB_STEP_SUMMARY
+          echo "- Updated CHANGELOGs for modified packages" >> $GITHUB_STEP_SUMMARY
+          echo "- Version bumps based on conventional commits" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Review and merge the PR to trigger the release workflow." >> $GITHUB_STEP_SUMMARY
+

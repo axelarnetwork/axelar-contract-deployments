@@ -1,0 +1,61 @@
+name: Release Upload to R2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Solana Programs
+    uses: ./.github/workflows/_reusable-build.yaml
+    with:
+      update-ids: false
+      commit-changes: false
+    secrets: inherit
+
+  upload-all-environments:
+    name: Upload to R2 (${{ matrix.environment }})
+    needs: build
+    strategy:
+      matrix:
+        environment:
+          - devnet-amplifier
+          - stagenet
+          - testnet
+          - mainnet
+    uses: ./.github/workflows/_reusable-upload.yaml
+    with:
+      version: ${{ github.sha }}
+      environment: ${{ matrix.environment }}
+      artifact-name: solana-programs
+    secrets: inherit
+
+  summary:
+    name: Upload Summary
+    runs-on: ubuntu-latest
+    needs: upload-all-environments
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Build and Upload Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Short SHA:** \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts uploaded to R2 for all environments:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`devnet-amplifier\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`stagenet\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`testnet\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`mainnet\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Programs built:" >> $GITHUB_STEP_SUMMARY
+          echo "- axelar-solana-gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- axelar-solana-its" >> $GITHUB_STEP_SUMMARY
+          echo "- axelar-solana-gas-service" >> $GITHUB_STEP_SUMMARY
+          echo "- axelar-solana-multicall" >> $GITHUB_STEP_SUMMARY
+          echo "- axelar-solana-memo-program" >> $GITHUB_STEP_SUMMARY
+          echo "- axelar-solana-governance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Access artifacts at: \`releases/solana/{environment}/${{ github.sha }}/\`" >> $GITHUB_STEP_SUMMARY
+
