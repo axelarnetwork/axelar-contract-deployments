@@ -50,36 +50,6 @@ async function checkMigration(
     }
 }
 
-async function coordinatorInstantiatePermissions(
-    client: ClientManager,
-    config: FullConfig,
-    options: MigrationOptions,
-    args: string[],
-    fee: string | StdFee,
-): Promise<void> {
-    const senderAddress = client.accounts[0].address;
-    const contractAddress = options.address ?? config.axelar.contracts['Coordinator']?.address;
-    if (args.length < 2 || args[0] === undefined || args[1] === undefined) {
-        throw new Error('code_id and current_permissions arguments are required');
-    }
-    const codeId = Number(args[0]);
-    if (isNaN(codeId)) {
-        throw new Error('code_id must be a valid number');
-    }
-
-    const permissions: InstantiatePermission = JSON.parse(args[1]);
-    if (permissions?.permission === 'Everybody' || (permissions?.address === contractAddress && permissions?.permission !== 'Nobody')) {
-        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
-    }
-
-    const permitted_addresses = permissions.addresses ?? [];
-    if (permitted_addresses.includes(contractAddress)) {
-        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
-    }
-
-    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
-}
-
 const programHandler = () => {
     const program = new Command();
 
@@ -120,22 +90,6 @@ const programHandler = () => {
             .action((options: MigrationCheckOptions) => {
                 mainQueryProcessor(checkMigration, options, []);
             }),
-    );
-
-    addAmplifierOptions(
-        program
-            .command('coordinator-instantiate-permissions')
-            .argument('<code_id>', 'coordinator will have instantiate permissions for this code id')
-            .argument('<current_permissions>', 'current instantiate permissions for given contract')
-            .addOption(new Option('--address <address>', 'contract address (overrides config)'))
-            .option('--dry', 'only generate migration msg')
-            .description('Give coordinator instantiate permissions for the given code id')
-            .action((codeId: string, currentPermissions: string, options: MigrationOptions) => {
-                mainProcessor(coordinatorInstantiatePermissions, options, [codeId, currentPermissions]);
-            }),
-        {
-            proposalOptions: true,
-        },
     );
 
     program.parse();

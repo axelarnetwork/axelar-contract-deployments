@@ -3,8 +3,8 @@
 require('../common/cli-utils');
 
 const { createHash } = require('crypto');
-
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 
 const {
     CONTRACTS,
@@ -13,6 +13,7 @@ const {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -22,6 +23,7 @@ const {
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
+    encodeUpdateInstantiateConfigProposal,
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
@@ -339,6 +341,71 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     };
 };
 
+export async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
+    permittedAddresses.push(coordinatorAddress);
+
+    const updateMsg = JSON.stringify([
+        {
+            codeId: codeId,
+            instantiatePermission: {
+                permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
+                addresses: permittedAddresses,
+            },
+        },
+    ]);
+
+    printInfo(`Update Msg: ${JSON.stringify(updateMsg)}`);
+
+    const updateOptions = {
+        msg: updateMsg,
+        title: options.title,
+        description: options.description,
+        runAs: senderAddress,
+        deposit: options.deposit,
+    };
+
+    const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
+
+    if (!options.dry) {
+        try {
+            printInfo(`Executing migration...\n${JSON.stringify(updateOptions)}`);
+            await submitProposal(client, config, updateOptions, proposal, fee);
+            printInfo('Migration proposal successfully submitted');
+        } catch (e) {
+            printError(`Error: ${e}`);
+        }
+    }
+}
+
+async function coordinatorInstantiatePermissions(client, config, options, args, fee) {
+    const senderAddress = client.accounts[0].address;
+    const contractAddress = options.address ?? config.axelar.contracts['Coordinator']?.address;
+    if (args.length < 1 || args[0] === undefined) {
+        throw new Error('code_id and current_permissions arguments are required');
+    }
+    const codeId = Number(args[0]);
+    if (isNaN(codeId)) {
+        throw new Error('code_id must be a valid number');
+    }
+
+    const codeDetails = await getCodeDetails(config, codeId);
+    const permissions = codeDetails.instantiatePermission;
+
+    if (
+        permissions?.permission === AccessType.ACCESS_TYPE_EVERYBODY ||
+        (permissions?.address === contractAddress && permissions?.permission !== AccessType.ACCESS_TYPE_NOBODY)
+    ) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const permitted_addresses = permissions.addresses ?? [];
+    if (permitted_addresses.includes(contractAddress)) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -459,6 +526,21 @@ const programHandler = () => {
         fetchCodeId: true,
         instantiateOptions: true,
     });
+
+    addAmplifierOptions(
+        program
+            .command('coordinator-instantiate-permissions')
+            .argument('<code_id>', 'coordinator will have instantiate permissions for this code id')
+            .addOption(new Option('--address <address>', 'contract address (overrides config)'))
+            .option('--dry', 'only generate migration msg')
+            .description('Give coordinator instantiate permissions for the given code id')
+            .action((codeId, options) => {
+                mainProcessor(coordinatorInstantiatePermissions, options, [codeId]);
+            }),
+        {
+            proposalOptions: true,
+        },
+    );
 
     program.parse();
 };

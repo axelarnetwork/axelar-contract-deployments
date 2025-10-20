@@ -13,7 +13,9 @@ const {
     UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
+const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
     isString,
@@ -1338,6 +1340,24 @@ const initContractConfig = (config, options) => {
     }
 };
 
+const getCodeDetails = async (config, codeId) => {
+    console.log(config?.axelar?.rpc);
+    const tendermint_client = await Tendermint34Client.connect(config?.axelar?.rpc);
+
+    const data = QueryCodeRequest.encode({
+        codeId: BigInt(codeId),
+    }).finish();
+
+    const { value } = await tendermint_client.abciQuery({
+        path: '/cosmwasm.wasm.v1.Query/Code',
+        data: data,
+    });
+
+    let response = QueryCodeResponse.decode(value);
+
+    return response?.codeInfo;
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1411,6 +1431,7 @@ module.exports = {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
     executeTransaction,
     uploadContract,
     instantiateContract,
