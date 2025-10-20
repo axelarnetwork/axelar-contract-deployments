@@ -237,7 +237,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN`config within`ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
