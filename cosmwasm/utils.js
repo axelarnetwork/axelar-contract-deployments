@@ -98,7 +98,8 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const executeTransaction = async (client, account, contractAddress, message, fee) => {
+const executeTransaction = async (client, contractAddress, message, fee) => {
+    const [account] = client.accounts;
     const tx = await client.execute(account.address, contractAddress, message, fee, '');
     return tx;
 };
