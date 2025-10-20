@@ -126,13 +126,13 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     ```bash
     ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
-    -n $CHAIN \
-    -s "$SALT" \
-    --fetchCodeId \
-    -t "Instantiate contracts for $CHAIN" \
-    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" \
-    --admin "$CONTRACT_ADMIN" \
-    --runAs "<governanceAddress>"
+        -n $CHAIN \
+        -s "$SALT" \
+        --fetchCodeId \
+        -t "Instantiate contracts for $CHAIN" \
+        -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" \
+        --admin "$CONTRACT_ADMIN" \
+        --runAs "[governanceAddress]"
     ```
 
 1. Wait for proposal to pass and query deployed contract addresses
@@ -145,10 +145,10 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     ```bash
     ts-node cosmwasm/submit-proposal register-deployment \
-    -n $CHAIN \
-    -t "Register deployment for $CHAIN" \
-    -d "Register deployment for $CHAIN in the Coordinator" \
-    --runAs "<governanceAddress>"
+        -n $CHAIN \
+        -t "Register deployment for $CHAIN" \
+        -d "Register deployment for $CHAIN in the Coordinator" \
+        --runAs "[governanceAddress]"
     ```
 
 1. Set environment variables
@@ -195,44 +195,44 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for $CHAIN in $CHAIN voting verifier" \
-    -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-    --msg "{
-        \"create_pool\": {
-            \"params\": {
-                \"epoch_duration\": \"$EPOCH_DURATION\",
-                \"participation_threshold\": [participation threshold],
-                \"rewards_per_epoch\": \"[rewards per epoch]\"
-            },
-            \"pool_id\": {
-                \"chain_name\": \"$CHAIN\",
-                \"contract\": \"$VOTING_VERIFIER\"
+        -c Rewards \
+        -t "Create pool for $CHAIN in $CHAIN voting verifier" \
+        -d "Create pool for $CHAIN in $CHAIN voting verifier" \
+        --msg "{
+            \"create_pool\": {
+                \"params\": {
+                    \"epoch_duration\": \"$EPOCH_DURATION\",
+                    \"participation_threshold\": [participation threshold],
+                    \"rewards_per_epoch\": \"[rewards per epoch]\"
+                },
+                \"pool_id\": {
+                    \"chain_name\": \"$CHAIN\",
+                    \"contract\": \"$VOTING_VERIFIER\"
+                }
             }
-        }
-    }"
+        }"
     ```
 
 1. Create reward pool for multisig
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for $CHAIN in axelar multisig" \
-    -d "Create pool for $CHAIN in axelar multisig" \
-    --msg "{
-        \"create_pool\": {
-            \"params\": {
-                \"epoch_duration\": \"$EPOCH_DURATION\",
-                \"participation_threshold\": [participation threshold],
-                \"rewards_per_epoch\": \"[rewards per epoch]\"
-            },
-            \"pool_id\": {
-                \"chain_name\": \"$CHAIN\",
-                \"contract\": \"$MULTISIG\"
+        ts-node cosmwasm/submit-proposal.js execute \
+        -c Rewards \
+        -t "Create pool for $CHAIN in axelar multisig" \
+        -d "Create pool for $CHAIN in axelar multisig" \
+        --msg "{
+            \"create_pool\": {
+                \"params\": {
+                    \"epoch_duration\": \"$EPOCH_DURATION\",
+                    \"participation_threshold\": [participation threshold],
+                    \"rewards_per_epoch\": \"[rewards per epoch]\"
+                },
+                \"pool_id\": {
+                    \"chain_name\": \"$CHAIN\",
+                    \"contract\": \"$MULTISIG\"
+                }
             }
-        }
-    }"
+        }"
     ```
 
 1. Register ITS edge contract on ITS Hub
