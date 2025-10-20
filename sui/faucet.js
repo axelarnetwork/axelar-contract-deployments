@@ -21,11 +21,11 @@ async function processCommand(config, chain, options) {
     const host = getFaucetHost(chain.networkType);
 
     switch (chain.networkType) {
-        case 'localnet': {
-            /// @deprecated: requestSuiFromFaucetV0
-            await requestSuiFromFaucetV0({ host, recipient });
-            break;
-        }
+        // case 'localnet': {
+        //     /// @deprecated: requestSuiFromFaucetV0
+        //     await requestSuiFromFaucetV0({ host, recipient });
+        //     break;
+        // }
         default: {
             await requestSuiFromFaucetV2({ host, recipient });
         }
