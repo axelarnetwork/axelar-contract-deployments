@@ -1024,32 +1024,29 @@ fn parse_gateway_event(data: &[u8]) -> Option<GatewayEvent> {
     let disc = &data[8..16];
     let event_data = &data[16..];
 
-    if disc == CallContractEvent::DISCRIMINATOR {
-        let event = CallContractEvent::try_from_slice(event_data).ok()?;
-        return Some(GatewayEvent::CallContract(event));
+    match disc {
+        CallContractEvent::DISCRIMINATOR => {
+            let event = CallContractEvent::try_from_slice(event_data).ok()?;
+            Some(GatewayEvent::CallContract(event))
+        }
+        VerifierSetRotatedEvent::DISCRIMINATOR => {
+            let event = VerifierSetRotatedEvent::try_from_slice(event_data).ok()?;
+            Some(GatewayEvent::VerifierSetRotated(event))
+        }
+        OperatorshipTransferredEvent::DISCRIMINATOR => {
+            let event = OperatorshipTransferredEvent::try_from_slice(event_data).ok()?;
+            Some(GatewayEvent::OperatorshipTransferred(event))
+        }
+        MessageApprovedEvent::DISCRIMINATOR => {
+            let event = MessageApprovedEvent::try_from_slice(event_data).ok()?;
+            Some(GatewayEvent::MessageApproved(event))
+        }
+        MessageExecutedEvent::DISCRIMINATOR => {
+            let event = MessageExecutedEvent::try_from_slice(event_data).ok()?;
+            Some(GatewayEvent::MessageExecuted(event))
+        }
+        _ => None,
     }
-
-    if disc == VerifierSetRotatedEvent::DISCRIMINATOR {
-        let event = VerifierSetRotatedEvent::try_from_slice(event_data).ok()?;
-        return Some(GatewayEvent::VerifierSetRotated(event));
-    }
-
-    if disc == OperatorshipTransferredEvent::DISCRIMINATOR {
-        let event = OperatorshipTransferredEvent::try_from_slice(event_data).ok()?;
-        return Some(GatewayEvent::OperatorshipTransferred(event));
-    }
-
-    if disc == MessageApprovedEvent::DISCRIMINATOR {
-        let event = MessageApprovedEvent::try_from_slice(event_data).ok()?;
-        return Some(GatewayEvent::MessageApproved(event));
-    }
-
-    if disc == MessageExecutedEvent::DISCRIMINATOR {
-        let event = MessageExecutedEvent::try_from_slice(event_data).ok()?;
-        return Some(GatewayEvent::MessageExecuted(event));
-    }
-
-    None
 }
 
 fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> {
