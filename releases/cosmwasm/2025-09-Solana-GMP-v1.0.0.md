@@ -84,6 +84,30 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
 RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 ```
 
+1. Store VotingVerifier:
+
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+        -c VotingVerifier \
+        -t "Upload VotingVerifier contract for Solana" \
+        -d "Upload VotingVerifier contract for Solana integration" \
+        -a "$ARTIFACT_PATH" \
+        --chainName $CHAIN \
+        -m $MNEMONIC
+    ```
+
+1. Store Gateway:
+
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+        -c Gateway \
+        -t "Upload Gateway contract for Solana" \
+        -d "Upload Gateway contract for Solana integration" \
+        -a "$ARTIFACT_PATH" \
+        --chainName $CHAIN \
+        -m $MNEMONIC
+    ```
+
 1. Store SolanaMultisigProver:
 
     ```bash
@@ -126,8 +150,6 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
   "keyType": "ecdsa"
 }
 ```
-
-- Return to 'Initialization Steps' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
 
 ### Instantiate Amplifier Contracts
 
@@ -385,6 +407,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     # Query the multisig prover for active verifier set
     axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
     ```
+
+- Return to 'Initialization Steps:Initialize Gateway' in the [Solana GMP](../solana/2025-09-GMP-vanilla.md)
 
 ## Checklist
 

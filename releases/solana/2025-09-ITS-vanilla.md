@@ -33,12 +33,12 @@ This is the vanilla Solana ITS release.
 
 1. Ensure you have access to the keypairs for the following accounts, unless you plan to generate new keypairs (below):
 
-    | Axelar Env           | Authority                          | Operator                           |
-    | -------------------- | ---------------------------------- | ---------------------------------- |
-    | **Devnet-amplifier** | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Stagenet**         | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Testnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Mainnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
+    | Axelar Env           | Authority                                     | Operator                                      |
+    | -------------------- | --------------------------------------------- | --------------------------------------------- |
+    | **Devnet-amplifier** | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | `gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18` |
+    | **Stagenet**         | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Testnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Mainnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
 
 1. Create an `.env` config with the following:
 
@@ -177,10 +177,17 @@ This is the vanilla Solana ITS release.
 
 The initialization steps can only be performed by the upgrade authority.
 
+1. Based on the PDA tables, set the following variables:
+
+    ```sh
+    OPERATOR_PDA="[operator-pda]"
+    ITS_PDA="[its-pda]"
+    ```
+
 1. Initialize ITS:
 
     ```sh
-    solana/cli send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
+    solana/cli send its init --operator $OPERATOR_PDA
     ```
 
 1. Register Solana ITS on ITS Hub:
