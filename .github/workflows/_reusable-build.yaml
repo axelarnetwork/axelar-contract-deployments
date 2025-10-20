@@ -24,7 +24,7 @@ on:
         value: 'target/deploy'
 
 env:
-  BASE_IMAGE: ${{ vars.BASE_IMAGE}}
+  BASE_IMAGE: ${{ vars.BASE_IMAGE }}
 
 jobs:
   build:
