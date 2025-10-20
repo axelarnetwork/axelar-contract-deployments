@@ -3538,9 +3538,9 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "266",
         "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
-        "codeId": 19,
+        "codeId": 42,
         "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93",
-        "executeProposalId": "242"
+        "executeProposalId": "382"
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -3581,10 +3581,10 @@
         "blockExpiry": 10,
         "storeCodeProposalId": "383",
         "storeCodeProposalCodeHash": "78919bd79976f9e22a632b8301e219819900161c94914ee6fdf49a3b6d9db272",
-        "codeId": 33,
+        "codeId": 44,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
-        "executeProposalId": "244",
-        "lastUploadedCodeId": 33
+        "executeProposalId": "383",
+        "lastUploadedCodeId": 44
       },
       "MultisigProver": {
         "flow": {
