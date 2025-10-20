@@ -13,6 +13,7 @@ use axelar_solana_gateway::BytemuckedPda;
 use axelar_solana_gateway::events::GatewayEvent;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
+use base64::Engine as _;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
@@ -963,7 +964,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
         for inner_ix in &inner_ix_set.instructions {
             let data = match inner_ix {
                 UiInstruction::Compiled(compiled_ix) => {
-                    match bs58::decode(&compiled_ix.data).into_vec() {
+                    match base64::engine::general_purpose::STANDARD.decode(&compiled_ix.data) {
                         Ok(d) => d,
                         Err(_) => continue,
                     }
