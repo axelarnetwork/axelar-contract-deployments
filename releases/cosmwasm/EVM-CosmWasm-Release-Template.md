@@ -1,7 +1,7 @@
 # &lt; ChainName &gt; GMP Amplifier vX.X.X
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                                |
+| -------------- | ---------------------------------------- |
 | **Created By** | @[github-username] <user@interoplabs.io> |
 | **Deployment** | @[github-username] <user@interoplabs.io> |
 
@@ -138,7 +138,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
+    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
     ```
 
 1. Register deployment
@@ -152,7 +152,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Set environment variables
-
     - These variables are network-specific
 
     ```bash
@@ -238,7 +237,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN`config within`ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -273,13 +272,12 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Confirm proposals have passed
-
     - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
-      - "Instantiate contracts for `$CHAIN`"
-      - "Register deployment for `$CHAIN`"
-      - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
-      - "Create pool for `$CHAIN` in axelar multisig"
-      - (optional) "Register `$CHAIN` on ITS Hub"
+        - "Instantiate contracts for `$CHAIN`"
+        - "Register deployment for `$CHAIN`"
+        - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
+        - "Create pool for `$CHAIN` in axelar multisig"
+        - (optional) "Register `$CHAIN` on ITS Hub"
 
     - Check Gateway registered at Router
 
