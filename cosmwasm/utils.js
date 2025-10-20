@@ -900,8 +900,7 @@ const addCoordinatorToInstantiateAddresses = (contractName, instantiateAddresses
 
     if (!coordinatorAddress) {
         throw new Error(
-            `Coordinator address not found in config for environment ${env}. ` +
-                `This is required for instantiating ${contractName}.`,
+            `Coordinator address not found in config for environment ${env}. ` + `This is required for instantiating ${contractName}.`,
         );
     }
 
