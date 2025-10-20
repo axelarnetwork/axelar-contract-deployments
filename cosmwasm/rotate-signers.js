@@ -44,12 +44,7 @@ const confirmVerifierRotation = async (client, config, _options, [chain, txHash]
             new_verifier_set: nextVerifierSet,
         },
     };
-    let { transactionHash } = await executeTransaction(
-        client,
-        config.axelar.contracts.VotingVerifier[chain].address,
-        verificationSet,
-        fee,
-    );
+    let { transactionHash } = await executeTransaction(client, config.axelar.contracts.VotingVerifier[chain].address, verificationSet, fee);
     printInfo('Initiate verifier set verification', transactionHash);
 
     let rotationPollStatus = await getVerifierSetStatus(config, chain, client, nextVerifierSet);
@@ -66,9 +61,8 @@ const confirmVerifierRotation = async (client, config, _options, [chain, txHash]
 
     printInfo('Poll passed for verifier set rotation');
 
-    transactionHash = (
-        await executeTransaction(client, config.axelar.contracts.MultisigProver[chain].address, 'confirm_verifier_set', fee)
-    ).transactionHash;
+    transactionHash = (await executeTransaction(client, config.axelar.contracts.MultisigProver[chain].address, 'confirm_verifier_set', fee))
+        .transactionHash;
     printInfo('Confirm verifier set rotation', transactionHash);
 };
 

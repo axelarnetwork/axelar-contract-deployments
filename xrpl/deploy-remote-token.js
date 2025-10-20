@@ -8,7 +8,7 @@ const { mainProcessor } = require('../cosmwasm/processor');
 const { Err } = require('@stellar/stellar-sdk/contract');
 
 const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
-const RESERVE_CURRENCY = 'XRP'
+const RESERVE_CURRENCY = 'XRP';
 
 const deployRemoteToken = async (client, config, options, args, fee) => {
     // TODO: Add validation or retrieve token informaiton from on-chain
@@ -22,15 +22,17 @@ const deployRemoteToken = async (client, config, options, args, fee) => {
 
     // For XRP, use the Xrp variant instead of issued
     const isXrp = currency === RESERVE_CURRENCY;
-    
+
     const execMsg = {
         deploy_remote_token: {
-            xrpl_token: isXrp ? 'xrp' : {
-                issued: {
-                    issuer,
-                    currency,
-                },
-            },
+            xrpl_token: isXrp
+                ? 'xrp'
+                : {
+                      issued: {
+                          issuer,
+                          currency,
+                      },
+                  },
             destination_chain: destinationChain,
             token_metadata: {
                 name: tokenName,
@@ -43,14 +45,14 @@ const deployRemoteToken = async (client, config, options, args, fee) => {
 
     printInfo('Initiated remote token deployment', transactionHash);
 
-    const contractCalledEvent = events.find(e => e.type === CONTRACT_CALLED_EVENT_TYPE);
+    const contractCalledEvent = events.find((e) => e.type === CONTRACT_CALLED_EVENT_TYPE);
     if (!contractCalledEvent) {
         throw new Error(`${CONTRACT_CALLED_EVENT_TYPE} event not found`);
     }
 
-    const messageId = contractCalledEvent.attributes.find(attr => attr.key === 'message_id')?.value;
-    const payload = contractCalledEvent.attributes.find(attr => attr.key === 'payload')?.value;
-    
+    const messageId = contractCalledEvent.attributes.find((attr) => attr.key === 'message_id')?.value;
+    const payload = contractCalledEvent.attributes.find((attr) => attr.key === 'payload')?.value;
+
     validateParameters({ isString: { messageId, payload } });
 
     printInfo('Message ID', messageId);
