@@ -2,13 +2,12 @@
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
-const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
+const { executeTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
 const { mainCosmosProcessor } = require('./utils');
 
 const registerLocalToken = async (config, options, wallet, client, fee) => {
     const { chainName, issuer, currency } = options;
-    const [account] = await wallet.getAccounts();
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
     if (!xrplGateway) {
@@ -25,7 +24,7 @@ const registerLocalToken = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
+    const { transactionHash } = await executeTransaction(client, xrplGateway.address, execMsg, fee);
 
     printInfo('Registered local token', transactionHash);
 };

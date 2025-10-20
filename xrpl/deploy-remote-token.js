@@ -3,10 +3,12 @@
 const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
 const { executeTransaction } = require('../cosmwasm/utils');
-const { printInfo, printError } = require('../common');
+const { printInfo, printError, validateParameters } = require('../common');
 const { mainProcessor } = require('../cosmwasm/processor');
+const { Err } = require('@stellar/stellar-sdk/contract');
 
 const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
+const RESERVE_CURRENCY = 'XRP'
 
 const deployRemoteToken = async (client, config, options, args, fee) => {
     const { chainName, issuer, currency, tokenName, tokenSymbol, destinationChain } = options;
@@ -19,7 +21,7 @@ const deployRemoteToken = async (client, config, options, args, fee) => {
     }
 
     // For XRP, use the Xrp variant instead of issued
-    const isXrp = currency === 'XRP';
+    const isXrp = currency === RESERVE_CURRENCY;
     
     const execMsg = {
         deploy_remote_token: {
@@ -41,25 +43,18 @@ const deployRemoteToken = async (client, config, options, args, fee) => {
 
     printInfo('Initiated remote token deployment', transactionHash);
 
-    try {
-        const contractCalledEvent = events.find(e => e.type === CONTRACT_CALLED_EVENT_TYPE);
-        if (!contractCalledEvent) {
-            throw new Error(`${CONTRACT_CALLED_EVENT_TYPE} event not found`);
-        }
-
-        const messageId = contractCalledEvent.attributes.find(attr => attr.key === 'message_id')?.value;
-        const payload = contractCalledEvent.attributes.find(attr => attr.key === 'payload')?.value;
-        
-        if (!messageId || !payload) {
-            throw new Error('Message ID or payload not found in event');
-        }
-
-        printInfo('Message ID', messageId);
-        printInfo('Payload', payload);
-    } catch (err) {
-        printError(err.message);
-        process.exit(1);
+    const contractCalledEvent = events.find(e => e.type === CONTRACT_CALLED_EVENT_TYPE);
+    if (!contractCalledEvent) {
+        throw new Error(`${CONTRACT_CALLED_EVENT_TYPE} event not found`);
     }
+
+    const messageId = contractCalledEvent.attributes.find(attr => attr.key === 'message_id')?.value;
+    const payload = contractCalledEvent.attributes.find(attr => attr.key === 'payload')?.value;
+    
+    validateParameters({ isString: { messageId, payload } });
+
+    printInfo('Message ID', messageId);
+    printInfo('Payload', payload);
 };
 
 const programHandler = () => {

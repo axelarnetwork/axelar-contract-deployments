@@ -8,7 +8,6 @@ const { mainProcessor } = require('../cosmwasm/processor');
 
 const registerRemoteToken = async (client, config, options, args, fee) => {
     const { chainName, tokenId, currency } = options;
-    const [account] = client.accounts;
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
     if (!xrplGateway) {
@@ -23,7 +22,7 @@ const registerRemoteToken = async (client, config, options, args, fee) => {
         },
     };
 
-    const { transactionHash } = await executeTransaction(client, account, xrplGateway.address, execMsg, fee);
+    const { transactionHash } = await executeTransaction(client, xrplGateway.address, execMsg, fee);
 
     printInfo('Registered remote token', transactionHash);
 };
