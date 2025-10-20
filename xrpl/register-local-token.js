@@ -4,9 +4,9 @@ const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
 const { executeTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
-const { mainCosmosProcessor } = require('./utils');
+const { mainProcessor } = require('../cosmwasm/processor');
 
-const registerLocalToken = async (config, options, wallet, client, fee) => {
+const registerLocalToken = async (client, config, options, args, fee) => {
     const { chainName, issuer, currency } = options;
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
@@ -44,7 +44,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        mainCosmosProcessor(registerLocalToken, options);
+        mainProcessor(registerLocalToken, options);
     });
 
     program.parse();

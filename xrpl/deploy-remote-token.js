@@ -5,7 +5,6 @@ const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-uti
 const { executeTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError, validateParameters } = require('../common');
 const { mainProcessor } = require('../cosmwasm/processor');
-const { Err } = require('@stellar/stellar-sdk/contract');
 
 const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
 const RESERVE_CURRENCY = 'XRP';
