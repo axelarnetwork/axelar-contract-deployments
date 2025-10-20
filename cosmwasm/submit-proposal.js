@@ -24,6 +24,7 @@ const {
     submitProposal,
     validateItsChainChange,
     COORDINATOR_INSTANTIATED_CONTRACTS,
+    addCoordinatorToInstantiateAddresses,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
@@ -80,21 +81,14 @@ const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
     const contractBaseConfig = config.getContractConfig(contractName);
 
-    if (COORDINATOR_INSTANTIATED_CONTRACTS.includes(contractName)) {
-        const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
-
-        if (!coordinatorAddress) {
-            throw new Error(
-                `Coordinator address not found in config for environment ${options.env}. ` +
-                    `This is required for instantiating ${contractName}.`,
-            );
-        }
-
-        const existingAddresses = options.instantiateAddresses || [];
-        const allAddresses = [...existingAddresses, coordinatorAddress];
-
-        options.instantiateAddresses = [...new Set(allAddresses)];
-    }
+    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
+    const instantiateAddresses = addCoordinatorToInstantiateAddresses(
+        contractName,
+        options.instantiateAddresses,
+        coordinatorAddress,
+        options.env,
+    );
+    options = { ...options, instantiateAddresses };
 
     const proposal = encodeStoreCodeProposal(options);
 

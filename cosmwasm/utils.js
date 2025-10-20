@@ -893,6 +893,21 @@ const getStoreInstantiateParams = (_config, options, msg) => {
     };
 };
 
+const addCoordinatorToInstantiateAddresses = (contractName, instantiateAddresses, coordinatorAddress, env) => {
+    if (!COORDINATOR_INSTANTIATED_CONTRACTS.includes(contractName)) {
+        return instantiateAddresses;
+    }
+
+    if (!coordinatorAddress) {
+        throw new Error(
+            `Coordinator address not found in config for environment ${env}. ` +
+                `This is required for instantiating ${contractName}.`,
+        );
+    }
+
+    return [...new Set([...(instantiateAddresses || []), coordinatorAddress])];
+};
+
 const getInstantiateContractParams = (config, options, msg) => {
     const { admin } = options;
 
@@ -1214,6 +1229,7 @@ module.exports = {
     AXELAR_GATEWAY_CONTRACT_NAME,
     MULTISIG_PROVER_CONTRACT_NAME,
     COORDINATOR_INSTANTIATED_CONTRACTS,
+    addCoordinatorToInstantiateAddresses,
     fromHex,
     getSalt,
     calculateDomainSeparator,
