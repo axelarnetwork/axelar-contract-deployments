@@ -1,5 +1,6 @@
 'use strict';
 
+const fetch = require('node-fetch');
 const zlib = require('zlib');
 const { createHash } = require('crypto');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
@@ -13,6 +14,8 @@ const {
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
+const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
+const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 const {
     printInfo,
     isString,
@@ -46,6 +49,8 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
+const GOVERNANCE_MODULE_ADDRESS = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -61,6 +66,64 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
+
+const getSDKVersion = async (config) => {
+    if (!config.axelar?.lcd) {
+        throw new Error('LCD endpoint not found in config');
+    }
+
+    const url = `${config.axelar.lcd}/cosmos/base/tendermint/v1beta1/node_info`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const sdkVersion = data?.application_version?.cosmos_sdk_version;
+
+        if (!sdkVersion) {
+            throw new Error('cosmos_sdk_version not found in response');
+        }
+
+        return sdkVersion;
+    } catch (error) {
+        throw new Error(`Failed to fetch SDK version from ${url}: ${error.message}`);
+    }
+};
+
+const parseSDKVersion = (version) => {
+    const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
+
+    const parts = cleanVersion.split('.');
+    if (parts.length < 2) {
+        throw new Error(`Invalid SDK version format: ${version}`);
+    }
+
+    const major = parseInt(parts[0], 10);
+    const minor = parseInt(parts[1], 10);
+
+    if (isNaN(major) || isNaN(minor)) {
+        throw new Error(`Invalid SDK version format: ${version}`);
+    }
+
+    return { major, minor };
+};
+
+const isPreV50SDK = async (config) => {
+    let version;
+
+    if (config.axelar?.cosmosSDKVersion) {
+        version = config.axelar.cosmosSDKVersion;
+    } else {
+        version = await getSDKVersion(config);
+        config.axelar.cosmosSDKVersion = version;
+    }
+
+    const { major, minor } = parseSDKVersion(version);
+    return major === 0 && minor < 50;
+};
 
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     const contractBaseConfig = config.getContractConfig(contractName);
@@ -950,12 +1013,36 @@ const getMigrateContractParams = (config, options) => {
     };
 };
 
-const encodeStoreCodeProposal = (options) => {
+const encodeStoreCodeProposalLegacy = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
         value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeStoreCodeMessage = (options) => {
+    const { source, builder, instantiateAddresses } = options;
+
+    const wasm = readContractCode(options);
+
+    const instantiatePermission =
+        instantiateAddresses && instantiateAddresses.length > 0
+            ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+            : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
+
+    const storeMsg = MsgStoreCode.fromPartial({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        wasmByteCode: zlib.gzipSync(wasm),
+        instantiatePermission,
+        source,
+        builder,
+    });
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
+        value: Uint8Array.from(MsgStoreCode.encode(storeMsg).finish()),
     };
 };
 
@@ -994,12 +1081,34 @@ const encodeInstantiate2Proposal = (config, options, msg) => {
     };
 };
 
-const encodeExecuteContractProposal = (config, options, chainName) => {
+const encodeExecuteContractProposalLegacy = (config, options, chainName) => {
     const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
         value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeExecuteContractMessage = (config, options, chainName) => {
+    const { contractName, msg } = options;
+    const {
+        axelar: {
+            contracts: { [contractName]: contractConfig },
+        },
+    } = config;
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    const executeMsg = MsgExecuteContract.fromPartial({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
+        msg: Buffer.from(msg),
+        funds: [],
+    });
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+        value: Uint8Array.from(MsgExecuteContract.encode(executeMsg).finish()),
     };
 };
 
@@ -1021,7 +1130,7 @@ const encodeMigrateContractProposal = (config, options) => {
     };
 };
 
-const encodeSubmitProposal = (content, config, options, proposer) => {
+const encodeSubmitProposalLegacy = (content, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
     } = config;
@@ -1033,6 +1142,25 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
             content,
             initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
             proposer,
+        }),
+    };
+};
+
+const encodeSubmitProposal = (messages, config, options, proposer) => {
+    const {
+        axelar: { tokenSymbol },
+    } = config;
+    const { deposit, title, description } = options;
+
+    return {
+        typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
+        value: MsgSubmitProposalV1.fromPartial({
+            messages: messages,
+            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
+            proposer,
+            metadata: '',
+            title,
+            summary: description,
         }),
     };
 };
@@ -1059,14 +1187,37 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
-const submitProposal = async (client, config, options, content, fee) => {
+const submitProposalLegacy = async (client, config, options, content, fee) => {
     const [account] = client.accounts;
 
-    const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+    const submitProposalMsg = encodeSubmitProposalLegacy(content, config, options, account.address);
 
     const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
+};
+
+const submitProposal = async (client, config, options, messages, fee) => {
+    const [account] = await client.signer.getAccounts();
+    printInfo('Proposer address', account.address);
+
+    const submitProposalMsg = encodeSubmitProposal(messages, config, options, account.address);
+
+    const result = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+
+    const { events } = result;
+
+    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
+    if (!proposalEvent) {
+        throw new Error('Proposal submission event not found');
+    }
+
+    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
+    if (!proposalId) {
+        throw new Error('Proposal ID not found in events');
+    }
+
+    return proposalId;
 };
 
 const getContractR2Url = (contractName, contractVersion) => {
@@ -1105,6 +1256,161 @@ const getContractCodePath = async (options, contractName) => {
 
 const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
     return {};
+};
+
+const getVerifierInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: {
+            contracts: {
+                ServiceRegistry: { address: serviceRegistryAddress },
+                Rewards: { address: rewardsAddress },
+                VotingVerifier: { [chainName]: verifierConfig },
+            },
+        },
+    } = config;
+
+    if (!verifierConfig) {
+        throw new Error(`VotingVerifier config not found for chain ${chainName}`);
+    }
+
+    const {
+        governanceAddress,
+        serviceName,
+        sourceGatewayAddress,
+        votingThreshold,
+        blockExpiry,
+        confirmationHeight,
+        msgIdFormat,
+        addressFormat,
+    } = verifierConfig;
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(rewardsAddress)) {
+        throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isString(sourceGatewayAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
+    }
+
+    if (!isStringArray(votingThreshold)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
+    }
+
+    if (!isNumber(blockExpiry)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
+    }
+
+    if (!isNumber(confirmationHeight)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
+    }
+
+    if (!isString(msgIdFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
+    }
+
+    if (!isString(addressFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
+    }
+
+    return {
+        service_registry_address: serviceRegistryAddress,
+        governance_address: governanceAddress,
+        service_name: serviceName,
+        source_gateway_address: sourceGatewayAddress,
+        voting_threshold: votingThreshold,
+        block_expiry: toBigNumberString(blockExpiry),
+        confirmation_height: confirmationHeight,
+        source_chain: chainName,
+        rewards_address: rewardsAddress,
+        msg_id_format: msgIdFormat,
+        address_format: addressFormat,
+    };
+};
+
+const getProverInstantiateMsg = (config, chainName) => {
+    const {
+        axelar: {
+            contracts: {
+                MultisigProver: { [chainName]: proverConfig },
+            },
+            chainId: axelarChainId,
+        },
+    } = config;
+
+    if (!proverConfig) {
+        throw new Error(`MultisigProver config not found for chain ${chainName}`);
+    }
+
+    const { governanceAddress, adminAddress, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType, domainSeparator } =
+        proverConfig;
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!isStringArray(signingThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
+    }
+
+    if (!isString(encoder)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
+    }
+
+    if (!isString(keyType)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
+    }
+
+    const routerAddress = config.axelar.contracts.Router?.address;
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+
+    if (!isKeccak256Hash(separator)) {
+        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
+    }
+
+    return {
+        governance_address: governanceAddress,
+        admin_address: adminAddress,
+        multisig_address: config.axelar.contracts.Multisig.address,
+        signing_threshold: signingThreshold,
+        service_name: serviceName,
+        chain_name: chainName,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
+        encoder,
+        key_type: keyType,
+        domain_separator: separator.replace('0x', ''),
+    };
 };
 
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
@@ -1217,15 +1523,21 @@ module.exports = {
     fetchCodeIdFromContract,
     getChainTruncationParams,
     decodeProposalAttributes,
-    encodeStoreCodeProposal,
+    encodeStoreCodeProposalLegacy,
+    encodeStoreCodeMessage,
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
-    encodeExecuteContractProposal,
+    encodeExecuteContractProposalLegacy,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
+    submitProposalLegacy,
+    encodeExecuteContractMessage,
+    encodeStoreCodeMessage,
+    encodeSubmitProposal,
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
+    isPreV50SDK,
 };

@@ -14,13 +14,18 @@ const {
     getCodeId,
     getChainTruncationParams,
     decodeProposalAttributes,
-    encodeStoreCodeProposal,
+    encodeStoreCodeProposalLegacy,
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
-    encodeExecuteContractProposal,
+    encodeExecuteContractProposalLegacy,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
+    submitProposalLegacy,
+    encodeExecuteContractMessage,
+    isPreV50SDK,
+    encodeStoreCodeMessage,
+    encodeSubmitProposal,
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
@@ -34,6 +39,7 @@ const {
     MigrateContractProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -51,15 +57,49 @@ const predictAddress = async (client, contractConfig, options) => {
     return contractAddress;
 };
 
-const printProposal = (proposal, proposalType) => {
+const printProposalLegacy = (proposal, proposalType) => {
     printInfo(
         `Encoded ${proposal.typeUrl}`,
         JSON.stringify(decodeProposalAttributes(proposalType.toJSON(proposalType.decode(proposal.value))), null, 2),
     );
 };
 
-const confirmProposalSubmission = (options, proposal, proposalType) => {
-    printProposal(proposal, proposalType);
+const confirmProposalSubmissionLegacy = (options, proposal, proposalType) => {
+    printProposalLegacy(proposal, proposalType);
+    if (prompt(`Proceed with proposal submission?`, options.yes)) {
+        return false;
+    }
+    return true;
+};
+
+const printProposal = (messages) => {
+    messages.forEach((message) => {
+        const typeMap = {
+            '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
+            '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
+        };
+
+        const MessageType = typeMap[message.typeUrl];
+        if (MessageType) {
+            const decoded = MessageType.decode(message.value);
+
+            if (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' && decoded.msg) {
+                decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
+            }
+
+            if (decoded.wasmByteCode) {
+                decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
+            }
+
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+        } else {
+            printInfo(`Encoded ${message.typeUrl}`, '<Unable to decode>');
+        }
+    });
+};
+
+const confirmProposalSubmission = (options, messages) => {
+    printProposal(messages);
 
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return false;
@@ -68,27 +108,74 @@ const confirmProposalSubmission = (options, proposal, proposalType) => {
     return true;
 };
 
-const callSubmitProposal = async (client, config, options, proposal, fee) => {
-    const proposalId = await submitProposal(client, config, options, proposal, fee);
-    printInfo('Proposal submitted', proposalId);
+const callSubmitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
+    const isLegacy = await isPreV50SDK(config);
 
+    let proposalId;
+    if (isLegacy) {
+        proposalId = await submitProposalLegacy(client, config, options, proposalDataOrMessages, fee);
+    } else {
+        proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee);
+    }
+
+    printInfo('Proposal submitted', proposalId);
     return proposalId;
 };
 
 const storeCode = async (client, config, options, _args, fee) => {
-    const { contractName } = options;
-    const contractBaseConfig = config.getContractConfig(contractName);
+    const isLegacy = await isPreV50SDK(config);
 
-    const proposal = encodeStoreCodeProposal(options);
+    if (isLegacy) {
+        const { contractName } = options;
+        const contractBaseConfig = config.getContractConfig(contractName);
 
-    if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
-        return;
+        const proposal = encodeStoreCodeProposalLegacy(options);
+        if (!confirmProposalSubmissionLegacy(options, proposal, StoreCodeProposal)) {
+            return;
+        }
+
+        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
+
+        contractBaseConfig.storeCodeProposalId = proposalId;
+        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
+
+        return proposalId;
+    } else {
+        const { contractName, contractCodePaths } = options;
+        const contractNames = Array.isArray(contractName) ? contractName : [contractName];
+
+        const messages = contractNames.map((name) => {
+            const contractOptions = {
+                ...options,
+                contractName: name,
+                contractCodePath: contractCodePaths ? contractCodePaths[name] : options.contractCodePath,
+            };
+            return encodeStoreCodeMessage(contractOptions);
+        });
+
+        if (!confirmProposalSubmission(options, messages)) {
+            return;
+        }
+
+        const proposalId = await callSubmitProposal(client, config, options, messages, fee);
+
+        contractNames.forEach((name) => {
+            const contractBaseConfig = config.getContractConfig(name);
+            contractBaseConfig.storeCodeProposalId = proposalId;
+
+            const contractOptions = {
+                ...options,
+                contractName: name,
+                contractCodePath: contractCodePaths ? contractCodePaths[name] : options.contractCodePath,
+            };
+            contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+                .update(readContractCode(contractOptions))
+                .digest()
+                .toString('hex');
+        });
+
+        return proposalId;
     }
-
-    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-
-    contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const storeInstantiate = async (client, config, options, _args, fee) => {
@@ -156,14 +243,29 @@ const instantiate = async (client, config, options, _args, fee) => {
 
 const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
+    const isLegacy = await isPreV50SDK(config);
 
-    const proposal = encodeExecuteContractProposal(config, options, chainName);
+    if (isLegacy) {
+        const proposal = encodeExecuteContractProposalLegacy(config, options, chainName);
+        if (!confirmProposalSubmissionLegacy(options, proposal, ExecuteContractProposal)) {
+            return;
+        }
+        return callSubmitProposal(client, config, options, proposal, fee);
+    } else {
+        const { msg } = options;
+        const msgs = Array.isArray(msg) ? msg : [msg];
 
-    if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
-        return;
+        const messages = msgs.map((msgJson) => {
+            const msgOptions = { ...options, msg: msgJson };
+            return encodeExecuteContractMessage(config, msgOptions, chainName);
+        });
+
+        if (!confirmProposalSubmission(options, messages)) {
+            return;
+        }
+
+        return callSubmitProposal(client, config, options, messages, fee);
     }
-
-    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
 const registerItsChain = async (client, config, options, _args, fee) => {
