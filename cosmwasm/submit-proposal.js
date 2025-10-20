@@ -10,7 +10,6 @@ const {
     CONTRACTS,
     fromHex,
     getSalt,
-    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
     getCodeDetails,
@@ -80,7 +79,7 @@ const callSubmitProposal = async (client, config, options, proposal, fee) => {
 
 const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -282,38 +281,37 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     }
 
     // validate that the contract configs exist
-    config.getContractConfigByChain('Gateway', chainName);
-    config.getContractConfigByChain('VotingVerifier', chainName);
-    config.getContractConfigByChain('MultisigProver', chainName);
+    let gatewayConfig = config.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName);
+    let verifierConfig = config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName);
+    let proverConfig = config.getContractConfigByChain(MULTISIG_PROVER_CONTRACT_NAME, chainName);
 
     if (options.fetchCodeId) {
-        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
-        const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
-        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
-        config.axelar.contracts.Gateway[chainName].codeId = gatewayCode;
-        config.axelar.contracts.VotingVerifier[chainName].codeId = verifierCode;
-        config.axelar.contracts.MultisigProver[chainName].codeId = proverCode;
+        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
+        const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
+        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: MULTISIG_PROVER_CONTRACT_NAME }));
+        gatewayConfig.codeId = gatewayCode;
+        verifierConfig.codeId = verifierCode;
+        proverConfig.codeId = proverCode;
     } else {
-        if (!config.axelar.contracts.Gateway[chainName].codeId && !gatewayCodeId) {
+        if (!gatewayConfig.codeId && !gatewayCodeId) {
             throw new Error(
                 'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
             );
         }
-        if (!config.axelar.contracts.VotingVerifier[chainName].codeId && !verifierCodeId) {
+        if (!verifierConfig.codeId && !verifierCodeId) {
             throw new Error(
                 'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
             );
         }
-        if (!config.axelar.contracts.MultisigProver[chainName].codeId && !proverCodeId) {
+        if (!proverConfig.codeId && !proverCodeId) {
             throw new Error(
                 'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
             );
         }
 
-        config.axelar.contracts.Gateway[chainName].codeId = gatewayCodeId || config.axelar.contracts.Gateway[chainName].codeId;
-        config.axelar.contracts.VotingVerifier[chainName].codeId =
-            verifierCodeId || config.axelar.contracts.VotingVerifier[chainName].codeId;
-        config.axelar.contracts.MultisigProver[chainName].codeId = proverCodeId || config.axelar.contracts.MultisigProver[chainName].codeId;
+        gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
+        verifierConfig.codeId = verifierCodeId || verifierConfig.codeId;
+        proverConfig.codeId = proverCodeId || proverConfig.codeId;
     }
 
     const coordinator = new CoordinatorManager(config);
@@ -405,6 +403,19 @@ async function coordinatorInstantiatePermissions(client, config, options, args, 
 
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
 }
+const registerDeployment = async (client, config, options, _args, fee) => {
+    const { chainName } = options;
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructRegisterDeploymentMessage(chainName);
+    const proposalId = await execute(
+        client,
+        config,
+        { ...options, contractName: 'Coordinator', msg: JSON.stringify(message) },
+        undefined,
+        fee,
+    );
+    return proposalId;
+};
 
 const programHandler = () => {
     const program = new Command();
@@ -541,6 +552,15 @@ const programHandler = () => {
             proposalOptions: true,
         },
     );
+    const registerDeploymentCmd = program
+        .command('register-deployment')
+        .description('Submit an execute wasm contract proposal to register a deployment')
+        .requiredOption('-n, --chainName <chainName>', 'chain name')
+        .action((options) => mainProcessor(registerDeployment, options));
+    addAmplifierOptions(registerDeploymentCmd, {
+        proposalOptions: true,
+        runAs: true,
+    });
 
     program.parse();
 };
