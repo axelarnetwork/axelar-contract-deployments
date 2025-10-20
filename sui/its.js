@@ -1274,3 +1274,5 @@ if (require.main === module) {
     addOptionsToCommands(program, addBaseOptions, { offline: true });
     program.parse();
 }
+
+// temp test
