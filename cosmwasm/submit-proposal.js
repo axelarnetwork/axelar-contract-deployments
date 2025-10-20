@@ -379,7 +379,7 @@ async function coordinatorInstantiatePermissions(client, config, options, args, 
     const senderAddress = client.accounts[0].address;
     const contractAddress = options.address ?? config.axelar.contracts['Coordinator']?.address;
     if (args.length < 1 || args[0] === undefined) {
-        throw new Error('code_id and current_permissions arguments are required');
+        throw new Error('code_id is required');
     }
     const codeId = Number(args[0]);
     if (isNaN(codeId)) {
@@ -391,17 +391,17 @@ async function coordinatorInstantiatePermissions(client, config, options, args, 
 
     if (
         permissions?.permission === AccessType.ACCESS_TYPE_EVERYBODY ||
-        (permissions?.address === contractAddress && permissions?.permission !== AccessType.ACCESS_TYPE_NOBODY)
+        (permissions?.address === contractAddress && permissions?.permission === AccessType.ACCESS_TYPE_ONLY_ADDRESS)
     ) {
         throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
     }
 
-    const permitted_addresses = permissions.addresses ?? [];
-    if (permitted_addresses.includes(contractAddress)) {
+    const permittedAddresses = permissions.addresses ?? [];
+    if (permittedAddresses.includes(contractAddress) && permissions?.permission === AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES) {
         throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
     }
 
-    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permitted_addresses, codeId, fee);
+    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
 const registerDeployment = async (client, config, options, _args, fee) => {
     const { chainName } = options;

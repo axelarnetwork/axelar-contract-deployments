@@ -23,9 +23,3 @@ export interface ProtocolContracts {
     router: string;
     multisig: string;
 }
-
-export interface InstantiatePermission {
-    permission?: string;
-    address?: string;
-    addresses?: string[];
-}

@@ -8,9 +8,9 @@ import { FullConfig } from '../../common/config';
 import { addAmplifierOptions, addAmplifierQueryContractOptions } from '../cli-utils';
 import { ClientManager, mainProcessor, mainQueryProcessor } from '../processor';
 import { getContractInfo } from '../query';
-import { checkMigration as checkMigrationCoordinator, instantiatePermissions, migrate as migrateCoordinator } from './coordinator';
+import { checkMigration as checkMigrationCoordinator, migrate as migrateCoordinator } from './coordinator';
 import { migrate as migrateMultisig } from './multisig';
-import { InstantiatePermission, MigrationCheckOptions, MigrationOptions } from './types';
+import { MigrationCheckOptions, MigrationOptions } from './types';
 
 async function migrate(
     client: ClientManager,

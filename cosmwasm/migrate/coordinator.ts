@@ -346,14 +346,14 @@ export async function instantiatePermissions(
     codeId: number,
     fee: string | StdFee,
 ) {
-    permittedAddresses.push(coordinatorAddress);
+    const addresses = [...permittedAddresses, coordinatorAddress];
 
     const updateMsg: string = JSON.stringify([
         {
             codeId: codeId,
             instantiatePermission: {
                 permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
-                addresses: permittedAddresses,
+                addresses: addresses,
             },
         },
     ]);
