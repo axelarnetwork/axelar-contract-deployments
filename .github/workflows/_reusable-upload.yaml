@@ -1,4 +1,4 @@
-name: Reusable Upload
+name: Reusable Upload (helper workflow)
 
 on:
   workflow_call:
