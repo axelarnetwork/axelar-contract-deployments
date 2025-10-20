@@ -1,4 +1,4 @@
-# Commmon scripts
+# Common scripts
 
 ## Interchain Token Service
 

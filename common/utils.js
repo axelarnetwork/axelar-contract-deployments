@@ -136,11 +136,12 @@ const isNumber = (arg) => {
 };
 
 const isValidNumber = (arg) => {
-    return !isNaN(parseInt(arg)) && isFinite(arg);
+    return !isNaN(Number(arg)) && isFinite(Number(arg));
 };
 
 const isValidDecimal = (arg) => {
-    return !isNaN(parseFloat(arg)) && isFinite(arg);
+    const num = parseFloat(arg);
+    return !isNaN(num) && isFinite(num);
 };
 
 const isNumberArray = (arr) => {
@@ -182,7 +183,7 @@ const httpGet = (url) => {
             const contentType = res.headers['content-type'];
             let error;
 
-            if (statusCode !== 200 && statusCode !== 301) {
+            if (statusCode !== 200) {
                 error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
@@ -452,7 +453,7 @@ function validateParameters(parameters) {
         const validatorFunction = validationFunctions[validatorFunctionString];
 
         if (typeof validatorFunction !== 'function') {
-            throw new Error(`Validator function ${validatorFunction} is not defined`);
+            throw new Error(`Validator function ${validatorFunctionString} is not defined`);
         }
 
         for (const paramKey of Object.keys(paramsObj)) {
@@ -809,10 +810,10 @@ function validateDestinationChain(chains, destinationChain) {
 
 async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
     if (env === 'devnet-amplifier') {
-        return 0;
+        return { gasValue: 0, gasFeeValue: 0 };
     }
 
-    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
+    if (gasValue !== 'auto' && !isValidNumber(gasValue)) {
         throw new Error(`Invalid gas value: ${gasValue}`);
     }
 
