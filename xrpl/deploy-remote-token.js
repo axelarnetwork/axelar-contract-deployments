@@ -10,7 +10,7 @@ const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
 const RESERVE_CURRENCY = 'XRP';
 
 const deployRemoteToken = async (client, config, options, args, fee) => {
-    // TODO: Add validation or retrieve token informaiton from on-chain
+    // TODO: Add validation or retrieve token information from on-chain
     const { chainName, issuer, currency, tokenName, tokenSymbol, destinationChain } = options;
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
