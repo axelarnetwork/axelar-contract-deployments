@@ -13,7 +13,6 @@ const RESERVE_CURRENCY = 'XRP'
 const deployRemoteToken = async (client, config, options, args, fee) => {
     // TODO: Add validation or retrieve token informaiton from on-chain
     const { chainName, issuer, currency, tokenName, tokenSymbol, destinationChain } = options;
-    const [account] = client.accounts;
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
     if (!xrplGateway) {
@@ -40,7 +39,7 @@ const deployRemoteToken = async (client, config, options, args, fee) => {
         },
     };
 
-    const { transactionHash, events } = await executeTransaction(client, account, xrplGateway.address, execMsg, fee);
+    const { transactionHash, events } = await executeTransaction(client, xrplGateway.address, execMsg, fee);
 
     printInfo('Initiated remote token deployment', transactionHash);
 
