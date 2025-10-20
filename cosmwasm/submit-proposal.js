@@ -339,7 +339,7 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     };
 };
 
-export async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
+async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
     permittedAddresses.push(coordinatorAddress);
 
     const updateMsg = JSON.stringify([

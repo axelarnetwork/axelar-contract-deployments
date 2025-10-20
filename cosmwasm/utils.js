@@ -1155,7 +1155,6 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
 };
 
 const getCodeDetails = async (config, codeId) => {
-    console.log(config?.axelar?.rpc);
     const tendermint_client = await Tendermint34Client.connect(config?.axelar?.rpc);
 
     const data = QueryCodeRequest.encode({
