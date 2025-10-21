@@ -136,12 +136,31 @@ const isNumber = (arg) => {
 };
 
 const isValidNumber = (arg) => {
-    return !isNaN(Number(arg)) && isFinite(Number(arg));
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = Number(arg);
+
+    return !isNaN(num) && isFinite(num);
 };
 
 const isValidDecimal = (arg) => {
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
     const num = parseFloat(arg);
-    return !isNaN(num) && isFinite(num);
+
+    return !isNaN(num) && isFinite(num) && num === parseFloat(String(arg).trim());
 };
 
 const isNumberArray = (arr) => {
