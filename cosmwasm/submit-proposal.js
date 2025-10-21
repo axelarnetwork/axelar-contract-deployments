@@ -38,7 +38,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { mainProcessor } = require('./processor');
-const { CoordinatorManager } = require('./coordinator');
+const { CoordinatorManager, getProverContractForChainType } = require('./coordinator');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -278,15 +278,17 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         throw new Error('Salt is required when instantiating chain contracts');
     }
 
+    const multisigProverContractName = getProverContractForChainType(chainConfig.chainType);
+
     // validate that the contract configs exist
     let gatewayConfig = config.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName);
     let verifierConfig = config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName);
-    let proverConfig = config.getContractConfigByChain(MULTISIG_PROVER_CONTRACT_NAME, chainName);
+    let proverConfig = config.getContractConfigByChain(multisigProverContractName, chainName);
 
     if (options.fetchCodeId) {
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
         const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: MULTISIG_PROVER_CONTRACT_NAME }));
+        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
         gatewayConfig.codeId = gatewayCode;
         verifierConfig.codeId = verifierCode;
         proverConfig.codeId = proverCode;
