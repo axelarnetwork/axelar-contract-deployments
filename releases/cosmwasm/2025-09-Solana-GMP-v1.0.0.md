@@ -412,5 +412,5 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 ## Checklist
 
-- Follow the [Solana GMP checklist](../solana/2025-09-GMP-v1.0.0.md)
+- Follow the [Solana GMP checklist](../solana/2025-09-GMP-vanilla.md)
 - Follow the [Solana ITS checklist](../solana/2025-09-ITS-v1.0.0.md)
