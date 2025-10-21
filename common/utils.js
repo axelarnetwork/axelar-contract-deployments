@@ -160,7 +160,7 @@ const isValidDecimal = (arg) => {
 
     const num = parseFloat(arg);
 
-    return !isNaN(num) && isFinite(num) && String(num) === String(arg).trim();
+    return !isNaN(num) && isFinite(num) && num === parseFloat(String(arg).trim());
 };
 
 const isNumberArray = (arr) => {
