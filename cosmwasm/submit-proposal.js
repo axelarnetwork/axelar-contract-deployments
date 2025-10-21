@@ -278,6 +278,7 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         throw new Error('Salt is required when instantiating chain contracts');
     }
 
+    const chainConfig = config.getChainConfig(chainName);
     const multisigProverContractName = getProverContractForChainType(chainConfig.chainType);
 
     // validate that the contract configs exist
