@@ -952,7 +952,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
         .meta
         .ok_or_else(|| eyre!("Transaction missing metadata"))?;
 
-    let inner_instructions = meta.inner_instructions.unwrap_or_else(|| vec![]);
+    let inner_instructions = meta.inner_instructions.unwrap_or_else(std::vec::Vec::new);
 
     let mut event_count = 0;
 
@@ -1013,6 +1013,8 @@ fn parse_gateway_event(data: &[u8]) -> Option<GatewayEvent> {
     if data.len() < 16 {
         return None;
     }
+
+    assert!(data.len() > 15, "Event data is too short");
 
     let ev_disc = &data[0..8];
     if ev_disc != event_cpi::EVENT_IX_TAG_LE {
