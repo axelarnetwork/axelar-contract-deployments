@@ -952,9 +952,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
         .meta
         .ok_or_else(|| eyre!("Transaction missing metadata"))?;
 
-    let inner_instructions = meta
-        .inner_instructions
-        .ok_or_else(|| eyre!("Transaction missing inner instructions"))?;
+    let inner_instructions = meta.inner_instructions.unwrap_or_else(|| vec![]);
 
     let mut event_count = 0;
 
