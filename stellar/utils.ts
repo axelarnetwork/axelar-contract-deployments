@@ -524,7 +524,7 @@ const getContractR2Url = (contractName, version) => {
         return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
     }
 
-    throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (omit prefix v) or a commit hash`);
 };
 
 const getContractArtifactPath = (artifactDir, contractName) => {

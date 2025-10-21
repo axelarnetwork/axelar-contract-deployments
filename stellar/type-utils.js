@@ -41,7 +41,7 @@ function messagesToScVal(messages) {
                     source_chain: message.sourceChain,
                     source_address: message.sourceAddress,
                     contract_address: Address.fromString(message.contractAddress),
-                    payload_hash: Buffer.from(message.payloadHash, 'hex'),
+                    payload_hash: Buffer.from(message.payloadHash),
                 },
                 {
                     type: {
@@ -67,7 +67,7 @@ function proofToScVal(proof) {
                         weight,
                     },
                     signature: signature
-                        ? nativeToScVal([nativeToScVal('Signed', { type: 'symbol' }), Buffer.from(signature, 'hex')])
+                        ? nativeToScVal([nativeToScVal('Signed', { type: 'symbol' }), Buffer.from(signature)])
                         : nativeToScVal([nativeToScVal('Unsigned', { type: 'symbol' })]),
                 };
             }),
