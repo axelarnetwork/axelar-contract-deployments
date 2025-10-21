@@ -28,7 +28,6 @@ event-cpi = { path = "./axelar-amplifier-solana/helpers/event-cpi" }
 base64 = "0.22.1"
 bincode = { version = "2.0.1", features = ["serde"] }
 borsh = "1.5.1"
-bs58 = "0.5.0"
 clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
