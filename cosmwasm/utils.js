@@ -1,6 +1,5 @@
 'use strict';
 
-const fetch = require('node-fetch');
 const zlib = require('zlib');
 const { createHash } = require('crypto');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
@@ -36,6 +35,7 @@ const {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
+    httpGet,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -75,12 +75,7 @@ const getSDKVersion = async (config) => {
     const url = `${config.axelar.lcd}/cosmos/base/tendermint/v1beta1/node_info`;
 
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await httpGet(url);
         const sdkVersion = data?.application_version?.cosmos_sdk_version;
 
         if (!sdkVersion) {
