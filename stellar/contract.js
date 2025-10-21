@@ -122,7 +122,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--extend-by <extendBy>',
-                'Number of ledgers to extend by. If ommitted, will default to the maximum extension amount',
+                'Number of ledgers to extend by. If omitted, will default to the maximum extension amount',
             ),
         )
         .action((contractName, options) => {
