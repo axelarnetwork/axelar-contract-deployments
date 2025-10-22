@@ -1198,7 +1198,7 @@ const submitProposal = async (client, config, options, messages, fee) => {
 
     const submitProposalMsg = encodeSubmitProposal(messages, config, options, account.address);
 
-    const result = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     const { events } = result;
 
