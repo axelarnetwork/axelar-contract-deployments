@@ -69,12 +69,12 @@ ARTIFACT_PATH=../solana/axelar-amplifier/artifacts/
 
 Add `INIT_ADDRESSES` to `.env`.
 
-| Axelar Env           | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
-| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
+| Axelar Env           | `INIT_ADDRESSES`                                                                                                                                                                                              | `RUN_AS_ACCOUNT`                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9,axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g`                                               | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
+| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky,axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
+| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
+| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
 
 > **_NOTE:_**
 > Set `RUN_AS_ACCOUNT` to an EOA account's address instead of the governance address to avoid having to instantiate the contracts via another governance proposal.
@@ -93,7 +93,8 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -d "Upload VotingVerifier contract for Solana integration" \
         -a "$ARTIFACT_PATH" \
         --chainName $CHAIN \
-        -m $MNEMONIC
+        -m $MNEMONIC \
+        --instantiateAddresses $INIT_ADDRESSES
     ```
 
 1. Store Gateway:
@@ -105,7 +106,8 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -d "Upload Gateway contract for Solana integration" \
         -a "$ARTIFACT_PATH" \
         --chainName $CHAIN \
-        -m $MNEMONIC
+        -m $MNEMONIC \
+        --instantiateAddresses $INIT_ADDRESSES
     ```
 
 1. Store SolanaMultisigProver:
@@ -117,7 +119,8 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -d "Upload MultisigProver contract for Solana integration" \
         -a "$ARTIFACT_PATH" \
         --chainName $CHAIN \
-        -m $MNEMONIC
+        -m $MNEMONIC \
+        --instantiateAddresses $INIT_ADDRESSES
     ```
 
 ## Deployment
@@ -137,6 +140,20 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
 | **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
 | **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       |
+
+```bash
+# Add under `config.axelar.contracts.VotingVerifier` based on Network
+"$CHAIN" : {
+  "governanceAddress": "[governance address]",
+  "serviceName": "[service name]",
+  "sourceGatewayAddress": "[external gateway PDA]",
+  "votingThreshold": "[voting threshold]",
+  "blockExpiry": 10,
+  "confirmationHeight": 1000000,
+  "msgIdFormat": "base58_solana_tx_signature_and_event_index",
+  "addressFormat": "base58"
+}
+```
 
 ```bash
 # Add under `config.axelar.contracts.SolanaMultisigProver` based on Network
@@ -164,22 +181,42 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based on network]
 ```
 
-1. Instantiate `VotingVerifier`
+| Network              | Salt     |
+| -------------------- | -------- |
+| **Devnet-amplifier** | `v1.0.0` |
+| **Stagenet**         | `v1.0.0` |
+| **Testnet**          | `v1.0.0` |
+| **Mainnet**          | `v1.0.0` |
+
+1. Instantiate `Gateway`, `VotingVerifier` and `SolanaMultisigProver` contracts via Coordinator
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
+    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+        -n $CHAIN \
+        -s "$SALT" \
+        --fetchCodeId \
+        -t "Instantiate contracts for $CHAIN" \
+        -d "Instantiate Gateway, VotingVerifier and SolanaMultisigProver contracts for $CHAIN via Coordinator" \
+        --admin "$CONTRACT_ADMIN" \
+        --runAs "[governanceAddress]" \
+        -m $MNEMONIC
     ```
 
-1. Instantiate `Gateway`
+1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
+    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
     ```
 
-1. Instantiate `SolanaMultisigProver`
+1. Register deployment
 
     ```bash
-    ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaMultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN --chainName $CHAIN -m $MNEMONIC
+    ts-node cosmwasm/submit-proposal.js register-deployment \
+        -n $CHAIN \
+        -t "Register deployment for $CHAIN" \
+        -d "Register deployment for $CHAIN in the Coordinator" \
+        --runAs "[governanceAddress]" \
+        -m $MNEMONIC
     ```
 
 1. Set environment variables

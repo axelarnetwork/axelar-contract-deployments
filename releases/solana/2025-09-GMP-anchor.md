@@ -101,7 +101,7 @@ This is the anchor Solana GMP release.
     solana config set --url $CLUSTER
     ```
 
-1. Generate or set existing keypair:
+1. Generate or set existing upgrade authority keypair:
 
     - To generate and set a new keypair:
 
@@ -120,6 +120,25 @@ This is the anchor Solana GMP release.
 
         ```sh
         solana config set --keypair /path/to/my/keys/folder/upgrade-authority-$ENV.json
+        ```
+
+1. Generate or set existing operator keypair:
+
+    - To generate and set a new keypair:
+
+        ```sh
+        # Get keypair starting with 'gop'
+        solana-keygen grind --starts-with gop:1
+
+        # Move new keypair out of current dir
+        mv [generated gop keypair].json /path/to/my/keys/folder/operator-$ENV.json
+        ```
+
+    - To set an existing keypair:
+
+        ```sh
+        # Copy existing operator keypair to your keys folder
+        cp /path/to/existing/operator-keypair.json /path/to/my/keys/folder/operator-$ENV.json
         ```
 
 1. Fund keypair (unless on mainnet)
@@ -198,6 +217,7 @@ This is the anchor Solana GMP release.
     MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_memo_program.so"
 
     UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
+    OPERATOR_KEYPAIR_PATH="<path/to/operator_keypair.json>"
     ```
 
     ```bash
@@ -245,36 +265,34 @@ This is the anchor Solana GMP release.
 1. Deploy and verify axelar_solana_gas_service program:
 
     ```sh
-    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_gas_service --provider.cluster $CLUSTER --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_gas_service --provider.cluster $CLUSTER $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_governance program:
 
     ```sh
-    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_governance --provider.cluster $CLUSTER --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_governance --provider.cluster $CLUSTER $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_multicall program:
 
     ```sh
-    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_multicall --provider.cluster $CLUSTER --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_multicall --provider.cluster $CLUSTER $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 1. Deploy and verify axelar_solana_memo_program program:
 
     ```sh
-    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair $MEMO_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_memo_program --provider.cluster $CLUSTER --program-keypair $MEMO_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_memo_program --provider.cluster $CLUSTER $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
-
-1. After deploying Solana contracts, deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
 
 ### Initialization Steps
 
@@ -292,7 +310,7 @@ The initialization steps can only be performed by the upgrade authority.
     MEMO_PDA="[memo-pda]"
     ```
 
-1. Initialize Gateway:
+1. Reference parameters for Gateway initialization:
 
     | Axelar Env           | `minimumRotationDelay` | `previousSignersRetention` | `minimumProposalEtaDelaySeconds` |
     | -------------------- | ---------------------- | -------------------------- | -------------------------------- |
@@ -301,8 +319,27 @@ The initialization steps can only be performed by the upgrade authority.
     | **Testnet**          | `3600`                 | `15`                       | `3600`                           |
     | **Mainnet**          | `86400`                | `15`                       | `3600`                           |
 
+1. Add AxelarGateway:
+
+    ```bash
+    # Add under `config.axelar.contracts.AxelarGateway` based on Network
+    "$CHAIN" : {
+        "address": "$GATEWAY_PDA",
+        "connectionType": "amplifier",
+        "domainSeparator": "TBD",
+        "minimumRotationDelay": "[minimumRotationDelay]",
+        "operator": "$OPERATOR_PDA",
+        "previousSignersRetention": "[previousSignersRetention]",
+        "upgradeAuthority": "$UPGRADE_AUTHORITY_PDA"
+    }
+    ```
+
+1. Now deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
+
+1. Initialize Gateway:
+
     ```sh
-    solana/cli --chain-id $CHAIN send gateway init \
+    solana/cli send gateway init \
         --previous-signers-retention [previousSignersRetention] \
         --minimum-rotation-delay [minimumRotationDelay] \
         --operator $OPERATOR_PDA
@@ -313,15 +350,17 @@ The initialization steps can only be performed by the upgrade authority.
 1. Initialize Gas Service:
 
     ```sh
-    solana/cli --chain-id $CHAIN send gas-service init \
+    solana/cli send --signer-keys $OPERATOR_KEYPAIR_PATH gas-service init \
         --operator $OPERATOR_PDA \
         --salt "[version] $ENV"
     ```
 
+    **Note**: The `--signer-keys` parameter must be set to the keypair file that corresponds to the operator address specified in `--operator`. The gas service init instruction requires the operator to sign the transaction to prove they are the legitimate operator for the gas service.
+
 1. Initialize Governance:
 
     ```sh
-    solana/cli --chain-id $CHAIN send governance init \
+    solana/cli send governance init \
         --governance-chain 'Axelarnet' \
         --governance-address [axelarnet governance address] \
         --minimum-proposal-eta-delay [minimumProposalEtaDelaySeconds] \
