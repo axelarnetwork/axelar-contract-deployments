@@ -43,7 +43,14 @@ export interface ExplorerConfig {
     api?: string;
 }
 
+export interface DeploymentConfig {
+    deploymentName: string;
+    salt: string;
+    proposalId: string;
+}
+
 export interface ContractConfig {
+    deployments?: Record<string, DeploymentConfig>;
     address?: string;
     codeId?: number;
     storeCodeProposalCodeHash?: string;
@@ -299,7 +306,7 @@ export class ConfigManager implements FullConfig {
     }
 
     public saveConfig(): void {
-        saveConfig({ axelar: this.axelar, chains: this.chains }, this.environment);
+        saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
     public getProposalInstantiateAddresses(): string[] {
@@ -325,7 +332,7 @@ export class ConfigManager implements FullConfig {
         }
 
         if (!axelarContracts[configContractName]) {
-            axelarContracts[configContractName] = {};
+            throw new Error(`Contract '${configContractName}' not found in ${this.environment} config`);
         }
 
         return axelarContracts[configContractName];
@@ -334,7 +341,7 @@ export class ConfigManager implements FullConfig {
     public getContractConfigByChain(configContractName: string, chainName: string): ContractConfig {
         const contractConfig = this.getContractConfig(configContractName);
         if (!contractConfig[chainName]) {
-            contractConfig[chainName] = {};
+            throw new Error(`Contract '${configContractName}' not found on chain '${chainName}' in ${this.environment} config`);
         }
         return contractConfig[chainName];
     }

@@ -2,13 +2,12 @@
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
-const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
+const { executeTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
-const { mainCosmosProcessor } = require('./utils');
+const { mainProcessor } = require('../cosmwasm/processor');
 
-const registerRemoteToken = async (config, options, wallet, client, fee) => {
+const registerRemoteToken = async (client, config, options, args, fee) => {
     const { chainName, tokenId, currency } = options;
-    const [account] = await wallet.getAccounts();
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
     if (!xrplGateway) {
@@ -23,7 +22,7 @@ const registerRemoteToken = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
+    const { transactionHash } = await executeTransaction(client, xrplGateway.address, execMsg, fee);
 
     printInfo('Registered remote token', transactionHash);
 };
@@ -47,7 +46,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        mainCosmosProcessor(registerRemoteToken, options);
+        mainProcessor(registerRemoteToken, options);
     });
 
     program.parse();
