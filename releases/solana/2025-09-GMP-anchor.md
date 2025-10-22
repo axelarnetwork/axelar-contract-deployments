@@ -101,7 +101,7 @@ This is the anchor Solana GMP release.
     solana config set --url $CLUSTER
     ```
 
-1. Generate or set existing keypair:
+1. Generate or set existing upgrade authority keypair:
 
     - To generate and set a new keypair:
 
@@ -120,6 +120,25 @@ This is the anchor Solana GMP release.
 
         ```sh
         solana config set --keypair /path/to/my/keys/folder/upgrade-authority-$ENV.json
+        ```
+
+1. Generate or set existing operator keypair:
+
+    - To generate and set a new keypair:
+
+        ```sh
+        # Get keypair starting with 'gop'
+        solana-keygen grind --starts-with gop:1
+
+        # Move new keypair out of current dir
+        mv [generated gop keypair].json /path/to/my/keys/folder/operator-$ENV.json
+        ```
+
+    - To set an existing keypair:
+
+        ```sh
+        # Copy existing operator keypair to your keys folder
+        cp /path/to/existing/operator-keypair.json /path/to/my/keys/folder/operator-$ENV.json
         ```
 
 1. Fund keypair (unless on mainnet)
@@ -198,6 +217,7 @@ This is the anchor Solana GMP release.
     MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_memo_program.so"
 
     UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
+    OPERATOR_KEYPAIR_PATH="<path/to/operator_keypair.json>"
     ```
 
     ```bash

@@ -215,7 +215,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Register deployment
 
     ```bash
-    ts-node cosmwasm/submit-proposal register-deployment \
+    ts-node cosmwasm/submit-proposal.js register-deployment \
         -n $CHAIN \
         -t "Register deployment for $CHAIN" \
         -d "Register deployment for $CHAIN in the Coordinator" \
