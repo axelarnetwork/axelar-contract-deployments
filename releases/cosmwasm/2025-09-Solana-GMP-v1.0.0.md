@@ -207,9 +207,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN \
-        --admin "$CONTRACT_ADMIN" \
-        -m $MNEMONIC
+    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
     ```
 
 1. Register deployment
