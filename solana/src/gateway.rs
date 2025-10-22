@@ -766,7 +766,6 @@ async fn submit_proof(
     Ok(instructions)
 }
 
-
 async fn execute(
     fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
