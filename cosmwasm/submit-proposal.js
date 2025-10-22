@@ -93,7 +93,7 @@ const printProposal = (messages) => {
 
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
         } else {
-            printInfo(`Encoded ${message.typeUrl}`, '<Unable to decode>');
+            printInfo(`Unknown message type: ${message.typeUrl}`, '<Unable to decode>');
         }
     });
 };
