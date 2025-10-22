@@ -23,7 +23,7 @@ const addAmplifierOptions = (program, options) => {
         program.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
             const contractName = opts.contractName;
-            const contractNames = Array.isArray(contractName) ? contractName : [contractName];
+            const contractNames = contractName;
 
             const contractCodePaths = {};
             for (const name of contractNames) {
@@ -114,7 +114,7 @@ const addContractOptions = (program) => {
     program.hook('preAction', (command) => {
         const chainName = command.opts().chainName;
         const contractName = command.opts().contractName;
-        const contractNames = Array.isArray(contractName) ? contractName : [contractName];
+        const contractNames = contractName;
 
         contractNames.forEach((name) => {
             if (!CONTRACTS[name]) {

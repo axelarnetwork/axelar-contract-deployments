@@ -142,7 +142,7 @@ const storeCode = async (client, config, options, _args, fee) => {
         return proposalId;
     } else {
         const { contractName, contractCodePaths } = options;
-        const contractNames = Array.isArray(contractName) ? contractName : [contractName];
+        const contractNames = contractName;
 
         const messages = contractNames.map((name) => {
             const contractOptions = {
