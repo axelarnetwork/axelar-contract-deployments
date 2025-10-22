@@ -219,7 +219,6 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -n $CHAIN \
         -t "Register deployment for $CHAIN" \
         -d "Register deployment for $CHAIN in the Coordinator" \
-        --admin "$CONTRACT_ADMIN" \
         --runAs "[governanceAddress]" \
         -m $MNEMONIC
     ```
