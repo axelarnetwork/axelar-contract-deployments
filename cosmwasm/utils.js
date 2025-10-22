@@ -1168,9 +1168,12 @@ const getCodeDetails = async (config, codeId) => {
 
     tendermint_client.disconnect();
 
-    let response = QueryCodeResponse.decode(value);
+    let codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+    if (!codeInfo) {
+        throw new Error(`Info not found for code id ${codeId}`);
+    }
 
-    return response?.codeInfo;
+    return codeInfo;
 };
 
 const CONTRACTS = {

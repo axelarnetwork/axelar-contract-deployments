@@ -34,6 +34,7 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
+    UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
@@ -352,8 +353,6 @@ async function instantiatePermissions(client, options, config, senderAddress, co
         },
     ]);
 
-    printInfo(`Update Msg: ${updateMsg}`);
-
     const updateOptions = {
         msg: updateMsg,
         title: options.title,
@@ -364,28 +363,27 @@ async function instantiatePermissions(client, options, config, senderAddress, co
 
     const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
 
-    if (!options.dry) {
-        try {
-            printInfo(`Executing instantiate params proposal...\n${JSON.stringify(updateOptions)}`);
-            await submitProposal(client, config, updateOptions, proposal, fee);
-            printInfo('Instantiate params proposal successfully submitted');
-        } catch (e) {
-            printError(`Error: ${e}`);
-        }
+    if (!confirmProposalSubmission(options, proposal, UpdateInstantiateConfigProposal)) {
+        return;
+    }
+
+    try {
+        await submitProposal(client, config, updateOptions, proposal, fee);
+        printInfo('Instantiate params proposal successfully submitted');
+    } catch (e) {
+        printError(`Error: ${e}`);
     }
 }
 
-async function coordinatorInstantiatePermissions(client, config, options, args, fee) {
+async function coordinatorInstantiatePermissions(client, config, options, _args, fee) {
     const senderAddress = client.accounts[0].address;
-    const contractAddress = options.address ?? config.axelar.contracts['Coordinator']?.address;
-    if (args.length < 1 || args[0] === undefined) {
-        throw new Error('code_id is required');
-    }
-    const codeId = Number(args[0]);
-    if (isNaN(codeId)) {
-        throw new Error('code_id must be a valid number');
+    const contractAddress = config.axelar.contracts['Coordinator']?.address;
+
+    if (!contractAddress) {
+        throw new Error('cannot find coordinator address in configuration');
     }
 
+    const codeId = await getCodeId(client, config, { ...options, contractName: options.contractName });
     const codeDetails = await getCodeDetails(config, codeId);
     const permissions = codeDetails.instantiatePermission;
 
@@ -541,17 +539,20 @@ const programHandler = () => {
     addAmplifierOptions(
         program
             .command('coordinator-instantiate-permissions')
-            .argument('<code_id>', 'coordinator will have instantiate permissions for this code id')
-            .addOption(new Option('--address <address>', 'contract address (overrides config)'))
-            .option('--dry', 'only generate migration msg')
+            .addOption(
+                new Option('--contractName <contractName>', 'coordinator will have instantiate permissions for this contract')
+                    .makeOptionMandatory(true)
+                    .choices(['Gateway', 'VotingVerifier', 'MultisigProver']),
+            )
             .description('Give coordinator instantiate permissions for the given code id')
-            .action((codeId, options) => {
-                mainProcessor(coordinatorInstantiatePermissions, options, [codeId]);
+            .action((options) => {
+                mainProcessor(coordinatorInstantiatePermissions, options, []);
             }),
         {
             proposalOptions: true,
         },
     );
+
     const registerDeploymentCmd = program
         .command('register-deployment')
         .description('Submit an execute wasm contract proposal to register a deployment')
