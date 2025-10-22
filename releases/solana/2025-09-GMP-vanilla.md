@@ -183,9 +183,7 @@ This is the vanilla Solana GMP release.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Check out the `upstream` branch.
-
-    - Note: This will change for real V1 release.
+1. Check out the `main` branch.
 
 1. Compile the Solana programs:
 
@@ -326,6 +324,25 @@ The initialization steps can only be performed by the upgrade authority.
     | **Stagenet**         | `300`                  | `15`                       | `3600`                           |
     | **Testnet**          | `3600`                 | `15`                       | `3600`                           |
     | **Mainnet**          | `86400`                | `15`                       | `3600`                           |
+
+1. Add AxelarGateway:
+
+    ```bash
+    # Add under `config.axelar.contracts.AxelarGateway` based on Network
+    "$CHAIN" : {
+        "address": "$GATEWAY_PDA",
+        "connectionType": "amplifier",
+        "domainSeparator": "TBD",
+        "minimumRotationDelay": "[minimumRotationDelay]",
+        "operator": "$OPERATOR_PDA",
+        "previousSignersRetention": "[previousSignersRetention]",
+        "upgradeAuthority": "$UPGRADE_AUTHORITY_PDA"
+    }
+    ```
+
+1. Now deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
+
+1. Initialize Gateway:
 
     ```sh
     solana/cli send gateway init \
