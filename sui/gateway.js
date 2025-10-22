@@ -153,7 +153,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
-    console.log([sourceChain, messageId, sourceAddress, destinationId, payloadHash]);
+    printInfo('Approving message', JSON.stringify({ sourceChain, messageId, sourceAddress, destinationId, payloadHash }));
     const encodedMessages = bcs
         .vector(bcsStructs.gateway.Message)
         .serialize([
@@ -394,7 +394,8 @@ async function checkVersionControl(version, options) {
         for (const allowedFunction of allowedFunctions) {
             const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction], options);
             const color = allowed ? chalk.green : chalk.red;
-            console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
+            const status = allowed ? 'allowed' : 'disallowed';
+            printInfo(`${allowedFunction} is`, color(status));
         }
     }
 
@@ -404,7 +405,8 @@ async function checkVersionControl(version, options) {
         for (const disallowedFunction of disallowedFunctions) {
             const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction], options);
             const color = allowed ? chalk.red : chalk.green;
-            console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
+            const status = allowed ? 'allowed' : 'disallowed';
+            printInfo(`${disallowedFunction} is`, color(status));
         }
     }
 }
@@ -445,7 +447,7 @@ async function testNewField(value, options) {
         sender: keypair.toSuiAddress(),
     });
     const returnedValue = bcs.U64.parse(new Uint8Array(response.results[0].returnValues[0][0]));
-    console.log(`Set the value to ${value} and it was set to ${returnedValue}.`);
+    printInfo('Value verification', `Set the value to ${value} and it was set to ${returnedValue}`);
 }
 
 async function mainProcessor(processor, args, options) {
