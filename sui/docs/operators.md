@@ -55,7 +55,7 @@ ts-node sui/deploy-contract sync
 Deploy the Operators contract using the following command:
 
 ```bash
-ts-node sui/deploy-contract Operators
+ts-node sui/deploy-contract deploy Operators
 ```
 
 ## Usage
@@ -73,7 +73,7 @@ ts-node sui/operators add <sui address>
 Store the `TreasuryCap` using the following command:
 
 ```bash
-ts-node sui/operators storeCap --cap-id <treasury cap id>
+ts-node sui/operators storeCap --capId <treasury cap id>
 ```
 
 ## TODO
