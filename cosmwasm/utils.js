@@ -1157,20 +1157,22 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
 const getCodeDetails = async (config, codeId) => {
     const tendermint_client = await Tendermint34Client.connect(config?.axelar?.rpc);
 
-    const data = QueryCodeRequest.encode({
-        codeId: BigInt(codeId),
-    }).finish();
+    try {
+        const data = QueryCodeRequest.encode({
+            codeId: BigInt(codeId),
+        }).finish();
 
-    const { value } = await tendermint_client.abciQuery({
-        path: '/cosmwasm.wasm.v1.Query/Code',
-        data: data,
-    });
+        const { value } = await tendermint_client.abciQuery({
+            path: '/cosmwasm.wasm.v1.Query/Code',
+            data: data,
+        });
 
-    tendermint_client.disconnect();
-
-    let codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
-    if (!codeInfo) {
-        throw new Error(`Info not found for code id ${codeId}`);
+        let codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+        if (!codeInfo) {
+            throw new Error(`Info not found for code id ${codeId}`);
+        }
+    } finally {
+        tendermint_client.disconnect();
     }
 
     return codeInfo;
