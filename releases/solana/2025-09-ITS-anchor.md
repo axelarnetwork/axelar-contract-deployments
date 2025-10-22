@@ -170,9 +170,9 @@ This is the anchor Solana ITS release.
 1. Deploy and verify axelar_solana_its program (only run the `solana-verify` command for mainnet):
 
     ```sh
-    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair ITS_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_its --provider.cluster $CLUSTER --program-keypair ITS_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
+    anchor verify -p axelar_solana_its --provider.cluster $CLUSTER $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 ### Initialization Steps
