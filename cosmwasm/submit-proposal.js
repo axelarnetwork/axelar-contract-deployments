@@ -544,7 +544,7 @@ const programHandler = () => {
                     .makeOptionMandatory(true)
                     .choices(['Gateway', 'VotingVerifier', 'MultisigProver']),
             )
-            .description('Give coordinator instantiate permissions for the given code id')
+            .description('Give coordinator instantiate permissions for the given contract')
             .action((options) => {
                 mainProcessor(coordinatorInstantiatePermissions, options, []);
             }),
