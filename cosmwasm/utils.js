@@ -1156,6 +1156,7 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
 
 const getCodeDetails = async (config, codeId) => {
     const tendermintClient = await Tendermint34Client.connect(config?.axelar?.rpc);
+    let codeInfo;
 
     try {
         const data = QueryCodeRequest.encode({
@@ -1167,7 +1168,7 @@ const getCodeDetails = async (config, codeId) => {
             data: data,
         });
 
-        let codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+        codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
         if (!codeInfo) {
             throw new Error(`Info not found for code id ${codeId}`);
         }
