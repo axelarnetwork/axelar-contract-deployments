@@ -3,8 +3,8 @@
 require('../common/cli-utils');
 
 const { createHash } = require('crypto');
-
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
+const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 
 const {
     CONTRACTS,
@@ -12,6 +12,7 @@ const {
     getSalt,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -21,6 +22,7 @@ const {
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
+    encodeUpdateInstantiateConfigProposal,
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
@@ -32,6 +34,7 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
+    UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
@@ -337,6 +340,67 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     };
 };
 
+async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
+    const addresses = [...permittedAddresses, coordinatorAddress];
+
+    const updateMsg = JSON.stringify([
+        {
+            codeId: codeId,
+            instantiatePermission: {
+                permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
+                addresses: addresses,
+            },
+        },
+    ]);
+
+    const updateOptions = {
+        msg: updateMsg,
+        title: options.title,
+        description: options.description,
+        runAs: senderAddress,
+        deposit: options.deposit,
+    };
+
+    const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
+
+    if (!confirmProposalSubmission(options, proposal, UpdateInstantiateConfigProposal)) {
+        return;
+    }
+
+    try {
+        await submitProposal(client, config, updateOptions, proposal, fee);
+        printInfo('Instantiate params proposal successfully submitted');
+    } catch (e) {
+        printError(`Error: ${e}`);
+    }
+}
+
+async function coordinatorInstantiatePermissions(client, config, options, _args, fee) {
+    const senderAddress = client.accounts[0].address;
+    const contractAddress = config.axelar.contracts['Coordinator']?.address;
+
+    if (!contractAddress) {
+        throw new Error('cannot find coordinator address in configuration');
+    }
+
+    const codeId = await getCodeId(client, config, { ...options, contractName: options.contractName });
+    const codeDetails = await getCodeDetails(config, codeId);
+    const permissions = codeDetails.instantiatePermission;
+
+    if (
+        permissions?.permission === AccessType.ACCESS_TYPE_EVERYBODY ||
+        (permissions?.address === contractAddress && permissions?.permission === AccessType.ACCESS_TYPE_ONLY_ADDRESS)
+    ) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const permittedAddresses = permissions.addresses ?? [];
+    if (permittedAddresses.includes(contractAddress) && permissions?.permission === AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
+}
 const registerDeployment = async (client, config, options, _args, fee) => {
     const { chainName } = options;
     const coordinator = new CoordinatorManager(config);
@@ -471,6 +535,23 @@ const programHandler = () => {
         fetchCodeId: true,
         instantiateOptions: true,
     });
+
+    addAmplifierOptions(
+        program
+            .command('coordinator-instantiate-permissions')
+            .addOption(
+                new Option('--contractName <contractName>', 'coordinator will have instantiate permissions for this contract')
+                    .makeOptionMandatory(true)
+                    .choices(['Gateway', 'VotingVerifier', 'MultisigProver']),
+            )
+            .description('Give coordinator instantiate permissions for the given contract')
+            .action((options) => {
+                mainProcessor(coordinatorInstantiatePermissions, options, []);
+            }),
+        {
+            proposalOptions: true,
+        },
+    );
 
     const registerDeploymentCmd = program
         .command('register-deployment')
