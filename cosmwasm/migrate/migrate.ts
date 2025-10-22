@@ -53,7 +53,7 @@ async function checkMigration(
 const programHandler = () => {
     const program = new Command();
 
-    program.name('migrate').version('1.0.0').description('Automation for migrating Amplifier contracts');
+    program.name('migrate').version('1.1.0').description('Automation for migrating Amplifier contracts');
 
     addAmplifierOptions(
         program
@@ -86,7 +86,7 @@ const programHandler = () => {
             .addOption(new Option('--address <address>', 'address of contract to check'))
             .addOption(new Option('--coordinator <coordinator address>', 'coordinator address'))
             .addOption(new Option('--multisig <multisig address>', 'multisig address'))
-            .description('check migration succeeded')
+            .description('Check migration succeeded')
             .action((options: MigrationCheckOptions) => {
                 mainQueryProcessor(checkMigration, options, []);
             }),
