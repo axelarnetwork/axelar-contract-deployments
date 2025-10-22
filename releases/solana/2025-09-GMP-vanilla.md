@@ -294,6 +294,7 @@ The initialization steps can only be performed by the upgrade authority.
     GATEWAY_PDA="[gateway-pda]"
     GAS_SERVICE_PDA="[gas-service-pda]"
     GOVERNANCE_PDA="[governance-pda]"
+    MULTICALL_PDA="[multicall-pda]"
     MEMO_PDA="[memo-pda]"
     ```
 
