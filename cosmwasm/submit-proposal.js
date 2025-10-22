@@ -122,28 +122,28 @@ const callSubmitProposal = async (client, config, options, proposalDataOrMessage
     return proposalId;
 };
 
+const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, proposalId) => {
+    const contractBaseConfig = config.getContractConfig(contractName);
+    contractBaseConfig.storeCodeProposalId = proposalId;
+
+    const contractOptions = { contractName, contractCodePath };
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(contractOptions)).digest().toString('hex');
+};
+
 const storeCode = async (client, config, options, _args, fee) => {
     const isLegacy = await isPreV50SDK(config);
-
     if (isLegacy) {
-        const { contractName } = options;
-        const contractBaseConfig = config.getContractConfig(contractName);
-
+        const { contractName, contractCodePath } = options;
         const proposal = encodeStoreCodeProposalLegacy(options);
         if (!confirmProposalSubmissionLegacy(options, proposal, StoreCodeProposal)) {
             return;
         }
-
         const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-
-        contractBaseConfig.storeCodeProposalId = proposalId;
-        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
-
+        saveStoreCodeProposalInfo(config, contractName, contractCodePath, proposalId);
         return proposalId;
     } else {
         const { contractName, contractCodePaths } = options;
         const contractNames = contractName;
-
         const messages = contractNames.map((name) => {
             const contractOptions = {
                 ...options,
@@ -152,28 +152,14 @@ const storeCode = async (client, config, options, _args, fee) => {
             };
             return encodeStoreCodeMessage(contractOptions);
         });
-
         if (!confirmProposalSubmission(options, messages)) {
             return;
         }
-
         const proposalId = await callSubmitProposal(client, config, options, messages, fee);
-
         contractNames.forEach((name) => {
-            const contractBaseConfig = config.getContractConfig(name);
-            contractBaseConfig.storeCodeProposalId = proposalId;
-
-            const contractOptions = {
-                ...options,
-                contractName: name,
-                contractCodePath: contractCodePaths ? contractCodePaths[name] : options.contractCodePath,
-            };
-            contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-                .update(readContractCode(contractOptions))
-                .digest()
-                .toString('hex');
+            const contractCodePath = contractCodePaths ? contractCodePaths[name] : options.contractCodePath;
+            saveStoreCodeProposalInfo(config, name, contractCodePath, proposalId);
         });
-
         return proposalId;
     }
 };
