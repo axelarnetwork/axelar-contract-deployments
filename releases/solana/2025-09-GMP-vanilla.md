@@ -316,7 +316,7 @@ The initialization steps can only be performed by the upgrade authority.
     MEMO_PDA="[memo-pda]"
     ```
 
-1. Initialize Gateway:
+1. Reference parameters for Gateway initialization:
 
     | Axelar Env           | `minimumRotationDelay` | `previousSignersRetention` | `minimumProposalEtaDelaySeconds` |
     | -------------------- | ---------------------- | -------------------------- | -------------------------------- |
