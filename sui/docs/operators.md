@@ -65,7 +65,15 @@ ts-node sui/deploy-contract deploy Operators
 Add operators to your contract using the following command:
 
 ```bash
-ts-node sui/operators add <sui address>
+ts-node sui/operators add <sui address> [--ownerCap <ownerCapId>]
+```
+
+### Remove Operator
+
+Remove an operator from your contract:
+
+```bash
+ts-node sui/operators remove <sui address> [--ownerCap <ownerCapId>]
 ```
 
 ### Store Treasury Cap
@@ -74,6 +82,30 @@ Store the `TreasuryCap` using the following command:
 
 ```bash
 ts-node sui/operators storeCap --capId <treasury cap id>
+```
+
+### Remove Cap
+
+Remove a previously stored capability:
+
+```bash
+ts-node sui/operators removeCap <capId> [--ownerCap <ownerCapId>] [--receiver <address>]
+```
+
+### Collect Gas
+
+Collect gas from the gas service to the operator (receiver optional):
+
+```bash
+ts-node sui/operators collectGas --amount <amount> [--receiver <address>]
+```
+
+### Refund Gas
+
+Refund gas for a specific message (receiver optional):
+
+```bash
+ts-node sui/operators refund <messageId> --amount <amount> [--receiver <address>]
 ```
 
 ## TODO
