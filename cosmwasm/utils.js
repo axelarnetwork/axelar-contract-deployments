@@ -1129,39 +1129,36 @@ const encodeMigrateContractProposal = (config, options) => {
     };
 };
 
-const encodeSubmitProposalLegacy = (content, config, options, proposer) => {
-    const {
-        axelar: { tokenSymbol },
-    } = config;
-    const { deposit } = options;
-
-    return {
-        typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
-        value: MsgSubmitProposal.fromPartial({
-            content,
-            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
-            proposer,
-        }),
-    };
-};
-
-const encodeSubmitProposal = (messages, config, options, proposer) => {
+const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer, isLegacy) => {
     const {
         axelar: { tokenSymbol },
     } = config;
     const { deposit, title, description } = options;
 
-    return {
-        typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
-        value: MsgSubmitProposalV1.fromPartial({
-            messages: messages,
-            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
-            proposer,
-            metadata: '',
-            title,
-            summary: description,
-        }),
-    };
+    const initialDeposit = [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }];
+
+    if (isLegacy) {
+        return {
+            typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
+            value: MsgSubmitProposal.fromPartial({
+                content: proposalDataOrMessages,
+                initialDeposit,
+                proposer,
+            }),
+        };
+    } else {
+        return {
+            typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
+            value: MsgSubmitProposalV1.fromPartial({
+                messages: proposalDataOrMessages,
+                initialDeposit,
+                proposer,
+                metadata: '',
+                title,
+                summary: description,
+            }),
+        };
+    }
 };
 
 // Retries sign-and-broadcast on transient RPC socket closures
@@ -1186,24 +1183,16 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
-const submitProposalLegacy = async (client, config, options, content, fee) => {
-    const [account] = client.accounts;
+const submitProposal = async (client, config, options, proposalDataOrMessages, fee, isLegacy) => {
+    const [account] = isLegacy ? client.accounts : await client.signer.getAccounts();
 
-    const submitProposalMsg = encodeSubmitProposalLegacy(content, config, options, account.address);
+    if (!isLegacy) {
+        printInfo('Proposer address', account.address);
+    }
 
-    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
-
-    return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
-};
-
-const submitProposal = async (client, config, options, messages, fee) => {
-    const [account] = await client.signer.getAccounts();
-    printInfo('Proposer address', account.address);
-
-    const submitProposalMsg = encodeSubmitProposal(messages, config, options, account.address);
+    const submitProposalMsg = encodeSubmitProposal(proposalDataOrMessages, config, options, account.address, isLegacy);
 
     const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
-
     const { events } = result;
 
     const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
@@ -1530,7 +1519,6 @@ module.exports = {
     encodeExecuteContractProposalLegacy,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
-    submitProposalLegacy,
     encodeExecuteContractMessage,
     encodeStoreCodeMessage,
     encodeSubmitProposal,

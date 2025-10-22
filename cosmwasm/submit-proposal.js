@@ -21,7 +21,6 @@ const {
     encodeExecuteContractProposalLegacy,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
-    submitProposalLegacy,
     encodeExecuteContractMessage,
     isPreV50SDK,
     encodeStoreCodeMessage,
@@ -98,14 +97,7 @@ const confirmProposalSubmission = (options, proposalData, proposalType = null) =
 
 const callSubmitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
     const isLegacy = await isPreV50SDK(config);
-
-    let proposalId;
-    if (isLegacy) {
-        proposalId = await submitProposalLegacy(client, config, options, proposalDataOrMessages, fee);
-    } else {
-        proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee);
-    }
-
+    const proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee, isLegacy);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
 };
