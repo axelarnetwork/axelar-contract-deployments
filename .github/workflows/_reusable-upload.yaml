@@ -23,7 +23,7 @@ env:
 
 jobs:
   upload:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -81,17 +81,26 @@ jobs:
       - name: Generate artifact manifest
         run: |
           echo "Generating artifact manifest..."
+          
+          # Generate list of artifacts
+          ARTIFACT_LIST=$(find artifacts -name "*.so" -o -name "*.json" | while read file; do
+            echo "      \"$(basename $file)\","
+          done)
+          
+          # Remove trailing comma if artifacts exist
+          if [ -n "$ARTIFACT_LIST" ]; then
+            ARTIFACT_LIST=$(echo "$ARTIFACT_LIST" | sed '$ s/,$//')
+          fi
+          
           cat > artifacts/manifest.json << EOF
           {
             "version": "${{ inputs.version }}",
             "environment": "${{ inputs.environment }}",
             "uploaded_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "commit_sha": "${{ github.sha }}",
+            "commit_sha": "${{ github.event.pull_request.head.sha || github.sha }}",
             "ref": "${{ github.ref }}",
             "artifacts": [
-          $(find artifacts -name "*.so" -o -name "*.json" | while read file; do
-            echo "      \"$(basename $file)\","
-          done | sed '$ s/,$//')
+          $ARTIFACT_LIST
             ]
           }
           EOF

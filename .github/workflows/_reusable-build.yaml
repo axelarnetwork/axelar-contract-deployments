@@ -3,11 +3,6 @@ name: Reusable Build (helper workflow)
 on:
   workflow_call:
     inputs:
-      network:
-        description: 'Network environment: devnet-amplifier, stagenet, testnet, or mainnet'
-        required: false
-        type: string
-        default: ''
       update-ids:
         description: 'Whether to update program IDs'
         required: false
@@ -28,7 +23,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
