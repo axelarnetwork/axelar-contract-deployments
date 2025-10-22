@@ -57,54 +57,42 @@ const predictAddress = async (client, contractConfig, options) => {
     return contractAddress;
 };
 
-const printProposalLegacy = (proposal, proposalType) => {
-    printInfo(
-        `Encoded ${proposal.typeUrl}`,
-        JSON.stringify(decodeProposalAttributes(proposalType.toJSON(proposalType.decode(proposal.value))), null, 2),
-    );
+const printProposal = (proposalData, proposalType = null) => {
+    if (proposalType) {
+        // Legacy: single proposal with decoder
+        printInfo(
+            `Encoded ${proposalData.typeUrl}`,
+            JSON.stringify(decodeProposalAttributes(proposalType.toJSON(proposalType.decode(proposalData.value))), null, 2),
+        );
+    } else {
+        // v0.50: array of messages
+        proposalData.forEach((message) => {
+            const typeMap = {
+                '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
+                '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
+            };
+            const MessageType = typeMap[message.typeUrl];
+            if (MessageType) {
+                const decoded = MessageType.decode(message.value);
+                if (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' && decoded.msg) {
+                    decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
+                }
+                if (decoded.wasmByteCode) {
+                    decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
+                }
+                printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+            } else {
+                printInfo(`Unknown message type: ${message.typeUrl}`, '<Unable to decode>');
+            }
+        });
+    }
 };
 
-const confirmProposalSubmissionLegacy = (options, proposal, proposalType) => {
-    printProposalLegacy(proposal, proposalType);
+const confirmProposalSubmission = (options, proposalData, proposalType = null) => {
+    printProposal(proposalData, proposalType);
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return false;
     }
-    return true;
-};
-
-const printProposal = (messages) => {
-    messages.forEach((message) => {
-        const typeMap = {
-            '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
-            '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
-        };
-
-        const MessageType = typeMap[message.typeUrl];
-        if (MessageType) {
-            const decoded = MessageType.decode(message.value);
-
-            if (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' && decoded.msg) {
-                decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
-            }
-
-            if (decoded.wasmByteCode) {
-                decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
-            }
-
-            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-        } else {
-            printInfo(`Unknown message type: ${message.typeUrl}`, '<Unable to decode>');
-        }
-    });
-};
-
-const confirmProposalSubmission = (options, messages) => {
-    printProposal(messages);
-
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return false;
-    }
-
     return true;
 };
 
@@ -132,17 +120,17 @@ const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, propo
 
 const storeCode = async (client, config, options, _args, fee) => {
     const isLegacy = await isPreV50SDK(config);
+    const { contractName, contractCodePath, contractCodePaths } = options;
+
     if (isLegacy) {
-        const { contractName, contractCodePath } = options;
         const proposal = encodeStoreCodeProposalLegacy(options);
-        if (!confirmProposalSubmissionLegacy(options, proposal, StoreCodeProposal)) {
+        if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
             return;
         }
         const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
         saveStoreCodeProposalInfo(config, contractName, contractCodePath, proposalId);
         return proposalId;
     } else {
-        const { contractName, contractCodePaths } = options;
         const contractNames = contractName;
         const messages = contractNames.map((name) => {
             const contractOptions = {
@@ -157,8 +145,8 @@ const storeCode = async (client, config, options, _args, fee) => {
         }
         const proposalId = await callSubmitProposal(client, config, options, messages, fee);
         contractNames.forEach((name) => {
-            const contractCodePath = contractCodePaths ? contractCodePaths[name] : options.contractCodePath;
-            saveStoreCodeProposalInfo(config, name, contractCodePath, proposalId);
+            const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
+            saveStoreCodeProposalInfo(config, name, codePath, proposalId);
         });
         return proposalId;
     }
@@ -233,7 +221,7 @@ const execute = async (client, config, options, _args, fee) => {
 
     if (isLegacy) {
         const proposal = encodeExecuteContractProposalLegacy(config, options, chainName);
-        if (!confirmProposalSubmissionLegacy(options, proposal, ExecuteContractProposal)) {
+        if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
             return;
         }
         return callSubmitProposal(client, config, options, proposal, fee);

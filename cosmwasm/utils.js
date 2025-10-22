@@ -1055,6 +1055,10 @@ const decodeProposalAttributes = (proposalJson) => {
         proposalJson.msg = JSON.parse(atob(proposalJson.msg));
     }
 
+    if (proposalJson.wasmByteCode) {
+        proposalJson.wasmByteCode = `<${proposalJson.wasmByteCode.length} bytes>`;
+    }
+
     return proposalJson;
 };
 
