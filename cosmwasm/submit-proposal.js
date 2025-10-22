@@ -24,7 +24,6 @@ const {
     encodeExecuteContractMessage,
     isPreV50SDK,
     encodeStoreCodeMessage,
-    encodeSubmitProposal,
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
