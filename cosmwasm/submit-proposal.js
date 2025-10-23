@@ -15,7 +15,7 @@ const {
     getCodeDetails,
     getChainTruncationParams,
     decodeProposalAttributes,
-    encodeStoreCodeProposalLegacy,
+    encodeStoreCode,
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
@@ -23,7 +23,6 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     isLegacySDK,
-    encodeStoreCodeMessage,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     validateItsChainChange,
@@ -126,7 +125,8 @@ const storeCode = async (client, config, options, _args, fee) => {
         }
         const singleContractName = contractName[0];
         const legacyOptions = { ...options, contractName: singleContractName };
-        const proposal = encodeStoreCodeProposalLegacy(legacyOptions);
+        const proposal = encodeStoreCode(config, legacyOptions);
+
         if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
             return;
         }
@@ -141,8 +141,9 @@ const storeCode = async (client, config, options, _args, fee) => {
                 contractName: name,
                 contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
             };
-            return encodeStoreCodeMessage(contractOptions);
+            return encodeStoreCode(config, contractOptions);
         });
+
         if (!confirmProposalSubmission(options, messages)) {
             return;
         }
@@ -222,12 +223,10 @@ const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
     let contractName = options.contractName;
 
-    // Normalize contractName to array
     if (!Array.isArray(contractName)) {
         contractName = [contractName];
     }
 
-    // Validate single contract
     const singleContractName = contractName[0];
     if (contractName.length > 1) {
         throw new Error(
@@ -238,7 +237,6 @@ const execute = async (client, config, options, _args, fee) => {
     const isLegacy = isLegacySDK(config);
 
     if (isLegacy) {
-        // Legacy: single proposal for single message
         const singleMsg = Array.isArray(options.msg) ? options.msg[0] : options.msg;
         const legacyOptions = { ...options, contractName: singleContractName, msg: singleMsg };
         const proposal = encodeExecuteContract(config, legacyOptions, chainName);
@@ -248,7 +246,6 @@ const execute = async (client, config, options, _args, fee) => {
         }
         return callSubmitProposal(client, config, options, proposal, fee);
     } else {
-        // v0.50: multiple messages to same contract
         const { msg } = options;
         const msgs = Array.isArray(msg) ? msg : [msg];
 

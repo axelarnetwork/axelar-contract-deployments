@@ -981,37 +981,37 @@ const getMigrateContractParams = (config, options) => {
     };
 };
 
-const encodeStoreCodeProposalLegacy = (options) => {
-    const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
+const encodeStoreCode = (config, options) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
-        value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
-    };
-};
+    if (isLegacy) {
+        const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
+            value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { source, builder, instantiateAddresses } = options;
+        const wasm = readContractCode(options);
 
-const encodeStoreCodeMessage = (options) => {
-    const { source, builder, instantiateAddresses } = options;
+        const instantiatePermission =
+            instantiateAddresses && instantiateAddresses.length > 0
+                ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+                : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
 
-    const wasm = readContractCode(options);
+        const storeMsg = MsgStoreCode.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            wasmByteCode: zlib.gzipSync(wasm),
+            instantiatePermission,
+            source,
+            builder,
+        });
 
-    const instantiatePermission =
-        instantiateAddresses && instantiateAddresses.length > 0
-            ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
-            : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
-
-    const storeMsg = MsgStoreCode.fromPartial({
-        sender: GOVERNANCE_MODULE_ADDRESS,
-        wasmByteCode: zlib.gzipSync(wasm),
-        instantiatePermission,
-        source,
-        builder,
-    });
-
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
-        value: Uint8Array.from(MsgStoreCode.encode(storeMsg).finish()),
-    };
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
+            value: Uint8Array.from(MsgStoreCode.encode(storeMsg).finish()),
+        };
+    }
 };
 
 const encodeStoreInstantiateProposal = (config, options, msg) => {
@@ -1520,8 +1520,7 @@ module.exports = {
     fetchCodeIdFromContract,
     getChainTruncationParams,
     decodeProposalAttributes,
-    encodeStoreCodeProposalLegacy,
-    encodeStoreCodeMessage,
+    encodeStoreCode,
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
