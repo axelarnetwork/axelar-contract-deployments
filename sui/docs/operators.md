@@ -55,7 +55,7 @@ ts-node sui/deploy-contract sync
 Deploy the Operators contract using the following command:
 
 ```bash
-ts-node sui/deploy-contract deploy Operators
+ts-node sui/deploy-contract deploy operators
 ```
 
 ## Usage
