@@ -107,7 +107,7 @@ This is the vanilla Solana GMP release.
     solana config set --url $CLUSTER
     ```
 
-1. Generate or set existing keypair:
+1. Generate or set existing upgrade authority keypair:
 
     - To generate and set a new keypair:
 
@@ -126,6 +126,25 @@ This is the vanilla Solana GMP release.
 
         ```sh
         solana config set --keypair /path/to/my/keys/folder/upgrade-authority-$ENV.json
+        ```
+
+1. Generate or set existing operator keypair:
+
+    - To generate and set a new keypair:
+
+        ```sh
+        # Get keypair starting with 'gop'
+        solana-keygen grind --starts-with gop:1
+
+        # Move new keypair out of current dir
+        mv [generated gop keypair].json /path/to/my/keys/folder/operator-$ENV.json
+        ```
+
+    - To set an existing keypair:
+
+        ```sh
+        # Copy existing operator keypair to your keys folder
+        cp /path/to/existing/operator-keypair.json /path/to/my/keys/folder/operator-$ENV.json
         ```
 
 1. Fund keypair (unless on mainnet)
@@ -164,9 +183,7 @@ This is the vanilla Solana GMP release.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Check out the `upstream` branch.
-
-    - Note: This will change for real V1 release.
+1. Check out the `main` branch.
 
 1. Compile the Solana programs:
 
@@ -204,6 +221,7 @@ This is the vanilla Solana GMP release.
     MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_memo_program.so"
 
     UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
+    OPERATOR_KEYPAIR_PATH="<path/to/operator_keypair.json>"
     ```
 
     ```bash
@@ -294,10 +312,11 @@ The initialization steps can only be performed by the upgrade authority.
     GATEWAY_PDA="[gateway-pda]"
     GAS_SERVICE_PDA="[gas-service-pda]"
     GOVERNANCE_PDA="[governance-pda]"
+    MULTICALL_PDA="[multicall-pda]"
     MEMO_PDA="[memo-pda]"
     ```
 
-1. Initialize Gateway:
+1. Reference parameters for Gateway initialization:
 
     | Axelar Env           | `minimumRotationDelay` | `previousSignersRetention` | `minimumProposalEtaDelaySeconds` |
     | -------------------- | ---------------------- | -------------------------- | -------------------------------- |
@@ -305,6 +324,25 @@ The initialization steps can only be performed by the upgrade authority.
     | **Stagenet**         | `300`                  | `15`                       | `3600`                           |
     | **Testnet**          | `3600`                 | `15`                       | `3600`                           |
     | **Mainnet**          | `86400`                | `15`                       | `3600`                           |
+
+1. Add AxelarGateway:
+
+    ```bash
+    # Add under `config.axelar.contracts.AxelarGateway` based on Network
+    "$CHAIN" : {
+        "address": "$GATEWAY_PDA",
+        "connectionType": "amplifier",
+        "domainSeparator": "TBD",
+        "minimumRotationDelay": "[minimumRotationDelay]",
+        "operator": "$OPERATOR_PDA",
+        "previousSignersRetention": "[previousSignersRetention]",
+        "upgradeAuthority": "$UPGRADE_AUTHORITY_PDA"
+    }
+    ```
+
+1. Now deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
+
+1. Initialize Gateway:
 
     ```sh
     solana/cli send gateway init \
