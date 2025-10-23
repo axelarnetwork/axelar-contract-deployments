@@ -81,7 +81,7 @@ ts-node sui/operators remove <sui address> [--ownerCap <ownerCapId>]
 Store the `TreasuryCap` using the following command:
 
 ```bash
-ts-node sui/operators storeCap --capId <treasury cap id>
+ts-node sui/operators storeCap --capId <treasuryCapId>
 ```
 
 ### Remove Cap
