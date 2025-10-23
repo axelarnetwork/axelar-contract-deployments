@@ -94,7 +94,7 @@ ts-node sui/operators removeCap <capId> [--ownerCap <ownerCapId>] [--receiver <a
 
 ### Collect Gas
 
-Collect gas from the gas service to the operator (receiver optional):
+Collect gas from the gas service for the operator (receiver optional):
 
 ```bash
 ts-node sui/operators collectGas --amount <amount> [--receiver <address>]
