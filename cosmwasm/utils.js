@@ -1520,7 +1520,6 @@ module.exports = {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     encodeExecuteContractMessage,
-    encodeStoreCodeMessage,
     encodeSubmitProposal,
     submitProposal,
     isValidCosmosAddress,

@@ -225,11 +225,18 @@ const execute = async (client, config, options, _args, fee) => {
         }
         return callSubmitProposal(client, config, options, proposal, fee);
     } else {
+        const singleContractName = contractName[0];
+        if (contractName.length > 1) {
+            throw new Error(
+                'Execute command only supports one contract at a time. Use multiple --msg flags for multiple messages to the same contract.',
+            );
+        }
+
         const { msg } = options;
         const msgs = Array.isArray(msg) ? msg : [msg];
 
         const messages = msgs.map((msgJson) => {
-            const msgOptions = { ...options, msg: msgJson };
+            const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
             return encodeExecuteContractMessage(config, msgOptions, chainName);
         });
 
