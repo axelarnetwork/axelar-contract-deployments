@@ -114,12 +114,14 @@ const storeCode = async (client, config, options, _args, fee) => {
     const { contractName, contractCodePath, contractCodePaths } = options;
 
     if (isLegacy) {
-        const proposal = encodeStoreCodeProposalLegacy(options);
+        const singleContractName = contractName[0];
+        const legacyOptions = { ...options, contractName: singleContractName };
+        const proposal = encodeStoreCodeProposalLegacy(legacyOptions);
         if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
             return;
         }
         const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-        saveStoreCodeProposalInfo(config, contractName, contractCodePath, proposalId);
+        saveStoreCodeProposalInfo(config, singleContractName, contractCodePath, proposalId);
         return proposalId;
     } else {
         const contractNames = contractName;
@@ -127,7 +129,7 @@ const storeCode = async (client, config, options, _args, fee) => {
             const contractOptions = {
                 ...options,
                 contractName: name,
-                contractCodePath: contractCodePaths ? contractCodePaths[name] : options.contractCodePath,
+                contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
             };
             return encodeStoreCodeMessage(contractOptions);
         });
@@ -207,11 +209,14 @@ const instantiate = async (client, config, options, _args, fee) => {
 };
 
 const execute = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
+    const { chainName, contractName } = options;
     const isLegacy = await isPreV50SDK(config);
 
     if (isLegacy) {
-        const proposal = encodeExecuteContractProposalLegacy(config, options, chainName);
+        const singleContractName = contractName[0];
+        const singleMsg = Array.isArray(options.msg) ? options.msg[0] : options.msg;
+        const legacyOptions = { ...options, contractName: singleContractName, msg: singleMsg };
+        const proposal = encodeExecuteContractProposalLegacy(config, legacyOptions, chainName);
         if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
             return;
         }
