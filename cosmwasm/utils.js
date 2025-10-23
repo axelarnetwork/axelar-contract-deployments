@@ -53,6 +53,7 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
 const GOVERNANCE_MODULE_ADDRESS = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+const COSMOS_SDK_LEGACY_THRESHOLD = '0.50.0';
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -71,17 +72,15 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 const getLabel = ({ contractName, label }) => label || contractName;
 
 const isLegacySDK = (config) => {
-    const version = config.axelar.cosmosSDK?.version;
-    const threshold = config.axelar.cosmosSDK?.legacyThreshold;
+    const version = config.axelar.cosmosSDK;
 
-    if (!version || !threshold) {
-        throw new Error('SDK version and legacyThreshold must be configured in axelar config');
+    if (!version) {
+        throw new Error('SDK version must be configured in axelar config');
     }
 
     const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
-    const cleanThreshold = threshold.startsWith('v') ? threshold.slice(1) : threshold;
 
-    return cleanVersion < cleanThreshold;
+    return cleanVersion < COSMOS_SDK_LEGACY_THRESHOLD;
 };
 
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
