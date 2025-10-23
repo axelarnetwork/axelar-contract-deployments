@@ -70,57 +70,18 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const getSDKVersion = async (config) => {
-    if (!config.axelar?.lcd) {
-        throw new Error('LCD endpoint not found in config');
+const isLegacySDK = (config) => {
+    const version = config.axelar.cosmosSDK?.version;
+    const threshold = config.axelar.cosmosSDK?.legacyThreshold;
+
+    if (!version || !threshold) {
+        throw new Error('SDK version and legacyThreshold must be configured in axelar config');
     }
 
-    const url = `${config.axelar.lcd}/cosmos/base/tendermint/v1beta1/node_info`;
-
-    try {
-        const data = await httpGet(url);
-        const sdkVersion = data?.application_version?.cosmos_sdk_version;
-
-        if (!sdkVersion) {
-            throw new Error('cosmos_sdk_version not found in response');
-        }
-
-        return sdkVersion;
-    } catch (error) {
-        throw new Error(`Failed to fetch SDK version from ${url}: ${error.message}`);
-    }
-};
-
-const parseSDKVersion = (version) => {
     const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
+    const cleanThreshold = threshold.startsWith('v') ? threshold.slice(1) : threshold;
 
-    const parts = cleanVersion.split('.');
-    if (parts.length < 2) {
-        throw new Error(`Invalid SDK version format: ${version}`);
-    }
-
-    const major = parseInt(parts[0], 10);
-    const minor = parseInt(parts[1], 10);
-
-    if (isNaN(major) || isNaN(minor)) {
-        throw new Error(`Invalid SDK version format: ${version}`);
-    }
-
-    return { major, minor };
-};
-
-const isPreV50SDK = async (config) => {
-    let version;
-
-    if (config.axelar?.cosmosSDKVersion) {
-        version = config.axelar.cosmosSDKVersion;
-    } else {
-        version = await getSDKVersion(config);
-        config.axelar.cosmosSDKVersion = version;
-    }
-
-    const { major, minor } = parseSDKVersion(version);
-    return major === 0 && minor < 50;
+    return cleanVersion < cleanThreshold;
 };
 
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
@@ -1092,35 +1053,36 @@ const encodeInstantiate2Proposal = (config, options, msg) => {
     };
 };
 
-const encodeExecuteContractProposalLegacy = (config, options, chainName) => {
-    const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
+const encodeExecuteContract = (config, options, chainName) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
-        value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
-    };
-};
+    if (isLegacy) {
+        const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
+            value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { contractName, msg } = options;
+        const {
+            axelar: {
+                contracts: { [contractName]: contractConfig },
+            },
+        } = config;
+        const chainConfig = getChainConfig(config.chains, chainName);
 
-const encodeExecuteContractMessage = (config, options, chainName) => {
-    const { contractName, msg } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-    } = config;
-    const chainConfig = getChainConfig(config.chains, chainName);
+        const executeMsg = MsgExecuteContract.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
+            msg: Buffer.from(msg),
+            funds: [],
+        });
 
-    const executeMsg = MsgExecuteContract.fromPartial({
-        sender: GOVERNANCE_MODULE_ADDRESS,
-        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
-        msg: Buffer.from(msg),
-        funds: [],
-    });
-
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
-        value: Uint8Array.from(MsgExecuteContract.encode(executeMsg).finish()),
-    };
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+            value: Uint8Array.from(MsgExecuteContract.encode(executeMsg).finish()),
+        };
+    }
 };
 
 const encodeParameterChangeProposal = (options) => {
@@ -1563,15 +1525,14 @@ module.exports = {
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
-    encodeExecuteContractProposalLegacy,
+    encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeUpdateInstantiateConfigProposal,
     encodeMigrateContractProposal,
-    encodeExecuteContractMessage,
     encodeSubmitProposal,
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
-    isPreV50SDK,
+    isLegacySDK,
 };

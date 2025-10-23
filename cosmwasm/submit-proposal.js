@@ -19,11 +19,10 @@ const {
     encodeStoreInstantiateProposal,
     encodeInstantiateProposal,
     encodeInstantiate2Proposal,
-    encodeExecuteContractProposalLegacy,
+    encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
-    encodeExecuteContractMessage,
-    isPreV50SDK,
+    isLegacySDK,
     encodeStoreCodeMessage,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
@@ -98,7 +97,7 @@ const confirmProposalSubmission = (options, proposalData, proposalType = null) =
 };
 
 const callSubmitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
-    const isLegacy = await isPreV50SDK(config);
+    const isLegacy = isLegacySDK(config);
     const proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee, isLegacy);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
@@ -113,7 +112,7 @@ const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, propo
 };
 
 const storeCode = async (client, config, options, _args, fee) => {
-    const isLegacy = await isPreV50SDK(config);
+    const isLegacy = isLegacySDK(config);
     let contractName = options.contractName;
     const { contractCodePath, contractCodePaths } = options;
 
@@ -223,35 +222,39 @@ const execute = async (client, config, options, _args, fee) => {
     const { chainName } = options;
     let contractName = options.contractName;
 
+    // Normalize contractName to array
     if (!Array.isArray(contractName)) {
         contractName = [contractName];
     }
 
-    const isLegacy = await isPreV50SDK(config);
+    // Validate single contract
+    const singleContractName = contractName[0];
+    if (contractName.length > 1) {
+        throw new Error(
+            'Execute command only supports one contract at a time. Use multiple --msg flags for multiple messages to the same contract.',
+        );
+    }
+
+    const isLegacy = isLegacySDK(config);
 
     if (isLegacy) {
-        const singleContractName = contractName[0];
+        // Legacy: single proposal for single message
         const singleMsg = Array.isArray(options.msg) ? options.msg[0] : options.msg;
         const legacyOptions = { ...options, contractName: singleContractName, msg: singleMsg };
-        const proposal = encodeExecuteContractProposalLegacy(config, legacyOptions, chainName);
+        const proposal = encodeExecuteContract(config, legacyOptions, chainName);
+
         if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
             return;
         }
         return callSubmitProposal(client, config, options, proposal, fee);
     } else {
-        const singleContractName = contractName[0];
-        if (contractName.length > 1) {
-            throw new Error(
-                'Execute command only supports one contract at a time. Use multiple --msg flags for multiple messages to the same contract.',
-            );
-        }
-
+        // v0.50: multiple messages to same contract
         const { msg } = options;
         const msgs = Array.isArray(msg) ? msg : [msg];
 
         const messages = msgs.map((msgJson) => {
             const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
-            return encodeExecuteContractMessage(config, msgOptions, chainName);
+            return encodeExecuteContract(config, msgOptions, chainName);
         });
 
         if (!confirmProposalSubmission(options, messages)) {
