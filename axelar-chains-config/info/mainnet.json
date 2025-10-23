@@ -3524,6 +3524,10 @@
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am"
     ],
+    "cosmosSDK": {
+      "version": "0.45.16",
+      "legacyThreshold": "0.50.0"
+    },
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
