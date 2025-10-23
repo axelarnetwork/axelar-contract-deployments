@@ -212,7 +212,13 @@ const instantiate = async (client, config, options, _args, fee) => {
 };
 
 const execute = async (client, config, options, _args, fee) => {
-    const { chainName, contractName } = options;
+    const { chainName } = options;
+    let contractName = options.contractName;
+
+    if (!Array.isArray(contractName)) {
+        contractName = [contractName];
+    }
+
     const isLegacy = await isPreV50SDK(config);
 
     if (isLegacy) {
