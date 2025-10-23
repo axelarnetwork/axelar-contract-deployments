@@ -114,6 +114,9 @@ const storeCode = async (client, config, options, _args, fee) => {
     const { contractName, contractCodePath, contractCodePaths } = options;
 
     if (isLegacy) {
+        if (contractName.length > 1) {
+            throw new Error('Legacy SDK only supports storing one contract at a time. Please provide a single contract name.');
+        }
         const singleContractName = contractName[0];
         const legacyOptions = { ...options, contractName: singleContractName };
         const proposal = encodeStoreCodeProposalLegacy(legacyOptions);
