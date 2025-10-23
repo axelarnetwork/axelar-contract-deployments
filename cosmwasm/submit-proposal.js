@@ -111,7 +111,12 @@ const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, propo
 
 const storeCode = async (client, config, options, _args, fee) => {
     const isLegacy = await isPreV50SDK(config);
-    const { contractName, contractCodePath, contractCodePaths } = options;
+    let contractName = options.contractName;
+    const { contractCodePath, contractCodePaths } = options;
+
+    if (!Array.isArray(contractName)) {
+        contractName = [contractName];
+    }
 
     if (isLegacy) {
         if (contractName.length > 1) {
