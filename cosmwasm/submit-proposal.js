@@ -39,7 +39,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { mainProcessor } = require('./processor');
-const { CoordinatorManager, getMultisigProverContractForChainType } = require('./coordinator');
+const { CoordinatorManager } = require('./coordinator');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -314,8 +314,8 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         }
 
         gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
-        votingVerifierConfig.codeId = votingVerifierCodeId || votingVerifierConfig.codeId;
-        multisigProverConfig.codeId = multisigProverCodeId || multisigProverConfig.codeId;
+        votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
+        multisigProverConfig.codeId = proverCodeId || multisigProverConfig.codeId;
     }
 
     const coordinator = new CoordinatorManager(config);
