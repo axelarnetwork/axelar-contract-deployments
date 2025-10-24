@@ -24,6 +24,7 @@ const {
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
+const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
@@ -279,12 +280,12 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     }
 
     const chainConfig = config.getChainConfig(chainName);
-    const multisigProverContractName = getMultisigProverContractForChainType(chainConfig.chainType);
+    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
 
     // validate that the contract configs exist
-    let gatewayConfig = config.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName);
-    let votingVerifierConfig = config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName);
-    let multisigProverConfig = config.getContractConfigByChain(multisigProverContractName, chainName);
+    let gatewayConfig = config.getGatewayContract(chainName);
+    let votingVerifierConfig = config.getVotingVerifierContract(chainName);
+    let multisigProverConfig = config.getMultisigProverContract(chainName);
 
     if (options.fetchCodeId) {
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));

@@ -2,6 +2,10 @@ import { GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
 
 import { loadConfig, printWarn, saveConfig } from './utils';
 
+export const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
+export const GATEWAY_CONTRACT_NAME = 'Gateway';
+export const MULTISIG_PROVER_CONTRACT_NAME = 'MultisigProver';
+
 export interface FullConfig {
     axelar: AxelarConfig;
     chains: Record<string, ChainConfig>;
@@ -62,6 +66,44 @@ export interface AxelarContractConfig extends ContractConfig {
     governanceAddress?: string;
     governanceAccount?: string;
     [chainName: string]: unknown;
+}
+
+export interface VotingVerifierChainConfig {
+    governanceAddress?: string;
+    serviceName?: string;
+    rewardsAddress?: string;
+    sourceGatewayAddress?: string;
+    votingThreshold?: [string, string];
+    blockExpiry?: string | number;
+    confirmationHeight?: number;
+    msgIdFormat?: string;
+    addressFormat?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+    codeId: number;
+    address?: string;
+}
+
+export interface MultisigProverChainConfig {
+    encoder: string;
+    keyType: string;
+    domainSeparator?: string;
+    adminAddress: string;
+    multisigAddress?: string;
+    verifierSetDiffThreshold: number;
+    signingThreshold: [string, string];
+    proposalId?: string;
+    contractAdmin?: string;
+    codeId: number;
+    address?: string;
+}
+
+export interface GatewayChainConfig {
+    proposalId?: string;
+    salt?: string;
+    contractAdmin?: string;
+    codeId: number;
+    address?: string;
 }
 
 export class ConfigManager implements FullConfig {
@@ -344,6 +386,73 @@ export class ConfigManager implements FullConfig {
             throw new Error(`Contract '${configContractName}' not found on chain '${chainName}' in ${this.environment} config`);
         }
         return contractConfig[chainName];
+    }
+
+    public validateRequired<T>(value: T | undefined | null, configPath: string): T {
+        if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+            throw new Error(`Missing required configuration for the chain. Please configure it in ${configPath}.`);
+        }
+        return value;
+    }
+
+    public validateThreshold(value: [string, string] | undefined | null, configPath: string): [string, string] {
+        if (!value || !Array.isArray(value) || value.length !== 2) {
+            throw new Error(
+                `Missing or invalid threshold configuration for the chain. Please configure it in ${configPath} as [numerator, denominator].`,
+            );
+        } else if (Number(value[0]) > Number(value[1])) {
+            throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
+        }
+        return value;
+    }
+
+    public getMultisigProverContractForChainType(chainType: string): string {
+        const chainProverMapping: Record<string, string> = {
+            svm: 'SolanaMultisigProver',
+        };
+        return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
+    }
+
+    public getMultisigProverContract(chainName: string): MultisigProverChainConfig {
+        const chainConfig = this.getChainConfig(chainName);
+        const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
+        const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
+
+        this.validateRequired(multisigProverConfig.codeId, `${MULTISIG_PROVER_CONTRACT_NAME}.codeId`);
+        this.validateRequired(multisigProverConfig.encoder, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].encoder`);
+        this.validateRequired(multisigProverConfig.keyType, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].keyType`);
+        this.validateRequired(multisigProverConfig.adminAddress, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].adminAddress`);
+        this.validateRequired(
+            multisigProverConfig.verifierSetDiffThreshold,
+            `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].verifierSetDiffThreshold`,
+        );
+        this.validateThreshold(multisigProverConfig.signingThreshold, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].signingThreshold`);
+
+        return multisigProverConfig;
+    }
+
+    public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
+        const votingVerifierConfig = this.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName) as VotingVerifierChainConfig;
+
+        this.validateRequired(votingVerifierConfig.codeId, `${VERIFIER_CONTRACT_NAME}.codeId`);
+        this.validateRequired(votingVerifierConfig.governanceAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`);
+        this.validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
+        this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`);
+        this.validateThreshold(votingVerifierConfig.votingThreshold, `${VERIFIER_CONTRACT_NAME}[${chainName}].votingThreshold`);
+        this.validateRequired(votingVerifierConfig.blockExpiry, `${VERIFIER_CONTRACT_NAME}[${chainName}].blockExpiry`);
+        this.validateRequired(votingVerifierConfig.confirmationHeight, `${VERIFIER_CONTRACT_NAME}[${chainName}].confirmationHeight`);
+        this.validateRequired(votingVerifierConfig.msgIdFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].msgIdFormat`);
+        this.validateRequired(votingVerifierConfig.addressFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].addressFormat`);
+
+        return votingVerifierConfig;
+    }
+
+    public getGatewayContract(chainName: string): GatewayChainConfig {
+        const gatewayConfig = this.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
+
+        this.validateRequired(gatewayConfig.codeId, `${GATEWAY_CONTRACT_NAME}[${chainName}].codeId`);
+
+        return gatewayConfig;
     }
 
     public getFee(): string | StdFee {
