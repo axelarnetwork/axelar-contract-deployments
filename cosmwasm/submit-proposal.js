@@ -236,7 +236,11 @@ const execute = async (client, config, options, _args, fee) => {
     const isLegacy = isLegacySDK(config);
 
     if (isLegacy) {
-        const singleMsg = Array.isArray(options.msg) ? options.msg[0] : options.msg;
+        const msgs = Array.isArray(options.msg) ? options.msg : [options.msg];
+        if (msgs.length > 1) {
+            throw new Error('Legacy SDK only supports one message per proposal. Please provide a single --msg flag.');
+        }
+        const singleMsg = msgs[0];
         const legacyOptions = { ...options, contractName: singleContractName, msg: singleMsg };
         const proposal = encodeExecuteContract(config, legacyOptions, chainName);
 
