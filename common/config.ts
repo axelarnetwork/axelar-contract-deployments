@@ -71,7 +71,6 @@ export interface AxelarContractConfig extends ContractConfig {
 export interface VotingVerifierChainConfig {
     governanceAddress: string;
     serviceName: string;
-    rewardsAddress?: string;
     sourceGatewayAddress: string;
     votingThreshold: [string, string];
     blockExpiry: number;
