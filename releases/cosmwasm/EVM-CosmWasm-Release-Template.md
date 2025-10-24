@@ -144,7 +144,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Register deployment
 
     ```bash
-    ts-node cosmwasm/submit-proposal register-deployment \
+    ts-node cosmwasm/submit-proposal.js register-deployment \
         -n $CHAIN \
         -t "Register deployment for $CHAIN" \
         -d "Register deployment for $CHAIN in the Coordinator" \

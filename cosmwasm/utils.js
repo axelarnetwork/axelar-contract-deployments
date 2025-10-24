@@ -10,9 +10,12 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
+    UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
+const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
     isString,
@@ -930,6 +933,15 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
+const getUpdateInstantiateParams = (options) => {
+    const { msg } = options;
+
+    return {
+        ...getSubmitProposalParams(options),
+        accessConfigUpdates: JSON.parse(msg),
+    };
+};
+
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
@@ -1007,6 +1019,15 @@ const encodeParameterChangeProposal = (options) => {
     return {
         typeUrl: '/cosmos.params.v1beta1.ParameterChangeProposal',
         value: Uint8Array.from(ParameterChangeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeUpdateInstantiateConfigProposal = (options) => {
+    const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
+        value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
     };
 };
 
@@ -1131,6 +1152,31 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
     }
 };
 
+const getCodeDetails = async (config, codeId) => {
+    const tendermintClient = await Tendermint34Client.connect(config?.axelar?.rpc);
+    let codeInfo;
+
+    try {
+        const data = QueryCodeRequest.encode({
+            codeId: BigInt(codeId),
+        }).finish();
+
+        const { value } = await tendermintClient.abciQuery({
+            path: '/cosmwasm.wasm.v1.Query/Code',
+            data: data,
+        });
+
+        codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+        if (!codeInfo) {
+            throw new Error(`Info not found for code id ${codeId}`);
+        }
+    } finally {
+        tendermintClient.disconnect();
+    }
+
+    return codeInfo;
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1204,6 +1250,7 @@ module.exports = {
     calculateDomainSeparator,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
     executeTransaction,
     uploadContract,
     instantiateContract,
@@ -1218,6 +1265,7 @@ module.exports = {
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
+    encodeUpdateInstantiateConfigProposal,
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,

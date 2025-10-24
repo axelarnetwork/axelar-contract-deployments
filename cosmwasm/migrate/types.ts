@@ -7,6 +7,8 @@ export interface MigrationOptions extends Options {
     dry?: boolean;
     direct?: boolean;
     ignoreChains?: string;
+    title?: string;
+    description?: string;
     codeId?: number;
 }
 
