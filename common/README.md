@@ -35,3 +35,11 @@ Human-readable destination address: CC6FYRUBDJVTATQ55KGPMD2JQFY775BTSJQMRNJEWPEJ
 
 Encoded ITS destination address: 0x4343364659525542444a565441545135354b47504d44324a5146593737354254534a514d524e4a455750454a465558504f4246534d454f58
 ```
+
+### ITS Set Trusted Chains All
+
+As a manner of convenience to call the set trusted chain command across all ITS instances across all chains.
+
+```bash
+ts-node common/its.js set-trusted-chains-all  --evmPrivateKey $EVM_PRIVATE_KEY --suiPrivateKey $SUI_PRIVATE_KEY --stellarPrivateKey $STELLAR_PRIVATE_KEY --env $env
+```
