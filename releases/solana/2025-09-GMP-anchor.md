@@ -177,10 +177,6 @@ This is the anchor Solana GMP release.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Check out the `v2-anchor` branch.
-
-    - Note: This will change for real V2 release.
-
 1. Compile the Solana programs:
 
     ```sh
