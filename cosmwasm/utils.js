@@ -79,8 +79,16 @@ const isLegacySDK = (config) => {
     }
 
     const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
+    const cleanThreshold = COSMOS_SDK_LEGACY_THRESHOLD.startsWith('v') ? COSMOS_SDK_LEGACY_THRESHOLD.slice(1) : COSMOS_SDK_LEGACY_THRESHOLD;
 
-    return cleanVersion < COSMOS_SDK_LEGACY_THRESHOLD;
+    const [vMajor, vMinor] = cleanVersion.split('.').map(Number);
+    const [tMajor, tMinor] = cleanThreshold.split('.').map(Number);
+
+    if (isNaN(vMajor) || isNaN(vMinor) || isNaN(tMajor) || isNaN(tMinor)) {
+        throw new Error(`Invalid SDK version format: ${version} or threshold: ${COSMOS_SDK_LEGACY_THRESHOLD}`);
+    }
+
+    return vMajor < tMajor || (vMajor === tMajor && vMinor < tMinor);
 };
 
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
