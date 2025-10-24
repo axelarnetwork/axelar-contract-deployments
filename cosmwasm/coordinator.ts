@@ -2,7 +2,7 @@ import { calculateDomainSeparator, isKeccak256Hash, printError, printInfo } from
 import { ConfigManager } from '../common/config';
 import { GATEWAY_CONTRACT_NAME, MULTISIG_PROVER_CONTRACT_NAME, VERIFIER_CONTRACT_NAME, getSalt } from './utils';
 
-export const getProverContractForChainType = (chainType: string): string => {
+export const getMultisigProverContractForChainType = (chainType: string): string => {
     const chainProverMapping: Record<string, string> = {
         svm: 'SolanaMultisigProver',
     };
@@ -147,7 +147,7 @@ export class CoordinatorManager {
                 return value;
             };
 
-            const proverContractName = getProverContractForChainType(chainConfig.chainType);
+            const proverContractName = getMultisigProverContractForChainType(chainConfig.chainType);
             const votingVerifierConfig = this.configManager.getContractConfigByChain(
                 VERIFIER_CONTRACT_NAME,
                 chainName,
