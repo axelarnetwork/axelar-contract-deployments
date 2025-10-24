@@ -100,7 +100,6 @@ export class CoordinatorManager {
             gatewayConfig.contractAdmin = admin;
             const validSalt = this.configManager.validateRequired(salt, 'CLI option --salt');
             const saltUint8Array = getSalt(validSalt, 'Coordinator', chainName);
-            const governanceAddress = votingVerifierConfig.governanceAddress;
 
             printInfo(`Code IDs - Gateway: ${gatewayCodeId}, Verifier: ${verifierCodeId}, Prover: ${proverCodeId}`);
 
@@ -120,7 +119,7 @@ export class CoordinatorManager {
                                 code_id: verifierCodeId,
                                 label: `${VERIFIER_CONTRACT_NAME}-${chainName}`,
                                 msg: {
-                                    governance_address: governanceAddress,
+                                    governance_address: votingVerifierConfig.governanceAddress,
                                     service_name: votingVerifierConfig.serviceName,
                                     source_gateway_address: votingVerifierConfig.sourceGatewayAddress,
                                     voting_threshold: votingVerifierConfig.votingThreshold,
@@ -137,7 +136,7 @@ export class CoordinatorManager {
                                 code_id: proverCodeId,
                                 label: `${proverContractName}-${chainName}`,
                                 msg: {
-                                    governance_address: governanceAddress,
+                                    governance_address: multisigProverConfig.governanceAddress,
                                     admin_address: multisigProverConfig.adminAddress,
                                     multisig_address: multisigAddress,
                                     signing_threshold: multisigProverConfig.signingThreshold,

@@ -69,15 +69,15 @@ export interface AxelarContractConfig extends ContractConfig {
 }
 
 export interface VotingVerifierChainConfig {
-    governanceAddress?: string;
-    serviceName?: string;
+    governanceAddress: string;
+    serviceName: string;
     rewardsAddress?: string;
-    sourceGatewayAddress?: string;
-    votingThreshold?: [string, string];
-    blockExpiry?: string | number;
-    confirmationHeight?: number;
-    msgIdFormat?: string;
-    addressFormat?: string;
+    sourceGatewayAddress: string;
+    votingThreshold: [string, string];
+    blockExpiry: string | number;
+    confirmationHeight: number;
+    msgIdFormat: string;
+    addressFormat: string;
     proposalId?: string;
     contractAdmin?: string;
     codeId: number;
@@ -85,6 +85,7 @@ export interface VotingVerifierChainConfig {
 }
 
 export interface MultisigProverChainConfig {
+    governanceAddress: string;
     encoder: string;
     keyType: string;
     domainSeparator?: string;
@@ -427,6 +428,7 @@ export class ConfigManager implements FullConfig {
             `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].verifierSetDiffThreshold`,
         );
         this.validateThreshold(multisigProverConfig.signingThreshold, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].signingThreshold`);
+        this.validateRequired(multisigProverConfig.governanceAddress, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].governanceAddress`);
 
         return multisigProverConfig;
     }
