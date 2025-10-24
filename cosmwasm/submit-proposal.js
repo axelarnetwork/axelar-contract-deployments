@@ -25,6 +25,8 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     validateItsChainChange,
+    COORDINATOR_INSTANTIATED_CONTRACTS,
+    addCoordinatorToInstantiateAddresses,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
@@ -81,6 +83,15 @@ const callSubmitProposal = async (client, config, options, proposal, fee) => {
 const storeCode = async (client, config, options, _args, fee) => {
     const { contractName } = options;
     const contractBaseConfig = config.getContractConfig(contractName);
+
+    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
+    const instantiateAddresses = addCoordinatorToInstantiateAddresses(
+        contractName,
+        options.instantiateAddresses,
+        coordinatorAddress,
+        options.env,
+    );
+    options = { ...options, instantiateAddresses };
 
     const proposal = encodeStoreCodeProposal(options);
 
