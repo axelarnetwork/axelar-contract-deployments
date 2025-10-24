@@ -96,8 +96,7 @@ const confirmProposalSubmission = (options, proposalData, proposalType = null) =
 };
 
 const callSubmitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
-    const isLegacy = isLegacySDK(config);
-    const proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee, isLegacy);
+    const proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
 };

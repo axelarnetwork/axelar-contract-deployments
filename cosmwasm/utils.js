@@ -1111,13 +1111,14 @@ const encodeMigrateContractProposal = (config, options) => {
     };
 };
 
-const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer, isLegacy) => {
+const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
     } = config;
     const { deposit, title, description } = options;
 
     const initialDeposit = [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }];
+    const isLegacy = isLegacySDK(config);
 
     if (isLegacy) {
         return {
@@ -1165,14 +1166,15 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
-const submitProposal = async (client, config, options, proposalDataOrMessages, fee, isLegacy) => {
+const submitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
+    const isLegacy = isLegacySDK(config);
     const [account] = isLegacy ? client.accounts : await client.signer.getAccounts();
 
     if (!isLegacy) {
         printInfo('Proposer address', account.address);
     }
 
-    const submitProposalMsg = encodeSubmitProposal(proposalDataOrMessages, config, options, account.address, isLegacy);
+    const submitProposalMsg = encodeSubmitProposal(proposalDataOrMessages, config, options, account.address);
 
     const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
     const { events } = result;
