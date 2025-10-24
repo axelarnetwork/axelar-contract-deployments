@@ -414,16 +414,16 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.codeId, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].codeId`);
-        this.validateRequired(multisigProverConfig.encoder, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].encoder`);
-        this.validateRequired(multisigProverConfig.keyType, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].keyType`);
-        this.validateRequired(multisigProverConfig.adminAddress, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].adminAddress`);
+        this.validateRequired(multisigProverConfig.codeId, `${multisigProverContractName}[${chainName}].codeId`);
+        this.validateRequired(multisigProverConfig.encoder, `${multisigProverContractName}[${chainName}].encoder`);
+        this.validateRequired(multisigProverConfig.keyType, `${multisigProverContractName}[${chainName}].keyType`);
+        this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`);
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
-            `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].verifierSetDiffThreshold`,
+            `${multisigProverContractName}[${chainName}].verifierSetDiffThreshold`,
         );
-        this.validateThreshold(multisigProverConfig.signingThreshold, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].signingThreshold`);
-        this.validateRequired(multisigProverConfig.governanceAddress, `${MULTISIG_PROVER_CONTRACT_NAME}[${chainName}].governanceAddress`);
+        this.validateThreshold(multisigProverConfig.signingThreshold, `${multisigProverContractName}[${chainName}].signingThreshold`);
+        this.validateRequired(multisigProverConfig.governanceAddress, `${multisigProverContractName}[${chainName}].governanceAddress`);
 
         return multisigProverConfig;
     }
