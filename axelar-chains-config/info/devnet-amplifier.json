@@ -1354,6 +1354,21 @@
           "version": "2.1.1"
         }
       }
+    },
+    "solana-9": {
+        "name": "Solana Devnet Amplifier",
+        "axelarId": "solana-9",
+        "rpc": "https://api.devnet.solana.com",
+        "chainType": "svm",
+        "decimals": 9,
+        "finality": "31",
+        "approxFinalityWaitTime": 1,
+        "tokenSymbol": "SOL",
+        "explorer": {
+            "name": "Solana Devnet Explorer",
+            "url": "https://explorer.solana.com/?cluster=devnet"
+        },
+        "contracts": {}
     }
   },
   "axelar": {
