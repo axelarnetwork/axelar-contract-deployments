@@ -177,10 +177,6 @@ This is the anchor Solana GMP release.
 
 1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
 
-1. Check out the `v2-anchor` branch.
-
-    - Note: This will change for real V2 release.
-
 1. Compile the Solana programs:
 
     ```sh
@@ -257,7 +253,7 @@ This is the anchor Solana GMP release.
 1. Deploy and verify axelar_solana_gateway program:
 
     ```sh
-    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair $GATEWAY_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_gateway --provider.cluster $CLUSTER --program-keypair $GATEWAY_PROGRAM_KEYPAIR_PATH --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
     anchor verify -p axelar_solana_gateway --provider.cluster $CLUSTER $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
@@ -265,7 +261,7 @@ This is the anchor Solana GMP release.
 1. Deploy and verify axelar_solana_gas_service program:
 
     ```sh
-    anchor deploy -p axelar_solana_gas_service --provider.cluster $CLUSTER --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_gas_service --provider.cluster $CLUSTER --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
     anchor verify -p axelar_solana_gas_service --provider.cluster $CLUSTER $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
@@ -273,7 +269,7 @@ This is the anchor Solana GMP release.
 1. Deploy and verify axelar_solana_governance program:
 
     ```sh
-    anchor deploy -p axelar_solana_governance --provider.cluster $CLUSTER --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_governance --provider.cluster $CLUSTER --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
     anchor verify -p axelar_solana_governance --provider.cluster $CLUSTER $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
@@ -281,7 +277,7 @@ This is the anchor Solana GMP release.
 1. Deploy and verify axelar_solana_multicall program:
 
     ```sh
-    anchor deploy -p axelar_solana_multicall --provider.cluster $CLUSTER --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_multicall --provider.cluster $CLUSTER --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
     anchor verify -p axelar_solana_multicall --provider.cluster $CLUSTER $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
@@ -289,7 +285,7 @@ This is the anchor Solana GMP release.
 1. Deploy and verify axelar_solana_memo_program program:
 
     ```sh
-    anchor deploy -p axelar_solana_memo_program --provider.cluster $CLUSTER --program-keypair $MEMO_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_memo_program --provider.cluster $CLUSTER --program-keypair $MEMO_PROGRAM_KEYPAIR_PATH --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
     anchor verify -p axelar_solana_memo_program --provider.cluster $CLUSTER $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
