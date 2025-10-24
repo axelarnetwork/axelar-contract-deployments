@@ -26,6 +26,9 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     validateItsChainChange,
+    VERIFIER_CONTRACT_NAME,
+    GATEWAY_CONTRACT_NAME,
+    MULTISIG_PROVER_CONTRACT_NAME,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {

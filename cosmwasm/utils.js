@@ -38,7 +38,6 @@ const {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
-    httpGet,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
