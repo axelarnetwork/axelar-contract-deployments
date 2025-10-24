@@ -77,7 +77,7 @@ export interface VotingVerifierChainConfig {
     confirmationHeight: number;
     msgIdFormat: string;
     addressFormat: string;
-    codeId: number;
+    codeId?: number;
     contractAdmin?: string;
     address?: string;
 }
@@ -89,14 +89,14 @@ export interface MultisigProverChainConfig {
     adminAddress: string;
     verifierSetDiffThreshold: number;
     signingThreshold: [string, string];
-    codeId: number;
+    codeId?: number;
     contractAdmin?: string;
     address?: string;
     domainSeparator?: string;
 }
 
 export interface GatewayChainConfig {
-    codeId: number;
+    codeId?: number;
     contractAdmin?: string;
     address?: string;
 }
@@ -413,7 +413,6 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.codeId, `${multisigProverContractName}[${chainName}].codeId`);
         this.validateRequired(multisigProverConfig.encoder, `${multisigProverContractName}[${chainName}].encoder`);
         this.validateRequired(multisigProverConfig.keyType, `${multisigProverContractName}[${chainName}].keyType`);
         this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`);
@@ -430,7 +429,6 @@ export class ConfigManager implements FullConfig {
     public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
         const votingVerifierConfig = this.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName) as VotingVerifierChainConfig;
 
-        this.validateRequired(votingVerifierConfig.codeId, `${VERIFIER_CONTRACT_NAME}[${chainName}].codeId`);
         this.validateRequired(votingVerifierConfig.governanceAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`);
         this.validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
         this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`);
@@ -445,8 +443,6 @@ export class ConfigManager implements FullConfig {
 
     public getGatewayContract(chainName: string): GatewayChainConfig {
         const gatewayConfig = this.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
-
-        this.validateRequired(gatewayConfig.codeId, `${GATEWAY_CONTRACT_NAME}[${chainName}].codeId`);
 
         return gatewayConfig;
     }
