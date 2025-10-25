@@ -143,8 +143,7 @@ async function askForConfirmation(actionName, commandOptions = {}) {
         const aborted = prompt(promptTitle);
 
         if (aborted) {
-            printInfo('Aborted');
-            process.exit(0);
+            throw new Error('Transaction aborted by user');
         }
     }
 }

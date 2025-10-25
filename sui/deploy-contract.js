@@ -276,7 +276,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     const maxRetries = 10;
     let retry = 0;
 
-    while (result.objectChanges == undefined) {
+    while (result.objectChanges === undefined) {
         retry++;
         if (retry > maxRetries) {
             throw new Error(`failed to fetch object changes for tx ${result.digest}`);

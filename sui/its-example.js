@@ -255,7 +255,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     const postDeployTxBuilder = new TxBuilder(client);
 
     // Mint tokens before registration (while user still holds the TreasuryCap)
-    const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+    const amount = Number.isFinite(Number(options.mintAmount)) ? parseInt(options.mintAmount) : 0;
     if (amount && options.origin) {
         const unitAmount = getUnitAmount(options.mintAmount, decimals);
 

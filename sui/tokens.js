@@ -61,8 +61,7 @@ class CoinManager {
             });
 
             if (!metadata) {
-                printError('No metadata found for', coinType);
-                process.exit(0);
+                throw new Error(`No metadata found for ${coinType}`);
             }
 
             printInfo('Coin Type', coinType);
@@ -84,8 +83,7 @@ class CoinManager {
         });
 
         if (!metadata) {
-            printError('No metadata found for', coinType);
-            process.exit(0);
+            throw new Error(`No metadata found for ${coinType}`);
         }
 
         const objectToSplit = isGasToken(coinType)
@@ -93,8 +91,7 @@ class CoinManager {
             : coinTypeToCoins[coinType].data.find((coinObject) => BigInt(coinObject.balance) >= splitAmount)?.coinObjectId;
 
         if (!objectToSplit) {
-            printError('No coin object found with enough balance to split');
-            process.exit(0);
+            throw new Error('No coin object found with enough balance to split');
         }
 
         const [coin] = tx.splitCoins(objectToSplit, [splitAmount]);
@@ -155,7 +152,7 @@ async function mintCoinsCommand(keypair, client, args, options, contracts) {
 
     const walletAddress = keypair.toSuiAddress();
 
-    if (isNaN(amount)) {
+    if (!Number.isFinite(Number(amount))) {
         throw new Error(`Amount to be minted must be a valid number, found: ${amount}`);
     }
 
