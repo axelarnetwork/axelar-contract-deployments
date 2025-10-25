@@ -67,9 +67,9 @@ This is the vanilla Solana GMP release.
     | Axelar Env           | Authority                                     | Operator                                      |
     | -------------------- | --------------------------------------------- | --------------------------------------------- |
     | **Devnet-amplifier** | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | `gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18` |
-    | **Stagenet**         | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Testnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
-    | **Mainnet**          | `<generate key with 'upa' prefix>` | `<generate key with 'gop' prefix>` |
+    | **Stagenet**         | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Testnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
+    | **Mainnet**          | `<generate key with 'upa' prefix>`            | `<generate key with 'gop' prefix>`            |
 
 1. Create an `.env` config with the following:
 
@@ -297,8 +297,6 @@ This is the vanilla Solana GMP release.
 
     solana-verify verify-from-repo https://github.com/axelarnetwork/axelar-amplifier-solana --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MEMO_PROGRAM_KEYPAIR_PATH) --library-name axelar_solana_memo_program -- --no-default-features --features $ENV
     ```
-
-1. After deploying Solana contracts, deploy the [Solana GMP Amplifier](../cosmwasm/2025-09-Solana-GMP-v1.0.0.md).
 
 ### Initialization Steps
 

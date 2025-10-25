@@ -168,8 +168,6 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 }
 ```
 
-- Return to 'Initialization Steps' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
-
 ### Instantiate Amplifier Contracts
 
 | Axelar Env           | `CONTRACT_ADMIN`                                |
@@ -447,7 +445,9 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
     ```
 
+- Return to 'Initialization Steps:Initialize Gateway' in the [Solana GMP](../solana/2025-09-GMP-vanilla.md)
+
 ## Checklist
 
-- Follow the [Solana GMP checklist](../solana/2025-09-GMP-v1.0.0.md)
+- Follow the [Solana GMP checklist](../solana/2025-09-GMP-vanilla.md)
 - Follow the [Solana ITS checklist](../solana/2025-09-ITS-v1.0.0.md)
