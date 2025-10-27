@@ -16,8 +16,8 @@ export interface ContractInfo {
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
 
-    let votingVerifierAddress = config.getVotingVerifierContract(chainName).address;
-    votingVerifierAddress = config.validateRequired(votingVerifierAddress, `VotingVerifier.${chainName}.address`);
+    const votingVerifier = config.getVotingVerifierContract(chainName);
+    const votingVerifierAddress = config.validateRequired(votingVerifier.address, `VotingVerifier.${chainName}.address`);
 
     const rewardsContractAddresses = {
         multisig: config.getContractConfig('Multisig').address,

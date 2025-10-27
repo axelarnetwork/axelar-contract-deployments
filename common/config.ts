@@ -398,22 +398,17 @@ export class ConfigManager implements FullConfig {
             throw new Error(
                 `Missing or invalid threshold configuration for the chain. Please configure it in ${configPath} as [numerator, denominator].`,
             );
-        } else if (Number(value[0]) > Number(value[1])) {
+        }
+        if (typeof value[0] !== 'number' && typeof value[0] !== 'string') {
+            throw new Error(`Invalid threshold configuration for the chain. Numerator must be a number or a string.`);
+        }
+        if (typeof value[1] !== 'number' && typeof value[1] !== 'string') {
+            throw new Error(`Invalid threshold configuration for the chain. Denominator must be a number or a string.`);
+        }
+        if (Number(value[0]) > Number(value[1])) {
             throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
         }
-        if (value[0] && typeof value[0] == 'number') {
-            value[0] = String(value[0]);
-        }
-        if (value[1] && typeof value[1] == 'number') {
-            value[1] = String(value[1]);
-        }
-        if (value[0] && typeof value[0] !== 'string') {
-            throw new Error(`Invalid threshold configuration for the chain. Numerator must be a string.`);
-        }
-        if (value[1] && typeof value[1] !== 'string') {
-            throw new Error(`Invalid threshold configuration for the chain. Denominator must be a string.`);
-        }
-        return value as [string, string];
+        return [String(value[0]), String(value[1])];
     }
 
     public getMultisigProverContractForChainType(chainType: string): string {

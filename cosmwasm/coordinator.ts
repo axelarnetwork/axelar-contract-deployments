@@ -125,7 +125,10 @@ export class CoordinatorManager {
                                     governance_address: votingVerifierConfig.governanceAddress,
                                     service_name: votingVerifierConfig.serviceName,
                                     source_gateway_address: votingVerifierConfig.sourceGatewayAddress,
-                                    voting_threshold: votingVerifierConfig.votingThreshold,
+                                    voting_threshold: [
+                                        String(votingVerifierConfig.votingThreshold[0]),
+                                        String(votingVerifierConfig.votingThreshold[1]),
+                                    ],
                                     block_expiry: String(votingVerifierConfig.blockExpiry),
                                     confirmation_height: votingVerifierConfig.confirmationHeight,
                                     source_chain: chainConfig.axelarId,
@@ -142,7 +145,10 @@ export class CoordinatorManager {
                                     governance_address: multisigProverConfig.governanceAddress,
                                     admin_address: multisigProverConfig.adminAddress,
                                     multisig_address: multisigAddress,
-                                    signing_threshold: multisigProverConfig.signingThreshold,
+                                    signing_threshold: [
+                                        String(multisigProverConfig.signingThreshold[0]),
+                                        String(multisigProverConfig.signingThreshold[1]),
+                                    ],
                                     service_name: votingVerifierConfig.serviceName,
                                     chain_name: chainConfig.axelarId,
                                     verifier_set_diff_threshold: multisigProverConfig.verifierSetDiffThreshold,
