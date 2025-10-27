@@ -27,10 +27,9 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
         .filter((c) => c.contracts?.InterchainTokenService?.address)
         .filter((c) => c.chainType === 'evm');
 
+    const trustedChains = parseTrustedChains(config.chains, [ALL_CHAINS]);
     for (const chain of allEvmChains) {
         printInfo(`\n--- Setting trusted chains on ${chain.name} (${chain.axelarId}) ---`);
-
-        const trustedChains = parseTrustedChains(config.chains, [ALL_CHAINS]);
 
         const options = {
             privateKey: evmPrivateKey,
@@ -42,7 +41,7 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
     }
 }
 
-async function callSuiAddTrustedChains(config, suiPrivateKey, yes = false, suiSignatureScheme, suiPrivateKeyType) {
+async function callSuiAddTrustedChains(config, options) {
     const allSuiChains = Object.values(config.chains)
         .filter((c) => c.contracts?.InterchainTokenService?.address)
         .filter((c) => c.chainType === 'sui');
@@ -51,18 +50,18 @@ async function callSuiAddTrustedChains(config, suiPrivateKey, yes = false, suiSi
         printInfo(`\n--- Setting trusted chains on ${chain.name} (${chain.axelarId}) ---`);
 
         const [keypair, client] = getSuiWallet(chain, {
-            privateKey: suiPrivateKey,
-            signatureScheme: suiSignatureScheme,
-            privateKeyType: suiPrivateKeyType,
+            privateKey: options.suiPrivateKey,
+            signatureScheme: options.suiSignatureScheme,
+            privateKeyType: options.suiPrivateKeyType,
         });
 
         await printSuiWalletInfo(keypair, client, chain, {});
 
-        await addTrustedChainsSui(keypair, client, config, chain.contracts, [ALL_CHAINS], { yes });
+        await addTrustedChainsSui(keypair, client, config, chain.contracts, [ALL_CHAINS], options);
     }
 }
 
-async function callStellarAddTrustedChains(config, stellarPrivateKey, yes = false) {
+async function callStellarAddTrustedChains(config, options) {
     const allStellarChains = Object.values(config.chains)
         .filter((c) => c.contracts?.InterchainTokenService?.address)
         .filter((c) => c.chainType === 'stellar');
@@ -70,16 +69,16 @@ async function callStellarAddTrustedChains(config, stellarPrivateKey, yes = fals
     for (const chain of allStellarChains) {
         printInfo(`\n--- Setting trusted chains on ${chain.name} (${chain.axelarId}) ---`);
 
-        const wallet = await getStellarWallet(chain, { privateKey: stellarPrivateKey });
+        const wallet = await getStellarWallet(chain, { privateKey: options.stellarPrivateKey });
 
         const contract = new StellarContract(chain.contracts.InterchainTokenService.address);
 
-        await addTrustedChainsStellar(wallet, config, chain, contract, [ALL_CHAINS], { yes });
+        await addTrustedChainsStellar(wallet, config, chain, contract, [ALL_CHAINS], options);
     }
 }
 
 async function setTrustedChainsAll(config, args, options) {
-    const { evmPrivateKey, suiPrivateKey, stellarPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType } = options;
+    const { evmPrivateKey, suiPrivateKey, stellarPrivateKey } = options;
 
     if (!evmPrivateKey) throw new Error('Missing required option: --evmPrivateKey');
     if (!suiPrivateKey) throw new Error('Missing required option: --suiPrivateKey');
@@ -89,10 +88,10 @@ async function setTrustedChainsAll(config, args, options) {
     await callEvmSetTrustedChains(config, evmPrivateKey, options.env);
 
     printInfo('Setting trusted chains for all Sui chains...');
-    await callSuiAddTrustedChains(config, suiPrivateKey, yes, suiSignatureScheme, suiPrivateKeyType);
+    await callSuiAddTrustedChains(config, options);
 
     printInfo('Setting trusted chains for all Stellar chains...');
-    await callStellarAddTrustedChains(config, stellarPrivateKey, yes);
+    await callStellarAddTrustedChains(config, options);
 }
 
 async function mainProcessor(processor, args, options) {
