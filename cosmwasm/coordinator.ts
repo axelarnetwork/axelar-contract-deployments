@@ -84,6 +84,11 @@ export class CoordinatorManager {
             const votingVerifierConfig = this.configManager.getVotingVerifierContract(chainName);
             const multisigProverConfig = this.configManager.getMultisigProverContract(chainName);
             const gatewayConfig = this.configManager.getGatewayContract(chainName);
+
+            this.configManager.validateRequired(votingVerifierConfig.codeId, `VotingVerifier.${chainName}.codeId`);
+            this.configManager.validateRequired(multisigProverConfig.codeId, `${proverContractName}.${chainName}.codeId`);
+            this.configManager.validateRequired(gatewayConfig.codeId, `Gateway.${chainName}.codeId`);
+
             const gatewayCodeId = gatewayConfig.codeId;
             const verifierCodeId = votingVerifierConfig.codeId;
             const proverCodeId = multisigProverConfig.codeId;
