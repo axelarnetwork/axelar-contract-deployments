@@ -128,8 +128,8 @@ if (require.main === module) {
                 .makeOptionMandatory(true),
         )
         .addOption(new Option('-y, --yes', 'Skip confirmation prompts').default(false))
-        .addOption(new Option('-suiSignatureScheme, --suiSignatureScheme', 'Signature scheme for Sui').default('secp256k1'))
-        .addOption(new Option('-suiPrivateKeyType, --suiPrivateKeyType', 'Private key type for Sui').default('mnemonic'))
+        .addOption(new Option('--suiSignatureScheme <suiSignatureScheme>', 'Signature scheme for Sui').default('secp256k1'))
+        .addOption(new Option('--suiPrivateKeyType <suiPrivateKeyType>', 'Private key type for Sui').default('mnemonic'))
         .action((options) => {
             mainProcessor(setTrustedChainsAll, [], options);
         });
