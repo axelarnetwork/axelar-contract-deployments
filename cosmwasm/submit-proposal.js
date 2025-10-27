@@ -26,6 +26,7 @@ const {
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
+const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
@@ -281,38 +282,43 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
         throw new Error('Salt is required when instantiating chain contracts');
     }
 
+    const chainConfig = config.getChainConfig(chainName);
+    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
+
     // validate that the contract configs exist
-    let gatewayConfig = config.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName);
-    let verifierConfig = config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName);
-    let proverConfig = config.getContractConfigByChain(MULTISIG_PROVER_CONTRACT_NAME, chainName);
+    let gatewayConfig = config.getGatewayContract(chainName);
+    let votingVerifierConfig = config.getVotingVerifierContract(chainName);
+    let multisigProverConfig = config.getMultisigProverContract(chainName);
 
     if (options.fetchCodeId) {
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
-        const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: MULTISIG_PROVER_CONTRACT_NAME }));
+        const votingVerifierCode =
+            verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
+        const multisigProverCode =
+            proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
         gatewayConfig.codeId = gatewayCode;
-        verifierConfig.codeId = verifierCode;
-        proverConfig.codeId = proverCode;
+        votingVerifierConfig.codeId = votingVerifierCode;
+        multisigProverConfig.codeId = multisigProverCode;
     } else {
         if (!gatewayConfig.codeId && !gatewayCodeId) {
             throw new Error(
                 'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
             );
         }
-        if (!verifierConfig.codeId && !verifierCodeId) {
+        if (!votingVerifierConfig.codeId && !verifierCodeId) {
             throw new Error(
                 'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
             );
         }
-        if (!proverConfig.codeId && !proverCodeId) {
+        if (!multisigProverConfig.codeId && !proverCodeId) {
             throw new Error(
                 'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
             );
         }
 
         gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
-        verifierConfig.codeId = verifierCodeId || verifierConfig.codeId;
-        proverConfig.codeId = proverCodeId || proverConfig.codeId;
+        votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
+        multisigProverConfig.codeId = proverCodeId || multisigProverConfig.codeId;
     }
 
     const coordinator = new CoordinatorManager(config);
