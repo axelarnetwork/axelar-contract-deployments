@@ -393,7 +393,7 @@ export class ConfigManager implements FullConfig {
         return value;
     }
 
-    public validateThreshold(value: [string, string] | undefined | null, configPath: string): [string, string] {
+    public validateThreshold(value: [string | number, string | number] | undefined | null, configPath: string): [string, string] {
         if (!value || !Array.isArray(value) || value.length !== 2) {
             throw new Error(
                 `Missing or invalid threshold configuration for the chain. Please configure it in ${configPath} as [numerator, denominator].`,
@@ -413,7 +413,7 @@ export class ConfigManager implements FullConfig {
         if (value[1] && typeof value[1] !== 'string') {
             throw new Error(`Invalid threshold configuration for the chain. Denominator must be a string.`);
         }
-        return value;
+        return value as [string, string];
     }
 
     public getMultisigProverContractForChainType(chainType: string): string {
