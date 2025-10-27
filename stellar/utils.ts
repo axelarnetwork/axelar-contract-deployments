@@ -310,7 +310,7 @@ async function estimateCost(tx, server) {
         ram: Number(response.cost.memBytes),
 
         min_resource_fee: response.minResourceFee,
-        ledger_read_bytes: sorobanTransactionData.resources().readBytes(),
+        // ledger_read_bytes: sorobanTransactionData.resources().readBytes(),
         ledger_write_bytes: sorobanTransactionData.resources().writeBytes(),
         ledger_entry_reads: sorobanTransactionData.resources().footprint().readOnly().length,
         ledger_entry_writes: sorobanTransactionData.resources().footprint().readWrite().length,

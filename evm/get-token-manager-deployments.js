@@ -10,7 +10,7 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
-const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
+// const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
 
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
@@ -58,7 +58,8 @@ async function getTokenManagers(name) {
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         console.log('processing... ', name);
 
-        const rpc = RPCs[name];
+        // const rpc = RPCs[name];
+        const rpc = chain.rpc;
         console.log(name, rpc);
         if(!rpc) return false;
         const provider = getDefaultProvider(rpc);
@@ -117,8 +118,6 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
-    getTokenManagers('blast-sepolia');
-    return;
     let results = {};
     for (const name of Object.keys(info.chains)) {
         results[name] = 0;
