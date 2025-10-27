@@ -22,7 +22,6 @@ async function encodeRecipient(config, args, _) {
     printInfo('Encoded ITS destination address', itsDestinationAddress);
 }
 
-//EVM
 async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
     const allEvmChains = Object.values(config.chains)
         .filter((c) => c.contracts?.InterchainTokenService?.address)
