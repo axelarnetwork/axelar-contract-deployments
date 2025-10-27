@@ -18,7 +18,7 @@ async function processCommand(config, chain, options) {
         process.exit(0);
     }
 
-    const host = getFaucetHost(chain.networkType);
+    const host = options.rpc ?? getFaucetHost(chain.networkType);
 
     switch (chain.networkType) {
         case 'localnet': {
