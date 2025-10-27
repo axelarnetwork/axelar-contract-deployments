@@ -76,6 +76,138 @@ ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
 `proxySalt` is used to derive the same address as a deployment on an existing chain.
 
+## AxelarTransceiver and ERC1967 Proxy Deployment
+
+Note: You can deploy transceiver for any tokens/chains by providing the appropriate  `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script saves the config under the full name of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc)
+
+### Prerequisites
+
+AxelarTransceiver and ERC1967Proxy contract are compiled from the example-wormhole-axelar-wsteth repo. Build is generated using the following commands:
+
+```bash
+git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git
+forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:<$TRANSCEIVER_STRUCTS_ADDRESS>"
+```
+
+- Note: Pre-linked artifacts will be generated, i.e. TransceiverStructs library will be linked. This step is mandatory to deploy AxelarTransceiver contract.
+
+### AxelarTransceiver Deployment
+
+Please ensure you have generated pre-linked artifacts.
+
+Set address of deployed `gmpManager` to the transceiver section in your chain config:
+
+```json
+"${TRANSCEIVER_PREFIX}AxelarTransceiver": {
+  "gmpManager": "0x..."
+}
+```
+
+To deploy an AxelarTransceiver contract, run:
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --transceiverPrefix $TRANSCEIVER_PREFIX
+```
+
+**Important**:
+
+- **Use `create`** method to deploy, as deployer of transceiver will be used to initialize the contract, avoid using `create2` or `create3`
+- **`--artifactPath` is required** for transceiver deployment
+- **`--transceiverPrefix` is required** to differentiate multiple transceivers in config
+- The GMP Manager address is automatically read from the chain config (`${TRANSCEIVER_PREFIX}AxelarTransceiver.gmpManager`) or can be manually provided via `--gmpManager` flag
+- **Library Linking**: Pre-linked artifacts are generated and required libraries are already linked
+
+The deployment script will:
+
+- Validate the gateway, gas service, and GMP manager addresses from the chain configuration
+- Deploy the contract with the correct constructor arguments
+- Store configuration including gateway, gas service, and GMP manager addresses
+- Verify the deployed contract state matches the original constructor arguments
+
+#### Upgrade Transceiver
+
+To upgrade an existing transceiver implementation, follow these steps:
+
+##### Deploy New Implementation (Reuse Existing Proxy)
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --transceiverPrefix $TRANSCEIVER_PREFIX \
+  --reuseProxy
+```
+
+##### Upgrade Proxy to Point to New Implementation
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --transceiverPrefix $TRANSCEIVER_PREFIX \
+  --upgrade
+```
+
+### ERC1967Proxy
+
+The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify the full contract name like this:
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c ERC1967Proxy \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --forContract `${TRANSCEIVER_PREFIX}AxelarTransceiver`
+```
+
+**Important**:
+
+- **Use `create`** method to deploy for ERC1967Proxy of `${TRANSCEIVER_PREFIX}AxelarTransceiver`, as deployer will be used to initialize the contract
+- **`--artifactPath` is required** for ERC1967Proxy deployment
+- **Default deployment method is `create`** (standard nonce-based deployment)
+- Use `-m create2` or `-m create3` for deterministic deployments if needed
+
+The proxy deployment will:
+
+- Use the implementation address from the specified contract's config
+- Store the proxy address in the target contract's configuration
+- Support custom initialization data via `--proxyData` (defaults to "0x")
+
+### Transceiver Post-Deployment Operations
+
+After deploying a transceiver contract, you can perform post-deployment operations using the `axelar-transceiver.ts` script:
+
+```bash
+# Initialize the transceiver contract
+ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
+
+# Transfer pauser capability to a new address
+ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
+
+# Set Chain ID mapping
+ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress> --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
+```
+
+## Hyperliquid
+
+The Hyperliquid chain uses a dual architecture block model with fast blocks (2 seconds, 2M gas limit) and slow blocks (1 minute, 30M gas limit). The `hyperliquid.js` script provides utilities to set an account to used a specific block size, to query the deployer address of an interchain token, and to update the deployer address of an interchain token. The supported commands are:
+
+```bash
+# Update block size
+ts-node evm/hyperliquid.js update-block-size <small|big>
+
+# Get token deployer
+ts-node evm/hyperliquid.js deployer <token-id>
+
+# Update token deployer
+ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
+```
+
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
@@ -356,3 +488,167 @@ ts-node evm/its.js link-token --salt [deploy-salt] [token-id] [destination-chain
 ```
 
 The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of hashing the provided salt string.
+
+## Interchain Token Factory
+
+The Interchain Token Factory is responsible for deploying new interchain tokens and managing their token managers. It has the following functionality:
+
+### Contract-Id
+
+Getter for the contract id.
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames <chain_name> --env <env> 
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames avalanche --env testnet  
+```
+
+
+### Interchain Token Deploy Salt
+
+Computes the deploy salt for an interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer <deployer>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
+```
+
+### Canonical Interchain Token Deploy Salt
+
+Computes the deploy salt for a canonical interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --tokenAddress <token_address> --chainNames <chain_name>  --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --tokenAddress 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+### Canonical Interchain Token Id
+
+Computes the ID for a canonical interchain token based on its address.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddress <token_address> --chainNames <chain_name>  --env <env>
+
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddress 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+### Interchain Token Id
+
+Computes the ID for an interchain token based on the deployer and a salt.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id --deployer <deployer> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id --deployer 0x312dba807EAE77f01EF3dd21E885052f8F617c5B --chainNames avalanche --env testnet --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+```
+
+### Deploy Interchain Token
+
+Creates a new token and optionally mints an initial amount to a specified minter
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name <name> --symbol <symbol> --decimals <decimals> --initialSupply <initialSupply> --minter <minter>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name Test_Token --symbol TT --decimals 18 --initialSupply 12345 --minter 0x312dba807EAE77f01EF3dd21E885052f8F617c5B  --chainNames ethereum-sepolia --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Deploy Remote Interchain Token
+
+Deploys a remote interchain token on a specified destination chain. No additional minter is set on the deployed token.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain <destination_chain> --chainNames <chain_name>  --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain Avalanche  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Register Canonical Interchain Token
+
+Registers a canonical token as an interchain token and deploys its token manager.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress <token_address> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress 0xff0021D9201B51C681d26799A338f98741fBBB6a --chainNames ethereum-sepolia --env testnet
+```
+
+### Deploy Remote Canonical Interchain Token
+
+Deploys a canonical interchain token on a remote chain.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress <token_address> --destinationChain <destination_chain> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress 0x4a895FB659aAD3082535Aa193886D7501650685b --destinationChain Avalanche --chainNames ethereum-sepolia --env testnet
+```
+
+### Register Custom Token
+
+Register an existing ERC20 token under a `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token  --tokenAddress <token_address> --tokenManagerType <token_manager_type> --operator <operator> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token --tokenAddress 0x0F6814301C0DA51bFddA9D2A6Dd877950aa0F912 --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb50
+```
+
+### Link Token
+
+Links a remote token on `destinationChain` to a local token corresponding to the `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token --destinationChain <destination_chain> --destinationTokenAddress <destination_token_address> --tokenManagerType <token_manager_type> --linkParams <link_params>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token --destinationChain Avalanche --destinationTokenAddress 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C --tokenManagerType 4 --linkParams 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+```

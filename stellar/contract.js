@@ -18,8 +18,8 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
 
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
-    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, args.simulate);
-    const result = args.simulate ? returnValue.result.retval._value : returnValue.value();
+    const response = await broadcast(callOperation, wallet, chain, `${operation}`, options);
+    const result = response.value();
 
     if (result !== undefined) {
         printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
@@ -82,7 +82,7 @@ async function restoreInstance(_wallet, chain, contractName, _contract, _args, _
 async function mainProcessor(processor, contractName, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with action ${processor.name}`, yes)) {
@@ -122,7 +122,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--extend-by <extendBy>',
-                'Number of ledgers to extend by. If ommitted, will default to the maximum extension amount',
+                'Number of ledgers to extend by. If omitted, will default to the maximum extension amount',
             ),
         )
         .action((contractName, options) => {
@@ -141,7 +141,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, { operation: 'paused', simulate: true }, options);
+            mainProcessor(submitOperation, contractName, { operation: 'paused' }, options);
         });
 
     program
@@ -165,7 +165,7 @@ if (require.main === module) {
         .description('Retrieve the owner of the contract')
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, { operation: 'owner', simulate: true }, options);
+            mainProcessor(submitOperation, contractName, { operation: 'owner' }, options);
         });
 
     program
@@ -180,7 +180,7 @@ if (require.main === module) {
         .description('Retrieve the operator of the contract')
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, { operation: 'operator', simulate: true }, options);
+            mainProcessor(submitOperation, contractName, { operation: 'operator' }, options);
         });
 
     program

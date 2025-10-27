@@ -1,175 +1,30 @@
 name: Update config
-
 on:
   pull_request_target:
     types: [closed]
 
-permissions:
-  contents: read
-  pull-requests: read
-
 jobs:
-  determine-networks:
-    runs-on: ubuntu-latest
-    outputs:
-      networks: ${{ steps.set-networks.outputs.networks }}
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    steps:
-      - name: Checkout axelar-contract-deployments repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2 # for the diff checks between HEAD~1..HEAD on "determine_networks" step
-
-      - name: Check if PR was merged
-        id: check_if_merged
-        run: |
-          if [ "${{ github.event.pull_request.merged }}" = "true" ]; then
-            echo "merged=true" >> $GITHUB_OUTPUT
-          else
-            echo "merged=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Get the merge commit SHA
-        id: merge_commit
-        if: steps.check_if_merged.outputs.merged == 'true'
-        run: |
-          MERGE_COMMIT=$(git log -1 --pretty=format:"%H")
-          echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
-
-      - name: Determine NETWORKS
-        id: set-networks
-        if: steps.check_if_merged.outputs.merged == 'true'
-        run: |
-          echo "Checking modified files in commit ${{ env.MERGE_COMMIT }}"
-          MODIFIED_FILES=$(git diff --name-only HEAD~1..HEAD)
-          echo "Modified files: $MODIFIED_FILES"
-
-          NETWORKS=()
-
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/mainnet.json"; then
-            NETWORKS+=("mainnet")
-          fi
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/testnet.json"; then
-            NETWORKS+=("testnet")
-          fi
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/stagenet.json"; then
-            NETWORKS+=("stagenet")
-          fi
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/devnet-amplifier.json"; then
-            NETWORKS+=("devnet-amplifier")
-          fi
-
-          if [ ${#NETWORKS[@]} -eq 0 ]; then
-            echo "No relevant changes detected."
-            echo "networks=none" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "Detected networks: ${NETWORKS[*]}"
-          echo "networks=$(IFS=,; echo "${NETWORKS[*]}")" >> "$GITHUB_OUTPUT"
-
-      - name: Set networks output to none if not merged
-        if: steps.check_if_merged.outputs.merged != 'true'
-        run: echo "networks=none" >> "$GITHUB_OUTPUT"
-
-  update-config:
-    runs-on: ubuntu-latest
-    needs: determine-networks
-    if: needs.determine-networks.outputs.networks != 'none'
-    permissions:
-      contents: write
-      pull-requests: write
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  reusable-update-config:
+    if: github.event.pull_request.merged == true
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - network: mainnet
+            files: axelar-chains-config/info/mainnet.json
+          - network: testnet
+            files: axelar-chains-config/info/testnet.json
+          - network: stagenet
+            files: axelar-chains-config/info/stagenet.json
+          - network: devnet-amplifier
+            files: axelar-chains-config/info/devnet-amplifier.json
+    uses: ./.github/workflows/reusable-update-config.yaml
+    with:
+      source_repo: axelar-contract-deployments
+      network: ${{ matrix.network }}
+      files: ${{ matrix.files }}
+    secrets:
+      SOURCE_REPO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
       CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
-      NETWORKS: ${{ needs.determine-networks.outputs.networks }}
-
-    steps:
-      - name: Checkout axelar-contract-deployments repository
-        uses: actions/checkout@v4
-
-      - name: Checkout external repository
-        uses: actions/checkout@v4
-        with:
-          repository: axelarnetwork/${{ secrets.CONFIG_REPO }}
-          path: config-repo
-          token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
-
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      - name: Setup Branch Name
-        id: branch-name
-        run: echo "branch=feat/config-update-$(date +'%Y-%m-%d-%H-%M-%S')" >> "$GITHUB_OUTPUT"
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Create branch and generate config
-        run: |
-          cd config-repo
-          poetry install --no-interaction
-          git config --local user.email "cicd@interoplabs.io"
-          git config --local user.name "Interoplabs CI"
-          git checkout -b ${{ steps.branch-name.outputs.branch }}
-
-          for NETWORK in ${{ env.NETWORKS }}; do
-            echo "Generating config for $NETWORK"
-            poetry run python generate.py --network "$NETWORK" gen-configs all-configs
-          done
-
-          git add --all
-          git commit -m "chore: update generated configuration files for ${{ env.NETWORKS }}"
-          git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
-
-      - name: Create Pull Request
-        id: create_pr
-        run: |
-          cd config-repo
-          PR_TITLE="chore: update configs for ${{ env.NETWORKS }} from axelar-contract-deployments"
-          PR_BODY="Auto-generated PR with updated configuration files"
-          PR_HEAD="${{ steps.branch-name.outputs.branch }}"
-          PR_BASE="main"
-          # Capture both response and HTTP status code
-          RESPONSE=$(curl -s -w "%{http_code}" -o response.json -X POST \
-            -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls \
-            -d "{\"title\":\"$PR_TITLE\",\"body\":\"$PR_BODY\",\"head\":\"$PR_HEAD\",\"base\":\"$PR_BASE\"}")
-          HTTP_STATUS=$(tail -c 3 <<< "$RESPONSE")
-          cat response.json
-          PR_NUMBER=$(jq -r .number response.json)
-          if [[ "$HTTP_STATUS" != "201" ]] || [[ "$PR_NUMBER" == "null" || -z "$PR_NUMBER" ]]; then
-            echo "Failed to create PR. HTTP status: $HTTP_STATUS, PR number: $PR_NUMBER"
-            cat response.json
-            exit 1
-          fi
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-
-      - name: Merge Pull Request
-        if: steps.create_pr.outcome == 'success'
-        run: |
-          cd config-repo
-          PR_NUMBER=${{ env.PR_NUMBER }}
-          PR_TITLE="chore: update configs for ${{ env.NETWORKS }} from axelar-contract-deployments"
-          # Attempt to merge the PR and capture both response and HTTP status code
-          RESPONSE=$(curl -s -w "%{http_code}" -o merge_response.json -X PUT \
-            -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls/$PR_NUMBER/merge \
-            -d "{\"commit_title\":\"Merge PR #$PR_NUMBER: $PR_TITLE\",\"merge_method\":\"squash\"}")
-          HTTP_STATUS=$(tail -c 3 <<< "$RESPONSE")
-          cat merge_response.json
-          if [[ "$HTTP_STATUS" != "200" ]]; then
-            echo "Failed to merge PR. HTTP status: $HTTP_STATUS"
-            cat merge_response.json
-            exit 1
-          fi
-          echo "PR #$PR_NUMBER merged successfully."

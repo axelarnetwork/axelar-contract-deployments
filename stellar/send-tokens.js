@@ -11,8 +11,8 @@ async function processCommand(chain, options) {
     recipients = options.recipients.split(',').map((str) => str.trim());
 
     validateParameters({
-        isValidDecimal: amount,
-        isValidStellarAddress: { recipients },
+        isValidDecimal: { amount },
+        isValidStellarAddress: recipients,
     });
 
     const nativeAssetBalance = await getNativeBalance(chain, wallet.publicKey());
@@ -44,7 +44,7 @@ async function processCommand(chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(chain, options);
 }
 

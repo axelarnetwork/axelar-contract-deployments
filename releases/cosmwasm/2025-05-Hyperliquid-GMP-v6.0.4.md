@@ -253,7 +253,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1284000000`        |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -312,7 +312,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 Check reward pool to confirm funding worked:
 
 ```bash
-ts-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards $CHAIN
 ```
 
 11. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
@@ -355,8 +355,8 @@ Note that this step can only be run once a sufficient number of verifiers have r
 | -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
-| **Testnet**          | 21                  |
-| **Mainnet**          | 25                  |
+| **Testnet**          | 5                  |
+| **Mainnet**          | 5                  |
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2

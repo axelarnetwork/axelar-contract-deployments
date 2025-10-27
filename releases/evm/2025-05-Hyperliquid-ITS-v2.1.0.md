@@ -45,16 +45,21 @@ CHAINS=xyz
 ### Devnet Amplifier
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.1.1 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.1.1" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
+
+Install the latest release that supports Hyperliquid ITS specific contracts for updating deployer address on Interchain Tokens. Example command is:
+```bash
+npm install @axelar-network/interchain-token-service@0.0.0-snapshot.<commit-hash>
+```
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 

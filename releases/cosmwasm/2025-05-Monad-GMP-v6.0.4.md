@@ -1,20 +1,20 @@
-# MonadGMP Amplifier v6.0.4
+# Monad GMP v6.0.4
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                          |
+| -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
 | **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | Completed             | 2025-05-22      |
-| **Stagenet**         | Completed             | 2025-05-29      |
-| **Testnet**          | Completed             | 2025-06-05      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-05-22 |
+| **Stagenet**         | Completed             | 2025-05-29 |
+| **Testnet**          | Completed             | 2025-06-05 |
+| **Mainnet**          | Completed             | 2025-09-19 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
-- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) 
-- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) 
+- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
+- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1)
 - [MultisigProver v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1)
 
 ## Background
@@ -242,7 +242,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1326`              |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -297,17 +297,17 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 Check reward pool to confirm funding worked:
 
 ```bash
-ts-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards $CHAIN
 ```
 
 11. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
-| Network              | `http_url`        |
-| -------------------- | ----------------- |
+| Network              | `http_url`                    |
+| -------------------- | ----------------------------- |
 | **Devnet-amplifier** | https://testnet-rpc.monad.xyz |
 | **Stagenet**         | https://testnet-rpc.monad.xyz |
 | **Testnet**          | https://testnet-rpc.monad.xyz |
-| **Mainnet**          | [mainnet RPC URL] |
+| **Mainnet**          | TBD                           |
 
 ```bash
 [[handlers]]

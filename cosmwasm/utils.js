@@ -2,9 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
@@ -13,12 +10,14 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
+    UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
+const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
-    printWarn,
     isString,
     isStringArray,
     isKeccak256Hash,
@@ -28,6 +27,7 @@ const {
     getSaltFromKey,
     calculateDomainSeparator,
     validateParameters,
+    tryItsEdgeContract,
 } = require('../common');
 const {
     pascalToSnake,
@@ -39,7 +39,8 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
-const { XRPLClient } = require('../xrpl/utils');
+const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
+const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
@@ -47,20 +48,7 @@ const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
-const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
-
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
-
-const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
-
-const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareDummyWallet = async () => {
-    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
-};
-
-const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
-    await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -78,32 +66,8 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const initContractConfig = (config, { contractName, chainName }) => {
-    if (!contractName) {
-        return;
-    }
-
-    config.axelar = config.axelar || {};
-    config.axelar.contracts = config.axelar.contracts || {};
-    config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
-
-    if (chainName) {
-        config.axelar.contracts[contractName][chainName] = config.axelar.contracts[contractName][chainName] || {};
-    }
-};
-
-const getAmplifierBaseContractConfig = (config, contractName) => {
-    const contractBaseConfig = config.axelar.contracts[contractName];
-
-    if (!contractBaseConfig) {
-        throw new Error(`Contract ${contractName} not found in config`);
-    }
-
-    return contractBaseConfig;
-};
-
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (!chainName) {
         return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
@@ -121,7 +85,7 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
 const getCodeId = async (client, config, options) => {
     const { fetchCodeId, codeId, contractName } = options;
 
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (codeId) {
         return codeId;
@@ -138,30 +102,24 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const uploadContract = async (client, wallet, config, options) => {
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+const executeTransaction = async (client, contractAddress, message, fee) => {
+    const [account] = client.accounts;
+    const tx = await client.execute(account.address, contractAddress, message, fee, '');
+    return tx;
+};
 
-    const [account] = await wallet.getAccounts();
+const uploadContract = async (client, options, uploadFee) => {
+    const [account] = client.accounts;
     const wasm = readContractCode(options);
-
-    const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
     return client.upload(account.address, wasm, uploadFee);
 };
 
-const instantiateContract = async (client, wallet, initMsg, config, options) => {
+const instantiateContract = async (client, initMsg, config, options, initFee) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const initFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-
     const contractLabel = getLabel(options);
 
     const { contractAddress } = instantiate2
@@ -181,15 +139,10 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
     return contractAddress;
 };
 
-const migrateContract = async (client, wallet, config, options) => {
+const migrateContract = async (client, config, options, migrateFee) => {
     const { msg } = options;
-    const [account] = await wallet.getAccounts();
+    const [account] = client.accounts;
     const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
-    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
@@ -224,6 +177,7 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         Rewards: { address: rewardsAddress },
+        Coordinator: { address: coordinatorAddress },
     } = contracts;
     const { adminAddress, governanceAddress, blockExpiry } = contractConfig;
 
@@ -243,11 +197,16 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
+    if (!validateAddress(coordinatorAddress)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
     return {
         admin_address: adminAddress,
         governance_address: governanceAddress,
         rewards_address: rewardsAddress,
         block_expiry: toBigNumberString(blockExpiry),
+        coordinator_address: coordinatorAddress,
     };
 };
 
@@ -271,7 +230,7 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         AxelarnetGateway: { address: axelarnetGateway },
-        Coordinator: { address: coordinator }
+        Coordinator: { address: coordinator },
     } = contracts;
     const { adminAddress, governanceAddress } = contractConfig;
 
@@ -291,7 +250,12 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid Coordinator.address in axelar info');
     }
 
-    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway, coordinator_address: coordinator };
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        axelarnet_gateway: axelarnetGateway,
+        coordinator_address: coordinator,
+    };
 };
 
 const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
@@ -366,6 +330,13 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
         axelar: { contracts },
+        chains: {
+            [chainName]: {
+                contracts: {
+                    [AXELAR_GATEWAY_CONTRACT_NAME]: { address: gatewayAddress },
+                },
+            },
+        },
     } = config;
     const {
         ServiceRegistry: { address: serviceRegistryAddress },
@@ -400,6 +371,14 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 
     if (!isString(sourceGatewayAddress)) {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
+    }
+
+    if (gatewayAddress !== undefined && gatewayAddress !== sourceGatewayAddress) {
+        throw new Error(
+            `Address mismatch for [${chainName}] in config:\n` +
+                `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
+                `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`,
+        );
     }
 
     if (!isStringArray(votingThreshold)) {
@@ -496,13 +475,16 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
+const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
+
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
+
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                VotingVerifier: {
+                [VERIFIER_CONTRACT_NAME]: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -514,7 +496,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${VERIFIER_CONTRACT_NAME}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -645,6 +627,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
+
     const {
         axelar: { contracts, chainId: axelarChainId },
     } = config;
@@ -653,10 +636,10 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        VotingVerifier: {
+        [VERIFIER_CONTRACT_NAME]: {
             [chainName]: { address: verifierAddress },
         },
-        Gateway: {
+        [GATEWAY_CONTRACT_NAME]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -891,7 +874,7 @@ const getStoreCodeParams = (options) => {
     };
 };
 
-const getStoreInstantiateParams = (config, options, msg) => {
+const getStoreInstantiateParams = (_config, options, msg) => {
     const { admin } = options;
 
     return {
@@ -932,7 +915,7 @@ const getExecuteContractParams = (config, options, chainName) => {
             contracts: { [contractName]: contractConfig },
         },
     } = config;
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),
@@ -950,16 +933,29 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
-const getMigrateContractParams = (config, options) => {
-    const { msg, chainName } = options;
-
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+const getUpdateInstantiateParams = (options) => {
+    const { msg } = options;
 
     return {
         ...getSubmitProposalParams(options),
-        contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
-        codeId: contractConfig.codeId,
+        accessConfigUpdates: JSON.parse(msg),
+    };
+};
+
+const getMigrateContractParams = (config, options) => {
+    const { msg, chainName } = options;
+
+    let contractConfig;
+    let chainConfig;
+    if (!options.address || !options.codeId) {
+        contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+        chainConfig = getChainConfig(config.chains, chainName);
+    }
+
+    return {
+        ...getSubmitProposalParams(options),
+        contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+        codeId: options.codeId ?? contractConfig.codeId,
         msg: Buffer.from(msg),
     };
 };
@@ -1026,6 +1022,15 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
+const encodeUpdateInstantiateConfigProposal = (options) => {
+    const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
+        value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
+    };
+};
+
 const encodeMigrateContractProposal = (config, options) => {
     const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
 
@@ -1051,17 +1056,34 @@ const encodeSubmitProposal = (content, config, options, proposer) => {
     };
 };
 
-const submitProposal = async (client, wallet, config, options, content) => {
-    const [account] = await wallet.getAccounts();
+// Retries sign-and-broadcast on transient RPC socket closures
+const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo = '', maxAttempts = 3) => {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            return await client.signAndBroadcast(signerAddress, msgs, fee, memo);
+        } catch (error) {
+            lastError = error;
+            const code = error?.cause?.code || error?.code;
+            const message = error?.message || '';
 
-    const {
-        axelar: { gasPrice, gasLimit },
-    } = config;
+            // Confirm err is socket error
+            const isTransient = code === 'UND_ERR_SOCKET' || /fetch failed/i.test(message);
+            if (!isTransient || attempt === maxAttempts - 1) {
+                throw error;
+            }
+
+            printInfo('Retrying proposal submission..... 🔄');
+        }
+    }
+};
+
+const submitProposal = async (client, config, options, content, fee) => {
+    const [account] = client.accounts;
 
     const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
 
-    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
-    const { events } = await client.signAndBroadcast(account.address, [submitProposalMsg], fee, '');
+    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
 
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
@@ -1081,9 +1103,15 @@ const getContractR2Url = (contractName, contractVersion) => {
     throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
 };
 
+const getContractArtifactPath = (artifactDir, contractName) => {
+    const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
+    const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
+    return basePath + fileName;
+};
+
 const getContractCodePath = async (options, contractName) => {
-    if (options.artifactPath) {
-        return options.artifactPath;
+    if (options.artifactDir) {
+        return getContractArtifactPath(options.artifactDir, contractName);
     }
 
     if (options.version) {
@@ -1091,7 +1119,62 @@ const getContractCodePath = async (options, contractName) => {
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-path or --version must be provided');
+    throw new Error('Either --artifact-dir or --version must be provided');
+};
+
+const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
+    return {};
+};
+
+const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
+    if (!itsEdgeContract) {
+        throw new Error(`ITS edge contract not found for chain '${chainName}'.`);
+    }
+
+    const currentConfig = await client.queryContractSmart(config.axelar.contracts.InterchainTokenService.address, {
+        its_chain: {
+            chain: chainConfig.axelarId,
+        },
+    });
+
+    const hasChanges =
+        currentConfig.chain !== proposedConfig.chain ||
+        currentConfig.its_edge_contract !== proposedConfig.its_edge_contract ||
+        currentConfig.msg_translator !== proposedConfig.msg_translator ||
+        currentConfig.truncation.max_uint_bits !== proposedConfig.truncation.max_uint_bits ||
+        currentConfig.truncation.max_decimals_when_truncating !== proposedConfig.truncation.max_decimals_when_truncating;
+
+    if (!hasChanges) {
+        throw new Error(`No changes detected for chain '${chainName}'.`);
+    }
+};
+
+const getCodeDetails = async (config, codeId) => {
+    const tendermintClient = await Tendermint34Client.connect(config?.axelar?.rpc);
+    let codeInfo;
+
+    try {
+        const data = QueryCodeRequest.encode({
+            codeId: BigInt(codeId),
+        }).finish();
+
+        const { value } = await tendermintClient.abciQuery({
+            path: '/cosmwasm.wasm.v1.Query/Code',
+            data: data,
+        });
+
+        codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+        if (!codeInfo) {
+            throw new Error(`Info not found for code id ${codeId}`);
+        }
+    } finally {
+        tendermintClient.disconnect();
+    }
+
+    return codeInfo;
 };
 
 const CONTRACTS = {
@@ -1139,6 +1222,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
+    SolanaMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeAxelarnetGatewayInstantiateMsg,
@@ -1147,23 +1234,24 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeInterchainTokenServiceInstantiateMsg,
     },
+    ItsAbiTranslator: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
+    },
 };
 
 module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    governanceAddress,
-    prepareWallet,
-    prepareDummyWallet,
-    prepareClient,
+    AXELAR_GATEWAY_CONTRACT_NAME,
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    initContractConfig,
-    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
+    executeTransaction,
     uploadContract,
     instantiateContract,
     migrateContract,
@@ -1177,8 +1265,10 @@ module.exports = {
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
+    encodeUpdateInstantiateConfigProposal,
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
+    validateItsChainChange,
 };

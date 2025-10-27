@@ -62,7 +62,7 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
     );
 };
 
-async function processCommand(config, chain, options) {
+async function processCommand(axelar, chain, _chains, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -132,7 +132,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'operators': {
-            const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain.axelarId, options);
+            const { addresses, weights, threshold, keyID } = await getEVMAddresses(axelar, chain.axelarId, options);
             printInfo('Axelar validator key id', keyID);
 
             const auth = new Contract(await gateway.authModule(), IAuth.abi, wallet);
@@ -153,7 +153,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'submitBatch': {
-            const batch = await getEVMBatch(config, chain.axelarId, options.batchID);
+            const batch = await getEVMBatch(axelar, chain.axelarId, options.batchID);
 
             printInfo(`Submitting batch: ${options.batchID || 'latest'}`);
 
@@ -203,7 +203,7 @@ async function processCommand(config, chain, options) {
             }
 
             const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
-            const apiUrl = `${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
+            const apiUrl = `${axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
 
             let executeData, response;
 
@@ -248,6 +248,7 @@ async function processCommand(config, chain, options) {
             const payloadHash = keccak256(arrayify(payload));
 
             const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            printInfo('Command ID', commandID);
 
             if (await gateway.isCommandExecuted(commandID)) {
                 printWarn('Command already executed');
@@ -465,7 +466,7 @@ async function processCommand(config, chain, options) {
             };
 
             const data = defaultAbiCoder.encode(['uint8', WEIGHTED_SIGNERS_TYPE], [1, newSigners]);
-            console.log(JSON.stringify(newSigners, null, 2));
+            printInfo('New Signers', JSON.stringify(newSigners, null, 2));
             const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet]);
             const tx = await gateway.rotateSigners(newSigners, proof, gasOptions);
 
@@ -487,7 +488,7 @@ async function processCommand(config, chain, options) {
                 throw new Error('Missing multisig session ID');
             }
 
-            const { status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+            const { status } = await getMultisigProof(axelar, chain.axelarId, multisigSessionId);
 
             if (!status.completed) {
                 throw new Error('Multisig session not completed');

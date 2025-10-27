@@ -33,9 +33,8 @@ const CONTRACT_INFO = {
         singletonName: 'InterchainTokenService',
         moduleName: 'interchain_token_service',
         defaultFunctions: {
-            versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            versions: [0, 0, 0, 0, 0, 0, 0, 0],
             functionNames: [
-                'register_coin',
                 'deploy_remote_interchain_token',
                 'send_interchain_transfer',
                 'receive_interchain_transfer',
@@ -118,12 +117,10 @@ async function pause(keypair, client, chain, args, options) {
 
             let allowedFunctions = allowedFunctionsArray[version];
 
-            // Do not dissalow `allow_function` because that locks the gateway forever.
-            if (Number(version) === allowedFunctionsArray.length - 1) {
-                allowedFunctions = allowedFunctions.filter(
-                    (allowedFunction) => allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function',
-                );
-            }
+            // Do not disable `allow_function` because that locks the contract forever.
+            allowedFunctions = allowedFunctions.filter((allowedFunction) => {
+                return allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function';
+            });
 
             printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
 
@@ -202,7 +199,7 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
@@ -218,7 +215,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--functions <functions>',
-                'The functions to allow. Use use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
+                'The functions to allow. Use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
             ).default('default'),
         )
         .addOption(new Option('--version, <version>', 'The version to pause. Use all to pause all versions').default('all'))

@@ -9,7 +9,7 @@ const { mainProcessor, printInfo, prompt } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
-async function processCommand(_, chain, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const { env, rpc, yes } = options;
     let { addresses } = options;
     const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);
@@ -18,7 +18,7 @@ async function processCommand(_, chain, options) {
         return;
     }
 
-    const chainName = chain.name.toLowerCase();
+    const chainName = chain.axelarId.toLowerCase();
     const nonceData = getNonceFileData();
 
     if (!nonceData[env]) {

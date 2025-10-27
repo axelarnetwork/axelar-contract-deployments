@@ -1,6 +1,6 @@
 'use strict';
 
-const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
+const { requestSuiFromFaucetV0, requestSuiFromFaucetV2, getFaucetHost } = require('@mysten/sui/faucet');
 const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common/utils');
 const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
 const { Command, Option } = require('commander');
@@ -18,17 +18,25 @@ async function processCommand(config, chain, options) {
         process.exit(0);
     }
 
-    await requestSuiFromFaucetV0({
-        host: getFaucetHost(chain.networkType),
-        recipient,
-    });
+    const host = getFaucetHost(chain.networkType);
+
+    switch (chain.networkType) {
+        case 'localnet': {
+            /// @deprecated: requestSuiFromFaucetV0
+            await requestSuiFromFaucetV0({ host, recipient });
+            break;
+        }
+        default: {
+            await requestSuiFromFaucetV2({ host, recipient });
+        }
+    }
 
     printInfo('Funds requested', recipient);
 }
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(config, chain, options);
     saveConfig(config, options.env);
 }

@@ -10,18 +10,25 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify, defaultAbiCoder },
+    utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
+const bs58 = require('bs58');
+const { AsyncLocalStorage } = require('async_hooks');
+const { isValidNamedType } = require('@mysten/sui/utils');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
+const kebabToPascal = (str) => str.replace(/-./g, (match) => match.charAt(1).toUpperCase()).replace(/^./, (match) => match.toUpperCase());
+
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
+const SVM_BASE58_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -38,17 +45,38 @@ const writeJSON = (data, name) => {
     });
 };
 
+let asyncLocalLoggerStorage = new AsyncLocalStorage();
+
+const printMsg = (msg) => {
+    const streams = asyncLocalLoggerStorage?.getStore();
+    if (streams?.stdStream) {
+        streams.stdStream.write(`${msg}\n\n`);
+    } else {
+        console.log(`${msg}\n`);
+    }
+};
+
+const printErrorMsg = (msg) => {
+    const streams = asyncLocalLoggerStorage?.getStore();
+    if (streams?.errorStream && streams?.stdStream) {
+        streams.errorStream.write(`${msg}\n\n`);
+        streams.stdStream.write(`${msg}\n\n`);
+    } else {
+        console.log(`${msg}\n`);
+    }
+};
+
 const printInfo = (msg, info = '', colour = chalk.green) => {
     if (typeof info === 'boolean') {
         info = String(info);
-    } else if (typeof info === 'object') {
+    } else if (Array.isArray(info) || typeof info === 'object') {
         info = JSON.stringify(info, null, 2);
     }
 
     if (info) {
-        console.log(`${msg}: ${colour(info)}\n`);
+        printMsg(`${msg}: ${colour(info)}`);
     } else {
-        console.log(`${msg}\n`);
+        printMsg(`${msg}`);
     }
 };
 
@@ -57,7 +85,7 @@ const printWarn = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.italic.yellow(msg)}\n`);
+    printMsg(`${chalk.italic.yellow(msg)}`);
 };
 
 const printError = (msg, info = '') => {
@@ -65,7 +93,7 @@ const printError = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.bold.red(msg)}\n`);
+    printErrorMsg(`${chalk.bold.red(msg)}`);
 };
 
 const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
@@ -73,19 +101,24 @@ const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${colour(msg)}\n`);
+    printMsg(`${colour(msg)}`);
 };
 
 const printDivider = (char = '-', width = process.stdout.columns, colour = chalk.bold.white) => {
-    console.log(colour(char.repeat(width)));
+    printMsg(colour(char.repeat(width)));
 };
 
 function printLog(log) {
-    console.log(JSON.stringify({ log }, null, 2));
+    printMsg(JSON.stringify({ log }, null, 2));
 }
 
 const isString = (arg) => {
     return typeof arg === 'string';
+};
+
+const isNonArrayObject = (arg) => {
+    if (!arg) return false;
+    return typeof arg === 'object' && Array.isArray(arg) === false;
 };
 
 const isNonEmptyString = (arg) => {
@@ -103,11 +136,31 @@ const isNumber = (arg) => {
 };
 
 const isValidNumber = (arg) => {
-    return !isNaN(parseInt(arg)) && isFinite(arg);
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = Number(arg);
+
+    return !isNaN(num) && isFinite(num);
 };
 
 const isValidDecimal = (arg) => {
-    return !isNaN(parseFloat(arg)) && isFinite(arg);
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = parseFloat(arg);
+
+    return !isNaN(num) && isFinite(num) && num === parseFloat(String(arg).trim());
 };
 
 const isNumberArray = (arr) => {
@@ -149,7 +202,7 @@ const httpGet = (url) => {
             const contentType = res.headers['content-type'];
             let error;
 
-            if (statusCode !== 200 && statusCode !== 301) {
+            if (statusCode !== 200) {
                 error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
@@ -195,6 +248,10 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
         time,
         new Error(`Timeout calling Axelarscan API: ${method}`),
     );
+};
+
+const itsHubContractAddress = (axelar) => {
+    return axelar?.contracts?.InterchainTokenService?.address;
 };
 
 /**
@@ -325,9 +382,77 @@ function isValidStellarContract(address) {
     return StellarSdk.StrKey.isValidContract(address);
 }
 
+/// Token Manager Types supported by ITS
+/// These are the standardized token manager implementations across all chains
+const tokenManagerTypes = {
+    NATIVE_INTERCHAIN_TOKEN: 0,
+    MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
+
+/**
+ * Validates if a token manager type is supported for link token operations on a specific chain.
+ * Different chains may have different supported token manager types for linking tokens.
+ *
+ * Supported types by chain:
+ * - EVM: All types except INTERCHAIN_TOKEN (MINT_BURN_FROM, LOCK_UNLOCK, LOCK_UNLOCK_FEE, MINT_BURN)
+ * - Stellar: LOCK_UNLOCK, MINT_BURN, MINT_BURN_FROM
+ *
+ * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
+ * @param {string} type - The token manager type string to validate (e.g., 'LOCK_UNLOCK', 'MINT_BURN', 'MINT_BURN_FROM')
+ * @returns {number} The validated token manager type value
+ * @throws {Error} If the token manager type is not valid for the specified chain type
+ */
+const validateLinkType = (chainType, type) => {
+    const tokenManagerType = tokenManagerTypes[type];
+
+    if (tokenManagerType === undefined) {
+        throw new Error(`Invalid token manager type: ${type}. Must be one of: ${Object.keys(tokenManagerTypes).join(', ')}`);
+    }
+
+    const chainRules = {
+        evm: {
+            validate: (type) => ![tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN].includes(type),
+            errorMsg: 'NATIVE_INTERCHAIN_TOKEN is not supported for EVM chains.',
+        },
+        stellar: {
+            validate: (type) =>
+                [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN, tokenManagerTypes.MINT_BURN_FROM].includes(type),
+            errorMsg: 'Only LOCK_UNLOCK, MINT_BURN, and MINT_BURN_FROM are supported for Stellar.',
+        },
+    };
+
+    const rules = chainRules[chainType];
+    if (!rules) {
+        throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
+    }
+
+    if (!rules.validate(tokenManagerType)) {
+        throw new Error(`Invalid token manager type ${type} for chain type ${chainType}: ${rules.errorMsg}`);
+    }
+
+    return tokenManagerType;
+};
+
+/**
+ * Basic validatation to check if the provided string *might* be a valid SVM
+ * address. One needs to ensure that it's 32 bytes long after decoding.
+ *
+ * See https://solana.com/developers/guides/advanced/exchange#basic-verification.
+ *
+ * @param {string} address - The base58 encoded Solana address to validate
+ * @returns {boolean} - True if the address is valid, false otherwise
+ */
+function isValidSvmAddressFormat(address) {
+    return SVM_BASE58_ADDRESS_REGEX.test(address);
+}
+
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
@@ -338,6 +463,8 @@ const validationFunctions = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    isValidSvmAddressFormat,
+    isHexString,
 };
 
 function validateParameters(parameters) {
@@ -345,7 +472,7 @@ function validateParameters(parameters) {
         const validatorFunction = validationFunctions[validatorFunctionString];
 
         if (typeof validatorFunction !== 'function') {
-            throw new Error(`Validator function ${validatorFunction} is not defined`);
+            throw new Error(`Validator function ${validatorFunctionString} is not defined`);
         }
 
         for (const paramKey of Object.keys(paramsObj)) {
@@ -441,14 +568,14 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const getAmplifierContractOnchainConfig = async (config, chain) => {
+const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
     const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    const client = await CosmWasmClient.connect(axelar.rpc);
+    const value = await client.queryContractRaw(axelar.contracts[contract][chain].address, key);
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(config, chain, options) {
+async function getDomainSeparator(axelar, chain, options, contract = 'MultisigProver') {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -463,9 +590,7 @@ async function getDomainSeparator(config, chain, options) {
         return options.domainSeparator;
     }
 
-    const {
-        axelar: { contracts, chainId },
-    } = config;
+    const { contracts, chainId } = axelar;
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -490,7 +615,7 @@ async function getDomainSeparator(config, chain, options) {
     }
 
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(config, chain.axelarId)).domain_separator);
+    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(axelar, chain.axelarId, contract)).domain_separator);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
@@ -499,12 +624,12 @@ async function getDomainSeparator(config, chain, options) {
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (config, chainName, options = {}) => {
+const getChainConfig = (chains, chainName, options = {}) => {
     if (!chainName) {
         return undefined;
     }
 
-    const chainConfig = config.chains[chainName] || config[chainName];
+    const chainConfig = chains[chainName];
 
     if (!options.skipCheck && !chainConfig) {
         throw new Error(`Chain ${chainName} not found in config`);
@@ -527,17 +652,17 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (config, chain, multisigSessionId) => {
+const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
+    const client = await CosmWasmClient.connect(axelar.rpc);
+    const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
-const getCurrentVerifierSet = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
+const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
+    const client = await CosmWasmClient.connect(axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
+        axelar.contracts[contract][chain].address,
         'current_verifier_set',
     );
 
@@ -549,18 +674,6 @@ const getCurrentVerifierSet = async (config, chain) => {
 };
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
-
-const itsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
-        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
-        chainConfig.contracts.InterchainTokenService?.address;
-
-    if (!itsEdgeContract) {
-        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
-    }
-
-    return itsEdgeContract;
-};
 
 const downloadContractCode = async (url, contractName, version) => {
     const tempDir = path.join(process.cwd(), 'artifacts');
@@ -591,13 +704,23 @@ const tryItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-const itsEdgeChains = (config) =>
-    Object.values(config.chains)
-        .filter(itsEdgeContract)
+const itsEdgeContract = (chainConfig) => {
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
+
+    if (!itsEdgeContract) {
+        throw new Error(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
+    }
+
+    return itsEdgeContract;
+};
+
+const itsEdgeChains = (chains) =>
+    Object.values(chains)
+        .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
-const parseTrustedChains = (config, trustedChains) => {
-    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
+const parseTrustedChains = (chains, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(chains) : trustedChains;
 };
 
 const readContractCode = (options) => {
@@ -608,15 +731,48 @@ function asciiToBytes(string) {
     return hexlify(Buffer.from(string, 'ascii'));
 }
 
+function solanaAddressBytesFromBase58(string) {
+    const decoded = bs58.default.decode(string);
+    if (decoded.length !== 32) {
+        throw new Error(`Invalid Solana address: ${string}`);
+    }
+    return hexlify(decoded);
+}
+
+/**
+ * Encodes the destination token address for Interchain Token Service (ITS) link token operations.
+ * This function handles token address encoding differently from recipient addresses.
+ * Note:
+ * - Token addresses are encoded as ASCII strings for X -> Sui transfers
+ * - Destination addresses (recipients) are encoded as bytes (already hex strings)
+ */
+function encodeITSDestinationToken(chains, destinationChain, destinationTokenAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'sui':
+            if (!isValidNamedType(destinationTokenAddress)) {
+                throw new Error(`Destination token address invalid, got ${destinationTokenAddress}`);
+            }
+            // For Sui token addresses (X -> Sui), encode as ASCII string
+            return asciiToBytes(destinationTokenAddress.replace('0x', ''));
+
+        default:
+            // For all other chains, use the same encoding as destination addresses
+            return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+    }
+}
+
 /**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
  * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
+ *       - Solana (svm) addresses are decoded from base58 and hexlified.
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
  */
-function encodeITSDestination(config, destinationChain, destinationAddress) {
-    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+function encodeITSDestination(chains, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
         case undefined:
@@ -627,26 +783,95 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
             validateParameters({ isValidStellarAddress: { destinationAddress } });
             return asciiToBytes(destinationAddress);
 
+        case 'svm':
+            validateParameters({ isValidSvmAddressFormat: { destinationAddress } });
+            return solanaAddressBytesFromBase58(destinationAddress);
+
         case 'xrpl':
             // TODO: validate XRPL address format
             return asciiToBytes(destinationAddress);
 
         case 'evm':
         case 'sui':
-        default: // EVM, Sui, and other chains (return as-is)
+        default: // EVM, Sui (non-token addresses), and other chains return as-is
             return destinationAddress;
     }
 }
 
-const getProposalConfig = (config, env, key) => {
-    try {
-        const value = config.axelar?.[key];
-        if (value === undefined) throw new Error(`Key "${key}" not found in config for ${env}`);
-        return value;
-    } catch (error) {
-        throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
+/**
+ * Validates if a chain is valid in the config.
+ *
+ * @param {Object} chains - The chains object
+ * @param {string} chainName - The chain name to validate
+ * @throws {Error} If the chain is not valid
+ */
+function validateChain(chains, chainName) {
+    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
     }
-};
+}
+
+/**
+ * Validates if a destination chain is valid (allows empty string).
+ *
+ * @param {Object} chains - The chains object
+ * @param {string} destinationChain - The destination chain to validate
+ */
+function validateDestinationChain(chains, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    validateChain(chains, destinationChain);
+}
+
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
+    if (env === 'devnet-amplifier') {
+        return { gasValue: 0, gasFeeValue: 0 };
+    }
+
+    if (gasValue !== 'auto' && !isValidNumber(gasValue)) {
+        throw new Error(`Invalid gas value: ${gasValue}`);
+    }
+
+    if (isValidNumber(gasValue)) {
+        const gasFeeValue = scaleGasValue(chain, gasValue);
+        return { gasValue, gasFeeValue };
+    }
+
+    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+
+    const payload = {
+        sourceChain: chain.axelarId,
+        destinationChain,
+        event: eventType,
+    };
+
+    const rawEstimate = await httpPost(url, payload);
+
+    if (rawEstimate.error || rawEstimate === 0) {
+        throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
+    }
+
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER ? rawEstimate.toString() : rawEstimate;
+
+    const ethValue = scaleGasValue(chain, estimate, false);
+    return { gasValue: ethValue, gasFeeValue: estimate };
+}
+
+function scaleGasValue(chain, gasValue, up = true) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        if (up) {
+            return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        } else {
+            return BigNumber.from(gasValue).div(BigNumber.from(10).pow(chain.gasScalingFactor));
+        }
+    }
+
+    return gasValue;
+}
 
 module.exports = {
     loadConfig,
@@ -664,11 +889,13 @@ module.exports = {
     isStringArray,
     isStringLowercase,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isHexString,
     copyObject,
     httpGet,
     httpPost,
@@ -693,6 +920,7 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
+    kebabToPascal,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
@@ -702,8 +930,17 @@ module.exports = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    isValidSvmAddressFormat,
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
-    getProposalConfig,
+    encodeITSDestinationToken,
+    tokenManagerTypes,
+    validateLinkType,
+    validateChain,
+    validateDestinationChain,
+    itsHubContractAddress,
+    asyncLocalLoggerStorage,
+    printMsg,
+    estimateITSFee,
 };

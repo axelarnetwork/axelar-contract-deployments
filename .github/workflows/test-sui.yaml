@@ -242,8 +242,8 @@ jobs:
 
       - name: Deploy Test Tokens
         run: |
-          ts-node sui/its-example deploy-token --origin ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
-          ts-node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
+          ts-node sui/its-example deploy-token --tokenManagerMode lock_unlock --origin ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
+          ts-node sui/its-example deploy-token --tokenManagerMode lock_unlock ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
 
           # Prepare additional parameters for the example:
           transferInfo=$(ts-node sui/its-example.js print-receive-transfer ${{ env.sourceChain }} ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})

@@ -17,7 +17,7 @@ if (require.main === module) {
 
     program.action((options) => {
         const config = loadConfig(options.env);
-        processCommand(options, config, getChainConfig(config, options.chainName));
+        processCommand(options, config, getChainConfig(config.chains, options.chainName));
     });
 
     program.parse();

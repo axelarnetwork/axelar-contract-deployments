@@ -12,7 +12,6 @@ const {
 } = ethers;
 
 const {
-    saveConfig,
     getBytecodeHash,
     printInfo,
     printError,
@@ -36,13 +35,13 @@ const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-networ
 const AxelarAmplifierGatewayProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json');
 const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
 
-async function getSetupParams(config, chain, operator, options) {
-    const { signers: signerSets, verifierSetId } = await getWeightedSigners(config, chain, options);
+async function getSetupParams(axelar, chain, operator, options) {
+    const { signers: signerSets, verifierSetId } = await getWeightedSigners(axelar, chain, options);
     printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
     return { params: defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]), verifierSetId };
 }
 
-async function deploy(config, chain, options) {
+async function deploy(axelar, chain, chains, options) {
     const { privateKey, reuseProxy, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
@@ -115,7 +114,7 @@ async function deploy(config, chain, options) {
 
     let existingAddress;
 
-    for (const chainConfig of Object.values(config.chains)) {
+    for (const chainConfig of Object.values(chains)) {
         existingAddress = chainConfig.contracts?.[contractName]?.address;
 
         if (existingAddress !== undefined) {
@@ -138,7 +137,7 @@ async function deploy(config, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = await getDomainSeparator(config, chain, options);
+    const domainSeparator = await getDomainSeparator(axelar, chain, options);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
 
     printInfo(`Deploying gateway implementation contract`);
@@ -175,7 +174,7 @@ async function deploy(config, chain, options) {
         gateway = gatewayFactory.attach(proxyAddress);
     } else if (!reuseProxy) {
         const operator = options.operator || contractConfig.operator || wallet.address;
-        const { params, verifierSetId } = await getSetupParams(config, chain, operator, options);
+        const { params, verifierSetId } = await getSetupParams(axelar, chain, operator, options);
 
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
@@ -246,7 +245,7 @@ async function deploy(config, chain, options) {
     }
 
     if (!reuseProxy) {
-        const { signers: signerSets } = await getWeightedSigners(config, chain, options);
+        const { signers: signerSets } = await getWeightedSigners(axelar, chain, options);
 
         for (let i = 0; i < signerSets.length; i++) {
             const signersHash = keccak256(encodeWeightedSigners(signerSets[i]));
@@ -290,14 +289,11 @@ async function deploy(config, chain, options) {
     }
 
     printInfo('Deployment status', 'SUCCESS');
-
-    saveConfig(config, options.env);
 }
 
-async function upgrade(_, chain, options) {
+async function upgrade(_axelar, chain, options) {
     const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
-    const chainName = chain.name.toLowerCase();
 
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -350,7 +346,7 @@ async function upgrade(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chainName}-address-${address}-nonce-${baseTx.nonce}.json`;
+        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chain.axelarId.toLowerCase()}-address-${address}-nonce-${baseTx.nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
 
         // Storing the fields in the data that will be stored in file
@@ -375,11 +371,11 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(axelar, chain, chains, options) {
     if (!options.upgrade) {
-        await deploy(config, chain, options);
+        await deploy(axelar, chain, chains, options);
     } else {
-        await upgrade(config, chain, options);
+        await upgrade(axelar, chain, options);
     }
 }
 
@@ -403,7 +399,6 @@ async function programHandler() {
     ); // 1 day
 
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
-    program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--owner <owner>', 'owner/governance address').env('OWNER'));
     program.addOption(new Option('--operator <operator>', 'gateway operator address'));
     program.addOption(new Option('--keyID <keyID>', 'use the specified key ID address instead of the querying the chain').env('KEY_ID'));

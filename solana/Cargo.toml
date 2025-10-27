@@ -1,0 +1,182 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axelar-solana-encoding = { path = "./axelar-amplifier-solana/crates/axelar-solana-encoding" }
+axelar-solana-gas-service = { path = "./axelar-amplifier-solana/programs/axelar-solana-gas-service", features = [
+    "no-entrypoint",
+], default-features = false }
+axelar-solana-gateway = { path = "./axelar-amplifier-solana/programs/axelar-solana-gateway", features = [
+    "no-entrypoint",
+], default-features = false }
+axelar-solana-governance = { path = "./axelar-amplifier-solana/programs/axelar-solana-governance", features = [
+    "no-entrypoint",
+], default-features = false }
+axelar-solana-its = { path = "./axelar-amplifier-solana/programs/axelar-solana-its", features = [
+    "no-entrypoint"
+], default-features = false }
+axelar-solana-memo-program = { path = "./axelar-amplifier-solana/programs/axelar-solana-memo-program", features = [
+    "no-entrypoint",
+], default-features = false }
+
+axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
+
+base64 = "0.22.1"
+bincode = { version = "2.0.1", features = ["serde"] }
+borsh = "1.5.1"
+clap = { version = "3.2", features = ["derive", "env"] }
+cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
+cosmwasm-std = "1.5"
+dotenvy = { version = "0.15.7", features = ["cli"] }
+eyre = "0.6.11"
+gateway-event-stack = { path = "./axelar-amplifier-solana/crates/gateway-event-stack", default-features = false }
+hex = { version = "0.4.3", features = ["serde"] }
+its-instruction-builder = { path = "./axelar-amplifier-solana/helpers/its-instruction-builder", default-features = false }
+k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
+lazy_static = "1.4"
+regex = "1.10"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140", features = ["preserve_order"] }
+solana-clap-v3-utils = "2"
+solana-cli-config = "2"
+solana-client = "2"
+solana-sdk = "2"
+solana-transaction-status = "2"
+spl-token = { version = "6", features = ["no-entrypoint"] }
+spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
+tokio = { version = "1", features = ["full"] }
+
+[lints.clippy]
+cargo = { priority = -1, level = "deny" }
+complexity = { priority = -2, level = "deny" }
+correctness = { priority = -4, level = "deny" }
+nursery = { priority = -9, level = "deny" }
+pedantic = { priority = -8, level = "deny" }
+perf = { priority = -3, level = "deny" }
+restriction = { priority = -5, level = "deny" }
+style = { priority = -6, level = "deny" }
+suspicious = { priority = -7, level = "deny" }
+
+# Selectively disable specific lints
+absolute_paths = "allow"
+allow_attributes = "allow"
+allow_attributes_without_reason = "allow"
+arbitrary_source_item_ordering = "allow"
+arithmetic_side_effects = "allow"
+as_conversions = "allow"
+assertions_on_result_states = "allow"
+blanket_clippy_restriction_lints = "allow"
+cargo_common_metadata = "allow"
+cast_lossless = "allow"
+dbg_macro = "allow"
+default_numeric_fallback = "allow"
+doc_lazy_continuation = "allow"
+doc_markdown = "allow"
+exhaustive_enums = "allow"
+exhaustive_structs = "allow"
+expect_used = "allow"
+explicit_deref_methods = "allow"
+explicit_iter_loop = "allow"
+field_scoped_visibility_modifiers = "allow"
+future_not_send = "allow"
+host_endian_bytes = "allow"
+implicit_clone = "allow"
+implicit_return = "allow"
+inconsistent_struct_constructor = "allow"
+indexing_slicing = "allow"
+iter_over_hash_type = "allow"
+large_futures = "allow"
+manual_inspect = "allow"
+map_err_ignore = "allow"
+min_ident_chars = "allow"
+missing_const_for_fn = "allow"
+missing_docs_in_private_items = "allow"
+missing_errors_doc = "allow"
+missing_inline_in_public_items = "allow"
+missing_panics_doc = "allow"
+missing_trait_methods = "allow"
+mod_module_files = "allow"
+module_name_repetitions = "allow"
+multiple_crate_versions = "allow"
+must_use_candidate = "allow"
+needless_lifetimes = "allow"
+needless_pass_by_value = "allow"
+negative_feature_names = "allow"
+non_minimal_cfg = "allow"
+option_if_let_else = "allow"
+pattern_type_mismatch = "allow"
+precedence = "allow"
+print_stderr = "allow"
+print_stdout = "allow"
+pub_use = "allow"
+pub_with_shorthand = "allow"
+question_mark_used = "allow"
+redundant_clone = "allow"
+redundant_pub_crate = "allow"
+ref_patterns = "allow"
+renamed_function_params = "allow"
+self_named_module_files = "allow"
+separated_literal_suffix = "allow"
+shadow_reuse = "allow"
+shadow_unrelated = "allow"
+similar_names = "allow"
+single_call_fn = "allow"
+single_char_lifetime_names = "allow"
+std_instead_of_alloc = "allow"
+std_instead_of_core = "allow"
+transmute_ptr_to_ptr = "allow"
+undocumented_unsafe_blocks = "allow"
+unnecessary_wraps = "allow"
+unseparated_literal_suffix = "allow"
+unused_trait_names = "allow"
+unwrap_used = "allow"
+use_debug = "allow"
+use_self = "allow"
+wildcard_imports = "allow"
+
+[lints.rust]
+rust_2018_idioms = { level = "allow", priority = 0 }
+unreachable_pub = { level = "warn", priority = -1 }
+unused_imports = { level = "warn", priority = -1 }
+unused_must_use = { level = "deny", priority = -1 }
+
+[features]
+devnet-amplifier = [
+    "axelar-solana-gas-service/devnet-amplifier",
+    "axelar-solana-gateway/devnet-amplifier",
+    "axelar-solana-governance/devnet-amplifier",
+    "axelar-solana-its/devnet-amplifier",
+    "axelar-solana-memo-program/devnet-amplifier",
+    "gateway-event-stack/devnet-amplifier",
+    "its-instruction-builder/devnet-amplifier",
+]
+stagenet = [
+    "axelar-solana-gas-service/stagenet",
+    "axelar-solana-gateway/stagenet",
+    "axelar-solana-governance/stagenet",
+    "axelar-solana-its/stagenet",
+    "axelar-solana-memo-program/stagenet",
+    "gateway-event-stack/stagenet",
+    "its-instruction-builder/stagenet",
+]
+testnet = [
+    "axelar-solana-gas-service/testnet",
+    "axelar-solana-gateway/testnet",
+    "axelar-solana-governance/testnet",
+    "axelar-solana-its/testnet",
+    "axelar-solana-memo-program/testnet",
+    "gateway-event-stack/testnet",
+    "its-instruction-builder/testnet",
+]
+mainnet = [
+    "axelar-solana-gas-service/mainnet",
+    "axelar-solana-gateway/mainnet",
+    "axelar-solana-governance/mainnet",
+    "axelar-solana-its/mainnet",
+    "axelar-solana-memo-program/mainnet",
+    "gateway-event-stack/mainnet",
+    "its-instruction-builder/mainnet",
+]
+default = ["devnet-amplifier"]

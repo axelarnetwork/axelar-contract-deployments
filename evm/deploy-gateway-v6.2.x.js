@@ -12,7 +12,6 @@ const {
 } = ethers;
 
 const {
-    saveConfig,
     getBytecodeHash,
     verifyContract,
     printInfo,
@@ -37,12 +36,12 @@ const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/con
 const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
 const TokenDeployer = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json');
 
-async function checkKeyRotation(config, chain) {
+async function checkKeyRotation(axelar, chain) {
     let resp;
 
     // check if key rotation is in progress
     try {
-        resp = await httpGet(`${config.axelar.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
+        resp = await httpGet(`${axelar.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
     } catch (err) {
         return;
     }
@@ -50,24 +49,24 @@ async function checkKeyRotation(config, chain) {
     throw new Error(`Key rotation is in progress for ${chain.name}: ${resp}`);
 }
 
-async function getAuthParams(config, chain, options) {
+async function getAuthParams(axelar, chain, options) {
     printInfo(`Retrieving validator addresses for ${chain} from Axelar network`);
 
-    await checkKeyRotation(config, chain);
+    await checkKeyRotation(axelar, chain);
 
     const params = [];
     const keyIDs = [];
 
     if (options.prevKeyIDs) {
         for (const keyID of options.prevKeyIDs.split(',')) {
-            const { addresses, weights, threshold } = await getEVMAddresses(config, chain, { ...options, keyID });
+            const { addresses, weights, threshold } = await getEVMAddresses(axelar, chain, { ...options, keyID });
             printInfo(JSON.stringify({ status: 'old', keyID, addresses, weights, threshold }));
             params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
             keyIDs.push(keyID);
         }
     }
 
-    const { addresses, weights, threshold, keyID } = await getEVMAddresses(config, chain, options);
+    const { addresses, weights, threshold, keyID } = await getEVMAddresses(axelar, chain, options);
     printInfo(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
     keyIDs.push(keyID);
@@ -79,7 +78,7 @@ function getProxyParams(governance, mintLimiter) {
     return defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
 }
 
-async function deploy(config, chain, options) {
+async function deploy(axelar, chain, chains, options) {
     const { privateKey, reuseProxy, reuseHelpers, reuseAuth, verify, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
@@ -142,7 +141,7 @@ async function deploy(config, chain, options) {
     let proxyAddress;
 
     if (reuseProxy) {
-        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(config, chain.axelarId));
+        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(axelar, chain.axelarId));
         printInfo('Reusing Gateway Proxy address', proxyAddress);
         gateway = gatewayFactory.attach(proxyAddress);
     } else {
@@ -154,11 +153,11 @@ async function deploy(config, chain, options) {
         printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
-    const existingAddress = config.chains.arbitrum?.contracts?.[contractName]?.address;
+    const existingAddress = chains.arbitrum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && proxyAddress !== existingAddress) {
         printWarn(
-            `Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.arbitrum.name}.`,
+            `Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} on chain ${chains.arbitrum.name}.`,
         );
         printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
     }
@@ -182,7 +181,7 @@ async function deploy(config, chain, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const { params, keyIDs } = await getAuthParams(config, chain.axelarId, options);
+        const { params, keyIDs } = await getAuthParams(axelar, chain.axelarId, options);
         printInfo('Auth deployment args', params);
 
         contractConfig.startingKeyIDs = keyIDs;
@@ -377,12 +376,10 @@ async function deploy(config, chain, options) {
 
     printInfo('Deployment status', 'SUCCESS');
 
-    saveConfig(config, options.env);
-
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(options.env, chain.name, contract.address, contract.params);
+            await verifyContract(options.env, chain.axelarId, contract.address, contract.params);
         }
 
         printInfo('Verified all contracts!');
@@ -392,7 +389,6 @@ async function deploy(config, chain, options) {
 async function upgrade(_, chain, options) {
     const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
-    const chainName = chain.name.toLowerCase();
 
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -465,7 +461,7 @@ async function upgrade(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chainName}-address-${address}-nonce-${baseTx.nonce}.json`;
+        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chain.axelarId.toLowerCase()}-address-${address}-nonce-${baseTx.nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
 
         // Storing the fields in the data that will be stored in file
@@ -490,11 +486,11 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(axelar, chain, chains, options) {
     if (!options.upgrade) {
-        await deploy(config, chain, options);
+        await deploy(axelar, chain, chains, options);
     } else {
-        await upgrade(config, chain, options);
+        await upgrade(axelar, chain, options);
     }
 }
 
@@ -515,7 +511,6 @@ async function programHandler() {
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
     program.addOption(new Option('--reuseAuth', 'reuse auth module contract for new implementation deployment'));
-    program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));

@@ -25,19 +25,8 @@ const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
 const { getWallet } = require('./sign-utils');
 
-async function processCommand(config, chain, options) {
-    const {
-        env,
-        contractName,
-        address,
-        action,
-        privateKey,
-        args,
-
-        chains,
-
-        yes,
-    } = options;
+async function processCommand(axelar, chain, chains, options) {
+    const { env, contractName, address, action, privateKey, args, chains: destinationChains, yes } = options;
 
     const argsArray = args ? parseArgs(args) : [];
 
@@ -222,11 +211,11 @@ async function processCommand(config, chain, options) {
             const target = chain.contracts.AxelarGasService?.address;
 
             validateParameters({
-                isNonEmptyStringArray: { chains },
+                isNonEmptyStringArray: { destinationChains },
                 isAddress: { target },
             });
 
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(axelar, chain, chains, destinationChains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');
@@ -299,7 +288,6 @@ if (require.main === module) {
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
     program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
-    program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
 
     program.action((options) => {
         main(options);

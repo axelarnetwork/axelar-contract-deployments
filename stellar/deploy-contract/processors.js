@@ -2,7 +2,7 @@
 
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, getUploadContractCodePath } = require('../utils');
+const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, tokenMetadataToScVal } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
@@ -14,7 +14,7 @@ const {
 
 require('../cli-utils');
 
-const deploy = async (options, config, chain, contractName) => {
+const deploy = async (options, config, chain, contractName, args = []) => {
     const { yes } = options;
     const wallet = await getWallet(chain, options);
 
@@ -23,7 +23,7 @@ const deploy = async (options, config, chain, contractName) => {
     }
 
     const wasmHash = await uploadWasm(wallet, chain, options.contractCodePath, contractName);
-    const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
+    const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options, args);
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
     );
@@ -35,8 +35,8 @@ const deploy = async (options, config, chain, contractName) => {
     });
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
-    const contractAddress = Address.fromScAddress(deployResponse.address()).toString();
+    const response = await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const contractAddress = Address.fromScAddress(response.address()).toString();
 
     validateParameters({
         isValidStellarAddress: { contractAddress },
@@ -55,11 +55,11 @@ const deploy = async (options, config, chain, contractName) => {
     printInfo('Contract deployed successfully', chain.contracts[contractName]);
 };
 
-const upgrade = async (options, _, chain, contractName) => {
+const upgrade = async (options, _, chain, contractName, args = []) => {
     const { yes } = options;
 
-    if (!options.version && !options.artifactPath) {
-        throw new Error('--version or --artifact-path required to upgrade');
+    if (!options.version && !options.artifactDir) {
+        throw new Error('--version or --artifact-dir required to upgrade');
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
@@ -79,10 +79,10 @@ const upgrade = async (options, _, chain, contractName) => {
     const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath, contractName);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    const args = [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal);
+    const upgradeArgs = [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal);
 
     const upgrader = new Contract(upgraderAddress);
-    const operation = upgrader.call('upgrade', ...args);
+    const operation = upgrader.call('upgrade', ...upgradeArgs);
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
@@ -94,20 +94,19 @@ const upgrade = async (options, _, chain, contractName) => {
     printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
 };
 
-const upload = async (options, _, chain, contractName) => {
+const upload = async (options, _, chain, contractName, args = []) => {
     const wallet = await getWallet(chain, options);
-    const contractCodePath = await getUploadContractCodePath(options, contractName);
-    const newWasmHash = await uploadWasm(wallet, chain, contractCodePath, contractName);
+    const newWasmHash = await uploadContract(contractName, options, wallet, chain);
     printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
-const getInitializeArgs = async (config, chain, contractName, wallet, options) => {
+const getInitializeArgs = async (config, chain, contractName, wallet, options, args = []) => {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
     const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
         case 'AxelarGateway': {
-            const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
+            const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config.axelar, chain, options))));
             const minimumRotationDelay = nativeToScVal(options.minimumRotationDelay);
             const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
             const nonce = options.nonce ? arrayify(id(options.nonce)) : Array(32).fill(0);
@@ -140,8 +139,18 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-            const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', options, wallet, chain));
-            const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', options, wallet, chain));
+
+            const interchainTokenOptions = {
+                ...options,
+                version: options.interchainTokenVersion || options.version,
+            };
+            const tokenManagerOptions = {
+                ...options,
+                version: options.tokenManagerVersion || options.version,
+            };
+
+            const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', interchainTokenOptions, wallet, chain));
+            const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', tokenManagerOptions, wallet, chain));
 
             return {
                 owner,
@@ -193,6 +202,29 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
             return {};
         }
 
+        case 'InterchainToken': {
+            const [name, symbol, decimals] = args;
+
+            validateParameters({
+                isNonEmptyString: { name, symbol },
+                isNumber: { decimals },
+            });
+
+            if (decimals <= 0 || !Number.isInteger(decimals)) {
+                throw new Error('Decimals must be a positive integer');
+            }
+
+            const tokenId = nativeToScVal(Buffer.from('0'.repeat(64), 'hex'), { type: 'bytes' });
+            const tokenMetadata = tokenMetadataToScVal(decimals, name, symbol);
+
+            return {
+                minter: owner,
+                admin: owner,
+                tokenId,
+                tokenMetadata,
+            };
+        }
+
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
@@ -210,15 +242,15 @@ const uploadWasm = async (wallet, chain, filePath, contractName) => {
     return wasmResponse.value();
 };
 
-const mainProcessor = async (options, processor, contractName) => {
+const mainProcessor = async (processor, contractName, args, options) => {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
 
     if (!chain.contracts) {
         chain.contracts = {};
     }
 
-    await processor(options, config, chain, contractName);
+    await processor(options, config, chain, contractName, args);
     saveConfig(config, options.env);
 };
 

@@ -4,7 +4,7 @@ const { Command, Option } = require('commander');
 const { mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(options, chain, _) {
+async function processCommand(_axelar, chain, _chains, options) {
     const { contractName } = options;
 
     const contracts = chain.contracts;

@@ -8,7 +8,7 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig } = require('../common/utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -105,9 +105,9 @@ function getProof(keypair, commandType, data, contractConfig, options) {
 async function callContract(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
 
-    const [destinationChain, destinationAddress, payload] = args;
-
     const gatewayObjectId = chain.contracts.AxelarGateway.objects.Gateway;
+
+    const [destinationChain, destinationAddress, payload] = args;
 
     let channel = options.channel;
 
@@ -209,7 +209,7 @@ async function migrate(keypair, client, config, chain, contractConfig, args, opt
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [multisigSessionId] = args;
-    const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+    const { payload, status } = await getMultisigProof(config.axelar, chain.axelarId, multisigSessionId);
 
     if (!status.completed) {
         throw new Error('Multisig session not completed');
@@ -285,7 +285,7 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
 async function checkVersionControl(version, options) {
     const config = loadConfig(options.env);
 
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
 
@@ -412,7 +412,7 @@ async function checkVersionControl(version, options) {
 async function testNewField(value, options) {
     const config = loadConfig(options.env);
 
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
 
@@ -451,7 +451,7 @@ async function testNewField(value, options) {
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
 
@@ -540,3 +540,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { migrate };

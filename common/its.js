@@ -6,7 +6,7 @@ const { addBaseOptions, addOptionsToCommands, encodeITSDestination, loadConfig, 
 async function encodeRecipient(config, args, _) {
     const [destinationChain, destinationAddress] = args;
 
-    const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+    const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
 
     printInfo('Human-readable destination address', destinationAddress);
     printInfo('Encoded ITS destination address', itsDestinationAddress);
@@ -24,7 +24,7 @@ if (require.main === module) {
     program.name('its').description('Interchain Token Service common operations.');
 
     program
-        .command('encode-recipient <destination-chain> <destination-address')
+        .command('encode-recipient <destination-chain> <destination-address>')
         .description('Encode ITS recipient based on destination chain in config')
         .action((destinationChain, destinationAddress, options) => {
             mainProcessor(encodeRecipient, [destinationChain, destinationAddress], options);

@@ -11,7 +11,22 @@ function main() {
     const command = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
     const deployCommand = new Command('deploy').description('Deploy a Stellar contract');
-    const upgradeCommand = new Command('upgrade').description('Upgrade a Stellar contract');
+    const upgradeCommand = new Command('upgrade').description('Upgrade a Stellar contract').addHelpText(
+        'after',
+        `
+Examples:
+# using Vec<Address> as migration data:
+$ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+
+# default void migration data:
+$ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 1.0.1
+
+# equivalent explicit void migration data:
+$ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 1.0.1 --migration-data '()'
+
+# artifactDirectoryPath example: ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/
+`,
+    );
     const uploadCommand = new Command('upload').description('Upload a Stellar contract');
 
     const deployContractCommand = getDeployContractCommands();

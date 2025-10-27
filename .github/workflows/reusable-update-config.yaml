@@ -1,0 +1,48 @@
+name: Reusable Update Config
+
+on:
+  workflow_call:
+    inputs:
+      network:
+        required: true
+        type: string
+      # Uses `files` input with `https://github.com/tj-actions/changed-files` action
+      files:
+        required: true
+        type: string
+      source_repo:
+        required: true
+        type: string
+    secrets:
+      SOURCE_REPO_GITHUB_TOKEN:
+        required: true
+      CHAINS_REPO_CICD_TOKEN:
+        required: true
+      CONFIG_REPO:
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  update-config:
+    env:
+      GITHUB_TOKEN: ${{ secrets.SOURCE_REPO_GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get all changed ${{ inputs.network }} changed files
+        id: changed-network-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          files: ${{ inputs.files }}
+
+      - uses: axelarnetwork/axelar-contract-deployments/.github/actions/update-config@main
+        if: steps.changed-network-files.outputs.any_changed == 'true'
+        with:
+          network: ${{ inputs.network }}
+          source_repo: ${{ inputs.source_repo }}
+          config_repo: ${{ secrets.CONFIG_REPO }}
+          cicd_token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}

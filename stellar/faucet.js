@@ -13,7 +13,7 @@ async function processCommand(chain, options) {
         balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
     );
 
-    if (keyPair.publicKey().toLowerCase() !== options?.recipient?.toLowerCase()) {
+    if (options.recipient) {
         printInfo(`Requesting funds for`, recipient);
     }
 
@@ -29,7 +29,7 @@ async function processCommand(chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(chain, options);
 }
 
