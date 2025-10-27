@@ -55,7 +55,6 @@ async function callSuiAddTrustedChains(config, chain, suiPrivateKey, yes = false
     await addTrustedChainsSui(keypair, client, config, chainConfig.contracts, [ALL_CHAINS], { yes });
 }
 
-//STELLAR
 async function callStellarAddTrustedChains(config, chain, stellarPrivateKey, yes = false) {
     const chainConfig = getChainConfig(config.chains, chain);
 
