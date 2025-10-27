@@ -41,7 +41,6 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
     }
 }
 
-//SUI
 async function callSuiAddTrustedChains(config, chain, suiPrivateKey, yes = false, suiSignatureScheme, suiPrivateKeyType) {
     const chainConfig = getChainConfig(config.chains, chain);
 
