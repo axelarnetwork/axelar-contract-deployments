@@ -1,7 +1,7 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const { addBaseOptions, addOptionsToCommands, encodeITSDestination, loadConfig, printInfo } = require('../common');
+const { addBaseOptions, addOptionsToCommands, encodeITSDestination, loadConfig, printInfo, parseTrustedChains } = require('../common');
 
 const { processCommand: evmProcessCommand } = require('../evm/its');
 const { addTrustedChains: addTrustedChainsSui } = require('../sui/its');
@@ -30,9 +30,11 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
     for (const chain of allEvmChains) {
         printInfo(`\n--- Setting trusted chains on ${chain.name} (${chain.axelarId}) ---`);
 
+        const trustedChains = parseTrustedChains(config.chains, [ALL_CHAINS]);
+
         const options = {
             privateKey: evmPrivateKey,
-            args: [ALL_CHAINS],
+            args: trustedChains,
             env: env,
         };
 
