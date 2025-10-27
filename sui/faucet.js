@@ -53,6 +53,7 @@ if (require.main === module) {
                 'tokens will only be requested from the faucet if recipient balance is below the amount provided',
             ).default('1'),
         )
+        .addOption(new Option('--rpc <rpc>', 'rpc for Sui'))
         .description('Query the faucet for funds.')
         .action((options) => {
             mainProcessor(options, processCommand);
