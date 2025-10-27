@@ -53,7 +53,7 @@ function getVariablesForPackage(chain, packageName) {
     const info = CONTRACT_INFO[packageName];
     const defaultFunctions = info.defaultFunctions;
     const version = Math.max(...Object.keys(contractConfig.versions).map((version) => Number(version)));
-    defaultFunctions.versions = defaultFunctions.versions.map(() => version);
+    const defaultFunctions = { ...info.defaultFunctions, versions: info.defaultFunctions.versions.map(() => version) };
     return {
         packageId: contractConfig.address,
         singletonId: contractConfig.objects[info.singletonName],
