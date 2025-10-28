@@ -1392,16 +1392,16 @@
       },
       "Coordinator": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "codeId": 1542,
-        "lastUploadedCodeId": 1542,
+        "codeId": 1558,
+        "lastUploadedCodeId": 1558,
         "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g",
         "executeProposalId": "56",
         "axelar": {
-          "codeId": 1542,
+          "codeId": 1558,
           "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g"
         },
-        "storeCodeProposalId": "1188",
-        "storeCodeProposalCodeHash": "dc9d7f18a03970e0d7a6d81b2307d76eec2114a6f8bf27dc4336e1813f362bc9"
+        "storeCodeProposalId": "1275",
+        "storeCodeProposalCodeHash": "45b1c5c230b686d47283ea3b6c7174b9d979f557e65aeca4e1aece66d9eb94e0"
       },
       "Rewards": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1850,6 +1850,7 @@
     "govProposalInstantiateAddresses": [
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"
-    ]
+    ],
+    "cosmosSDK": "0.45.16"
   }
 }

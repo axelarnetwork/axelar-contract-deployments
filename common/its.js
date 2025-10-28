@@ -24,7 +24,7 @@ if (require.main === module) {
     program.name('its').description('Interchain Token Service common operations.');
 
     program
-        .command('encode-recipient <destination-chain> <destination-address')
+        .command('encode-recipient <destination-chain> <destination-address>')
         .description('Encode ITS recipient based on destination chain in config')
         .action((destinationChain, destinationAddress, options) => {
             mainProcessor(encodeRecipient, [destinationChain, destinationAddress], options);
