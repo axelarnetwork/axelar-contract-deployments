@@ -55,6 +55,11 @@ jobs:
           shared-key: 'cache-lint'
           workspaces: 'solana'
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libusb-1.0-0-dev
+
       - name: Add cargo clippy
         run: rustup component add clippy
 
