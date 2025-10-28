@@ -37,7 +37,7 @@ jobs:
         run: |
           git clone https://github.com/axelarnetwork/axelar-amplifier-solana.git
           cd axelar-amplifier-solana
-          git checkout f5edd275b94911ef6b57ab6ec99c75e30ce15572
+          git checkout 3594e19da2c5654fb12f18c5450be94bcf056f68
         working-directory: solana
 
       - name: Install Rust nightly toolchain

@@ -141,8 +141,8 @@ This is the anchor Solana ITS release.
     # Go to the solana directory within the cloned repo
     cd axelar-amplifier-solana
 
-    # Compile the ITS
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
+    # Build Solana programs
+    cargo build-sbf
 
     # Go back
     cd ..
@@ -170,8 +170,9 @@ This is the anchor Solana ITS release.
 1. Deploy and verify axelar_solana_its program (only run the `solana-verify` command for mainnet):
 
     ```sh
-    anchor deploy -p axelar_solana_its --provider.cluster $CLUSTER --program-keypair $ITS_PROGRAM_KEYPAIR_PATH -v -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    anchor deploy -p axelar_solana_its --provider.cluster $CLUSTER --program-keypair $ITS_PROGRAM_KEYPAIR_PATH --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
+    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
     anchor verify -p axelar_solana_its --provider.cluster $CLUSTER $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 

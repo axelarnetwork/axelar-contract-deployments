@@ -126,3 +126,5 @@ sui/move
 
 .stellar/
 *.clar
+
+solana/axelar-amplifier*
