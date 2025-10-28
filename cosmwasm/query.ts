@@ -7,7 +7,6 @@ import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../
 import { ConfigManager } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
-import { GATEWAY_CONTRACT_NAME, MULTISIG_PROVER_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from './utils';
 
 export interface ContractInfo {
     contract: string;
@@ -19,7 +18,7 @@ async function rewards(client, config, _options, args, _fee) {
 
     const rewardsContractAddresses = {
         multisig: config.getContractConfig('Multisig').address,
-        voting_verifier: config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName).address,
+        voting_verifier: config.getVotingVerifierContract(chainName).address,
     };
 
     for (const [key, address] of Object.entries(rewardsContractAddresses)) {
@@ -178,9 +177,9 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         );
     }
 
-    config.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName).address = result.verifier_address;
-    config.getContractConfigByChain(MULTISIG_PROVER_CONTRACT_NAME, chainName).address = result.prover_address;
-    config.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName).address = result.gateway_address;
+    config.getVotingVerifierContract(chainName).address = result.verifier_address;
+    config.getMultisigProverContract(chainName).address = result.prover_address;
+    config.getGatewayContract(chainName).address = result.gateway_address;
 
     printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier_address);
     printInfo(`Updated MultisigProver[${chainName}].address`, result.prover_address);
