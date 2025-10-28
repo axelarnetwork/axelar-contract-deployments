@@ -3573,7 +3573,8 @@
         "storeCodeProposalCodeHash": "5a12c166833e73f12b17bf8480c51b638afbae6aba13bf6ea9870bdddc78e681",
         "codeId": 45,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
-        "executeProposalId": "245"
+        "executeProposalId": "245",
+        "lastUploadedCodeId": 45
       },
       "Multisig": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
