@@ -51,7 +51,7 @@ const CONTRACT_INFO = {
 function getVariablesForPackage(chain, packageName) {
     const contractConfig = chain.contracts[packageName];
     const info = CONTRACT_INFO[packageName];
-    const defaultFunctions = info.defaultFunctions;
+    const defaultFunctions = { ...info.defaultFunctions, versions: [...info.defaultFunctions.versions] };
     const version = Math.max(...Object.keys(contractConfig.versions).map((version) => Number(version)));
     defaultFunctions.versions.fill(version);
     return {
@@ -60,7 +60,7 @@ function getVariablesForPackage(chain, packageName) {
         versionedId: contractConfig.objects[info.singletonName + 'v0'],
         ownerCapId: contractConfig.objects.OwnerCap,
         moduleName: info.moduleName,
-        defaultFunctions: info.defaultFunctions,
+        defaultFunctions,
         contract: contractConfig,
     };
 }
