@@ -117,16 +117,14 @@ async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH, cont
 
                 if (item.isDirectory() && item.name !== 'deps' && item.name !== 'verification') {
                     await updateTomlInFolder(itemPath);
-                } else if (item.name === 'Move.toml') {
+                } else if (item.name === 'Move.toml' || item.name === 'Move.lock') {
                     try {
-                        let tomlContent = await fs.readFile(itemPath, 'utf-8');
-
-                        tomlContent = tomlContent.replace(/local\s*=\s*"\.\.\/([^"]+)"/g, 'local = "./deps/$1"');
-
-                        await fs.writeFile(itemPath, tomlContent);
-                        printInfo('Updated Move.toml', itemPath);
+                        let content = await fs.readFile(itemPath, 'utf-8');
+                        content = content.replace(/local\s*=\s*"\.\.\/([^"]+)"/g, 'local = "./deps/$1"');
+                        await fs.writeFile(itemPath, content);
+                        printInfo(`Updated ${item.name}`, itemPath);
                     } catch (error) {
-                        printInfo('Skipping Move.toml update due to error', `${itemPath}: ${error.message}`);
+                        printInfo(`Skipping ${item.name} update due to error`, `${itemPath}: ${error.message}`);
                     }
                 }
             }
