@@ -1,15 +1,15 @@
-# Cosmwasm Coordinator v2.1.1
+# Cosmwasm Coordinator v2.1
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
 | **Created By** | @sdavidson1177 <solomon@interoplabs.io>         |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-10-01 |
-| **Stagenet**         | Completed             | 2025-10-14 |
-| **Testnet**          | Completed             | 2025-10-15 |
-| **Mainnet**          | -                     | TBD        |
+| **Network**          | **Deployment Status** | **Date**   | **Coordinator** | **Router** | **Multisig** |
+| -------------------- | --------------------- | ---------- | --------------- |----------- | ------------ |
+| **Devnet Amplifier** | Completed             | 2025-10-01 | v2.1.2          | v1.3.0     | v2.3.1       |
+| **Stagenet**         | Completed             | 2025-10-14 | v2.1.1          | v1.3.0     | v2.3.1       |
+| **Testnet**          | Completed             | 2025-10-15 | v2.1.1          | v1.3.0     | v2.3.1       |
+| **Mainnet**          | Partially Completed   | 2025-10-23 | TBD             | v1.3.0     | v2.3.1       |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.1)
@@ -32,6 +32,10 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 1. The coordinator now stores both the router and multisig contract addresses in its state. This information will be given to the coordinator after it is instantiated using the *RegisterProtocol* message. The service registry address will also be registered using *RegisterProtocol*, where it was previously in the coordinator's instantiate message.
 1. Previously, registering a chain with the coordinator involved specifying only the multisig prover's address. Now, registration must also include the corresponding gateway and voting verifier addresses.
 1. The coordinator's migration script will default to using the provided prover/chain pairs instead of the prover/chain pairs registered in its state.
+
+### Coordinator v2.1.2
+
+This update was applied only on the devnet-amplifier in order to allow migration from `v2.1.0`. Coordinator `v2.1.1` was released after the devnet migration and it was not prepared for migration from `v2.1`. An important update was released in `v2.1.1`, so in order to allow the migration, a new patch release was prepared and submitted.
 
 ### Multisig v2.3.1
 
