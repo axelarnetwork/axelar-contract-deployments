@@ -1,5 +1,5 @@
 const { loadConfig, printInfo } = require('../common/index.js');
-const { addBaseOptions } = require('../common/cli-utils.ts');
+const { addBaseOptions } = require('../common/cli-utils');
 const { addTopUpOptions } = require('./cli-utils.ts');
 
 const { getWallet } = require('./sign-utils.js');
