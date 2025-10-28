@@ -1,8 +1,19 @@
 const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { Transaction } = require('@mysten/sui/transactions');
+const { bcs } = require('@mysten/sui/bcs');
 const { broadcastFromTxBuilder } = require('./sign-utils');
 
-async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymbol, coinMetadata, coinType, treasuryCap = null) {
+async function registerCustomCoinUtil(
+    config,
+    itsConfig,
+    AxelarGateway,
+    coinSymbol,
+    coinMetadata,
+    coinType,
+    treasuryCap = null,
+    fixedSalt = null,
+) {
     const { InterchainTokenService } = itsConfig.objects;
     const txBuilder = new TxBuilder(config.client);
 
@@ -26,7 +37,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
           });
 
     // Salt
-    const saltAddress = createSaltAddress();
+    const saltAddress = fixedSalt ? fixedSalt : createSaltAddress();
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
         arguments: [saltAddress],
@@ -41,7 +52,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
 
     // TreasuryCapReclaimer<T>
     const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', coinType, '>'].join('');
-    if (config.options.treasuryCap) {
+    if (treasuryCap) {
         const treasuryCapReclaimer = await txBuilder.moveCall({
             target: `${STD_PACKAGE_ID}::option::extract`,
             arguments: [treasuryCapReclaimerOption],
@@ -85,10 +96,43 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     return [tokenId, channelId, saltAddress, result];
 }
 
-function createSaltAddress() {
-    const keypair = new Ed25519Keypair();
+function createSaltAddress(keypair = null) {
+    if (!keypair) {
+        keypair = new Ed25519Keypair();
+    }
     const address = keypair.getPublicKey().toSuiAddress();
     return address;
+}
+
+async function tokenIdToCoinType(client, walletAddress, itsConfig, tokenId = '') {
+    try {
+        const coinTypeResult = await client.devInspectTransactionBlock({
+            transactionBlock: (() => {
+                const tx = new Transaction();
+                tx.moveCall({
+                    target: `${itsConfig.address}::interchain_token_service::registered_coin_type`,
+                    arguments: [tx.object(itsConfig.objects.InterchainTokenService), tx.pure.address(tokenId)],
+                });
+                return tx;
+            })(),
+            sender: walletAddress,
+        });
+
+        const coinType = extractCoinTypeFromDevInspect(coinTypeResult);
+
+        return coinType.slice(0, 2) === '0x' ? coinType : '0x' + coinType;
+    } catch {
+        throw new Error(`Failed parsing coin type for token id ${tokenId}`);
+    }
+}
+
+function extractCoinTypeFromDevInspect(result) {
+    if (result.results?.[0]?.returnValues?.[0]) {
+        const [bytes] = result.results[0].returnValues[0];
+        const coinType = bcs.String.parse(new Uint8Array(bytes));
+        return coinType;
+    }
+    throw new Error(`Failed to get coin type from dev inspect for result ${result}`);
 }
 
 const itsFunctions = {
@@ -146,4 +190,10 @@ const itsFunctions = {
     ],
 };
 
-module.exports = { createSaltAddress, registerCustomCoinUtil, itsFunctions };
+module.exports = {
+    createSaltAddress,
+    extractCoinTypeFromDevInspect,
+    registerCustomCoinUtil,
+    tokenIdToCoinType,
+    itsFunctions,
+};

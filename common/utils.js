@@ -11,13 +11,14 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
+    BigNumber,
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
-const { cvToHex, principalCV } = require('@stacks/transactions');
+const { isValidNamedType } = require('@mysten/sui/utils');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -135,11 +136,31 @@ const isNumber = (arg) => {
 };
 
 const isValidNumber = (arg) => {
-    return !isNaN(parseInt(arg)) && isFinite(arg);
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = Number(arg);
+
+    return !isNaN(num) && isFinite(num);
 };
 
 const isValidDecimal = (arg) => {
-    return !isNaN(parseFloat(arg)) && isFinite(arg);
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = parseFloat(arg);
+
+    return !isNaN(num) && isFinite(num) && num === parseFloat(String(arg).trim());
 };
 
 const isNumberArray = (arr) => {
@@ -181,7 +202,7 @@ const httpGet = (url) => {
             const contentType = res.headers['content-type'];
             let error;
 
-            if (statusCode !== 200 && statusCode !== 301) {
+            if (statusCode !== 200) {
                 error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
@@ -451,7 +472,7 @@ function validateParameters(parameters) {
         const validatorFunction = validationFunctions[validatorFunctionString];
 
         if (typeof validatorFunction !== 'function') {
-            throw new Error(`Validator function ${validatorFunction} is not defined`);
+            throw new Error(`Validator function ${validatorFunctionString} is not defined`);
         }
 
         for (const paramKey of Object.keys(paramsObj)) {
@@ -719,6 +740,30 @@ function solanaAddressBytesFromBase58(string) {
 }
 
 /**
+ * Encodes the destination token address for Interchain Token Service (ITS) link token operations.
+ * This function handles token address encoding differently from recipient addresses.
+ * Note:
+ * - Token addresses are encoded as ASCII strings for X -> Sui transfers
+ * - Destination addresses (recipients) are encoded as bytes (already hex strings)
+ */
+function encodeITSDestinationToken(chains, destinationChain, destinationTokenAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'sui':
+            if (!isValidNamedType(destinationTokenAddress)) {
+                throw new Error(`Destination token address invalid, got ${destinationTokenAddress}`);
+            }
+            // For Sui token addresses (X -> Sui), encode as ASCII string
+            return asciiToBytes(destinationTokenAddress.replace('0x', ''));
+
+        default:
+            // For all other chains, use the same encoding as destination addresses
+            return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+    }
+}
+
+/**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
  * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
@@ -746,12 +791,9 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
             // TODO: validate XRPL address format
             return asciiToBytes(destinationAddress);
 
-        case 'stacks':
-            return cvToHex(principalCV(destinationAddress));
-
         case 'evm':
         case 'sui':
-        default: // EVM, Sui, and other chains (return as-is)
+        default: // EVM, Sui (non-token addresses), and other chains return as-is
             return destinationAddress;
     }
 }
@@ -787,54 +829,45 @@ function validateDestinationChain(chains, destinationChain) {
 
 async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
     if (env === 'devnet-amplifier') {
-        return 0;
+        return { gasValue: 0, gasFeeValue: 0 };
     }
 
-    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
+    if (gasValue !== 'auto' && !isValidNumber(gasValue)) {
         throw new Error(`Invalid gas value: ${gasValue}`);
     }
 
     if (isValidNumber(gasValue)) {
-        return scaleGasValue(chain, gasValue);
+        const gasFeeValue = scaleGasValue(chain, gasValue);
+        return { gasValue, gasFeeValue };
     }
 
     const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
-        destinationChain: destinationChain,
+        destinationChain,
         event: eventType,
     };
 
-    const res = await httpPost(url, payload);
+    const rawEstimate = await httpPost(url, payload);
 
-    if (res.error) {
-        throw new Error(`Error querying gas amount: ${res.error}`);
+    if (rawEstimate.error || rawEstimate === 0) {
+        throw new Error(`Error querying gas amount: ${rawEstimate.error}`);
     }
-    return res;
+
+    const estimate = typeof rawEstimate === 'number' && rawEstimate > Number.MAX_SAFE_INTEGER ? rawEstimate.toString() : rawEstimate;
+
+    const ethValue = scaleGasValue(chain, estimate, false);
+    return { gasValue: ethValue, gasFeeValue: estimate };
 }
 
-/**
- * Scales a gas value up to 18 decimals when required.
- *
- * Hedera uses a lower decimal precision for gas/fees, while EVM ecosystems
- * standardize on 18 decimals. For EVM interactions we need to scale Hedera
- * values up so that on-chain math uses the same 18-decimal base. Chains that
- * require scaling should set `gasScalingFactor` to the number of missing
- * decimals to reach 18.
- *
- * Example: if a chain uses 8 decimals, set `gasScalingFactor = 10` so
- * `gasValue * 10^10` yields an 18-decimal value.
- *
- * When `gasScalingFactor` is not a number, no scaling is applied.
- *
- * @param {Object} chain - Chain config, may include `gasScalingFactor`.
- * @param {string|number|BigNumber} gasValue - Raw gas value to scale.
- * @returns {BigNumber|*} Scaled gas if factor provided; original otherwise.
- */
-function scaleGasValue(chain, gasValue) {
+function scaleGasValue(chain, gasValue, up = true) {
     if (typeof chain.gasScalingFactor === 'number') {
-        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        if (up) {
+            return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+        } else {
+            return BigNumber.from(gasValue).div(BigNumber.from(10).pow(chain.gasScalingFactor));
+        }
     }
 
     return gasValue;
@@ -901,6 +934,7 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
+    encodeITSDestinationToken,
     tokenManagerTypes,
     validateLinkType,
     validateChain,

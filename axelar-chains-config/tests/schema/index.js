@@ -4,12 +4,12 @@ const axelarSchema = {
     properties: {
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
-        // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
         lcd: { type: 'string', pattern: '^$|^(https?:\\/\\/[^\\/\\:]+(:\\d+)?)$' },
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
+        cosmosSDK: { type: 'string' },
     },
-    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
+    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol', 'cosmosSDK'],
 };
 
 export const contractValueSchema = {

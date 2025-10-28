@@ -321,7 +321,14 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
             const { metadata, env } = options;
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'InterchainTransfer', options.gasValue, _axelar);
+            const { gasValue, gasFeeValue } = await estimateITSFee(
+                chain,
+                destinationChain,
+                env,
+                'InterchainTransfer',
+                options.gasValue,
+                _axelar,
+            );
 
             validateParameters({
                 isValidTokenId: { tokenId },
@@ -369,7 +376,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 amountInUnits,
                 metadata,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: gasFeeValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
@@ -379,12 +386,19 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenAddress] = args;
             const { env } = options;
 
-            const gasValue = await estimateITSFee(chain, 'axelar', env, 'TokenMetadataRegistered', options.gasValue, _axelar);
+            const { gasValue, gasFeeValue } = await estimateITSFee(
+                chain,
+                'axelar',
+                env,
+                'TokenMetadataRegistered',
+                options.gasValue,
+                _axelar,
+            );
 
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
-                value: gasValue,
+                value: gasFeeValue,
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
@@ -594,7 +608,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateParameters({ isKeccak256Hash: { tokenId } });
 
-            const tx = await interchainTokenService.migrateInterchainToken(tokenId);
+            const tx = await interchainTokenService.migrateInterchainToken(tokenId, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, action);
 
@@ -662,7 +676,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidAddress: { tokenAddress, minter } });
 
             const token = new Contract(tokenAddress, IMinter.abi, wallet);
-            const tx = await token.transferMintership(minter);
+            const tx = await token.transferMintership(minter, gasOptions);
 
             await handleTx(tx, chain, token, action, 'RolesRemoved', 'RolesAdded');
 
@@ -674,7 +688,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { env } = options;
             const deploymentSalt = getDeploymentSalt(options);
 
-            const gasValue = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
+            const { gasValue, gasFeeValue } = await estimateITSFee(chain, destinationChain, env, 'LinkToken', options.gasValue, _axelar);
 
             validateParameters({
                 isValidTokenId: { tokenId },
@@ -713,7 +727,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 tokenManagerType,
                 linkParams,
                 gasValue,
-                gasOptions,
+                { value: gasFeeValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'LinkTokenStarted');
             break;

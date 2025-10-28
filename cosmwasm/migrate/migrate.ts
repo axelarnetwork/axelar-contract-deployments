@@ -1,36 +1,51 @@
 'use strict';
 
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
 import { FullConfig } from '../../common/config';
-import { addAmplifierOptions } from '../cli-utils';
-import { ClientManager, mainProcessor } from '../processor';
-import { ContractInfo, getContractInfo } from '../query';
-import { migrate as migrateCoordinator } from './coordinator';
-import { MigrationOptions } from './types';
+import { addAmplifierOptions, addAmplifierQueryContractOptions } from '../cli-utils';
+import { ClientManager, mainProcessor, mainQueryProcessor } from '../processor';
+import { getContractInfo } from '../query';
+import { checkMigration as checkMigrationCoordinator, migrate as migrateCoordinator } from './coordinator';
+import { migrate as migrateMultisig } from './multisig';
+import { MigrationCheckOptions, MigrationOptions } from './types';
 
 async function migrate(
     client: ClientManager,
     config: FullConfig,
     options: MigrationOptions,
-    args: string[],
+    _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const sender_address = client.accounts[0].address;
+    const senderAddress = client.accounts[0].address;
+    const contractAddress = options.address ?? config.axelar.contracts[options.contractName]?.address;
+
+    const contractInfo = await getContractInfo(client, contractAddress);
+    switch (contractInfo.contract) {
+        case 'coordinator':
+            await migrateCoordinator(client, options, config, senderAddress, contractAddress, contractInfo.version, fee);
+            break;
+        case 'multisig':
+            await migrateMultisig(client, options, config, senderAddress, contractAddress, contractInfo.version, fee);
+            break;
+    }
+}
+
+async function checkMigration(
+    client: CosmWasmClient,
+    config: FullConfig,
+    options: MigrationCheckOptions,
+    _args: string[],
+    _fee: string | StdFee,
+): Promise<void> {
     const contract_address = options.address ?? config.axelar.contracts[options.contractName]?.address;
-    if (args.length === 0 || args[0] === undefined) {
-        throw new Error('code_id argument is required');
-    }
-    const code_id = Number(args[0]);
-    if (isNaN(code_id)) {
-        throw new Error('code_id must be a valid number');
-    }
 
     const contract_info = await getContractInfo(client, contract_address);
     switch (contract_info.contract) {
         case 'coordinator':
-            await migrateCoordinator(client, options, config, sender_address, contract_address, contract_info.version, code_id);
+            await checkMigrationCoordinator(client, config, contract_info.version, options?.coordinator, options?.multisig);
             break;
     }
 }
@@ -38,22 +53,43 @@ async function migrate(
 const programHandler = () => {
     const program = new Command();
 
-    program.name('migrate').version('1.0.0').description('Automation for migrating Amplifier contracts');
+    program.name('migrate').version('1.1.0').description('Automation for migrating Amplifier contracts');
 
     addAmplifierOptions(
         program
             .command('migrate')
-            .argument('<code_id>', 'code id of new contract')
-            .addOption(new Option('--fees <fees>', 'fees').default('auto'))
+            .addOption(new Option('--ignoreChains [chains]', 'chains to ignore'))
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
-            .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
-            .option('--proposal', 'make a proposal rather than a direct migration')
+            .addOption(new Option('--codeId <codeId>', 'code id of new contract (default fetch from the chain)'))
+            .option('--direct', 'make a direct migration rather than a proposal')
             .option('--dry', 'only generate migration msg')
             .description('Migrate contract')
-            .action((code_id: string, options: MigrationOptions) => {
-                mainProcessor(migrate, options, [code_id]);
+            .action((options: MigrationOptions) => {
+                if (options.codeId !== undefined) {
+                    const parsedCodeId = Number(options.codeId);
+
+                    if (isNaN(parsedCodeId) || !Number.isInteger(parsedCodeId) || parsedCodeId <= 0) {
+                        console.error(`Error: Invalid codeId '${options.codeId}'. CodeId must be a positive integer.`);
+                        process.exit(1);
+                    }
+
+                    options.codeId = parsedCodeId;
+                }
+                mainProcessor(migrate, options, []);
             }),
         {},
+    );
+
+    addAmplifierQueryContractOptions(
+        program
+            .command('check')
+            .addOption(new Option('--address <address>', 'address of contract to check'))
+            .addOption(new Option('--coordinator <coordinator address>', 'coordinator address'))
+            .addOption(new Option('--multisig <multisig address>', 'multisig address'))
+            .description('Check migration succeeded')
+            .action((options: MigrationCheckOptions) => {
+                mainQueryProcessor(checkMigration, options, []);
+            }),
     );
 
     program.parse();

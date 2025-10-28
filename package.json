@@ -31,7 +31,7 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
-    "@axelar-network/axelar-cgp-sui": "1.1.3",
+    "@axelar-network/axelar-cgp-sui": "1.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
     "@axelar-network/interchain-token-service": "2.2.0",
     "@axelar-network/interchain-token-service-v2.1.1": "npm:@axelar-network/interchain-token-service@2.1.1",
@@ -40,9 +40,6 @@
     "@ledgerhq/hw-app-eth": "6.32.2",
     "@mysten/ledgerjs-hw-app-sui": "^0.4.1",
     "@mysten/sui": "^1.3.0",
-    "@stacks/common": "^7.0.2",
-    "@stacks/transactions": "^7.0.6",
-    "@stacks/wallet-sdk": "^7.0.6",
     "@stellar/stellar-sdk": "v14.2.0",
     "abort-controller": "^3.0.0",
     "axios": "^1.7.2",
@@ -100,6 +97,7 @@
     "wrap-ansi": "7.0.0",
     "slice-ansi": "4.0.0",
     "is-arrayish": "0.2.1",
-    "ansi-regex": "5.0.1"
+    "ansi-regex": "5.0.1",
+    "elliptic": "^6.6.1"
   }
 }

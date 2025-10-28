@@ -227,6 +227,25 @@ const getBagContentId = async (client, objectType, bagId, bagName) => {
     return objectDetails.data.content.fields.value.fields.id.id;
 };
 
+const getBagContents = async function (client, bagId, retrieveFunction) {
+    if (typeof retrieveFunction !== 'function') {
+        throw new Error(`Expected function, got ${typeof retrieveFunction}`);
+    }
+
+    let cursor = null;
+    const bagItems = [];
+    do {
+        const page = await client.getDynamicFields({ parentId: bagId, cursor });
+        for (const entry of page.data || []) {
+            const bagItem = retrieveFunction(entry);
+            bagItems.push(bagItem);
+        }
+        cursor = page.hasNextPage ? page.nextCursor : null;
+    } while (cursor);
+
+    return bagItems;
+};
+
 const getTransactionList = async (client, discoveryObjectId) => {
     const tableBcsBytes = await getBcsBytesByObjectId(client, discoveryObjectId);
     const data = bcsStructs.relayerDiscovery.RelayerDiscovery.parse(tableBcsBytes);
@@ -345,6 +364,23 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
     return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
 };
 
+const selectSuiNetwork = (env) => {
+    let network;
+    switch (env) {
+        case 'devnet':
+        case 'testnet':
+        case 'mainnet': {
+            network = env;
+            break;
+        }
+        default: {
+            network = 'testnet';
+        }
+    }
+
+    return network;
+};
+
 module.exports = {
     suiCoinId,
     isGasToken,
@@ -362,6 +398,7 @@ module.exports = {
     getItsChannelId,
     getSigners,
     getBagContentId,
+    getBagContents,
     moveDir,
     getTransactionList,
     parseDiscoveryInfo,
@@ -369,6 +406,7 @@ module.exports = {
     checkTrustedAddresses,
     getStructs,
     saveGeneratedTx,
+    selectSuiNetwork,
     isAllowed,
     getAllowedFunctions,
 };

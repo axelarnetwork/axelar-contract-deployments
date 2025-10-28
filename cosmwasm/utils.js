@@ -2,9 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
@@ -13,9 +10,12 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
+    UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
+const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
     isString,
@@ -39,6 +39,7 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
+const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -65,18 +66,8 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const getAmplifierBaseContractConfig = (config, contractName) => {
-    const contractBaseConfig = config.axelar.contracts[contractName];
-
-    if (!contractBaseConfig) {
-        throw new Error(`Contract ${contractName} not found in config`);
-    }
-
-    return contractBaseConfig;
-};
-
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (!chainName) {
         return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
@@ -94,7 +85,7 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
 const getCodeId = async (client, config, options) => {
     const { fetchCodeId, codeId, contractName } = options;
 
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (codeId) {
         return codeId;
@@ -111,7 +102,8 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const executeTransaction = async (client, account, contractAddress, message, fee) => {
+const executeTransaction = async (client, contractAddress, message, fee) => {
+    const [account] = client.accounts;
     const tx = await client.execute(account.address, contractAddress, message, fee, '');
     return tx;
 };
@@ -336,13 +328,12 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = getAxelarGatewayContractForChain(chainName);
     const {
         axelar: { contracts },
         chains: {
             [chainName]: {
                 contracts: {
-                    [axelarGatewayContract]: { address: gatewayAddress },
+                    [AXELAR_GATEWAY_CONTRACT_NAME]: { address: gatewayAddress },
                 },
             },
         },
@@ -484,40 +475,16 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => {
-    const chainVerifierMapping = {
-        stacks: 'StacksVotingVerifier',
-        solana: 'SolanaVotingVerifier',
-    };
-
-    return chainVerifierMapping[chainName] || 'VotingVerifier';
-};
-
-const getGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        solana: 'SolanaGateway',
-    };
-
-    return chainGatewayMapping[chainName] || 'Gateway';
-};
-
-const getAxelarGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        stacks: 'GatewayStorage',
-    };
-
-    return chainGatewayMapping[chainName] || 'AxelarGateway';
-};
+const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
 
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                [verifierContract]: {
+                [VERIFIER_CONTRACT_NAME]: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -529,7 +496,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid ${verifierContractName}[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${VERIFIER_CONTRACT_NAME}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -660,8 +627,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContractName = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -671,10 +636,10 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        [verifierContract]: {
+        [VERIFIER_CONTRACT_NAME]: {
             [chainName]: { address: verifierAddress },
         },
-        [gatewayContractName]: {
+        [GATEWAY_CONTRACT_NAME]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -909,7 +874,7 @@ const getStoreCodeParams = (options) => {
     };
 };
 
-const getStoreInstantiateParams = (config, options, msg) => {
+const getStoreInstantiateParams = (_config, options, msg) => {
     const { admin } = options;
 
     return {
@@ -967,6 +932,15 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
         value: JSON.stringify(value), // `value` must be JSON encoded: https://github.com/cosmos/cosmos-sdk/blob/9abd946ba0cdc6d0e708bf862b2ca202b13f2d7b/x/params/client/utils/utils.go#L23
     })),
 });
+
+const getUpdateInstantiateParams = (options) => {
+    const { msg } = options;
+
+    return {
+        ...getSubmitProposalParams(options),
+        accessConfigUpdates: JSON.parse(msg),
+    };
+};
 
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
@@ -1045,6 +1019,15 @@ const encodeParameterChangeProposal = (options) => {
     return {
         typeUrl: '/cosmos.params.v1beta1.ParameterChangeProposal',
         value: Uint8Array.from(ParameterChangeProposal.encode(proposal).finish()),
+    };
+};
+
+const encodeUpdateInstantiateConfigProposal = (options) => {
+    const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
+        value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
     };
 };
 
@@ -1143,210 +1126,6 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
-const generateDeploymentName = (chainName, codeId) => {
-    return `${chainName}-${codeId}`;
-};
-
-const getVerifierInstantiateMsg = (config, chainName) => {
-    const {
-        axelar: {
-            contracts: {
-                ServiceRegistry: { address: serviceRegistryAddress },
-                Rewards: { address: rewardsAddress },
-                VotingVerifier: { [chainName]: verifierConfig },
-            },
-        },
-    } = config;
-
-    if (!verifierConfig) {
-        throw new Error(`VotingVerifier config not found for chain ${chainName}`);
-    }
-
-    const {
-        governanceAddress,
-        serviceName,
-        sourceGatewayAddress,
-        votingThreshold,
-        blockExpiry,
-        confirmationHeight,
-        msgIdFormat,
-        addressFormat,
-    } = verifierConfig;
-
-    if (!validateAddress(serviceRegistryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    if (!validateAddress(rewardsAddress)) {
-        throw new Error('Missing or invalid Rewards.address in axelar info');
-    }
-
-    if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
-    }
-
-    if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
-    }
-
-    if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
-    }
-
-    if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
-    }
-
-    if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
-    }
-
-    if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
-    }
-
-    if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
-    }
-
-    return {
-        service_registry_address: serviceRegistryAddress,
-        governance_address: governanceAddress,
-        service_name: serviceName,
-        source_gateway_address: sourceGatewayAddress,
-        voting_threshold: votingThreshold,
-        block_expiry: toBigNumberString(blockExpiry),
-        confirmation_height: confirmationHeight,
-        source_chain: chainName,
-        rewards_address: rewardsAddress,
-        msg_id_format: msgIdFormat,
-        address_format: addressFormat,
-    };
-};
-
-const getProverInstantiateMsg = (config, chainName) => {
-    const {
-        axelar: {
-            contracts: {
-                MultisigProver: { [chainName]: proverConfig },
-            },
-            chainId: axelarChainId,
-        },
-    } = config;
-
-    if (!proverConfig) {
-        throw new Error(`MultisigProver config not found for chain ${chainName}`);
-    }
-
-    const { governanceAddress, adminAddress, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType, domainSeparator } =
-        proverConfig;
-
-    if (!isString(axelarChainId)) {
-        throw new Error(`Missing or invalid chain ID`);
-    }
-
-    if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
-    }
-
-    if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
-    }
-
-    if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
-    }
-
-    if (!isNumber(verifierSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
-    }
-
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
-    }
-
-    if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
-    }
-
-    const routerAddress = config.axelar.contracts.Router?.address;
-    if (!validateAddress(routerAddress)) {
-        throw new Error('Missing or invalid Router.address in axelar info');
-    }
-
-    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
-
-    if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
-    }
-
-    return {
-        governance_address: governanceAddress,
-        admin_address: adminAddress,
-        signing_threshold: signingThreshold,
-        service_name: serviceName,
-        chain_name: chainName,
-        verifier_set_diff_threshold: verifierSetDiffThreshold,
-        encoder,
-        key_type: keyType,
-        domain_separator: separator.replace('0x', ''),
-    };
-};
-
-const getInstantiateChainContractsMessage = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    if (!chainName) {
-        throw new Error('Chain name is required');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required');
-    }
-
-    const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
-    const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
-    const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
-
-    const verifierMsg = getVerifierInstantiateMsg(config, chainName);
-    const proverMsg = getProverInstantiateMsg(config, chainName);
-
-    return {
-        instantiate_chain_contracts: {
-            chain: chainName,
-            deployment_name: generateDeploymentName(chainName, `${gatewayCode}-${verifierCode}-${proverCode}`),
-            salt: salt,
-            params: {
-                gateway: {
-                    code_id: Number(gatewayCode),
-                    label: `Gateway ${chainName}`,
-                    contract_admin: admin,
-                },
-                verifier: {
-                    code_id: Number(verifierCode),
-                    label: `VotingVerifier ${chainName}`,
-                    msg: verifierMsg,
-                    contract_admin: admin,
-                },
-                prover: {
-                    code_id: Number(proverCode),
-                    label: `MultisigProver ${chainName}`,
-                    msg: proverMsg,
-                    contract_admin: admin,
-                },
-            },
-        },
-    };
-};
-
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
     const chainConfig = getChainConfig(config.chains, chainName);
 
@@ -1371,6 +1150,31 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
     if (!hasChanges) {
         throw new Error(`No changes detected for chain '${chainName}'.`);
     }
+};
+
+const getCodeDetails = async (config, codeId) => {
+    const tendermintClient = await Tendermint34Client.connect(config?.axelar?.rpc);
+    let codeInfo;
+
+    try {
+        const data = QueryCodeRequest.encode({
+            codeId: BigInt(codeId),
+        }).finish();
+
+        const { value } = await tendermintClient.abciQuery({
+            path: '/cosmwasm.wasm.v1.Query/Code',
+            data: data,
+        });
+
+        codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+        if (!codeInfo) {
+            throw new Error(`Info not found for code id ${codeId}`);
+        }
+    } finally {
+        tendermintClient.disconnect();
+    }
+
+    return codeInfo;
 };
 
 const CONTRACTS = {
@@ -1402,14 +1206,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
-    StacksVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
-    SolanaVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1418,10 +1214,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
     },
-    SolanaGateway: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeGatewayInstantiateMsg,
-    },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
@@ -1429,10 +1221,6 @@ const CONTRACTS = {
     XrplMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
-    },
-    StacksMultisigProver: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
     },
     SolanaMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
@@ -1450,22 +1238,19 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
     },
-    ItsStacksTranslator: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: () => ({}),
-    },
 };
 
 module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
+    AXELAR_GATEWAY_CONTRACT_NAME,
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
     executeTransaction,
     uploadContract,
     instantiateContract,
@@ -1480,13 +1265,10 @@ module.exports = {
     encodeInstantiate2Proposal,
     encodeExecuteContractProposal,
     encodeParameterChangeProposal,
+    encodeUpdateInstantiateConfigProposal,
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
-    generateDeploymentName,
-    getVerifierInstantiateMsg,
-    getProverInstantiateMsg,
-    getInstantiateChainContractsMessage,
     validateItsChainChange,
 };

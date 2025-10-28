@@ -52,6 +52,7 @@ async function saveTokenDeployment(
     Metadata, // sui::coin::CoinMetadata
     linkedTokens = [], // [{chain, address, linkParams}]
     saltAddress = null, // address used for Bytes32::new for custom coin registrations and link_coin
+    tokenManagerType = null,
 ) {
     contracts[symbol.toUpperCase()] = {
         address,
@@ -65,6 +66,7 @@ async function saveTokenDeployment(
     };
     if (linkedTokens.length) contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
     if (saltAddress) contracts[symbol.toUpperCase()].saltAddress = saltAddress;
+    if (tokenManagerType) contracts[symbol.toUpperCase()].tokenManagerType = tokenManagerType;
 }
 
 async function checkIfCoinExists(client, coinPackageId, coinType) {
@@ -75,13 +77,60 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
     }
 }
 
-async function checkIfCoinIsMinted(client, coinObjectId, coinType) {
-    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
-    const objectType = coinObject?.data?.type;
-    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
-    if (objectType !== expectedObjectType) {
-        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
+/**
+ * Get a coin object id for a coin held by the user and meeting a given threshold.
+ * Returns `undefined` if balance threshold criteria are not met.
+ * @param {Object} client : Sui client
+ * @param {String} walletAddress : Sui wallet address
+ * @param {String} coinType : Named type of the Sui coin
+ * @param {String | Number} : Balance threshold required, in unit amount format (@see getUnitAmount)
+ * @returns Coin Object ID held by user which has sufficient balance
+ */
+async function senderHasSufficientBalance(client, keypair, options, coinType, amount) {
+    const walletAddress = keypair.toSuiAddress();
+
+    const coins = await client.getCoins({
+        owner: walletAddress,
+        coinType,
+    });
+
+    const insufficientBalanceMsg = `Insufficient balance of coin ${coinType} using wallet ${walletAddress}`;
+    if (!Array.isArray(coins.data) || !coins.data.length) {
+        throw new Error(insufficientBalanceMsg);
     }
+
+    let coin = coins.data.find((c) => parseInt(c.balance) >= parseInt(amount));
+
+    // Merge coins to reach required threshold if possible
+    if (!coin) {
+        const txBuilder = new TxBuilder(client);
+        const tx = txBuilder.tx;
+
+        let totalBalance = 0;
+        coins.data.forEach((coin) => {
+            const { balance } = coin;
+            totalBalance += parseInt(balance);
+        });
+
+        if (totalBalance < parseInt(amount)) {
+            throw new Error(insufficientBalanceMsg);
+        }
+
+        const coinObjectIds = coins.data.map((coin) => coin.coinObjectId);
+        const firstCoin = coinObjectIds.shift();
+        const remainingCoins = coinObjectIds.map((id) => tx.object(id));
+
+        txBuilder.tx.mergeCoins(firstCoin, remainingCoins);
+
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Merge Coins', options);
+
+        coin = coins.data.find((c) => c.coinObjectId === firstCoin);
+
+        // Update coin with post-merge balance
+        coin.balance = totalBalance;
+    }
+
+    return coin;
 }
 
 module.exports = {
@@ -89,5 +138,5 @@ module.exports = {
     createLockedCoinManagement,
     saveTokenDeployment,
     checkIfCoinExists,
-    checkIfCoinIsMinted,
+    senderHasSufficientBalance,
 };
