@@ -83,7 +83,7 @@ async function callStellarAddTrustedChains(config, options) {
 }
 
 async function setTrustedChainsAll(config, args, options) {
-    const { evmPrivateKey, suiPrivateKey, stellarPrivateKey } = options;
+    const { evmPrivateKey } = options;
 
     printInfo('Setting trusted chains on all EVM chains...\n');
     await callEvmSetTrustedChains(config, evmPrivateKey, options.env);
