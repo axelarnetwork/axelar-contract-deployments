@@ -5,7 +5,7 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const { addSkipPromptOption } = require('./cli-utils.js');
-const { addBaseOptions } = require('../common/cli-utils.js');
+const { addBaseOptions } = require('../common/cli-utils');
 const { loadConfig, prompt, printInfo, printError } = require('../common/utils.js');
 
 // Basic WHBAR ABI for deposit, transfer, and balanceOf functions
