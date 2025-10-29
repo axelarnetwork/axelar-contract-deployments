@@ -43,8 +43,9 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
 }
 
 async function callSuiAddTrustedChains(config, options) {
-    const suiChain = Object.values(config.chains)
-        .find((c) => c.contracts?.InterchainTokenService?.address && c.networkType?.includes('sui'));
+    const suiChain = Object.values(config.chains).find(
+        (c) => c.contracts?.InterchainTokenService?.address && c.networkType?.includes('sui'),
+    );
 
     if (!suiChain) {
         return;
@@ -64,14 +65,15 @@ async function callSuiAddTrustedChains(config, options) {
 }
 
 async function callStellarAddTrustedChains(config, options) {
-    const stellarChain = Object.values(config.chains)
-        .find((c) => c.contracts?.InterchainTokenService?.address && c.horizonRpc !== undefined);
+    const stellarChain = Object.values(config.chains).find(
+        (c) => c.contracts?.InterchainTokenService?.address && c.horizonRpc !== undefined,
+    );
 
     if (!stellarChain) {
         return;
     }
 
-    console.log(stellarChain, 'the stellar chain')
+    console.log(stellarChain, 'the stellar chain');
 
     printInfo(`\n--- Setting trusted chains on ${stellarChain.name} (${stellarChain.axelarId}) ---`);
 
