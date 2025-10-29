@@ -91,7 +91,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -v "v1.2.0" \
+        -v "1.2.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -104,7 +104,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c Gateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
-        -v "v1.1.1" \
+        -v "1.1.1" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -440,7 +440,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "validators", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
+    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "[service_name]", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
     ```
 
 1. Create genesis verifier set
