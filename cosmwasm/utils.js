@@ -41,6 +41,7 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
+const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -499,10 +500,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
-const GATEWAY_CONTRACT_NAME = 'Gateway';
 const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
-const MULTISIG_PROVER_CONTRACT_NAME = 'MultisigProver';
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
@@ -1355,10 +1353,7 @@ module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
-    VERIFIER_CONTRACT_NAME,
-    GATEWAY_CONTRACT_NAME,
     AXELAR_GATEWAY_CONTRACT_NAME,
-    MULTISIG_PROVER_CONTRACT_NAME,
     fromHex,
     getSalt,
     calculateDomainSeparator,
