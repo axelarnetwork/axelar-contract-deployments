@@ -56,14 +56,14 @@ For Sui, only the following token manager types are supported:
 
 ```move
 public fun link_coin(
-        self: &InterchainTokenService,
-        deployer: &Channel,
-        salt: Bytes32,
-        destination_chain: String,
-        destination_token_address: vector<u8>,
-        token_manager_type: TokenManagerType,
-        link_params: vector<u8>,
-    ): MessageTicket { ... }
+    self: &InterchainTokenService,
+    deployer: &Channel,
+    salt: Bytes32,
+    destination_chain: String,
+    destination_token_address: vector<u8>,
+    token_manager_type: TokenManagerType,
+    link_params: vector<u8>,
+): MessageTicket { ... }
 ```
 
 **Required:**
