@@ -14,7 +14,7 @@
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-  - SolanaMultisigProver: `09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6`
+  - SolanaMultisigProver: `cd0c28f81d0bb735ae9ac442f1d51688582be6d380b8756b6a12aeab8ceb8d92`
 
 ## Background
 
@@ -31,8 +31,8 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git
-    cd axelar-amplifier
+    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
+    cd axelar-amplifier-eiger
     git checkout solana-cosmwasm
     ```
 
@@ -57,7 +57,7 @@ Create an .env config:
 MNEMONIC=xyz
 ENV=xyz
 CHAIN=<solana-custom|solana>
-ARTIFACT_PATH=../solana/axelar-amplifier/artifacts/
+EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
 ```
 
 | Axelar Env           | `DEPOSIT_VALUE` |
@@ -91,7 +91,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
+        -v "v1.2.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -104,7 +104,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c Gateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
+        -v "v1.1.1" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -115,9 +115,9 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
         -c SolanaMultisigProver \
-        -t "Upload MultisigProver contract for Solana" \
-        -d "Upload MultisigProver contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
+        -t "Upload SolanaMultisigProver contract for Solana" \
+        -d "Upload SolanaMultisigProver contract for Solana integration" \
+        -a "$EIGER_ARTIFACT_PATH" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -151,7 +151,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
   "blockExpiry": 10,
   "confirmationHeight": 1000000,
   "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-  "addressFormat": "base58"
+  "addressFormat": "solana"
 }
 ```
 
@@ -167,8 +167,6 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
   "keyType": "ecdsa"
 }
 ```
-
-- Return to 'Initialization Steps' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
 
 ### Instantiate Amplifier Contracts
 
@@ -204,10 +202,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -m $MNEMONIC
     ```
 
+1. Update the domainSeparator under `config.chains.$CHAIN.AxelarGateway`
+
 1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
+    ts-node cosmwasm/query.ts save-deployed-contracts $CHAIN
     ```
 
 1. Register deployment
@@ -257,17 +257,17 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
-    -c Router \
-    -t "Register Gateway for solana" \
-    -d "Register Gateway address for solana at Router contract" \
-    -m $MNEMONIC \
-    --msg "{
-            \"register_chain\": {
-                \"chain\": \"$CHAIN\",
-                \"gateway_address\": \"$GATEWAY\",
-                \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
-            }
-        }"
+        -c Router \
+        -t "Register Gateway for Solana" \
+        -d "Register Gateway address for Solana at Router contract" \
+        -m $MNEMONIC \
+        --msg "{
+                \"register_chain\": {
+                    \"chain\": \"$CHAIN\",
+                    \"gateway_address\": \"$GATEWAY\",
+                    \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
+                }
+            }"
     ```
 
     - Verify Gateway Registration:
@@ -290,13 +290,13 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     }
     ```
 
-1. Register prover contract on coordinator
+1. Register SolanaMultisigProver contract on coordinator
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Coordinator \
-        -t "Register Multisig Prover for solana" \
-        -d "Register Multisig Prover address for solana at Coordinator contract" \
+        -t "Register SolanaMultisigProver" \
+        -d "Register SolanaMultisigProver address at Coordinator contract" \
         -m $MNEMONIC \
         --msg "{
             \"register_prover_contract\": {
@@ -306,13 +306,13 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         }"
     ```
 
-1. Authorize Multisig prover on Multisig
+1. Authorize SolanaMultisigProver on Multisig
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Multisig \
-        -t "Authorize Multisig Prover for solana" \
-        -d "Authorize Multisig Prover address for solana at Multisig contract" \
+        -t "Authorize SolanaMultisigProver" \
+        -d "Authorize SolanaMultisigProver address at Multisig contract" \
         -m $MNEMONIC \
         --msg "{
             \"authorize_callers\": {
@@ -346,8 +346,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Rewards \
-        -t "Create pool for solana in solana voting verifier" \
-        -d "Create pool for solana in solana voting verifier" \
+        -t "Create pool for Solana in VotingVerifier" \
+        -d "Create pool for Solana in VotingVerifier" \
         --deposit $DEPOSIT_VALUE \
         -m $MNEMONIC \
         --msg "{
@@ -370,8 +370,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Rewards \
-        -t "Create pool for solana in axelar multisig" \
-        -d "Create pool for solana in axelar multisig" \
+        -t "Create pool for Solana in Axelar Multisig" \
+        -d "Create pool for Solana in Axelar Multisig" \
         -m $MNEMONIC \
         --msg "{
             \"create_pool\": {
@@ -414,10 +414,17 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 1. Update ampd with the Solana chain configuration.
 
+    | Axelar Env           | `service_name` |
+    | -------------------- | -------------- |
+    | **Devnet-amplifier** | `validators`   |
+    | **Stagenet**         | `amplifier`    |
+    | **Testnet**          | `amplifier`    |
+    | **Mainnet**          | `amplifier`    |
+
     ```bash
     ampd register-public-key ed25519
 
-    ampd register-chain-support validator $CHAIN
+    ampd register-chain-support [service_name] $CHAIN
     ```
 
 1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
@@ -433,7 +440,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY_ADDRESS '{"active_verifiers": {"service_name": "validators", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
+    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "validators", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
     ```
 
 1. Create genesis verifier set
@@ -446,6 +453,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     # Query the multisig prover for active verifier set
     axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
     ```
+
+- Return to 'Initialization Steps:Initialize Gateway' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
 
 ## Checklist
 
