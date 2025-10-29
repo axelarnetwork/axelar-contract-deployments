@@ -1173,7 +1173,7 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
-const submitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
+const submitProposal = async (client, config, options, proposal, fee) => {
     const isLegacy = isLegacySDK(config);
     const [account] = isLegacy ? client.accounts : await client.signer.getAccounts();
 
@@ -1181,7 +1181,7 @@ const submitProposal = async (client, config, options, proposalDataOrMessages, f
         printInfo('Proposer address', account.address);
     }
 
-    const submitProposalMsg = encodeSubmitProposal(proposalDataOrMessages, config, options, account.address);
+    const submitProposalMsg = encodeSubmitProposal(proposal, config, options, account.address);
 
     const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
     const { events } = result;

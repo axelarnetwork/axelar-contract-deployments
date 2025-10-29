@@ -98,8 +98,8 @@ const confirmProposalSubmission = (options, proposalData, proposalType = null) =
     return true;
 };
 
-const callSubmitProposal = async (client, config, options, proposalDataOrMessages, fee) => {
-    const proposalId = await submitProposal(client, config, options, proposalDataOrMessages, fee);
+const callSubmitProposal = async (client, config, options, proposal, fee) => {
+    const proposalId = await submitProposal(client, config, options, proposal, fee);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
 };
@@ -137,7 +137,7 @@ const storeCode = async (client, config, options, _args, fee) => {
         return proposalId;
     } else {
         const contractNames = contractName;
-        const messages = contractNames.map((name) => {
+        const proposal = contractNames.map((name) => {
             const contractOptions = {
                 ...options,
                 contractName: name,
@@ -146,10 +146,10 @@ const storeCode = async (client, config, options, _args, fee) => {
             return encodeStoreCode(config, contractOptions);
         });
 
-        if (!confirmProposalSubmission(options, messages)) {
+        if (!confirmProposalSubmission(options, proposal)) {
             return;
         }
-        const proposalId = await callSubmitProposal(client, config, options, messages, fee);
+        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
         contractNames.forEach((name) => {
             const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
             saveStoreCodeProposalInfo(config, name, codePath, proposalId);
