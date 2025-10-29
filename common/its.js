@@ -73,8 +73,6 @@ async function callStellarAddTrustedChains(config, options) {
         return;
     }
 
-    console.log(stellarChain, 'the stellar chain');
-
     printInfo(`\n--- Setting trusted chains on ${stellarChain.name} (${stellarChain.axelarId}) ---`);
 
     const wallet = await getStellarWallet(stellarChain, { privateKey: options.stellarPrivateKey });
