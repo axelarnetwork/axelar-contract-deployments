@@ -75,6 +75,10 @@ public fun link_coin(
 - `token_manager_type`: Token manager type on Sui (e.g., `2_u256` for LOCK_UNLOCK or, `4_u256` for MINT_BURN)
 - `link_params`: Bytes representation of an address on the destination chain that will be Operator of the destination token
 
+## Using Channels
+
+[TODO: clarify the importance of channels and how and why they are used in places of addresses in Sui ITS]
+
 ## Operator Role & Security
 
 **Operator Role:**
