@@ -75,9 +75,13 @@ public fun link_coin(
 - `token_manager_type`: Token manager type on Sui (e.g., `2_u256` for LOCK_UNLOCK or, `4_u256` for MINT_BURN)
 - `link_params`: Bytes representation of an address on the destination chain that will be Operator of the destination token
 
-## Using Channels
+## Channels
 
-[TODO: clarify the importance of channels and how and why they are used in places of addresses in Sui ITS]
+[TODO:]
+- Describe role of `Channel` in general
+- Describe Sui object model and `Channel` ownership
+- Describe related entities using `Channel` (Operator, Distributor, Deployer)
+- Describe role of `Channel` in `salt` and `TokenId` derivation for coin linking
 
 ## Operator Role & Security
 
@@ -428,7 +432,52 @@ ts-node sui/its interchain-transfer $EVM_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS
 
 ## Troubleshooting & Error Handling
 
-[TODO: Add Sui-specific error handling scenarios, error messages, and solutions]
+Error message types in Sui begin with an uppercase E, followed by the error name in ucfirst format.
+
+**Untrusted Chain:**
+```
+EUntrustedChain: the chain is not trusted
+```
+
+Problem: attempted to create an interchain message (`prepare_hub_message`) for an unapproved chain
+
+Solution: use the admin acount (holding the `OwnerCap`) add the target destination chain (`add_trusted_chains`), or use an already approved chain for the destination chain.
+
+**Missing Destination Token Address**
+```
+EEmptyTokenAddress: cannot deploy a remote custom token to an empty token address
+```
+
+Problem: `link_coin` was called without specifying a valid remote token address.
+
+Solution: ensure the correct remote token address is specified when calling `link_coin`
+
+**Manager Type Not Supported for Custom Token Manager**
+```
+ECannotDeployInterchainTokenManager: cannot deploy an interchain token token manager type remotely
+```
+
+Problem: trying to call `link_coin` with an unsupported token manager type fails.
+
+Solution: use MINT_BURN or LOCK_UNLOCK token manager type for token manager type when calling `link_coin`.
+
+**Invalid Remote Destination**
+```
+ECannotDeployRemotelyToSelf: cannot deploy custom token to this chain remotely, use register_custom_coin instead
+```
+
+Problem: Sui has been declared as the remote destination in a call to `link_coin`
+
+Solution: use a different (not Sui) for the `destination` parameter.
+
+**CoinType Mismatch**
+```
+ECoinTypeMissmatch: receiving coin type does not match the coin type specified
+```
+
+Problem: `receive_link_coin<T>` type argmument generic (`T`) does not match the coin type that was decoded from GMP as the destination token address.
+
+Solution: Ensure the correct `CoinType` is being sent in the `linkToken` request from the source chain.
 
 ## Best Practices & Security
 
