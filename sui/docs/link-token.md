@@ -50,20 +50,30 @@ For Sui, only the following token manager types are supported:
 - `LOCK_UNLOCK` (2): For tokens that are locked/unlocked on the chain
 - `MINT_BURN` (4): For tokens that are burned/minted on the chain
 
-**Important:** Linking two LOCK_UNLOCK tokens is not recommended. One token should be MINT_BURN (requiring TreasuryCap transfer) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
+**Important:** Linking two LOCK_UNLOCK tokens is not recommended. One token should be MINT_BURN (requiring TreasuryCap transfer if token deployed on Sui) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
 
 ## Parameters
 
+```move
+public fun link_coin(
+        self: &InterchainTokenService,
+        deployer: &Channel,
+        salt: Bytes32,
+        destination_chain: String,
+        destination_token_address: vector<u8>,
+        token_manager_type: TokenManagerType,
+        link_params: vector<u8>,
+    ): MessageTicket { ... }
+```
+
 **Required:**
 
-- `salt`: Unique identifier for the token linking operation. Used to generate a unique `tokenId`. On Sui, the salt must be 66 characters (matching Sui address format)
-- `coinSymbol` or `coinType`: The coin symbol or type of the token to be linked on Sui
-- `destinationChain`: Name of the destination chain (e.g., `avalanche`, `ethereum`)
-- `destinationTokenAddress`: Address of the token on the destination chain
-- `tokenManagerMode`: Token manager type on Sui (e.g., `lock_unlock`, `mint_burn`)
-- `destinationTokenManagerMode`: Token manager type on destination chain (e.g., `lock_unlock`, `mint_burn`)
-
-[TODO: Add information about Operator Role & Security for Sui implementation]
+- `deployer`: An ITS `Channel` to represent the deployer of the coin. Transaction sender's Sui address will not be tracked, only their `Channel`
+- `salt`: Unique identifier for the token linking operation. Used to generate a unique `tokenId`. On Sui, the salt must be 64 characters (e.g.32 bytes) matching the Sui address format
+- `destination_chain`: Name of the destination chain (e.g., `avalanche`, `ethereum`)
+- `destination_token_address`: Address of the token on the destination chain
+- `token_manager_type`: Token manager type on Sui (e.g., `2_u256` for LOCK_UNLOCK or, `4_u256` for MINT_BURN)
+- `link_params`: Bytes representation of an address on the destination chain that is an operator of the destination token
 
 ## Step-by-Step Process
 
