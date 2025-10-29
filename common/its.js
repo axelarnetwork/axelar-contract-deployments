@@ -27,13 +27,19 @@ async function callEvmSetTrustedChains(config, evmPrivateKey, env) {
         .filter((c) => c.contracts?.InterchainTokenService?.address)
         .filter((c) => c.chainType === 'evm');
 
-    if (allEvmChains.length === 0) {
-        printInfo('No EVM chains with ITS contracts found. Skipping EVM setup.');
-        return;
-    }
-
     const trustedChains = parseTrustedChains(config.chains, [ALL_CHAINS]);
+
     for (const chain of allEvmChains) {
+        printInfo(`\n--- Setting trusted chains on ${chain.name} (${chain.axelarId}) ---`);
+
+        const options = {
+            privateKey: evmPrivateKey,
+            args: trustedChains,
+            env: env,
+        };
+
+        await evmProcessCommand(config.axelar, chain, config.chains, 'set-trusted-chains', options);
+    }
 }
 
 async function callSuiAddTrustedChains(config, options) {
