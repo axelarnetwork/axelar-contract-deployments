@@ -114,13 +114,15 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     let trustedChains = parseTrustedChains(config.chains, args);
 
-    const alreadyTrustedChains = await listTrustedChains(keypair, client, config, contracts, args, options);
+    if (!options.offline) {
+        const alreadyTrustedChains = await listTrustedChains(keypair, client, config, contracts, args, options);
 
-    trustedChains = trustedChains.filter((chain) => !alreadyTrustedChains.includes(chain));
+        trustedChains = trustedChains.filter((chain) => !alreadyTrustedChains.includes(chain));
 
-    if (trustedChains.length === 0) {
-        printInfo('All specified chains are already trusted. No action needed.');
-        return;
+        if (trustedChains.length === 0) {
+            printInfo('All specified chains are already trusted. No action needed.');
+            return;
+        }
     }
 
     printInfo('Chains to add as trusted', trustedChains);

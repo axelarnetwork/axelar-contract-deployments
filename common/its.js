@@ -80,10 +80,6 @@ async function callStellarAddTrustedChains(config, options) {
 async function setTrustedChainsAll(config, args, options) {
     const { evmPrivateKey, suiPrivateKey, stellarPrivateKey } = options;
 
-    if (!evmPrivateKey) throw new Error('Missing required option: --evmPrivateKey');
-    if (!suiPrivateKey) throw new Error('Missing required option: --suiPrivateKey');
-    if (!stellarPrivateKey) throw new Error('Missing required option: --stellarPrivateKey');
-
     printInfo('Setting trusted chains on all EVM chains...\n');
     await callEvmSetTrustedChains(config, evmPrivateKey, options.env);
 
