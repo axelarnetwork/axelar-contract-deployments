@@ -188,7 +188,7 @@ ts-node evm/its transfer-mintership <tokenAddress> <tokenManagerAddress> -n <net
 
 ## Examples
 
-### Example 1: Link Token on Sui (Source - LOCK_UNLOCK) with EVM Token (Destination - MINT_BURN)
+Basic configuration for all the examples:
 
 ```bash
 # Common variables
@@ -203,7 +203,11 @@ EVM_WALLET_ADDRESS="0x13f8C723AeB8CA762c652c553a11a11483846d8B"
 SUI_WALLET_ADDRESS="0x76f89a9b56dc580aed9f97e2b3bd03d8d24464e38522da9464c15103761c6707"
 CHANNEL="0x028680c11ddb66705c1609d204b108737003d140d27e9096fe72b6bc2dadfeeb"
 TRANSFER_AMOUNT=1
+```
 
+### Example 1: Link Token on Sui (Source - LOCK_UNLOCK) with EVM Token (Destination - MINT_BURN)
+
+```bash
 # Deploy token on EVM
 ts-node evm/interchainTokenFactory --action deployInterchainToken \
     --minter $EVM_WALLET_ADDRESS \
