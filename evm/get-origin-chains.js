@@ -11,10 +11,10 @@ const { printInfo, printError } = require('../common/utils');
     const tokens = {};
     for (const name of Object.keys(tokenManagerInfo)) {
         for (const token of tokenManagerInfo[name].tokenManagers) {
-            if(!token.tokenId) {
+            if (!token.tokenId) {
                 continue;
             }
-            if (! tokens[token.tokenId] ) tokens[token.tokenId] = {};
+            if (!tokens[token.tokenId]) tokens[token.tokenId] = {};
 
             tokens[token.tokenId][name] = token;
         }
@@ -36,9 +36,9 @@ const { printInfo, printError } = require('../common/utils');
 
         try {
             const originChain = await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {
-                "token_config": {"token_id": tokenId.slice(2)}
+                token_config: { token_id: tokenId.slice(2) },
             });
-            if(originChain) {
+            if (originChain) {
                 token.originChain = originChain.origin_chain;
                 continue;
             }
@@ -54,8 +54,8 @@ const { printInfo, printError } = require('../common/utils');
 
         // if only a single chain is untacked, use that chain
         const untracked = [];
-        for(const chainName of Object.keys(token)) {
-            if(!token[chainName].tracking) {
+        for (const chainName of Object.keys(token)) {
+            if (!token[chainName].tracking) {
                 untracked.push(chainName);
             }
         }

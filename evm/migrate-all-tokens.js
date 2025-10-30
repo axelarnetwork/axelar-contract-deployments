@@ -36,8 +36,11 @@ async function migrateTokens(name) {
     const tokenManagers = tokenManagerInfo[name].tokenManagers;
     const chain = info.chains[chainName];
     if (chain.contracts.InterchainTokenService.skip) return;
-    const rpc = env === 'testnet' ? RPCs.node.EVMBridges.find((chain) => chain.name.toLowerCase() === name.toLowerCase()).rpc_addr : info.chains[name].rpc;
-    
+    const rpc =
+        env === 'testnet'
+            ? RPCs.node.EVMBridges.find((chain) => chain.name.toLowerCase() === name.toLowerCase()).rpc_addr
+            : info.chains[name].rpc;
+
     printInfo(`RPC: ${rpc}`);
     const provider = getDefaultProvider(rpc);
     const wallet = await getWallet(process.env.PRIVATE_KEY, provider);
@@ -46,9 +49,9 @@ async function migrateTokens(name) {
     const gasOptions = await getGasOptions(chain, {});
     for (const index in tokenManagers) {
         const tokenData = tokenManagers[index];
-        if(tokenData.skip) continue;
+        if (tokenData.skip) continue;
         // event TokenManagerDeployed(tokenId, tokenManager_, tokenManagerType, params);
-        const {tokenId, tokenManagerAddress, tokenManagerType } = tokenData;
+        const { tokenId, tokenManagerAddress, tokenManagerType } = tokenData;
 
         if (tokenManagerType === NATIVE_INTERCHAIN_TOKEN_MANAGER_TYPE) {
             try {
@@ -56,7 +59,6 @@ async function migrateTokens(name) {
                 const tokenAddress = await tokenManager.tokenAddress();
                 const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
                 if (await token.isMinter(service.address)) {
-                    
                     printInfo(`Migrating token with tokenId: ${tokenId}. | ${Number(index) + 1} out of ${tokenManagers.length}`);
 
                     //await (await service.migrateInterchainToken(tokenId, gasOptions)).wait();
@@ -66,7 +68,7 @@ async function migrateTokens(name) {
                 }
             } catch (e) {
                 printError(`Error migrating tokens for ${name}: ${e.message}`);
-                
+
                 // TODO tkulik: check this case:
                 printInfo(`Token with tokenId: ${tokenId} seems to be legacy.. | ${Number(index) + 1} out of ${tokenManagers.length}`);
                 //tokenData.skip = true;
@@ -77,7 +79,7 @@ async function migrateTokens(name) {
 
         fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
     }
-    while(tokenIds.length > 0) {
+    while (tokenIds.length > 0) {
         const data = [];
         const migrating = tokenIds.splice(0, N);
         printInfo(`Migrating tokens: ${migrating}`);
@@ -95,12 +97,12 @@ async function migrateTokens(name) {
 
 (async () => {
     let chains;
-    if(process.env.CHAINS && process.env.CHAINS != 'all') {
+    if (process.env.CHAINS && process.env.CHAINS != 'all') {
         chains = process.env.CHAINS.split(',');
     }
     for (const name of Object.keys(info.chains)) {
         printInfo(`Migrating tokens for ${name}`);
-        if(chains && chains.findIndex((chainName) => chainName == name) == -1) {
+        if (chains && chains.findIndex((chainName) => chainName == name) == -1) {
             continue;
         }
         try {
