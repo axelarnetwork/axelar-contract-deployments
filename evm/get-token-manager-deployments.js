@@ -8,8 +8,6 @@ const IInterchainTokenService = require('@axelar-network/interchain-token-servic
 const fs = require('fs');
 const { printInfo, printError } = require('../common/utils');
 
-// const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
-
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
 // This is after the upgrade.
@@ -49,6 +47,9 @@ const queryLimit = {
 
 async function getTokenManagersFromBlock(its, filter, startBlockNumber, eventsLength, max) {
     const end = Math.min(startBlockNumber + eventsLength, max);
+    if (startBlockNumber > end) {
+        return [];
+    }
     for (let i = 0; i < 30; i++) {
         try {
             const events = await its.queryFilter(filter, startBlockNumber, end);
@@ -67,8 +68,7 @@ async function getTokenManagers(name, tokenManagerInfo) {
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         printInfo('processing... ', name);
 
-        // const rpc = RPCs[name];
-        const rpc = chain.rpc;
+        const rpc = tokenManagerInfo[name].rpcs[0] || chain.rpc;
         printInfo(name, rpc);
         if (!rpc) {
             printError(`No RPC for ${name}`);
@@ -79,11 +79,26 @@ async function getTokenManagers(name, tokenManagerInfo) {
         const max = await provider.getBlockNumber();
 
         if (!tokenManagerInfo[name]) {
-            tokenManagerInfo[name] = { start: 0, end: 0, max: max, alreadyProcessedPercentage: 0, tokenManagers: [] };
+            tokenManagerInfo[name] = {
+                start: 0,
+                end: 0,
+                max: max,
+                alreadyProcessedPercentage: 0,
+                tokenManagers: [],
+                rpcs: [rpc],
+            };
         }
 
         const filter = its.filters.TokenManagerDeployed();
         printInfo(`${name} current block number: ${max}`);
+
+        printInfo(`Trying to request token managers from block ${name}`);
+        try {
+            its.queryFilter(filter, tokenManagerInfo[name].end, tokenManagerInfo[name].end + 1);
+        } catch (e) {
+            printError(`Error requesting token managers from block ${name}: ${e.message}`);
+            return false;
+        }
 
         //if ((await provider.getBlock(tokenManagerInfo[name].end)).timestamp >= endTimestamp) return;
 
@@ -131,7 +146,7 @@ async function getTokenManagers(name, tokenManagerInfo) {
                         };
                     }),
             );
-            tokenManagerInfo[name].end += batchSize * eventsLength;
+            tokenManagerInfo[name].end = Math.min(tokenManagerInfo[name].end + batchSize * eventsLength, tokenManagerInfo[name].max);
             tokenManagerInfo[name].alreadyProcessedPercentage = ((tokenManagerInfo[name].end / tokenManagerInfo[name].max) * 100).toFixed(
                 2,
             );
@@ -144,7 +159,13 @@ async function getTokenManagers(name, tokenManagerInfo) {
 }
 
 (async () => {
-    tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${env}.json`);
+    let tokenManagerInfo = {};
+    const tokenManagerInfoFilePath = `../axelar-chains-config/info/tokenManagers-${env}_2.json`;
+    try {
+        tokenManagerInfo = require(tokenManagerInfoFilePath);
+    } catch (e) {
+        printInfo(`No token manager info file found for ${env}`);
+    }
 
     const promises = [];
     for (const name of Object.keys(info.chains)) {
@@ -152,11 +173,11 @@ async function getTokenManagers(name, tokenManagerInfo) {
     }
     // write to file every second
     setInterval(() => {
-        fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
+        fs.writeFileSync(tokenManagerInfoFilePath, JSON.stringify(tokenManagerInfo, null, 2));
     }, 1000);
 
     await Promise.all(promises).then(() => {
-        fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
+        fs.writeFileSync(tokenManagerInfoFilePath, JSON.stringify(tokenManagerInfo, null, 2));
         process.exit(0);
     });
 })();
