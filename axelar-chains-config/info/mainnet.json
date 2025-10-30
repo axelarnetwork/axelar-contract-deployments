@@ -3538,9 +3538,10 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "382",
         "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
-        "codeId": 19,
+        "codeId": 43,
         "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93",
-        "executeProposalId": "242"
+        "executeProposalId": "242",
+        "lastUploadedCodeId": 43
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
