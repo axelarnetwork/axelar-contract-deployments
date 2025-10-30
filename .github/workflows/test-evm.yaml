@@ -212,4 +212,4 @@ jobs:
           '{"gasLimit": 9000000,"gasPriceAdjustment": 1.1}'
 
       - name: InterchainTokenService remove trusted chain
-        run: node evm/its.js remove-trusted-chains all -y
+        run: ts-node evm/its.js remove-trusted-chains all -y

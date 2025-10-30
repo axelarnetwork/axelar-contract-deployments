@@ -608,7 +608,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateParameters({ isKeccak256Hash: { tokenId } });
 
-            const tx = await interchainTokenService.migrateInterchainToken(tokenId);
+            const tx = await interchainTokenService.migrateInterchainToken(tokenId, gasOptions);
 
             await handleTx(tx, chain, interchainTokenService, action);
 
@@ -676,7 +676,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidAddress: { tokenAddress, minter } });
 
             const token = new Contract(tokenAddress, IMinter.abi, wallet);
-            const tx = await token.transferMintership(minter);
+            const tx = await token.transferMintership(minter, gasOptions);
 
             await handleTx(tx, chain, token, action, 'RolesRemoved', 'RolesAdded');
 
@@ -969,4 +969,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, processCommand };

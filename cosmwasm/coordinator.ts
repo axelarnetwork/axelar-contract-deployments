@@ -1,13 +1,6 @@
 import { calculateDomainSeparator, isKeccak256Hash, printError, printInfo } from '../common';
-import { ConfigManager } from '../common/config';
-import { GATEWAY_CONTRACT_NAME, MULTISIG_PROVER_CONTRACT_NAME, VERIFIER_CONTRACT_NAME, getSalt } from './utils';
-
-const getProverContractForChainType = (chainType: string): string => {
-    const chainProverMapping: Record<string, string> = {
-        svm: 'SolanaMultisigProver',
-    };
-    return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
-};
+import { ConfigManager, GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from '../common/config';
+import { getSalt } from './utils';
 
 export interface RegisterDeploymentMsg {
     register_deployment: {
@@ -72,47 +65,6 @@ export interface InstantiateChainContractsMsg {
     };
 }
 
-export interface VotingVerifierChainConfig {
-    governanceAddress?: string;
-    serviceName?: string;
-    rewardsAddress?: string;
-    sourceGatewayAddress?: string;
-    votingThreshold?: [string, string];
-    blockExpiry?: string | number;
-    confirmationHeight?: number;
-    msgIdFormat?: string;
-    addressFormat?: string;
-    deploymentName?: string;
-    proposalId?: string;
-    contractAdmin?: string;
-    codeId: number;
-    address?: string;
-}
-
-export interface MultisigProverChainConfig {
-    encoder?: string;
-    keyType?: string;
-    domainSeparator?: string;
-    adminAddress?: string;
-    multisigAddress?: string;
-    verifierSetDiffThreshold?: number;
-    signingThreshold?: [string, string];
-    deploymentName?: string;
-    proposalId?: string;
-    contractAdmin?: string;
-    codeId: number;
-    address?: string;
-}
-
-export interface GatewayChainConfig {
-    deploymentName?: string;
-    proposalId?: string;
-    salt?: string;
-    contractAdmin?: string;
-    codeId: number;
-    address?: string;
-}
-
 export class CoordinatorManager {
     public configManager: ConfigManager;
 
@@ -127,97 +79,26 @@ export class CoordinatorManager {
             const multisigConfig = this.configManager.getContractConfig('Multisig');
             const routerConfig = this.configManager.getContractConfig('Router');
 
-            const validateRequired = <T>(value: T | undefined | null, configPath: string): T => {
-                if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
-                    throw new Error(`Missing required configuration for chain ${chainName}. Please configure it in ${configPath}.`);
-                }
-                return value;
-            };
-
-            const validateThreshold = (value: [string, string] | undefined | null, configPath: string): [string, string] => {
-                if (!value || !Array.isArray(value) || value.length !== 2) {
-                    throw new Error(
-                        `Missing or invalid threshold configuration for chain ${chainName}. Please configure it in ${configPath} as [numerator, denominator].`,
-                    );
-                } else if (Number(value[0]) > Number(value[1])) {
-                    throw new Error(
-                        `Invalid threshold configuration for chain ${chainName}. Numerator must not be greater than denominator.`,
-                    );
-                }
-                return value;
-            };
-
-            const proverContractName = getProverContractForChainType(chainConfig.chainType);
-            const votingVerifierConfig = this.configManager.getContractConfigByChain(
-                VERIFIER_CONTRACT_NAME,
-                chainName,
-            ) as VotingVerifierChainConfig;
-            const multisigProverConfig = this.configManager.getContractConfigByChain(
-                proverContractName,
-                chainName,
-            ) as MultisigProverChainConfig;
-            const gatewayConfig = this.configManager.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
-
-            const gatewayCodeId: number = validateRequired(gatewayConfig.codeId, `${GATEWAY_CONTRACT_NAME}.codeId`);
-            const verifierCodeId: number = validateRequired(votingVerifierConfig.codeId, `${VERIFIER_CONTRACT_NAME}.codeId`);
-            const proverCodeId: number = validateRequired(multisigProverConfig.codeId, `${proverContractName}.codeId`);
+            const multisigAddress = this.configManager.validateRequired(multisigConfig.address, `Multisig.address`);
+            const proverContractName = this.configManager.getMultisigProverContractForChainType(chainConfig.chainType);
+            const votingVerifierConfig = this.configManager.getVotingVerifierContract(chainName);
+            const multisigProverConfig = this.configManager.getMultisigProverContract(chainName);
+            const gatewayConfig = this.configManager.getGatewayContract(chainName);
+            const gatewayCodeId = gatewayConfig.codeId;
+            const verifierCodeId = votingVerifierConfig.codeId;
+            const proverCodeId = multisigProverConfig.codeId;
             const deploymentName = this.generateDeploymentName(chainName, `${gatewayCodeId}-${verifierCodeId}-${proverCodeId}`);
-
-            const governanceAddress = validateRequired(
-                votingVerifierConfig.governanceAddress,
-                `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`,
-            );
-            const serviceName = validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
-            const rewardsAddress = validateRequired(rewardsConfig.address, `Rewards.address`);
-            const sourceGatewayAddress = validateRequired(
-                votingVerifierConfig.sourceGatewayAddress,
-                `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`,
-            );
-            const votingThreshold = validateThreshold(
-                votingVerifierConfig.votingThreshold,
-                `${VERIFIER_CONTRACT_NAME}[${chainName}].votingThreshold`,
-            );
-            const blockExpiry = validateRequired(votingVerifierConfig.blockExpiry, `${VERIFIER_CONTRACT_NAME}[${chainName}].blockExpiry`);
-            const confirmationHeight = validateRequired(
-                votingVerifierConfig.confirmationHeight,
-                `${VERIFIER_CONTRACT_NAME}[${chainName}].confirmationHeight`,
-            );
-            const msgIdFormat = validateRequired(votingVerifierConfig.msgIdFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].msgIdFormat`);
-            const addressFormat = validateRequired(
-                votingVerifierConfig.addressFormat,
-                `${VERIFIER_CONTRACT_NAME}[${chainName}].addressFormat`,
-            );
-            const encoder = validateRequired(multisigProverConfig.encoder, `${proverContractName}[${chainName}].encoder`);
-            const keyType = validateRequired(multisigProverConfig.keyType, `${proverContractName}[${chainName}].keyType`);
-
-            const routerAddress = validateRequired(routerConfig.address, `Router.address`);
+            const rewardsAddress = this.configManager.validateRequired(rewardsConfig.address, `Rewards.address`);
+            const routerAddress = this.configManager.validateRequired(routerConfig.address, `Router.address`);
             const domainSeparator = calculateDomainSeparator(chainName, routerAddress, this.configManager.axelar.chainId);
             if (!isKeccak256Hash(domainSeparator)) {
                 throw new Error(`Invalid ${proverContractName}[${chainName}].domainSeparator in axelar info`);
             }
             multisigProverConfig.domainSeparator = domainSeparator;
-
-            const verifierContractAdminAddress = admin;
-            const multisigContractAdminAddress = admin;
-            const gatewayContractAdminAddress = admin;
-            votingVerifierConfig.contractAdmin = verifierContractAdminAddress;
-            multisigProverConfig.contractAdmin = multisigContractAdminAddress;
-            gatewayConfig.contractAdmin = gatewayContractAdminAddress;
-
-            const multisigAdminAddress = validateRequired(
-                multisigProverConfig.adminAddress,
-                `${proverContractName}[${chainName}].adminAddress`,
-            );
-            const multisigAddress = validateRequired(multisigConfig.address, `Multisig.address`);
-            const verifierSetDiffThreshold = validateRequired(
-                multisigProverConfig.verifierSetDiffThreshold,
-                `${proverContractName}[${chainName}].verifierSetDiffThreshold`,
-            );
-            const signingThreshold = validateThreshold(
-                multisigProverConfig.signingThreshold,
-                `${proverContractName}[${chainName}].signingThreshold`,
-            );
-            const validSalt = validateRequired(salt, 'CLI option --salt');
+            votingVerifierConfig.contractAdmin = admin;
+            multisigProverConfig.contractAdmin = admin;
+            gatewayConfig.contractAdmin = admin;
+            const validSalt = this.configManager.validateRequired(salt, 'CLI option --salt');
             const saltUint8Array = getSalt(validSalt, 'Coordinator', chainName);
 
             printInfo(`Code IDs - Gateway: ${gatewayCodeId}, Verifier: ${verifierCodeId}, Prover: ${proverCodeId}`);
@@ -232,41 +113,41 @@ export class CoordinatorManager {
                                 code_id: gatewayCodeId,
                                 label: `${GATEWAY_CONTRACT_NAME}-${chainName}`,
                                 msg: null,
-                                contract_admin: gatewayContractAdminAddress,
+                                contract_admin: gatewayConfig.contractAdmin,
                             },
                             verifier: {
                                 code_id: verifierCodeId,
                                 label: `${VERIFIER_CONTRACT_NAME}-${chainName}`,
                                 msg: {
-                                    governance_address: governanceAddress,
-                                    service_name: serviceName,
-                                    source_gateway_address: sourceGatewayAddress,
-                                    voting_threshold: [votingThreshold[0].toString(), votingThreshold[1].toString()],
-                                    block_expiry: String(blockExpiry),
-                                    confirmation_height: confirmationHeight,
+                                    governance_address: votingVerifierConfig.governanceAddress,
+                                    service_name: votingVerifierConfig.serviceName,
+                                    source_gateway_address: votingVerifierConfig.sourceGatewayAddress,
+                                    voting_threshold: votingVerifierConfig.votingThreshold,
+                                    block_expiry: String(votingVerifierConfig.blockExpiry),
+                                    confirmation_height: votingVerifierConfig.confirmationHeight,
                                     source_chain: chainConfig.axelarId,
                                     rewards_address: rewardsAddress,
-                                    msg_id_format: msgIdFormat,
-                                    address_format: addressFormat,
+                                    msg_id_format: votingVerifierConfig.msgIdFormat,
+                                    address_format: votingVerifierConfig.addressFormat,
                                 },
-                                contract_admin: verifierContractAdminAddress,
+                                contract_admin: votingVerifierConfig.contractAdmin,
                             },
                             prover: {
                                 code_id: proverCodeId,
                                 label: `${proverContractName}-${chainName}`,
                                 msg: {
-                                    governance_address: governanceAddress,
-                                    admin_address: multisigAdminAddress,
+                                    governance_address: multisigProverConfig.governanceAddress,
+                                    admin_address: multisigProverConfig.adminAddress,
                                     multisig_address: multisigAddress,
-                                    signing_threshold: [signingThreshold[0].toString(), signingThreshold[1].toString()],
-                                    service_name: serviceName,
+                                    signing_threshold: multisigProverConfig.signingThreshold,
+                                    service_name: votingVerifierConfig.serviceName,
                                     chain_name: chainConfig.axelarId,
-                                    verifier_set_diff_threshold: verifierSetDiffThreshold,
-                                    encoder: encoder,
-                                    key_type: keyType,
+                                    verifier_set_diff_threshold: multisigProverConfig.verifierSetDiffThreshold,
+                                    encoder: multisigProverConfig.encoder,
+                                    key_type: multisigProverConfig.keyType,
                                     domain_separator: domainSeparator.replace('0x', ''),
                                 },
-                                contract_admin: multisigContractAdminAddress,
+                                contract_admin: multisigProverConfig.contractAdmin,
                             },
                         },
                     },
