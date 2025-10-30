@@ -1,15 +1,15 @@
-# Cosmwasm Coordinator v2.1.1
+# Cosmwasm Coordinator v2.1
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
 | **Created By** | @sdavidson1177 <solomon@interoplabs.io>         |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-10-01 |
-| **Stagenet**         | Completed             | 2025-10-14 |
-| **Testnet**          | Completed             | 2025-10-15 |
-| **Mainnet**          | -                     | TBD        |
+| **Network**          | **Deployment Status** | **Date**   | **Coordinator** | **Router** | **Multisig** |
+| -------------------- | --------------------- | ---------- | --------------- |----------- | ------------ |
+| **Devnet Amplifier** | Completed             | 2025-10-01 | v2.1.2          | v1.3.0     | v2.3.1       |
+| **Stagenet**         | Completed             | 2025-10-14 | v2.1.1          | v1.3.0     | v2.3.1       |
+| **Testnet**          | Completed             | 2025-10-15 | v2.1.1          | v1.3.0     | v2.3.1       |
+| **Mainnet**          | Completed             | 2025-10-28 | v2.1.1          | v1.3.0     | v2.3.1       |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.1)
@@ -31,6 +31,11 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 
 1. The coordinator now stores both the router and multisig contract addresses in its state. This information will be given to the coordinator after it is instantiated using the *RegisterProtocol* message. The service registry address will also be registered using *RegisterProtocol*, where it was previously in the coordinator's instantiate message.
 1. Previously, registering a chain with the coordinator involved specifying only the multisig prover's address. Now, registration must also include the corresponding gateway and voting verifier addresses.
+1. The coordinator's migration script will default to using the provided prover/chain pairs instead of the prover/chain pairs registered in its state.
+
+### Coordinator v2.1.2
+
+This update was applied only on the devnet-amplifier in order to allow migration from `v2.1.0`. Coordinator `v2.1.1` was released after the devnet migration and it was not prepared for migration from `v2.1`. An important update was released in `v2.1.1`, so in order to allow the migration, a new patch release was prepared and submitted.
 
 ### Multisig v2.3.1
 
@@ -46,6 +51,11 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 
 - This rollout upgrades the amplifier coordinator contract from `v1.1.0` to `v2.1.1`, the multisig contract from `v2.1.0` to `v2.3.1`, and the router from `v1.2.0` to `v1.3.0`.
 - State migration is required for all three contracts.
+
+   | Component        | Versions Tested                                                                                                                           
+   | ---------------- | ---------------- |
+   | Cosmos SDK | 0.47.x |
+   | Wasm         | 0.34.x |
 
 1. Retrieve coordinator address from the appropriate config file for the environment. (ENV: devnet, testnet, stagenet or mainnet)
 
@@ -105,7 +115,7 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
      --fetchCodeId
    ```
 
-   Provide coordinator address to the multisig.
+   Provide coordinator address to the multisig, and migrate using the contract deployment scripts.
 
    ```bash
    ts-node cosmwasm/migrate/migrate.ts migrate \
@@ -125,6 +135,19 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
 
    **Warning:** Using the `--ignoreChains [chains to ignore...]` flag might introduce protocol breaking behaviour, so it should be used only in a test environment. Coordinator v2 requires the gateways, verifiers and provers for each chain to be unique. You may ignore chains in the event that there are multiple chains that use the same verifier. This is possible because the protocol allows different gateways to be instantiated with the same verifier.
 
+1. (Optional) Give the Coordinator Permission to Instantiate Gateway, Verifier and Prover
+
+   The coordinator needs to have permission from the wasm module to instantiate gateways, verifiers and provers. You may retrieve these code ids by checking `.axelar.contracts.Gateway.$CHAIN.codeId`, `.axelar.contracts.VotingVerifier.$CHAIN.codeId` and `.axelar.contracts.MultisigProver.$CHAIN.codeId` respectively. To get the current instantiate permissions for a particular code id, run the following command:
+
+   ```bash
+   axelard q wasm code-info <code id> --node <node rpc>
+   ```
+
+   We have provided a script that submits a proposal to append the coordinator's address to the list of allowed addresses for a given code id. A proposal will not be created if the coordinator is already allowed to instantiate that contract. To execute that script, run:
+
+   ```bash
+   ts-node cosmwasm/submit-proposal.js coordinator-instantiate-permissions --contractName <Gateway|VotingVerifier|MultisigProver> --deposit 100000000 -e $ENV -t $TITLE -d $DESCRIPTION -m $MNEMONIC
+   ```
 ## Checklist
 
 1. Verify router contract version
@@ -202,4 +225,9 @@ The coordinator can now deploy a gateway, voting verifier, and multisig prover c
    ts-node cosmwasm/migrate/migrate.ts check -e $ENV -c Coordinator 
    ```
 
-   You may manually specify the address of the coordinator and multisig by using the `--coordinator` and `--multisig` flags respectively.
+   You may optionally specify the address of the coordinator and multisig by using the `--coordinator` and `--multisig` flags respectively.
+
+   Expected Output
+   ```bash
+   ✅ Migration succeeded!
+   ```

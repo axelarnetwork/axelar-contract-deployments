@@ -1,4 +1,5 @@
 const { Transaction } = require('@mysten/sui/transactions');
+const { SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { Command } = require('commander');
 const { loadConfig, saveConfig, printInfo, printError, getChainConfig, validateParameters } = require('../common/');
 
@@ -16,6 +17,9 @@ const {
     printWalletInfo,
     saveTokenDeployment,
     suiCoinId,
+    getUnitAmount,
+    checkIfCoinExists,
+    getFormattedAmount,
 } = require('./utils');
 const {
     utils: { formatUnits },
@@ -57,8 +61,7 @@ class CoinManager {
             });
 
             if (!metadata) {
-                printError('No metadata found for', coinType);
-                process.exit(0);
+                throw new Error(`No metadata found for ${coinType}`);
             }
 
             printInfo('Coin Type', coinType);
@@ -80,8 +83,7 @@ class CoinManager {
         });
 
         if (!metadata) {
-            printError('No metadata found for', coinType);
-            process.exit(0);
+            throw new Error(`No metadata found for ${coinType}`);
         }
 
         const objectToSplit = isGasToken(coinType)
@@ -89,8 +91,7 @@ class CoinManager {
             : coinTypeToCoins[coinType].data.find((coinObject) => BigInt(coinObject.balance) >= splitAmount)?.coinObjectId;
 
         if (!objectToSplit) {
-            printError('No coin object found with enough balance to split');
-            process.exit(0);
+            throw new Error('No coin object found with enough balance to split');
         }
 
         const [coin] = tx.splitCoins(objectToSplit, [splitAmount]);
@@ -144,6 +145,82 @@ class CoinManager {
 
         return merged;
     }
+}
+
+async function mintCoinsCommand(keypair, client, args, options, contracts) {
+    const [symbol, amount, recipient] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    if (!Number.isFinite(Number(amount))) {
+        throw new Error(`Amount to be minted must be a valid number, found: ${amount}`);
+    }
+
+    const coin = contracts[symbol.toUpperCase()];
+
+    if (!coin) {
+        if (!options.coinPackageId || !options.coinPackageName || !options.coinDecimals) {
+            throw new Error(
+                `Options coinPackageId, coinPackageName and coinDecimals are required for coins not saved in config, found: ${JSON.stringify(
+                    [options.coinPackageId, options.coinPackageName, options.coinDecimals],
+                )}`,
+            );
+        }
+    }
+
+    const coinType = coin ? coin.typeArgument : `${options.coinPackageId}::${options.coinPackageName}::${symbol.toUpperCase()}`;
+    const coinPackageId = coin ? coin.address : options.coinPackageId;
+    const coinPackageName = coin ? coinType.split('::')[1] : options.coinPackageName;
+    const coinDecimals = coin ? coin.decimals : options.coinDecimals;
+
+    if (!coinPackageName) {
+        throw new Error(`Invalid coin type, found: ${coinType}`);
+    }
+
+    if (!coinDecimals) {
+        throw new Error(`Coin decimals are required, found: ${coinDecimals}`);
+    }
+
+    await checkIfCoinExists(client, coinPackageId, coinType);
+
+    const { data } = await client.getOwnedObjects({
+        owner: walletAddress,
+        filter: { StructType: `${SUI_PACKAGE_ID}::coin::TreasuryCap<${coinType}>` },
+        options: { showType: true },
+    });
+
+    if (!Array.isArray(data) || !data.length) {
+        throw new Error('TreasuryCap object not found for the specified coin type.');
+    }
+
+    const treasury = data[0].data?.objectId ?? data[0].objectId;
+
+    const txBuilder = new TxBuilder(client);
+
+    const unitAmount = getUnitAmount(amount, coinDecimals);
+
+    const mintedCoins = await txBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::coin::mint`,
+        arguments: [treasury, unitAmount],
+        typeArguments: [coinType],
+    });
+
+    txBuilder.tx.transferObjects([mintedCoins], recipient);
+
+    const response = await broadcastFromTxBuilder(txBuilder, keypair, `Mint ${amount} ${symbol.toUpperCase()}`, options);
+
+    const balance = (
+        await client.getBalance({
+            owner: recipient,
+            coinType,
+        })
+    ).totalBalance;
+
+    printInfo('💰 recipient token balance', getFormattedAmount(balance, coinDecimals));
+
+    const coinChanged = response.objectChanges.find((c) => c.type === 'created');
+
+    printInfo('New coin object id', coinChanged.objectId);
 }
 
 async function processSplitCommand(keypair, client, args, options) {
@@ -346,6 +423,9 @@ if (require.main === module) {
     const publishCoinProgram = new Command('publish-coin').description(
         'Deploy a coin on Sui by specifying coin symbol, name and decimal precision',
     );
+    const mintCoinsProgram = new Command('mint-coins').description(
+        'Mint coins for the given symbol on Sui. The token must be deployed on Sui first.',
+    );
 
     // Define options, arguments, and actions for each sub-program
     mergeProgram.option('--coin-type <coinType>', 'Coin type to merge').action((options) => {
@@ -381,12 +461,24 @@ if (require.main === module) {
             mainProcessor(options, publishCoinCommand, [symbol, name, decimals]);
         });
 
+    mintCoinsProgram
+        .argument('<symbol>', 'Coin symbol')
+        .argument('<amount>', 'Amount of coins to be minted')
+        .argument('<recipient>', 'Sui address to receive the minted coins')
+        .option('--coinPackageId <id>', 'Optional deployed package id (mandatory if coin is not saved in config)')
+        .option('--coinPackageName <name>', 'Optional deployed package name (mandatory if coin is not saved in config)')
+        .option('--coinDecimals <decimals>', 'Optional coin decimal precision (mandatory if coin is not saved in config)')
+        .action((symbol, amount, recipient, options) => {
+            mainProcessor(options, mintCoinsCommand, [symbol, amount, recipient]);
+        });
+
     // Add sub-programs to the main program
-    program.addCommand(mergeProgram);
-    program.addCommand(splitProgram);
     program.addCommand(listProgram);
     program.addCommand(legacyCoinsProgram);
+    program.addCommand(mergeProgram);
+    program.addCommand(mintCoinsProgram);
     program.addCommand(publishCoinProgram);
+    program.addCommand(splitProgram);
 
     // Add base options to all sub-programs
     addOptionsToCommands(program, addBaseOptions);
