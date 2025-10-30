@@ -136,7 +136,7 @@ When registering a custom token for linking, the token ID is derived from three 
 
 1. **Chain Name Hash** (`Bytes32`): Unique identifier for the Sui chain instance
 2. **Deployer `Channel`**: The deployer's `Channel` object
-3. **Salt** (`Bytes32`): A user-provided unique value. The `salt` must be 33 bytes (e.g. 0x + 64 characters) matching the Sui address format
+3. **Salt** (`Bytes32`): A user-provided unique value. The `salt` must be 32 bytes (e.g. 0x + 64 characters) matching the Sui address format
 
 **Custom Token ID Derivation Formula**:
 ```move
