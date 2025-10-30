@@ -2211,7 +2211,7 @@
       "chainType": "evm",
       "explorer": {
         "name": "Hyperliquid Explorer",
-        "url": "https://app.hyperliquid-testnet.xyz/explorer"
+        "url": "https://testnet.purrsec.com/"
       },
       "contracts": {
         "ConstAddressDeployer": {
