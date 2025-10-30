@@ -8,7 +8,6 @@ const tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${e
 const ITokenManager = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/ITokenManager.sol/ITokenManager.json');
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const fs = require('fs');
-const toml = require('toml');
 const { printInfo } = require('../common');
 
 const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
@@ -59,16 +58,13 @@ async function getTokens(name) {
 }
 
 (async () => {
-    await getTokens('filecoin');
-    return;
     for (const name of Object.keys(info.chains)) {
         printInfo('Chain Name', name);
 
         try {
             await getTokens(name);
         } catch (e) {
-            console.log(name);
-            console.log(e);
+            printError(`Error getting tokens for ${name}: ${e.message}`);
         }
     }
 })();

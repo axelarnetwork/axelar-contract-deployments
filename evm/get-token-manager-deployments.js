@@ -7,8 +7,7 @@ const info = require(`../axelar-chains-config/info/${env}.json`);
 const tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${env}.json`);
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const fs = require('fs');
-const toml = require('toml');
-const { printInfo } = require('../common');
+const { printInfo, printError } = require('../common/utils');
 
 // const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
 
@@ -56,11 +55,11 @@ async function getTokenManagers(name) {
         printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
 
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
-        console.log('processing... ', name);
+        printInfo('processing... ', name);
 
         // const rpc = RPCs[name];
         const rpc = chain.rpc;
-        console.log(name, rpc);
+        printInfo(name, rpc);
         if(!rpc) return false;
         const provider = getDefaultProvider(rpc);
 
@@ -73,7 +72,7 @@ async function getTokenManagers(name) {
         }
 
         const filter = its.filters.TokenManagerDeployed();
-        console.log(name, 'current block number: ', blockNumber);
+        printInfo(`${name} current block number: ${blockNumber}`);
 
         let min = tokenManagerInfo[name].end;
         let max = blockNumber;
@@ -95,7 +94,7 @@ async function getTokenManagers(name) {
         while (tokenManagerInfo[name].end < min) {
             try {
                 const end = min < tokenManagerInfo[name].end + eventsLength ? min : tokenManagerInfo[name].end + eventsLength;
-                console.log(name, end, min, eventsLength);
+                printInfo(`${name} end: ${end}, min: ${min}, eventsLength: ${eventsLength}`);
                 const events = await its.queryFilter(filter, tokenManagerInfo[name].end + 1, end);
                 tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map((event) => event.args));
                 tokenManagerInfo[name].end = end;
@@ -104,15 +103,14 @@ async function getTokenManagers(name) {
             } catch (e) {
                 tries++;
                 if (tries >= 30) {
-                    console.log(e);
+                    printError(`Error getting token managers for ${name}: ${e.message}`);
                     return false;
                 }
             }
         }
         return true;
     } catch (e) {
-        console.log(name);
-        console.log(e);
+        printError(`Error getting token managers for ${name}: ${e.message}`);
         return false;
     }
 }
@@ -124,8 +122,7 @@ async function getTokenManagers(name) {
         // add an await to run in sequence, which is slower.
         getTokenManagers(name).then((result) => {
             results[name] = result;
-            console.log(name);
-            console.log(results);
+            printInfo(`${name} results: ${results}`);
         });
     }
 })();

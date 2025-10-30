@@ -37,7 +37,8 @@ async function migrateTokens(name) {
     const chain = info.chains[chainName];
     if (chain.contracts.InterchainTokenService.skip) return;
     const rpc = env === 'testnet' ? RPCs.node.EVMBridges.find((chain) => chain.name.toLowerCase() === name.toLowerCase()).rpc_addr : info.chains[name].rpc;
-    console.log(rpc);
+    
+    printInfo(`RPC: ${rpc}`);
     const provider = getDefaultProvider(rpc);
     const wallet = await getWallet(process.env.PRIVATE_KEY, provider);
     const service = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, wallet);
@@ -64,10 +65,10 @@ async function migrateTokens(name) {
                     tokenData.skip = true;
                 }
             } catch (e) {
-                printError(e);
-
+                printError(`Error migrating tokens for ${name}: ${e.message}`);
+                
+                // TODO tkulik: check this case:
                 printInfo(`Token with tokenId: ${tokenId} seems to be legacy.. | ${Number(index) + 1} out of ${tokenManagers.length}`);
-
                 //tokenData.skip = true;
             }
         } else {
@@ -79,7 +80,7 @@ async function migrateTokens(name) {
     while(tokenIds.length > 0) {
         const data = [];
         const migrating = tokenIds.splice(0, N);
-        console.log(migrating);
+        printInfo(`Migrating tokens: ${migrating}`);
         for (const tokenId of migrating) {
             const tx = await service.populateTransaction.migrateInterchainToken(tokenId);
             data.push(tx.data);
@@ -87,7 +88,7 @@ async function migrateTokens(name) {
         try {
             await (await service.multicall(data)).wait();
         } catch (e) {
-            console.log(e);
+            printError(`Error migrating tokens for ${name}: ${e.message}`);
         }
     }
 }
@@ -98,14 +99,14 @@ async function migrateTokens(name) {
         chains = process.env.CHAINS.split(',');
     }
     for (const name of Object.keys(info.chains)) {
-        console.log(name);
+        printInfo(`Migrating tokens for ${name}`);
         if(chains && chains.findIndex((chainName) => chainName == name) == -1) {
             continue;
         }
         try {
             await migrateTokens(name);
         } catch (e) {
-            printError(e);
+            printError(`Error migrating tokens for ${name}: ${e.message}`);
         }
     }
 })();

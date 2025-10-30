@@ -5,11 +5,9 @@ const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider, constants: { AddressZero } } = ethers;
 const info = require(`../axelar-chains-config/info/${env}.json`);
 const tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${env}.json`);
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const ITokenManager = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/ITokenManager.sol/ITokenManager.json');
 const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json')
 const fs = require('fs');
-const toml = require('toml');
 const { printInfo } = require('../common');
 
 const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
@@ -24,15 +22,10 @@ async function getTokens(name) {
             !tokenManagerInfo[name].tokenManagers
         ) return false;
         printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
-
-        // if (name != 'mantle') { return; }
-
-        console.log('processing... ', name);
+        printInfo('processing... ', name);
 
         const rpc = RPCs[name];
         const provider = getDefaultProvider(rpc);
-
-        const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
         const tokenManagers = tokenManagerInfo[name].tokenManagers;
 
         let i = 0;
@@ -51,11 +44,8 @@ async function getTokens(name) {
                 printInfo(`${name}: Processing (${i}/${tokenManagers.length}), tokenId: ${tokenId}`);
                 const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
                 const tokenAddress = await tokenManager.tokenAddress();
-
                 const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-
                 const tokenDecimals = await token.decimals();
-
                 const decimals = tokenDecimals;
                 const track = tokenManagerType === 0 && await token.isMinter(AddressZero);
                 tokenManagerInfo[name].tokenManagers[i] = {
@@ -73,22 +63,19 @@ async function getTokens(name) {
             } catch (e) {
                 tries++;
                 if (tries >= 10) {
-                    console.log(e);
+                    printError(`Error getting tokens for ${name}: ${e.message}`);
                     i++;
                 }
             }
         }
         return true;
     } catch (e) {
-        console.log(name);
-        console.log(e);
+        printError(`Error getting tokens for ${name}: ${e.message}`);
     }
 }
 
 (async () => {
     for (const name of Object.keys(info.chains)) {
-        // add an await to run in sequence, which is slower.
-        getTokens(name).then((success) => console.log(name, 'returned', success));
-        
+        getTokens(name).then((success) => printInfo(name, 'returned', success));
     }
 })();

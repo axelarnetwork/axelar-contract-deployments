@@ -92,7 +92,7 @@ class TokenIterator {
                     printError('Failed to query token supply for', current.tokenAddress);
                 }
 
-                console.log(`Chain Progress: ${this.chainIndex + 1}/${this.chainNames.length} | Token Progress: ${this.tokenIndex + 1}/${this.tokenIds.length}`)
+                printInfo(`Chain Progress: ${this.chainIndex + 1}/${this.chainNames.length} | Token Progress: ${this.tokenIndex + 1}/${this.tokenIds.length}`);
                 return true;
             }
         }
@@ -135,7 +135,9 @@ const processCommand = async (options) => {
     const tokenInfo = require(`../axelar-chains-config/info/tokens-${env}.json`);
     const config = loadConfig(env);
 
-    if (options.rpcs && (!options.chains || options.chains.length != options.rpcs.length)) throw new Error('Need to provide chain names alongside RPCs and their length must match.');
+    if (options.rpcs && (!options.chains || options.chains.length != options.rpcs.length)) {
+        throw new Error('Need to provide chain names alongside RPCs and their length must match.');
+    }
 
     initContractConfig(config, options);
 
@@ -159,6 +161,8 @@ const programHandler = () => {
     addAmplifierOptions(program, {});
 
     program.addOption(new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for').env('TOKEN_IDS'));
+    
+    // TODO tkulik: Should we run this script for all chains per tokenID at once?
     program.addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for').env('CHAINS'));
     program.addOption(new Option('-rpcs, --rpcs <rpcs...>', 'rpcs. Must be provided alongside a --chains argument and their length must match').env('RPCS'));
     program.addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'));
