@@ -53,11 +53,12 @@ That would create the `artifacts` folder with all the compiled contracts, plus t
 
 Create an .env config:
 
-```yaml
+```sh
 MNEMONIC=xyz
 ENV=xyz
 CHAIN=<solana-custom|solana>
 EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
+NODE=[Axelar RPC URL]
 ```
 
 | Axelar Env           | `DEPOSIT_VALUE` |
@@ -273,7 +274,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     - Verify Gateway Registration:
 
     ```bash
-    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node [axelar rpc url] | jq .
+    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node $NODE | jq .
     ```
 
     ```bash
@@ -324,7 +325,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```
 
     ```bash
-    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node [axelar rpc url] | jq .
+    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node $NODE | jq .
 
     # Result should look like:
     {
@@ -430,8 +431,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
     ```bash
-    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node [axelar rpc url]
-    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node [axelar rpc url]
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node $NODE
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node $NODE
 
     # Check reward pool to confirm funding worked
     ts-node cosmwasm/query.ts rewards $CHAIN
@@ -440,7 +441,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "[service_name]", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
+    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "[service_name]", "chain_name": "$CHAIN"}}' --node $NODE
     ```
 
 1. Create genesis verifier set
@@ -448,10 +449,10 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     Note that this step can only be run once a sufficient number of verifiers have registered.
 
     ```bash
-    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2 --node [axelar rpc url]
+    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2 --node $NODE
 
     # Query the multisig prover for active verifier set
-    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
+    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node $NODE
     ```
 
 - Return to 'Initialization Steps:Initialize Gateway' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
