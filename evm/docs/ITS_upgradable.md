@@ -67,7 +67,7 @@ ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddres
 ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain chain2 --destinationTokenAddress [remote token address] --tokenManagerType 4 --linkParams "0x" --salt "salt6789"
 ```
 
- * If any of the token managers was deployed as Mint/Burn the token mintership must be transfered to the token manager. If the contracts are ITS standard tokens the following procedure can be applied
+ * If any of the token managers was deployed as Mint/Burn the token mintership must be transferred to the token manager. If the contracts are ITS standard tokens the following procedure can be applied
     * Fetch tokenManager address for deployed token on target chain
 
 ```bash
