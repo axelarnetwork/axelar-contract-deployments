@@ -108,7 +108,7 @@ When registering a custom token for linking, the token ID is derived from three 
 Derivation Formula:
 
 ```move
-token_id = hash(PREFIX_CUSTOM_TOKEN_ID, chain_name_hash, deployer.to_address(), salt)
+let token_id = hash(PREFIX_CUSTOM_TOKEN_ID, chain_name_hash, deployer.to_address(), salt)
 ```
 
 **Note:** the same `Channel` cannot re-use the same `salt`.
