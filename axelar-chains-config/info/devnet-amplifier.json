@@ -1372,7 +1372,7 @@
         "AxelarGateway": {
           "address": "gt2EEXhF49mAGhi6Fxsuwwuoz5Dpx7daAXAWE8sLZ77",
           "connectionType": "amplifier",
-          "domainSeparator": "TBD",
+          "domainSeparator": "0x7ebf002c79818631b647e43d616592c0cde021341dffd0c07b54a3dc60e787ee",
           "minimumRotationDelay": "0",
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": "15",
@@ -1426,7 +1426,14 @@
           "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g"
         },
         "storeCodeProposalId": "1275",
-        "storeCodeProposalCodeHash": "45b1c5c230b686d47283ea3b6c7174b9d979f557e65aeca4e1aece66d9eb94e0"
+        "storeCodeProposalCodeHash": "45b1c5c230b686d47283ea3b6c7174b9d979f557e65aeca4e1aece66d9eb94e0",
+        "deployments": {
+          "solana-11": {
+            "deploymentName": "solana-11-1571-1570-1572",
+            "salt": "v1.0.0-solana-11",
+            "proposalId": "1318"
+          }
+        }
       },
       "Rewards": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1490,7 +1497,7 @@
           "codeId": 854,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
         },
-        "lastUploadedCodeId": 1563,
+        "lastUploadedCodeId": 1570,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1611,7 +1618,7 @@
           "codeId": 854,
           "address": "axelar1uypvvkd820cs4t6y47hqszawegwyrxaxr9ehpla74e98g0rezr5sw9lj4z"
         },
-        "storeCodeProposalId": "1287",
+        "storeCodeProposalId": "1315",
         "storeCodeProposalCodeHash": "11877b06b4021d2ec15a02338bcaa97fe932aaec03dcd21e09a2de005a59779a",
         "solana-11": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1624,7 +1631,10 @@
           "blockExpiry": 10,
           "confirmationHeight": 1000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-          "addressFormat": "solana"
+          "addressFormat": "solana",
+          "codeId": 1570,
+          "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "address": "axelar19rjdavd2n59gkvggk7ech8r889nr5lxxjjjqf0y5uhwj63x0x44szg9dqz"
         }
       },
       "Gateway": {
@@ -1632,7 +1642,7 @@
           "codeId": 848,
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "lastUploadedCodeId": 1564,
+        "lastUploadedCodeId": 1571,
         "eth-sepolia": {
           "codeId": 848,
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
@@ -1653,7 +1663,7 @@
           "codeId": 848,
           "address": "axelar1va6q3ht9glcx6l5suh4xkpae8z54sahc82xqxqhhlggu658qv3tqpkrzu5"
         },
-        "storeCodeProposalId": "1288",
+        "storeCodeProposalId": "1316",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
         "plume-2": {
           "codeId": 848,
@@ -1667,7 +1677,11 @@
           "codeId": 848,
           "address": "axelar129htsgeyygnc6mlhxxjsdrtu2yj8wam83ur6mcdlvdttvk3zlecqwdjnl0"
         },
-        "solana-11": {}
+        "solana-11": {
+          "codeId": 1571,
+          "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "address": "axelar1uavxkpzw08s7qalymn0pwqxryrj8ggmn68xpekzy0z32lw4ztp3qp7r04j"
+        }
       },
       "XrplMultisigProver": {
         "xrpl-dev": {
@@ -1872,8 +1886,8 @@
           "codeId": 1427,
           "address": "axelar109wjfgdx63num4xyvzhrt2djuvd7zdu3zv4m0hcjvt55r0mvhszssxl8gg"
         },
-        "lastUploadedCodeId": 1565,
-        "storeCodeProposalId": "1289",
+        "lastUploadedCodeId": 1572,
+        "storeCodeProposalId": "1317",
         "storeCodeProposalCodeHash": "cd0c28f81d0bb735ae9ac442f1d51688582be6d380b8756b6a12aeab8ceb8d92",
         "solana-11": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1885,7 +1899,11 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "encoder": "solana",
-          "keyType": "ecdsa"
+          "keyType": "ecdsa",
+          "codeId": 1572,
+          "domainSeparator": "0x7ebf002c79818631b647e43d616592c0cde021341dffd0c07b54a3dc60e787ee",
+          "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "address": "axelar1k86pvgdkr466ycfn7pf4wxf2gytu35punwtn9zr8fdys0hs6vwcs73m7lt"
         }
       }
     },
