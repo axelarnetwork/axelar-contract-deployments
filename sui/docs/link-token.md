@@ -103,7 +103,7 @@ When registering a custom token for linking, the token ID is derived from three 
 
 1. **Chain Name Hash** (`Bytes32`): Unique identifier for the Sui chain instance
 2. **Deployer** (`Channel`): The address of the deployer's Channel object
-3. **Salt** (`Bytes32`): A user-provided unique value (must be 66 characters on Sui)
+3. **Salt** (`Bytes32`): A user-provided unique value (must be 0x + 64 hex characters on Sui)
 
 Derivation Formula:
 
@@ -127,35 +127,35 @@ let token_id = token_id::custom_token_id(&self.chain_name_hash, deployer, &salt)
 
 **Operator Role:**
 
-When Sui [receives](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L269-L273) a link coin GMP message, if a `Channel` is included in the `link_params`, it will be automatically added as an Operator of the Sui coin.<!-- skip-check -->
+When Sui [receives](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L269-L273) a link message, if a `Channel` is included in the `link_params`, it will be automatically added as an Operator of the Sui coin.<!-- skip-check -->
 
-When sui [creates](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L172-L184) a link coin GMP message, if an address is included in the `link_params`, it is presumed it will be automatically added as an Operator on the destination chain (actual behaviour depends on destination chain's implementation).<!-- skip-check -->
+When sui [creates](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L172-L184) a link message, if an address is included in the `link_params`, it will be added as an Operator on the destination chain (actual behaviour depends on destination implementation).<!-- skip-check -->
 
 **Security:** 
 
-The operator cannot steal tokens directly, but can modify settings that affect Interchain Token Service. Use trusted channels and addresses only.
+The operator cannot steal tokens directly, but can modify settings that affect the Interchain Token Service. Use trusted channels and addresses only.
 
-**Note:** The deployer account (caller of `linkToken`) must also be secure, as it has the authority to initiate token linking operations.
+**Note:** The deployer account (caller of `linkToken`) must also be secure, as it has the authority to initiate token linking operations and Operators.
 
 ## Step-by-Step Process
 
-**Example Configuration:**
+**Example Configuration**
 
-- Chain A (Sui): Source chain using LOCK_UNLOCK token manager type
-- Chain B (EVM): Destination chain using MINT_BURN token manager type
+- Chain A (Sui): Source chain using *LOCK_UNLOCK* token manager type
+- Chain B (EVM): Destination chain using *MINT_BURN* token manager type
 
 ### Step 1: Setup Tokens
 
 Deploy test tokens on both chains:
 
-**Chain A (Sui):**
+**Chain A (Sui)**
 
 ```bash
 # Deploy token on Sui
 ts-node sui/tokens publish-coin <symbol> <name> <decimals>
 ```
 
-**Chain B (EVM):**
+**Chain B (EVM)**
 
 ```bash
 ts-node evm/interchainTokenFactory \
@@ -171,13 +171,13 @@ ts-node evm/interchainTokenFactory \
 
 ### Step 2: Register Token Metadata
 
-**Chain A (Sui):**
+**Chain A (Sui)**
 
 ```bash
 ts-node sui/its register-coin-metadata <symbol>
 ```
 
-**Chain B (EVM):**
+**Chain B (EVM)**
 
 ```bash
 ts-node evm/its register-token-metadata <tokenAddress> -n <network>
@@ -196,8 +196,8 @@ ts-node sui/its register-custom-coin <SYMBOL> <NAME> <DECIMALS> --salt <SALT> --
 ```
 
 **Notes:** 
-1. if the `--treasuryCap` flag is passed, the coin's `TreasuryCap` is automatically transferred to the Sui ITS contract. For `MINT_BURN` token managers, transferring the `TreasuryCap` to the ITS contract is required.
-2. if the `--channel <channel>` flag is not used a channel will be automatically created and transferred to the address of the command caller. 
+1. If the `--treasuryCap` flag is passed, the coin's `TreasuryCap` is automatically transferred to the Sui ITS contract. For `MINT_BURN` token managers, transferring the `TreasuryCap` to the ITS contract is required.
+2. If the `--channel <channel>` flag is not used a channel will be automatically created and transferred to the address of the command caller. 
 
 ### Step 4: Link Token
 
@@ -214,9 +214,9 @@ ts-node sui/its link-coin <symbol> <destination-chain> <destination-token-addres
 TOKEN_ID=<from-result>
 ```
 
-**Note:** `link-coin` _must_ use the same `Channel` used to register the custom token (e.g. in the previous step).
+**Note:** `link-coin` must use the same `Channel` that was used to register the custom token (e.g. in the previous step).
 
-**On EVM (if destination uses MINT_BURN):**
+**On EVM (if destination uses _MINT_BURN_)**
 
 ```bash
 # Get token manager address on the destination chain
@@ -228,7 +228,7 @@ ts-node evm/its transfer-mintership <tokenAddress> <tokenManagerAddress> -n <net
 
 ## Examples
 
-Basic configuration for all the examples:
+Basic configuration for all examples:
 
 ```bash
 # Common variables
@@ -245,7 +245,7 @@ CHANNEL="0x028680c11ddb66705c1609d204b108737003d140d27e9096fe72b6bc2dadfeeb"
 TRANSFER_AMOUNT=1
 ```
 
-### Example 1: Link Token on Sui (Source - LOCK_UNLOCK) with EVM Token (Destination - MINT_BURN)
+### Example 1: Link Token on Sui (Source - _LOCK_UNLOCK_) with EVM Token (Destination - _MINT_BURN_)
 
 ```bash
 # Deploy token on EVM
@@ -296,7 +296,7 @@ ts-node sui/its interchain-transfer $SUI_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS
 ts-node evm/its interchain-transfer sui $SUI_TOKEN_ID $SUI_WALLET_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN
 ```
 
-### Example 2: Link Token on Sui (Source - MINT_BURN) with EVM Token (Destination - LOCK_UNLOCK)
+### Example 2: Link Token on Sui (Source - _MINT_BURN_) with EVM Token (Destination - _LOCK_UNLOCK_)
 
 ```bash
 # Deploy token on EVM
@@ -338,7 +338,7 @@ ts-node evm/its interchain-transfer sui $SUI_TOKEN_ID $SUI_WALLET_ADDRESS $TRANS
 ts-node sui/its interchain-transfer $SUI_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS $TRANSFER_AMOUNT
 ```
 
-### Example 3: Link EVM Token (Source - MINT_BURN) with Sui Token (Destination - LOCK_UNLOCK)
+### Example 3: Link EVM Token (Source - _MINT_BURN_) with Sui Token (Destination - _LOCK_UNLOCK_)
 
 ```bash
 # Deploy token on Sui
@@ -409,7 +409,7 @@ ts-node evm/its interchain-transfer sui $EVM_TOKEN_ID $SUI_WALLET_ADDRESS $TRANS
 ts-node sui/its interchain-transfer $EVM_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS $TRANSFER_AMOUNT
 ```
 
-### Example 4: Link EVM Token (Source - LOCK_UNLOCK) with Sui Token (Destination - MINT_BURN)
+### Example 4: Link EVM Token (Source - _LOCK_UNLOCK_) with Sui Token (Destination - _MINT_BURN_)
 
 ```bash
 # Deploy token on Sui
@@ -485,9 +485,9 @@ EUntrustedChain: the chain is not trusted
 
 Problem: attempted to create an interchain message (`prepare_hub_message`) for an unapproved chain
 
-Solution: use the admin acount (holding the `OwnerCap`) add the target destination chain (`add_trusted_chains`), or use an already approved chain for the destination chain.
+Solution: use the admin acount (holding the `OwnerCap`) to add the target destination chain (`add_trusted_chains`), or, use an already approved chain for the destination chain.
 
-**Missing Destination Token Address**
+**Destination Token Address Missing**
 ```
 EEmptyTokenAddress: cannot deploy a remote custom token to an empty token address
 ```
@@ -496,36 +496,36 @@ Problem: `link_coin` was called without specifying a valid remote token address.
 
 Solution: ensure the correct remote token address is specified when calling `link_coin`
 
-**Manager Type Not Supported for Custom Token Manager**
+**Unsupported Native Manager Type**
 ```
 ECannotDeployInterchainTokenManager: cannot deploy an interchain token token manager type remotely
 ```
 
-Problem: trying to call `link_coin` with an unsupported token manager type fails.
+Problem: calling `link_coin` with an interchain token native token manager type, for the destination chain, is unsupported and coin linking fails.
 
-Solution: use MINT_BURN or LOCK_UNLOCK token manager type for token manager type when calling `link_coin`.
+Solution: use MINT_BURN or LOCK_UNLOCK token manager type for the destination token manager parameter of `link_coin`.
 
 **Invalid Remote Destination**
 ```
 ECannotDeployRemotelyToSelf: cannot deploy custom token to this chain remotely, use register_custom_coin instead
 ```
 
-Problem: Sui has been declared as the remote destination in a call to `link_coin`
+Problem: Sui has been declared as the remote destination in a call to `link_coin`.
 
-Solution: use a different (not Sui) for the `destination` parameter.
+Solution: use a different chain name (not Sui) for the `destination` parameter.
 
 **CoinType Mismatch**
 ```
 ECoinTypeMissmatch: receiving coin type does not match the coin type specified
 ```
 
-Problem: `receive_link_coin<T>` type argmument generic (`T`) does not match the coin type that was decoded from GMP as the destination token address.
+Problem: the `receive_link_coin<T>` type argmument generic (`T`) does not match the coin type that was decoded from GMP as the destination token address.
 
-Solution: Ensure the correct `CoinType` is being sent in the `linkToken` request from the source chain.
+Solution: Ensure the correct `CoinType` is being broadcast in the `linkToken` request from the source chain.
 
 ## Best Practices & Security
 
-1. **Salt Management**: Use unique salts for each token linking operation. On Sui, the salt must be 66 characters matching Sui address format (e.g. 32 bytes).
-2. **Token Control**: Ensure you have proper control over both tokens (e.g. `TreasuryCap` for MINT_BURN types on Sui)
-3. **TreasuryCap Security**: For MINT_BURN token managers on Sui, the `TreasuryCap` is transferred to the token manager. Ensure this is intended before proceeding, and that any precedent transactions (such as minting yourself tokens) has been taken care of before transferring the `TreasuryCap`.
-4. **Decimal Precision**: Be aware of decimal differences between chains. ITS Hub automatically handles scaling, but understand the implications for your use case
+1. **Salt Management**: Use unique salts for each token linking operation. On Sui, the salt must be 0x + 64 hex characters (e.g. 32 bytes) matching Sui address format.
+2. **Token Control**: Ensure you have proper control over both tokens (e.g. `TreasuryCap` for MINT_BURN token manager types on Sui).
+3. **TreasuryCap Security**: For MINT_BURN token managers, the `TreasuryCap` is transferred to the token manager. Ensure this is intended before proceeding, and that any precedent transactions (such as minting yourself tokens) has been taken care of before transferring the `TreasuryCap`.
+4. **Decimal Precision**: Be aware of decimal differences between chains. ITS Hub automatically handles scaling, but understand the implications for your use case.
