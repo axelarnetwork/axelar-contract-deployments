@@ -1674,22 +1674,24 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
+          "salt": "ITS v2.1.1",
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0x835AF4Fa00f7D7E90e878A5Ed72c309fEA3CB675",
-          "interchainTokenDeployer": "0x48ca274849c3CBfAB152b46d88c52C7740cb1007",
-          "tokenManager": "0x377F8af458d247E6B92a988b015997De053a98ae",
-          "tokenHandler": "0x358f38620e86fBBDA786A1a1500241b3AFf2a973",
-          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
+          "tokenManagerDeployer": "0xFa71E6789d5e0833Dd2BAa312D811597b8B9C4C3",
+          "interchainTokenDeployer": "0xD3f5f5517650463C4875B4ECAD0fbcf13ACC9214",
+          "tokenManager": "0x914dc2eAc9C867E167325ABeD5e3c66723687d4f",
+          "tokenHandler": "0x725161e51F724F7E967630a4Ba097e0331A9fE7E",
+          "implementation": "0xFF882Ade63338494Fdab578c2046208dB2cA08EA",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
+          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5",
+          "version": "2.1.0"
         },
         "InterchainTokenFactory": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
-          "implementation": "0x3296D09c102447ECEE9E469c83b22Bbec8e87a95",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "implementation": "0xb7b033b301D461b8eDB6fC05400d90B9F7675094",
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.0"
         }
       }
     },
@@ -2209,7 +2211,7 @@
       "chainType": "evm",
       "explorer": {
         "name": "Hyperliquid Explorer",
-        "url": "https://app.hyperliquid-testnet.xyz/explorer"
+        "url": "https://testnet.purrsec.com/"
       },
       "contracts": {
         "ConstAddressDeployer": {
@@ -2662,10 +2664,10 @@
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "76",
-        "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
-        "codeId": 28,
-        "lastUploadedCodeId": 1,
+        "storeCodeProposalId": "276",
+        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
+        "codeId": 68,
+        "lastUploadedCodeId": 68,
         "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
         "executeProposalId": "16",
         "flow": {
@@ -2702,10 +2704,10 @@
       },
       "Coordinator": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "66",
-        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
+        "storeCodeProposalId": "286",
+        "storeCodeProposalCodeHash": "5a12c166833e73f12b17bf8480c51b638afbae6aba13bf6ea9870bdddc78e681",
         "codeId": 18,
-        "lastUploadedCodeId": 5,
+        "lastUploadedCodeId": 73,
         "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y",
         "executeProposalId": "20",
         "flow": {
@@ -2719,10 +2721,10 @@
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "166",
-        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
+        "storeCodeProposalId": "285",
+        "storeCodeProposalCodeHash": "78919bd79976f9e22a632b8301e219819900161c94914ee6fdf49a3b6d9db272",
         "codeId": 42,
-        "lastUploadedCodeId": 42,
+        "lastUploadedCodeId": 72,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
@@ -3186,6 +3188,7 @@
       "axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm",
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
-    ]
+    ],
+    "cosmosSDK": "0.45.16"
   }
 }

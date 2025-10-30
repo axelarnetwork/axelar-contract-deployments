@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, printInfo, getChainConfig, validateParameters, encodeITSDestination } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -22,9 +22,16 @@ const {
 } = ethers;
 
 async function sendToken(keypair, client, contracts, args, options) {
+    const config = loadConfig(options.env);
+    const { Example, GasService, AxelarGateway, InterchainTokenService } = contracts;
     const [symbol, destinationChain, destinationAddress, feeAmount, amount] = args;
 
-    const { Example, GasService, AxelarGateway, InterchainTokenService } = contracts;
+    validateParameters({
+        isValidNumber: { amount, feeAmount },
+    });
+
+    const destinationAddressEnc = encodeITSDestination(config.chains, destinationChain, destinationAddress);
+
     const ItsToken = contracts[symbol.toUpperCase()];
 
     if (!ItsToken) {
@@ -130,7 +137,7 @@ async function sendToken(keypair, client, contracts, args, options) {
             TokenId,
             Coin,
             destinationChain,
-            destinationAddress,
+            destinationAddressEnc,
             '0x', // its token metadata
             walletAddress,
             gas,
@@ -247,38 +254,36 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     const postDeployTxBuilder = new TxBuilder(client);
 
+    // Mint tokens before registration (while user still holds the TreasuryCap)
+    const amount = Number.isFinite(Number(options.mintAmount)) ? parseInt(options.mintAmount) : 0;
+    if (amount && options.origin) {
+        const unitAmount = getUnitAmount(options.mintAmount, decimals);
+
+        const mintTxBuilder = new TxBuilder(client);
+
+        const coin = await mintTxBuilder.moveCall({
+            target: `${SUI_PACKAGE_ID}::coin::mint`,
+            arguments: [TreasuryCap, unitAmount],
+            typeArguments: [tokenType],
+        });
+
+        mintTxBuilder.tx.transferObjects([coin], walletAddress);
+
+        await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
+    }
+
     if (options.origin) {
-        // Mint tokens before registration (while user still holds the TreasuryCap)
-        const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
-        if (amount) {
-            const unitAmount = getUnitAmount(options.mintAmount, decimals);
+        const coinRegistration = options.tokenManagerMode === 'lock_unlock' ? 'register_coin' : 'register_coin_with_cap';
+        const args =
+            options.tokenManagerMode === 'lock_unlock'
+                ? [InterchainTokenService.objects.InterchainTokenService, Metadata]
+                : [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap];
 
-            const mintTxBuilder = new TxBuilder(client);
-
-            const coin = await mintTxBuilder.moveCall({
-                target: `${SUI_PACKAGE_ID}::coin::mint`,
-                arguments: [TreasuryCap, unitAmount],
-                typeArguments: [tokenType],
-            });
-
-            mintTxBuilder.tx.transferObjects([coin], walletAddress);
-
-            await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
-        }
-
-        if (options.tokenManagerMode === 'lock_unlock') {
-            await postDeployTxBuilder.moveCall({
-                target: `${Example.address}::its::register_coin`,
-                arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
-                typeArguments: [tokenType],
-            });
-        } else {
-            await postDeployTxBuilder.moveCall({
-                target: `${Example.address}::its::register_coin_with_cap`,
-                arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap],
-                typeArguments: [tokenType],
-            });
-        }
+        await postDeployTxBuilder.moveCall({
+            target: `${Example.address}::its::${coinRegistration}`,
+            arguments: args,
+            typeArguments: [tokenType],
+        });
 
         const result = await broadcastFromTxBuilder(
             postDeployTxBuilder,
@@ -442,9 +447,7 @@ if (require.main === module) {
         .description('Deploy token on Sui. The supported token manager modes are lock_unlock (default) and mint_burn.')
         .command('deploy-token <symbol> <name> <decimals>')
         .addOption(
-            new Option('--tokenManagerMode <tokenManagerMode>', 'Token Manager Mode')
-                .default('lock_unlock')
-                .choices(['lock_unlock', 'mint_burn']),
+            new Option('--tokenManagerMode <mode>', 'Token Manager Mode').choices(['lock_unlock', 'mint_burn']).makeOptionMandatory(true),
         )
         .addOption(new Option('--mintAmount <amount>', 'Amount of tokens to mint to the deployer (must be origin).').default('1000'))
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))

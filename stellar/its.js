@@ -14,6 +14,7 @@ const {
     validateParameters,
     validateDestinationChain,
     validateChain,
+    encodeITSDestinationToken,
 } = require('../common');
 const {
     addBaseOptions,
@@ -407,7 +408,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
-    const itsDestinationTokenAddress = encodeITSDestination(config.chains, destinationChain, destinationTokenAddress);
+    const itsDestinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationTokenAddress);
     printInfo('Human-readable destination token address', destinationTokenAddress);
 
     let operatorBytes = nativeToScVal(null, { type: 'void' });
@@ -635,3 +636,4 @@ if (require.main === module) {
 
     program.parse();
 }
+module.exports = { addTrustedChains, removeTrustedChains, manageTrustedChains };

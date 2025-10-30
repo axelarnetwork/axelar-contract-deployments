@@ -2,6 +2,10 @@ import { GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
 
 import { loadConfig, printWarn, saveConfig } from './utils';
 
+export const VERIFIER_CONTRACT_NAME = 'VotingVerifier';
+export const GATEWAY_CONTRACT_NAME = 'Gateway';
+export const MULTISIG_PROVER_CONTRACT_NAME = 'MultisigProver';
+
 export interface FullConfig {
     axelar: AxelarConfig;
     chains: Record<string, ChainConfig>;
@@ -43,7 +47,14 @@ export interface ExplorerConfig {
     api?: string;
 }
 
+export interface DeploymentConfig {
+    deploymentName: string;
+    salt: string;
+    proposalId: string;
+}
+
 export interface ContractConfig {
+    deployments?: Record<string, DeploymentConfig>;
     address?: string;
     codeId?: number;
     storeCodeProposalCodeHash?: string;
@@ -55,6 +66,39 @@ export interface AxelarContractConfig extends ContractConfig {
     governanceAddress?: string;
     governanceAccount?: string;
     [chainName: string]: unknown;
+}
+
+export interface VotingVerifierChainConfig {
+    governanceAddress: string;
+    serviceName: string;
+    sourceGatewayAddress: string;
+    votingThreshold: [string, string];
+    blockExpiry: number;
+    confirmationHeight: number;
+    msgIdFormat: string;
+    addressFormat: string;
+    codeId: number;
+    contractAdmin?: string;
+    address?: string;
+}
+
+export interface MultisigProverChainConfig {
+    governanceAddress: string;
+    encoder: string;
+    keyType: string;
+    adminAddress: string;
+    verifierSetDiffThreshold: number;
+    signingThreshold: [string, string];
+    codeId: number;
+    contractAdmin?: string;
+    address?: string;
+    domainSeparator?: string;
+}
+
+export interface GatewayChainConfig {
+    codeId: number;
+    contractAdmin?: string;
+    address?: string;
 }
 
 export class ConfigManager implements FullConfig {
@@ -173,7 +217,7 @@ export class ConfigManager implements FullConfig {
             'approxFinalityWaitTime',
             'contracts',
         ];
-        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'stacks', 'hedera'];
+        const validChainTypes = ['evm', 'cosmos', 'stellar', 'sui', 'svm', 'xrpl', 'hedera'];
 
         requiredFields.forEach((field) => {
             if (chainConfig[field] === undefined || chainConfig[field] === null) {
@@ -299,7 +343,7 @@ export class ConfigManager implements FullConfig {
     }
 
     public saveConfig(): void {
-        saveConfig({ axelar: this.axelar, chains: this.chains }, this.environment);
+        saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
     public getProposalInstantiateAddresses(): string[] {
@@ -325,7 +369,7 @@ export class ConfigManager implements FullConfig {
         }
 
         if (!axelarContracts[configContractName]) {
-            axelarContracts[configContractName] = {};
+            throw new Error(`Contract '${configContractName}' not found in ${this.environment} config`);
         }
 
         return axelarContracts[configContractName];
@@ -334,9 +378,77 @@ export class ConfigManager implements FullConfig {
     public getContractConfigByChain(configContractName: string, chainName: string): ContractConfig {
         const contractConfig = this.getContractConfig(configContractName);
         if (!contractConfig[chainName]) {
-            contractConfig[chainName] = {};
+            throw new Error(`Contract '${configContractName}' not found on chain '${chainName}' in ${this.environment} config`);
         }
         return contractConfig[chainName];
+    }
+
+    public validateRequired<T>(value: T | undefined | null, configPath: string): T {
+        if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+            throw new Error(`Missing required configuration for the chain. Please configure it in ${configPath}.`);
+        }
+        return value;
+    }
+
+    public validateThreshold(value: [string, string] | undefined | null, configPath: string): [string, string] {
+        if (!value || !Array.isArray(value) || value.length !== 2) {
+            throw new Error(
+                `Missing or invalid threshold configuration for the chain. Please configure it in ${configPath} as [numerator, denominator].`,
+            );
+        } else if (Number(value[0]) > Number(value[1])) {
+            throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
+        }
+        return value;
+    }
+
+    public getMultisigProverContractForChainType(chainType: string): string {
+        const chainProverMapping: Record<string, string> = {
+            svm: 'SolanaMultisigProver',
+        };
+        return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
+    }
+
+    public getMultisigProverContract(chainName: string): MultisigProverChainConfig {
+        const chainConfig = this.getChainConfig(chainName);
+        const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
+        const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
+
+        this.validateRequired(multisigProverConfig.codeId, `${multisigProverContractName}[${chainName}].codeId`);
+        this.validateRequired(multisigProverConfig.encoder, `${multisigProverContractName}[${chainName}].encoder`);
+        this.validateRequired(multisigProverConfig.keyType, `${multisigProverContractName}[${chainName}].keyType`);
+        this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`);
+        this.validateRequired(
+            multisigProverConfig.verifierSetDiffThreshold,
+            `${multisigProverContractName}[${chainName}].verifierSetDiffThreshold`,
+        );
+        this.validateThreshold(multisigProverConfig.signingThreshold, `${multisigProverContractName}[${chainName}].signingThreshold`);
+        this.validateRequired(multisigProverConfig.governanceAddress, `${multisigProverContractName}[${chainName}].governanceAddress`);
+
+        return multisigProverConfig;
+    }
+
+    public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
+        const votingVerifierConfig = this.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName) as VotingVerifierChainConfig;
+
+        this.validateRequired(votingVerifierConfig.codeId, `${VERIFIER_CONTRACT_NAME}[${chainName}].codeId`);
+        this.validateRequired(votingVerifierConfig.governanceAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`);
+        this.validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
+        this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`);
+        this.validateThreshold(votingVerifierConfig.votingThreshold, `${VERIFIER_CONTRACT_NAME}[${chainName}].votingThreshold`);
+        this.validateRequired(votingVerifierConfig.blockExpiry, `${VERIFIER_CONTRACT_NAME}[${chainName}].blockExpiry`);
+        this.validateRequired(votingVerifierConfig.confirmationHeight, `${VERIFIER_CONTRACT_NAME}[${chainName}].confirmationHeight`);
+        this.validateRequired(votingVerifierConfig.msgIdFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].msgIdFormat`);
+        this.validateRequired(votingVerifierConfig.addressFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].addressFormat`);
+
+        return votingVerifierConfig;
+    }
+
+    public getGatewayContract(chainName: string): GatewayChainConfig {
+        const gatewayConfig = this.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
+
+        this.validateRequired(gatewayConfig.codeId, `${GATEWAY_CONTRACT_NAME}[${chainName}].codeId`);
+
+        return gatewayConfig;
     }
 
     public getFee(): string | StdFee {
