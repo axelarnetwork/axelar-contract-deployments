@@ -2211,7 +2211,7 @@
       "chainType": "evm",
       "explorer": {
         "name": "Hyperliquid Explorer",
-        "url": "https://app.hyperliquid-testnet.xyz/explorer"
+        "url": "https://testnet.purrsec.com/"
       },
       "contracts": {
         "ConstAddressDeployer": {
@@ -2664,10 +2664,10 @@
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "76",
-        "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
-        "codeId": 28,
-        "lastUploadedCodeId": 1,
+        "storeCodeProposalId": "276",
+        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
+        "codeId": 68,
+        "lastUploadedCodeId": 68,
         "address": "axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9",
         "executeProposalId": "16",
         "flow": {
@@ -2704,10 +2704,10 @@
       },
       "Coordinator": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "66",
-        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
+        "storeCodeProposalId": "286",
+        "storeCodeProposalCodeHash": "5a12c166833e73f12b17bf8480c51b638afbae6aba13bf6ea9870bdddc78e681",
         "codeId": 18,
-        "lastUploadedCodeId": 5,
+        "lastUploadedCodeId": 73,
         "address": "axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y",
         "executeProposalId": "20",
         "flow": {
@@ -2721,10 +2721,10 @@
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "166",
-        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
+        "storeCodeProposalId": "285",
+        "storeCodeProposalCodeHash": "78919bd79976f9e22a632b8301e219819900161c94914ee6fdf49a3b6d9db272",
         "codeId": 42,
-        "lastUploadedCodeId": 42,
+        "lastUploadedCodeId": 72,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
@@ -3188,6 +3188,7 @@
       "axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm",
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
-    ]
+    ],
+    "cosmosSDK": "0.45.16"
   }
 }
