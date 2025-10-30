@@ -4,7 +4,7 @@
 
 This document explains how to link custom tokens on Sui to other chains using the Interchain Token Service (ITS).
 
-For detailed design specifications and architecture, see **[ARC-1: ITS Hub Multi-Chain Token Linking](https://github.com/axelarnetwork/arcs/blob/main/ARCs/ARC-1.md)**. <!-- skip-check -->
+For detailed ITS design specifications and architecture, see **[ARC-1: ITS Hub Multi-Chain Token Linking](https://github.com/axelarnetwork/arcs/blob/main/ARCs/ARC-1.md)**. <!-- skip-check -->
 
 The token linking feature enables:
 
@@ -37,22 +37,26 @@ Once metadata is registered, you can link tokens by specifying which tokens on d
 
 ## Prerequisites
 
-Before linking tokens, ensure you have:
+**Token Control**
 
-- **Token Control**: Token permissions depend on the manager type:
-    - **LOCK_UNLOCK**: No token control or minter permissions required for that token
-    - **MINT_BURN**: You must have the TreasuryCap for the token on Sui to transfer it to the token manager
+Before linking tokens, ensure you have Token permissions. Permission requirements depend on the manager type:
+
+- **LOCK_UNLOCK**: No token control or minter permissions required for that token
+    
+- **MINT_BURN**: You must have the [TreasuryCap](https://docs.sui.io/references/framework/sui_sui/coin#sui_coin_TreasuryCap) for the token on Sui to transfer it to the token manager
 
 ## Token Manager Types
 
 For Sui, only the following token manager types are supported:
 
-- `LOCK_UNLOCK` (2): For tokens that are locked/unlocked on the chain
-- `MINT_BURN` (4): For tokens that are burned/minted on the chain
+- **LOCK_UNLOCK** (`2_u256`): For tokens that are locked/unlocked on the chain
+- **MINT_BURN** (`4_u256`): For tokens that are burned/minted on the chain
 
-**Important:** Linking two LOCK_UNLOCK tokens is not recommended. One token should be MINT_BURN (requiring TreasuryCap transfer if token deployed on Sui) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
+**Important:** Linking two LOCK_UNLOCK tokens is not recommended. One token should be MINT_BURN (requiring `TreasuryCap` transfer if token deployed on Sui) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
 
 ## Parameters
+
+**Function Signature**
 
 ```move
 public fun link_coin(
@@ -66,22 +70,58 @@ public fun link_coin(
 ): MessageTicket { ... }
 ```
 
-**Required:**
+**Requirements**
 
-- `deployer`: An ITS `Channel` to represent the deployer of the coin. Transaction sender's Sui address will not be tracked, only their `Channel`
-- `salt`: Unique identifier for the token linking operation. Used to generate a unique `tokenId`. On Sui, the salt must be 64 characters (e.g.32 bytes) matching the Sui address format
-- `destination_chain`: Name of the destination chain (e.g., `avalanche`, `ethereum`)
-- `destination_token_address`: Address of the token on the destination chain
+- `deployer`: An ITS `Channel` of the deployer of the coin as the sender's Sui address will not be tracked, only their `Channel` ID.
+- `salt`: Unique identifier for the token linking operation that will be used to generate a unique `tokenId`. On Sui, the `salt` must be 64 characters (e.g. 32 bytes), matching the Sui address format.
+- `destination_chain`: Name of the destination chain.
+- `destination_token_address`: Address of the token on the destination chain.
 - `token_manager_type`: Token manager type on Sui (e.g., `2_u256` for LOCK_UNLOCK or, `4_u256` for MINT_BURN)
-- `link_params`: Bytes representation of an address on the destination chain that will be Operator of the destination token
 
-## Channels
+**Optional**
+- `link_params`: Bytes representation of an address on the destination chain that will be `Operator` of the destination token. Or, use an empty `vector` for no `Operator`.
 
-[TODO:]
-- Describe role of `Channel` in general
-- Describe Sui object model and `Channel` ownership
-- Describe related entities using `Channel` (Operator, Distributor, Deployer)
-- Describe role of `Channel` in `salt` and `TokenId` derivation for coin linking
+## Channel Role & Security
+
+#### `Channel` & Sender Identity
+
+Sui uses an object ownership model for security. Contracts cannot access sender parameters (such as the sender's Sui address), but capabilities can be granted by owning or transferring an object that posses the permissions required.
+
+In the context of ITS, the `Channel` object is used in place of the sender's Sui address managing, deploying and transferring tokens.
+
+#### Notable Entities Using `Channel`
+
+1. **Operator:** controls operational settings for a token manager, including flow limits and pausing.
+2. **Distributor:** has minting and burning privileges for tokens with MINT_BURN token manager types.
+3. **Deployer:** the original entity that registered or deployed a token. During token linking, deployers can auto-enable operators on the destination chain, and during custom token registration their channel is used for `TokenId` derivation.
+
+#### Role of `Channel` in `TokenId` Derivation
+
+**Custom Token ID Derivation**
+
+When registering a custom token for linking, the token ID is derived from three components:
+
+1. **Chain Name Hash** (`Bytes32`): Unique identifier for the Sui chain instance
+2. **Deployer** (`Channel`): The address of the deployer's Channel object
+3. **Salt** (`Bytes32`): A user-provided unique value (must be 66 characters on Sui)
+
+Derivation Formula:
+
+```move
+token_id = hash(PREFIX_CUSTOM_TOKEN_ID, chain_name_hash, deployer.to_address(), salt)
+```
+
+**Note:** the same `Channel` cannot re-use the same `salt`.
+
+#### Role of `Channel` in `link_coin`
+
+During token linking the deployer is verified as the creator of the token using the provided `Channel` and `salt` by deriving the token id.
+
+Derivation Formula:
+
+```move
+let token_id = token_id::custom_token_id(&self.chain_name_hash, deployer, &salt);
+```
 
 ## Operator Role & Security
 
