@@ -243,6 +243,8 @@ EVM_WALLET_ADDRESS="0x13f8C723AeB8CA762c652c553a11a11483846d8B"
 SUI_WALLET_ADDRESS="0x76f89a9b56dc580aed9f97e2b3bd03d8d24464e38522da9464c15103761c6707"
 CHANNEL="0x028680c11ddb66705c1609d204b108737003d140d27e9096fe72b6bc2dadfeeb"
 TRANSFER_AMOUNT=1
+LOCK_UNLOCK=2
+MINT_BURN=4
 ```
 
 ### Example 1: Link Token on Sui (Source - _LOCK_UNLOCK_) with EVM Token (Destination - _MINT_BURN_)
@@ -265,7 +267,7 @@ EVM_TOKEN_ADDRESS="EVM_TOKEN_ADDRESS"
 ts-node evm/its register-token-metadata $EVM_TOKEN_ADDRESS -n $EVM_CHAIN
 
 # Deploy and register token on Sui with LOCK_UNLOCK mode
-ts-node sui/its register-custom-coin $SYMBOL $NAME $SUI_DECIMALS --salt $SALT
+ts-node sui/its register-custom-coin $SYMBOL $NAME $SUI_DECIMALS --salt $SALT --channel $CHANNEL
 
 # Register Sui token metadata
 ts-node sui/its register-coin-metadata $SYMBOL
