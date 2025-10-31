@@ -529,5 +529,5 @@ Solution: Ensure the correct `CoinType` is being broadcast in the `linkToken` re
 
 1. **Salt Management**: Use unique salts for each token linking operation. On Sui, the salt must be 0x + 64 hex characters (e.g. 32 bytes) matching Sui address format.
 2. **Token Control**: Ensure you have proper control over both tokens (e.g. `TreasuryCap` for `MINT_BURN` token manager types on Sui).
-3. **TreasuryCap Security**: For MINT_BURN token managers, the `TreasuryCap` is transferred to the token manager. Ensure this is intended before proceeding, and that any precedent transactions (such as minting yourself tokens) has been taken care of before transferring the `TreasuryCap`.
+3. **TreasuryCap Security**: For `MINT_BURN` token managers, the `TreasuryCap` is transferred to the token manager. Ensure this is intended before proceeding, and that any previous transactions (such as minting yourself tokens) have been taken care of before transferring the `TreasuryCap`.
 4. **Decimal Precision**: Be aware of decimal differences between chains. ITS Hub automatically handles scaling, but understand the implications for your use case.
