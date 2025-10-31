@@ -126,3 +126,6 @@ sui/move
 
 .stellar/
 *.clar
+
+# ITS hub migration
+axelar-chains-config/info/tokens-p2p/
