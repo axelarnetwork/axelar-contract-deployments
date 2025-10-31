@@ -341,18 +341,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anchor-discriminators-macros"
-version = "0.1.0"
-dependencies = [
- "anchor-discriminators",
- "borsh 1.5.7",
- "convert_case 0.8.0",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "anchor-lang"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1444,6 +1432,7 @@ dependencies = [
  "solana-axelar-governance",
  "solana-axelar-its",
  "solana-axelar-memo",
+ "solana-axelar-operators",
  "solana-clap-v3-utils",
  "solana-cli-config",
  "solana-client",
@@ -1573,15 +1562,6 @@ name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
-
-[[package]]
-name = "convert_case"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baaaa0ecca5b51987b9423ccdc971514dd8b0bb7b4060b983d3664dad3f1f89f"
-dependencies = [
- "unicode-segmentation",
-]
 
 [[package]]
 name = "core-foundation"
@@ -2024,7 +2004,7 @@ version = "0.99.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6edb4b64a43d977b8e99788fe3a04d483834fba1215a7e02caa415b626497f7f"
 dependencies = [
- "convert_case 0.4.0",
+ "convert_case",
  "proc-macro2",
  "quote",
  "rustc_version 0.4.1",
@@ -2201,27 +2181,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed25519-dalek"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70e796c081cee67dc755e1a36a0a172b897fab85fc3f6bc48307991f64e4eca9"
-dependencies = [
- "curve25519-dalek 4.1.3",
- "ed25519 2.2.3",
- "serde",
- "sha2 0.10.9",
- "subtle",
- "zeroize",
-]
-
-[[package]]
 name = "ed25519-dalek-bip32"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d2be62a4061b872c8c0873ee4fc6f101ce7b889d039f019c5fa2af471a59908"
 dependencies = [
  "derivation-path",
- "ed25519-dalek 1.0.1",
+ "ed25519-dalek",
  "hmac 0.12.1",
  "sha2 0.10.9",
 ]
@@ -2367,17 +2333,6 @@ dependencies = [
  "anchor-discriminators",
  "borsh 1.5.7",
  "solana-program",
-]
-
-[[package]]
-name = "event-cpi-macros"
-version = "0.1.0"
-dependencies = [
- "anchor-discriminators",
- "event-cpi",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -3409,12 +3364,13 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 name = "its-instruction-builder"
 version = "0.1.0"
 dependencies = [
+ "anchor-lang",
  "async-recursion",
  "axelar-solana-encoding",
  "borsh 1.5.7",
  "interchain-token-transfer-gmp",
- "solana-axelar-gateway-legacy",
- "solana-axelar-its-legacy",
+ "solana-axelar-gateway",
+ "solana-axelar-its",
  "solana-client",
  "solana-sdk",
  "spl-token-2022 6.0.0",
@@ -4812,19 +4768,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "role-management"
-version = "0.1.0"
-dependencies = [
- "anchor-discriminators",
- "anchor-discriminators-macros",
- "bincode 1.3.3",
- "bitflags 2.10.0",
- "borsh 1.5.7",
- "program-utils",
- "solana-program",
-]
-
-[[package]]
 name = "rpassword"
 version = "7.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5699,24 +5642,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "solana-axelar-gas-service-legacy"
-version = "0.1.0"
-dependencies = [
- "anchor-discriminators",
- "anchor-discriminators-macros",
- "borsh 1.5.7",
- "bytemuck",
- "event-cpi",
- "event-cpi-macros",
- "program-utils",
- "solana-program",
- "solana-sdk-ids",
- "spl-associated-token-account 6.0.0",
- "spl-token 6.0.0",
- "spl-token-2022 6.0.0",
-]
-
-[[package]]
 name = "solana-axelar-gateway"
 version = "0.1.0"
 dependencies = [
@@ -5732,35 +5657,6 @@ dependencies = [
  "num-traits",
  "program-utils",
  "udigest",
-]
-
-[[package]]
-name = "solana-axelar-gateway-legacy"
-version = "0.1.0"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "anchor-discriminators",
- "anchor-discriminators-macros",
- "axelar-solana-encoding",
- "bincode 1.3.3",
- "bitvec",
- "bnum",
- "borsh 1.5.7",
- "bytemuck",
- "ed25519-dalek 2.2.0",
- "event-cpi",
- "event-cpi-macros",
- "hex",
- "itertools 0.12.1",
- "libsecp256k1",
- "num-derive 0.4.2",
- "num-traits",
- "program-utils",
- "role-management",
- "solana-program",
- "solana-sdk-ids",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -5787,33 +5683,6 @@ dependencies = [
  "program-utils",
  "solana-axelar-gas-service",
  "solana-axelar-operators",
-]
-
-[[package]]
-name = "solana-axelar-its-legacy"
-version = "0.1.0"
-dependencies = [
- "alloy-primitives",
- "anchor-discriminators",
- "anchor-discriminators-macros",
- "axelar-solana-encoding",
- "bitflags 2.10.0",
- "borsh 1.5.7",
- "event-cpi",
- "event-cpi-macros",
- "interchain-token-transfer-gmp",
- "itertools 0.12.1",
- "mpl-token-metadata",
- "program-utils",
- "role-management",
- "solana-axelar-gas-service-legacy",
- "solana-axelar-gateway-legacy",
- "solana-program",
- "solana-sdk-ids",
- "spl-associated-token-account 6.0.0",
- "spl-token-2022 6.0.0",
- "spl-token-metadata-interface 0.6.0",
- "typed-builder",
 ]
 
 [[package]]
@@ -6178,7 +6047,7 @@ checksum = "a1feafa1691ea3ae588f99056f4bdd1293212c7ece28243d7da257c443e84753"
 dependencies = [
  "bytemuck",
  "bytemuck_derive",
- "ed25519-dalek 1.0.1",
+ "ed25519-dalek",
  "solana-feature-set",
  "solana-instruction",
  "solana-precompile-error",
@@ -6432,7 +6301,7 @@ version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd3f04aa1a05c535e93e121a95f66e7dcccf57e007282e8255535d24bf1e98bb"
 dependencies = [
- "ed25519-dalek 1.0.1",
+ "ed25519-dalek",
  "ed25519-dalek-bip32",
  "five8",
  "rand 0.7.3",
@@ -7392,7 +7261,7 @@ version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "64c8ec8e657aecfc187522fc67495142c12f35e55ddeca8698edbb738b8dbd8c"
 dependencies = [
- "ed25519-dalek 1.0.1",
+ "ed25519-dalek",
  "five8",
  "rand 0.8.5",
  "serde",
@@ -9395,26 +9264,6 @@ dependencies = [
  "url",
  "utf-8",
  "webpki-roots 0.24.0",
-]
-
-[[package]]
-name = "typed-builder"
-version = "0.20.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd9d30e3a08026c78f246b173243cf07b3696d274debd26680773b6773c2afc7"
-dependencies = [
- "typed-builder-macro",
-]
-
-[[package]]
-name = "typed-builder-macro"
-version = "0.20.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c36781cc0e46a83726d9879608e4cf6c2505237e263a8eb8c24502989cfdb28"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.108",
 ]
 
 [[package]]

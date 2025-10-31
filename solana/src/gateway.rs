@@ -589,7 +589,7 @@ async fn init(
         },
         minimum_rotation_delay: init_args.minimum_rotation_delay,
         operator: init_args.operator,
-        previous_verifier_retention: solana_axelar_gateway::u256::U256::from(
+        previous_verifier_retention: solana_axelar_gateway::U256::from(
             u64::try_from(init_args.previous_signers_retention)
                 .map_err(|_| eyre!("previous_signers_retention value too large for u64"))?,
         ),
@@ -1008,13 +1008,9 @@ async fn execute(
             .await?;
             instructions.push(ix);
         } else if destination_address == solana_axelar_governance::id() {
-            let ix = solana_axelar_governance::instructions::builder::calculate_gmp_ix(
-                *fee_payer,
-                incoming_message_pda,
-                &message,
-                &payload,
-            )?;
-            instructions.push(ix);
+            eyre::bail!(
+                "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
+            );
         } else {
             eyre::bail!(
                 "Generic executable instruction building not yet implemented for v2. Use ITS or Governance specific commands."

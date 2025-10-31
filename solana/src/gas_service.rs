@@ -1,5 +1,6 @@
+use anchor_lang::InstructionData;
 use clap::{Parser, Subcommand};
-use solana_sdk::instruction::Instruction;
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
@@ -23,10 +24,6 @@ pub(crate) struct InitArgs {
     /// to withdraw funds from the AxelarGasService program and update the configuration.
     #[clap(short, long)]
     operator: Pubkey,
-
-    /// The salt used to derive the config PDA. This should be a unique value for each deployment.
-    #[clap(short, long)]
-    salt: String,
 }
 
 pub(crate) fn build_transaction(
@@ -77,20 +74,38 @@ fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (config_pda, _bump) = solana_axelar_gas_service::get_config_pda();
+    let (treasury_pda, _) = Pubkey::find_program_address(
+        &[b"gas-service"],
+        &solana_axelar_gas_service::id(),
+    );
+
+    let (operator_pda, _) = Pubkey::find_program_address(
+        &[b"operator", init_args.operator.as_ref()],
+        &solana_axelar_operators::ID,
+    );
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
         ADDRESS_KEY: solana_axelar_gas_service::id().to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
-        CONFIG_ACCOUNT_KEY: config_pda.to_string(),
+        CONFIG_ACCOUNT_KEY: treasury_pda.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![solana_axelar_gas_service::instructions::init_config(
-        fee_payer,
-        &init_args.operator,
-    )?])
+    use anchor_lang::InstructionData;
+    let ix_data = solana_axelar_gas_service::instruction::Initialize {}.data();
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_gas_service::id(),
+        accounts: vec![
+            AccountMeta::new(*fee_payer, true),
+            AccountMeta::new_readonly(init_args.operator, true),
+            AccountMeta::new_readonly(operator_pda, false),
+            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new(treasury_pda, false),
+        ],
+        data: ix_data,
+    }])
 }

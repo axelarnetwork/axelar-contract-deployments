@@ -20,6 +20,9 @@ solana-axelar-its = { path = "./axelar-amplifier-solana/programs/solana-axelar-i
 solana-axelar-memo = { path = "./axelar-amplifier-solana/programs/solana-axelar-memo", features = [
     "no-entrypoint",
 ], default-features = false }
+solana-axelar-operators = { path = "./axelar-amplifier-solana/programs/solana-axelar-operators", features = [
+    "no-entrypoint",
+], default-features = false }
 
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
 anchor-discriminators = { path = "./axelar-amplifier-solana/helpers/anchor-discriminators" }
