@@ -145,7 +145,9 @@ The operator cannot steal tokens directly, but it can modify critical settings t
 
 ### Step 1: Setup Tokens
 
-Deploy test tokens on both chains:
+Deploy test tokens on both chains. 
+
+On Sui, the object IDs for the coin's `TreasuryCap` and `CoinMetadata` will be stored in your chain config JSON, and can also be found in the transaction data. The coin's metadata is publicly frozen and the treasury capability is transferred to the caller.
 
 **Chain A (Sui)**
 
@@ -184,7 +186,7 @@ ts-node evm/its register-token-metadata <tokenAddress> -n <network>
 
 ### Step 3: Register Custom Token
 
-Register the coin on the source chain (Sui):
+Register the coin on the source chain (Sui). If no channel flag is passed (`--channel <channel>`), a new channel will be automatically created and transferred to the caller and can be found in the transaction data.
 
 ```bash
 # For LOCK_UNLOCK token manager
