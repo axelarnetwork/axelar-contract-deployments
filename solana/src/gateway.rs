@@ -48,6 +48,7 @@ fn command_id(source_chain: &str, message_id: &str) -> [u8; 32] {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum GatewayEvent {
     CallContract(solana_axelar_gateway::CallContractEvent),
     VerifierSetRotated(solana_axelar_gateway::VerifierSetRotatedEvent),

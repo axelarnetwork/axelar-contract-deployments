@@ -870,6 +870,7 @@ fn parse_token_manager_type(s: &str) -> Result<TokenManagerType, String> {
     }
 }
 
+#[allow(dead_code)]
 fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<Pubkey> {
     let rpc_client = RpcClient::new(config.url.clone());
     let mint_account = rpc_client.get_account(mint)?;
