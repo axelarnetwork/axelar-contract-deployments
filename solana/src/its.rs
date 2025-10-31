@@ -1080,7 +1080,7 @@ fn init(
             AccountMeta::new_readonly(program_data, false),
             AccountMeta::new(its_root_pda, false),
             AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-            AccountMeta::new_readonly(init_args.operator, true),
+            AccountMeta::new_readonly(init_args.operator, false),
             AccountMeta::new(user_roles_pda, false),
         ],
         data: ix_data,
