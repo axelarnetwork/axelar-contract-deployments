@@ -1038,9 +1038,9 @@ pub(crate) fn build_transaction(
 fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
-    _config: &Config,
+    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mut chains_info: serde_json::Value = read_json_file_from_path(&_config.chains_info_file)?;
+    let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let (its_root_pda, _) = find_its_root_pda();
     let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
 
@@ -1053,16 +1053,14 @@ fn init(
         &solana_axelar_its::id(),
     );
 
-    chains_info[CHAINS_KEY][&_config.chain][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
         ADDRESS_KEY: solana_axelar_its::id().to_string(),
         CONFIG_ACCOUNT_KEY: its_root_pda.to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
-    write_json_to_file_path(&chains_info, &_config.chains_info_file)?;
-
-    use anchor_lang::InstructionData;
+    write_json_to_file_path(&chains_info, &config.chains_info_file)?;
     let ix_data = solana_axelar_its::instruction::Initialize {
         chain_name: init_args.chain_name,
         its_hub_address: init_args.its_hub_address,
@@ -1324,8 +1322,8 @@ fn interchain_transfer(
     args: InterchainTransferArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let _mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let decimals = get_token_decimals(&_mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
 
     let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
@@ -1346,8 +1344,8 @@ fn call_contract_with_interchain_token(
     args: CallContractWithInterchainTokenArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let _mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let decimals = get_token_decimals(&_mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
 
     let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
@@ -1368,8 +1366,8 @@ fn call_contract_with_interchain_token_offchain_data(
     args: CallContractWithInterchainTokenOffchainDataArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let _mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let decimals = get_token_decimals(&_mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let decimals = get_token_decimals(&mint, config)?;
 
     let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 

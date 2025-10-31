@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use anchor_lang::InstructionData;
 use axelar_solana_encoding::hash_payload;
+use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
 use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::execute_data::{ExecuteData, MerkleisedPayload};
 use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
@@ -576,8 +577,6 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
-
     let gateway_program_data =
         solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
 
@@ -834,6 +833,7 @@ async fn rotate(
     Ok(instructions)
 }
 
+#[allow(clippy::too_many_lines)]
 async fn submit_proof(
     fee_payer: &Pubkey,
     submit_proof_args: SubmitProofArgs,
@@ -1095,6 +1095,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
     Ok(())
 }
 
+#[allow(clippy::missing_asserts_for_indexing)]
 fn parse_gateway_event(data: &[u8]) -> eyre::Result<Option<GatewayEvent>> {
     use anchor_lang::AnchorDeserialize;
     use anchor_lang::Discriminator;

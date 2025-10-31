@@ -59,7 +59,7 @@ fn init(fee_payer: &Pubkey, _config: &Config) -> eyre::Result<Vec<Instruction>> 
         "\u{2705} Memo program ({}) initialization details:",
         solana_axelar_memo::id()
     );
-    println!("   Counter Account: {}", counter_pda);
+    println!("   Counter Account: {counter_pda}");
     println!("------------------------------------------");
 
     Ok(vec![Instruction {

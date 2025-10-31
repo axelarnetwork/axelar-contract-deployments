@@ -230,6 +230,7 @@ fn execute_proposal(
     };
 
     let mut native_value = [0u8; 32];
+    #[allow(clippy::little_endian_bytes)]
     native_value[..8].copy_from_slice(&args.base.native_value.to_le_bytes());
 
     let execute_data = solana_axelar_governance::ExecuteProposalData {
@@ -303,6 +304,7 @@ fn execute_operator_proposal(
     };
 
     let mut native_value = [0u8; 32];
+    #[allow(clippy::little_endian_bytes)]
     native_value[..8].copy_from_slice(&args.base.native_value.to_le_bytes());
 
     let execute_data = solana_axelar_governance::ExecuteProposalData {
