@@ -2,14 +2,14 @@
 
 ## Overview
 
-This document explains how to link custom tokens on Sui to other chains using the Interchain Token Service (ITS).
+This document explains how to link custom coins on Sui to other chains using the Interchain Token Service (ITS).
 
 For detailed ITS design specifications and architecture, see **[ARC-1: ITS Hub Multi-Chain Token Linking](https://github.com/axelarnetwork/arcs/blob/main/ARCs/ARC-1.md)**. <!-- skip-check -->
 
 The token linking feature enables:
 
-- Linking custom tokens deployed on Sui with tokens on trusted chains
-- Supporting tokens with different decimal precisions through automatic scaling
+- Linking custom coins deployed on Sui with tokens on trusted chains
+- Supporting coins and tokens with different decimal precisions through automatic scaling
 
 ## How It Works
 
@@ -17,13 +17,15 @@ The token linking process involves two key message types that ITS Hub uses to co
 
 ### Token Metadata Registration
 
-Before linking tokens, ITS Hub needs to know about each token's details (address and decimals) on both chains.
+Before linking tokens, ITS Hub needs to know about each Sui coin and remote token's metadata (address and decimals).
 
 ### Token Linking
 
 Once metadata is registered, you can link tokens by specifying which tokens on different chains should be connected.
 
 ## Link Token Flow
+
+The basic GMP flow followed by the Source and Destination chains: 
 
 ```
 1. User has access to Token A (Source Chain) and Token B (Destination Chain)
@@ -39,11 +41,11 @@ Once metadata is registered, you can link tokens by specifying which tokens on d
 
 **Token Control**
 
-Before linking tokens, ensure you have Token permissions. Permission requirements depend on the manager type:
+Before linking, ensure you have Token permissions. Permission requirements depend on the manager type:
 
-- **LOCK_UNLOCK**: No token control or minter permissions required for that token
+- **LOCK_UNLOCK**: No token control or minter permissions required
     
-- **MINT_BURN**: You must have the [TreasuryCap](https://docs.sui.io/references/framework/sui_sui/coin#sui_coin_TreasuryCap) for the token on Sui to transfer it to the token manager
+- **MINT_BURN**: You must have the [TreasuryCap](https://docs.sui.io/references/framework/sui_sui/coin#sui_coin_TreasuryCap) for the coin on Sui to transfer it to the token manager (`CoinManagement`) in Sui ITS.
 
 ## Token Manager Types
 
@@ -52,10 +54,9 @@ For Sui, only the following token manager types are supported:
 - **LOCK_UNLOCK** (`2_u256`): For tokens that are locked/unlocked on the home chain
 - **MINT_BURN** (`4_u256`): For tokens that are burned/minted on the chain
 
-**Important:** Linking two LOCK_UNLOCK tokens is never recommended. One token should be MINT_BURN (requiring `TreasuryCap` transfer if token deployed on Sui) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
+**Important:** Linking two LOCK_UNLOCK tokens is not recommended. One should be MINT_BURN (requiring `TreasuryCap` transfer if the coin is deployed on Sui) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
 
-## Parameters
-
+## Link Coin
 **Function Signature**
 
 ```move
@@ -79,13 +80,11 @@ public fun link_coin(
 - `token_manager_type`: Token manager type on Sui (e.g., `2_u256` for LOCK_UNLOCK or, `4_u256` for MINT_BURN)
 
 **Optional**
-- `link_params`: Bytes representation of an address on the destination chain that will be `Operator` of the destination token. Or, use an empty `vector` for no `Operator`.
+- `link_params`: Bytes representation of an address on the destination chain that will become `Operator` of the destination token. Or, use an empty `vector` for no `Operator`.
 
 ## Channel Role & Security
 
 #### `Channel` & Sender Identity
-
-Sui uses an object ownership model for security. Contracts cannot access sender parameters (such as the sender's Sui address), but capabilities can be granted by owning or transferring an object that posses the permissions required.
 
 In the context of ITS, the `Channel` object is used in place of the sender's Sui address managing, deploying and transferring tokens.
 
@@ -99,10 +98,10 @@ In the context of ITS, the `Channel` object is used in place of the sender's Sui
 
 **Custom Token ID Derivation**
 
-When registering a custom token for linking, the token ID is derived from three components:
+When registering a custom coin for token linking, the token ID on Sui is derived from three components:
 
 1. **Chain Name Hash** (`Bytes32`): Unique identifier for the Sui chain instance
-2. **Deployer** (`Channel`): The address of the deployer's Channel object
+2. **Deployer** (`Channel`): The deployer's `Channel` object
 3. **Salt** (`Bytes32`): A user-provided unique value (must be 0x + 64 hex characters on Sui)
 
 Derivation Formula:
@@ -115,9 +114,9 @@ let token_id = hash(PREFIX_CUSTOM_TOKEN_ID, chain_name_hash, deployer.to_address
 
 #### Role of `Channel` in `link_coin`
 
-During token linking the deployer is verified as the creator of the token using the provided `Channel` and `salt` by deriving the token id.
+During token linking the deployer is verified as the deployer, using the provided `Channel` and `salt`, by re-deriving the token id.
 
-Derivation Formula:
+Derivation:
 
 ```move
 let token_id = token_id::custom_token_id(&self.chain_name_hash, deployer, &salt);
@@ -127,15 +126,15 @@ let token_id = token_id::custom_token_id(&self.chain_name_hash, deployer, &salt)
 
 **Operator Role:**
 
-When Sui [receives](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L269-L273) a link message, if a `Channel` is included in the `link_params`, it will be automatically added as an Operator of the Sui coin.<!-- skip-check -->
+When Sui [receives](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L269-L273) a link message, if a `Channel` is included in the `link_params`, it will be automatically added as `Operator` of the Sui coin.<!-- skip-check -->
 
-When sui [creates](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L172-L184) a link message, if an address is included in the `link_params`, it will be added as an Operator on the destination chain (actual behaviour depends on destination implementation).<!-- skip-check -->
+When sui [creates](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d6577f97416522f17e529a3a7fcd8f5c6/move/interchain_token_service/sources/interchain_token_service.move#L172-L184) a link message, if an address is included in the `link_params`, it will be added as operator on the destination chain (actual behaviour depends on destination implementation).<!-- skip-check -->
 
 **Security:** 
 
 The operator cannot steal tokens directly, but it can modify critical settings that affect your asset's integration to ITS, including flow limits. Use trusted channels and addresses only.
 
-**Note:** The deployer account (caller of `linkToken`) must also be secure, as it has the authority to initiate token linking operations and Operators.
+**Note:** The deployer account (caller of `linkToken`) must also be secure, as it has the authority to initiate token linking operations and `Operator`s.
 
 ## Step-by-Step Process
 
@@ -151,7 +150,7 @@ Deploy test tokens on both chains:
 **Chain A (Sui)**
 
 ```bash
-# Deploy token on Sui
+# Deploy coin on Sui
 ts-node sui/tokens publish-coin <symbol> <name> <decimals>
 ```
 
@@ -185,7 +184,7 @@ ts-node evm/its register-token-metadata <tokenAddress> -n <network>
 
 ### Step 3: Register Custom Token
 
-Register the token on the source chain (Sui):
+Register the coin on the source chain (Sui):
 
 ```bash
 # For LOCK_UNLOCK token manager
@@ -196,12 +195,12 @@ ts-node sui/its register-custom-coin <SYMBOL> <NAME> <DECIMALS> --salt <SALT> --
 ```
 
 **Notes:** 
-1. If the `--treasuryCap` flag is passed, the coin's `TreasuryCap` is automatically transferred to the Sui ITS contract. For `MINT_BURN` token managers, transferring the `TreasuryCap` to the ITS contract is required.
-2. If the `--channel <channel>` flag is not used a channel will be automatically created and transferred to the address of the command caller. 
+1. If the `--treasuryCap` flag is passed, the coin's `TreasuryCap` is automatically transferred to the token manager (`CoinManagement`) in the Sui ITS contract. For `MINT_BURN` token managers, transferring the `TreasuryCap` to the ITS contract is required.
+2. If the `--channel <channel>` flag is not used a channel will be automatically created and transferred to the caller.
 
 ### Step 4: Link Token
 
-Link the token to the destination chain:
+Link Sui coin to the destination chain:
 
 ```bash
 ts-node sui/its link-coin <symbol> <destination-chain> <destination-token-address> \
