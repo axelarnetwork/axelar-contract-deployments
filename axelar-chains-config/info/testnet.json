@@ -2301,16 +2301,16 @@
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
+          "salt": "ITS v2.1.1",
           "proxySalt": "ITS v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "version": "2.1.0",
-          "tokenManagerDeployer": "0x478b2BC902B73D06ff541b411FC6124cA50C6A3C",
-          "interchainTokenDeployer": "0x747EdBde75b1d48dBA2149C40edD51E37285B679",
-          "tokenManager": "0x62C0f0939DdFF94A4d21fAF041609b2E7498B4A8",
-          "tokenHandler": "0x88Ccd3040Eb4D73B155A3552EA49bdA3063AB13B",
-          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "tokenManagerDeployer": "0x88af2704bAb572dc7339d5F8275e089677956055",
+          "interchainTokenDeployer": "0x97E812C52E5dc43e789CBfCF28823e2d6BC519E3",
+          "tokenManager": "0xF0C255159c56DADC2559295e2427240484172Aba",
+          "tokenHandler": "0x563ee90271512e7a83D0cF31c46395F27a3f489f",
+          "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
         },
         "InterchainTokenFactory": {
@@ -2318,7 +2318,7 @@
           "salt": "ITS Factory v1.0.0",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.0",
-          "implementation": "0x8B0485bf274fF8bF3cd0E7231fC807cb236E50c6"
+          "implementation": "0x18e160AA6740bfa78091a6Aee08270d48CAf9944"
         }
       }
     },
@@ -3007,7 +3007,7 @@
       "chainType": "evm",
       "explorer": {
         "name": "Hyperliquid Explorer",
-        "url": "https://app.hyperliquid-testnet.xyz/explorer"
+        "url": "https://testnet.purrsec.com/"
       },
       "hypercore": {
         "domain": {
