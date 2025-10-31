@@ -24,7 +24,7 @@ to migrate the Multisig contracts on each network to the same version (from 2.3.
 ## Deployment
 
 - This rollout upgrades the amplifier multisig contract from `v2.3.x` to `v2.3.2`
-- There is a no state migration involved
+- There is no state migration involved
 
 1. Upload new Multisig contract
 
