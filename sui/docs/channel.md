@@ -1,12 +1,13 @@
 # Channels in ITS
 
+Understanding `Channel` objects is essential for implementing secure token linking and managing cross-chain token operations in ITS.
+
 The `Channel` object in Sui ITS is a foundational abstraction that:
+
 - Provides unique, verifiable identity for ITS instances, deployers, operators, and distributors
 - Enables deterministic token ID derivation for custom token linking
 - Serves as an authentication mechanism for privileged operations
 - Leverages Sui's object model for secure ownership and transfer semantics
-
-Understanding `Channel` objects is essential for implementing secure token linking and managing cross-chain token operations in ITS.
 
 ## Role of `Channel`
 
@@ -132,13 +133,13 @@ The `Channel` plays a critical role in ensuring deterministic, collision-resista
 
 ### Custom Token ID Derivation
 
-When registering a custom token for linking, the token ID is derived from three components:
+When registering a custom coin for linking, the token ID is derived from three components:
 
 1. **Chain Name Hash** (`Bytes32`): Unique identifier for the Sui chain instance
 2. **Deployer `Channel`**: The deployer's `Channel` object
 3. **Salt** (`Bytes32`): A user-provided unique value. The `salt` must be 32 bytes (e.g. 0x + 64 characters) matching the Sui address format
 
-**Custom Token ID Derivation Formula**:
+**Token ID Derivation Formula**:
 ```move
 let token_id = hash(PREFIX_CUSTOM_TOKEN_ID, chain_name_hash, deployer.to_address(), salt)
 ```
@@ -170,7 +171,7 @@ The `Channel` is used to:
 - Emit an event claiming the token ID for this deployer/salt combination
 - Establish the deployer's ownership rights over this token
 
-**Step 2 - Link Token** (Source Chain):
+**Step 2 - Link Coin** (Source Chain):
 ```move
 public fun link_coin(
     self: &InterchainTokenService,
@@ -244,3 +245,26 @@ This is particularly important for MINT_BURN type token managers, where the work
 1. ITS creates a new `Channel`
 2. ITS adds the newly created `Channel` as distributor for the coin
 3. `give_unlinked_coin` returns the `Channel` to the caller, giving them distributor privileges. This ensures that the deployer on the destination chain receives appropriate control over the linked token once the linking is complete.
+
+## Creating & Using Channels
+
+Disregarding the `sui/its interchain-transfer` command, which creates and destroys and temporary `Channel`, all interchain Sui commands support using the channel flag (`--channel <channel>`). 
+
+If no channel flag is passed to the command, a new channel will be created and transferred to the user. Whenever a new channel is created for the caller, it can be found in the transaction block data (e.g. using the transaction hash logged in the console), or by searching the user's owned objects for the type (`Channel`).
+
+Example creation:
+
+```bash
+# Register a custom coin and create a new `Channel`
+# (channel object id can be found in the transaction data)
+ts-node sui/its register-custom-coin SYMBOL "Coin Name" 9 --salt "0x..."
+```
+
+Example usage: 
+
+```bash
+# Register a custom coin using an existing `Channel`
+ts-node sui/its register-custom-coin SYMBOL "Coin Name" 9 --salt "0x..." --channel "0x..."
+```
+
+**Note:** The value of the channel flag is it's object ID on the Sui blockchain which is different from its `UID` in the Axelar Gateway contract's storage.
