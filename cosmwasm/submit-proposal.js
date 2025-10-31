@@ -17,8 +17,7 @@ const {
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiateProposal,
-    encodeInstantiateProposal,
-    encodeInstantiate2Proposal,
+    encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
@@ -39,7 +38,7 @@ const {
     UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
-const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const { MsgExecuteContract, MsgInstantiateContract, MsgInstantiateContract2, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -70,11 +69,21 @@ const printProposal = (proposalData, proposalType = null) => {
             const typeMap = {
                 '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
                 '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
+                '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
+                '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
             };
             const MessageType = typeMap[message.typeUrl];
             if (MessageType) {
                 const decoded = MessageType.decode(message.value);
-                if (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' && decoded.msg) {
+                if (decoded.codeId) {
+                    decoded.codeId = decoded.codeId.toString();
+                }
+                if (
+                    (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
+                        message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
+                        message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2') &&
+                    decoded.msg
+                ) {
                     decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
                 }
                 if (decoded.wasmByteCode) {
@@ -178,6 +187,7 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
 };
 
 const instantiate = async (client, config, options, _args, fee) => {
+    const isLegacy = isLegacySDK(config);
     const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -188,29 +198,28 @@ const instantiate = async (client, config, options, _args, fee) => {
     if (predictOnly) {
         contractAddress = await predictAddress(client, contractConfig, options);
         contractConfig.address = contractAddress;
-
         return;
     }
 
     const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
 
-    let proposal;
-    let proposalType;
+    const proposal = encodeInstantiate(config, options, initMsg);
 
     if (instantiate2) {
-        proposal = encodeInstantiate2Proposal(config, options, initMsg);
-        proposalType = InstantiateContract2Proposal;
-
         contractAddress = await predictAddress(client, contractConfig, options);
     } else {
-        proposal = encodeInstantiateProposal(config, options, initMsg);
-        proposalType = InstantiateContractProposal;
-
         printInfo('Contract address cannot be predicted without using `--instantiate2` flag, address will not be saved in the config');
     }
 
-    if (!confirmProposalSubmission(options, proposal, proposalType)) {
-        return;
+    if (isLegacy) {
+        const proposalType = instantiate2 ? InstantiateContract2Proposal : InstantiateContractProposal;
+        if (!confirmProposalSubmission(options, proposal, proposalType)) {
+            return;
+        }
+    } else {
+        if (!confirmProposalSubmission(options, [proposal])) {
+            return;
+        }
     }
 
     const proposalId = await callSubmitProposal(client, config, options, proposal, fee);

@@ -16,7 +16,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
-const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const { MsgExecuteContract, MsgInstantiateContract, MsgInstantiateContract2, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
@@ -1039,22 +1039,58 @@ const decodeProposalAttributes = (proposalJson) => {
     return proposalJson;
 };
 
-const encodeInstantiateProposal = (config, options, msg) => {
-    const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
+const encodeInstantiate = (config, options, msg) => {
+    const isLegacy = isLegacySDK(config);
+    const { instantiate2 } = options;
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
-        value: Uint8Array.from(InstantiateContractProposal.encode(proposal).finish()),
-    };
-};
+    if (isLegacy) {
+        if (instantiate2) {
+            const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
+                value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
+            };
+        } else {
+            const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
+                value: Uint8Array.from(InstantiateContractProposal.encode(proposal).finish()),
+            };
+        }
+    } else {
+        const { admin, contractName, salt, chainName } = options;
+        const { contractConfig } = getAmplifierContractConfig(config, options);
 
-const encodeInstantiate2Proposal = (config, options, msg) => {
-    const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
-
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
-        value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
-    };
+        if (instantiate2) {
+            const instantiateMsg = MsgInstantiateContract2.fromPartial({
+                sender: GOVERNANCE_MODULE_ADDRESS,
+                admin,
+                codeId: contractConfig.codeId,
+                label: getLabel(options),
+                msg: Buffer.from(JSON.stringify(msg)),
+                funds: [],
+                salt: getSalt(salt, contractName, chainName),
+                fixMsg: false,
+            });
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract2',
+                value: Uint8Array.from(MsgInstantiateContract2.encode(instantiateMsg).finish()),
+            };
+        } else {
+            const instantiateMsg = MsgInstantiateContract.fromPartial({
+                sender: GOVERNANCE_MODULE_ADDRESS,
+                admin,
+                codeId: contractConfig.codeId,
+                label: getLabel(options),
+                msg: Buffer.from(JSON.stringify(msg)),
+                funds: [],
+            });
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+                value: Uint8Array.from(MsgInstantiateContract.encode(instantiateMsg).finish()),
+            };
+        }
+    }
 };
 
 const encodeExecuteContract = (config, options, chainName) => {
@@ -1370,8 +1406,7 @@ module.exports = {
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiateProposal,
-    encodeInstantiateProposal,
-    encodeInstantiate2Proposal,
+    encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeUpdateInstantiateConfigProposal,
