@@ -1,10 +1,6 @@
-use std::fs::File;
-use std::io::Write;
-
 use anchor_lang::InstructionData;
 use clap::{Args, Parser, Subcommand};
 use eyre::eyre;
-use serde::Deserialize;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
@@ -13,24 +9,22 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
-    UPGRADE_AUTHORITY_KEY, decode_its_destination, fetch_latest_blockhash,
+    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
+    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash,
     read_json_file_from_path, write_json_to_file_path,
 };
 
 const ITS_SEED: &[u8] = b"interchain-token-service";
 const TOKEN_MANAGER_SEED: &[u8] = b"token-manager";
 const INTERCHAIN_TOKEN_SEED: &[u8] = b"interchain-token";
-const PREFIX_INTERCHAIN_TOKEN_ID: &[u8] = b"interchain-token-id";
 const PREFIX_INTERCHAIN_TOKEN_SALT: &[u8] = b"interchain-token-salt";
 const PREFIX_CANONICAL_TOKEN_SALT: &[u8] = b"canonical-token-salt";
 const PREFIX_CUSTOM_TOKEN_SALT: &[u8] = b"solana-custom-token-salt";
 
 #[derive(Debug, Clone, Copy, borsh::BorshDeserialize)]
 #[borsh(use_discriminant = true)]
-#[allow(dead_code)]
 #[repr(u8)]
-pub enum TokenManagerType {
+enum TokenManagerType {
     NativeInterchainToken = 0,
     MintBurnFrom = 1,
     LockUnlock = 2,
@@ -40,7 +34,6 @@ pub enum TokenManagerType {
 }
 
 #[derive(borsh::BorshDeserialize, Debug)]
-#[allow(dead_code)]
 struct TokenManager {
     token_address: Pubkey,
     ty: TokenManagerType,
@@ -48,7 +41,6 @@ struct TokenManager {
 }
 
 #[derive(borsh::BorshDeserialize, Debug)]
-#[allow(dead_code)]
 struct FlowSlot {
     flow_limit: Option<u64>,
 }
@@ -1223,41 +1215,32 @@ fn remove_trusted_chain(
 }
 
 fn approve_deploy_remote_interchain_token(
-    fee_payer: &Pubkey,
-    args: ApproveDeployRemoteInterchainTokenArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: ApproveDeployRemoteInterchainTokenArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_minter = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_minter,
-    )?;
-
     not_implemented_error()
 }
 
 fn revoke_deploy_remote_interchain_token(
-    fee_payer: &Pubkey,
-    args: RevokeDeployRemoteInterchainTokenArgs,
+    _fee_payer: &Pubkey,
+    _args: RevokeDeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     not_implemented_error()
 }
 
 fn register_canonical_interchain_token(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: RegisterCanonicalInterchainTokenArgs,
-    config: &Config,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = canonical_interchain_token_id(&args.mint);
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {}", args.mint);
-    println!("- Token Program: {token_program}");
     println!("------------------------------------------");
 
     not_implemented_error()
@@ -1274,7 +1257,7 @@ fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let raw_supply =
+    let _raw_supply =
         crate::utils::parse_decimal_string_to_raw_units(&args.initial_supply, args.decimals)?;
 
     let token_id = interchain_token_id(fee_payer, &args.salt);
@@ -1287,7 +1270,6 @@ fn deploy_interchain_token(
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {mint}");
     println!("- Human Amount: {} {}", args.initial_supply, args.symbol);
-    println!("- Raw Amount: {raw_supply} (smallest units)");
     println!("- Decimals: {}", args.decimals);
     println!("------------------------------------------");
 
@@ -1295,29 +1277,23 @@ fn deploy_interchain_token(
 }
 
 fn deploy_remote_interchain_token(
-    fee_payer: &Pubkey,
-    args: DeployRemoteInterchainTokenArgs,
+    _fee_payer: &Pubkey,
+    _args: DeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     not_implemented_error()
 }
 
 fn deploy_remote_interchain_token_with_minter(
-    fee_payer: &Pubkey,
-    args: DeployRemoteInterchainTokenWithMinterArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: DeployRemoteInterchainTokenWithMinterArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_minter = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_minter,
-    )?;
     not_implemented_error()
 }
 
 fn register_token_metadata(
-    fee_payer: &Pubkey,
-    args: RegisterTokenMetadataArgs,
+    _fee_payer: &Pubkey,
+    _args: RegisterTokenMetadataArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     not_implemented_error()
 }
@@ -1325,17 +1301,15 @@ fn register_token_metadata(
 fn register_custom_token(
     fee_payer: &Pubkey,
     args: RegisterCustomTokenArgs,
-    config: &Config,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = linked_token_id(fee_payer, &args.salt);
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {}", args.mint);
-    println!("- Token Program: {token_program}");
     println!("------------------------------------------");
 
     not_implemented_error()
@@ -1346,29 +1320,19 @@ fn link_token(_fee_payer: &Pubkey, _args: LinkTokenArgs) -> eyre::Result<Vec<Ins
 }
 
 fn interchain_transfer(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: InterchainTransferArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
-    let decimals = get_token_decimals(&mint, config)?;
+    let _mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let decimals = get_token_decimals(&_mint, config)?;
 
-    // Convert human-readable amount to raw units using safe integer arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_address.clone(),
-    )?;
+    let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Transfer details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {raw_amount} (smallest units)");
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
@@ -1378,29 +1342,19 @@ fn interchain_transfer(
 }
 
 fn call_contract_with_interchain_token(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
-    let decimals = get_token_decimals(&mint, config)?;
+    let _mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let decimals = get_token_decimals(&_mint, config)?;
 
-    // Convert human-readable amount to raw units using safe integer arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_address.clone(),
-    )?;
+    let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Contract call details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {raw_amount} (smallest units)");
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
@@ -1410,29 +1364,19 @@ fn call_contract_with_interchain_token(
 }
 
 fn call_contract_with_interchain_token_offchain_data(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenOffchainDataArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
-    let decimals = get_token_decimals(&mint, config)?;
+    let _mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let decimals = get_token_decimals(&_mint, config)?;
 
-    // Convert human-readable amount to raw units using safe integer arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_address.clone(),
-    )?;
+    let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Offchain contract call details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {raw_amount} (smallest units)");
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
@@ -1474,8 +1418,8 @@ fn token_manager_set_flow_limit(
 }
 
 fn token_manager_add_flow_limiter(
-    fee_payer: &Pubkey,
-    args: TokenManagerAddFlowLimiterArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerAddFlowLimiterArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     not_implemented_error()
 }
@@ -1509,24 +1453,18 @@ fn token_manager_accept_operatorship(
 }
 
 fn token_manager_handover_mint_authority(
-    fee_payer: &Pubkey,
-    args: TokenManagerHandoverMintAuthorityArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerHandoverMintAuthorityArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
     not_implemented_error()
 }
 
 fn interchain_token_mint(
-    fee_payer: &Pubkey,
-    args: InterchainTokenMintArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: InterchainTokenMintArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
-    let decimals = get_token_decimals(&mint, config)?;
-
     not_implemented_error()
 }
 

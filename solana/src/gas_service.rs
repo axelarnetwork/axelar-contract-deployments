@@ -1,4 +1,3 @@
-use anchor_lang::InstructionData;
 use clap::{Parser, Subcommand};
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
@@ -94,8 +93,10 @@ fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    use anchor_lang::InstructionData;
-    let ix_data = solana_axelar_gas_service::instruction::Initialize {}.data();
+    let ix_data = {
+        use anchor_lang::InstructionData;
+        solana_axelar_gas_service::instruction::Initialize {}.data()
+    };
 
     Ok(vec![Instruction {
         program_id: solana_axelar_gas_service::id(),
