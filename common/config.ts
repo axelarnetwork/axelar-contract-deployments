@@ -88,7 +88,7 @@ export interface MultisigProverChainConfig {
     keyType: string;
     adminAddress: string;
     verifierSetDiffThreshold: number;
-    signingThreshold: [string, string];
+    signingThreshold: [string | number, string | number];
     codeId?: number;
     contractAdmin?: string;
     address?: string;
