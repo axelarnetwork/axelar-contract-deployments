@@ -14,14 +14,14 @@ The `Channel` object in Sui ITS is a foundational abstraction that:
 A `Channel` serves as a destination address for cross-chain messages on Sui, via the [Axelar Gateway contract](https://github.com/axelarnetwork/axelar-cgp-sui/tree/main/move/axelar_gateway). It is an identifier that allows applications to send and receive messages between Sui and other chains through the Axelar network. <!-- skip-check -->
 
 Key characteristics:
-- **Unique Identification**: Each Channel has a unique `UID` (Universal Identifier) field, as well as an object ID, that's used in address on Sui. Transferring the object to another owner will not modify the `UID`, nor the object ID.
-- **Message Routing**: The `Channel`'s ID is used by the Axelar protocol to route approved messages to the correct destination.
-- **Cross-chain Messaging**: `Channel`s enable bidirectional communication with other blockchain networks
+- **Unique Identification**: Each `Channel` has a unique `UID` (Universal Identifier) field, as well as an object ID on Sui. Transferring the object to another owner will transfer the `Channel`'s capabilities (operator, distributor, etc.) but will not modify the `UID` or object ID of the `Channel`.
+- **Message Routing**: `Channel`s are used by the Axelar protocol to route approved messages to the correct destination.
+- **Cross-chain Messaging**: `Channel`s enable bidirectional communication with other blockchain networks.
 
 In the context of ITS, the `Channel` serves multiple critical roles:
-1. **ITS Instance Identity**: The main ITS contract maintains its own `Channel` with the Axelar Gateway which represents the ITS instance's address for receiving messages from the Axelar Hub.
+1. **ITS Instance Identity**: The ITS contract maintains its own `Channel` with the Axelar Gateway which represents the ITS instance's address for receiving messages from the Axelar Hub.
 2. **Message Verification**: When receiving cross-chain messages from GMP, the `Channel` validates incoming `ApprovedMessage` objects are destined for the correct recipient.
-3. **Source Attribution**: When preparing outbound messages, the `Channel`'s address is included to identify the sender, and replaces the need to track the coin deployer by their Sui address.
+3. **Source Attribution**: When preparing outbound messages, the `Channel` identifies the sender, and it replaces the need to track coin deployers by their Sui address.
 
 ## Sui Object Model and `Channel` Ownership
 
@@ -38,11 +38,11 @@ The `Channel` has two important abilities:
 - **`key`**: Makes it a Sui object that can be owned, shared, or wrapped
 - **`store`**: Allows it to be stored inside other objects or data structures
 
-### Ownership Patterns in ITS
+### `Channel` Ownership in ITS
 
 **ITS Global Channel (Stored in Contract State)**
 
-The main ITS contract stores a `Channel` within its versioned storage:
+The ITS contract stores a `Channel` within its versioned storage:
 ```move
 public struct InterchainTokenService_v0 has store {
     channel: Channel,
@@ -52,16 +52,14 @@ public struct InterchainTokenService_v0 has store {
 
 This `Channel` is embedded in the shared ITS object and represents the ITS instance itself. It cannot be transferred or destroyed by external actors because it's wrapped within the ITS storage.
 
-**User-Owned Channels**
-
-When users register custom tokens, or when the ITS contract receives linked tokens, user permissions are controlled by a `Channel` object that they own. 
+When users register and transfer tokens, or when the ITS contract receives linked tokens, permissions are controlled by a `Channel` object that can be owned by users or packages. 
 
 This Channel serves as:
 - Proof of deployment authority (deployer identity)
 - An authentication token for administrative operations
 - A reference for deriving token IDs
 
-## Related Entities Using `Channel`
+## Coin Admin `Channel` Types
 
 In the ITS architecture, the `Channel` object is closely tied to three key roles:
 
@@ -79,7 +77,7 @@ The operator cannot steal tokens but can modify settings that affect the token m
 
 ### 2. Distributor
 
-**Purpose**: Has minting and burning privileges for tokens with MINT_BURN token manager types.
+**Purpose**: Has minting and burning privileges for tokens with MINT_BURN token manager (`CoinManagement`) types.
 
 **Channel Relationship**:
 - A distributor is identified by their `Channel` object
@@ -88,7 +86,7 @@ The operator cannot steal tokens but can modify settings that affect the token m
   - `mint_to_as_distributor`: Mint tokens directly to a recipient
   - `burn_as_distributor`: Burn tokens
 
-**Distribution Assignment**: When unlinked coins are registered with the MINT_BURN token manager type, a `Channel` is created by ITS and assigned as the distributor:
+**Distribution Assignment**: When unlinked coins are registered with the MINT_BURN token manager (`CoinManagement`) type, a `Channel` is created by ITS and assigned as the distributor:
 ```move
 let distributor = axelar_gateway::channel::new(ctx);
 let mut coin_management = coin_management::new_with_cap(treasury_cap);
@@ -102,11 +100,11 @@ This `Channel` is then returned to the caller, giving them the minting/burning c
 **Purpose**: The original entity that registered or deployed a token, used for deriving custom token IDs, token linking security, and initiating remote operators.
 
 **Channel Relationship**:
-- The deployer's `Channel` is used in the deterministic derivation of token IDs for custom tokens
+- The deployer's `Channel` is used to deterministically derive token IDs for custom tokens
 - `Channel` ownership proves deployment authority for linking operations
 
 **Token ID Derivation**:
-Custom token IDs are derived using the deployer's Channel address:
+Custom token IDs (required for coin linking) are derived using the deployer's `Channel` and provided `salt`:
 ```move
 pub fun custom_token_id(
     chain_name_hash: &Bytes32,
@@ -125,36 +123,13 @@ pub fun custom_token_id(
 |------|----------------|----------------|
 | **Operator** | Authentication for administrative operations | Set flow limits, pause/unpause, transfer operatorship |
 | **Distributor** | Authentication for mint/burn privileges | Mint tokens, burn tokens, transfer distributorship |
-| **Deployer** | Identity proof for token registration | Register custom tokens, link tokens, token ID derivation |
+| **Deployer** | Identity proof for token registration | Register custom coins, link coins, token ID derivation |
 
-## Role of `Channel` in `salt` and `TokenId` Derivation for Coin Linking
-
-The `Channel` plays a critical role in ensuring deterministic, collision-resistant token ID generation for custom token linking.
-
-### Custom Token ID Derivation
-
-When registering a custom coin for linking, the token ID is derived from three components:
-
-1. **Chain Name Hash** (`Bytes32`): Unique identifier for the Sui chain instance
-2. **Deployer `Channel`**: The deployer's `Channel` object
-3. **Salt** (`Bytes32`): A user-provided unique value. The `salt` must be 32 bytes (e.g. 0x + 64 characters) matching the Sui address format
-
-**Token ID Derivation Formula**:
-```move
-let token_id = hash(PREFIX_CUSTOM_TOKEN_ID, chain_name_hash, deployer.to_address(), salt)
-```
-
-This derivation scheme ensures:
-- **Uniqueness**: Different deployers or different salts produce different token IDs
-- **Determinism**: The same inputs always produce the same token ID
-- **Collision Resistance**: Cryptographic hashing prevents accidental collisions
-- **Chain Specificity**: Tokens deployed on different Sui chains have different IDs even with the same deployer/salt
-
-### Linking Process Using Channel
+### Linking Process Using `Channel`
 
 When linking a custom token from Sui to another chain:
 
-**Step 1 - Register Custom Token** (Source Chain):
+**Step 1 - Register Custom Coin** (Source Chain):
 ```move
 public fun register_custom_coin<T>(
     self: &mut InterchainTokenService,
@@ -228,7 +203,9 @@ let message_ticket = its.link_coin(
 
 ### Receiving Unlinked Tokens
 
-To receive a link token message from another chain, the destination must prepare the "unlinked coin" before the link message arrives. This is done by giving the unlinked coin to ITS. If the coin's `TreasuryCap` is given to ITS in the `give_unlinked_coin` transaction, ITS creates a new `Channel` that's used both to validate the deployer so that the coin may be linked later (e.g. using the same `Channel`), as well as make them a distributor of the coin in the case of MINT_BURN token managers.
+To receive a `LinkToken` message from another chain, the Sui ITS contract (the destination) must prepare the "unlinked coin" before the link message arrives. This is done by giving the unlinked coin to ITS. 
+
+If the coin's `TreasuryCap` is given to ITS in the `give_unlinked_coin` transaction, ITS creates a new `Channel` that will validate the deployer for coin linking; and, in the case of MINT_BURN token managers (`CoinManagement`), ITS makes this `Channel` a distributor of the coin.
 
 ```move
 public fun give_unlinked_coin<T>(
@@ -248,9 +225,9 @@ This is particularly important for MINT_BURN type token managers, where the work
 
 ## Creating & Using Channels
 
-Disregarding the `sui/its interchain-transfer` command, which creates and destroys and temporary `Channel`, all interchain Sui commands support using the channel flag (`--channel <channel>`). 
+The `sui/its interchain-transfer` command creates and destroys and temporary `Channel`. All other Sui interchain commands support using the channel flag (`--channel <channel>`). If no channel flag is passed to the command, a new channel will be created and transferred to the user. 
 
-If no channel flag is passed to the command, a new channel will be created and transferred to the user. Whenever a new channel is created for the caller, it can be found in the transaction block data (e.g. using the transaction hash logged in the console), or by searching the user's owned objects for the type (`Channel`).
+When a new channel is created by a command it can be found in the transaction block data (see the tx hash logged in the console).
 
 Example creation:
 
