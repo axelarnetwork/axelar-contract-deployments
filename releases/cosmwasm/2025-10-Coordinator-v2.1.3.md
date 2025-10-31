@@ -16,7 +16,7 @@
 
 ## Background
 
-The coordinator can now deploy a gateway, voting verifier, and multisig prover contract for a given chain. It can then register these contracts with the router and multisig in a separate transaction, thereby completing that chain’s integration with GMP. Coordinator v2.1.3 builds upon coordinator v2.1.1 and v2.1.2 in that it now supports deployment for Solana.
+Coordinator v2.1.3 adds support for Solana address format and encoder used in Solana Multisig Prover.
 
 ### Contract Version Info
 
