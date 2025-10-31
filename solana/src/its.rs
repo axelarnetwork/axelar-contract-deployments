@@ -10,8 +10,8 @@ use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
-    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash,
-    read_json_file_from_path, write_json_to_file_path,
+    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path,
 };
 
 const ITS_SEED: &[u8] = b"interchain-token-service";
@@ -77,7 +77,9 @@ fn linked_token_id(sender: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
 }
 
 fn not_implemented_error() -> eyre::Result<Vec<Instruction>> {
-    eyre::bail!("This instruction is not yet implemented in the new Anchor ITS program. The Anchor program currently only supports: Initialize, SetPauseStatus, SetTrustedChain, and RemoveTrustedChain.")
+    eyre::bail!(
+        "This instruction is not yet implemented in the new Anchor ITS program. The Anchor program currently only supports: Initialize, SetPauseStatus, SetTrustedChain, and RemoveTrustedChain."
+    )
 }
 
 #[derive(Subcommand, Debug)]
@@ -864,7 +866,9 @@ fn parse_token_manager_type(s: &str) -> Result<TokenManagerType, String> {
         "mintburn" | "mint_burn" => Ok(TokenManagerType::MintBurn),
         "mintburnfrom" | "mint_burn_from" => Ok(TokenManagerType::MintBurnFrom),
         "lockunlockfee" | "lock_unlock_fee" => Ok(TokenManagerType::LockUnlockFee),
-        "nativeinterchaintoken" | "native_interchain_token" => Ok(TokenManagerType::NativeInterchainToken),
+        "nativeinterchaintoken" | "native_interchain_token" => {
+            Ok(TokenManagerType::NativeInterchainToken)
+        }
         "gateway" => Ok(TokenManagerType::Gateway),
         _ => Err(format!("Invalid token manager type: {s}")),
     }
@@ -1043,7 +1047,8 @@ fn init(
 ) -> eyre::Result<Vec<Instruction>> {
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let (its_root_pda, _) = find_its_root_pda();
-    let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
+    let program_data =
+        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
 
     let (user_roles_pda, _) = Pubkey::find_program_address(
         &[
@@ -1065,7 +1070,8 @@ fn init(
     let ix_data = solana_axelar_its::instruction::Initialize {
         chain_name: init_args.chain_name,
         its_hub_address: init_args.its_hub_address,
-    }.data();
+    }
+    .data();
 
     Ok(vec![Instruction {
         program_id: solana_axelar_its::id(),
@@ -1087,17 +1093,14 @@ fn set_pause_status(
 ) -> eyre::Result<Vec<Instruction>> {
     let (its_root_pda, _) = find_its_root_pda();
     let (user_roles_pda, _) = Pubkey::find_program_address(
-        &[
-            b"user-roles",
-            its_root_pda.as_ref(),
-            fee_payer.as_ref(),
-        ],
+        &[b"user-roles", its_root_pda.as_ref(), fee_payer.as_ref()],
         &solana_axelar_its::id(),
     );
 
     let ix_data = solana_axelar_its::instruction::SetPauseStatus {
         paused: set_pause_args.paused,
-    }.data();
+    }
+    .data();
 
     Ok(vec![Instruction {
         program_id: solana_axelar_its::id(),
@@ -1129,17 +1132,14 @@ fn set_trusted_chain(
                 println!("Creating instruction to set {chain} as trusted on Solana ITS");
                 let (its_root_pda, _) = find_its_root_pda();
                 let (user_roles_pda, _) = Pubkey::find_program_address(
-                    &[
-                        b"user-roles",
-                        its_root_pda.as_ref(),
-                        authority.as_ref(),
-                    ],
+                    &[b"user-roles", its_root_pda.as_ref(), authority.as_ref()],
                     &solana_axelar_its::id(),
                 );
 
                 let ix_data = solana_axelar_its::instruction::SetTrustedChain {
                     chain_name: chain.clone(),
-                }.data();
+                }
+                .data();
 
                 instructions.push(Instruction {
                     program_id: solana_axelar_its::id(),
@@ -1157,17 +1157,14 @@ fn set_trusted_chain(
     } else {
         let (its_root_pda, _) = find_its_root_pda();
         let (user_roles_pda, _) = Pubkey::find_program_address(
-            &[
-                b"user-roles",
-                its_root_pda.as_ref(),
-                authority.as_ref(),
-            ],
+            &[b"user-roles", its_root_pda.as_ref(), authority.as_ref()],
             &solana_axelar_its::id(),
         );
 
         let ix_data = solana_axelar_its::instruction::SetTrustedChain {
             chain_name: set_trusted_chain_args.chain_name,
-        }.data();
+        }
+        .data();
 
         instructions.push(Instruction {
             program_id: solana_axelar_its::id(),
@@ -1190,17 +1187,14 @@ fn remove_trusted_chain(
     let authority = remove_trusted_chain_args.authority.unwrap_or(*fee_payer);
     let (its_root_pda, _) = find_its_root_pda();
     let (user_roles_pda, _) = Pubkey::find_program_address(
-        &[
-            b"user-roles",
-            its_root_pda.as_ref(),
-            authority.as_ref(),
-        ],
+        &[b"user-roles", its_root_pda.as_ref(), authority.as_ref()],
         &solana_axelar_its::id(),
     );
 
     let ix_data = solana_axelar_its::instruction::RemoveTrustedChain {
         chain_name: remove_trusted_chain_args.chain_name,
-    }.data();
+    }
+    .data();
 
     Ok(vec![Instruction {
         program_id: solana_axelar_its::id(),
@@ -1502,8 +1496,7 @@ fn get_token_manager(args: TokenManagerArgs, config: &Config) -> eyre::Result<()
     let token_id: [u8; 32] = hex::decode(args.token_id.trim_start_matches("0x"))?
         .try_into()
         .map_err(|vec| eyre!("invalid token id: {vec:?}"))?;
-    let (token_manager_pda, _) =
-        find_token_manager_pda(&its_root_pda, &token_id);
+    let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, &token_id);
     let account = rpc_client.get_account(&token_manager_pda)?;
     let token_manager = TokenManager::try_from_slice(&account.data)?;
 

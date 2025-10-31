@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
-use solana_axelar_gateway::payload::AxelarMessagePayload;
-use solana_axelar_gateway::payload::EncodingScheme;
 use clap::{Args, Subcommand};
 use eyre::Result;
+use solana_axelar_gateway::payload::AxelarMessagePayload;
+use solana_axelar_gateway::payload::EncodingScheme;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 

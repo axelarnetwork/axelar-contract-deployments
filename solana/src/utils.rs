@@ -4,8 +4,8 @@ use std::str::FromStr;
 
 use clap::ArgMatches;
 use eyre::eyre;
-use k256::pkcs8::DecodePrivateKey;
 use k256::SecretKey;
+use k256::pkcs8::DecodePrivateKey;
 use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};

@@ -179,7 +179,9 @@ fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_governance::id());
+    let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(
+        &solana_axelar_governance::id(),
+    );
 
     let ix_data = solana_axelar_governance::instruction::InitializeConfig { params }.data();
 
@@ -214,14 +216,14 @@ fn execute_proposal(
         })
         .collect();
 
-    let native_value_receiver = args
-        .base
-        .native_value_receiver
-        .map(|pk| solana_axelar_governance::SolanaAccountMetadata {
-            pubkey: pk.to_bytes(),
-            is_signer: false,
-            is_writable: true,
-        });
+    let native_value_receiver =
+        args.base
+            .native_value_receiver
+            .map(|pk| solana_axelar_governance::SolanaAccountMetadata {
+                pubkey: pk.to_bytes(),
+                is_signer: false,
+                is_writable: true,
+            });
 
     let call_data = solana_axelar_governance::ExecuteProposalCallData {
         solana_accounts,
@@ -242,7 +244,10 @@ fn execute_proposal(
     let proposal_hash = solana_axelar_governance::ExecutableProposal::hash_from_data(&execute_data);
     let (proposal_pda, _) = solana_axelar_governance::ExecutableProposal::find_pda(&proposal_hash);
 
-    let ix_data = solana_axelar_governance::instruction::ExecuteTimelockProposal { execute_proposal_data: execute_data.clone() }.data();
+    let ix_data = solana_axelar_governance::instruction::ExecuteTimelockProposal {
+        execute_proposal_data: execute_data.clone(),
+    }
+    .data();
 
     let mut accounts = vec![
         AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
@@ -259,7 +264,10 @@ fn execute_proposal(
     }
 
     if let Some(receiver) = &execute_data.call_data.solana_native_value_receiver_account {
-        accounts.push(AccountMeta::new(Pubkey::new_from_array(receiver.pubkey), false));
+        accounts.push(AccountMeta::new(
+            Pubkey::new_from_array(receiver.pubkey),
+            false,
+        ));
     }
 
     accounts.push(AccountMeta::new_readonly(args.base.target, false));
@@ -288,14 +296,14 @@ fn execute_operator_proposal(
         })
         .collect();
 
-    let native_value_receiver = args
-        .base
-        .native_value_receiver
-        .map(|pk| solana_axelar_governance::SolanaAccountMetadata {
-            pubkey: pk.to_bytes(),
-            is_signer: false,
-            is_writable: true,
-        });
+    let native_value_receiver =
+        args.base
+            .native_value_receiver
+            .map(|pk| solana_axelar_governance::SolanaAccountMetadata {
+                pubkey: pk.to_bytes(),
+                is_signer: false,
+                is_writable: true,
+            });
 
     let call_data = solana_axelar_governance::ExecuteProposalCallData {
         solana_accounts,
@@ -315,9 +323,13 @@ fn execute_operator_proposal(
 
     let proposal_hash = solana_axelar_governance::ExecutableProposal::hash_from_data(&execute_data);
     let (proposal_pda, _) = solana_axelar_governance::ExecutableProposal::find_pda(&proposal_hash);
-    let (operator_proposal_pda, _) = solana_axelar_governance::OperatorProposal::find_pda(&proposal_hash);
+    let (operator_proposal_pda, _) =
+        solana_axelar_governance::OperatorProposal::find_pda(&proposal_hash);
 
-    let ix_data = solana_axelar_governance::instruction::ExecuteOperatorProposal { execute_proposal_data: execute_data.clone() }.data();
+    let ix_data = solana_axelar_governance::instruction::ExecuteOperatorProposal {
+        execute_proposal_data: execute_data.clone(),
+    }
+    .data();
 
     let mut accounts = vec![
         AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
@@ -336,7 +348,10 @@ fn execute_operator_proposal(
     }
 
     if let Some(receiver) = &execute_data.call_data.solana_native_value_receiver_account {
-        accounts.push(AccountMeta::new(Pubkey::new_from_array(receiver.pubkey), false));
+        accounts.push(AccountMeta::new(
+            Pubkey::new_from_array(receiver.pubkey),
+            false,
+        ));
     }
 
     accounts.push(AccountMeta::new_readonly(args.base.target, false));

@@ -73,10 +73,8 @@ fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (treasury_pda, _) = Pubkey::find_program_address(
-        &[b"gas-service"],
-        &solana_axelar_gas_service::id(),
-    );
+    let (treasury_pda, _) =
+        Pubkey::find_program_address(&[b"gas-service"], &solana_axelar_gas_service::id());
 
     let (operator_pda, _) = Pubkey::find_program_address(
         &[b"operator", init_args.operator.as_ref()],

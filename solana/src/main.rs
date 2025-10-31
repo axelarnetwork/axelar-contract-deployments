@@ -62,11 +62,7 @@ struct Cli {
     url: Option<String>,
 
     /// Directory to store output files (unsigned tx, signatures, bundles)
-    #[clap(
-        short = 'o',
-        long = "output-dir",
-        default_value = "./output"
-    )]
+    #[clap(short = 'o', long = "output-dir", default_value = "./output")]
     output_dir: PathBuf,
 
     /// Directory containing the JSON files for Axelar chains configuration info
@@ -185,11 +181,7 @@ struct CombineCommandArgs {
     output_dir: Option<PathBuf>,
 
     /// Paths to the partial signature JSON files (*.partial.sig) to combine (provide at least one)
-    #[clap(
-        required = true,
-        multiple_values = true,
-        min_values = 1
-    )]
+    #[clap(required = true, multiple_values = true, min_values = 1)]
     signature_paths: Vec<PathBuf>,
 
     /// Path to the original unsigned Solana transaction JSON file (*.unsigned.json)
