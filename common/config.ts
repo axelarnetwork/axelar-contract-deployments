@@ -72,7 +72,7 @@ export interface VotingVerifierChainConfig {
     governanceAddress: string;
     serviceName: string;
     sourceGatewayAddress: string;
-    votingThreshold: [string, string];
+    votingThreshold: [string | number, string | number];
     blockExpiry: number;
     confirmationHeight: number;
     msgIdFormat: string;
