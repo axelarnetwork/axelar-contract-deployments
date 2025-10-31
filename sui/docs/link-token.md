@@ -49,7 +49,7 @@ Before linking tokens, ensure you have Token permissions. Permission requirement
 
 For Sui, only the following token manager types are supported:
 
-- **LOCK_UNLOCK** (`2_u256`): For tokens that are locked/unlocked on the chain
+- **LOCK_UNLOCK** (`2_u256`): For tokens that are locked/unlocked on the home chain
 - **MINT_BURN** (`4_u256`): For tokens that are burned/minted on the chain
 
 **Important:** Linking two LOCK_UNLOCK tokens is not recommended. One token should be MINT_BURN (requiring `TreasuryCap` transfer if token deployed on Sui) and the other can be LOCK_UNLOCK (no permissions required). Using MINT_BURN on both sides is supported.
