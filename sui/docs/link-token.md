@@ -193,7 +193,7 @@ Register the coin on the source chain (Sui). If no channel flag is passed (`--ch
 ts-node sui/its register-custom-coin <symbol> <name> <decimals> --salt <salt> --channel <channel>
 
 # For MINT_BURN token manager (requires --treasuryCap flag)
-ts-node sui/its register-custom-coin <SYMBOL> <NAME> <DECIMALS> --salt <SALT> --treasuryCap --channel <channel>
+ts-node sui/its register-custom-coin <symbol> <name> <decimals> --salt <salt> --treasuryCap --channel <channel>
 ```
 
 **Notes:** 
