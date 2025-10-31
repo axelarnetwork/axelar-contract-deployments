@@ -22,6 +22,9 @@ axelar-solana-memo-program = { path = "./axelar-amplifier-solana/programs/axelar
 ], default-features = false }
 
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
+anchor-discriminators = { path = "./axelar-amplifier-solana/helpers/anchor-discriminators" }
+anchor-lang = "0.31.1"
+event-cpi = { path = "./axelar-amplifier-solana/helpers/event-cpi" }
 
 base64 = "0.22.1"
 bincode = { version = "2.0.1", features = ["serde"] }
@@ -31,10 +34,9 @@ cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 eyre = "0.6.11"
-gateway-event-stack = { path = "./axelar-amplifier-solana/crates/gateway-event-stack", default-features = false }
 hex = { version = "0.4.3", features = ["serde"] }
 its-instruction-builder = { path = "./axelar-amplifier-solana/helpers/its-instruction-builder", default-features = false }
-k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
+k256     = { version = "0.13.1", features = ["pkcs8", "pem", "ecdsa"] }
 lazy_static = "1.4"
 regex = "1.10"
 serde = { version = "1.0.219", features = ["derive"] }
@@ -149,7 +151,6 @@ devnet-amplifier = [
     "axelar-solana-governance/devnet-amplifier",
     "axelar-solana-its/devnet-amplifier",
     "axelar-solana-memo-program/devnet-amplifier",
-    "gateway-event-stack/devnet-amplifier",
     "its-instruction-builder/devnet-amplifier",
 ]
 stagenet = [
@@ -158,7 +159,6 @@ stagenet = [
     "axelar-solana-governance/stagenet",
     "axelar-solana-its/stagenet",
     "axelar-solana-memo-program/stagenet",
-    "gateway-event-stack/stagenet",
     "its-instruction-builder/stagenet",
 ]
 testnet = [
@@ -167,7 +167,6 @@ testnet = [
     "axelar-solana-governance/testnet",
     "axelar-solana-its/testnet",
     "axelar-solana-memo-program/testnet",
-    "gateway-event-stack/testnet",
     "its-instruction-builder/testnet",
 ]
 mainnet = [
@@ -176,7 +175,6 @@ mainnet = [
     "axelar-solana-governance/mainnet",
     "axelar-solana-its/mainnet",
     "axelar-solana-memo-program/mainnet",
-    "gateway-event-stack/mainnet",
     "its-instruction-builder/mainnet",
 ]
 default = ["devnet-amplifier"]

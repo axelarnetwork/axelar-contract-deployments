@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use axelar_solana_gateway::executable::AxelarMessagePayload;
-use axelar_solana_gateway::executable::EncodingScheme;
+use axelar_solana_gateway::payload::AxelarMessagePayload;
+use axelar_solana_gateway::payload::EncodingScheme;
 use clap::{Args, Subcommand};
 use eyre::Result;
 use solana_sdk::instruction::AccountMeta;
