@@ -192,8 +192,7 @@ pub(crate) fn print_transaction_result(
             let cluster_param = match config.network_type {
                 NetworkType::Local => "?cluster=custom",
                 NetworkType::Devnet => "?cluster=devnet",
-                NetworkType::Testnet => "?cluster=testnet",
-                NetworkType::Mainnet => "",
+                NetworkType::Mainnet => "?cluster=mainnet-beta",
             };
             println!("   Explorer Link: {explorer_base_url}{tx_signature}{cluster_param}");
             println!("------------------------------------------");
