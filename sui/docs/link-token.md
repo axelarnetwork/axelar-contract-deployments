@@ -133,7 +133,7 @@ When sui [creates](https://github.com/axelarnetwork/axelar-cgp-sui/blob/40458a1d
 
 **Security:** 
 
-The operator cannot steal tokens directly, but can modify settings that affect the Interchain Token Service. Use trusted channels and addresses only.
+The operator cannot steal tokens directly, but it can modify critical settings that affect your asset's integration to ITS, including flow limits. Use trusted channels and addresses only.
 
 **Note:** The deployer account (caller of `linkToken`) must also be secure, as it has the authority to initiate token linking operations and Operators.
 
