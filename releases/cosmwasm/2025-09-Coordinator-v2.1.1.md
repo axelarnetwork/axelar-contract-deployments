@@ -1,4 +1,4 @@
-# Cosmwasm Coordinator v2.1
+# Cosmwasm Coordinator v2.1.1
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
