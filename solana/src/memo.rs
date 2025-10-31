@@ -49,15 +49,15 @@ pub(crate) fn build_transaction(
 }
 
 fn init(fee_payer: &Pubkey, _config: &Config) -> eyre::Result<Vec<Instruction>> {
-    let counter_pda = axelar_solana_memo_program::get_counter_pda();
+    let counter_pda = solana_axelar_memo::get_counter_pda();
 
     let init_instruction =
-        axelar_solana_memo_program::instruction::initialize(fee_payer, &counter_pda)?;
+        solana_axelar_memo::instruction::initialize(fee_payer, &counter_pda)?;
 
     println!("------------------------------------------");
     println!(
         "\u{2705} Memo program ({}) initialization details:",
-        axelar_solana_memo_program::id()
+        solana_axelar_memo::id()
     );
     println!("   Counter Account: {}", counter_pda.0);
     println!("------------------------------------------");

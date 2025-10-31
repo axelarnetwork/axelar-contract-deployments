@@ -9,7 +9,7 @@ use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
-use axelar_solana_gateway::state::config::RotationDelaySecs;
+use solana_axelar_gateway::state::config::RotationDelaySecs;
 use base64::Engine as _;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
@@ -48,11 +48,11 @@ fn command_id(source_chain: &str, message_id: &str) -> [u8; 32] {
 
 #[derive(Debug)]
 enum GatewayEvent {
-    CallContract(axelar_solana_gateway::CallContractEvent),
-    VerifierSetRotated(axelar_solana_gateway::VerifierSetRotatedEvent),
-    OperatorshipTransferred(axelar_solana_gateway::OperatorshipTransferredEvent),
-    MessageApproved(axelar_solana_gateway::MessageApprovedEvent),
-    MessageExecuted(axelar_solana_gateway::MessageExecutedEvent),
+    CallContract(solana_axelar_gateway::CallContractEvent),
+    VerifierSetRotated(solana_axelar_gateway::VerifierSetRotatedEvent),
+    OperatorshipTransferred(solana_axelar_gateway::OperatorshipTransferredEvent),
+    MessageApproved(solana_axelar_gateway::MessageApprovedEvent),
+    MessageExecuted(solana_axelar_gateway::MessageExecutedEvent),
 }
 
 #[derive(Subcommand, Debug)]
@@ -456,24 +456,24 @@ fn append_verification_flow_instructions(
     execute_data: &ExecuteData,
     gateway_config_pda: &Pubkey,
 ) -> eyre::Result<Pubkey> {
-    let (verifier_set_tracker_pda, _bump) = axelar_solana_gateway::VerifierSetTracker::find_pda(
+    let (verifier_set_tracker_pda, _bump) = solana_axelar_gateway::VerifierSetTracker::find_pda(
         &execute_data.signing_verifier_set_merkle_root,
     );
 
     let (verification_session_pda, _bump) =
-        axelar_solana_gateway::SignatureVerificationSessionData::find_pda(
+        solana_axelar_gateway::SignatureVerificationSessionData::find_pda(
             &execute_data.payload_merkle_root,
             &execute_data.signing_verifier_set_merkle_root,
         );
 
     let init_session_ix_data =
-        axelar_solana_gateway::instruction::InitializePayloadVerificationSession {
+        solana_axelar_gateway::instruction::InitializePayloadVerificationSession {
             merkle_root: execute_data.payload_merkle_root,
         }
         .data();
 
     instructions.push(Instruction {
-        program_id: axelar_solana_gateway::id(),
+        program_id: solana_axelar_gateway::id(),
         accounts: vec![
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(*gateway_config_pda, false),
@@ -496,15 +496,15 @@ fn append_verification_flow_instructions(
             }
         };
 
-        let v2_leaf = axelar_solana_gateway::VerifierSetLeaf {
+        let v2_leaf = solana_axelar_gateway::VerifierSetLeaf {
             nonce: signature_leaf.leaf.nonce,
             quorum: signature_leaf.leaf.quorum,
             signer_pubkey: match &signature_leaf.leaf.signer_pubkey {
                 axelar_solana_encoding::types::pubkey::PublicKey::Secp256k1(pk) => {
-                    axelar_solana_gateway::PublicKey::Secp256k1(*pk)
+                    solana_axelar_gateway::PublicKey::Secp256k1(*pk)
                 }
                 axelar_solana_encoding::types::pubkey::PublicKey::Ed25519(pk) => {
-                    axelar_solana_gateway::PublicKey::Ed25519(*pk)
+                    solana_axelar_gateway::PublicKey::Ed25519(*pk)
                 }
             },
             signer_weight: signature_leaf.leaf.signer_weight,
@@ -513,20 +513,20 @@ fn append_verification_flow_instructions(
             domain_separator: signature_leaf.leaf.domain_separator,
         };
 
-        let verifier_info = axelar_solana_gateway::SigningVerifierSetInfo {
+        let verifier_info = solana_axelar_gateway::SigningVerifierSetInfo {
             signature: signature_bytes,
             leaf: v2_leaf,
             merkle_proof: signature_leaf.merkle_proof.clone(),
         };
 
-        let verify_sig_ix_data = axelar_solana_gateway::instruction::VerifySignature {
+        let verify_sig_ix_data = solana_axelar_gateway::instruction::VerifySignature {
             payload_merkle_root: execute_data.payload_merkle_root,
             verifier_info,
         }
         .data();
 
         instructions.push(Instruction {
-            program_id: axelar_solana_gateway::id(),
+            program_id: solana_axelar_gateway::id(),
             accounts: vec![
                 AccountMeta::new_readonly(*gateway_config_pda, false),
                 AccountMeta::new_readonly(verifier_set_tracker_pda, false),
@@ -546,7 +546,7 @@ async fn init(
 ) -> eyre::Result<Vec<Instruction>> {
     let mut chains_info: serde_json::Value =
         read_json_file_from_path(&config.chains_info_file).unwrap_or_default();
-    let (gateway_config_pda, _bump) = axelar_solana_gateway::GatewayConfig::find_pda();
+    let (gateway_config_pda, _bump) = solana_axelar_gateway::GatewayConfig::find_pda();
     let verifier_set = get_verifier_set(
         init_args.signer.as_ref(),
         init_args.signer_set.as_ref(),
@@ -560,12 +560,12 @@ async fn init(
         NativeHasher,
     >(&verifier_set, &domain_separator)?;
     let (verifier_set_tracker_pda, _bump) =
-        axelar_solana_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
+        solana_axelar_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
     let payer = *fee_payer;
     let upgrade_authority = payer;
 
     chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY] = json!({
-        ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
+        ADDRESS_KEY: solana_axelar_gateway::id().to_string(),
         CONNECTION_TYPE_KEY: SOLANA_GATEWAY_CONNECTION_TYPE.to_owned(),
         DOMAIN_SEPARATOR_KEY: format!("0x{}", hex::encode(domain_separator)),
         MINIMUM_ROTATION_DELAY_KEY: init_args.minimum_rotation_delay,
@@ -576,10 +576,10 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    use axelar_solana_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
+    use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
 
     let gateway_program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&axelar_solana_gateway::id());
+        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
 
     let params = InitializeConfigParams {
         domain_separator,
@@ -589,7 +589,7 @@ async fn init(
         },
         minimum_rotation_delay: init_args.minimum_rotation_delay,
         operator: init_args.operator,
-        previous_verifier_retention: axelar_solana_gateway::u256::U256::from(
+        previous_verifier_retention: solana_axelar_gateway::u256::U256::from(
             u64::try_from(init_args.previous_signers_retention)
                 .map_err(|_| eyre!("previous_signers_retention value too large for u64"))?,
         ),
@@ -604,10 +604,10 @@ async fn init(
         AccountMeta::new(verifier_set_tracker_pda, false),
     ];
 
-    let ix_data = axelar_solana_gateway::instruction::InitializeConfig { params }.data();
+    let ix_data = solana_axelar_gateway::instruction::InitializeConfig { params }.data();
 
     Ok(vec![Instruction {
-        program_id: axelar_solana_gateway::id(),
+        program_id: solana_axelar_gateway::id(),
         accounts,
         data: ix_data,
     }])
@@ -624,11 +624,11 @@ fn call_contract(
             .unwrap_or(&call_contract_args.payload),
     )?;
 
-    let gateway_config_pda = axelar_solana_gateway::GatewayConfig::find_pda().0;
+    let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let (event_authority_pda, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &axelar_solana_gateway::id());
+        Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let ix_data = axelar_solana_gateway::instruction::CallContract {
+    let ix_data = solana_axelar_gateway::instruction::CallContract {
         destination_chain: call_contract_args.destination_chain,
         destination_contract_address: call_contract_args.destination_address,
         payload,
@@ -637,12 +637,12 @@ fn call_contract(
     .data();
 
     Ok(vec![Instruction {
-        program_id: axelar_solana_gateway::id(),
+        program_id: solana_axelar_gateway::id(),
         accounts: vec![
             AccountMeta::new_readonly(*fee_payer, true),
             AccountMeta::new_readonly(gateway_config_pda, false),
             AccountMeta::new_readonly(event_authority_pda, false),
-            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+            AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
         data: ix_data,
     }])
@@ -651,23 +651,23 @@ fn call_contract(
 fn transfer_operatorship(
     transfer_operatorship_args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let gateway_config_pda = axelar_solana_gateway::GatewayConfig::find_pda().0;
+    let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let gateway_program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&axelar_solana_gateway::id());
+        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
     let (event_authority_pda, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &axelar_solana_gateway::id());
+        Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let ix_data = axelar_solana_gateway::instruction::TransferOperatorship {}.data();
+    let ix_data = solana_axelar_gateway::instruction::TransferOperatorship {}.data();
 
     Ok(vec![Instruction {
-        program_id: axelar_solana_gateway::id(),
+        program_id: solana_axelar_gateway::id(),
         accounts: vec![
             AccountMeta::new(gateway_config_pda, false),
             AccountMeta::new_readonly(transfer_operatorship_args.authority, true),
             AccountMeta::new_readonly(gateway_program_data, false),
             AccountMeta::new_readonly(transfer_operatorship_args.new_operator, false),
             AccountMeta::new_readonly(event_authority_pda, false),
-            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+            AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
         data: ix_data,
     }])
@@ -699,7 +699,7 @@ fn approve(
         destination_address: approve_args.destination_address,
         payload_hash,
     };
-    let gateway_config_pda = axelar_solana_gateway::GatewayConfig::find_pda().0;
+    let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let gmp_payload = Payload::Messages(Messages(vec![message]));
     let execute_data = construct_execute_data(&signer_set, gmp_payload, domain_separator)?;
     let verification_session_pda = append_verification_flow_instructions(
@@ -719,7 +719,7 @@ fn approve(
         &merkleised_message.leaf.message.cc_id.id,
     );
     let (incoming_message_pda, _bump) =
-        axelar_solana_gateway::IncomingMessage::find_pda(&command_id);
+        solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
 
     println!(
         "Building instruction to approve message from {} with id: {}",
@@ -727,12 +727,12 @@ fn approve(
     );
 
     let (event_authority_pda, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &axelar_solana_gateway::id());
+        Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let v2_merkleised_message = axelar_solana_gateway::MerkleisedMessage {
-        leaf: axelar_solana_gateway::MessageLeaf {
-            message: axelar_solana_gateway::Message {
-                cc_id: axelar_solana_gateway::CrossChainId {
+    let v2_merkleised_message = solana_axelar_gateway::MerkleisedMessage {
+        leaf: solana_axelar_gateway::MessageLeaf {
+            message: solana_axelar_gateway::Message {
+                cc_id: solana_axelar_gateway::CrossChainId {
                     chain: merkleised_message.leaf.message.cc_id.chain.clone(),
                     id: merkleised_message.leaf.message.cc_id.id.clone(),
                 },
@@ -748,14 +748,14 @@ fn approve(
         proof: merkleised_message.proof.clone(),
     };
 
-    let approve_ix_data = axelar_solana_gateway::instruction::ApproveMessage {
+    let approve_ix_data = solana_axelar_gateway::instruction::ApproveMessage {
         merkleised_message: v2_merkleised_message,
         payload_merkle_root: execute_data.payload_merkle_root,
     }
     .data();
 
     instructions.push(Instruction {
-        program_id: axelar_solana_gateway::id(),
+        program_id: solana_axelar_gateway::id(),
         accounts: vec![
             AccountMeta::new_readonly(gateway_config_pda, false),
             AccountMeta::new(*fee_payer, true),
@@ -763,7 +763,7 @@ fn approve(
             AccountMeta::new(incoming_message_pda, false),
             AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
             AccountMeta::new_readonly(event_authority_pda, false),
-            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+            AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
         data: approve_ix_data,
     });
@@ -795,10 +795,10 @@ async fn rotate(
         NativeHasher,
     >(&new_verifier_set, &domain_separator)?;
     let (verifier_set_tracker_pda, _bump) =
-        axelar_solana_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
+        solana_axelar_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
     let (new_verifier_set_tracker_pda, _bump) =
-        axelar_solana_gateway::VerifierSetTracker::find_pda(&new_verifier_set_hash);
-    let gateway_config_pda = axelar_solana_gateway::GatewayConfig::find_pda().0;
+        solana_axelar_gateway::VerifierSetTracker::find_pda(&new_verifier_set_hash);
+    let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let payload = Payload::NewVerifierSet(new_verifier_set.clone());
     let execute_data = construct_execute_data(&signer_set, payload, domain_separator)?;
     let verification_session_pda = append_verification_flow_instructions(
@@ -809,15 +809,15 @@ async fn rotate(
     )?;
 
     let (event_authority_pda, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &axelar_solana_gateway::id());
+        Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let rotate_ix_data = axelar_solana_gateway::instruction::RotateSigners {
+    let rotate_ix_data = solana_axelar_gateway::instruction::RotateSigners {
         new_verifier_set_merkle_root: new_verifier_set_hash,
     }
     .data();
 
     instructions.push(Instruction {
-        program_id: axelar_solana_gateway::id(),
+        program_id: solana_axelar_gateway::id(),
         accounts: vec![
             AccountMeta::new(gateway_config_pda, false),
             AccountMeta::new_readonly(verification_session_pda, false),
@@ -826,7 +826,7 @@ async fn rotate(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
             AccountMeta::new_readonly(event_authority_pda, false),
-            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+            AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
         data: rotate_ix_data,
     });
@@ -858,7 +858,7 @@ async fn submit_proof(
     )
     .await?;
 
-    let gateway_config_pda = axelar_solana_gateway::GatewayConfig::find_pda().0;
+    let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let execute_data: ExecuteData = match multisig_prover_response.status {
         ProofStatus::Pending => eyre::bail!("Proof is not completed yet"),
         ProofStatus::Completed { execute_data } => borsh::from_slice(&execute_data)?,
@@ -878,21 +878,21 @@ async fn submit_proof(
         } => {
             println!("Building instruction to rotate signers");
             let (verifier_set_tracker_pda, _bump) =
-                axelar_solana_gateway::VerifierSetTracker::find_pda(
+                solana_axelar_gateway::VerifierSetTracker::find_pda(
                     &execute_data.signing_verifier_set_merkle_root,
                 );
             let (new_verifier_set_tracker_pda, _bump) =
-                axelar_solana_gateway::VerifierSetTracker::find_pda(&new_verifier_set_merkle_root);
+                solana_axelar_gateway::VerifierSetTracker::find_pda(&new_verifier_set_merkle_root);
             let (event_authority_pda, _) =
-                Pubkey::find_program_address(&[b"__event_authority"], &axelar_solana_gateway::id());
+                Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-            let rotate_ix_data = axelar_solana_gateway::instruction::RotateSigners {
+            let rotate_ix_data = solana_axelar_gateway::instruction::RotateSigners {
                 new_verifier_set_merkle_root,
             }
             .data();
 
             instructions.push(Instruction {
-                program_id: axelar_solana_gateway::id(),
+                program_id: solana_axelar_gateway::id(),
                 accounts: vec![
                     AccountMeta::new(gateway_config_pda, false),
                     AccountMeta::new_readonly(verification_session_pda, false),
@@ -901,7 +901,7 @@ async fn submit_proof(
                     AccountMeta::new(*fee_payer, true),
                     AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
                     AccountMeta::new_readonly(event_authority_pda, false),
-                    AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+                    AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
                 ],
                 data: rotate_ix_data,
             });
@@ -917,17 +917,17 @@ async fn submit_proof(
                     message.leaf.message.cc_id.id.as_str(),
                 );
                 let (incoming_message_pda, _bump) =
-                    axelar_solana_gateway::IncomingMessage::find_pda(&msg_command_id);
+                    solana_axelar_gateway::IncomingMessage::find_pda(&msg_command_id);
 
                 let (event_authority_pda, _) = Pubkey::find_program_address(
                     &[b"__event_authority"],
-                    &axelar_solana_gateway::id(),
+                    &solana_axelar_gateway::id(),
                 );
 
-                let v2_merkleised_message = axelar_solana_gateway::MerkleisedMessage {
-                    leaf: axelar_solana_gateway::MessageLeaf {
-                        message: axelar_solana_gateway::Message {
-                            cc_id: axelar_solana_gateway::CrossChainId {
+                let v2_merkleised_message = solana_axelar_gateway::MerkleisedMessage {
+                    leaf: solana_axelar_gateway::MessageLeaf {
+                        message: solana_axelar_gateway::Message {
+                            cc_id: solana_axelar_gateway::CrossChainId {
                                 chain: message.leaf.message.cc_id.chain.clone(),
                                 id: message.leaf.message.cc_id.id.clone(),
                             },
@@ -943,14 +943,14 @@ async fn submit_proof(
                     proof: message.proof.clone(),
                 };
 
-                let approve_ix_data = axelar_solana_gateway::instruction::ApproveMessage {
+                let approve_ix_data = solana_axelar_gateway::instruction::ApproveMessage {
                     merkleised_message: v2_merkleised_message,
                     payload_merkle_root: execute_data.payload_merkle_root,
                 }
                 .data();
 
                 instructions.push(Instruction {
-                    program_id: axelar_solana_gateway::id(),
+                    program_id: solana_axelar_gateway::id(),
                     accounts: vec![
                         AccountMeta::new_readonly(gateway_config_pda, false),
                         AccountMeta::new(*fee_payer, true),
@@ -958,7 +958,7 @@ async fn submit_proof(
                         AccountMeta::new(incoming_message_pda, false),
                         AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
                         AccountMeta::new_readonly(event_authority_pda, false),
-                        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+                        AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
                     ],
                     data: approve_ix_data,
                 });
@@ -993,11 +993,11 @@ async fn execute(
     };
 
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let (incoming_message_pda, _) = axelar_solana_gateway::IncomingMessage::find_pda(&command_id);
+    let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
     let mut instructions = Vec::new();
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
-        if destination_address == axelar_solana_its::id() {
+        if destination_address == solana_axelar_its::id() {
             let ix = its_instruction_builder::build_execute_instruction(
                 *fee_payer,
                 incoming_message_pda,
@@ -1007,8 +1007,8 @@ async fn execute(
             )
             .await?;
             instructions.push(ix);
-        } else if destination_address == axelar_solana_governance::id() {
-            let ix = axelar_solana_governance::instructions::builder::calculate_gmp_ix(
+        } else if destination_address == solana_axelar_governance::id() {
+            let ix = solana_axelar_governance::instructions::builder::calculate_gmp_ix(
                 *fee_payer,
                 incoming_message_pda,
                 &message,
@@ -1102,7 +1102,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
 fn parse_gateway_event(data: &[u8]) -> eyre::Result<Option<GatewayEvent>> {
     use anchor_lang::AnchorDeserialize;
     use anchor_lang::Discriminator;
-    use axelar_solana_gateway::{
+    use solana_axelar_gateway::{
         CallContractEvent, MessageApprovedEvent, MessageExecutedEvent,
         OperatorshipTransferredEvent, VerifierSetRotatedEvent,
     };
@@ -1159,7 +1159,7 @@ fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> 
         args.message_id.as_bytes(),
     ])
     .0;
-    let (incoming_message_pda, _) = axelar_solana_gateway::IncomingMessage::find_pda(&command_id);
+    let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
     let raw_incoming_message =
         rpc_client
             .get_account_data(&incoming_message_pda)
@@ -1167,7 +1167,7 @@ fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> 
                 eyre!("Couldn't fetch information about given message. Are the details correct?")
             })?;
     let incoming_message =
-        axelar_solana_gateway::IncomingMessage::try_deserialize(&mut &raw_incoming_message[8..])
+        solana_axelar_gateway::IncomingMessage::try_deserialize(&mut &raw_incoming_message[8..])
             .map_err(|_| eyre!("Failed to deserialize message data"))?;
 
     let status = if incoming_message.status.is_approved() {

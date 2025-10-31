@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use axelar_solana_gateway::payload::AxelarMessagePayload;
-use axelar_solana_gateway::payload::EncodingScheme;
+use solana_axelar_gateway::payload::AxelarMessagePayload;
+use solana_axelar_gateway::payload::EncodingScheme;
 use clap::{Args, Subcommand};
 use eyre::Result;
 use solana_sdk::instruction::AccountMeta;
@@ -12,7 +12,7 @@ use crate::Config;
 /// Commands for miscellaneous utilities
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
-    /// Build an axelar_solana_gateway::executable message
+    /// Build an solana_axelar_gateway::executable message
     BuildAxelarMessage(BuildAxelarMessageArgs),
 }
 

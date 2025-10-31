@@ -77,11 +77,11 @@ fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
+    let (config_pda, _bump) = solana_axelar_gas_service::get_config_pda();
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
-        ADDRESS_KEY: axelar_solana_gas_service::id().to_string(),
+        ADDRESS_KEY: solana_axelar_gas_service::id().to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
@@ -89,7 +89,7 @@ fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![axelar_solana_gas_service::instructions::init_config(
+    Ok(vec![solana_axelar_gas_service::instructions::init_config(
         fee_payer,
         &init_args.operator,
     )?])

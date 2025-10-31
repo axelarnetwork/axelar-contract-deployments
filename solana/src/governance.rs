@@ -1,4 +1,4 @@
-use axelar_solana_governance::instructions::builder::IxBuilder;
+use solana_axelar_governance::instructions::builder::IxBuilder;
 use base64::Engine;
 use clap::{Args, Subcommand};
 use solana_sdk::instruction::AccountMeta;
@@ -100,7 +100,7 @@ pub(crate) fn build_instruction(
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (config_pda, _) = axelar_solana_governance::state::GovernanceConfig::pda();
+    let (config_pda, _) = solana_axelar_governance::state::GovernanceConfig::pda();
 
     match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config, &config_pda),
@@ -159,7 +159,7 @@ fn init(
     let chain_hash = solana_sdk::keccak::hashv(&[init_args.governance_chain.as_bytes()]).0;
     let address_hash = solana_sdk::keccak::hashv(&[init_args.governance_address.as_bytes()]).0;
 
-    let governance_config = axelar_solana_governance::state::GovernanceConfig::new(
+    let governance_config = solana_axelar_governance::state::GovernanceConfig::new(
         chain_hash,
         address_hash,
         init_args.minimum_proposal_eta_delay,
@@ -168,7 +168,7 @@ fn init(
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
-        ADDRESS_KEY: axelar_solana_governance::id().to_string(),
+        ADDRESS_KEY: solana_axelar_governance::id().to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
         GOVERNANCE_ADDRESS_KEY: init_args.governance_address,
         GOVERNANCE_CHAIN_KEY: init_args.governance_chain,
