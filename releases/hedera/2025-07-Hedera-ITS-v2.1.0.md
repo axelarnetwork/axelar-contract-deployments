@@ -12,7 +12,7 @@
 | **Testnet**          | -                     | TBD         |
 | **Mainnet**          | -                     | TBD         |
 
-- [Release](https://github.com/commonprefix/interchain-token-service/tree/01ac9020896b6e16577a9d922f6b7e23baae9145)
+- [Release](https://github.com/commonprefix/interchain-token-service/tree/01ac9020896b6e16577a9d922f6b7e23baae9145) # skip-check
 
 ## Background
 
