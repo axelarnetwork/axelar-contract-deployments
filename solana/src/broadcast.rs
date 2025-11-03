@@ -2,20 +2,14 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use axelar_solana_gateway::num_traits::FromPrimitive;
-use eyre::eyre;
-use solana_client::client_error::ClientErrorKind;
 use solana_client::rpc_client::RpcClient;
-use solana_client::rpc_request::RpcResponseErrorData;
-use solana_client::rpc_response::RpcSimulateTransactionResult;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction as SolanaInstruction;
-use solana_sdk::instruction::InstructionError;
 use solana_sdk::message::Message;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
-use solana_sdk::transaction::{Transaction, TransactionError};
+use solana_sdk::transaction::Transaction;
 
 use crate::config::Config;
 use crate::types::SignedSolanaTransaction;
@@ -122,58 +116,6 @@ fn simulate_transaction(rpc_client: &RpcClient, tx: &Transaction) {
     }
 }
 
-fn handle_transaction_error(
-    client_err: solana_client::client_error::ClientError,
-) -> eyre::Result<Signature> {
-    let should_continue = if let ClientErrorKind::RpcError(
-        solana_client::rpc_request::RpcError::RpcResponseError {
-            data:
-                RpcResponseErrorData::SendTransactionPreflightFailure(RpcSimulateTransactionResult {
-                    err:
-                        Some(TransactionError::InstructionError(_, InstructionError::Custom(err_code))),
-                    ..
-                }),
-            ..
-        },
-    ) = client_err.kind()
-    {
-        axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
-            .is_some_and(|gw_err| gw_err.should_relayer_proceed())
-    } else if let ClientErrorKind::TransactionError(TransactionError::InstructionError(
-        _,
-        InstructionError::Custom(err_code),
-    )) = client_err.kind()
-    {
-        axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
-            .is_some_and(|gw_err| gw_err.should_relayer_proceed())
-    } else {
-        false
-    };
-
-    if should_continue {
-        println!(
-            "Transaction error: GatewayError, but it's a recoverable error - continuing with next transaction"
-        );
-        Ok(Signature::default())
-    } else {
-        #[allow(clippy::wildcard_enum_match_arm)]
-        match client_err.kind() {
-            ClientErrorKind::RpcError(solana_client::rpc_request::RpcError::RpcResponseError {
-                data: RpcResponseErrorData::SendTransactionPreflightFailure(sim_result),
-                ..
-            }) => {
-                eprintln!(" -> Preflight Simulation Failure Result: {sim_result:?}");
-            }
-            ClientErrorKind::TransactionError(tx_err) => {
-                eprintln!(" -> Transaction Error Detail: {tx_err:?}");
-            }
-            _ => { /* Don't need to print any detail */ }
-        }
-
-        Err(eyre!("RPC client error: {client_err}"))
-    }
-}
-
 fn submit_solana_transaction(
     url: &str,
     signed_tx_data: &SignedSolanaTransaction,
@@ -196,7 +138,7 @@ fn submit_solana_transaction(
         }
         Err(client_err) => {
             eprintln!("Error during RPC broadcast/confirmation: {client_err}");
-            handle_transaction_error(client_err)
+            Err(eyre::eyre!("RPC client error: {client_err}"))
         }
     }
 }
@@ -224,16 +166,7 @@ pub(crate) fn broadcast_solana_transaction(
     );
 
     match submit_solana_transaction(&config.url, &signed_tx_data) {
-        Ok(signature) => {
-            if signature == Signature::default() {
-                println!(
-                    "Transaction had a recoverable error - operation complete with recoverable error"
-                );
-                Ok(())
-            } else {
-                print_transaction_result(config, Ok(signature))
-            }
-        }
+        Ok(signature) => print_transaction_result(config, Ok(signature)),
         Err(err) => print_transaction_result(config, Err(err)),
     }
 }

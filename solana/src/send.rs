@@ -1,16 +1,11 @@
 use std::rc::Rc;
 
-use axelar_solana_gateway::num_traits::FromPrimitive;
 use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
-use solana_client::client_error::ClientErrorKind;
 use solana_client::rpc_client::RpcClient;
-use solana_client::rpc_request::RpcResponseErrorData;
-use solana_client::rpc_response::RpcSimulateTransactionResult;
 use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::instruction::InstructionError;
 use solana_sdk::signer::Signer;
-use solana_sdk::transaction::{Transaction, TransactionError};
+use solana_sdk::transaction::Transaction;
 
 use crate::config::Config;
 use crate::types::SerializableSolanaTransaction;
@@ -146,40 +141,7 @@ fn add_compute_budget_to_transaction(
 }
 
 fn handle_transaction_error(err: solana_client::client_error::ClientError) -> eyre::Result<bool> {
-    let should_continue = if let ClientErrorKind::RpcError(
-        solana_client::rpc_request::RpcError::RpcResponseError {
-            data:
-                RpcResponseErrorData::SendTransactionPreflightFailure(RpcSimulateTransactionResult {
-                    err:
-                        Some(TransactionError::InstructionError(_, InstructionError::Custom(err_code))),
-                    ..
-                }),
-            ..
-        },
-    ) = err.kind()
-    {
-        axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
-            .is_some_and(|gw_err| gw_err.should_relayer_proceed())
-    } else if let ClientErrorKind::TransactionError(TransactionError::InstructionError(
-        _,
-        InstructionError::Custom(err_code),
-    )) = err.kind()
-    {
-        axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
-            .is_some_and(|gw_err| gw_err.should_relayer_proceed())
-    } else {
-        false
-    };
-
-    if should_continue {
-        println!(
-            "Transaction error: GatewayError (code: {:?}), but continuing with next transaction as it's recoverable",
-            err.kind()
-        );
-        Ok(true)
-    } else {
-        eyre::bail!("Transaction simulation error: {err:?}");
-    }
+    eyre::bail!("Transaction simulation error: {err:?}");
 }
 
 pub(crate) fn sign_and_send_transactions(

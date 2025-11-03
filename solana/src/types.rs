@@ -15,7 +15,6 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 pub(crate) enum NetworkType {
     Local,
     Devnet,
-    Testnet,
     Mainnet,
 }
 
@@ -48,7 +47,6 @@ impl FromStr for NetworkType {
         s.contains("local")
             .then_some(NetworkType::Local)
             .or_else(|| s.contains("devnet").then_some(NetworkType::Devnet))
-            .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
             .or_else(|| s.contains("mainnet").then_some(NetworkType::Mainnet))
             .ok_or_else(|| eyre!("Invalid network type: {s}"))
     }
