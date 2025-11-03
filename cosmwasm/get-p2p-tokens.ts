@@ -69,15 +69,34 @@ type TokenData = {
     tokenManagerAddress: string;
     tokenManagerType: number;
     deployParams: unknown;
-    tokenInfo?: {
-        conflictingInterchainTokenAddress?: string;
-        tokenAddress: string;
-        decimals: number;
-        track: boolean;
-    };
+    tokenAddress: string;
+    decimals: number;
+    track: boolean;
+    conflictingInterchainTokenAddress?: string;
 };
 
 type TokenDataResult = TokenData[] | Error;
+
+export type TokenInfoFile = {
+    chains: {
+        [chainName: string]: {
+            start: number;
+            end: number;
+            max: number;
+            alreadyProcessedPercentage: string;
+            rpcs: string[];
+        };
+    };
+    tokens: {
+        [tokenId: string]: {
+            chains: {
+                [chainName: string]: TokenData & {
+                    tokenIdDeployedMultipleTimes: TokenData[];
+                };
+            };
+        };
+    };
+};
 
 async function getTokensFromBlock(
     name: string,
@@ -93,10 +112,22 @@ async function getTokensFromBlock(
         return [];
     }
     let lastError = null;
+    let events = null;
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
-            const events = await its.queryFilter(filter, startBlockNumber, end);
-            const tokenDatas: TokenData[] = await Promise.all(
+            events = await its.queryFilter(filter, startBlockNumber, end);
+            break;
+        } catch (e) {
+            lastError = e;
+        }
+    }
+    if (lastError) {
+        return lastError;
+    }
+
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            const tokenData: TokenData[] = await Promise.all(
                 events
                     .map((event) => event.args)
                     .map(async (event) => {
@@ -105,28 +136,25 @@ async function getTokensFromBlock(
                         const tokenManagerType = event[2];
                         const deployParams = event[3];
                         const tokenInfo = await getTokenInfo(tokenManagerAddress, tokenManagerType, provider);
+                        const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
 
-                        if (tokenInfo) {
-                            const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
-                            if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
-                                printWarn(
-                                    `Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`,
-                                );
-                                return {
-                                    tokenId,
-                                    tokenManagerAddress,
-                                    tokenManagerType,
-                                    deployParams,
-                                    tokenInfo: { conflictingInterchainTokenAddress: interchainTokenAddress, ...tokenInfo },
-                                };
-                            } else {
-                                return { tokenId, tokenManagerAddress, tokenManagerType, deployParams, tokenInfo: { ...tokenInfo } };
-                            }
+                        if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
+                            printWarn(
+                                `Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`,
+                            );
+                            return {
+                                tokenId,
+                                tokenManagerAddress,
+                                tokenManagerType,
+                                deployParams,
+                                conflictingInterchainTokenAddress: interchainTokenAddress,
+                                ...tokenInfo,
+                            };
                         }
-                        return { tokenId, tokenManagerAddress, tokenManagerType, deployParams };
+                        return { tokenId, tokenManagerAddress, tokenManagerType, deployParams, ...tokenInfo };
                     }),
             );
-            return tokenDatas;
+            return tokenData;
         } catch (e) {
             lastError = e;
         }
@@ -134,14 +162,14 @@ async function getTokensFromBlock(
     return lastError;
 }
 
-async function getTokensFromChain(name, chainInfo, tokensInfo) {
+async function getTokensFromChain(name, chainInfo, tokensInfo: TokenInfoFile) {
     try {
         if (!tokensInfo.chains[name]) {
             tokensInfo.chains[name] = {
                 start: 0,
                 end: 0,
                 max: 0,
-                alreadyProcessedPercentage: 0,
+                alreadyProcessedPercentage: '0.00',
                 rpcs: [chainInfo.rpc],
             };
         }
@@ -215,19 +243,18 @@ async function getTokensFromChain(name, chainInfo, tokensInfo) {
                 const tokenId = token.tokenId;
 
                 if (!tokensInfo?.tokens?.[tokenId]) {
-                    tokensInfo.tokens[tokenId] = {};
+                    tokensInfo.tokens[tokenId] = {
+                        chains: {},
+                    };
                 }
 
-                if (tokensInfo.tokens[tokenId][name]) {
+                if (tokensInfo.tokens[tokenId].chains[name]) {
                     printWarn(`Token ${tokenId} already exists for ${name}`);
                     // TODO tkulik: potentially not thread safe
                     tokensInfo.tokens[tokenId].chains[name].tokenIdDeployedMultipleTimes.push({
                         ...token,
                     });
                 } else {
-                    tokensInfo.tokens[tokenId] = {
-                        chains: {},
-                    };
                     tokensInfo.tokens[tokenId].chains[name] = {
                         tokenIdDeployedMultipleTimes: [],
                         ...token,
