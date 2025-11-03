@@ -1383,6 +1383,21 @@
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "configAccount": "FS5zNZygm9bF33UJZLygfqxmfSkZVTtopyi4wJvWT99b",
           "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "AxelarOperators": {
+          "address": "oprqSRXsywUWMHSLcsLNwYBW3uq4miVq8THceDLcQh8",
+          "configAccount": "A1xMQ2SDujcT2JKeNLRc1HaUt2iEB8F7xoe9AztRYXwi",
+          "owner": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "InterchainGovernance": {
+          "address": "govKw1XM67EFoyLoJ7x6A8qtyJqEw5ZREGfwYxJtYt8",
+          "configAccount": "6siRkKCYtmfxhA5bhESX5JBhffNbybqwJSfx3kMCvvsH",
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "governanceChain": "Axelarnet",
+          "minimumTimeDelay": 3600,
+          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
         }
       }
     }
