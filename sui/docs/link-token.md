@@ -91,7 +91,7 @@ In the context of ITS, the `Channel` object is used in place of the sender's Sui
 #### Notable Entities Using `Channel`
 
 1. **Operator:** controls operational settings for a token manager, including the ability to set flow limits and pausing.
-2. **Distributor:** has minting and burning privileges for tokens with MINT_BURN token manager types.
+2. **Distributor:** has minting and burning privileges for tokens with `MINT_BURN` token manager types.
 3. **Deployer:** the original entity that registered or deployed a token. During token linking, deployers can auto-enable operators on the destination chain, and during custom token registration their channel is used for `TokenId` derivation.
 
 #### Role of `Channel` in `TokenId` Derivation
