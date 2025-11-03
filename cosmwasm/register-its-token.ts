@@ -1,18 +1,30 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-const { ethers } = require('hardhat');
-const { Contract, getDefaultProvider } = ethers;
-const { Command, Option } = require('commander');
-const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json');
-const fs = require('fs');
-const { printError, loadConfig, saveConfig, printInfo } = require('../common');
-const { initContractConfig, prepareWallet, prepareClient } = require('./utils');
-const { addAmplifierOptions } = require('./cli-utils');
+import { Contract, getDefaultProvider } from 'ethers';
+import { Command, Option } from 'commander';
+import IInterchainToken from '@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json';
+import fs from 'fs';
+import { printError, printInfo } from '../common';
+import { addAmplifierOptions } from './cli-utils';
+import { mainProcessor } from './processor';
+import { ConfigManager } from '../common/config';
 
 class TokenIterator {
-    constructor(env, info, tokenInfo, options) {
+
+    env: string;
+    config: ConfigManager;
+    tokenInfo: any;
+    tokenIndex: number;
+    tokenIds: string[];
+    chains: string[];
+    rpcs: string[];
+    chainIndex: number;
+    chainNames: string[];
+
+
+    constructor(env: string, config: ConfigManager, tokenInfo: any, options: any) {
         this.env = env;
-        this.info = info;
+        this.config = config;
         this.tokenInfo = tokenInfo;
         this.tokenIndex = -1;
         this.tokenIds = options.tokenIds || Object.keys(tokenInfo);
@@ -53,14 +65,14 @@ class TokenIterator {
     }
 
     axelarId() {
-        return this.info.chains[this.chainName()].axelarId;
+        return this.config.chains[this.chainName()].axelarId;
     }
 
     rpc() {
         if (this.rpcs) return this.rpcs[this.chainIndex];
 
         const chainName = this.chainName();
-        return this.info.chains[chainName].rpc;
+        return this.config.chains[chainName].rpc;
     }
 
     async getNext() {
@@ -102,7 +114,7 @@ class TokenIterator {
     }
 }
 
-async function getOriginChain(tokenData, client) {
+async function getOriginChain(tokenData, client, itsAddress: string) {
     // if only a single token exists it has to be the origin token (those will be skipped later).
     if (tokenData.chains.length === 1) {
         return tokenData.chains[0];
@@ -110,7 +122,7 @@ async function getOriginChain(tokenData, client) {
 
     // if a token is already registered on axelar, use the same origin chain.
     try {
-        const originChain = await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {
+        const originChain = await client.queryContractSmart(itsAddress, {
             token_config: { token_id: tokenData.tokenId.slice(2) },
         });
         if (originChain) {
@@ -136,62 +148,48 @@ async function getOriginChain(tokenData, client) {
     return tokenData.chains[0];
 }
 
-async function registerToken(client, wallet, tokenIterator, options) {
-    const config = loadConfig(tokenIterator.env);
-
-    initContractConfig(config, { contractName: 'InterchainTokenService' });
-
+async function registerToken(client, config, tokenIterator, options) {
     const supply = tokenIterator.get().supply;
     const supplyParam = supply ? { tracked: String(supply) } : 'untracked';
     const msg = {
         register_p2p_token_instance: {
             chain: tokenIterator.axelarId(),
             token_id: tokenIterator.tokenId().slice(2),
-            origin_chain: tokenIterator.info.chains[tokenIterator.token().originChain].axelarId,
+            origin_chain: tokenIterator.config.chains[tokenIterator.token().originChain].axelarId,
             decimals: tokenIterator.get().decimals,
             supply: supplyParam,
         },
     };
 
-    const interchainTokenServiceAddress = tokenIterator.info.axelar.contracts.InterchainTokenService.address;
+    const interchainTokenServiceAddress = tokenIterator.config.getContractAddress('InterchainTokenService');
     const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
         token_instance: { chain: tokenIterator.chainName(), token_id: tokenIterator.tokenId().slice(2) },
     });
     if (registered) return;
 
-    const [account] = await wallet.getAccounts(interchainTokenServiceAddress, {});
-    printInfo('Registerring ', msg.register_p2p_token_instance);
+    // TODO tkulik: only InterchainTokenService can be account is used here.
+    const [account] = await client.accounts;
+    printInfo('Registerring ', JSON.stringify(msg.register_p2p_token_instance));
     if (!options.dryRun) {
         await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
         // If registration is successfull skip this token in the future without needing to query.
         tokenIterator.get().registered = true;
     }
-
-    saveConfig(config, options.env);
 }
 
-const processCommand = async (options) => {
+async function processCommand(client, config, options, _args, _fee) {
     const { env } = options;
-    const info = require(`../axelar-chains-config/info/${env}.json`);
-    const tokenInfo = require(`../axelar-chains-config/info/tokens-${env}.json`);
-    const config = loadConfig(env);
+    const tokenInfo = (await import(`../axelar-chains-config/info/tokens-${env}.json`)).default;
 
     if (options.rpcs && (!options.chains || options.chains.length != options.rpcs.length)) {
         throw new Error('Need to provide chain names alongside RPCs and their length must match.');
     }
 
-    initContractConfig(config, options);
-
-    const wallet = await prepareWallet(options);
-    const client = await prepareClient(config, wallet);
-
-    let iter = new TokenIterator(env, info, tokenInfo, options);
+    const iter = new TokenIterator(env, config, tokenInfo, options);
 
     while (await iter.getNext()) {
-        await registerToken(client, wallet, iter, options);
+        await registerToken(client, config, iter, options);
     }
-
-    saveConfig(config, env);
 };
 
 const programHandler = () => {
@@ -213,7 +211,7 @@ const programHandler = () => {
     program.addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'));
 
     program.action((options) => {
-        processCommand(options);
+        mainProcessor(processCommand, options, []);
     });
 
     program.parse();
