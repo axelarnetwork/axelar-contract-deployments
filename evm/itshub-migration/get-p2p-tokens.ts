@@ -70,7 +70,10 @@ type TokenData = {
     tokenManagerType: number;
     deployParams: unknown;
     tokenInfo?: {
+        conflictingInterchainTokenAddress?: string;
         tokenAddress: string;
+        decimals: number;
+        track: boolean;
     };
 };
 
@@ -114,7 +117,7 @@ async function getTokensFromBlock(
                                     tokenManagerAddress,
                                     tokenManagerType,
                                     deployParams,
-                                    tokenInfo: { conflicting: { interchainTokenAddress }, ...tokenInfo },
+                                    tokenInfo: { conflictingInterchainTokenAddress: interchainTokenAddress, ...tokenInfo },
                                 };
                             } else {
                                 return { tokenId, tokenManagerAddress, tokenManagerType, deployParams, tokenInfo: { ...tokenInfo } };
@@ -218,12 +221,12 @@ async function getTokensFromChain(name, chainInfo, tokensInfo) {
                 if (tokensInfo.tokens[tokenId][name]) {
                     printWarn(`Token ${tokenId} already exists for ${name}`);
                     // TODO tkulik: potentially not thread safe
-                    tokensInfo.tokens[tokenId][name].conflictingIds.push({
+                    tokensInfo.tokens[tokenId][name].tokenIdDeployedMultipleTimes.push({
                         ...token,
                     });
                 } else {
                     tokensInfo.tokens[tokenId][name] = {
-                        conflictingIds: [],
+                        tokenIdDeployedMultipleTimes: [],
                         ...token,
                     };
                 }
