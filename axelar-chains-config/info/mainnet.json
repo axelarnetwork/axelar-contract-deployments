@@ -792,7 +792,7 @@
       "name": "Binance",
       "axelarId": "binance",
       "chainId": 56,
-      "rpc": "https://bsc.drpc.org",
+      "rpc": "https://public-bsc.nownodes.io",
       "tokenSymbol": "BNB",
       "decimals": 18,
       "wrappedSymbol": "WBNB",
