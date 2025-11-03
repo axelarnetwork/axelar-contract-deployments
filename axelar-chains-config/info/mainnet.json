@@ -3226,16 +3226,16 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
+          "salt": "ITS v2.1.1",
           "proxySalt": "ITS v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "version": "2.1.0",
-          "tokenManagerDeployer": "0x478b2BC902B73D06ff541b411FC6124cA50C6A3C",
-          "interchainTokenDeployer": "0x644afd0e2B68044fE0A160bAb4CaC30f854e141A",
-          "tokenManager": "0x2AE94c771508A4A6Ca8Aa808532665E5668C968B",
-          "tokenHandler": "0x88Ccd3040Eb4D73B155A3552EA49bdA3063AB13B",
-          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "tokenManagerDeployer": "0x88af2704bAb572dc7339d5F8275e089677956055",
+          "interchainTokenDeployer": "0xD1a9Daa67970631C6853348fF4b0cdAa85f93e54",
+          "tokenManager": "0xE89A3e8E7262d96BD5dB9568060B8DDB2e7B7bCD",
+          "tokenHandler": "0x563ee90271512e7a83D0cF31c46395F27a3f489f",
+          "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
         },
         "InterchainTokenFactory": {
@@ -3243,7 +3243,7 @@
           "salt": "ITS Factory v1.0.0",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.0",
-          "implementation": "0x595cEDA049140D54630FEDCc6Be71F9E2AA85b95"
+          "implementation": "0x4B4c1F7754026E00608f1f27e20ff5cDbB047A70"
         }
       }
     },
@@ -3539,9 +3539,9 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "266",
         "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
-        "codeId": 19,
+        "codeId": 42,
         "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93",
-        "executeProposalId": "242"
+        "executeProposalId": "382"
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -3570,22 +3570,23 @@
       },
       "Coordinator": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "270",
-        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
-        "codeId": 23,
+        "storeCodeProposalId": "384",
+        "storeCodeProposalCodeHash": "5a12c166833e73f12b17bf8480c51b638afbae6aba13bf6ea9870bdddc78e681",
+        "codeId": 45,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
-        "executeProposalId": "245"
+        "executeProposalId": "245",
+        "lastUploadedCodeId": 45
       },
       "Multisig": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "322",
-        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
-        "codeId": 33,
+        "storeCodeProposalId": "383",
+        "storeCodeProposalCodeHash": "78919bd79976f9e22a632b8301e219819900161c94914ee6fdf49a3b6d9db272",
+        "codeId": 44,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "244",
-        "lastUploadedCodeId": 33
+        "lastUploadedCodeId": 44
       },
       "MultisigProver": {
         "flow": {

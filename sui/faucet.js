@@ -15,7 +15,7 @@ async function processCommand(config, chain, options) {
 
     if (balance >= Number(options.minBalance)) {
         printWarn('Wallet balance above minimum, skipping faucet request');
-        process.exit(0);
+        return;
     }
 
     const host = options.rpc ?? getFaucetHost(chain.networkType);
