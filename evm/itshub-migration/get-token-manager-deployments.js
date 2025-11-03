@@ -5,11 +5,14 @@ const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider } = ethers;
 const info = require(`../axelar-chains-config/info/${env}.json`);
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
+const ITokenManager = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/ITokenManager.sol/ITokenManager.json');
+const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json');
 const fs = require('fs');
-const { printInfo, printError } = require('../../common/utils');
+const { printInfo, printError, printWarn } = require('../../common/utils');
+const { tokenManagerTypes } = require('../../common');
 
 // This is before the its was deployed on mainnet.
-// const startTimestamp = 1702800000;
+const startTimestamp = 1702800000;
 // This is after the upgrade.
 const endTimestamp = 1710329513;
 const queryLimit = {
@@ -45,7 +48,16 @@ const queryLimit = {
     immutable: 5000,
 };
 
-async function getTokenManagersFromBlock(its, filter, startBlockNumber, eventsLength, max) {
+async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
+    const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
+    const tokenAddress = await tokenManager.tokenAddress();
+    const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
+    const decimals = await token.decimals();
+    const track = tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(AddressZero));
+    return { tokenAddress, decimals, track };
+}
+
+async function getTokenManagersFromBlock(name, its, filter, startBlockNumber, eventsLength, max, provider) {
     const end = Math.min(startBlockNumber + eventsLength, max);
     if (startBlockNumber > end) {
         return [];
@@ -53,7 +65,31 @@ async function getTokenManagersFromBlock(its, filter, startBlockNumber, eventsLe
     for (let i = 0; i < 30; i++) {
         try {
             const events = await its.queryFilter(filter, startBlockNumber, end);
-            return events;
+            return await Promise.all(
+                events.map(async (event) => {
+                    const tokenInfo = await getTokenInfo(event.args[1], event.args[2], provider);
+                    const tokenId = event.args[0];
+                    const tokenManagerAddress = event.args[1];
+                    const tokenManagerType = event.args[2];
+                    const deployParams = event.args[3];
+                    const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
+
+                    if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
+                        printWarn(`Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`);
+                        return {
+                            tokenId,
+                            tokenManagerAddress,
+                            tokenManagerType,
+                            deployParams,
+                            ...tokenInfo,
+                            conflicting: {
+                                interchainTokenAddress,
+                            },
+                        };
+                    }
+                    return { tokenId, tokenManagerAddress, tokenManagerType, deployParams, ...tokenInfo };
+                }),
+            );
         } catch (e) {}
     }
     return false;
@@ -84,7 +120,6 @@ async function getTokenManagers(name, tokenManagerInfo) {
                 end: 0,
                 max: max,
                 alreadyProcessedPercentage: 0,
-                tokenManagers: [],
                 rpcs: [rpc],
             };
         }
@@ -123,29 +158,36 @@ async function getTokenManagers(name, tokenManagerInfo) {
                     tokenManagerInfo[name].end + 1 + i * eventsLength,
                     eventsLength,
                     max,
+                    provider,
                 );
                 eventsPromises = eventsPromises.concat(newEventsPromises);
             }
 
-            // Wait for all promises to resolve
             const tokenManagerData = await Promise.all(eventsPromises);
             if (tokenManagerData.includes(false)) {
                 printError(`Failed to get token managers for ${name} after 30 tries`);
                 return false;
             }
-            tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(
-                tokenManagerData
-                    .flat()
-                    .map((event) => event.args)
-                    .map((args) => {
-                        return {
-                            tokenId: args[0],
-                            tokenManagerAddress: args[1],
-                            tokenManagerType: args[2],
-                            deployParams: args[3],
-                        };
-                    }),
-            );
+
+            for (const tokenManagerData of tokenManagerData.flat()) {
+                const tokenId = tokenManagerData.tokenId;
+                if (!tokenManagerInfo.tokens[tokenId]) {
+                    tokenManagerInfo.tokens[tokenId] = {};
+                    tokenManagerInfo.tokens[tokenId][name] = {
+                        conflicting: [],
+                    };
+                }
+                if (tokenManagerInfo.tokens[tokenId][name]) {
+                    printWarn(`Token ${tokenId} already exists for ${name}`);
+                    tokenManagerInfo.tokens[tokenId][name].conflicting.push({
+                        ...tokenManagerData,
+                    });
+                }
+                tokenManagerInfo.tokens[tokenId][name] = {
+                    ...tokenManagerData,
+                };
+            }
+
             tokenManagerInfo[name].end = Math.min(tokenManagerInfo[name].end + batchSize * eventsLength, tokenManagerInfo[name].max);
             tokenManagerInfo[name].alreadyProcessedPercentage = ((tokenManagerInfo[name].end / tokenManagerInfo[name].max) * 100).toFixed(
                 2,
@@ -160,7 +202,7 @@ async function getTokenManagers(name, tokenManagerInfo) {
 
 (async () => {
     let tokenManagerInfo = {};
-    const tokenManagerInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokenManagers-${env}_2.json`;
+    const tokenManagerInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}_2.json`;
     try {
         tokenManagerInfo = require(tokenManagerInfoFilePath);
     } catch (e) {
