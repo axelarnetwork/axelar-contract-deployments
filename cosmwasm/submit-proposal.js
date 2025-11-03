@@ -20,7 +20,7 @@ const {
     encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
-    encodeMigrateContractProposal,
+    encodeMigrate,
     isLegacySDK,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
@@ -38,7 +38,13 @@ const {
     UpdateInstantiateConfigProposal,
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
-const { MsgExecuteContract, MsgInstantiateContract, MsgInstantiateContract2, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const {
+    MsgExecuteContract,
+    MsgInstantiateContract,
+    MsgInstantiateContract2,
+    MsgMigrateContract,
+    MsgStoreCode,
+} = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -71,6 +77,7 @@ const printProposal = (proposalData, proposalType = null) => {
                 '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
                 '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
                 '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
+                '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
             };
             const MessageType = typeMap[message.typeUrl];
             if (MessageType) {
@@ -81,7 +88,8 @@ const printProposal = (proposalData, proposalType = null) => {
                 if (
                     (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
                         message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
-                        message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2') &&
+                        message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2' ||
+                        message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract') &&
                     decoded.msg
                 ) {
                     decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
@@ -359,13 +367,29 @@ const paramChange = async (client, config, options, _args, fee) => {
 };
 
 const migrate = async (client, config, options, _args, fee) => {
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-    contractConfig.codeId = await getCodeId(client, config, options);
+    let { contractName } = options;
 
-    const proposal = encodeMigrateContractProposal(config, options);
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error('migrate only supports a single contract at a time');
+        }
+        contractName = contractName[0];
+    }
 
-    if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
-        return;
+    const isLegacy = isLegacySDK(config);
+    const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName });
+    contractConfig.codeId = await getCodeId(client, config, { ...options, contractName });
+
+    const proposal = encodeMigrate(config, { ...options, contractName });
+
+    if (isLegacy) {
+        if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
+            return;
+        }
+    } else {
+        if (!confirmProposalSubmission(options, [proposal])) {
+            return;
+        }
     }
 
     return callSubmitProposal(client, config, options, proposal, fee);

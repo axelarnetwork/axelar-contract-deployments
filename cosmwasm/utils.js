@@ -16,7 +16,13 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
-const { MsgExecuteContract, MsgInstantiateContract, MsgInstantiateContract2, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const {
+    MsgExecuteContract,
+    MsgInstantiateContract,
+    MsgInstantiateContract2,
+    MsgMigrateContract,
+    MsgStoreCode,
+} = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
@@ -1143,13 +1149,37 @@ const encodeUpdateInstantiateConfigProposal = (options) => {
     };
 };
 
-const encodeMigrateContractProposal = (config, options) => {
-    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
+const encodeMigrate = (config, options) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
-        value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
+            value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { msg, chainName } = options;
+
+        let contractConfig;
+        let chainConfig;
+        if (!options.address || !options.codeId) {
+            contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+            chainConfig = getChainConfig(config.chains, chainName);
+        }
+
+        const migrateMsg = MsgMigrateContract.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+            codeId: options.codeId ?? contractConfig.codeId,
+            msg: Buffer.from(msg),
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgMigrateContract',
+            value: Uint8Array.from(MsgMigrateContract.encode(migrateMsg).finish()),
+        };
+    }
 };
 
 const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer) => {
@@ -1410,7 +1440,7 @@ module.exports = {
     encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeUpdateInstantiateConfigProposal,
-    encodeMigrateContractProposal,
+    encodeMigrate,
     encodeSubmitProposal,
     submitProposal,
     isValidCosmosAddress,
