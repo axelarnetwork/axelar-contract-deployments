@@ -52,7 +52,7 @@
 ### Deployment Setup
 
 > [!IMPORTANT]
-> For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `axelar-amplifier-solana` directory by invoking:
+> For the initial deployment of Solana programs to any of the clusters (devnet and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `axelar-amplifier-solana` directory by invoking:
 >
 > ```sh
 > cargo xtask update-ids
@@ -222,7 +222,6 @@ By creating a `.env` file in the root of the project with the `CLUSTER=<URL_OR_M
 The value can be a full RPC URL or a moniker:
 
 - `mainnet-beta`: Solana mainnet
-- `testnet`: Solana testnet
 - `devnet`: Solana devnet
 - `localhost`: Local Solana validator
 
