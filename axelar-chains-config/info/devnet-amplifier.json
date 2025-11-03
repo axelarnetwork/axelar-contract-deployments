@@ -1377,6 +1377,12 @@
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": 15,
           "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "AxelarGasService": {
+          "address": "gasHfy8EXRDrxM6XjzrrTBbbqDD3ywnCe29oEEtoTGv",
+          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "configAccount": "FS5zNZygm9bF33UJZLygfqxmfSkZVTtopyi4wJvWT99b",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
         }
       }
     }
