@@ -8,6 +8,31 @@ import { printError, printInfo } from '../common';
 import { ConfigManager } from '../common/config';
 import { mainProcessor } from './processor';
 
+export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
+
+export type SquidTokenData = {
+    tokenManager: string;
+    tokenManagerType: SquidTokenManagerType;
+    tokenAddress: string;
+    track?: boolean;
+};
+
+export type SquidToken = {
+    tokenId: string;
+    decimals: number;
+    tokenType: 'interchain' | 'customInterchain' | 'canonical';
+    chains: SquidTokenData[];
+    originAxelarChainId?: string;
+};
+
+export type SquidTokens = {
+    [tokenId: string]: SquidToken;
+};
+
+export type SquidTokenInfoFile = {
+    tokens: SquidTokens;
+};
+
 // class TokenIterator {
 //     env: string;
 //     config: ConfigManager;
@@ -182,25 +207,24 @@ async function registerToken(config: ConfigManager, client, tokenDataToRegister:
 }
 
 async function processCommand(client, config, options, _args, _fee) {
-    const { env } = options;
-    const tokenInfoString = fs.readFileSync(`../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
-    const tokenInfo = JSON.parse(tokenInfoString);
-
-    tokenInfo.tokens.map(async (tokenData) => {
-        tokenData.chains
-            .filter((chain) => chain.tokenInfo?.track)
-            .map(async (tokenOnChain): Promise<TokenDataToRegister> => {
-                const chainName = Object.keys(tokenOnChain)[0];
-                return {
-                    tokenId: tokenData.tokenId,
-                    originChain: chainName,
-                    decimals: tokenOnChain.tokenInfo?.decimals,
-                    track: tokenOnChain.tokenInfo?.track,
-                    supply: await getSupply(tokenOnChain.tokenAddress, config.chains[chainName].rpc),
-                    axelarId: config.chains[chainName].axelarId,
-                };
-            });
-    });
+    // const { env } = options;
+    // const tokenInfoString = fs.readFileSync(`../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
+    // const tokenInfo = JSON.parse(tokenInfoString);
+    // tokenInfo.tokens.map(async (tokenData: SquidTokenData) => {
+    //     tokenData.chains
+    //         .filter((chain) => chain.tokenInfo?.track)
+    //         .map(async (tokenOnChain): Promise<TokenDataToRegister> => {
+    //             const chainName = Object.keys(tokenOnChain)[0];
+    //             return {
+    //                 tokenId: tokenData.tokenId,
+    //                 originChain: chainName,
+    //                 decimals: tokenOnChain.tokenInfo?.decimals,
+    //                 track: tokenOnChain.tokenInfo?.track,
+    //                 supply: await getSupply(tokenOnChain.tokenAddress, config.chains[chainName].rpc),
+    //                 axelarId: config.chains[chainName].axelarId,
+    //             };
+    //         });
+    // });
 }
 
 const programHandler = () => {
@@ -215,9 +239,6 @@ const programHandler = () => {
     program.addOption(
         new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService account').makeOptionMandatory(true).env('MNEMONIC'),
     );
-
-    // TODO tkulik: Do we need to add a flag to skip the prompt confirmation?
-    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
 
     program.action((options) => {
         mainProcessor(processCommand, options, []);

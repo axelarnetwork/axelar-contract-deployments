@@ -5,6 +5,7 @@ import * as path from 'path';
 
 import { tokenManagerTypes } from '../common';
 import { printError, printInfo, printWarn } from '../common/utils';
+import { SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-its-token';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
@@ -52,32 +53,27 @@ const queryLimit = {
     immutable: 5000,
 };
 
-const MAX_RETRIES = 30;
+const MAX_RETRIES = 3;
 const BATCH_SIZE = 30;
 
-async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
-    const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
-    const tokenAddress = await tokenManager.tokenAddress();
-    const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    const decimals = await token.decimals();
-    const track = tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
-    return { tokenAddress, decimals, track };
+function getTokenManagerTypeString(numericValue: number): SquidTokenManagerType {
+    const mapping: Record<number, SquidTokenManagerType> = {
+        0: 'nativeInterchainToken',
+        1: 'mintBurnFrom',
+        2: 'lockUnlock',
+        3: 'lockUnlockFee',
+        4: 'mintBurn',
+    };
+    return mapping[numericValue];
 }
 
-type TokenData = {
+type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
-    tokenManagerAddress: string;
-    tokenManagerType: number;
-    deployParams: unknown;
-    tokenAddress: string;
     decimals: number;
-    track: boolean;
     conflictingInterchainTokenAddress?: string;
 };
 
-type TokenDataResult = TokenData[] | Error;
-
-export type TokenInfoFile = {
+type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
     chains: {
         [chainName: string]: {
             start: number;
@@ -87,16 +83,18 @@ export type TokenInfoFile = {
             rpcs: string[];
         };
     };
-    tokens: {
-        [tokenId: string]: {
-            chains: {
-                [chainName: string]: TokenData & {
-                    tokenIdDeployedMultipleTimes: TokenData[];
-                };
-            };
-        };
-    };
 };
+
+type TokenDataResult = SquidTokenDataWithTokenId[] | Error;
+
+async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
+    const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
+    const tokenAddress = await tokenManager.tokenAddress();
+    const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
+    const decimals = await token.decimals();
+    const track = tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
+    return { tokenAddress, decimals, track };
+}
 
 async function getTokensFromBlock(
     name: string,
@@ -127,14 +125,13 @@ async function getTokensFromBlock(
 
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
-            const tokenData: TokenData[] = await Promise.all(
+            const tokenData: SquidTokenDataWithTokenId[] = await Promise.all(
                 events
                     .map((event) => event.args)
-                    .map(async (event) => {
+                    .map(async (event): Promise<SquidTokenDataWithTokenId> => {
                         const tokenId = event[0];
                         const tokenManagerAddress = event[1];
                         const tokenManagerType = event[2];
-                        const deployParams = event[3];
                         const tokenInfo = await getTokenInfo(tokenManagerAddress, tokenManagerType, provider);
                         const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
 
@@ -142,16 +139,15 @@ async function getTokensFromBlock(
                             printWarn(
                                 `Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`,
                             );
-                            return {
-                                tokenId,
-                                tokenManagerAddress,
-                                tokenManagerType,
-                                deployParams,
-                                conflictingInterchainTokenAddress: interchainTokenAddress,
-                                ...tokenInfo,
-                            };
                         }
-                        return { tokenId, tokenManagerAddress, tokenManagerType, deployParams, ...tokenInfo };
+                        return {
+                            tokenId,
+                            tokenManager: tokenManagerAddress,
+                            tokenManagerType: getTokenManagerTypeString(tokenManagerType) as SquidTokenManagerType,
+                            conflictingInterchainTokenAddress:
+                                interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0 ? interchainTokenAddress : null,
+                            ...tokenInfo,
+                        } as SquidTokenDataWithTokenId;
                     }),
             );
             return tokenData;
@@ -162,7 +158,7 @@ async function getTokensFromBlock(
     return lastError;
 }
 
-async function getTokensFromChain(name, chainInfo, tokensInfo: TokenInfoFile) {
+async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFileWithChains) {
     try {
         if (!tokensInfo.chains[name]) {
             tokensInfo.chains[name] = {
@@ -193,16 +189,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: TokenInfoFile) {
         const filter = its.filters.TokenManagerDeployed();
         printInfo(`${name} current block number: ${currentChain.max}`);
 
-        // printInfo(`Trying to request token managers from block ${name}`);
-        // try {
-        //     its.queryFilter(filter, currentChain.end, currentChain.end + 1);
-        // } catch (e) {
-        //     printError(`Error requesting token managers from block ${name}: ${e.message}`);
-        //     return false;
-        // }
-
         //if ((await provider.getBlock(currentChain.end)).timestamp >= endTimestamp) return;
-
         /*while (max - min > 1) {
             const mid = Math.floor((min + max) / 2);
             const timestamp = (await provider.getBlock(mid)).timestamp;
@@ -237,29 +224,24 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: TokenInfoFile) {
             }
 
             // There's no errors, so we can flatten the array and get the token data
-            const tokensData: TokenData[] = (tokenDataResults as Array<TokenData[]>).flat();
+            const tokensData: SquidTokenDataWithTokenId[] = (tokenDataResults as Array<SquidTokenDataWithTokenId[]>).flat();
+
+            // TODO tkulik: use async Mutex to avoid race conditions
 
             for (const token of tokensData) {
                 const tokenId = token.tokenId;
+                const decimals = token.decimals;
 
                 if (!tokensInfo?.tokens?.[tokenId]) {
                     tokensInfo.tokens[tokenId] = {
-                        chains: {},
+                        tokenId,
+                        decimals,
+                        tokenType: 'interchain',
+                        chains: [] as SquidTokenData[],
                     };
                 }
 
-                if (tokensInfo.tokens[tokenId].chains[name]) {
-                    printWarn(`Token ${tokenId} already exists for ${name}`);
-                    // TODO tkulik: potentially not thread safe
-                    tokensInfo.tokens[tokenId].chains[name].tokenIdDeployedMultipleTimes.push({
-                        ...token,
-                    });
-                } else {
-                    tokensInfo.tokens[tokenId].chains[name] = {
-                        tokenIdDeployedMultipleTimes: [],
-                        ...token,
-                    };
-                }
+                tokensInfo.tokens[tokenId].chains.push(token);
             }
 
             currentChain.end = Math.min(currentChain.end + BATCH_SIZE * eventsLength, currentChain.max);
@@ -275,7 +257,7 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
 }
 
 (async () => {
-    let tokensInfo = {
+    let tokensInfo: SquidTokenInfoFileWithChains = {
         chains: {},
         tokens: {},
     };
