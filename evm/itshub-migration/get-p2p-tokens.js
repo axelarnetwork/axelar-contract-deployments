@@ -2,19 +2,20 @@ require('dotenv').config();
 const env = process.env.ENV;
 
 const { ethers } = require('hardhat');
-const { Contract, getDefaultProvider } = ethers;
-const info = require(`../axelar-chains-config/info/${env}.json`);
+const {
+    Contract,
+    getDefaultProvider,
+    constants: { AddressZero },
+} = ethers;
+const info = require(`../../axelar-chains-config/info/${env}.json`);
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const ITokenManager = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/ITokenManager.sol/ITokenManager.json');
 const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json');
 const fs = require('fs');
+const path = require('path');
 const { printInfo, printError, printWarn } = require('../../common/utils');
 const { tokenManagerTypes } = require('../../common');
 
-// This is before the its was deployed on mainnet.
-const startTimestamp = 1702800000;
-// This is after the upgrade.
-const endTimestamp = 1710329513;
 const queryLimit = {
     ethereum: 500000,
     'eth-sepolia': 1000,
@@ -48,6 +49,9 @@ const queryLimit = {
     immutable: 5000,
 };
 
+const MAX_RETRIES = 30;
+const BATCH_SIZE = 30;
+
 async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
     const tokenAddress = await tokenManager.tokenAddress();
@@ -60,82 +64,100 @@ async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
 async function getTokenManagersFromBlock(name, its, filter, startBlockNumber, eventsLength, max, provider) {
     const end = Math.min(startBlockNumber + eventsLength, max);
     if (startBlockNumber > end) {
-        return [];
+        return { success: null, error: null };
     }
-    for (let i = 0; i < 30; i++) {
+    let lastError = null;
+    for (let i = 0; i < MAX_RETRIES; i++) {
         try {
             const events = await its.queryFilter(filter, startBlockNumber, end);
             return await Promise.all(
-                events.map(async (event) => {
-                    const tokenInfo = await getTokenInfo(event.args[1], event.args[2], provider);
-                    const tokenId = event.args[0];
-                    const tokenManagerAddress = event.args[1];
-                    const tokenManagerType = event.args[2];
-                    const deployParams = event.args[3];
-                    const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
+                events
+                    .map((event) => event.args)
+                    .map(async (event) => {
+                        const tokenId = event[0];
+                        const tokenManagerAddress = event[1];
+                        const tokenManagerType = event[2];
+                        const deployParams = event[3];
+                        const tokenInfo = await getTokenInfo(tokenManagerAddress, tokenManagerType, provider);
 
-                    if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
-                        printWarn(`Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`);
-                        return {
-                            tokenId,
-                            tokenManagerAddress,
-                            tokenManagerType,
-                            deployParams,
-                            ...tokenInfo,
-                            conflicting: {
-                                interchainTokenAddress,
-                            },
-                        };
-                    }
-                    return { tokenId, tokenManagerAddress, tokenManagerType, deployParams, ...tokenInfo };
-                }),
+                        if (tokenInfo) {
+                            const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
+                            if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
+                                printWarn(
+                                    `Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`,
+                                );
+                                return {
+                                    success: {
+                                        tokenId,
+                                        tokenManagerAddress,
+                                        tokenManagerType,
+                                        deployParams,
+                                        tokenInfo: {
+                                            conflicting: {
+                                                interchainTokenAddress,
+                                            },
+                                            ...tokenInfo,
+                                        },
+                                    },
+                                    error: null,
+                                };
+                            } else {
+                                return {
+                                    success: { tokenId, tokenManagerAddress, tokenManagerType, deployParams, tokenInfo: { ...tokenInfo } },
+                                    error: null,
+                                };
+                            }
+                        }
+                        return { success: { tokenId, tokenManagerAddress, tokenManagerType, deployParams }, error: null };
+                    }),
             );
-        } catch (e) {}
+        } catch (e) {
+            lastError = e;
+        }
     }
-    return false;
+    return { success: null, error: lastError };
 }
 
-async function getTokenManagers(name, tokenManagerInfo) {
+async function getTokensFromChain(name, chainInfo, tokenManagerInfo) {
     try {
-        const chain = info.chains[name];
-        if (!chain.contracts.InterchainTokenService || chain.contracts.InterchainTokenService.skip) return false;
-        printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address);
+        if (!tokenManagerInfo.chains[name]) {
+            tokenManagerInfo.chains[name] = {
+                start: 0,
+                end: 0,
+                max: 0,
+                alreadyProcessedPercentage: 0,
+                rpcs: [chainInfo.rpc],
+            };
+        }
+        let currentChain = tokenManagerInfo.chains[name];
+        if (!chainInfo.contracts.InterchainTokenService || chainInfo.contracts.InterchainTokenService.skip) {
+            return;
+        }
+        printInfo(`ITS at ${name} is at`, chainInfo.contracts.InterchainTokenService.address);
 
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         printInfo('processing... ', name);
 
-        const rpc = tokenManagerInfo[name].rpcs[0] || chain.rpc;
-        printInfo(name, rpc);
+        const rpc = currentChain?.rpcs?.[0] || chainInfo.rpc;
         if (!rpc) {
             printError(`No RPC for ${name}`);
-            return false;
+            return;
         }
         const provider = getDefaultProvider(rpc);
-        const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
-        const max = await provider.getBlockNumber();
-
-        if (!tokenManagerInfo[name]) {
-            tokenManagerInfo[name] = {
-                start: 0,
-                end: 0,
-                max: max,
-                alreadyProcessedPercentage: 0,
-                rpcs: [rpc],
-            };
-        }
-
+        const its = new Contract(chainInfo.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
+        currentChain.max = await provider.getBlockNumber();
         const filter = its.filters.TokenManagerDeployed();
-        printInfo(`${name} current block number: ${max}`);
+        printInfo(`${name} current block number: ${currentChain.max}`);
 
-        printInfo(`Trying to request token managers from block ${name}`);
-        try {
-            its.queryFilter(filter, tokenManagerInfo[name].end, tokenManagerInfo[name].end + 1);
-        } catch (e) {
-            printError(`Error requesting token managers from block ${name}: ${e.message}`);
-            return false;
-        }
+        // printInfo(`Trying to request token managers from block ${name}`);
+        // try {
+        //     its.queryFilter(filter, currentChain.end, currentChain.end + 1);
+        // } catch (e) {
+        //     printError(`Error requesting token managers from block ${name}: ${e.message}`);
+        //     return false;
+        // }
 
-        //if ((await provider.getBlock(tokenManagerInfo[name].end)).timestamp >= endTimestamp) return;
+        //if ((await provider.getBlock(currentChain.end)).timestamp >= endTimestamp) return;
 
         /*while (max - min > 1) {
             const mid = Math.floor((min + max) / 2);
@@ -148,78 +170,90 @@ async function getTokenManagers(name, tokenManagerInfo) {
         }
         printInfo('Target Block number', min);*/
 
-        const batchSize = 30;
-        while (tokenManagerInfo[name].end < max) {
+        while (currentChain.end < currentChain.max) {
             let eventsPromises = [];
-            for (let i = 0; i < batchSize; i++) {
-                const newEventsPromises = getTokenManagersFromBlock(
+            for (let i = 0; i < BATCH_SIZE; i++) {
+                const newEventsPromise = getTokenManagersFromBlock(
+                    name,
                     its,
                     filter,
-                    tokenManagerInfo[name].end + 1 + i * eventsLength,
+                    currentChain.end + 1 + i * eventsLength,
                     eventsLength,
-                    max,
+                    currentChain.max,
                     provider,
                 );
-                eventsPromises = eventsPromises.concat(newEventsPromises);
+                eventsPromises.push(newEventsPromise);
             }
 
             const tokenManagerData = await Promise.all(eventsPromises);
-            if (tokenManagerData.includes(false)) {
-                printError(`Failed to get token managers for ${name} after 30 tries`);
-                return false;
+            if (tokenManagerData.some((data) => data.error)) {
+                printError(`Error getting token managers for ${name}: ${tokenManagerData.find((data) => data.error)?.error?.message}`);
+                return;
             }
 
-            for (const tokenManagerData of tokenManagerData.flat()) {
-                const tokenId = tokenManagerData.tokenId;
-                if (!tokenManagerInfo.tokens[tokenId]) {
+            for (const data of tokenManagerData.filter((data) => data.success).flat()) {
+                printInfo(`Processing token manager ${data.tokenId} for ${name}`);
+                const tokenId = data.tokenId;
+                if (!tokenManagerInfo?.tokens?.[tokenId]) {
                     tokenManagerInfo.tokens[tokenId] = {};
                     tokenManagerInfo.tokens[tokenId][name] = {
-                        conflicting: [],
+                        conflictingIds: [],
                     };
                 }
                 if (tokenManagerInfo.tokens[tokenId][name]) {
                     printWarn(`Token ${tokenId} already exists for ${name}`);
-                    tokenManagerInfo.tokens[tokenId][name].conflicting.push({
-                        ...tokenManagerData,
+                    // TODO tkulik: potentially not thread safe
+                    tokenManagerInfo.tokens[tokenId][name].conflictingIds.push({
+                        ...data,
                     });
+                } else {
+                    tokenManagerInfo.tokens[tokenId][name] = {
+                        ...data,
+                    };
                 }
-                tokenManagerInfo.tokens[tokenId][name] = {
-                    ...tokenManagerData,
-                };
             }
 
-            tokenManagerInfo[name].end = Math.min(tokenManagerInfo[name].end + batchSize * eventsLength, tokenManagerInfo[name].max);
-            tokenManagerInfo[name].alreadyProcessedPercentage = ((tokenManagerInfo[name].end / tokenManagerInfo[name].max) * 100).toFixed(
-                2,
-            );
+            currentChain.end = Math.min(currentChain.end + BATCH_SIZE * eventsLength, currentChain.max);
+            currentChain.alreadyProcessedPercentage = ((currentChain.end / currentChain.max) * 100).toFixed(2);
         }
-        return true;
     } catch (e) {
-        printError(`Error getting token managers for ${name}: ${e.message}`);
-        return false;
+        printError(`Error getting token managers for ${name}: ${e}`);
     }
 }
 
 (async () => {
-    let tokenManagerInfo = {};
-    const tokenManagerInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}_2.json`;
+    let tokenManagerInfo = {
+        chains: {},
+        tokens: {},
+    };
+    const tokenManagerInfoFilePath = `../../axelar-chains-config/info/tokens-p2p/tokens-${env}_2.json`;
+    const tokenManagerInfoFileAbsolutePath = path.resolve(__dirname, tokenManagerInfoFilePath);
     try {
         tokenManagerInfo = require(tokenManagerInfoFilePath);
     } catch (e) {
         printInfo(`No token manager info file found for ${env}`);
+        const dir = path.dirname(tokenManagerInfoFileAbsolutePath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        if (!fs.existsSync(tokenManagerInfoFileAbsolutePath)) {
+            fs.writeFileSync(tokenManagerInfoFileAbsolutePath, JSON.stringify(tokenManagerInfo, null, 2));
+        }
     }
 
     const promises = [];
     for (const name of Object.keys(info.chains)) {
-        promises.push(getTokenManagers(name, tokenManagerInfo));
+        const chainInfo = info.chains[name];
+        promises.push(getTokensFromChain(name, chainInfo, tokenManagerInfo));
     }
+
     // write to file every second
     setInterval(() => {
-        fs.writeFileSync(tokenManagerInfoFilePath, JSON.stringify(tokenManagerInfo, null, 2));
+        fs.writeFileSync(tokenManagerInfoFileAbsolutePath, JSON.stringify(tokenManagerInfo, null, 2));
     }, 1000);
 
     await Promise.all(promises).then(() => {
-        fs.writeFileSync(tokenManagerInfoFilePath, JSON.stringify(tokenManagerInfo, null, 2));
+        fs.writeFileSync(tokenManagerInfoFileAbsolutePath, JSON.stringify(tokenManagerInfo, null, 2));
         process.exit(0);
     });
 })();
