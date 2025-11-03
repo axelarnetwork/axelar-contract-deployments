@@ -3,8 +3,8 @@ import { Contract, constants, getDefaultProvider, providers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { tokenManagerTypes } from '../../common';
-import { printError, printInfo, printWarn } from '../../common/utils';
+import { tokenManagerTypes } from '../common';
+import { printError, printInfo, printWarn } from '../common/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
@@ -16,7 +16,7 @@ const IInterchainToken = require('@axelar-network/interchain-token-service/artif
 const env = process.env.ENV;
 
 // Dynamic import for JSON file with environment variable
-const infoPath = path.resolve(__dirname, `../../axelar-chains-config/info/${env}.json`);
+const infoPath = path.resolve(__dirname, `../axelar-chains-config/info/${env}.json`);
 const info = JSON.parse(fs.readFileSync(infoPath, 'utf-8'));
 
 const queryLimit = {
@@ -221,11 +221,14 @@ async function getTokensFromChain(name, chainInfo, tokensInfo) {
                 if (tokensInfo.tokens[tokenId][name]) {
                     printWarn(`Token ${tokenId} already exists for ${name}`);
                     // TODO tkulik: potentially not thread safe
-                    tokensInfo.tokens[tokenId][name].tokenIdDeployedMultipleTimes.push({
+                    tokensInfo.tokens[tokenId].chains[name].tokenIdDeployedMultipleTimes.push({
                         ...token,
                     });
                 } else {
-                    tokensInfo.tokens[tokenId][name] = {
+                    tokensInfo.tokens[tokenId] = {
+                        chains: {},
+                    };
+                    tokensInfo.tokens[tokenId].chains[name] = {
                         tokenIdDeployedMultipleTimes: [],
                         ...token,
                     };
@@ -249,7 +252,7 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
         chains: {},
         tokens: {},
     };
-    const tokensInfoFilePath = `../../axelar-chains-config/info/tokens-p2p/tokens-${env}_2.json`;
+    const tokensInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}_2.json`;
     const tokensInfoFileAbsolutePath = path.resolve(__dirname, tokensInfoFilePath);
     try {
         tokensInfo = JSON.parse(fs.readFileSync(tokensInfoFileAbsolutePath, 'utf-8'));

@@ -102,6 +102,40 @@ class TokenIterator {
     }
 }
 
+async function getOriginChain(tokenData, client) {
+    // if only a single token exists it has to be the origin token (those will be skipped later).
+    if (tokenData.chains.length === 1) {
+        return tokenData.chains[0];
+    }
+
+    // if a token is already registered on axelar, use the same origin chain.
+    try {
+        const originChain = await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {
+            token_config: { token_id: tokenData.tokenId.slice(2) },
+        });
+        if (originChain) {
+            return originChain.origin_chain;
+        }
+    } catch (e) {
+        printError(`Error getting origin chain for ${tokenData.tokenId}: ${e.message}`);
+    }
+
+    // if only a single chain is untacked, use that chain
+    const untracked = [];
+    for (const chainName of tokenData.chains) {
+        if (!tokenData.chains[chainName].tracking) {
+            untracked.push(chainName);
+        }
+    }
+    if (untracked.length === 1) {
+        printInfo(`Untracked token ${tokenData.tokenId} on ${untracked[0]}`);
+        return untracked[0];
+    }
+
+    // just use the firt chain that shows up.
+    return tokenData.chains[0];
+}
+
 async function registerToken(client, wallet, tokenIterator, options) {
     const config = loadConfig(tokenIterator.env);
 
