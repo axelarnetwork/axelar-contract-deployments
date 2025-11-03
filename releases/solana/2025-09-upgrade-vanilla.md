@@ -45,11 +45,11 @@ This is the Solana GMP upgrade doc for vanilla TO vanilla OR anchor programs.
     cd axelar-amplifier-solana
 
     # Compile the Solana programs
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_memo_program
+    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_gas_service
+    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_gateway
+    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_governance
+    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_multicall
+    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_memo_program
 
     # Go back
     cd ..
@@ -59,19 +59,19 @@ This is the Solana GMP upgrade doc for vanilla TO vanilla OR anchor programs.
 
     ```sh
     GATEWAY_PROGRAM_KEYPAIR_PATH="<path/to/gateway_program_keypair.json>"
-    GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gateway.so"
+    GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_gateway.so"
 
     GAS_SERVICE_PROGRAM_KEYPAIR_PATH="<path/to/gas_service_program_keypair.json>"
-    GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gas_service.so"
+    GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_gas_service.so"
 
     GOVERNANCE_PROGRAM_KEYPAIR_PATH="<path/to/governance_program_keypair.json>"
-    GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_governance.so"
+    GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_governance.so"
 
     MULTICALL_PROGRAM_KEYPAIR_PATH="<path/to/multicall_program_keypair.json>"
-    MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_multicall.so"
+    MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_multicall.so"
 
     MEMO_PROGRAM_KEYPAIR_PATH="<path/to/memo_program_keypair.json>"
-    MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_memo_program.so"
+    MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_memo_program.so"
     ```
 
     ```bash
