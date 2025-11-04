@@ -135,7 +135,7 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
     if (payload.verifier_set) {
         const bypassRotationDelay = nativeToScVal(false);
 
-        printInfo('Submitting rotate_signers');
+        printInfo('Submitting rotate_signers with bypassRotationDelay disabled');
 
         operation = contract.call('rotate_signers', data, proof, bypassRotationDelay);
     } else if (payload.messages) {
