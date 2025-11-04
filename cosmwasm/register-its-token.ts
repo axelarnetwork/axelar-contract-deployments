@@ -37,19 +37,28 @@ export type SquidTokenInfoFile = {
 };
 
 async function getOriginChain(tokenData: SquidToken, client: CosmWasmClient, itsAddress: string) {
-    // if only a single token exists it has to be the origin token (those will be skipped later).
+
+    // TODO tkulik: should we skip this chain in such case?
+    // if only a single token exists it has to be the origin token
     if (tokenData.chains.length === 1) {
         return tokenData.chains[0].axelarChainId;
     }
 
-    // if only a single chain is untacked, use that chain
+    // TODO tkulik: Why?
+    // If only a single chain is untracked, use that chain
     const untracked = tokenData.chains.filter((chain) => !chain.track);
     if (untracked.length === 1) {
         printInfo(`Untracked token ${tokenData.tokenId} on ${untracked[0].axelarChainId}`);
         return untracked[0].axelarChainId;
     }
 
-    // just use the first chain that shows up.
+    // Use ethereum as the origin chain if it exists
+    const ethereumChain = tokenData.chains.find((chain) => chain.axelarChainId === 'ethereum');
+    if (ethereumChain) {
+        return ethereumChain.axelarChainId;
+    }
+
+    // Use the first chain that shows up.
     return tokenData.chains[0].axelarChainId;
 }
 
