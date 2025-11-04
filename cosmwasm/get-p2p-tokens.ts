@@ -140,7 +140,9 @@ async function getTokensFromBlock(
                                 `Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`,
                             );
                         }
+
                         return {
+                            axelarChainId: name,
                             tokenId,
                             tokenManager: tokenManagerAddress,
                             tokenManagerType: getTokenManagerTypeString(tokenManagerType) as SquidTokenManagerType,
@@ -190,16 +192,15 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
         printInfo(`${name} current block number: ${currentChain.max}`);
 
         //if ((await provider.getBlock(currentChain.end)).timestamp >= endTimestamp) return;
-        /*while (max - min > 1) {
-            const mid = Math.floor((min + max) / 2);
-            const timestamp = (await provider.getBlock(mid)).timestamp;
-            if (timestamp > endTimestamp) {
-                max = mid;
-            } else {
-                min = mid;
-            }
-        }
-        printInfo('Target Block number', min);*/
+        // while (max - min > 1) {
+        //     const mid = Math.floor((min + max) / 2);
+        //     const timestamp = (await provider.getBlock(mid)).timestamp;
+        //     if (timestamp > endTimestamp) {
+        //         max = mid;
+        //     } else {
+        //         min = mid;
+        //     }
+        // }
 
         while (currentChain.end < currentChain.max) {
             const tokensPromises: Promise<TokenDataResult>[] = [];
