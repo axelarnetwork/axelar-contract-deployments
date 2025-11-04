@@ -71,10 +71,8 @@ fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (registry_pda, _) = Pubkey::find_program_address(
-        &[b"operator_registry"],
-        &solana_axelar_operators::ID,
-    );
+    let (registry_pda, _) =
+        Pubkey::find_program_address(&[b"operator_registry"], &solana_axelar_operators::ID);
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][OPERATORS_KEY] = serde_json::json!({
@@ -107,10 +105,8 @@ fn add_operator(
     fee_payer: &Pubkey,
     add_operator_args: AddOperatorArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (registry_pda, _) = Pubkey::find_program_address(
-        &[b"operator_registry"],
-        &solana_axelar_operators::ID,
-    );
+    let (registry_pda, _) =
+        Pubkey::find_program_address(&[b"operator_registry"], &solana_axelar_operators::ID);
 
     let (operator_pda, _) = Pubkey::find_program_address(
         &[b"operator", add_operator_args.operator.as_ref()],
@@ -134,4 +130,3 @@ fn add_operator(
         data: ix_data,
     }])
 }
-
