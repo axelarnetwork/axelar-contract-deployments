@@ -150,7 +150,7 @@ ts-node hedera/fund-whbar.js [user-address] --amount 100 -n $CHAIN
 ts-node hedera/approve-factory-whbar.js -n $CHAIN
 
 # Create a token on Hedera
-ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" --initialSupply 0 -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name test --symbol TST --decimals 6 --initialSupply 0 --minter [minter-address] --chainNames $CHAIN --env <env> --salt salt1234
 
 # Record the newly created token id and address from the output.
 
@@ -161,7 +161,7 @@ ts-node hedera/associate-token.js [token-address]
 ts-node evm/its.js mint-token [token-id] [to] [amount]
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination-chain] --chainNames $CHAIN --env <env> --salt "salt1234" -y
 
 # Approve token manager to spend tokens
 ts-node evm/its.js approve [token-id] [spender] [amount]
