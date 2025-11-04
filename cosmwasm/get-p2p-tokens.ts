@@ -56,6 +56,46 @@ const queryLimit = {
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 30;
 
+// Simple async mutex per tokenId to prevent race conditions
+// Uses a chain of promises to ensure sequential access per key
+class AsyncMutex {
+    private locks: Map<string, Promise<void>> = new Map();
+
+    async acquire(key: string): Promise<() => void> {
+        // Get the current lock (if any)
+        const prevLock = this.locks.get(key);
+
+        // Create our lock promise
+        let release: () => void;
+        const ourLock = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+
+        // Chain our lock to the previous one (if it exists)
+        const lockPromise = prevLock ? prevLock.then(() => ourLock) : ourLock;
+
+        // Set our lock in the map (this is atomic)
+        this.locks.set(key, lockPromise);
+
+        // Wait for previous locks to complete
+        if (prevLock) {
+            await prevLock;
+        }
+
+        return () => {
+            release();
+            // Clean up if no one is waiting (this is the last lock)
+            // Check if the current lock is our chained promise or just our lock
+            const currentLock = this.locks.get(key);
+            if (currentLock === lockPromise || currentLock === ourLock) {
+                this.locks.delete(key);
+            }
+        };
+    }
+}
+
+const tokenMutex = new AsyncMutex();
+
 function getTokenManagerTypeString(numericValue: number): SquidTokenManagerType {
     const mapping: Record<number, SquidTokenManagerType> = {
         0: 'nativeInterchainToken',
@@ -227,23 +267,29 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
             // There's no errors, so we can flatten the array and get the token data
             const tokensData: SquidTokenDataWithTokenId[] = (tokenDataResults as Array<SquidTokenDataWithTokenId[]>).flat();
 
-            // TODO tkulik: use async Mutex to avoid race conditions
+            // Process tokens with mutex protection to avoid race conditions
+            // Multiple chains can process the same tokenId concurrently
+            await Promise.all(
+                tokensData.map(async (token) => {
+                    const tokenId = token.tokenId;
+                    const decimals = token.decimals;
+                    const release = await tokenMutex.acquire(tokenId);
+                    try {
+                        if (!tokensInfo?.tokens?.[tokenId]) {
+                            tokensInfo.tokens[tokenId] = {
+                                tokenId,
+                                decimals,
+                                tokenType: 'interchain',
+                                chains: [] as SquidTokenData[],
+                            };
+                        }
 
-            for (const token of tokensData) {
-                const tokenId = token.tokenId;
-                const decimals = token.decimals;
-
-                if (!tokensInfo?.tokens?.[tokenId]) {
-                    tokensInfo.tokens[tokenId] = {
-                        tokenId,
-                        decimals,
-                        tokenType: 'interchain',
-                        chains: [] as SquidTokenData[],
-                    };
-                }
-
-                tokensInfo.tokens[tokenId].chains.push(token);
-            }
+                        tokensInfo.tokens[tokenId].chains.push(token);
+                    } finally {
+                        release();
+                    }
+                }),
+            );
 
             currentChain.end = Math.min(currentChain.end + BATCH_SIZE * eventsLength, currentChain.max);
             currentChain.alreadyProcessedPercentage = ((currentChain.end / currentChain.max) * 100).toFixed(2);
@@ -282,7 +328,7 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
         promises.push(getTokensFromChain(name, chainInfo, tokensInfo));
     }
 
-    // write to file every second
+    // Write to the output file every second
     setInterval(() => {
         writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
     }, 1000);
