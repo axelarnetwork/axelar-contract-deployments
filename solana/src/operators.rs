@@ -93,7 +93,7 @@ fn init(
         program_id: solana_axelar_operators::id(),
         accounts: vec![
             AccountMeta::new(*fee_payer, true),
-            AccountMeta::new_readonly(init_args.owner, true),
+            AccountMeta::new_readonly(init_args.owner, false),
             AccountMeta::new(registry_pda, false),
             AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
         ],
