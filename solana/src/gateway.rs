@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use anchor_lang::InstructionData;
+use anchor_lang::{InstructionData, ToAccountMetas};
 use axelar_solana_encoding::hash_payload;
 use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::execute_data::{ExecuteData, MerkleisedPayload};
@@ -636,14 +636,20 @@ fn call_contract(
     }
     .data();
 
+    let mut accounts = solana_axelar_gateway::accounts::CallContract {
+        caller: *fee_payer,
+        signing_pda: None,
+        gateway_root_pda: gateway_config_pda,
+        event_authority: event_authority_pda,
+        program: solana_axelar_gateway::id(),
+    }
+    .to_account_metas(None);
+
+    accounts[0].is_signer = true;
+
     Ok(vec![Instruction {
         program_id: solana_axelar_gateway::id(),
-        accounts: vec![
-            AccountMeta::new_readonly(*fee_payer, true),
-            AccountMeta::new_readonly(gateway_config_pda, false),
-            AccountMeta::new_readonly(event_authority_pda, false),
-            AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
-        ],
+        accounts,
         data: ix_data,
     }])
 }
