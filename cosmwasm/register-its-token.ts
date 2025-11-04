@@ -130,7 +130,7 @@ async function forEachToken(
                         return (
                             tokenData.tokenType === 'interchain' &&
                             (chains ? chainsToProcess.has(chain.axelarChainId) : true) &&
-                            (chain.track ? chain.track : true) &&
+                            (chain.track ?? true) &&
                             chain.axelarChainId !== tokenData.originAxelarChainId &&
                             (chain.registered ? !chain.registered : true) &&
                             isConsensusChain(config.getChainConfig(chain.axelarChainId))

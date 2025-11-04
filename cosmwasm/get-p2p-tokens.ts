@@ -6,6 +6,7 @@ import * as path from 'path';
 
 import { tokenManagerTypes } from '../common';
 import { printError, printInfo, printWarn } from '../common/utils';
+import { isConsensusChain } from '../evm/utils';
 import { SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-its-token';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -283,10 +284,19 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
         }
     }
 
-    const promises = Object.keys(info.chains).map((name) => {
-        const chainInfo = info.chains[name];
-        return getTokensFromChain(name, chainInfo, tokensInfo);
-    });
+    const promises = Object.keys(info.chains)
+        .filter((name) => {
+            try {
+                return isConsensusChain(info.chains[name]);
+            } catch (e) {
+                printError(`Error getting chain config for ${name} (skipping chain): ${e.message}`);
+                return false;
+            }
+        })
+        .map((name) => {
+            const chainInfo = info.chains[name];
+            return getTokensFromChain(name, chainInfo, tokensInfo);
+        });
 
     // Write to the output file every second
     setInterval(() => {
