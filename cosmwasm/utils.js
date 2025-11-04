@@ -326,6 +326,50 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     };
 };
 
+const makeEventVerifierInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
+    const {
+        axelar: { contracts },
+    } = config;
+    const {
+        ServiceRegistry: { address: serviceRegistryAddress },
+    } = contracts;
+    const { governanceAddress, adminAddress, serviceName, votingThreshold, blockExpiry } = contractConfig;
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid EventVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid EventVerifier[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid EventVerifier[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isStringArray(votingThreshold)) {
+        throw new Error(`Missing or invalid EventVerifier[${chainName}].votingThreshold in axelar info`);
+    }
+
+    if (!isNumber(blockExpiry)) {
+        throw new Error(`Missing or invalid EventVerifier[${chainName}].blockExpiry in axelar info`);
+    }
+
+    return {
+        governance_address: governanceAddress,
+        service_registry_address: serviceRegistryAddress,
+        service_name: serviceName,
+        admin_address: adminAddress,
+        voting_threshold: votingThreshold,
+        block_expiry: toBigNumberString(blockExpiry),
+    };
+};
+
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
@@ -1197,6 +1241,10 @@ const CONTRACTS = {
     Router: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeRouterInstantiateMsg,
+    },
+    EventVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeEventVerifierInstantiateMsg,
     },
     VotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
