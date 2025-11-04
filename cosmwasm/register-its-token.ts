@@ -77,10 +77,6 @@ async function getSupply(tokenAddress: string, rpc: string) {
     return await token.totalSupply();
 }
 
-function isLegacyP2pConsensusToken(config: ConfigManager, tokenData: SquidToken, chainData: SquidTokenData): boolean {
-    return tokenData.tokenType === 'interchain' && isConsensusChain(config.getChainConfig(chainData.axelarChainId));
-}
-
 async function registerToken(config: ConfigManager, client: ClientManager, tokenDataToRegister: TokenDataToRegister, dryRun: boolean) {
     const supply = tokenDataToRegister.supply;
     const supplyParam = supply ? { tracked: String(supply) } : 'untracked';
