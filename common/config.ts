@@ -103,10 +103,10 @@ export interface GatewayChainConfig {
 
 export class ConfigManager implements FullConfig {
     private environment: string;
+    private chainsByAxelarIdLowercase: Record<string, ChainConfig>;
 
     public axelar: AxelarConfig;
     public chains: Record<string, ChainConfig>;
-    public chainsByAxelarId: Record<string, ChainConfig>;
 
     constructor(environment: string, fullConfig?: FullConfig) {
         this.environment = environment;
@@ -121,7 +121,9 @@ export class ConfigManager implements FullConfig {
 
         this.axelar = fullConfig.axelar;
         this.chains = fullConfig.chains;
-        this.chainsByAxelarId = Object.fromEntries(Object.values(this.chains).map((chain) => [chain.axelarId, chain]));
+        this.chainsByAxelarIdLowercase = Object.fromEntries(
+            Object.values(this.chains).map((chain) => [chain.axelarId.toLowerCase(), chain]),
+        );
 
         this.validateConfig();
     }
@@ -364,10 +366,10 @@ export class ConfigManager implements FullConfig {
         return chainConfig;
     }
 
-    public getChainConfigByAxelarId(axelarId: string): ChainConfig {
-        const chainConfig = this.chainsByAxelarId[axelarId];
+    public getChainConfigByAxelarIdLowercase(axelarId: string): ChainConfig {
+        const chainConfig = this.chainsByAxelarIdLowercase[axelarId.toLowerCase()];
         if (!chainConfig) {
-            throw new Error(`Chain with axelarId '${axelarId}' not found in ${this.environment} config`);
+            throw new Error(`Chain '${axelarId}' not found in ${this.environment} config`);
         }
         return chainConfig;
     }

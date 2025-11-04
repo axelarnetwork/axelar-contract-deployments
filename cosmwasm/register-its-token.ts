@@ -71,7 +71,12 @@ async function getSupply(tokenAddress: string, rpc: string) {
     return await token.totalSupply();
 }
 
-async function registerToken(config: ConfigManager, client: ClientManager, tokenDataToRegister: TokenDataToRegister, dryRun: boolean) {
+async function registerToken(
+    interchainTokenServiceAddress: string,
+    client: ClientManager,
+    tokenDataToRegister: TokenDataToRegister,
+    dryRun: boolean,
+) {
     const supply = tokenDataToRegister.supply;
     const supplyParam = supply ? { tracked: String(supply) } : 'untracked';
     const msg = {
@@ -83,11 +88,6 @@ async function registerToken(config: ConfigManager, client: ClientManager, token
             supply: supplyParam,
         },
     };
-
-    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
-    if (!interchainTokenServiceAddress) {
-        throw new Error('InterchainTokenService contract address not found');
-    }
 
     const [account] = await client.accounts;
     printInfo('Registering token ', JSON.stringify(msg.register_p2p_token_instance));
@@ -127,7 +127,7 @@ async function forEachToken(
                             (chain.track ?? true) &&
                             chain.axelarChainId !== tokenData.originAxelarChainId &&
                             (chain.registered ? !chain.registered : true) &&
-                            isConsensusChain(config.getChainConfigByAxelarId(chain.axelarChainId))
+                            isConsensusChain(config.getChainConfigByAxelarIdLowercase(chain.axelarChainId))
                         );
                     } catch (e) {
                         printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e.message}`);
@@ -159,10 +159,13 @@ async function processTokens(client: ClientManager, config: ConfigManager, optio
                 originChain: tokenData.originAxelarChainId || getOriginChain(tokenData),
                 decimals: tokenData.decimals,
                 track: tokenOnChain.track,
-                supply: await getSupply(tokenOnChain.tokenAddress, config.getChainConfigByAxelarId(tokenOnChain.axelarChainId).rpc),
+                supply: await getSupply(
+                    tokenOnChain.tokenAddress,
+                    config.getChainConfigByAxelarIdLowercase(tokenOnChain.axelarChainId).rpc,
+                ),
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
-            await registerToken(config, client, tokenDataToRegister, options.dryRun);
+            await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
             tokenOnChain.registered = true;
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
         } catch (e) {
