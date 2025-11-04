@@ -102,7 +102,7 @@ async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
 }
 
 async function getTokensFromBlock(
-    name: string,
+    axelarChainId: string,
     its: Contract,
     filter: providers.Filter,
     startBlockNumber: number,
@@ -142,12 +142,12 @@ async function getTokensFromBlock(
 
                         if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
                             printWarn(
-                                `Token ${tokenId} is conflicting for ${name} with interchain token address ${interchainTokenAddress}`,
+                                `Token ${tokenId} is conflicting for ${axelarChainId} with interchain token address ${interchainTokenAddress}`,
                             );
                         }
 
                         return {
-                            axelarChainId: name,
+                            axelarChainId,
                             tokenId,
                             tokenManager: tokenManagerAddress,
                             tokenManagerType: getTokenManagerTypeString(tokenManagerType) as SquidTokenManagerType,
@@ -212,7 +212,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
             const tokensPromises: Promise<TokenDataResult>[] = [];
             for (let i = 0; i < BATCH_SIZE; i++) {
                 const newEventsPromise: Promise<TokenDataResult> = getTokensFromBlock(
-                    name,
+                    chainInfo.axelarChainId,
                     its,
                     filter,
                     currentChain.end + 1 + i * eventsLength,
