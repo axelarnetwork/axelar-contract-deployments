@@ -122,39 +122,40 @@ async function processTokens(client: ClientManager, config: ConfigManager, optio
     const tokenIdsToProcess = new Set(tokenIds);
     const chainsToProcess = new Set(chains);
     const tokenInfoString = fs.readFileSync(
-        `../axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
+        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
         'utf8',
     );
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    if (!interchainTokenServiceAddress) {
+        throw new Error('InterchainTokenService contract address not found');
+    }
     Object.values(tokenInfo.tokens)
-        .filter((tokenData: SquidToken) => tokenIdsToProcess.has(tokenData.tokenId))
+        .filter((tokenData: SquidToken) => (tokenIds ? tokenIdsToProcess.has(tokenData.tokenId) : true))
         .map((tokenData: SquidToken) => {
-            return (
-                tokenData.chains
-                    // TODO tkulik: chain.axelarChainId !== tokenData.originAxelarChainId was taken from the original PR.
-                    .filter(
-                        (chain) =>
-                            chainsToProcess.has(chain.axelarChainId) &&
-                            (chain.track ? chain.track : true) &&
-                            chain.axelarChainId !== tokenData.originAxelarChainId,
-                    )
-                    .map(async (tokenOnChain) => {
-                        const tokenDataToRegister = {
-                            tokenId: tokenData.tokenId,
-                            originChain: tokenData.originAxelarChainId,
-                            decimals: tokenData.decimals,
-                            track: tokenOnChain.track,
-                            supply: await getSupply(tokenOnChain.tokenAddress, config.chains[tokenOnChain.axelarChainId].rpc),
-                            axelarId: config.chains[tokenOnChain.axelarChainId].axelarId,
-                        } as TokenDataToRegister;
-                        await registerToken(config, client, tokenDataToRegister, options.dryRun);
-                        tokenOnChain.registered = true;
-                        printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
-                    })
-            );
+            tokenData.chains
+                .filter(
+                    (chain) =>
+                        chains
+                            ? chainsToProcess.has(chain.axelarChainId)
+                            : true && (chain.track ? chain.track : true) && chain.axelarChainId !== tokenData.originAxelarChainId, // TODO tkulik: taken from original PR.
+                )
+                .map(async (tokenOnChain) => {
+                    const tokenDataToRegister = {
+                        tokenId: tokenData.tokenId,
+                        originChain: tokenData.originAxelarChainId || getOriginChain(tokenData, client, interchainTokenServiceAddress),
+                        decimals: tokenData.decimals,
+                        track: tokenOnChain.track,
+                        supply: await getSupply(tokenOnChain.tokenAddress, config.chains[tokenOnChain.axelarChainId].rpc),
+                        axelarId: config.chains[tokenOnChain.axelarChainId].axelarId,
+                    } as TokenDataToRegister;
+                    await registerToken(config, client, tokenDataToRegister, options.dryRun);
+                    tokenOnChain.registered = true;
+                    printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
+                });
         });
     fs.writeFileSync(
-        `../axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
+        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
         JSON.stringify(tokenInfo, null, 2),
     );
 }
@@ -164,7 +165,7 @@ async function checkTokensRegistration(client: CosmWasmClient, config: ConfigMan
     const tokenIdsToProcess = new Set(tokenIds);
     const chainsToProcess = new Set(chains);
     const tokenInfoString = fs.readFileSync(
-        `../axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
+        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
         'utf8',
     );
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
@@ -173,30 +174,27 @@ async function checkTokensRegistration(client: CosmWasmClient, config: ConfigMan
         throw new Error('InterchainTokenService contract address not found');
     }
     Object.values(tokenInfo.tokens)
-        .filter((tokenData: SquidToken) => tokenIdsToProcess.has(tokenData.tokenId))
+        .filter((tokenData: SquidToken) => (tokenIds ? tokenIdsToProcess.has(tokenData.tokenId) : true))
         .map((tokenData: SquidToken) => {
-            return (
-                tokenData.chains
-                    // TODO tkulik: chain.axelarChainId !== tokenData.originAxelarChainId was taken from the original PR.
-                    .filter(
-                        (chain) =>
-                            chainsToProcess.has(chain.axelarChainId) &&
-                            (chain.track ? chain.track : true) &&
-                            chain.axelarChainId !== tokenData.originAxelarChainId,
-                    )
-                    .forEach(async (tokenOnChain) => {
-                        const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
-                            token_instance: { chain: tokenOnChain.axelarChainId, token_id: tokenData.tokenId.slice(2) },
-                        });
-                        tokenOnChain.registered = registered ? true : false;
-                        printInfo(
-                            `Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`,
-                        );
-                    })
-            );
+            tokenData.chains
+                .filter(
+                    (chain) =>
+                        chains
+                            ? chainsToProcess.has(chain.axelarChainId)
+                            : true && (chain.track ? chain.track : true) && chain.axelarChainId !== tokenData.originAxelarChainId, // TODO tkulik: taken from original PR.
+                )
+                .forEach(async (tokenOnChain) => {
+                    const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
+                        token_instance: { chain: tokenOnChain.axelarChainId, token_id: tokenData.tokenId.slice(2) },
+                    });
+                    tokenOnChain.registered = registered ? true : false;
+                    printInfo(
+                        `Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`,
+                    );
+                });
         });
     fs.writeFileSync(
-        `../axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
+        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
         JSON.stringify(tokenInfo, null, 2),
     );
 }
