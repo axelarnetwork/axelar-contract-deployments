@@ -1,3 +1,4 @@
+import { Mutex } from 'async-mutex';
 import 'dotenv/config';
 import { Contract, constants, getDefaultProvider, providers } from 'ethers';
 import * as fs from 'fs';
@@ -56,45 +57,8 @@ const queryLimit = {
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 30;
 
-// Simple async mutex per tokenId to prevent race conditions
-// Uses a chain of promises to ensure sequential access per key
-class AsyncMutex {
-    private locks: Map<string, Promise<void>> = new Map();
-
-    async acquire(key: string): Promise<() => void> {
-        // Get the current lock (if any)
-        const prevLock = this.locks.get(key);
-
-        // Create our lock promise
-        let release: () => void;
-        const ourLock = new Promise<void>((resolve) => {
-            release = resolve;
-        });
-
-        // Chain our lock to the previous one (if it exists)
-        const lockPromise = prevLock ? prevLock.then(() => ourLock) : ourLock;
-
-        // Set our lock in the map (this is atomic)
-        this.locks.set(key, lockPromise);
-
-        // Wait for previous locks to complete
-        if (prevLock) {
-            await prevLock;
-        }
-
-        return () => {
-            release();
-            // Clean up if no one is waiting (this is the last lock)
-            // Check if the current lock is our chained promise or just our lock
-            const currentLock = this.locks.get(key);
-            if (currentLock === lockPromise || currentLock === ourLock) {
-                this.locks.delete(key);
-            }
-        };
-    }
-}
-
-const tokenMutex = new AsyncMutex();
+// Async mutex per tokenId to prevent race conditions
+const tokenWriteMutex = new Mutex();
 
 function getTokenManagerTypeString(numericValue: number): SquidTokenManagerType {
     const mapping: Record<number, SquidTokenManagerType> = {
@@ -273,8 +237,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
                 tokensData.map(async (token) => {
                     const tokenId = token.tokenId;
                     const decimals = token.decimals;
-                    const release = await tokenMutex.acquire(tokenId);
-                    try {
+                    tokenWriteMutex.runExclusive(async () => {
                         if (!tokensInfo?.tokens?.[tokenId]) {
                             tokensInfo.tokens[tokenId] = {
                                 tokenId,
@@ -285,9 +248,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
                         }
 
                         tokensInfo.tokens[tokenId].chains.push(token);
-                    } finally {
-                        release();
-                    }
+                    });
                 }),
             );
 
@@ -322,11 +283,10 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
         }
     }
 
-    const promises = [];
-    for (const name of Object.keys(info.chains)) {
+    const promises = Object.keys(info.chains).map((name) => {
         const chainInfo = info.chains[name];
-        promises.push(getTokensFromChain(name, chainInfo, tokensInfo));
-    }
+        return getTokensFromChain(name, chainInfo, tokensInfo);
+    });
 
     // Write to the output file every second
     setInterval(() => {

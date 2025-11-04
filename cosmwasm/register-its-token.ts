@@ -37,7 +37,6 @@ export type SquidTokenInfoFile = {
 };
 
 async function getOriginChain(tokenData: SquidToken, client: CosmWasmClient, itsAddress: string) {
-
     // TODO tkulik: should we skip this chain in such case?
     // if only a single token exists it has to be the origin token
     if (tokenData.chains.length === 1) {
@@ -133,7 +132,8 @@ async function processTokens(client: ClientManager, config: ConfigManager, optio
                     try {
                         const tokenDataToRegister = {
                             tokenId: tokenData.tokenId,
-                            originChain: tokenData.originAxelarChainId || (await getOriginChain(tokenData, client, interchainTokenServiceAddress)),
+                            originChain:
+                                tokenData.originAxelarChainId || (await getOriginChain(tokenData, client, interchainTokenServiceAddress)),
                             decimals: tokenData.decimals,
                             track: tokenOnChain.track,
                             supply: await getSupply(tokenOnChain.tokenAddress, config.chains[tokenOnChain.axelarChainId].rpc),
