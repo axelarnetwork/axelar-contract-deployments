@@ -16,7 +16,7 @@ const {
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
-    encodeStoreInstantiateProposal,
+    encodeStoreInstantiate,
     encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
@@ -82,6 +82,12 @@ const printProposal = (proposalData, proposalType = null) => {
             const MessageType = typeMap[message.typeUrl];
             if (MessageType) {
                 const decoded = MessageType.decode(message.value);
+                // This is needed for the storeInstantiate encoder on SDK v0.50, where a 0n placeholder is used to get the code ID from the previous message
+                Object.keys(decoded).forEach((key) => {
+                    if (typeof decoded[key] === 'bigint') {
+                        decoded[key] = decoded[key].toString();
+                    }
+                });
                 if (decoded.codeId) {
                     decoded.codeId = decoded.codeId.toString();
                 }
@@ -174,24 +180,43 @@ const storeCode = async (client, config, options, _args, fee) => {
 };
 
 const storeInstantiate = async (client, config, options, _args, fee) => {
-    const { contractName, instantiate2 } = options;
-    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
+    const isLegacy = isLegacySDK(config);
+    let { contractName } = options;
+    const { instantiate2 } = options;
+
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error('storeInstantiate only supports a single contract at a time');
+        }
+        contractName = contractName[0];
+    }
+
+    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, { ...options, contractName });
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
     }
 
-    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
-    const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
+    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, { ...options, contractName }, contractConfig);
+    const proposal = encodeStoreInstantiate(config, { ...options, contractName }, initMsg);
 
-    if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
-        return;
+    if (isLegacy) {
+        if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
+            return;
+        }
+    } else {
+        if (!confirmProposalSubmission(options, proposal)) {
+            return;
+        }
     }
 
     const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
 
     contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+        .update(readContractCode({ ...options, contractName }))
+        .digest()
+        .toString('hex');
 };
 
 const instantiate = async (client, config, options, _args, fee) => {
