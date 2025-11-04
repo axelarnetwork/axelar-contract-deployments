@@ -196,6 +196,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
         const filter = its.filters.TokenManagerDeployed();
         printInfo(`${name} current block number: ${currentChain.max}`);
 
+        // TODO tkulik: Is it safe to assume we can start fetching from the given timestamp and finish before the upgrade?
         //if ((await provider.getBlock(currentChain.end)).timestamp >= endTimestamp) return;
         // while (max - min > 1) {
         //     const mid = Math.floor((min + max) / 2);
