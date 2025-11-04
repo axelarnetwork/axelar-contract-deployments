@@ -411,13 +411,13 @@ const migrate = async (client, config, options, _args, fee) => {
         if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
             return;
         }
+        return callSubmitProposal(client, config, options, proposal, fee);
     } else {
         if (!confirmProposalSubmission(options, [proposal])) {
             return;
         }
+        return callSubmitProposal(client, config, options, [proposal], fee);
     }
-
-    return callSubmitProposal(client, config, options, proposal, fee);
 };
 
 const instantiateChainContracts = async (client, config, options, _args, fee) => {
@@ -676,6 +676,7 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
+        runAs: true,
     });
 
     const instantiateChainContractsCmd = program
