@@ -5,8 +5,9 @@ import 'dotenv/config';
 import { Contract, getDefaultProvider } from 'ethers';
 import fs from 'fs';
 
-import { printError, printInfo, printWarn } from '../common';
+import { printError, printInfo } from '../common';
 import { ConfigManager } from '../common/config';
+import { isConsensusChain } from '../evm/utils';
 import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
 
 export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
@@ -76,57 +77,8 @@ async function getSupply(tokenAddress: string, rpc: string) {
     return await token.totalSupply();
 }
 
-function isConsensusChain(config: ConfigManager, axelarChainId: string): boolean {
-    const chainConfig = config.chains[axelarChainId];
-    if (!chainConfig) {
-        return false;
-    }
-
-    // Only EVM chains can have legacy p2p tokens
-    if (chainConfig.chainType !== 'evm') {
-        return false;
-    }
-
-    // Check if the chain uses consensus connection type (not amplifier)
-    const gateway = chainConfig.contracts?.AxelarGateway;
-    if (!gateway) {
-        return false;
-    }
-
-    // A chain is consensus if connectionType is not 'amplifier' (it's 'consensus' or undefined)
-    // Per evm/utils.js: isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
-    const connectionType = (gateway as { connectionType?: string }).connectionType;
-    return connectionType !== 'amplifier';
-}
-
-function isLegacyP2pConsensusToken(config: ConfigManager, tokenData: SquidToken, chainData: SquidTokenData, verbose = false): boolean {
-    // Only ITS tokens (not customInterchain or canonical) are eligible
-    if (tokenData.tokenType !== 'interchain') {
-        if (verbose) {
-            printWarn(
-                `Skipping token ${tokenData.tokenId} on ${chainData.axelarChainId}: tokenType is '${tokenData.tokenType}', expected 'interchain'`,
-            );
-        }
-        return false;
-    }
-
-    // Check if the chain uses consensus connection type
-    if (!isConsensusChain(config, chainData.axelarChainId)) {
-        if (verbose) {
-            printWarn(`Skipping token ${tokenData.tokenId} on ${chainData.axelarChainId}: chain does not use consensus connection type`);
-        }
-        return false;
-    }
-
-    // Skip if already registered (flag should be set by check-tokens-registration command)
-    if (chainData.registered === true) {
-        if (verbose) {
-            printInfo(`Skipping token ${tokenData.tokenId} on ${chainData.axelarChainId}: already registered in ITS Hub`);
-        }
-        return false;
-    }
-
-    return true;
+function isLegacyP2pConsensusToken(config: ConfigManager, tokenData: SquidToken, chainData: SquidTokenData): boolean {
+    return tokenData.tokenType === 'interchain' && isConsensusChain(config.getChainConfig(chainData.axelarChainId));
 }
 
 async function registerToken(config: ConfigManager, client: ClientManager, tokenDataToRegister: TokenDataToRegister, dryRun: boolean) {
@@ -178,13 +130,19 @@ async function forEachToken(
         .flatMap((tokenData: SquidToken) => {
             return tokenData.chains
                 .filter((chain: SquidTokenData) => {
-                    return (
-                        isLegacyP2pConsensusToken(config, tokenData, chain, false) &&
-                        (chains ? chainsToProcess.has(chain.axelarChainId) : true) &&
-                        (chain.track ? chain.track : true) &&
-                        chain.axelarChainId !== tokenData.originAxelarChainId &&
-                        (chain.registered ? !chain.registered : true)
-                    );
+                    try {
+                        return (
+                            tokenData.tokenType === 'interchain' &&
+                            (chains ? chainsToProcess.has(chain.axelarChainId) : true) &&
+                            (chain.track ? chain.track : true) &&
+                            chain.axelarChainId !== tokenData.originAxelarChainId &&
+                            (chain.registered ? !chain.registered : true) &&
+                            isConsensusChain(config.getChainConfig(chain.axelarChainId))
+                        );
+                    } catch (e) {
+                        printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e.message}`);
+                        return false;
+                    }
                 })
                 .map(async (tokenOnChain: SquidTokenData) => {
                     return processToken(tokenData, tokenOnChain);
