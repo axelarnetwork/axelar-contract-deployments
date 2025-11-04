@@ -1,5 +1,22 @@
 # Consensus chains P2P token migration to Axelar ITS hub
 
+|                      | **Owner**                             |
+| -------------------- | ------------------------------------- |
+| **Created By**       | @kulikthebird <tomasz@interoplabs.io> |
+
+
+| **Network**          | **Squid Tokens Migration** | **Date**   |
+| -------------------- | -------------------------- | ---------- |
+| **Testnet**          | TBD                        | 20xx-xx-xx | 
+| **Mainnet**          | TBD                        | 20xx-xx-xx |
+
+
+| **Network**          | **Other Tokens Migration** | **Date**   |
+| -------------------- | -------------------------- | ---------- |
+| **Testnet**          | TBD                        | 20xx-xx-xx |
+| **Mainnet**          | TBD                        | 20xx-xx-xx |
+
+
 ## Description of the problem
 
 Before ITS hub the tokens were deployed to work in a peer-2-peer manner. This standard was only used for the EVM-compatible chains. The token contracts are communicating via GMP protocol with each other i.e. for a given token that is deployed on chains X, Y and Z, the X's token contract sends messages directly to the Y's and Z's token contracts of a given token.
@@ -30,6 +47,8 @@ The `register-its-token` script is prepared to work for both squid tokens config
 
 
 ## Scripts testing
+
+**TODO**
 
 
 ## Squid tokens migration
