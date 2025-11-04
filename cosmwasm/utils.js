@@ -326,8 +326,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     };
 };
 
-const makeEventVerifierInstantiateMsg = (config, options, contractConfig) => {
-    const { chainName } = options;
+const makeEventVerifierInstantiateMsg = (config, _options, contractConfig) => {
     const {
         axelar: { contracts },
     } = config;
@@ -341,23 +340,23 @@ const makeEventVerifierInstantiateMsg = (config, options, contractConfig) => {
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid EventVerifier[${chainName}].governanceAddress in axelar info`);
+        throw new Error('Missing or invalid EventVerifier.governanceAddress in axelar info');
     }
 
     if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid EventVerifier[${chainName}].adminAddress in axelar info`);
+        throw new Error('Missing or invalid EventVerifier.adminAddress in axelar info');
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid EventVerifier[${chainName}].serviceName in axelar info`);
+        throw new Error('Missing or invalid EventVerifier.serviceName in axelar info');
     }
 
     if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid EventVerifier[${chainName}].votingThreshold in axelar info`);
+        throw new Error('Missing or invalid EventVerifier.votingThreshold in axelar info');
     }
 
     if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid EventVerifier[${chainName}].blockExpiry in axelar info`);
+        throw new Error('Missing or invalid EventVerifier.blockExpiry in axelar info');
     }
 
     return {
@@ -1243,7 +1242,7 @@ const CONTRACTS = {
         makeInstantiateMsg: makeRouterInstantiateMsg,
     },
     EventVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
+        scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeEventVerifierInstantiateMsg,
     },
     VotingVerifier: {
