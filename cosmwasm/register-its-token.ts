@@ -202,7 +202,7 @@ const programHandler = () => {
         .version('1.0.0')
         .description(
             'Script to perform ITS p2p token migration.\n' +
-                'Requires the following environment variables to be set: CHAINS, TOKEN_IDS, ENV, MNEMONIC.\n' +
+                'Requires the following environment variables to be set:, ENV, MNEMONIC.\n' +
                 'Requires the token file to be present in the following path:\n' +
                 ' * for non-squid tokens: ../axelar-chains-config/info/tokens-p2p/tokens-${env}.json\n' +
                 ' * for squid tokens: ../axelar-chains-config/info/tokens-p2p/squid-tokens-${env}.json\n' +
@@ -220,7 +220,7 @@ const programHandler = () => {
         .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV'))
         .addOption(new Option('-squid, --squid', 'use squid tokens'))
         .addOption(
-            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService account')
+            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
                 .env('MNEMONIC'),
         )
