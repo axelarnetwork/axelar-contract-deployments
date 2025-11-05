@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::process::exit;
 
 use broadcast::BroadcastArgs;
-use clap::{FromArgMatches, IntoApp, Parser, Subcommand};
+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use combine::CombineArgs;
 use dotenvy::dotenv;
 use eyre::eyre;
@@ -62,17 +62,12 @@ struct Cli {
     url: Option<String>,
 
     /// Directory to store output files (unsigned tx, signatures, bundles)
-    #[clap(
-        short = 'o',
-        long = "output-dir",
-        default_value = "./output",
-        parse(from_os_str)
-    )]
+    #[clap(short = 'o', long = "output-dir", default_value = "./output")]
     output_dir: PathBuf,
 
     /// Directory containing the JSON files for Axelar chains configuration info
     /// (devnet-amplifier.json, mainnet.json, testnet.json, etc)
-    #[clap(short, long, default_value = ".", parse(from_os_str), hide(true))]
+    #[clap(short, long, default_value = ".", hide(true))]
     chains_info_dir: PathBuf,
 }
 
@@ -134,7 +129,7 @@ struct GenerateCommandArgs {
     nonce_authority: Pubkey,
 
     /// Directory to store unsigned transaction files
-    #[clap(long = "output-dir", parse(from_os_str))]
+    #[clap(long = "output-dir")]
     output_dir: Option<PathBuf>,
 
     #[clap(subcommand)]
@@ -170,12 +165,11 @@ struct SignCommandArgs {
     signer_key: String,
 
     /// Path to the unsigned Solana transaction JSON file (*.unsigned.json)
-    #[clap(parse(from_os_str))]
     unsigned_tx_path: PathBuf,
 
     /// Output directory for signature files
     /// If not specified, signatures will be placed in the same directory as the unsigned transaction
-    #[clap(long = "output-dir", parse(from_os_str))]
+    #[clap(long = "output-dir")]
     output_dir: Option<PathBuf>,
 }
 
@@ -183,27 +177,20 @@ struct SignCommandArgs {
 struct CombineCommandArgs {
     /// Output directory for the combined signed transaction JSON
     /// If not specified, will use the same directory as the unsigned transaction
-    #[clap(long = "output-dir", parse(from_os_str))]
+    #[clap(long = "output-dir")]
     output_dir: Option<PathBuf>,
 
     /// Paths to the partial signature JSON files (*.partial.sig) to combine (provide at least one)
-    #[clap(
-        required = true,
-        multiple_values = true,
-        min_values = 1,
-        parse(from_os_str)
-    )]
+    #[clap(required = true, multiple_values = true, min_values = 1)]
     signature_paths: Vec<PathBuf>,
 
     /// Path to the original unsigned Solana transaction JSON file (*.unsigned.json)
-    #[clap(parse(from_os_str))]
     unsigned_tx_path: PathBuf,
 }
 
 #[derive(Parser, Debug)]
 struct BroadcastCommandArgs {
     /// Path to the combined signed Solana transaction JSON file (*.signed.json)
-    #[clap(parse(from_os_str))]
     signed_tx_path: PathBuf,
 }
 
@@ -266,10 +253,10 @@ async fn run() -> eyre::Result<()> {
 
     let config = Config::new(
         url,
-        cli.output_dir,
-        cli.chains_info_dir,
+        cli.output_dir.clone(),
+        cli.chains_info_dir.clone(),
         axelar_env,
-        cli.chain,
+        cli.chain.clone(),
     )?;
 
     match cli.command {
