@@ -19,6 +19,7 @@ export type SquidTokenData = {
     tokenAddress: string;
     track?: boolean;
     registered?: boolean;
+    needsAlignment?: boolean;
 };
 
 export type SquidToken = {
@@ -165,8 +166,11 @@ async function processTokens(client: ClientManager, config: ConfigManager, optio
                 ),
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
+
+            // TODO tkulik: check the results of the registration.
             await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
             tokenOnChain.registered = true;
+            tokenOnChain.needsAlignment = true;
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
         } catch (e) {
             tokenOnChain.registered ??= undefined;
