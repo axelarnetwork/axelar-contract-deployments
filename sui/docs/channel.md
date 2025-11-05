@@ -225,7 +225,7 @@ This is particularly important for MINT_BURN type token managers, where the work
 
 ## Creating & Using Channels
 
-The `sui/its interchain-transfer` command creates and destroys and temporary `Channel`. All other Sui interchain commands support using the channel flag (`--channel <channel>`). If no channel flag is passed to the command, a new channel will be created and transferred to the user. 
+The `sui/its interchain-transfer` command creates and destroys a temporary `Channel`. All other Sui interchain commands support using the channel flag (`--channel <channel>`). If no channel flag is passed to the command, a new channel will be created and transferred to the user. 
 
 When a new channel is created by a command it can be found in the transaction block data (see the tx hash logged in the console).
 
