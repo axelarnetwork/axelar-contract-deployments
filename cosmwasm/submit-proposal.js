@@ -16,7 +16,7 @@ const {
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
-    encodeStoreInstantiate,
+    encodeStoreInstantiateProposal,
     encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
@@ -82,12 +82,6 @@ const printProposal = (proposalData, proposalType = null) => {
             const MessageType = typeMap[message.typeUrl];
             if (MessageType) {
                 const decoded = MessageType.decode(message.value);
-                // This is needed for the storeInstantiate encoder on SDK v0.50, where a 0n placeholder is used to get the code ID from the previous message
-                Object.keys(decoded).forEach((key) => {
-                    if (typeof decoded[key] === 'bigint') {
-                        decoded[key] = decoded[key].toString();
-                    }
-                });
                 if (decoded.codeId) {
                     decoded.codeId = decoded.codeId.toString();
                 }
@@ -191,23 +185,22 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
         contractName = contractName[0];
     }
 
-    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, { ...options, contractName });
+    // Block SDK v0.50 environments until cosmjs upgrade
+    if (!isLegacy) {
+        throw new Error('storeInstantiate is not yet supported for SDK v0.50+ networks.');
+    }
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
     }
 
-    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, { ...options, contractName }, contractConfig);
-    const proposal = encodeStoreInstantiate(config, { ...options, contractName }, initMsg);
+    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, { ...options, contractName });
 
-    if (isLegacy) {
-        if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
-            return;
-        }
-    } else {
-        if (!confirmProposalSubmission(options, proposal)) {
-            return;
-        }
+    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, { ...options, contractName }, contractConfig);
+    const proposal = encodeStoreInstantiateProposal(config, { ...options, contractName }, initMsg);
+
+    if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
+        return;
     }
 
     const proposalId = await callSubmitProposal(client, config, options, proposal, fee);

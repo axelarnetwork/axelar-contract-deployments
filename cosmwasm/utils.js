@@ -1024,55 +1024,13 @@ const encodeStoreCode = (config, options) => {
     }
 };
 
-const encodeStoreInstantiate = (config, options, msg) => {
-    const isLegacy = isLegacySDK(config);
+const encodeStoreInstantiateProposal = (config, options, msg) => {
+    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
 
-    if (isLegacy) {
-        const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
-
-        return {
-            typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
-            value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
-        };
-    } else {
-        const { source, builder, instantiateAddresses, admin } = options;
-        const wasm = readContractCode(options);
-
-        const instantiatePermission =
-            instantiateAddresses && instantiateAddresses.length > 0
-                ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
-                : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
-
-        const storeMsg = MsgStoreCode.fromPartial({
-            sender: GOVERNANCE_MODULE_ADDRESS,
-            wasmByteCode: zlib.gzipSync(wasm),
-            instantiatePermission,
-            source,
-            builder,
-        });
-
-        // Note: We use a placeholder codeId of 0 - the chain will use the code
-        // from the previous message in the same proposal
-        const instantiateMsg = MsgInstantiateContract.fromPartial({
-            sender: GOVERNANCE_MODULE_ADDRESS,
-            admin: admin || GOVERNANCE_MODULE_ADDRESS,
-            codeId: 0n,
-            label: getLabel(options),
-            msg: Buffer.from(JSON.stringify(msg)),
-            funds: [],
-        });
-
-        return [
-            {
-                typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
-                value: Uint8Array.from(MsgStoreCode.encode(storeMsg).finish()),
-            },
-            {
-                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-                value: Uint8Array.from(MsgInstantiateContract.encode(instantiateMsg).finish()),
-            },
-        ];
-    }
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
+    };
 };
 
 const decodeProposalAttributes = (proposalJson) => {
@@ -1477,7 +1435,7 @@ module.exports = {
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
-    encodeStoreInstantiate,
+    encodeStoreInstantiateProposal,
     encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
