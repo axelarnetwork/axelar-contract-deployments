@@ -1,7 +1,18 @@
-const { Option } = require('commander');
-const { addBaseOptions, ...exportedCliUtils } = require('../common/cli-utils');
+import { Command, Option } from 'commander';
 
-const addEvmOptions = (program, options = {}) => {
+import { BaseOptions, addBaseOptions, addEnvOption, addOptionsToCommands, addStoreOptions } from '../common/cli-utils';
+
+interface EvmOptions extends BaseOptions {
+    artifactPath?: boolean;
+    contractName?: boolean;
+    deployMethod?: string;
+    salt?: boolean;
+    skipExisting?: boolean;
+    upgrade?: boolean;
+    predictOnly?: boolean;
+}
+
+const addEvmOptions = (program: Command, options: EvmOptions = {}): Command => {
     addBaseOptions(program, options);
 
     program.addOption(new Option('-v, --verify', 'verify the deployed contract on the explorer').env('VERIFY'));
@@ -41,7 +52,7 @@ const addEvmOptions = (program, options = {}) => {
     return program;
 };
 
-const addTopUpOptions = (program) => {
+const addTopUpOptions = (program: Command): void => {
     program.addOption(new Option('-t, --target <target>', 'target balance for each account').makeOptionMandatory(true));
     program.addOption(
         new Option('--threshold <threshold>', 'top up accounts only if the balance is below this threshold').makeOptionMandatory(true),
@@ -56,14 +67,18 @@ const addTopUpOptions = (program) => {
     program.addOption(
         new Option('--addresses <addresses>', 'comma separated list of addresses to top up')
             .default([])
-            .argParser((addresses) => addresses.split(',').map((address) => address.trim())),
+            .argParser((addresses: string): string[] => addresses.split(',').map((address) => address.trim())),
     );
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 };
 
 module.exports = {
-    ...exportedCliUtils,
+    addEnvOption,
     addBaseOptions,
+    addOptionsToCommands,
+    addStoreOptions,
     addEvmOptions,
     addTopUpOptions,
 };
+
+export type { BaseOptions, EvmOptions };

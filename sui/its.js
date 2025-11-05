@@ -54,7 +54,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
 
     if (tokenIds.length !== flowLimits.length) throw new Error('<token-ids> and <flow-limits> have to have the same length.');
 
-    for (const i in tokenIds) {
+    for (let i = 0; i < tokenIds.length; i++) {
         const coinTypeTxBuilder = new TxBuilder(client);
         let tokenId = await coinTypeTxBuilder.moveCall({
             target: `${itsConfig.address}::token_id::from_address`,
@@ -112,9 +112,22 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     const { OwnerCap, InterchainTokenService } = itsConfig.objects;
 
-    const txBuilder = new TxBuilder(client);
+    let trustedChains = parseTrustedChains(config.chains, args);
 
-    const trustedChains = parseTrustedChains(config.chains, args);
+    if (!options.offline) {
+        const alreadyTrustedChains = await listTrustedChains(keypair, client, config, contracts, args, options);
+
+        trustedChains = trustedChains.filter((chain) => !alreadyTrustedChains.includes(chain));
+
+        if (trustedChains.length === 0) {
+            printInfo('All specified chains are already trusted. No action needed.');
+            return;
+        }
+    }
+
+    printInfo('Chains to add as trusted', trustedChains);
+
+    const txBuilder = new TxBuilder(client);
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
@@ -130,7 +143,6 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
         await broadcastFromTxBuilder(txBuilder, keypair, 'Add Trusted Chains', options);
     }
 }
-
 async function removeTrustedChains(keypair, client, config, contracts, args, options) {
     const trustedChains = args;
 
@@ -239,7 +251,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // Mint pre-registration coins
-    const amount = !isNaN(options.mintAmount) ? parseInt(options.mintAmount) : 0;
+    const amount = Number.isFinite(Number(options.mintAmount)) ? parseInt(options.mintAmount) : 0;
     if (amount) {
         const unitAmount = getUnitAmount(options.mintAmount, decimals);
 
@@ -1274,3 +1286,5 @@ if (require.main === module) {
     addOptionsToCommands(program, addBaseOptions, { offline: true });
     program.parse();
 }
+
+module.exports = { addTrustedChains, removeTrustedChains, setFlowLimits };

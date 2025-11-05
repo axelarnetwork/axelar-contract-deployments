@@ -1,23 +1,86 @@
-use std::fs::File;
-use std::io::Write;
-
-use axelar_solana_its::state;
-use axelar_solana_its::state::token_manager::TokenManager;
+use anchor_lang::InstructionData;
 use clap::{Args, Parser, Subcommand};
 use eyre::eyre;
-use serde::Deserialize;
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::instruction::Instruction;
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
-    UPGRADE_AUTHORITY_KEY, decode_its_destination, fetch_latest_blockhash,
-    read_json_file_from_path, write_json_to_file_path,
+    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
+    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path,
 };
+
+const ITS_SEED: &[u8] = b"interchain-token-service";
+const TOKEN_MANAGER_SEED: &[u8] = b"token-manager";
+const INTERCHAIN_TOKEN_SEED: &[u8] = b"interchain-token";
+const PREFIX_INTERCHAIN_TOKEN_SALT: &[u8] = b"interchain-token-salt";
+const PREFIX_CANONICAL_TOKEN_SALT: &[u8] = b"canonical-token-salt";
+const PREFIX_CUSTOM_TOKEN_SALT: &[u8] = b"solana-custom-token-salt";
+
+#[derive(Debug, Clone, Copy, borsh::BorshDeserialize)]
+#[borsh(use_discriminant = true)]
+#[repr(u8)]
+enum TokenManagerType {
+    NativeInterchainToken = 0,
+    MintBurnFrom = 1,
+    LockUnlock = 2,
+    LockUnlockFee = 3,
+    MintBurn = 4,
+    Gateway = 5,
+}
+
+#[derive(borsh::BorshDeserialize, Debug)]
+struct TokenManager {
+    token_address: Pubkey,
+    ty: TokenManagerType,
+    flow_slot: FlowSlot,
+}
+
+#[derive(borsh::BorshDeserialize, Debug)]
+struct FlowSlot {
+    flow_limit: Option<u64>,
+}
+
+fn find_its_root_pda() -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[ITS_SEED], &solana_axelar_its::id())
+}
+
+fn find_token_manager_pda(its_root_pda: &Pubkey, token_id: &[u8; 32]) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[TOKEN_MANAGER_SEED, its_root_pda.as_ref(), token_id],
+        &solana_axelar_its::id(),
+    )
+}
+
+fn find_interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[INTERCHAIN_TOKEN_SEED, its_root_pda.as_ref(), token_id],
+        &solana_axelar_its::id(),
+    )
+}
+
+fn canonical_interchain_token_id(token_address: &Pubkey) -> [u8; 32] {
+    solana_sdk::keccak::hashv(&[PREFIX_CANONICAL_TOKEN_SALT, token_address.as_ref()]).0
+}
+
+fn interchain_token_id(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
+    let prefix_hash = solana_sdk::keccak::hashv(&[PREFIX_INTERCHAIN_TOKEN_SALT, salt]).0;
+    solana_sdk::keccak::hashv(&[&prefix_hash, deployer.as_ref()]).0
+}
+
+fn linked_token_id(sender: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
+    solana_sdk::keccak::hashv(&[PREFIX_CUSTOM_TOKEN_SALT, sender.as_ref(), salt]).0
+}
+
+fn not_implemented_error() -> eyre::Result<Vec<Instruction>> {
+    eyre::bail!(
+        "This instruction is not yet implemented in the new Anchor ITS program. The Anchor program currently only supports: Initialize, SetPauseStatus, SetTrustedChain, and RemoveTrustedChain."
+    )
+}
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
@@ -319,6 +382,14 @@ pub(crate) struct InitArgs {
     /// The operator account for the Interchain Token Service
     #[clap(short, long)]
     operator: Pubkey,
+
+    /// The chain name for the Interchain Token Service
+    #[clap(long)]
+    chain_name: String,
+
+    /// The ITS hub address on the Axelar network
+    #[clap(long)]
+    its_hub_address: String,
 }
 
 #[derive(Parser, Debug)]
@@ -534,7 +605,7 @@ pub(crate) struct RegisterCustomTokenArgs {
 
     /// The TokenManager type to use for this token
     #[clap(long, value_parser = parse_token_manager_type)]
-    token_manager_type: state::token_manager::Type,
+    token_manager_type: TokenManagerType,
 
     /// An optional account to receive the operator role on the TokenManager associated with the token
     #[clap(long)]
@@ -561,7 +632,7 @@ pub(crate) struct LinkTokenArgs {
 
     /// The TokenManager type to use for this token
     #[clap(long, value_parser = parse_token_manager_type)]
-    token_manager_type: state::token_manager::Type,
+    token_manager_type: TokenManagerType,
 
     /// Additional arguments for the link, depending on the chain specific implementation
     #[clap(long, value_parser = parse_hex_vec)]
@@ -789,16 +860,21 @@ fn parse_hex_bytes32(s: &str) -> eyre::Result<[u8; 32]> {
     Ok(decoded)
 }
 
-fn parse_token_manager_type(s: &str) -> Result<state::token_manager::Type, String> {
+fn parse_token_manager_type(s: &str) -> Result<TokenManagerType, String> {
     match s.to_lowercase().as_str() {
-        "lockunlock" | "lock_unlock" => Ok(state::token_manager::Type::LockUnlock),
-        "mintburn" | "mint_burn" => Ok(state::token_manager::Type::MintBurn),
-        "mintburnfrom" | "mint_burn_from" => Ok(state::token_manager::Type::MintBurnFrom),
-        "lockunlockfee" | "lock_unlock_fee" => Ok(state::token_manager::Type::LockUnlockFee),
+        "lockunlock" | "lock_unlock" => Ok(TokenManagerType::LockUnlock),
+        "mintburn" | "mint_burn" => Ok(TokenManagerType::MintBurn),
+        "mintburnfrom" | "mint_burn_from" => Ok(TokenManagerType::MintBurnFrom),
+        "lockunlockfee" | "lock_unlock_fee" => Ok(TokenManagerType::LockUnlockFee),
+        "nativeinterchaintoken" | "native_interchain_token" => {
+            Ok(TokenManagerType::NativeInterchainToken)
+        }
+        "gateway" => Ok(TokenManagerType::Gateway),
         _ => Err(format!("Invalid token manager type: {s}")),
     }
 }
 
+#[allow(dead_code)]
 fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<Pubkey> {
     let rpc_client = RpcClient::new(config.url.clone());
     let mint_account = rpc_client.get_account(mint)?;
@@ -832,8 +908,8 @@ fn get_mint_from_token_manager(token_id: &[u8; 32], config: &Config) -> eyre::Re
     use borsh::BorshDeserialize as _;
 
     let rpc_client = RpcClient::new(config.url.clone());
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
-    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&its_root_pda, token_id);
+    let (its_root_pda, _) = find_its_root_pda();
+    let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, token_id);
     let account = rpc_client.get_account(&token_manager_pda)?;
     let token_manager = TokenManager::try_from_slice(&account.data)?;
     Ok(token_manager.token_address)
@@ -970,35 +1046,71 @@ fn init(
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let its_hub_address =
-        String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
-    let its_root_config = axelar_solana_its::find_its_root_pda().0;
+    let (its_root_pda, _) = find_its_root_pda();
+    let program_data =
+        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
+
+    let (user_roles_pda, _) = Pubkey::find_program_address(
+        &[
+            b"user-roles",
+            its_root_pda.as_ref(),
+            init_args.operator.as_ref(),
+        ],
+        &solana_axelar_its::id(),
+    );
 
     chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
-        ADDRESS_KEY: axelar_solana_its::id().to_string(),
-        CONFIG_ACCOUNT_KEY: its_root_config.to_string(),
+        ADDRESS_KEY: solana_axelar_its::id().to_string(),
+        CONFIG_ACCOUNT_KEY: its_root_pda.to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
+    let ix_data = solana_axelar_its::instruction::Initialize {
+        chain_name: init_args.chain_name,
+        its_hub_address: init_args.its_hub_address,
+    }
+    .data();
 
-    Ok(vec![axelar_solana_its::instruction::initialize(
-        *fee_payer,
-        init_args.operator,
-        config.chain.to_owned(),
-        its_hub_address,
-    )?])
+    Ok(vec![Instruction {
+        program_id: solana_axelar_its::id(),
+        accounts: vec![
+            AccountMeta::new(*fee_payer, true),
+            AccountMeta::new_readonly(program_data, false),
+            AccountMeta::new(its_root_pda, false),
+            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(init_args.operator, false),
+            AccountMeta::new(user_roles_pda, false),
+        ],
+        data: ix_data,
+    }])
 }
 
 fn set_pause_status(
     fee_payer: &Pubkey,
     set_pause_args: SetPauseStatusArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![axelar_solana_its::instruction::set_pause_status(
-        *fee_payer,
-        set_pause_args.paused,
-    )?])
+    let (its_root_pda, _) = find_its_root_pda();
+    let (user_roles_pda, _) = Pubkey::find_program_address(
+        &[b"user-roles", its_root_pda.as_ref(), fee_payer.as_ref()],
+        &solana_axelar_its::id(),
+    );
+
+    let ix_data = solana_axelar_its::instruction::SetPauseStatus {
+        paused: set_pause_args.paused,
+    }
+    .data();
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_its::id(),
+        accounts: vec![
+            AccountMeta::new(its_root_pda, false),
+            AccountMeta::new_readonly(*fee_payer, true),
+            AccountMeta::new_readonly(user_roles_pda, false),
+        ],
+        data: ix_data,
+    }])
 }
 
 fn set_trusted_chain(
@@ -1018,21 +1130,51 @@ fn set_trusted_chain(
         if let serde_json::Value::Object(ref chains) = chains_info[CHAINS_KEY] {
             for chain in chains.keys() {
                 println!("Creating instruction to set {chain} as trusted on Solana ITS");
-                instructions.push(axelar_solana_its::instruction::set_trusted_chain(
-                    *fee_payer,
-                    authority,
-                    chain.clone(),
-                )?);
+                let (its_root_pda, _) = find_its_root_pda();
+                let (user_roles_pda, _) = Pubkey::find_program_address(
+                    &[b"user-roles", its_root_pda.as_ref(), authority.as_ref()],
+                    &solana_axelar_its::id(),
+                );
+
+                let ix_data = solana_axelar_its::instruction::SetTrustedChain {
+                    chain_name: chain.clone(),
+                }
+                .data();
+
+                instructions.push(Instruction {
+                    program_id: solana_axelar_its::id(),
+                    accounts: vec![
+                        AccountMeta::new(its_root_pda, false),
+                        AccountMeta::new_readonly(authority, true),
+                        AccountMeta::new_readonly(user_roles_pda, false),
+                    ],
+                    data: ix_data,
+                });
             }
         } else {
             eyre::bail!("Failed to load all chains from chains info JSON file");
         }
     } else {
-        instructions.push(axelar_solana_its::instruction::set_trusted_chain(
-            *fee_payer,
-            authority,
-            set_trusted_chain_args.chain_name,
-        )?);
+        let (its_root_pda, _) = find_its_root_pda();
+        let (user_roles_pda, _) = Pubkey::find_program_address(
+            &[b"user-roles", its_root_pda.as_ref(), authority.as_ref()],
+            &solana_axelar_its::id(),
+        );
+
+        let ix_data = solana_axelar_its::instruction::SetTrustedChain {
+            chain_name: set_trusted_chain_args.chain_name,
+        }
+        .data();
+
+        instructions.push(Instruction {
+            program_id: solana_axelar_its::id(),
+            accounts: vec![
+                AccountMeta::new(its_root_pda, false),
+                AccountMeta::new_readonly(authority, true),
+                AccountMeta::new_readonly(user_roles_pda, false),
+            ],
+            data: ix_data,
+        });
     }
 
     Ok(instructions)
@@ -1043,103 +1185,77 @@ fn remove_trusted_chain(
     remove_trusted_chain_args: TrustedChainArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     let authority = remove_trusted_chain_args.authority.unwrap_or(*fee_payer);
-    Ok(vec![axelar_solana_its::instruction::remove_trusted_chain(
-        *fee_payer,
-        authority,
-        remove_trusted_chain_args.chain_name,
-    )?])
+    let (its_root_pda, _) = find_its_root_pda();
+    let (user_roles_pda, _) = Pubkey::find_program_address(
+        &[b"user-roles", its_root_pda.as_ref(), authority.as_ref()],
+        &solana_axelar_its::id(),
+    );
+
+    let ix_data = solana_axelar_its::instruction::RemoveTrustedChain {
+        chain_name: remove_trusted_chain_args.chain_name,
+    }
+    .data();
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_its::id(),
+        accounts: vec![
+            AccountMeta::new(its_root_pda, false),
+            AccountMeta::new_readonly(authority, true),
+            AccountMeta::new_readonly(user_roles_pda, false),
+        ],
+        data: ix_data,
+    }])
 }
 
 fn approve_deploy_remote_interchain_token(
-    fee_payer: &Pubkey,
-    args: ApproveDeployRemoteInterchainTokenArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: ApproveDeployRemoteInterchainTokenArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_minter = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_minter,
-    )?;
-
-    let minter = args.minter.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
-            *fee_payer,
-            minter,
-            args.deployer,
-            args.salt,
-            args.destination_chain,
-            destination_minter,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn revoke_deploy_remote_interchain_token(
-    fee_payer: &Pubkey,
-    args: RevokeDeployRemoteInterchainTokenArgs,
+    _fee_payer: &Pubkey,
+    _args: RevokeDeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let minter = args.minter.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::revoke_deploy_remote_interchain_token(
-            *fee_payer,
-            minter,
-            args.deployer,
-            args.salt,
-            args.destination_chain,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn register_canonical_interchain_token(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: RegisterCanonicalInterchainTokenArgs,
-    config: &Config,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let token_id = axelar_solana_its::canonical_interchain_token_id(&args.mint);
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let token_id = canonical_interchain_token_id(&args.mint);
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {}", args.mint);
-    println!("- Token Program: {token_program}");
     println!("------------------------------------------");
 
-    Ok(vec![
-        axelar_solana_its::instruction::register_canonical_interchain_token(
-            *fee_payer,
-            args.mint,
-            token_program,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn deploy_remote_canonical_interchain_token(
-    fee_payer: &Pubkey,
-    args: DeployRemoteCanonicalInterchainTokenArgs,
+    _fee_payer: &Pubkey,
+    _args: DeployRemoteCanonicalInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::deploy_remote_canonical_interchain_token(
-            *fee_payer,
-            args.mint,
-            args.destination_chain,
-            args.gas_value,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let raw_supply =
+    let _raw_supply =
         crate::utils::parse_decimal_string_to_raw_units(&args.initial_supply, args.decimals)?;
 
-    let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
-    let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
+    let token_id = interchain_token_id(fee_payer, &args.salt);
+    let (its_root_pda, _) = find_its_root_pda();
+    let (mint, _) = find_interchain_token_pda(&its_root_pda, &token_id);
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
@@ -1147,467 +1263,223 @@ fn deploy_interchain_token(
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {mint}");
     println!("- Human Amount: {} {}", args.initial_supply, args.symbol);
-    println!("- Raw Amount: {raw_supply} (smallest units)");
     println!("- Decimals: {}", args.decimals);
     println!("------------------------------------------");
 
-    let deployer = args.deployer.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::deploy_interchain_token(
-            *fee_payer,
-            deployer,
-            args.salt,
-            args.name,
-            args.symbol,
-            args.decimals,
-            raw_supply,
-            args.minter,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn deploy_remote_interchain_token(
-    fee_payer: &Pubkey,
-    args: DeployRemoteInterchainTokenArgs,
+    _fee_payer: &Pubkey,
+    _args: DeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let deployer = args.deployer.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::deploy_remote_interchain_token(
-            *fee_payer,
-            deployer,
-            args.salt,
-            args.destination_chain,
-            args.gas_value,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn deploy_remote_interchain_token_with_minter(
-    fee_payer: &Pubkey,
-    args: DeployRemoteInterchainTokenWithMinterArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: DeployRemoteInterchainTokenWithMinterArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_minter = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_minter,
-    )?;
-    let deployer = args.deployer.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
-            *fee_payer,
-            deployer,
-            args.salt,
-            args.minter,
-            args.destination_chain,
-            destination_minter,
-            args.gas_value,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn register_token_metadata(
-    fee_payer: &Pubkey,
-    args: RegisterTokenMetadataArgs,
+    _fee_payer: &Pubkey,
+    _args: RegisterTokenMetadataArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::register_token_metadata(
-            *fee_payer,
-            args.mint,
-            args.gas_value,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn register_custom_token(
     fee_payer: &Pubkey,
     args: RegisterCustomTokenArgs,
-    config: &Config,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let token_id = axelar_solana_its::linked_token_id(fee_payer, &args.salt);
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let token_id = linked_token_id(fee_payer, &args.salt);
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {}", args.mint);
-    println!("- Token Program: {token_program}");
     println!("------------------------------------------");
 
-    let deployer = args.deployer.unwrap_or(*fee_payer);
-    Ok(vec![axelar_solana_its::instruction::register_custom_token(
-        *fee_payer,
-        deployer,
-        args.salt,
-        args.mint,
-        args.token_manager_type,
-        token_program,
-        args.operator,
-    )?])
+    not_implemented_error()
 }
 
-fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instruction>> {
-    let deployer = args.deployer.unwrap_or(*fee_payer);
-    Ok(vec![axelar_solana_its::instruction::link_token(
-        *fee_payer,
-        deployer,
-        args.salt,
-        args.destination_chain,
-        args.destination_token_address,
-        args.token_manager_type,
-        args.link_params,
-        args.gas_value,
-    )?])
+fn link_token(_fee_payer: &Pubkey, _args: LinkTokenArgs) -> eyre::Result<Vec<Instruction>> {
+    not_implemented_error()
 }
 
 fn interchain_transfer(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: InterchainTransferArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
     let decimals = get_token_decimals(&mint, config)?;
 
-    // Convert human-readable amount to raw units using safe integer arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_address.clone(),
-    )?;
+    let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Transfer details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {raw_amount} (smallest units)");
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
 
-    let authority = args.authority.unwrap_or(*fee_payer);
-    Ok(vec![axelar_solana_its::instruction::interchain_transfer(
-        *fee_payer,
-        authority,
-        args.source_account,
-        args.token_id,
-        args.destination_chain,
-        destination_address,
-        raw_amount,
-        mint,
-        token_program,
-        args.gas_value,
-    )?])
+    not_implemented_error()
 }
 
 fn call_contract_with_interchain_token(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
     let decimals = get_token_decimals(&mint, config)?;
 
-    // Convert human-readable amount to raw units using safe integer arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_address.clone(),
-    )?;
+    let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Contract call details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {raw_amount} (smallest units)");
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
 
-    let authority = args.authority.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::call_contract_with_interchain_token(
-            *fee_payer,
-            authority,
-            args.source_account,
-            args.token_id,
-            args.destination_chain,
-            destination_address,
-            raw_amount,
-            mint,
-            args.data,
-            token_program,
-            args.gas_value,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn call_contract_with_interchain_token_offchain_data(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenOffchainDataArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
     let decimals = get_token_decimals(&mint, config)?;
 
-    // Convert human-readable amount to raw units using safe integer arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = decode_its_destination(
-        &chains_info,
-        &args.destination_chain,
-        args.destination_address.clone(),
-    )?;
+    let _raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Offchain contract call details:");
     println!();
     println!("- Human Amount: {} tokens", args.amount);
-    println!("- Raw Amount: {raw_amount} (smallest units)");
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
     println!("------------------------------------------");
 
-    let authority = args.authority.unwrap_or(*fee_payer);
-    let instruction = axelar_solana_its::instruction::call_contract_with_interchain_token(
-        *fee_payer,
-        authority,
-        args.source_account,
-        args.token_id,
-        args.destination_chain,
-        destination_address,
-        raw_amount,
-        mint,
-        args.data,
-        token_program,
-        args.gas_value,
-    )?;
-
-    let mut file = File::create(config.output_dir.join("offchain_data_payload.bin"))?;
-    file.write_all(&instruction.data)?;
-
-    Ok(vec![instruction])
+    not_implemented_error()
 }
 
-fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
-    let operator = args.operator.unwrap_or(*fee_payer);
-    Ok(vec![axelar_solana_its::instruction::set_flow_limit(
-        *fee_payer,
-        operator,
-        args.token_id,
-        Some(args.flow_limit),
-    )?])
+fn set_flow_limit(_fee_payer: &Pubkey, _args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
+    not_implemented_error()
 }
 
 fn transfer_operatorship(
-    fee_payer: &Pubkey,
-    args: TransferOperatorshipArgs,
+    _fee_payer: &Pubkey,
+    _args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![axelar_solana_its::instruction::transfer_operatorship(
-        *fee_payer, *fee_payer, args.to,
-    )?])
+    not_implemented_error()
 }
 
 fn propose_operatorship(
-    fee_payer: &Pubkey,
-    args: TransferOperatorshipArgs, // Reuses args from transfer
+    _fee_payer: &Pubkey,
+    _args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![axelar_solana_its::instruction::propose_operatorship(
-        *fee_payer, *fee_payer, args.to,
-    )?])
+    not_implemented_error()
 }
 
 fn accept_operatorship(
-    fee_payer: &Pubkey,
-    args: AcceptOperatorshipArgs,
+    _fee_payer: &Pubkey,
+    _args: AcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![axelar_solana_its::instruction::accept_operatorship(
-        *fee_payer, *fee_payer, args.from,
-    )?])
+    not_implemented_error()
 }
 
 fn token_manager_set_flow_limit(
-    fee_payer: &Pubkey,
-    args: TokenManagerSetFlowLimitArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerSetFlowLimitArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let operator = args.operator.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::set_flow_limit(
-            *fee_payer,
-            operator,
-            args.token_id,
-            Some(args.flow_limit),
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn token_manager_add_flow_limiter(
-    fee_payer: &Pubkey,
-    args: TokenManagerAddFlowLimiterArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerAddFlowLimiterArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::add_flow_limiter(
-            *fee_payer,
-            args.adder,
-            args.token_id,
-            args.flow_limiter,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn token_manager_remove_flow_limiter(
-    fee_payer: &Pubkey,
-    args: TokenManagerRemoveFlowLimiterArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerRemoveFlowLimiterArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::remove_flow_limiter(
-            *fee_payer,
-            args.remover,
-            args.token_id,
-            args.flow_limiter,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn token_manager_transfer_operatorship(
-    fee_payer: &Pubkey,
-    args: TokenManagerTransferOperatorshipArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerTransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::transfer_operatorship(
-            *fee_payer,
-            args.sender,
-            args.token_id,
-            args.to,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn token_manager_propose_operatorship(
-    fee_payer: &Pubkey,
-    args: TokenManagerProposeOperatorshipArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerProposeOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::propose_operatorship(
-            *fee_payer,
-            args.proposer,
-            args.token_id,
-            args.to,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn token_manager_accept_operatorship(
-    fee_payer: &Pubkey,
-    args: TokenManagerAcceptOperatorshipArgs,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerAcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::accept_operatorship(
-            *fee_payer,
-            args.accepter,
-            args.token_id,
-            args.from,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn token_manager_handover_mint_authority(
-    fee_payer: &Pubkey,
-    args: TokenManagerHandoverMintAuthorityArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: TokenManagerHandoverMintAuthorityArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
-    let authority = args.authority.unwrap_or(*fee_payer);
-    Ok(vec![
-        axelar_solana_its::instruction::token_manager::handover_mint_authority(
-            *fee_payer,
-            authority,
-            args.token_id,
-            mint,
-            token_program,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn interchain_token_mint(
-    fee_payer: &Pubkey,
-    args: InterchainTokenMintArgs,
-    config: &Config,
+    _fee_payer: &Pubkey,
+    _args: InterchainTokenMintArgs,
+    _config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let mint = get_mint_from_token_manager(&args.token_id, config)?;
-    let token_program = get_token_program_from_mint(&mint, config)?;
-    let decimals = get_token_decimals(&mint, config)?;
-
-    // Parse decimal string to raw units using precise string-based arithmetic
-    let raw_amount = crate::utils::parse_decimal_string_to_raw_units(&args.amount, decimals)?;
-
-    Ok(vec![
-        axelar_solana_its::instruction::interchain_token::mint(
-            args.token_id,
-            mint,
-            args.to,
-            *fee_payer, // Payer is the minter in this context
-            token_program,
-            raw_amount,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn interchain_token_transfer_mintership(
-    fee_payer: &Pubkey,
-    args: InterchainTokenTransferMintershipArgs,
+    _fee_payer: &Pubkey,
+    _args: InterchainTokenTransferMintershipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::interchain_token::transfer_mintership(
-            *fee_payer,
-            args.sender,
-            args.token_id,
-            args.to,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn interchain_token_propose_mintership(
-    fee_payer: &Pubkey,
-    args: InterchainTokenProposeMintershipArgs,
+    _fee_payer: &Pubkey,
+    _args: InterchainTokenProposeMintershipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::interchain_token::propose_mintership(
-            *fee_payer,
-            args.proposer,
-            args.token_id,
-            args.to,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 fn interchain_token_accept_mintership(
-    fee_payer: &Pubkey,
-    args: InterchainTokenAcceptMintershipArgs,
+    _fee_payer: &Pubkey,
+    _args: InterchainTokenAcceptMintershipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![
-        axelar_solana_its::instruction::interchain_token::accept_mintership(
-            *fee_payer,
-            args.accepter,
-            args.token_id,
-            args.from,
-        )?,
-    ])
+    not_implemented_error()
 }
 
 pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
@@ -1620,12 +1492,11 @@ fn get_token_manager(args: TokenManagerArgs, config: &Config) -> eyre::Result<()
     use borsh::BorshDeserialize as _;
 
     let rpc_client = RpcClient::new(config.url.clone());
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (its_root_pda, _) = find_its_root_pda();
     let token_id: [u8; 32] = hex::decode(args.token_id.trim_start_matches("0x"))?
         .try_into()
         .map_err(|vec| eyre!("invalid token id: {vec:?}"))?;
-    let (token_manager_pda, _) =
-        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+    let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, &token_id);
     let account = rpc_client.get_account(&token_manager_pda)?;
     let token_manager = TokenManager::try_from_slice(&account.data)?;
 
