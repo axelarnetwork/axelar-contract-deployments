@@ -34,8 +34,7 @@ export async function registerToken(
     const [account] = await client.accounts;
     printInfo('Registering token ', JSON.stringify(msg.register_p2p_token_instance));
 
-    // TODO tkulik: uncomment to implement the registration
-    // TODO tkulik: check the results of the registration.
+    // TODO tkulik: un-comment to implement the registration
     // if (!dryRun) {
     //     await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
     // }
