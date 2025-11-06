@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances } = require('./utils');
+const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances, getRpcOptions } = require('./utils');
 const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
 const { Horizon } = require('@stellar/stellar-sdk');
 
@@ -8,7 +8,7 @@ require('./cli-utils');
 async function processCommand(chain, options) {
     const keyPair = await getWallet(chain, options);
     const recipient = options.recipient || keyPair.publicKey();
-    const horizonServer = new Horizon.Server(chain.horizonRpc);
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
     const balance = await getBalances(horizonServer, recipient).then((balances) =>
         balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
     );
