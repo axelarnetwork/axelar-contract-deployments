@@ -9,7 +9,6 @@ export type TokenDataToRegister = {
     tokenId: string;
     originChain: string;
     decimals: number;
-    track: boolean;
     supply: string;
     axelarId: string;
 };
@@ -68,7 +67,6 @@ async function registerSingleToken(client: ClientManager, config: ConfigManager,
             tokenId: tokenId,
             originChain: originChain,
             decimals: decimals,
-            track: true,
             supply: supply,
             axelarId: config.getChainConfig(chain).axelarId,
         };

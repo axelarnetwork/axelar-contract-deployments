@@ -125,7 +125,6 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 tokenId: tokenData.tokenId,
                 originChain: tokenData.originAxelarChainId || getOriginChain(tokenData),
                 decimals: tokenData.decimals,
-                track: tokenOnChain.track,
                 supply: await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc),
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
