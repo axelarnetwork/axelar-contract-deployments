@@ -62,49 +62,58 @@ function formatTokenAddress(tokenAddress: string): string {
 }
 
 async function registerSingleToken(client: ClientManager, config: ConfigManager, options) {
-    const { axelarChainId, tokenId, originChain, decimals, supply, dryRun } = options;
-    const tokenDataToRegister = {
-        tokenId: tokenId,
-        originChain: originChain,
-        decimals: decimals,
-        track: true,
-        supply: supply,
-        axelarId: axelarChainId,
-    };
-    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
-
-    if (!interchainTokenServiceAddress) {
-        throw new Error('InterchainTokenService contract address not found');
-    }
-
+    const { chain, tokenId, originChain, decimals, supply, dryRun } = options;
     try {
+        const tokenDataToRegister = {
+            tokenId: tokenId,
+            originChain: originChain,
+            decimals: decimals,
+            track: true,
+            supply: supply,
+            axelarId: config.getChainConfig(chain).axelarId,
+        };
+        const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+
+        if (!interchainTokenServiceAddress) {
+            throw new Error('InterchainTokenService contract address not found');
+        }
         await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, dryRun);
-        printInfo(`Token ${tokenId} on ${axelarChainId} is registered successfully`);
+        printInfo(`Token ${tokenId} on ${chain} is registered successfully`);
     } catch (e) {
-        printError(`Error registering token ${tokenId} on ${axelarChainId}: ${e.message}`);
+        printError(`Error registering token ${tokenId} on ${chain}: ${e.message}`);
     }
 }
 
 async function checkTokensRegistration(client: CosmWasmClient, config: ConfigManager, options) {
     const { chains, tokenIds } = options;
-    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
-    if (!interchainTokenServiceAddress) {
-        throw new Error('InterchainTokenService contract address not found');
+    try {
+        const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+
+        if (!interchainTokenServiceAddress) {
+            throw new Error('InterchainTokenService contract address not found');
+        }
+
+        await Promise.all(
+            tokenIds.flatMap(async (tokenId) => {
+                return chains.map(async (chainName) => {
+                    try {
+                        const registered = await checkSingleTokenRegistration(
+                            client,
+                            interchainTokenServiceAddress,
+                            tokenId,
+                            config.getChainConfig(chainName).axelarId,
+                        );
+                        printInfo(`Token ${tokenId} on ${chainName} is ${registered ? 'registered' : 'not registered'}`);
+                    } catch (e) {
+                        printError(`Error checking token ${tokenId} on ${chainName}: ${e.message}`);
+                    }
+                });
+            }),
+        );
+    } catch (e) {
+        printError(`Error checking tokens registration: ${e.message}`);
     }
-
-    await Promise.all(
-        chains.flatMap(async (chain) => {
-            return tokenIds.map(async (tokenId) => {
-                try {
-                    const registered = await checkSingleTokenRegistration(client, interchainTokenServiceAddress, tokenId, chain);
-                    printInfo(`Token ${tokenId} on ${chain} is ${registered ? 'registered' : 'not registered'}`);
-                } catch (e) {
-                    printError(`Error checking token ${tokenId} on ${chain}: ${e.message}`);
-                }
-            });
-        }),
-    );
 }
 
 const programHandler = () => {
@@ -118,11 +127,8 @@ const programHandler = () => {
     program
         .command('register-p2p-token')
         .description('Register a single P2P consensus token to the ITS Hub.')
-        .addOption(
-            new Option('-axelarChainId, --axelarChainId <axelarChainId>', 'axelar chain id to run the script for')
-                .env('AXELAR_CHAIN_ID')
-                .makeOptionMandatory(true),
-        )
+        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
+        .addOption(new Option('-chain, --chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
         .addOption(new Option('-tokenId, --tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
         .addOption(
             new Option('-originChain, --originChain <originChain>', 'Origin chain of the token')
@@ -144,6 +150,7 @@ const programHandler = () => {
     program
         .command('check-tokens-registration')
         .description('Check tokens registration status on the ITS Hub for given chains and tokenIds.')
+        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(
             new Option('-chains, --chains <chains...>', 'chains to check the registration for').env('CHAINS').makeOptionMandatory(true),
         )
