@@ -973,7 +973,7 @@ async fn submit_proof(
 }
 
 async fn execute(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -996,20 +996,14 @@ async fn execute(
     };
 
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
-    let mut instructions = Vec::new();
+    let (_incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
+    let instructions = Vec::new();
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
         if destination_address == solana_axelar_its::id() {
-            let ix = its_instruction_builder::build_execute_instruction(
-                *fee_payer,
-                incoming_message_pda,
-                message.clone(),
-                payload.clone(),
-                &solana_client::nonblocking::rpc_client::RpcClient::new(config.url.clone()),
-            )
-            .await?;
-            instructions.push(ix);
+            eyre::bail!(
+                "ITS GMP execution not yet implemented."
+            );
         } else if destination_address == solana_axelar_governance::id() {
             eyre::bail!(
                 "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
@@ -1112,7 +1106,7 @@ fn parse_gateway_event(data: &[u8]) -> eyre::Result<Option<GatewayEvent>> {
     }
 
     let ev_disc = &data[0..8];
-    if ev_disc != event_cpi::EVENT_IX_TAG_LE {
+    if ev_disc != anchor_lang::event::EVENT_IX_TAG_LE {
         return Ok(None);
     }
 

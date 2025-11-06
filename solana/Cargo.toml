@@ -25,9 +25,7 @@ solana-axelar-operators = { path = "./axelar-amplifier-solana/programs/solana-ax
 ], default-features = false }
 
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
-anchor-discriminators = { path = "./axelar-amplifier-solana/helpers/anchor-discriminators" }
-anchor-lang = "0.31.1"
-event-cpi = { path = "./axelar-amplifier-solana/helpers/event-cpi" }
+anchor-lang = { version = "0.31.1", features = ["event-cpi"] }
 
 base64 = "0.22.1"
 bincode = { version = "2.0.1", features = ["serde"] }
@@ -38,7 +36,6 @@ cosmwasm-std = "1.5"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 eyre = "0.6.11"
 hex = { version = "0.4.3", features = ["serde"] }
-its-instruction-builder = { path = "./axelar-amplifier-solana/helpers/its-instruction-builder", default-features = false }
 k256     = { version = "0.13.1", features = ["pkcs8", "pem", "ecdsa"] }
 lazy_static = "1.4"
 regex = "1.10"
@@ -154,7 +151,6 @@ devnet-amplifier = [
     "solana-axelar-governance/devnet-amplifier",
     "solana-axelar-its/devnet-amplifier",
     "solana-axelar-memo/devnet-amplifier",
-    "its-instruction-builder/devnet-amplifier",
 ]
 stagenet = [
     "solana-axelar-gas-service/stagenet",
@@ -162,7 +158,6 @@ stagenet = [
     "solana-axelar-governance/stagenet",
     "solana-axelar-its/stagenet",
     "solana-axelar-memo/stagenet",
-    "its-instruction-builder/stagenet",
 ]
 testnet = [
     "solana-axelar-gas-service/testnet",
@@ -170,7 +165,6 @@ testnet = [
     "solana-axelar-governance/testnet",
     "solana-axelar-its/testnet",
     "solana-axelar-memo/testnet",
-    "its-instruction-builder/testnet",
 ]
 mainnet = [
     "solana-axelar-gas-service/mainnet",
@@ -178,6 +172,5 @@ mainnet = [
     "solana-axelar-governance/mainnet",
     "solana-axelar-its/mainnet",
     "solana-axelar-memo/mainnet",
-    "its-instruction-builder/mainnet",
 ]
 default = ["devnet-amplifier"]
