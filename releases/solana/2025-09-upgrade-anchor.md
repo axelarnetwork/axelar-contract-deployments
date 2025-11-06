@@ -43,11 +43,12 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
     cd axelar-amplifier-solana
 
     # Compile the Solana programs
-    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_gas_service
-    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_gateway
-    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_governance
-    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_multicall
-    solana-verify build --base-image $BASE_IMAGE --library-name solana_axelar_memo_program
+    cargo build-sbf --manifest-path programs/solana-axelar-gateway/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-gas-service/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-governance/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-multicall/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-operators/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-memo/Cargo.toml
 
     # Go back
     cd ..
