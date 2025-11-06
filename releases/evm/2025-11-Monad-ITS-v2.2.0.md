@@ -2,12 +2,12 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @isi8787 <isaac@interoplabs.io> |
-| **Deployment** | - |
+| **Created By** | @isi8787 <isaac@interoplabs.io>           |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>           |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
+| **Devnet Amplifier** | Complete              | 2025-11-06 |
 | **Stagenet**         | -                     | TBD      |
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
@@ -72,7 +72,7 @@ If contracts are not deployed yet add the following to `contracts` in the `$CHAI
 
 | Network              | `ITS_EDGE_CONTRACT`                          |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff` |
+| **Devnet-amplifier** | `0xB4EFf8ea82D262f4e6215CC59f1406D3288E93D5` |
 | **Stagenet**         | `0x0FCb262571be50815627C16Eca1f5F3D342FF5a5` |
 | **Testnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
 | **Mainnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |

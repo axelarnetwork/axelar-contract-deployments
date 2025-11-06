@@ -8,7 +8,7 @@
 | **Network**  | **Deployment Status** | **Date**    |
 | ------------ | --------------------- | ----------- |
 | **Stagenet** | Completed             | 2025-09-08  |
-| **Testnet**  | Completed             | 2025-009-05 |
+| **Testnet**  | Completed             | 2025-09-05 |
 
 - [Releases](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
 
