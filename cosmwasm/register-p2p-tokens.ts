@@ -119,7 +119,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         throw new Error('InterchainTokenService contract address not found');
     }
 
-    forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
             const tokenDataToRegister = {
                 tokenId: tokenData.tokenId,
@@ -145,7 +145,7 @@ async function checkTokensRegistrationInFile(client: CosmWasmClient, config: Con
     if (!interchainTokenServiceAddress) {
         throw new Error('InterchainTokenService contract address not found');
     }
-    forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
             const registered = await checkSingleTokenRegistration(
                 client,
