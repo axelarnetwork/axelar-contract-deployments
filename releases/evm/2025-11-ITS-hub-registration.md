@@ -60,7 +60,36 @@ The `register-its-token` script is prepared to work for both squid tokens config
 
 ## Scripts testing
 
-**TODO**
+A new interchain token was deployed on the network using:
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name "test" --symbol "TST" --decimals 18 --initialSupply 12345 --minter [wallet] --salt "salt" -y -n core-ethereum
+```
+
+After the deployment, the script `cosmwasm/get-p2p-tokens.ts` was run to fetch the latest tokens from `core-ethereum` - the new token has been found. The token was stored in the auto-generated file `axelar-contract-deployments/axelar-chains-config/info/tokens-p2p/tokens-devnet-amplifier.json`. To isolate the token for the test purpose all the other tokens were removed from the file to avoid any unwanted registrations. The `track` flag needed to be set to `true` so that the token is taken into account by the registration script. Then the following command was run:
+
+```bash
+ts-node cosmwasm/register-p2p-tokens.ts check-tokens
+```
+
+The new token was checked for the registration status:
+
+```bash
+Token 0x156d635b12b653c8dfb6966c1336b722fd9bd8ec01243a33fb1b864eebc5fab8 on core-ethereum is not registered
+```
+
+The last step was to run the registration command:
+
+```bash
+ts-node cosmwasm/register-p2p-tokens.ts register-tokens -e devnet-amplifier
+```
+
+Result:
+
+```bash
+Registering token : {"chain":"core-ethereum","token_id":"156d635b12b653c8dfb6966c1336b722fd9bd8ec01243a33fb1b864eebc5fab8","origin_chain":"core-ethereum","decimals":18,"supply":{"tracked":"12345000000000000000000"}}
+
+Token 0x156d635b12b653c8dfb6966c1336b722fd9bd8ec01243a33fb1b864eebc5fab8 on core-ethereum is registered
+```
 
 
 ## Squid tokens migration
