@@ -16,7 +16,7 @@ const {
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
-    encodeStoreInstantiateProposal,
+    encodeStoreInstantiate,
     encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
@@ -36,7 +36,7 @@ const {
     ExecuteContractProposal,
     MigrateContractProposal,
     UpdateInstantiateConfigProposal,
-} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal_legacy');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const {
     MsgExecuteContract,
@@ -44,6 +44,7 @@ const {
     MsgInstantiateContract2,
     MsgMigrateContract,
     MsgStoreCode,
+    MsgStoreAndInstantiateContract,
 } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
@@ -78,6 +79,7 @@ const printProposal = (proposalData, proposalType = null) => {
                 '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
                 '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
                 '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
+                '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
             };
             const MessageType = typeMap[message.typeUrl];
             if (MessageType) {
@@ -89,7 +91,8 @@ const printProposal = (proposalData, proposalType = null) => {
                     (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
                         message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
                         message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2' ||
-                        message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract') &&
+                        message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract' ||
+                        message.typeUrl === '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract') &&
                     decoded.msg
                 ) {
                     decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
@@ -185,31 +188,38 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
         contractName = contractName[0];
     }
 
-    // Block SDK v0.50 environments until cosmjs upgrade
-    if (!isLegacy) {
-        throw new Error('storeInstantiate is not yet supported for SDK v0.50+ networks.');
-    }
+    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, { ...options, contractName });
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
     }
 
-    const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, { ...options, contractName });
-
     const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, { ...options, contractName }, contractConfig);
-    const proposal = encodeStoreInstantiateProposal(config, { ...options, contractName }, initMsg);
+    const proposal = encodeStoreInstantiate(config, { ...options, contractName }, initMsg);
 
-    if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
-        return;
+    if (isLegacy) {
+        if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
+            return;
+        }
+        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
+
+        contractConfig.storeInstantiateProposalId = proposalId;
+        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+            .update(readContractCode({ ...options, contractName }))
+            .digest()
+            .toString('hex');
+    } else {
+        if (!confirmProposalSubmission(options, [proposal])) {
+            return;
+        }
+        const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
+
+        contractConfig.storeInstantiateProposalId = proposalId;
+        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+            .update(readContractCode({ ...options, contractName }))
+            .digest()
+            .toString('hex');
     }
-
-    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-
-    contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-        .update(readContractCode({ ...options, contractName }))
-        .digest()
-        .toString('hex');
 };
 
 const instantiate = async (client, config, options, _args, fee) => {

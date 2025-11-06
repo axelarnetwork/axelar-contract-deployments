@@ -11,7 +11,7 @@ const {
     ExecuteContractProposal,
     MigrateContractProposal,
     UpdateInstantiateConfigProposal,
-} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal_legacy');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
@@ -22,6 +22,7 @@ const {
     MsgInstantiateContract2,
     MsgMigrateContract,
     MsgStoreCode,
+    MsgStoreAndInstantiateContract,
 } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
@@ -1067,13 +1068,42 @@ const encodeStoreCode = (config, options) => {
     }
 };
 
-const encodeStoreInstantiateProposal = (config, options, msg) => {
-    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+const encodeStoreInstantiate = (config, options, msg) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
-        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+            value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { source, builder, instantiateAddresses, admin } = options;
+        const wasm = readContractCode(options);
+
+        const instantiatePermission =
+            instantiateAddresses && instantiateAddresses.length > 0
+                ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+                : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
+
+        const storeAndInstantiateMsg = MsgStoreAndInstantiateContract.fromPartial({
+            authority: GOVERNANCE_MODULE_ADDRESS,
+            wasmByteCode: zlib.gzipSync(wasm),
+            instantiatePermission,
+            admin,
+            label: getLabel(options),
+            msg: Buffer.from(JSON.stringify(msg)),
+            funds: [],
+            source,
+            builder,
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract',
+            value: Uint8Array.from(MsgStoreAndInstantiateContract.encode(storeAndInstantiateMsg).finish()),
+        };
+    }
 };
 
 const decodeProposalAttributes = (proposalJson) => {
@@ -1482,7 +1512,7 @@ module.exports = {
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
-    encodeStoreInstantiateProposal,
+    encodeStoreInstantiate,
     encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
