@@ -38,6 +38,13 @@ export type SquidTokenInfoFile = {
     tokens: SquidTokens;
 };
 
+function formatTokenAddress(tokenAddress: string) {
+    if (tokenAddress.startsWith('0x')) {
+        return tokenAddress.slice(2);
+    }
+    return tokenAddress;
+}
+
 function getOriginChain(tokenData: SquidToken) {
     // TODO tkulik: Why?
     // If only a single chain is untracked, use that chain
@@ -83,7 +90,7 @@ async function registerToken(
     const msg = {
         register_p2p_token_instance: {
             chain: tokenDataToRegister.axelarId,
-            token_id: tokenDataToRegister.tokenId.slice(2),
+            token_id: formatTokenAddress(tokenDataToRegister.tokenId),
             origin_chain: tokenDataToRegister.originChain,
             decimals: tokenDataToRegister.decimals,
             supply: supplyParam,
@@ -187,7 +194,7 @@ async function checkTokensRegistration(client: CosmWasmClient, config: ConfigMan
     forEachToken(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
             const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
-                token_instance: { chain: tokenOnChain.axelarChainId, token_id: tokenData.tokenId.slice(2) },
+                token_instance: { chain: tokenOnChain.axelarChainId, token_id: formatTokenAddress(tokenData.tokenId) },
             });
             tokenOnChain.registered = registered ? true : false;
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`);

@@ -5,22 +5,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { tokenManagerTypes } from '../common';
+import { ChainConfig, ConfigManager } from '../common/config';
 import { printError, printInfo, printWarn } from '../common/utils';
-import { isConsensusChain } from '../evm/utils';
+import { getContractJSON, isConsensusChain } from '../evm/utils';
 import { SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-its-token';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const ITokenManager = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/ITokenManager.sol/ITokenManager.json');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json');
-
-const env = process.env.ENV;
-
-// Dynamic import for JSON file with environment variable
-const infoPath = path.resolve(__dirname, `../axelar-chains-config/info/${env}.json`);
-const info = JSON.parse(fs.readFileSync(infoPath, 'utf-8'));
+const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const ITokenManager = getContractJSON('ITokenManager');
+const IInterchainToken = getContractJSON('IInterchainToken');
 
 const queryLimit = {
     ethereum: 500000,
@@ -106,7 +98,8 @@ async function runWithRetries<T>(fn: () => Promise<T>): Promise<T> {
             return await fn();
         } catch (e) {
             lastError = e;
-            await new Promise((resolve) => setTimeout(resolve, (i + 1) * 1000));
+            const delayMilliseconds = (i + 1) * 1000;
+            await new Promise((resolve) => setTimeout(resolve, delayMilliseconds));
         }
     }
     throw new Error(`Failed to execute function after ${MAX_RETRIES} retries: ${lastError}`);
@@ -161,39 +154,39 @@ async function getTokensFromBlock(
     return tokens;
 }
 
-async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFileWithChains) {
+async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfoFileWithChains) {
     try {
-        if (!tokensInfo.chains[name]) {
-            tokensInfo.chains[name] = {
+        if (!tokensInfo.chains[chain.axelarId]) {
+            tokensInfo.chains[chain.axelarId] = {
                 start: 0,
                 end: 0,
                 max: 0,
                 alreadyProcessedPercentage: '0.00',
-                rpcs: [chainInfo.rpc],
+                rpcs: [chain.rpc],
             };
         }
-        const currentChain = tokensInfo.chains[name];
-        if (!chainInfo.contracts.InterchainTokenService || chainInfo.contracts.InterchainTokenService.skip) {
+        const currentChain = tokensInfo.chains[chain.axelarId];
+        if (!chain.contracts.InterchainTokenService) {
+            printWarn(`InterchainTokenService contract not found for ${chain.axelarId}`);
             return;
         }
-        printInfo(`ITS at ${name} is at`, chainInfo.contracts.InterchainTokenService.address);
+        printInfo(`ITS at ${chain.axelarId} is at`, chain.contracts.InterchainTokenService.address);
 
-        const eventsLength = queryLimit[name.toLowerCase()] || 2048;
-        printInfo('processing... ', name);
+        const eventsLength = queryLimit[chain.axelarId.toLowerCase()] || 2048;
+        printInfo('processing... ', chain.axelarId);
 
-        const rpc = currentChain?.rpcs?.[0] || chainInfo.rpc;
+        const rpc = currentChain?.rpcs?.[0] || chain.rpc;
         if (!rpc) {
-            printError(`No RPC for ${name}`);
+            printError(`No RPC for ${chain.axelarId}`);
             return;
         }
         const provider = getDefaultProvider(rpc);
-        const its = new Contract(chainInfo.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
+        const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
         currentChain.max = await provider.getBlockNumber();
         const filter = its.filters.TokenManagerDeployed();
-        printInfo(`${name} current block number: ${currentChain.max}`);
+        printInfo(`${chain.axelarId} current block number: ${currentChain.max}`);
 
-        // TODO tkulik: Is it safe to assume we can start fetching from the given timestamp and finish before the upgrade?
-        //if ((await provider.getBlock(currentChain.end)).timestamp >= endTimestamp) return;
+        // TODO tkulik: find the first block to start from
         // while (max - min > 1) {
         //     const mid = Math.floor((min + max) / 2);
         //     const timestamp = (await provider.getBlock(mid)).timestamp;
@@ -208,7 +201,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
             const tokensPromises: Promise<SquidTokenDataWithTokenId[]>[] = [];
             for (let i = 0; i < BATCH_SIZE; i++) {
                 const newEventsPromise: Promise<SquidTokenDataWithTokenId[]> = getTokensFromBlock(
-                    chainInfo.axelarChainId,
+                    chain.axelarId,
                     its,
                     filter,
                     currentChain.end + 1 + i * eventsLength,
@@ -246,7 +239,7 @@ async function getTokensFromChain(name, chainInfo, tokensInfo: SquidTokenInfoFil
             currentChain.alreadyProcessedPercentage = ((currentChain.end / currentChain.max) * 100).toFixed(2);
         }
     } catch (e) {
-        printError(`Error getting tokens for ${name}: ${e}`);
+        printError(`Error getting tokens for ${chain.axelarId}: ${e}`);
     }
 }
 
@@ -255,11 +248,14 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
 }
 
 (async () => {
+    const env = process.env.ENV;
+    const config = new ConfigManager(env);
+
     let tokensInfo: SquidTokenInfoFileWithChains = {
         chains: {},
         tokens: {},
     };
-    const tokensInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}_2.json`;
+    const tokensInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`;
     const tokensInfoFileAbsolutePath = path.resolve(__dirname, tokensInfoFilePath);
     try {
         tokensInfo = JSON.parse(fs.readFileSync(tokensInfoFileAbsolutePath, 'utf-8'));
@@ -273,18 +269,17 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
         }
     }
 
-    const promises = Object.keys(info.chains)
-        .filter((name) => {
+    const promises = Object.values(config.chains)
+        .filter((chain) => {
             try {
-                return isConsensusChain(info.chains[name]);
+                return isConsensusChain(chain);
             } catch (e) {
-                printError(`Error getting chain config for ${name} (skipping chain): ${e.message}`);
+                printError(`Error getting chain config for ${chain.axelarId} (skipping chain): ${e.message}`);
                 return false;
             }
         })
-        .map((name) => {
-            const chainInfo = info.chains[name];
-            return getTokensFromChain(name, chainInfo, tokensInfo);
+        .map((chain) => {
+            return getTokensFromChain(chain, tokensInfo);
         });
 
     // Write to the output file every second

@@ -5,26 +5,34 @@
 | **Created By**       | @kulikthebird <tomasz@interoplabs.io> |
 
 
-| **Network**          | **Squid Tokens Registration** | **Date**   |
-| -------------------- | ----------------------------- | ---------- |
-| **Testnet**          | TBD                           | 20xx-xx-xx |
-| **Mainnet**          | TBD                           | 20xx-xx-xx |
+| **Network**          | **Squid Tokens Registration**       | **Date**   |
+| -------------------- | ----------------------------------- | ---------- |
+| **Testnet**          | TBD                                 | 20xx-xx-xx |
+| **Mainnet**          | TBD                                 | 20xx-xx-xx |
 
 
-| **Network**          | **Other Tokens Rgistration** | **Date**   |
-| -------------------- | ---------------------------- | ---------- |
-| **Devnet amplifier** | TBD                          | 20xx-xx-xx |
-| **Stagenet**         | TBD                          | 20xx-xx-xx |
-| **Testnet**          | TBD                          | 20xx-xx-xx |
-| **Mainnet**          | TBD                          | 20xx-xx-xx |
+| **Network**          | **Other Tokens Rgistration**        | **Date**   |
+| -------------------- | ----------------------------------- | ---------- |
+| **Devnet amplifier** | TBD                                 | 20xx-xx-xx |
+| **Stagenet**         | TBD                                 | 20xx-xx-xx |
+| **Testnet**          | TBD                                 | 20xx-xx-xx |
+| **Mainnet**          | TBD                                 | 20xx-xx-xx |
 
 
-| **Network**          | **ITS contracts migration**  | **Date**   |
-| -------------------- | ---------------------------- | ---------- |
-| **Devnet amplifier** | TBD                          | 20xx-xx-xx |
-| **Stagenet**         | TBD                          | 20xx-xx-xx |
-| **Testnet**          | TBD                          | 20xx-xx-xx |
-| **Mainnet**          | TBD                          | 20xx-xx-xx |
+| **Network**          | **ITS v2.2.0 contracts migration**  | **Date**   |
+| -------------------- | ----------------------------------- | ---------- |
+| **Devnet amplifier** | TBD                                 | 20xx-xx-xx |
+| **Stagenet**         | TBD                                 | 20xx-xx-xx |
+| **Testnet**          | TBD                                 | 20xx-xx-xx |
+| **Mainnet**          | TBD                                 | 20xx-xx-xx |
+
+
+| **Network**          | **Tokens supply alignment**         | **Date**   |
+| -------------------- | ----------------------------------- | ---------- |
+| **Devnet amplifier** | TBD                                 | 20xx-xx-xx |
+| **Stagenet**         | TBD                                 | 20xx-xx-xx |
+| **Testnet**          | TBD                                 | 20xx-xx-xx |
+| **Mainnet**          | TBD                                 | 20xx-xx-xx |
 
 
 ## Description of the problem
@@ -34,22 +42,14 @@ Before ITS hub the tokens were deployed to work in a peer-2-peer manner. This st
 From the technical point of view it means that the list of the trusted chains of a given token cotract was set to all the chains that token is connected to. The purpose of this migration is to redirect the communication channel to the ITS hub contract that is deployed on the Axelar network. The goal of this migration procedure is to achieve the following state:
 1. List of the trusted chains of each ITS contract need to be set to Axelar chain only.
 2. The token contracts need to be registered in the ITS hub by using the message [RegisterP2pTokenInstance](https://github.com/axelarnetwork/axelar-amplifier/blob/b58d789c2b91d245d3593b445e00e9ab8e878ac4/contracts/interchain-token-service/src/msg.rs#L65) # skip-check
-
-
-## Finished steps
-
-[X] Finish the scripts implementation/refactoring
-[ ] Prepare test scenarios for the scripts
-[X] Prepare post-migration checks to ensure the valid state of the migrated tokens
-[ ] Migrate Squid tokens
-[ ] Migrate Testnet / non-Squid Mainnet tokens
-[ ] Align token supply values
+3. After the above two steps, the ITS contract on the consensus chains need to be upgraded to [`v2.2.0`](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0) to enforce routing the interchain transfers through the ITS hub on the Axelar network.
+4. Last step is to run the per chain token supply align command to make sure that the actual tokens' supply matches the one registered on the ITS hub.
 
 
 ## Scripts needed
 
 The following list of scripts are needed to achieve the goal:
- - `cosmwasm/get-tokens.ts` - Fetches RPCs of the chains that have deployed p2p tokens to find them and store in a single config file.
+ - `cosmwasm/get-p2p-tokens.ts` - Fetches RPCs of the chains that have deployed p2p tokens to find them and store in a single config file.
  - `cosmwasm/register-its-token.ts` - Introduces two commands:
    * `register-its-token` - Calls [RegisterP2pTokenInstance](https://github.com/axelarnetwork/axelar-amplifier/blob/b58d789c2b91d245d3593b445e00e9ab8e878ac4/contracts/interchain-token-service/src/msg.rs#L65) for each legacy p2p token deployed on a consensus chain to register it in the central hub. # skip-check
    * `check-tokens-registration` - Queries the ITS contract on the Axelar network to fetch information about the registration status of a given token per chain.
@@ -80,7 +80,7 @@ The `register-its-token` script can be used to check whether the tokens were reg
 
 ## Migrate the ITS contracts on the consensus chains
 
-The new ITS solidity contract will change the routing from P2P manner to use ITS hub only. This PR [feat: make all calls go through the hub](https://github.com/axelarnetwork/interchain-token-service/pull/332) makes the redirection to the hub mandatory (no P2P GMP based communication support). This step should be processed after all the legacy tokens are registered on the ITS Hub.
+The new [`ITS v2.2.0`](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0) solidity contract changes the intechain token transfers routing from P2P manner to ITS hub only. This PR [feat: make all calls go through the hub](https://github.com/axelarnetwork/interchain-token-service/pull/332) makes the redirection to the hub mandatory (no P2P GMP based communication support). This step should be processed after all the legacy tokens are registered on the ITS Hub.
 
 
 ## Align token supply per chain
