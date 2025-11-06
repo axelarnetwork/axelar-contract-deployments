@@ -43,11 +43,12 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
     cd axelar-amplifier-solana
 
     # Compile the Solana programs
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
-    solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_memo_program
+    cargo build-sbf --manifest-path programs/solana-axelar-gateway/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-gas-service/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-governance/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-multicall/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-operators/Cargo.toml
+    cargo build-sbf --manifest-path programs/solana-axelar-memo/Cargo.toml
 
     # Go back
     cd ..
@@ -57,23 +58,23 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
 
     ```sh
     GATEWAY_PROGRAM_KEYPAIR_PATH="<path/to/gateway_program_keypair.json>"
-    GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gateway.so"
+    GATEWAY_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_gateway.so"
     GATEWAY_PDA="[gateway-pda]"
 
     GAS_SERVICE_PROGRAM_KEYPAIR_PATH="<path/to/gas_service_program_keypair.json>"
-    GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_gas_service.so"
+    GAS_SERVICE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_gas_service.so"
     GAS_SERVICE_PDA="[gas-service-pda]"
 
     GOVERNANCE_PROGRAM_KEYPAIR_PATH="<path/to/governance_program_keypair.json>"
-    GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_governance.so"
+    GOVERNANCE_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_governance.so"
     GOVERNANCE_PDA="[governance-pda]"
 
     MULTICALL_PROGRAM_KEYPAIR_PATH="<path/to/multicall_program_keypair.json>"
-    MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_multicall.so"
+    MULTICALL_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_multicall.so"
     MULTICALL_PDA="[multicall-pda]"
 
     MEMO_PROGRAM_KEYPAIR_PATH="<path/to/memo_program_keypair.json>"
-    MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/axelar_solana_memo_program.so"
+    MEMO_PROGRAM_PATH="axelar-amplifier-solana/target/deploy/solana_axelar_memo_program.so"
     MEMO_PDA="[memo-pda]"
     ```
 
@@ -99,11 +100,7 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
     > Verification is **only possible in mainnet**. If deploying for test environments you can skip this step.
 
     ```bash
-    solana-verify verify-from-repo --remote --base-image $BASE_IMAGE \
-        --commit-hash $COMMIT_HASH \
-        --program-id $PROGRAM_PDA \
-        https://github.com/axelarnetwork/axelar-amplifier-solana \
-        -- --no-default-features --features $ENV
+    anchor verify -p [axelar_solana_program_name] --provider.cluster $CLUSTER $(solana address -k $PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 ## Checklist

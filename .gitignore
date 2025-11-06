@@ -129,3 +129,7 @@ sui/move
 
 # ITS hub migration
 axelar-chains-config/info/tokens-p2p/
+
+target/
+
+solana/axelar-amplifier*
