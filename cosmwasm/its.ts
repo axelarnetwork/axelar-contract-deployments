@@ -78,7 +78,7 @@ async function registerSingleToken(client: ClientManager, config: ConfigManager,
         await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, dryRun);
         printInfo(`Token ${tokenId} on ${chain} is registered successfully`);
     } catch (e) {
-        printError(`Error registering token ${tokenId} on ${chain}: ${e.message}`);
+        printError(`Error registering token ${tokenId} on ${chain}: ${e}`);
     }
 }
 
@@ -93,7 +93,7 @@ async function checkTokensRegistration(client: CosmWasmClient, config: ConfigMan
         }
 
         await Promise.all(
-            tokenIds.flatMap(async (tokenId) => {
+            tokenIds.flatMap((tokenId) => {
                 return chains.map(async (chainName) => {
                     try {
                         const registered = await checkSingleTokenRegistration(
@@ -104,13 +104,13 @@ async function checkTokensRegistration(client: CosmWasmClient, config: ConfigMan
                         );
                         printInfo(`Token ${tokenId} on ${chainName} is ${registered ? 'registered' : 'not registered'}`);
                     } catch (e) {
-                        printError(`Error checking token ${tokenId} on ${chainName}: ${e.message}`);
+                        printError(`Error checking token ${tokenId} on ${chainName}: ${e}`);
                     }
                 });
             }),
         );
     } catch (e) {
-        printError(`Error checking tokens registration: ${e.message}`);
+        printError(`Error checking tokens registration: ${e}`);
     }
 }
 

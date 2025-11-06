@@ -57,10 +57,11 @@ function getOriginChain(tokenData: SquidToken) {
     return tokenData.chains[0].axelarChainId;
 }
 
-async function getSupply(tokenAddress: string, rpc: string) {
+async function getSupply(tokenAddress: string, rpc: string): Promise<string> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    return await token.totalSupply();
+    const supply = await token.totalSupply();
+    return supply.toString();
 }
 
 async function forEachTokenInFile(
@@ -97,7 +98,7 @@ async function forEachTokenInFile(
                             isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
                         );
                     } catch (e) {
-                        printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e.message}`);
+                        printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e}`);
                         return false;
                     }
                 })
@@ -134,7 +135,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
         } catch (e) {
             tokenOnChain.registered ??= undefined;
-            printError(`Error registering token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e.message}`);
+            printError(`Error registering token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
         }
     });
 }
@@ -156,7 +157,7 @@ async function checkTokensRegistrationInFile(client: CosmWasmClient, config: Con
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`);
         } catch (e) {
             tokenOnChain.registered ??= undefined;
-            printError(`Error checking token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e.message}`);
+            printError(`Error checking token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
         }
     });
 }
