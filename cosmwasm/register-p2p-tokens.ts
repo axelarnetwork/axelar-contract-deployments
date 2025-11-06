@@ -1,13 +1,13 @@
 import IInterchainToken from '@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json';
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command, Option } from 'commander';
-import 'dotenv/config';
 import { Contract, getDefaultProvider } from 'ethers';
 import fs from 'fs';
 
 import { printError, printInfo } from '../common';
 import { ConfigManager } from '../common/config';
 import { isConsensusChain } from '../evm/utils';
+import { TokenDataToRegister, checkSingleTokenRegistration, registerToken } from './its';
 import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
 
 export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
@@ -38,13 +38,6 @@ export type SquidTokenInfoFile = {
     tokens: SquidTokens;
 };
 
-function formatTokenAddress(tokenAddress: string) {
-    if (tokenAddress.startsWith('0x')) {
-        return tokenAddress.slice(2);
-    }
-    return tokenAddress;
-}
-
 function getOriginChain(tokenData: SquidToken) {
     // TODO tkulik: Why?
     // If only a single chain is untracked, use that chain
@@ -64,49 +57,13 @@ function getOriginChain(tokenData: SquidToken) {
     return tokenData.chains[0].axelarChainId;
 }
 
-type TokenDataToRegister = {
-    tokenId: string;
-    originChain: string;
-    decimals: number;
-    track: boolean;
-    supply: string;
-    axelarId: string;
-};
-
 async function getSupply(tokenAddress: string, rpc: string) {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     return await token.totalSupply();
 }
 
-async function registerToken(
-    interchainTokenServiceAddress: string,
-    client: ClientManager,
-    tokenDataToRegister: TokenDataToRegister,
-    dryRun: boolean,
-) {
-    const supply = tokenDataToRegister.supply;
-    const supplyParam = supply ? { tracked: String(supply) } : 'untracked';
-    const msg = {
-        register_p2p_token_instance: {
-            chain: tokenDataToRegister.axelarId,
-            token_id: formatTokenAddress(tokenDataToRegister.tokenId),
-            origin_chain: tokenDataToRegister.originChain,
-            decimals: tokenDataToRegister.decimals,
-            supply: supplyParam,
-        },
-    };
-
-    const [account] = await client.accounts;
-    printInfo('Registering token ', JSON.stringify(msg.register_p2p_token_instance));
-
-    // TODO tkulik: uncomment to implement the registration
-    // if (!dryRun) {
-    //     await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
-    // }
-}
-
-async function forEachToken(
+async function forEachTokenInFile(
     config: ConfigManager,
     options,
     processToken: (tokenData: SquidToken, tokenOnChain: SquidTokenData) => Promise<void>,
@@ -120,9 +77,11 @@ async function forEachToken(
     );
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+
     if (!interchainTokenServiceAddress) {
         throw new Error('InterchainTokenService contract address not found');
     }
+
     const promises = Object.values(tokenInfo.tokens)
         .filter((tokenData: SquidToken) => (tokenIds ? tokenIdsToProcess.has(tokenData.tokenId) : true))
         .flatMap((tokenData: SquidToken) => {
@@ -153,14 +112,14 @@ async function forEachToken(
     );
 }
 
-async function processTokens(client: ClientManager, config: ConfigManager, options, _args, _fee) {
+async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
     if (!interchainTokenServiceAddress) {
         throw new Error('InterchainTokenService contract address not found');
     }
 
-    forEachToken(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
             const tokenDataToRegister = {
                 tokenId: tokenData.tokenId,
@@ -173,8 +132,6 @@ async function processTokens(client: ClientManager, config: ConfigManager, optio
                 ),
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
-
-            // TODO tkulik: check the results of the registration.
             await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
             tokenOnChain.registered = true;
             tokenOnChain.needsAlignment = true;
@@ -186,16 +143,19 @@ async function processTokens(client: ClientManager, config: ConfigManager, optio
     });
 }
 
-async function checkTokensRegistration(client: CosmWasmClient, config: ConfigManager, options, _args, _fee) {
+async function checkTokensRegistrationInFile(client: CosmWasmClient, config: ConfigManager, options, _args, _fee) {
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
     if (!interchainTokenServiceAddress) {
         throw new Error('InterchainTokenService contract address not found');
     }
-    forEachToken(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
-            const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
-                token_instance: { chain: tokenOnChain.axelarChainId, token_id: formatTokenAddress(tokenData.tokenId) },
-            });
+            const registered = await checkSingleTokenRegistration(
+                client,
+                interchainTokenServiceAddress,
+                tokenData.tokenId,
+                tokenOnChain.axelarChainId,
+            );
             tokenOnChain.registered = registered ? true : false;
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`);
         } catch (e) {
@@ -221,14 +181,14 @@ const programHandler = () => {
         );
 
     program
-        .command('register-its-token')
+        .command('register-tokens')
         .description('Register tokens to the ITS Hub.')
         .addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
         .addOption(
             new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'),
         )
         .addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'))
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV'))
+        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(new Option('-squid, --squid', 'use squid tokens'))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
@@ -236,19 +196,19 @@ const programHandler = () => {
                 .env('MNEMONIC'),
         )
         .action((options) => {
-            mainProcessor(processTokens, options, []);
+            mainProcessor(registerTokensInFile, options, []);
         });
 
     program
-        .command('check-tokens-registration')
+        .command('check-tokens')
         .addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
         .addOption(
             new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'),
         )
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV'))
+        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(new Option('-squid, --squid', 'use squid tokens'))
         .action((options) => {
-            mainQueryProcessor(checkTokensRegistration, options, []);
+            mainQueryProcessor(checkTokensRegistrationInFile, options, []);
         });
 
     program.parse();
