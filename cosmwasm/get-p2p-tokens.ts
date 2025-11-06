@@ -8,7 +8,7 @@ import { tokenManagerTypes } from '../common';
 import { ChainConfig, ConfigManager } from '../common/config';
 import { printError, printInfo, printWarn } from '../common/utils';
 import { getContractJSON, isConsensusChain } from '../evm/utils';
-import { SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-its-token';
+import { SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
@@ -19,7 +19,7 @@ const queryLimit = {
     'eth-sepolia': 1000,
     'ethereum-sepolia': 1000,
     'core-ethereum': 1000,
-    avalanche: 2048,
+    avalanche: 2047,
     'core-avalanche': 10000,
     fantom: 500000,
     polygon: 500000,
