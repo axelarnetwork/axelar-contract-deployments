@@ -34,10 +34,9 @@ export async function registerToken(
     const [account] = await client.accounts;
     printInfo('Registering token ', JSON.stringify(msg.register_p2p_token_instance));
 
-    // TODO tkulik: un-comment to implement the registration
-    // if (!dryRun) {
-    //     await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
-    // }
+    if (!dryRun) {
+        await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+    }
 }
 
 export async function checkSingleTokenRegistration(
@@ -132,7 +131,12 @@ const programHandler = () => {
                 .env('ORIGIN_CHAIN')
                 .makeOptionMandatory(true),
         )
-        .addOption(new Option('-decimals, --decimals <decimals>', 'Decimals of the token').env('DECIMALS').makeOptionMandatory(true))
+        .addOption(
+            new Option('-decimals, --decimals <decimals>', 'Decimals of the token')
+                .env('DECIMALS')
+                .makeOptionMandatory(true)
+                .argParser(parseInt),
+        )
         .addOption(new Option('-supply, --supply <supply>', 'Supply of the token').env('SUPPLY').makeOptionMandatory(true))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
