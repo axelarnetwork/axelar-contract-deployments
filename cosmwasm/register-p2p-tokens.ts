@@ -91,7 +91,7 @@ async function forEachTokenInFile(
                     try {
                         return (
                             tokenData.tokenType === 'interchain' &&
-                            (chains ? chainsToProcess.has(chain.axelarChainId) : true) &&
+                            (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
                             (chain.track ?? true) &&
                             chain.axelarChainId !== tokenData.originAxelarChainId &&
                             (chain.registered ? !chain.registered : true) &&
@@ -142,9 +142,11 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
 
 async function checkTokensRegistrationInFile(client: CosmWasmClient, config: ConfigManager, options, _args, _fee) {
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+
     if (!interchainTokenServiceAddress) {
         throw new Error('InterchainTokenService contract address not found');
     }
+
     await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
             const registered = await checkSingleTokenRegistration(
