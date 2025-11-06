@@ -1001,9 +1001,7 @@ async fn execute(
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
         if destination_address == solana_axelar_its::id() {
-            eyre::bail!(
-                "ITS GMP execution not yet implemented."
-            );
+            eyre::bail!("ITS GMP execution not yet implemented.");
         } else if destination_address == solana_axelar_governance::id() {
             eyre::bail!(
                 "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
