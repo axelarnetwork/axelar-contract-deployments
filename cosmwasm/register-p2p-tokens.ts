@@ -134,7 +134,6 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
             tokenOnChain.needsAlignment = true;
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
         } catch (e) {
-            tokenOnChain.registered ??= undefined;
             printError(`Error registering token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
         }
     });
@@ -158,7 +157,6 @@ async function checkTokensRegistrationInFile(client: CosmWasmClient, config: Con
             tokenOnChain.registered = registered ? true : false;
             printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`);
         } catch (e) {
-            tokenOnChain.registered ??= undefined;
             printError(`Error checking token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
         }
     });
