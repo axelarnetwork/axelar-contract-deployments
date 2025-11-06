@@ -94,7 +94,7 @@ async function forEachTokenInFile(
                             (chain.track ?? true) &&
                             chain.axelarChainId !== tokenData.originAxelarChainId &&
                             (chain.registered ? !chain.registered : true) &&
-                            isConsensusChain(config.getChainConfigByAxelarIdLowercase(chain.axelarChainId))
+                            isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
                         );
                     } catch (e) {
                         printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e.message}`);
@@ -126,10 +126,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 originChain: tokenData.originAxelarChainId || getOriginChain(tokenData),
                 decimals: tokenData.decimals,
                 track: tokenOnChain.track,
-                supply: await getSupply(
-                    tokenOnChain.tokenAddress,
-                    config.getChainConfigByAxelarIdLowercase(tokenOnChain.axelarChainId).rpc,
-                ),
+                supply: await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc),
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
             await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
