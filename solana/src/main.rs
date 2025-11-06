@@ -10,6 +10,7 @@ mod its;
 mod memo;
 mod misc;
 mod multisig_prover_types;
+mod operators;
 mod send;
 mod sign;
 mod types;
@@ -153,6 +154,10 @@ enum InstructionSubcommand {
     /// Commands to interface with the InterchainGovernance program on Solana
     #[clap(subcommand)]
     Governance(governance::Commands),
+
+    /// Commands to interface with the AxelarOperators program on Solana
+    #[clap(subcommand)]
+    Operators(operators::Commands),
 
     /// Commands to interface with the AxelarMemo program on Solana
     #[clap(subcommand)]
@@ -349,6 +354,9 @@ async fn build_transaction(
         InstructionSubcommand::Its(command) => its::build_transaction(fee_payer, command, config),
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
+        }
+        InstructionSubcommand::Operators(command) => {
+            operators::build_transaction(fee_payer, command, config)
         }
         InstructionSubcommand::Memo(command) => memo::build_transaction(fee_payer, command, config),
     }
