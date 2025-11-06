@@ -5712,9 +5712,6 @@ dependencies = [
  "program-utils",
  "solana-program",
  "solana-sdk-ids",
- "spl-associated-token-account 6.0.0",
- "spl-token 6.0.0",
- "spl-token-2022 6.0.0",
 ]
 
 [[package]]
@@ -5770,8 +5767,6 @@ version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
  "anchor-lang",
- "axelar-solana-encoding",
- "bytemuck",
  "governance-gmp",
  "program-utils",
  "solana-axelar-gateway",
