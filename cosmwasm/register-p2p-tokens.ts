@@ -27,7 +27,7 @@ export type SquidToken = {
     decimals: number;
     tokenType: 'interchain' | 'customInterchain' | 'canonical';
     chains: SquidTokenData[];
-    originAxelarChainId?: string;
+    originAxelarChainId: string;
 };
 
 export type SquidTokens = {
