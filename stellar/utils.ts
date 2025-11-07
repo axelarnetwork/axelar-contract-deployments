@@ -681,7 +681,6 @@ module.exports = {
     getAuthValidUntilLedger,
     addBaseOptions,
     getNewSigners,
-    getRpcOptions,
     serializeValue,
     getBalances,
     getNativeBalance,
