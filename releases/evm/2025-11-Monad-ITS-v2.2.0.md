@@ -2,14 +2,14 @@
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @isi8787 <isaac@interoplabs.io> |
-| **Deployment** | - |
+| **Created By** | @isi8787 <isaac@interoplabs.io>           |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>           |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------  |
+| **Stagenet**         | Complete              | 2025-11-06 |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
@@ -65,7 +65,6 @@ If contracts are not deployed yet add the following to `contracts` in the `$CHAI
 
 | Network              | `ITS_EDGE_CONTRACT`                          |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff` |
 | **Stagenet**         | `0x0FCb262571be50815627C16Eca1f5F3D342FF5a5` |
 | **Testnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
 | **Mainnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
