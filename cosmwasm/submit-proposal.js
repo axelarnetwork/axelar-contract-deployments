@@ -223,26 +223,39 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
 };
 
 const instantiate = async (client, config, options, _args, fee) => {
-    const isLegacy = isLegacySDK(config);
-    const { contractName, instantiate2, predictOnly } = options;
-    const { contractConfig } = getAmplifierContractConfig(config, options);
+    let contractName = options.contractName;
 
-    contractConfig.codeId = await getCodeId(client, config, options);
+    if (!Array.isArray(contractName)) {
+        contractName = [contractName];
+    }
+
+    const singleContractName = contractName[0];
+    if (contractName.length > 1) {
+        throw new Error('Instantiate command only supports one contract at a time.');
+    }
+
+    const isLegacy = isLegacySDK(config);
+    const { instantiate2, predictOnly } = options;
+
+    const instantiateOptions = { ...options, contractName: singleContractName };
+    const { contractConfig } = getAmplifierContractConfig(config, instantiateOptions);
+
+    contractConfig.codeId = await getCodeId(client, config, instantiateOptions);
 
     let contractAddress;
 
     if (predictOnly) {
-        contractAddress = await predictAddress(client, contractConfig, options);
+        contractAddress = await predictAddress(client, contractConfig, instantiateOptions);
         contractConfig.address = contractAddress;
         return;
     }
 
-    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
+    const initMsg = CONTRACTS[singleContractName].makeInstantiateMsg(config, instantiateOptions, contractConfig);
 
-    const proposal = encodeInstantiate(config, options, initMsg);
+    const proposal = encodeInstantiate(config, instantiateOptions, initMsg);
 
     if (instantiate2) {
-        contractAddress = await predictAddress(client, contractConfig, options);
+        contractAddress = await predictAddress(client, contractConfig, instantiateOptions);
     } else {
         printInfo('Contract address cannot be predicted without using `--instantiate2` flag, address will not be saved in the config');
     }
