@@ -46,7 +46,7 @@ export async function registerToken(
         },
     };
 
-    const [account] = await client.accounts;
+    const [account] = client.accounts;
     printInfo('Registering token ', JSON.stringify(msg.register_p2p_token_instance));
 
     if (!dryRun) {
@@ -123,10 +123,10 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
                     client,
                     interchainTokenServiceAddress,
                     tokenId,
-                    chain.axelarId,
+                    chain.axelarId.toLowerCase(),
                 );
                 if (registered) {
-                    return chain.axelarId;
+                    return chain.axelarId.toLowerCase();
                 }
             }),
         )
