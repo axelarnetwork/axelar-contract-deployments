@@ -137,7 +137,7 @@ const programHandler = () => {
                 .makeOptionMandatory(true)
                 .argParser(parseInt),
         )
-        .addOption(new Option('-supply, --supply <supply>', 'Supply of the token').env('SUPPLY').makeOptionMandatory(true))
+        .addOption(new Option('-supply, --supply <supply>', 'Supply of the token').env('SUPPLY'))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
