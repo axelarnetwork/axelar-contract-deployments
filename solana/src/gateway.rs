@@ -998,8 +998,13 @@ async fn execute(
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let (_incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
 
-    let destination_address = Pubkey::from_str(&message.destination_address)
-        .map_err(|e| eyre::eyre!("Invalid destination address '{}': {}", message.destination_address, e))?;
+    let destination_address = Pubkey::from_str(&message.destination_address).map_err(|e| {
+        eyre::eyre!(
+            "Invalid destination address '{}': {}",
+            message.destination_address,
+            e
+        )
+    })?;
 
     if destination_address == solana_axelar_its::id() {
         eyre::bail!("ITS GMP execution not yet implemented.");
