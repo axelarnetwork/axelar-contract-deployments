@@ -675,6 +675,7 @@ module.exports = {
     broadcast,
     broadcastHorizon,
     getWallet,
+    getRpcOptions,
     estimateCost,
     getNetworkPassphrase,
     getAuthValidUntilLedger,
