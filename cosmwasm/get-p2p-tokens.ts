@@ -8,7 +8,7 @@ import { tokenManagerTypes } from '../common';
 import { ChainConfig, ConfigManager } from '../common/config';
 import { printError, printInfo, printWarn } from '../common/utils';
 import { getContractJSON, isConsensusChain } from '../evm/utils';
-import { SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-p2p-tokens';
+import { SquidToken, SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
@@ -53,6 +53,25 @@ const BATCH_SIZE = 30;
 // Async mutex per tokenId to prevent race conditions
 const tokenWriteMutex = new Mutex();
 
+// TODO tkulik: use this method here:
+function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
+    // If only a single chain is untracked, use that chain
+    const untracked = tokenData.filter((chain) => !chain.trackSupply);
+    if (untracked.length === 1) {
+        return untracked[0].axelarChainId;
+    }
+
+    // Use ethereum as the origin chain if the token is deployed on any of the Ethereum chains.
+    const ethereumChains = ['ethereum', 'core-ethereum', 'ethereum-sepolia', 'core-ethereum-sepolia', 'eth-sepolia'];
+    const ethereumChain = tokenData.find((chain) => ethereumChains.includes(chain.axelarChainId.toLowerCase()));
+    if (ethereumChain) {
+        return ethereumChain.axelarChainId;
+    }
+
+    // Use the first chain that shows up.
+    return tokenData[0].axelarChainId;
+}
+
 function getTokenManagerTypeString(numericValue: number): SquidTokenManagerType {
     const mapping: Record<number, SquidTokenManagerType> = {
         0: 'nativeInterchainToken',
@@ -67,6 +86,7 @@ function getTokenManagerTypeString(numericValue: number): SquidTokenManagerType 
 type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
     decimals: number;
+    trackSupply: boolean;
     conflictingInterchainTokenAddress?: string;
 };
 
@@ -78,6 +98,11 @@ type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
             max: number;
             alreadyProcessedPercentage: string;
             rpcs: string[];
+        };
+    };
+    tokens: {
+        [tokenId: string]: SquidToken & {
+            chains: SquidTokenDataWithTokenId[];
         };
     };
 };
@@ -141,6 +166,7 @@ async function getTokensFromBlock(
                     return {
                         axelarChainId,
                         tokenId,
+                        trackSupply: tokenInfo.track,
                         tokenManager: tokenManagerAddress,
                         tokenManagerType: getTokenManagerTypeString(tokenManagerType) as SquidTokenManagerType,
                         conflictingInterchainTokenAddress:
@@ -224,13 +250,15 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
                         if (!tokensInfo?.tokens?.[tokenId]) {
                             tokensInfo.tokens[tokenId] = {
                                 tokenId,
+                                originAxelarChainId: token.axelarChainId,
                                 decimals,
                                 tokenType: 'interchain',
-                                chains: [] as SquidTokenData[],
+                                chains: [] as SquidTokenDataWithTokenId[],
                             };
                         }
 
                         tokensInfo.tokens[tokenId].chains.push(token);
+                        tokensInfo.tokens[tokenId].originAxelarChainId = getOriginChain(tokensInfo.tokens[tokenId].chains);
                     });
                 }),
             );
