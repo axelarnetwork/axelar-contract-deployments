@@ -150,9 +150,9 @@ const programHandler = () => {
     program
         .command('register-p2p-token')
         .description('Register a single P2P consensus token to the ITS Hub.')
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(new Option('-chain, --chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
-        .addOption(new Option('-tokenId, --tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
+        .addOption(new Option('-e, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
+        .addOption(new Option('--chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
         .addOption(new Option('--originChain <originChain>', 'Origin chain of the token').env('ORIGIN_CHAIN').makeOptionMandatory(true))
         .addOption(
             new Option('--decimals <decimals>', 'Decimals of the token').env('DECIMALS').makeOptionMandatory(true).argParser(parseInt),

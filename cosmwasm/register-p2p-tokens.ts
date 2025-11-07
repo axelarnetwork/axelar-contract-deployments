@@ -130,7 +130,7 @@ const programHandler = () => {
         .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
         .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'))
         .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
-        .addOption(new Option('--env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
+        .addOption(new Option('-e, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
