@@ -76,6 +76,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
     validateParameters({ isValidAddress: { interchainTokenServiceAddress } });
 
+    let error = false;
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
             validateParameters({
@@ -91,9 +92,13 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
             });
         } catch (e) {
+            error = true;
             printError(`Error validating token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }
     });
+    if (error) {
+        throw new Error('Error validating tokens');
+    }
 
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
