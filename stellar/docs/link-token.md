@@ -106,7 +106,6 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token \
   --initialSupply <initialSupply>
   --minter <minterAddress> \
   --chainNames <chain_name> \
-  --env <env> \
   --salt <salt>
 ```
 
@@ -180,7 +179,6 @@ ts-node evm/interchainTokenFactory.js register-custom-token \
   --operator <operator> \
   --chainNames <chain_name> \
   --salt <salt> \
-  --env <env>
 ```
 
 ### Step 4: Link Token
@@ -197,7 +195,6 @@ ts-node evm/interchainTokenFactory.js link-token \
   --tokenManagerType MINT_BURN \ # or MINT_BURN_FROM
   --linkParams "0x" \
   --chainNames <chain_name> \
-  --env <env> \
   --salt <salt> \
 ```
 
@@ -292,7 +289,6 @@ ts-node evm/interchainTokenFactory.js register-custom-token \
   --operator 0x1234.. \
   --chainNames $EVM_CHAIN_NAME \
   --salt $SALT \
-  --env $ENV
 
 
 # Link token - MINT_BURN type (4) on Stellar
@@ -303,7 +299,6 @@ ts-node evm/interchainTokenFactory.js link-token \
   --tokenManagerType $MINT_BURN_TYPE \
   --linkParams "0x" \
   --chainNames $EVM_CHAIN_NAME \
-  --env $ENV \
   --salt $SALT \
 
 
