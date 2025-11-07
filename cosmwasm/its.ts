@@ -98,7 +98,7 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
             chainName: chain,
         };
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
-        validateParameters({ isAddress: { interchainTokenServiceAddress } });
+        validateParameters({ isValidAddress: { interchainTokenServiceAddress } });
 
         await registerToken(config, interchainTokenServiceAddress, client, tokenData, dryRun);
     } catch (e) {
