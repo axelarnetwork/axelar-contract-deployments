@@ -37,32 +37,6 @@ export type SquidTokenInfoFile = {
     tokens: SquidTokens;
 };
 
-function getOriginChain(tokenData: SquidToken, originChainName?: string) {
-    if (originChainName) {
-        return originChainName;
-    }
-
-    // If only a single chain is untracked, use that chain
-    const untracked = tokenData.chains.filter((chain) => !chain.trackSupply);
-    if (untracked.length === 1) {
-        return untracked[0].axelarChainId;
-    }
-
-    // Use ethereum as the origin chain if the token is deployed on any of the Ethereum chains.
-    const ethereumChains = ['ethereum', 'core-ethereum', 'ethereum-sepolia', 'core-ethereum-sepolia', 'eth-sepolia'];
-    const ethereumChain = tokenData.chains.find((chain) => ethereumChains.includes(chain.axelarChainId.toLowerCase()));
-    if (ethereumChain) {
-        return ethereumChain.axelarChainId;
-    }
-
-    // Use the first chain that shows up.
-    if (tokenData.chains[0]?.axelarChainId) {
-        return tokenData.chains[0].axelarChainId;
-    } else {
-        throw new Error('No chains found for token ' + tokenData.tokenId);
-    }
-}
-
 async function forEachTokenInFile(
     config: ConfigManager,
     options,
@@ -105,7 +79,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         try {
             const tokenData: TokenData = {
                 tokenId: token.tokenId,
-                originChain: getOriginChain(token, token.originAxelarChainId),
+                originChain: token.originAxelarChainId,
                 decimals: token.decimals,
                 chainName: chain.axelarChainId.toLowerCase(),
             } as TokenData;
