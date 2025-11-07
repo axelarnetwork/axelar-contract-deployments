@@ -9,9 +9,9 @@
     "build": "tsc",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
-    "test": "mocha -r ts-node/register --project tsconfig.test.json 'test/**/*.ts' 'evm/test/**/*.js'",
+    "test": "mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js'",
     "test:evm": "mocha 'evm/test/**/*.js'",
-    "test:unit": "mocha -r ts-node/register --project tsconfig.test.json 'test/**/*.ts'",
+    "test:unit": "mocha -r ts-node/register 'test/**/*.ts'",
     "prepare": "husky",
     "postinstall": "safe-chain setup"
   },
