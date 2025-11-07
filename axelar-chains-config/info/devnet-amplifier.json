@@ -1194,75 +1194,6 @@
         }
       }
     },
-    "monad": {
-      "name": "Monad",
-      "axelarId": "monad",
-      "chainId": 10143,
-      "rpc": "https://testnet-rpc.monad.xyz",
-      "tokenSymbol": "MON",
-      "confirmations": 1,
-      "finality": "finalized",
-      "decimals": 18,
-      "approxFinalityWaitTime": 1,
-      "chainType": "evm",
-      "explorer": {
-        "name": "MonVision",
-        "url": "https://testnet.monadexplorer.com"
-      },
-      "contracts": {
-        "ConstAddressDeployer": {
-          "address": "0x27a3daf3b243104E9b0afAe6b56026a416B852C9",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create",
-          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
-          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
-        },
-        "Create3Deployer": {
-          "address": "0x066b0D7E70D94686cB8576A2ec459cE609ca5364",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
-          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
-          "salt": "Create3Deployer"
-        },
-        "AxelarGateway": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxyDeploymentArgs": [
-            "0x6b8bb608432cDc5bCA05ECCA89fd33EbfE437Fd9",
-            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000006ce33e000000000000000000000000000000000000000000000000000000000000000500000000000000000000000040e0122633f2f81ab18854eff39d954a26793060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c0900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009b027e69b79099feb3dd1478c574dc986671bea10000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "11ee4fb8ce164424f754f184ccc0821d5f41486fcd99bf3ca6782e9295dd7529",
-          "address": "0xA0c562047BcD4007ED3c38556c1C29429daC15F4",
-          "implementation": "0x6b8bb608432cDc5bCA05ECCA89fd33EbfE437Fd9",
-          "implementationCodehash": "0x9ee0e14ade4a07f0267af22e9fe810aad687651ca0a2462399fd79f9c77c7735",
-          "deploymentMethod": "create3",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0xd9d7fdc2c95115b28769eb237330c7eefa879ebab0fab16e19064bd71e109f60",
-          "minimumRotationDelay": 0,
-          "connectionType": "amplifier",
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "AxelarAmplifierGateway"
-        },
-        "Operators": {
-          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
-          "address": "0xcBA75dd553f70E9Ca0c49415a31F2214fb9090F3",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "salt": "Operators"
-        },
-        "AxelarGasService": {
-          "collector": "0xcBA75dd553f70E9Ca0c49415a31F2214fb9090F3",
-          "salt": "AxelarGasService",
-          "address": "0x3bd1a26205022d270469ED5596f07855761126E7",
-          "implementation": "0x650D4c0C64A5dbe57b65C51A25dd06B5186A2015",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        }
-      }
-    },
     "berachain": {
       "name": "Berachain",
       "axelarId": "berachain",
@@ -1600,21 +1531,6 @@
           "codeId": 854,
           "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl"
         },
-        "monad": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "serviceName": "validators",
-          "sourceGatewayAddress": "0xA0c562047BcD4007ED3c38556c1C29429daC15F4",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1000000,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 854,
-          "address": "axelar1yrenh2gnkgrv23mlpxke2gce6rhfsqhyzzlsgqxrla7x565md2yq7lsjet"
-        },
         "berachain": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1680,10 +1596,6 @@
         "plume-2": {
           "codeId": 848,
           "address": "axelar1unafus3vpt7nawfzdjf7u26g2rl855lpkqussxmtl5r2njaz39mqrmyv7g"
-        },
-        "monad": {
-          "codeId": 848,
-          "address": "axelar18xawfj42lhkvca2j79wlumenr9yujnzece9p7upcrywn7f5cewcslnap46"
         },
         "berachain": {
           "codeId": 848,
@@ -1820,21 +1732,6 @@
           "codeId": 855,
           "domainSeparator": "0x974a372dccb2a81196b546432ad388af9cb49d0a5e4567d444c51ea63edb62f9",
           "address": "axelar1mfn6hevkpj54qkkdy2rznp2azgvqff0rt2cegmflxgqfm0nqx20q6aqnp5"
-        },
-        "monad": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
-          "serviceName": "validators",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "domainSeparator": "0x25175689654ca91a6e0a80f7716bb966a67bb1162c9b89889eed7cfc4f03a6af",
-          "codeId": 1446,
-          "address": "axelar109wjfgdx63num4xyvzhrt2djuvd7zdu3zv4m0hcjvt55r0mvhszssxl8gg"
         },
         "berachain": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
