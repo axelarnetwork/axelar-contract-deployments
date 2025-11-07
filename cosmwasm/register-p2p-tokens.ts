@@ -100,7 +100,7 @@ async function forEachTokenInFile(
                         return (
                             tokenData.tokenType === 'interchain' &&
                             (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
-                            chain.axelarChainId !== tokenData.originAxelarChainId &&
+                            chain.axelarChainId.toLowerCase() !== tokenData.originAxelarChainId?.toLowerCase() &&
                             (chain.registered ? !chain.registered : true) &&
                             isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
                         );
@@ -133,9 +133,9 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 supply: tokenOnChain.trackSupply
                     ? await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc)
                     : undefined,
-                axelarId: tokenOnChain.axelarChainId,
+                chainName: tokenOnChain.axelarChainId.toLowerCase(),
             } as TokenDataToRegister;
-            await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
+            await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
             if (!options.dryRun) {
                 tokenOnChain.registered = true;
                 tokenOnChain.needsAlignment = true;
@@ -157,10 +157,11 @@ async function checkTokensRegistrationInFile(client: CosmWasmClient, config: Con
     await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
         try {
             const registered = await checkSingleTokenRegistration(
+                config,
                 client,
                 interchainTokenServiceAddress,
                 tokenData.tokenId,
-                tokenOnChain.axelarChainId,
+                tokenOnChain.axelarChainId.toLowerCase(),
             );
             if (!options.dryRun) {
                 tokenOnChain.registered = registered ? true : false;

@@ -10,10 +10,11 @@ export type TokenDataToRegister = {
     originChain: string;
     decimals: number;
     supply?: string;
-    axelarId: string;
+    chainName: string;
 };
 
 export async function registerToken(
+    config: ConfigManager,
     interchainTokenServiceAddress: string,
     client: ClientManager,
     tokenDataToRegister: TokenDataToRegister,
@@ -23,7 +24,7 @@ export async function registerToken(
     const supplyParam = supply ? { tracked: String(supply) } : 'untracked';
     const msg = {
         register_p2p_token_instance: {
-            chain: tokenDataToRegister.axelarId,
+            chain: config.getChainConfig(tokenDataToRegister.chainName).axelarId,
             token_id: formatTokenAddress(tokenDataToRegister.tokenId),
             origin_chain: tokenDataToRegister.originChain,
             decimals: tokenDataToRegister.decimals,
@@ -40,13 +41,14 @@ export async function registerToken(
 }
 
 export async function checkSingleTokenRegistration(
+    config: ConfigManager,
     client: CosmWasmClient,
     interchainTokenServiceAddress: string,
     tokenId: string,
-    axelarChainId: string,
+    chainName: string,
 ): Promise<boolean> {
     const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
-        token_instance: { chain: axelarChainId, token_id: formatTokenAddress(tokenId) },
+        token_instance: { chain: config.getChainConfig(chainName).axelarId, token_id: formatTokenAddress(tokenId) },
     });
     return registered;
 }
@@ -66,14 +68,14 @@ async function registerSingleToken(client: ClientManager, config: ConfigManager,
             originChain: originChain,
             decimals: decimals,
             supply: supply,
-            axelarId: config.getChainConfig(chain).axelarId,
+            chainName: chain,
         };
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
         if (!interchainTokenServiceAddress) {
             throw new Error('InterchainTokenService contract address not found');
         }
-        await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, dryRun);
+        await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, dryRun);
         printInfo(`Token ${tokenId} on ${chain} is registered successfully`);
     } catch (e) {
         printError(`Error registering token ${tokenId} on ${chain}: ${e}`);
@@ -95,10 +97,11 @@ async function checkTokensRegistration(client: CosmWasmClient, config: ConfigMan
                 return chains.map(async (chainName) => {
                     try {
                         const registered = await checkSingleTokenRegistration(
+                            config,
                             client,
                             interchainTokenServiceAddress,
                             tokenId,
-                            config.getChainConfig(chainName).axelarId,
+                            chainName,
                         );
                         printInfo(`Token ${tokenId} on ${chainName} is ${registered ? 'registered' : 'not registered'}`);
                     } catch (e) {
