@@ -112,7 +112,6 @@ const programHandler = () => {
 
     program
         .name('ITS p2p token registration')
-        .version('1.0.0')
         .description('Script to perform ITS p2p token registration and check tokens registration status.');
 
     program

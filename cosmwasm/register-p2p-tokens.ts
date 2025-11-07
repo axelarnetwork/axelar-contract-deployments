@@ -116,8 +116,7 @@ const programHandler = () => {
     const program = new Command();
 
     program
-        .name('ITS p2p token migration script')
-        .version('1.0.0')
+        .name('ITS p2p token registration script for Squid and non-Squid config files')
         .description(
             'The script will register the P2P tokens to the ITS Hub or check if they are already registered.\n' +
                 'Requires the token file to be present in the following path:\n' +
