@@ -7,7 +7,6 @@ const chalk = require('chalk');
 const https = require('https');
 const http = require('http');
 const readlineSync = require('readline-sync');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
@@ -569,6 +568,7 @@ const getSaltFromKey = (key) => {
 };
 
 const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
+    const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
     const key = Buffer.from('config');
     const client = await CosmWasmClient.connect(axelar.rpc);
     const value = await client.queryContractRaw(axelar.contracts[contract][chain].address, key);
@@ -653,6 +653,7 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
 };
 
 const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
+    const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(axelar.rpc);
     const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
@@ -660,6 +661,7 @@ const getMultisigProof = async (axelar, chain, multisigSessionId, proverContract
 };
 
 const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
+    const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
     const client = await CosmWasmClient.connect(axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
         axelar.contracts[contract][chain].address,
