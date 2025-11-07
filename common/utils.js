@@ -12,6 +12,7 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
     BigNumber,
 } = ethers;
+const { bech32 } = require('bech32');
 const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
@@ -554,20 +555,8 @@ function toBigNumberString(number) {
 
 const isValidCosmosAddress = (str) => {
     try {
-        if (typeof str !== 'string' || str.length < 3) return false;
-
-        const separatorIndex = str.lastIndexOf('1');
-        if (separatorIndex === -1 || separatorIndex === 0 || separatorIndex === str.length - 1) {
-            return false;
-        }
-
-        const prefix = str.substring(0, separatorIndex);
-        const data = str.substring(separatorIndex + 1);
-
-        if (!/^[a-z0-9]+$/.test(prefix)) return false;
-
-        if (!/^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/.test(data)) return false;
-
+        if (typeof str !== 'string') return false;
+        bech32.decode(str);
         return true;
     } catch (error) {
         return false;
