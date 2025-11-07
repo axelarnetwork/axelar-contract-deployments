@@ -1,12 +1,12 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { Command, Option } from 'commander';
+import { Argument, Command, Option } from 'commander';
 import { Contract, constants, getDefaultProvider } from 'ethers';
 
 import { tokenManagerTypes } from '../common';
 import { printError, printInfo } from '../common';
-import { ConfigManager } from '../common/config';
+import { ChainConfig, ConfigManager } from '../common/config';
 import { getContractJSON } from '../evm/utils';
-import { ClientManager, mainProcessor } from './processor';
+import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
 
 const IInterchainToken = getContractJSON('IInterchainToken');
 
@@ -107,6 +107,39 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
     }
 }
 
+async function checkTokenRegistration(client: ClientManager, config: ConfigManager, options) {
+    const { tokenId } = options;
+
+    const interchainTokenServiceAddress = config.validateRequired(
+        config.getContractConfig('InterchainTokenService').address,
+        `Address of 'InterchainTokenService' not found in config`,
+    );
+
+    const registeredChains = (
+        await Promise.all(
+            Object.values(config.chains).map(async (chain: ChainConfig) => {
+                const registered = await checkSingleTokenRegistration(
+                    config,
+                    client,
+                    interchainTokenServiceAddress,
+                    tokenId,
+                    chain.axelarId,
+                );
+                if (registered) {
+                    return chain.axelarId;
+                }
+            }),
+        )
+    ).filter((axelarChainId) => axelarChainId);
+
+    if (registeredChains.length === 0) {
+        printInfo(`Token ${tokenId} is not registered on any chain`);
+        return;
+    }
+
+    printInfo(`Token ${tokenId} is registered on: ${registeredChains.join(', ')}`);
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -132,6 +165,16 @@ const programHandler = () => {
         .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
         .action((options) => {
             mainProcessor(registerP2pToken, options, []);
+        });
+
+    program
+        .command('check-token-registration')
+        .description('Check if a token is registered on a chain.')
+        .addOption(new Option('-e, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
+        .addArgument(new Argument('tokenId', 'Token ID to check the registration of'))
+        .action((tokenId, options) => {
+            options.tokenId = tokenId;
+            mainQueryProcessor(checkTokenRegistration, options, []);
         });
 
     program.parse();
