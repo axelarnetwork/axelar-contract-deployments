@@ -5,6 +5,7 @@ import { Contract, constants, getDefaultProvider } from 'ethers';
 import { tokenManagerTypes } from '../common';
 import { printError, printInfo } from '../common';
 import { ConfigManager } from '../common/config';
+import { validateParameters } from '../common/utils';
 import { getContractJSON } from '../evm/utils';
 import { ClientManager, mainProcessor } from './processor';
 
@@ -97,6 +98,7 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
             chainName: chain,
         };
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+        validateParameters({ isAddress: { interchainTokenServiceAddress } });
 
         await registerToken(config, interchainTokenServiceAddress, client, tokenData, dryRun);
     } catch (e) {

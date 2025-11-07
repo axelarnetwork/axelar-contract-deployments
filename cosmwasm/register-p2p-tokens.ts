@@ -74,6 +74,7 @@ async function forEachTokenInFile(
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({ isAddress: { interchainTokenServiceAddress } });
 
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
