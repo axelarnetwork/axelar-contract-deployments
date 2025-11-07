@@ -1,15 +1,19 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command, Option } from 'commander';
+import { Contract, constants, getDefaultProvider } from 'ethers';
 
+import { tokenManagerTypes } from '../common';
 import { printError, printInfo } from '../common';
 import { ConfigManager } from '../common/config';
-import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
+import { getContractJSON } from '../evm/utils';
+import { ClientManager, mainProcessor } from './processor';
+
+const IInterchainToken = getContractJSON('IInterchainToken');
 
 export type TokenDataToRegister = {
     tokenId: string;
     originChain: string;
     decimals: number;
-    supply?: string;
     chainName: string;
 };
 
@@ -20,15 +24,25 @@ export async function registerToken(
     tokenDataToRegister: TokenDataToRegister,
     dryRun: boolean,
 ) {
-    const supply = tokenDataToRegister.supply;
-    const supplyParam = supply ? { tracked: String(supply) } : 'untracked';
+    const alreadyRegistered = await checkSingleTokenRegistration(
+        config,
+        client,
+        interchainTokenServiceAddress,
+        tokenDataToRegister.tokenId,
+        tokenDataToRegister.chainName,
+    );
+    if (alreadyRegistered) {
+        printInfo(`Token ${tokenDataToRegister.tokenId} on ${tokenDataToRegister.chainName} is already registered`);
+        return;
+    }
+
     const msg = {
         register_p2p_token_instance: {
             chain: config.getChainConfig(tokenDataToRegister.chainName).axelarId,
             token_id: formatTokenAddress(tokenDataToRegister.tokenId),
             origin_chain: config.getChainConfig(tokenDataToRegister.originChain).axelarId,
             decimals: tokenDataToRegister.decimals,
-            supply: supplyParam,
+            supply: 'untracked',
         },
     };
 
@@ -53,6 +67,19 @@ export async function checkSingleTokenRegistration(
     return registered;
 }
 
+// TODO tkulik: This command will be used to get the supply of the token on the chain.
+async function getSupply(tokenAddress: string, rpc: string): Promise<string> {
+    const provider = getDefaultProvider(rpc);
+    const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
+    const supply = await token.totalSupply();
+    return supply.toString();
+}
+
+// TODO tkulik: This command will be used in the supply alignment command.
+async function isTokenUntracked(tokenManagerType: number, token: Contract): Promise<boolean> {
+    return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
+}
+
 function formatTokenAddress(tokenAddress: string): string {
     if (tokenAddress.startsWith('0x')) {
         return tokenAddress.slice(2);
@@ -61,13 +88,12 @@ function formatTokenAddress(tokenAddress: string): string {
 }
 
 async function registerSingleToken(client: ClientManager, config: ConfigManager, options) {
-    const { chain, tokenId, originChain, decimals, supply, dryRun } = options;
+    const { chain, tokenId, originChain, decimals, dryRun } = options;
     try {
         const tokenDataToRegister = {
             tokenId: tokenId,
             originChain: originChain,
             decimals: decimals,
-            supply: supply,
             chainName: chain,
         };
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
@@ -79,39 +105,6 @@ async function registerSingleToken(client: ClientManager, config: ConfigManager,
         printInfo(`Token ${tokenId} on ${chain} is registered successfully`);
     } catch (e) {
         printError(`Error registering token ${tokenId} on ${chain}: ${e}`);
-    }
-}
-
-async function checkTokensRegistration(client: CosmWasmClient, config: ConfigManager, options) {
-    const { chains, tokenIds } = options;
-
-    try {
-        const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
-
-        if (!interchainTokenServiceAddress) {
-            throw new Error('InterchainTokenService contract address not found');
-        }
-
-        await Promise.all(
-            tokenIds.flatMap((tokenId) => {
-                return chains.map(async (chainName) => {
-                    try {
-                        const registered = await checkSingleTokenRegistration(
-                            config,
-                            client,
-                            interchainTokenServiceAddress,
-                            tokenId,
-                            chainName,
-                        );
-                        printInfo(`Token ${tokenId} on ${chainName} is ${registered ? 'registered' : 'not registered'}`);
-                    } catch (e) {
-                        printError(`Error checking token ${tokenId} on ${chainName}: ${e}`);
-                    }
-                });
-            }),
-        );
-    } catch (e) {
-        printError(`Error checking tokens registration: ${e}`);
     }
 }
 
@@ -140,31 +133,14 @@ const programHandler = () => {
                 .makeOptionMandatory(true)
                 .argParser(parseInt),
         )
-        .addOption(new Option('-supply, --supply <supply>', 'Supply of the token').env('SUPPLY'))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
                 .env('MNEMONIC'),
         )
-        .addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'))
+        .addOption(new Option('-dryRun, --dryRun', 'Provide to just print out what will happen when running the command.'))
         .action((options) => {
             mainProcessor(registerSingleToken, options, []);
-        });
-
-    program
-        .command('check-tokens-registration')
-        .description('Check tokens registration status on the ITS Hub for given chains and tokenIds.')
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(
-            new Option('-chains, --chains <chains...>', 'chains to check the registration for').env('CHAINS').makeOptionMandatory(true),
-        )
-        .addOption(
-            new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to check the registration for')
-                .env('TOKEN_IDS')
-                .makeOptionMandatory(true),
-        )
-        .action((options) => {
-            mainQueryProcessor(checkTokensRegistration, options, []);
         });
 
     program.parse();
