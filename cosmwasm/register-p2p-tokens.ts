@@ -17,7 +17,7 @@ export type SquidTokenData = {
     tokenManager: string;
     tokenManagerType: SquidTokenManagerType;
     tokenAddress: string;
-    track?: boolean;
+    trackSupply?: boolean;
     registered?: boolean;
     needsAlignment?: boolean;
 };
@@ -41,7 +41,7 @@ export type SquidTokenInfoFile = {
 function getOriginChain(tokenData: SquidToken) {
     // TODO tkulik: Why?
     // If only a single chain is untracked, use that chain
-    const untracked = tokenData.chains.filter((chain) => !chain.track);
+    const untracked = tokenData.chains.filter((chain) => !chain.trackSupply);
     if (untracked.length === 1) {
         printInfo(`Untracked token ${tokenData.tokenId} on ${untracked[0].axelarChainId}`);
         return untracked[0].axelarChainId;
@@ -69,13 +69,10 @@ async function forEachTokenInFile(
     options,
     processToken: (tokenData: SquidToken, tokenOnChain: SquidTokenData) => Promise<void>,
 ) {
-    const { env, tokenIds, chains, squid } = options;
+    const { env, tokenIds, chains } = options;
     const tokenIdsToProcess = new Set(tokenIds);
     const chainsToProcess = new Set(chains);
-    const tokenInfoString = fs.readFileSync(
-        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
-        'utf8',
-    );
+    const tokenInfoString = fs.readFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
@@ -92,7 +89,6 @@ async function forEachTokenInFile(
                         return (
                             tokenData.tokenType === 'interchain' &&
                             (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
-                            (chain.track ?? true) &&
                             chain.axelarChainId !== tokenData.originAxelarChainId &&
                             (chain.registered ? !chain.registered : true) &&
                             isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
@@ -107,10 +103,7 @@ async function forEachTokenInFile(
                 });
         });
     await Promise.all(promises);
-    fs.writeFileSync(
-        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
-        JSON.stringify(tokenInfo, null, 2),
-    );
+    fs.writeFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, JSON.stringify(tokenInfo, null, 2));
 }
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
@@ -126,7 +119,9 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 tokenId: tokenData.tokenId,
                 originChain: tokenData.originAxelarChainId || getOriginChain(tokenData),
                 decimals: tokenData.decimals,
-                supply: await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc),
+                supply: tokenOnChain.trackSupply
+                    ? await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc)
+                    : 'untracked',
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
             await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
@@ -169,12 +164,10 @@ const programHandler = () => {
         .name('ITS p2p token migration script')
         .version('1.0.0')
         .description(
-            'Script to perform ITS p2p token migration.\n' +
-                'Requires the following environment variables to be set:, ENV, MNEMONIC.\n' +
+            'The script will register the P2P tokens to the ITS Hub or check if they are already registered.\n' +
                 'Requires the token file to be present in the following path:\n' +
-                ' * for non-squid tokens: ../axelar-chains-config/info/tokens-p2p/tokens-${env}.json\n' +
-                ' * for squid tokens: ../axelar-chains-config/info/tokens-p2p/squid-tokens-${env}.json\n' +
-                'The script will register the tokens to the ITS Hub or check if they are registered on the chains.\n',
+                ' * `axelar-chains-config/info/tokens-p2p/tokens-${env}.json`\n' +
+                'The tokens file should follow the Squid config format.\n',
         );
 
     program
@@ -186,7 +179,6 @@ const programHandler = () => {
         )
         .addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'))
         .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(new Option('-squid, --squid', 'use squid tokens'))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
@@ -203,7 +195,6 @@ const programHandler = () => {
             new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'),
         )
         .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(new Option('-squid, --squid', 'use squid tokens'))
         .action((options) => {
             mainQueryProcessor(checkTokensRegistrationInFile, options, []);
         });
