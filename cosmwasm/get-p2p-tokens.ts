@@ -4,10 +4,10 @@ import { Contract, constants, getDefaultProvider, providers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { tokenManagerTypes } from '../common';
 import { ChainConfig, ConfigManager } from '../common/config';
 import { printError, printInfo, printWarn } from '../common/utils';
 import { getContractJSON, isConsensusChain } from '../evm/utils';
+import { isTokenSupplyTracked } from './its';
 import { SquidToken, SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -112,8 +112,8 @@ async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
     const tokenAddress = await tokenManager.tokenAddress();
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const decimals = await token.decimals();
-    const track = tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
-    return { tokenAddress, decimals, track };
+    const trackSupply = await isTokenSupplyTracked(tokenManagerType, token);
+    return { tokenAddress, decimals, trackSupply };
 }
 
 async function runWithRetries<T>(fn: () => Promise<T>): Promise<T> {
@@ -166,7 +166,6 @@ async function getTokensFromBlock(
                     return {
                         axelarChainId,
                         tokenId,
-                        trackSupply: tokenInfo.track,
                         tokenManager: tokenManagerAddress,
                         tokenManagerType: getTokenManagerTypeString(tokenManagerType) as SquidTokenManagerType,
                         conflictingInterchainTokenAddress:
