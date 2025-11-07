@@ -14,10 +14,6 @@
         "sourceMap": true,
         "allowJs": true // remove once all JS is removed
     },
-    "ts-node": {
-        "esm": true,
-        "experimentalSpecifierResolution": "node"
-    },
     "include": ["**/*.ts"],
     "exclude": ["node_modules", "dist", "solana/axelar-amplifier*", "solana/target"],
 }
