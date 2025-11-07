@@ -39,7 +39,7 @@ export async function registerToken(
     const msg = {
         register_p2p_token_instance: {
             chain: config.getChainConfig(tokenDataToRegister.chainName).axelarId,
-            token_id: formatTokenAddress(tokenDataToRegister.tokenId),
+            token_id: formatTokenId(tokenDataToRegister.tokenId),
             origin_chain: config.getChainConfig(tokenDataToRegister.originChain).axelarId,
             decimals: tokenDataToRegister.decimals,
             supply: 'untracked',
@@ -62,7 +62,7 @@ export async function checkSingleTokenRegistration(
     chainName: string,
 ): Promise<boolean> {
     const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
-        token_instance: { chain: config.getChainConfig(chainName).axelarId, token_id: formatTokenAddress(tokenId) },
+        token_instance: { chain: config.getChainConfig(chainName).axelarId, token_id: formatTokenId(tokenId) },
     });
     return registered;
 }
@@ -80,14 +80,14 @@ async function isTokenUntracked(tokenManagerType: number, token: Contract): Prom
     return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
 }
 
-function formatTokenAddress(tokenAddress: string): string {
+function formatTokenId(tokenAddress: string): string {
     if (tokenAddress.startsWith('0x')) {
         return tokenAddress.slice(2);
     }
     return tokenAddress;
 }
 
-async function registerSingleToken(client: ClientManager, config: ConfigManager, options) {
+async function registerP2pToken(client: ClientManager, config: ConfigManager, options) {
     const { chain, tokenId, originChain, decimals, dryRun } = options;
     try {
         const tokenDataToRegister = {
@@ -120,16 +120,9 @@ const programHandler = () => {
         .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(new Option('-chain, --chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
         .addOption(new Option('-tokenId, --tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
+        .addOption(new Option('--originChain <originChain>', 'Origin chain of the token').env('ORIGIN_CHAIN').makeOptionMandatory(true))
         .addOption(
-            new Option('--originChain <originChain>', 'Origin chain of the token')
-                .env('ORIGIN_CHAIN')
-                .makeOptionMandatory(true),
-        )
-        .addOption(
-            new Option('--decimals <decimals>', 'Decimals of the token')
-                .env('DECIMALS')
-                .makeOptionMandatory(true)
-                .argParser(parseInt),
+            new Option('--decimals <decimals>', 'Decimals of the token').env('DECIMALS').makeOptionMandatory(true).argParser(parseInt),
         )
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
@@ -138,7 +131,7 @@ const programHandler = () => {
         )
         .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
         .action((options) => {
-            mainProcessor(registerSingleToken, options, []);
+            mainProcessor(registerP2pToken, options, []);
         });
 
     program.parse();
