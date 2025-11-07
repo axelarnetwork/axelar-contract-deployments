@@ -106,7 +106,6 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 chainName: tokenOnChain.axelarChainId.toLowerCase(),
             } as TokenDataToRegister;
             await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
-            printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
         } catch (e) {
             printError(`Error registering token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
         }

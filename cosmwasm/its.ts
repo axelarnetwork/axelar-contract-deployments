@@ -102,7 +102,6 @@ async function registerSingleToken(client: ClientManager, config: ConfigManager,
             throw new Error('InterchainTokenService contract address not found');
         }
         await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, dryRun);
-        printInfo(`Token ${tokenId} on ${chain} is registered successfully`);
     } catch (e) {
         printError(`Error registering token ${tokenId} on ${chain}: ${e}`);
     }
