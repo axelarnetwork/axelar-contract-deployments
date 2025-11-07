@@ -21,27 +21,27 @@ export async function registerToken(
     config: ConfigManager,
     interchainTokenServiceAddress: string,
     client: ClientManager,
-    tokenDataToRegister: TokenData,
+    tokenData: TokenData,
     dryRun: boolean,
 ) {
     const alreadyRegistered = await checkSingleTokenRegistration(
         config,
         client,
         interchainTokenServiceAddress,
-        tokenDataToRegister.tokenId,
-        tokenDataToRegister.chainName,
+        tokenData.tokenId,
+        tokenData.chainName,
     );
     if (alreadyRegistered) {
-        printInfo(`Token ${tokenDataToRegister.tokenId} on ${tokenDataToRegister.chainName} is already registered`);
+        printInfo(`Token ${tokenData.tokenId} on ${tokenData.chainName} is already registered`);
         return;
     }
 
     const msg = {
         register_p2p_token_instance: {
-            chain: config.getChainConfig(tokenDataToRegister.chainName).axelarId,
-            token_id: formatTokenId(tokenDataToRegister.tokenId),
-            origin_chain: config.getChainConfig(tokenDataToRegister.originChain).axelarId,
-            decimals: tokenDataToRegister.decimals,
+            chain: config.getChainConfig(tokenData.chainName).axelarId,
+            token_id: formatTokenId(tokenData.tokenId),
+            origin_chain: config.getChainConfig(tokenData.originChain).axelarId,
+            decimals: tokenData.decimals,
             supply: 'untracked',
         },
     };
@@ -90,7 +90,7 @@ function formatTokenId(tokenAddress: string): string {
 async function registerP2pToken(client: ClientManager, config: ConfigManager, options) {
     const { chain, tokenId, originChain, decimals, dryRun } = options;
     try {
-        const tokenDataToRegister = {
+        const tokenData = {
             tokenId: tokenId,
             originChain: originChain,
             decimals: decimals,
@@ -98,10 +98,7 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
         };
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
-        if (!interchainTokenServiceAddress) {
-            throw new Error('InterchainTokenService contract address not found');
-        }
-        await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, dryRun);
+        await registerToken(config, interchainTokenServiceAddress, client, tokenData, dryRun);
     } catch (e) {
         printError(`Error registering token ${tokenId} on ${chain}: ${e}`);
     }

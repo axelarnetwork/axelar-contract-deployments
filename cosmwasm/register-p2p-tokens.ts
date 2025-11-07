@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import fs from 'fs';
 
-import { printError, printInfo } from '../common';
+import { printError } from '../common';
 import { ConfigManager } from '../common/config';
 import { isConsensusChain } from '../evm/utils';
 import { TokenData, registerToken } from './its';
@@ -45,7 +45,6 @@ function getOriginChain(tokenData: SquidToken, originChainName?: string) {
     // If only a single chain is untracked, use that chain
     const untracked = tokenData.chains.filter((chain) => !chain.trackSupply);
     if (untracked.length === 1) {
-        printInfo(`Untracked token ${tokenData.tokenId} on ${untracked[0].axelarChainId}`);
         return untracked[0].axelarChainId;
     }
 
@@ -67,7 +66,7 @@ function getOriginChain(tokenData: SquidToken, originChainName?: string) {
 async function forEachTokenInFile(
     config: ConfigManager,
     options,
-    processToken: (tokenData: SquidToken, tokenOnChain: SquidTokenData) => Promise<void>,
+    processToken: (token: SquidToken, chain: SquidTokenData) => Promise<void>,
 ) {
     const { env, tokenIds, chains } = options;
     const tokenIdsToProcess = new Set(tokenIds);
@@ -104,13 +103,13 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
 
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
-            const tokenDataToRegister: TokenData = {
+            const tokenData: TokenData = {
                 tokenId: token.tokenId,
                 originChain: getOriginChain(token, token.originAxelarChainId),
                 decimals: token.decimals,
                 chainName: chain.axelarChainId.toLowerCase(),
             } as TokenData;
-            await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
+            await registerToken(config, interchainTokenServiceAddress, client, tokenData, options.dryRun);
         } catch (e) {
             printError(`Error registering token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }
