@@ -1,14 +1,12 @@
-import IInterchainToken from '@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json';
-import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command, Option } from 'commander';
-import { Contract, getDefaultProvider } from 'ethers';
 import fs from 'fs';
 
-import { printError, printInfo } from '../common';
+import { printError } from '../common';
 import { ConfigManager } from '../common/config';
+import { validateParameters } from '../common/utils';
 import { isConsensusChain } from '../evm/utils';
-import { TokenDataToRegister, checkSingleTokenRegistration, registerToken } from './its';
-import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
+import { TokenData, registerToken } from './its';
+import { ClientManager, mainProcessor } from './processor';
 
 export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
 
@@ -17,9 +15,6 @@ export type SquidTokenData = {
     tokenManager: string;
     tokenManagerType: SquidTokenManagerType;
     tokenAddress: string;
-    track?: boolean;
-    registered?: boolean;
-    needsAlignment?: boolean;
 };
 
 export type SquidToken = {
@@ -27,7 +22,7 @@ export type SquidToken = {
     decimals: number;
     tokenType: 'interchain' | 'customInterchain' | 'canonical';
     chains: SquidTokenData[];
-    originAxelarChainId?: string;
+    originAxelarChainId: string;
 };
 
 export type SquidTokens = {
@@ -38,128 +33,81 @@ export type SquidTokenInfoFile = {
     tokens: SquidTokens;
 };
 
-function getOriginChain(tokenData: SquidToken) {
-    // TODO tkulik: Why?
-    // If only a single chain is untracked, use that chain
-    const untracked = tokenData.chains.filter((chain) => !chain.track);
-    if (untracked.length === 1) {
-        printInfo(`Untracked token ${tokenData.tokenId} on ${untracked[0].axelarChainId}`);
-        return untracked[0].axelarChainId;
-    }
-
-    // Use ethereum as the origin chain if it exists. Using lowercase to avoid case sensitivity issues (see squid config)
-    const ethereumChain = tokenData.chains.find((chain) => chain.axelarChainId.toLowerCase() === 'ethereum');
-    if (ethereumChain) {
-        return ethereumChain.axelarChainId;
-    }
-
-    // Use the first chain that shows up.
-    return tokenData.chains[0].axelarChainId;
-}
-
-async function getSupply(tokenAddress: string, rpc: string): Promise<string> {
-    const provider = getDefaultProvider(rpc);
-    const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    const supply = await token.totalSupply();
-    return supply.toString();
-}
-
 async function forEachTokenInFile(
     config: ConfigManager,
     options,
-    processToken: (tokenData: SquidToken, tokenOnChain: SquidTokenData) => Promise<void>,
+    processToken: (token: SquidToken, chain: SquidTokenData) => Promise<void>,
 ) {
-    const { env, tokenIds, chains, squid } = options;
+    const { env, tokenIds, chains } = options;
     const tokenIdsToProcess = new Set(tokenIds);
     const chainsToProcess = new Set(chains);
-    const tokenInfoString = fs.readFileSync(
-        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
-        'utf8',
-    );
+    const tokenInfoString = fs.readFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
-    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
-    if (!interchainTokenServiceAddress) {
-        throw new Error('InterchainTokenService contract address not found');
-    }
-
-    const promises = Object.values(tokenInfo.tokens)
-        .filter((tokenData: SquidToken) => (tokenIds ? tokenIdsToProcess.has(tokenData.tokenId) : true))
-        .flatMap((tokenData: SquidToken) => {
-            return tokenData.chains
-                .filter((chain: SquidTokenData) => {
-                    try {
-                        return (
-                            tokenData.tokenType === 'interchain' &&
-                            (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
-                            (chain.track ?? true) &&
-                            chain.axelarChainId !== tokenData.originAxelarChainId &&
-                            (chain.registered ? !chain.registered : true) &&
-                            isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
-                        );
-                    } catch (e) {
-                        printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e}`);
-                        return false;
-                    }
-                })
-                .map(async (tokenOnChain: SquidTokenData) => {
-                    return processToken(tokenData, tokenOnChain);
-                });
-        });
-    await Promise.all(promises);
-    fs.writeFileSync(
-        `axelar-chains-config/info/tokens-p2p/${squid ? 'squid-tokens' : 'tokens'}-${env}.json`,
-        JSON.stringify(tokenInfo, null, 2),
+    const filteredTokens: SquidToken[] = Object.values(tokenInfo.tokens).filter(
+        (token: SquidToken) => (tokenIds ? tokenIdsToProcess.has(token.tokenId) : true) && token.tokenType === 'interchain',
     );
+
+    for (const token of filteredTokens) {
+        const filteredChains: SquidTokenData[] = token.chains.filter((chain: SquidTokenData) => {
+            try {
+                return (
+                    (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
+                    isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
+                );
+            } catch (e) {
+                printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e}`);
+                return false;
+            }
+        });
+
+        for (const chain of filteredChains) {
+            await processToken(token, chain);
+        }
+    }
 }
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
-    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    const interchainTokenServiceAddress = config.validateRequired(
+        config.getContractConfig('InterchainTokenService').address,
+        `Address of 'InterchainTokenService' not found in config`,
+    );
 
-    if (!interchainTokenServiceAddress) {
-        throw new Error('InterchainTokenService contract address not found');
-    }
-
-    await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    let error = false;
+    await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
-            const tokenDataToRegister = {
-                tokenId: tokenData.tokenId,
-                originChain: tokenData.originAxelarChainId || getOriginChain(tokenData),
-                decimals: tokenData.decimals,
-                supply: await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc),
-                axelarId: tokenOnChain.axelarChainId,
-            } as TokenDataToRegister;
-            await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
-            tokenOnChain.registered = true;
-            tokenOnChain.needsAlignment = true;
-            printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is registered`);
+            validateParameters({
+                isNonEmptyString: { tokenId: token.tokenId },
+            });
+            validateParameters({
+                isNonEmptyString: { originAxelarChainId: token.originAxelarChainId },
+            });
+            validateParameters({
+                isNumber: { decimals: token.decimals },
+            });
+            validateParameters({
+                isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
+            });
         } catch (e) {
-            tokenOnChain.registered ??= undefined;
-            printError(`Error registering token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
+            error = true;
+            printError(`Error validating token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }
     });
-}
-
-async function checkTokensRegistrationInFile(client: CosmWasmClient, config: ConfigManager, options, _args, _fee) {
-    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
-
-    if (!interchainTokenServiceAddress) {
-        throw new Error('InterchainTokenService contract address not found');
+    if (error) {
+        throw new Error('Error validating tokens');
     }
 
-    await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
-            const registered = await checkSingleTokenRegistration(
-                client,
-                interchainTokenServiceAddress,
-                tokenData.tokenId,
-                tokenOnChain.axelarChainId,
-            );
-            tokenOnChain.registered = registered ? true : false;
-            printInfo(`Token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId} is ${registered ? 'registered' : 'not registered'}`);
+            const tokenData: TokenData = {
+                tokenId: token.tokenId,
+                originChain: token.originAxelarChainId,
+                decimals: token.decimals,
+                chainName: chain.axelarChainId.toLowerCase(),
+            } as TokenData;
+            await registerToken(config, interchainTokenServiceAddress, client, tokenData, options.dryRun);
         } catch (e) {
-            tokenOnChain.registered ??= undefined;
-            printError(`Error checking token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
+            printError(`Error registering token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }
     });
 }
@@ -168,27 +116,21 @@ const programHandler = () => {
     const program = new Command();
 
     program
-        .name('ITS p2p token migration script')
-        .version('1.0.0')
+        .name('ITS p2p token registration script for Squid and non-Squid config files')
         .description(
-            'Script to perform ITS p2p token migration.\n' +
-                'Requires the following environment variables to be set:, ENV, MNEMONIC.\n' +
+            'The script will register the P2P tokens to the ITS Hub or check if they are already registered.\n' +
                 'Requires the token file to be present in the following path:\n' +
-                ' * for non-squid tokens: ../axelar-chains-config/info/tokens-p2p/tokens-${env}.json\n' +
-                ' * for squid tokens: ../axelar-chains-config/info/tokens-p2p/squid-tokens-${env}.json\n' +
-                'The script will register the tokens to the ITS Hub or check if they are registered on the chains.\n',
+                ' * `axelar-chains-config/info/tokens-p2p/tokens-${env}.json`\n' +
+                'The tokens file should follow the Squid config format.\n',
         );
 
     program
         .command('register-tokens')
         .description('Register tokens to the ITS Hub.')
-        .addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
-        .addOption(
-            new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'),
-        )
-        .addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'))
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(new Option('-squid, --squid', 'use squid tokens'))
+        .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
+        .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'))
+        .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
+        .addOption(new Option('--env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
@@ -196,18 +138,6 @@ const programHandler = () => {
         )
         .action((options) => {
             mainProcessor(registerTokensInFile, options, []);
-        });
-
-    program
-        .command('check-tokens')
-        .addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
-        .addOption(
-            new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'),
-        )
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(new Option('-squid, --squid', 'use squid tokens'))
-        .action((options) => {
-            mainQueryProcessor(checkTokensRegistrationInFile, options, []);
         });
 
     program.parse();
