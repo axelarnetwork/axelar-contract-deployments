@@ -49,26 +49,26 @@ From the technical point of view it means that the list of the trusted chains of
 ## Scripts needed
 
 The following list of scripts are needed to achieve the goal:
- - `cosmwasm/get-p2p-tokens.ts` - Fetches RPCs of the chains that have deployed p2p tokens to find them and store in a single config file.
- - `cosmwasm/register-its-token.ts` - Introduces two commands:
-   * `register-its-token` - Calls [RegisterP2pTokenInstance](https://github.com/axelarnetwork/axelar-amplifier/blob/b58d789c2b91d245d3593b445e00e9ab8e878ac4/contracts/interchain-token-service/src/msg.rs#L65) for each legacy p2p token deployed on a consensus chain to register it in the central hub. # skip-check
-   * `check-tokens-registration` - Queries the ITS contract on the Axelar network to fetch information about the registration status of a given token per chain.
-   * `align-token-supply` - This command queries all the tokens to get the current supply per chain and updates the supply value stored on the ITS hub.
+ - `cosmwasm/get-p2p-tokens.ts` - **Not implemented** Fetches RPCs of the chains that have deployed p2p tokens to find them and store in a single config file.
+ - `cosmwasm/register-p2p-tokens.ts` - Introduces three commands:
+   * `register-tokens` - Calls [RegisterP2pTokenInstance](https://github.com/axelarnetwork/axelar-amplifier/blob/b58d789c2b91d245d3593b445e00e9ab8e878ac4/contracts/interchain-token-service/src/msg.rs#L65) for each legacy p2p token deployed on a consensus chain to register it in the central hub. # skip-check
+   * `check-tokens` - Queries the ITS contract on the Axelar network to fetch information about the registration status of a given token per chain.
+   * `align-supply` - **Not implemented** This command queries all the tokens to get the current supply per chain and updates the supply value stored on the ITS hub.
 
-The `register-its-token` script is prepared to work for both squid tokens config file and the output of the `get-tokens` script.
+The `register-p2p-tokens` script is prepared to work for both squid tokens config file and the output of the `get-p2p-tokens` script.
 
 
 ## Scripts testing
 
 A new interchain token was deployed on the network using:
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-interchain-token --name "test" --symbol "TST" --decimals 18 --initialSupply 12345 --minter [wallet] --salt "salt" -y -n core-ethereum
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name "test" --symbol "TST" --decimals 18 --initialSupply 12345 --minter [wallet] --salt "salt" -n core-ethereum -e devnet-amplifier
 ```
 
 After the deployment, the script `cosmwasm/get-p2p-tokens.ts` was run to fetch the latest tokens from `core-ethereum` - the new token has been found. The token was stored in the auto-generated file `axelar-contract-deployments/axelar-chains-config/info/tokens-p2p/tokens-devnet-amplifier.json`. To isolate the token for the test purpose all the other tokens were removed from the file to avoid any unwanted registrations. The `track` flag needed to be set to `true` so that the token is taken into account by the registration script. Then the following command was run:
 
 ```bash
-ts-node cosmwasm/register-p2p-tokens.ts check-tokens
+ts-node cosmwasm/register-p2p-tokens.ts check-tokens -e devnet-amplifier
 ```
 
 The new token was checked for the registration status:
@@ -99,12 +99,12 @@ All the Squid-enabled tokens can be found in the squid config files. The purpose
 
 ## Testnet & non-squid tokens migration
 
-All the other legacy tokens should be fetched using `get-tokens` script and then processed by the `register-its-token`. It is expected to encounter some unusual situations when fetching the tokens from testnet (conflicting ITS token addresses, stored decimals different between chains, tokens stored multiple times etc.). The result of the token fetching script should be analyzed and a proper steps should be implemented in the registration program to handle them.
+All the other legacy tokens should be fetched using `get-p2p-tokens` script and then processed by the `register-p2p-tokens`. It is expected to encounter some unusual situations when fetching the tokens from testnet (conflicting ITS token addresses, stored decimals different between chains, tokens stored multiple times etc.). The result of the token fetching script should be analyzed and a proper steps should be implemented in the registration program to handle them.
 
 
 ## Check the tokens were migrated properly
 
-The `register-its-token` script can be used to check whether the tokens were registered successfully using command `check-tokens-registration`
+The `register-p2p-tokens` script can be used to check whether the tokens were registered successfully using command `check-tokens`
 
 
 ## Migrate the ITS contracts on the consensus chains
@@ -114,4 +114,4 @@ The new [`ITS v2.2.0`](https://github.com/axelarnetwork/interchain-token-service
 
 ## Align token supply per chain
 
-The command `align-token-supply` from the `register-its-token.ts` script should be run to align the tokens supply per chain. This step is needed, since between the token registration and the ITS contract migration some of the tokens potentially could be transfered between the chains. The command will update the values to be as close to the real ones as possible.
+The command `align-supply` from the `register-p2p-tokens.ts` script should be run to align the tokens supply per chain. This step is needed, since between the token registration and the ITS contract migration some of the tokens potentially could be transfered between the chains. The command will update the values to be as close to the real ones as possible.
