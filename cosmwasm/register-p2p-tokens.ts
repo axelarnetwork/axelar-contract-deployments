@@ -4,7 +4,7 @@ import fs from 'fs';
 import { printError, printInfo } from '../common';
 import { ConfigManager } from '../common/config';
 import { isConsensusChain } from '../evm/utils';
-import { TokenDataToRegister, registerToken } from './its';
+import { TokenData, registerToken } from './its';
 import { ClientManager, mainProcessor } from './processor';
 
 export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
@@ -57,7 +57,11 @@ function getOriginChain(tokenData: SquidToken, originChainName?: string) {
     }
 
     // Use the first chain that shows up.
-    return tokenData.chains[0].axelarChainId;
+    if (tokenData.chains[0]?.axelarChainId) {
+        return tokenData.chains[0].axelarChainId;
+    } else {
+        throw new Error('No chains found for token ' + tokenData.tokenId);
+    }
 }
 
 async function forEachTokenInFile(
@@ -71,43 +75,44 @@ async function forEachTokenInFile(
     const tokenInfoString = fs.readFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
 
-    Object.values(tokenInfo.tokens)
-        .filter((tokenData: SquidToken) => (tokenIds ? tokenIdsToProcess.has(tokenData.tokenId) : true))
-        .forEach((tokenData: SquidToken) => {
-            tokenData.chains
-                .filter((chain: SquidTokenData) => {
-                    try {
-                        return (
-                            tokenData.tokenType === 'interchain' &&
-                            (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
-                            chain.axelarChainId.toLowerCase() !== tokenData.originAxelarChainId?.toLowerCase() &&
-                            isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
-                        );
-                    } catch (e) {
-                        printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e}`);
-                        return false;
-                    }
-                })
-                .forEach(async (tokenOnChain: SquidTokenData) => {
-                    await processToken(tokenData, tokenOnChain);
-                });
+    const filteredTokens: SquidToken[] = Object.values(tokenInfo.tokens).filter(
+        (token: SquidToken) => (tokenIds ? tokenIdsToProcess.has(token.tokenId) : true) && token.tokenType === 'interchain',
+    );
+
+    for (const token of filteredTokens) {
+        const filteredChains: SquidTokenData[] = token.chains.filter((chain: SquidTokenData) => {
+            try {
+                return (
+                    (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
+                    chain.axelarChainId.toLowerCase() !== token.originAxelarChainId?.toLowerCase() &&
+                    isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
+                );
+            } catch (e) {
+                printError(`Error getting chain config for ${chain.axelarChainId} (skipping chain): ${e}`);
+                return false;
+            }
         });
+
+        for (const chain of filteredChains) {
+            await processToken(token, chain);
+        }
+    }
 }
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
 
-    await forEachTokenInFile(config, options, async (tokenData: SquidToken, tokenOnChain: SquidTokenData) => {
+    await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
-            const tokenDataToRegister = {
-                tokenId: tokenData.tokenId,
-                originChain: getOriginChain(tokenData, tokenOnChain.axelarChainId),
-                decimals: tokenData.decimals,
-                chainName: tokenOnChain.axelarChainId.toLowerCase(),
-            } as TokenDataToRegister;
+            const tokenDataToRegister: TokenData = {
+                tokenId: token.tokenId,
+                originChain: getOriginChain(token, token.originAxelarChainId),
+                decimals: token.decimals,
+                chainName: chain.axelarChainId.toLowerCase(),
+            } as TokenData;
             await registerToken(config, interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
         } catch (e) {
-            printError(`Error registering token ${tokenData.tokenId} on ${tokenOnChain.axelarChainId}: ${e}`);
+            printError(`Error registering token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }
     });
 }

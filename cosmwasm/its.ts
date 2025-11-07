@@ -10,7 +10,7 @@ import { ClientManager, mainProcessor } from './processor';
 
 const IInterchainToken = getContractJSON('IInterchainToken');
 
-export type TokenDataToRegister = {
+export type TokenData = {
     tokenId: string;
     originChain: string;
     decimals: number;
@@ -21,7 +21,7 @@ export async function registerToken(
     config: ConfigManager,
     interchainTokenServiceAddress: string,
     client: ClientManager,
-    tokenDataToRegister: TokenDataToRegister,
+    tokenDataToRegister: TokenData,
     dryRun: boolean,
 ) {
     const alreadyRegistered = await checkSingleTokenRegistration(
