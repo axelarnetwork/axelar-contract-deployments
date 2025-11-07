@@ -9,7 +9,7 @@ export type TokenDataToRegister = {
     tokenId: string;
     originChain: string;
     decimals: number;
-    supply: string;
+    supply?: string;
     axelarId: string;
 };
 

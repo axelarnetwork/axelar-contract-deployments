@@ -17,8 +17,18 @@ export type SquidTokenData = {
     tokenManager: string;
     tokenManagerType: SquidTokenManagerType;
     tokenAddress: string;
+
+    // This field is used to store the supply tracking status of the token.
+    // It is set to true for tokens that are of type `nativeInterchainToken` and
+    // their minter address is the zero address.
     trackSupply?: boolean;
+
+    // These fields are used to store the registration status and alignment status of the token.
     registered?: boolean;
+
+    // This field is used to store the alignment status of the token.
+    // By default set to true after the token is registered to make sure to run the alignment command
+    // after the ITS contracts migration to `v2.2.0`.
     needsAlignment?: boolean;
 };
 
@@ -47,8 +57,9 @@ function getOriginChain(tokenData: SquidToken) {
         return untracked[0].axelarChainId;
     }
 
-    // Use ethereum as the origin chain if it exists. Using lowercase to avoid case sensitivity issues (see squid config)
-    const ethereumChain = tokenData.chains.find((chain) => chain.axelarChainId.toLowerCase() === 'ethereum');
+    // Use ethereum as the origin chain if the token is deployed on any of the Ethereum chains.
+    const ethereumChains = ['ethereum', 'core-ethereum', 'ethereum-sepolia', 'core-ethereum-sepolia', 'eth-sepolia'];
+    const ethereumChain = tokenData.chains.find((chain) => ethereumChains.includes(chain.axelarChainId.toLowerCase()));
     if (ethereumChain) {
         return ethereumChain.axelarChainId;
     }
@@ -121,7 +132,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 decimals: tokenData.decimals,
                 supply: tokenOnChain.trackSupply
                     ? await getSupply(tokenOnChain.tokenAddress, config.getChainConfig(tokenOnChain.axelarChainId.toLowerCase()).rpc)
-                    : 'untracked',
+                    : undefined,
                 axelarId: tokenOnChain.axelarChainId,
             } as TokenDataToRegister;
             await registerToken(interchainTokenServiceAddress, client, tokenDataToRegister, options.dryRun);
@@ -190,6 +201,7 @@ const programHandler = () => {
 
     program
         .command('check-tokens')
+        .description('Check tokens registration status on the ITS Hub.')
         .addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
         .addOption(
             new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'),
