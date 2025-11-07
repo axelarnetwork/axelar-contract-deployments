@@ -122,12 +122,12 @@ const programHandler = () => {
         .addOption(new Option('-chain, --chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
         .addOption(new Option('-tokenId, --tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
         .addOption(
-            new Option('-originChain, --originChain <originChain>', 'Origin chain of the token')
+            new Option('--originChain <originChain>', 'Origin chain of the token')
                 .env('ORIGIN_CHAIN')
                 .makeOptionMandatory(true),
         )
         .addOption(
-            new Option('-decimals, --decimals <decimals>', 'Decimals of the token')
+            new Option('--decimals <decimals>', 'Decimals of the token')
                 .env('DECIMALS')
                 .makeOptionMandatory(true)
                 .argParser(parseInt),
@@ -137,7 +137,7 @@ const programHandler = () => {
                 .makeOptionMandatory(true)
                 .env('MNEMONIC'),
         )
-        .addOption(new Option('-dryRun, --dryRun', 'Provide to just print out what will happen when running the command.'))
+        .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
         .action((options) => {
             mainProcessor(registerSingleToken, options, []);
         });
