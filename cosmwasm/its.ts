@@ -26,7 +26,7 @@ export async function registerToken(
         register_p2p_token_instance: {
             chain: config.getChainConfig(tokenDataToRegister.chainName).axelarId,
             token_id: formatTokenAddress(tokenDataToRegister.tokenId),
-            origin_chain: tokenDataToRegister.originChain,
+            origin_chain: config.getChainConfig(tokenDataToRegister.originChain).axelarId,
             decimals: tokenDataToRegister.decimals,
             supply: supplyParam,
         },

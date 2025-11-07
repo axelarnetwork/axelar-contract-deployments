@@ -114,7 +114,9 @@ async function forEachTokenInFile(
                 });
         });
     await Promise.all(promises);
-    fs.writeFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, JSON.stringify(tokenInfo, null, 2));
+    if (!options.dryRun) {
+        fs.writeFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, JSON.stringify(tokenInfo, null, 2));
+    }
 }
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
