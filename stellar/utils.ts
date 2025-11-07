@@ -90,7 +90,7 @@ function getNetworkPassphrase(networkType: NetworkType) {
  * @returns {Promise<number>} - The ledger sequence number until which the authorization is valid
  */
 async function getAuthValidUntilLedger(chain) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const server = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const latestLedger = await server.getLatestLedger();
     return latestLedger.sequence + LEDGER_EXTENSION_FOR_AUTH;
 }
@@ -244,7 +244,7 @@ async function simulate(tx, server, options: Options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options: Options) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const server = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
 
     if (options && options.nativePayment) {
