@@ -15,11 +15,6 @@ export type SquidTokenData = {
     tokenManager: string;
     tokenManagerType: SquidTokenManagerType;
     tokenAddress: string;
-
-    // This field is used to store the supply tracking status of the token.
-    // It is set to true for tokens that are of type `nativeInterchainToken` and
-    // their minter address is the zero address.
-    trackSupply?: boolean;
 };
 
 export type SquidToken = {
