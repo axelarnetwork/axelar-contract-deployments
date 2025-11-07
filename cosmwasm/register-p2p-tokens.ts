@@ -3,6 +3,7 @@ import fs from 'fs';
 
 import { printError } from '../common';
 import { ConfigManager } from '../common/config';
+import { validateParameters } from '../common/utils';
 import { isConsensusChain } from '../evm/utils';
 import { TokenData, registerToken } from './its';
 import { ClientManager, mainProcessor } from './processor';
@@ -57,7 +58,6 @@ async function forEachTokenInFile(
             try {
                 return (
                     (chains ? chainsToProcess.has(chain.axelarChainId.toLowerCase()) : true) &&
-                    chain.axelarChainId.toLowerCase() !== token.originAxelarChainId?.toLowerCase() &&
                     isConsensusChain(config.getChainConfig(chain.axelarChainId.toLowerCase()))
                 );
             } catch (e) {
@@ -74,6 +74,25 @@ async function forEachTokenInFile(
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+
+    await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
+        try {
+            validateParameters({
+                isNonEmptyString: { tokenId: token.tokenId },
+            });
+            validateParameters({
+                isNonEmptyString: { originAxelarChainId: token.originAxelarChainId },
+            });
+            validateParameters({
+                isNumber: { decimals: token.decimals },
+            });
+            validateParameters({
+                isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
+            });
+        } catch (e) {
+            printError(`Error validating token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
+        }
+    });
 
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
