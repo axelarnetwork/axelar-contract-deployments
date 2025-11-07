@@ -68,7 +68,7 @@ export async function checkSingleTokenRegistration(
 }
 
 // TODO tkulik: This command will be used to get the supply of the token on the chain.
-async function getSupply(tokenAddress: string, rpc: string): Promise<string> {
+export async function getTokenSupply(tokenAddress: string, rpc: string): Promise<string> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const supply = await token.totalSupply();
@@ -76,7 +76,7 @@ async function getSupply(tokenAddress: string, rpc: string): Promise<string> {
 }
 
 // TODO tkulik: This command will be used in the supply alignment command.
-async function isTokenUntracked(tokenManagerType: number, token: Contract): Promise<boolean> {
+export async function isTokenSupplyTracked(tokenManagerType: number, token: Contract): Promise<boolean> {
     return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
 }
 
