@@ -713,45 +713,45 @@ fn approve(
     let MerklizedPayload::NewMessages { mut messages } = execute_data.payload_items else {
         eyre::bail!("Expected Messages payload");
     };
-    let Some(Merklized_message) = messages.pop() else {
+    let Some(merklized_message) = messages.pop() else {
         eyre::bail!("No messages in the batch");
     };
     let command_id = command_id(
-        &Merklized_message.leaf.message.cc_id.chain,
-        &Merklized_message.leaf.message.cc_id.id,
+        &merklized_message.leaf.message.cc_id.chain,
+        &merklized_message.leaf.message.cc_id.id,
     );
     let (incoming_message_pda, _bump) =
         solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
 
     println!(
         "Building instruction to approve message from {} with id: {}",
-        Merklized_message.leaf.message.cc_id.chain, Merklized_message.leaf.message.cc_id.id
+        merklized_message.leaf.message.cc_id.chain, merklized_message.leaf.message.cc_id.id
     );
 
     let (event_authority_pda, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let v2_Merklized_message = solana_axelar_gateway::MerklizedMessage {
+    let v2_merklized_message = solana_axelar_gateway::MerklizedMessage {
         leaf: solana_axelar_gateway::MessageLeaf {
             message: solana_axelar_gateway::Message {
                 cc_id: solana_axelar_gateway::CrossChainId {
-                    chain: Merklized_message.leaf.message.cc_id.chain.clone(),
-                    id: Merklized_message.leaf.message.cc_id.id.clone(),
+                    chain: merklized_message.leaf.message.cc_id.chain.clone(),
+                    id: merklized_message.leaf.message.cc_id.id.clone(),
                 },
-                source_address: Merklized_message.leaf.message.source_address.clone(),
-                destination_chain: Merklized_message.leaf.message.destination_chain.clone(),
-                destination_address: Merklized_message.leaf.message.destination_address.clone(),
-                payload_hash: Merklized_message.leaf.message.payload_hash,
+                source_address: merklized_message.leaf.message.source_address.clone(),
+                destination_chain: merklized_message.leaf.message.destination_chain.clone(),
+                destination_address: merklized_message.leaf.message.destination_address.clone(),
+                payload_hash: merklized_message.leaf.message.payload_hash,
             },
-            position: Merklized_message.leaf.position,
-            set_size: Merklized_message.leaf.set_size,
-            domain_separator: Merklized_message.leaf.domain_separator,
+            position: merklized_message.leaf.position,
+            set_size: merklized_message.leaf.set_size,
+            domain_separator: merklized_message.leaf.domain_separator,
         },
-        proof: Merklized_message.proof.clone(),
+        proof: merklized_message.proof.clone(),
     };
 
     let approve_ix_data = solana_axelar_gateway::instruction::ApproveMessage {
-        Merklized_message: v2_Merklized_message,
+        merklized_message: v2_merklized_message,
         payload_merkle_root: execute_data.payload_merkle_root,
     }
     .data();
@@ -927,7 +927,7 @@ async fn submit_proof(
                     &solana_axelar_gateway::id(),
                 );
 
-                let v2_Merklized_message = solana_axelar_gateway::MerklizedMessage {
+                let v2_merklized_message = solana_axelar_gateway::MerklizedMessage {
                     leaf: solana_axelar_gateway::MessageLeaf {
                         message: solana_axelar_gateway::Message {
                             cc_id: solana_axelar_gateway::CrossChainId {
@@ -947,7 +947,7 @@ async fn submit_proof(
                 };
 
                 let approve_ix_data = solana_axelar_gateway::instruction::ApproveMessage {
-                    Merklized_message: v2_Merklized_message,
+                    merklized_message: v2_merklized_message,
                     payload_merkle_root: execute_data.payload_merkle_root,
                 }
                 .data();

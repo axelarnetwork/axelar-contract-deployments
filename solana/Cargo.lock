@@ -3248,6 +3248,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "interchain-token-transfer-gmp"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "hex",
+]
+
+[[package]]
 name = "into-inner-derive"
 version = "1.0.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier.git?rev=voting-verifier-v1.1.0#17792515ed9953ce6bd6ceabe59d2febe5eab2e7"
@@ -5612,13 +5621,18 @@ dependencies = [
 name = "solana-axelar-its"
 version = "0.1.0"
 dependencies = [
+ "alloy-primitives",
  "anchor-lang",
  "anchor-spl",
  "bitflags 2.10.0",
  "bytemuck",
+ "interchain-token-transfer-gmp",
+ "mpl-token-metadata",
  "program-utils",
  "solana-axelar-gas-service",
+ "solana-axelar-gateway",
  "solana-axelar-operators",
+ "spl-token-metadata-interface 0.6.0",
 ]
 
 [[package]]
@@ -5628,6 +5642,7 @@ dependencies = [
  "anchor-lang",
  "program-utils",
  "solana-axelar-gateway",
+ "solana-axelar-its",
 ]
 
 [[package]]
