@@ -639,6 +639,16 @@ Example:
 ts-node evm/interchainTokenFactory.js register-custom-token --tokenAddress 0x0F6814301C0DA51bFddA9D2A6Dd877950aa0F912 --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb50
 ```
 
+Note:
+Custom tokens that wish to utlize Mint/Burn token managers must implement the mint and burn interfaces to match:
+
+```bash
+mint(address to, uint256 amount);
+```
+```bash
+burn(address from, uint256 amount);
+```
+
 ### Link Token
 
 Links a remote token on `destinationChain` to a local token corresponding to the `tokenId` computed from the provided `salt`.
