@@ -1318,7 +1318,9 @@ const submitProposal = async (client, config, options, proposal, fee) => {
         printInfo('Proposer address', account.address);
     }
 
-    const submitProposalMsg = encodeSubmitProposal(proposal, config, options, account.address);
+    const normalizedProposal = isLegacy ? proposal : Array.isArray(proposal) ? proposal : [proposal];
+
+    const submitProposalMsg = encodeSubmitProposal(normalizedProposal, config, options, account.address);
 
     const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
     const { events } = result;
