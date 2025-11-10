@@ -266,7 +266,7 @@
           "deploymentMethod": "create",
           "codehash": "0xa8d97fae97c96dfda29d588bb9fe2d09144e48db6dc0b43f66932c2d7b07c6d8",
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
-          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x308287fe52966daf1b36d3eA1FEcF8A110bC3aF1"
         }
       },
@@ -3526,7 +3526,7 @@
           "deploymentMethod": "create",
           "codehash": "0xa8d97fae97c96dfda29d588bb9fe2d09144e48db6dc0b43f66932c2d7b07c6d8",
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
-          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x308287fe52966daf1b36d3eA1FEcF8A110bC3aF1"
         }
       }
