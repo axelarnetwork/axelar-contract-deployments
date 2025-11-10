@@ -399,6 +399,12 @@ const registerProtocol = async (client, config, options, _args, fee) => {
 };
 
 const paramChange = async (client, config, options, _args, fee) => {
+    const isLegacy = isLegacySDK(config);
+
+    if (!isLegacy) {
+        throw new Error('Parameter change proposals are not yet supported on SDK v0.50+.');
+    }
+
     const proposal = encodeParameterChangeProposal(options);
 
     if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
