@@ -567,10 +567,14 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
+const getCosmWasmClient = async (rpc) => {
     const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
+    return await CosmWasmClient.connect(rpc);
+};
+
+const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
     const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(axelar.rpc);
+    const client = await getCosmWasmClient(axelar.rpc);
     const value = await client.queryContractRaw(axelar.contracts[contract][chain].address, key);
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
@@ -653,16 +657,14 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
 };
 
 const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
-    const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(axelar.rpc);
+    const client = await getCosmWasmClient(axelar.rpc);
     const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
 const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
-    const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
-    const client = await CosmWasmClient.connect(axelar.rpc);
+    const client = await getCosmWasmClient(axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
         axelar.contracts[contract][chain].address,
         'current_verifier_set',
