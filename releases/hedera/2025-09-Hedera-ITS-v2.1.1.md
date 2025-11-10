@@ -87,7 +87,7 @@ ts-node hedera/fund-whbar.js [user-address] --amount 100 -n $CHAIN
 ts-node hedera/approve-factory-whbar.js -n $CHAIN
 
 # Create a token on Hedera
-ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial-supply] --minter [minter] --salt [some salt] -n $CHAIN 
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial_supply] --minter [minter] --salt [some salt] -n $CHAIN 
 
 
 # Record the newly created token id and address from the output.
@@ -101,7 +101,7 @@ ts-node evm/its.js mint-token [token-id] [to] [amount]
 # Record Token Manger Address
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination-chain] --salt [same salt as above] -n $CHAIN -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --salt [same salt as above] -n $CHAIN -y
 
 
 # Approve token manager to spend tokens
@@ -117,7 +117,7 @@ ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1
 Additionally, to test the patch itself:
 
 ```bash
-ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress [token-address] --chainNames $CHAIN --env <env>
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress [token_address] --chainNames $CHAIN
 ```
 
 To find an appropriate token address, go to [HashScan](https://hashscan.io/), either testnet or mainnet, and look for a fungible token created with the `max supply` field set to a finite value (e.g. `1000000`).

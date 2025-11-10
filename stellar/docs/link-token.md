@@ -103,8 +103,8 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token \
   --name <name> \
   --symbol <symbol>
   --decimals <decimal>
-  --initialSupply <initialSupply>
-  --minter <minterAddress> \
+  --initialSupply <initial_supply>
+  --minter <minter_address> \
   --chainNames <chain_name> \
   --salt <salt>
 ```
@@ -191,7 +191,7 @@ Link the token to the destination chain:
 ```bash
 ts-node evm/interchainTokenFactory.js link-token \
   --destinationChain <destination_chain> \
-  --destinationTokenAddress <destinationTokenAddress> \
+  --destinationTokenAddress <destination_token_dddress> \
   --tokenManagerType MINT_BURN \ # or MINT_BURN_FROM
   --linkParams "0x" \
   --chainNames <chain_name> \
