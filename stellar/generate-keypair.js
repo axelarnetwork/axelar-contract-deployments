@@ -1,13 +1,13 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const { addBaseOptions, generateKeypair, isFriendbotSupported } = require('./utils');
+const { addBaseOptions, generateKeypair, isFriendbotSupported, getRpcOptions } = require('./utils');
 const { loadConfig, printInfo, getChainConfig } = require('../common/utils');
 const { Horizon } = require('@stellar/stellar-sdk');
 
 async function processCommand(chain, options) {
     const keypair = await generateKeypair(options);
-    const horizonServer = new Horizon.Server(chain.horizonRpc);
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
     // Fund and activate the account using Friendbot if supported by the network.
     // Friendbot is available only on local, futurenet, and testnet.
