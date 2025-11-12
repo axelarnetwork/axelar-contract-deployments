@@ -4,7 +4,7 @@ use std::str::FromStr;
 use anchor_lang::InstructionData;
 use axelar_solana_encoding::hash_payload;
 use axelar_solana_encoding::hasher::NativeHasher;
-use axelar_solana_encoding::types::execute_data::{ExecuteData, MerkleisedPayload};
+use axelar_solana_encoding::types::execute_data::{ExecuteData, MerklizedPayload};
 use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
@@ -710,48 +710,48 @@ fn approve(
         &execute_data,
         &gateway_config_pda,
     )?;
-    let MerkleisedPayload::NewMessages { mut messages } = execute_data.payload_items else {
+    let MerklizedPayload::NewMessages { mut messages } = execute_data.payload_items else {
         eyre::bail!("Expected Messages payload");
     };
-    let Some(merkleised_message) = messages.pop() else {
+    let Some(merklized_message) = messages.pop() else {
         eyre::bail!("No messages in the batch");
     };
     let command_id = command_id(
-        &merkleised_message.leaf.message.cc_id.chain,
-        &merkleised_message.leaf.message.cc_id.id,
+        &merklized_message.leaf.message.cc_id.chain,
+        &merklized_message.leaf.message.cc_id.id,
     );
     let (incoming_message_pda, _bump) =
         solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
 
     println!(
         "Building instruction to approve message from {} with id: {}",
-        merkleised_message.leaf.message.cc_id.chain, merkleised_message.leaf.message.cc_id.id
+        merklized_message.leaf.message.cc_id.chain, merklized_message.leaf.message.cc_id.id
     );
 
     let (event_authority_pda, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let v2_merkleised_message = solana_axelar_gateway::MerkleisedMessage {
+    let v2_merklized_message = solana_axelar_gateway::MerklizedMessage {
         leaf: solana_axelar_gateway::MessageLeaf {
             message: solana_axelar_gateway::Message {
                 cc_id: solana_axelar_gateway::CrossChainId {
-                    chain: merkleised_message.leaf.message.cc_id.chain.clone(),
-                    id: merkleised_message.leaf.message.cc_id.id.clone(),
+                    chain: merklized_message.leaf.message.cc_id.chain.clone(),
+                    id: merklized_message.leaf.message.cc_id.id.clone(),
                 },
-                source_address: merkleised_message.leaf.message.source_address.clone(),
-                destination_chain: merkleised_message.leaf.message.destination_chain.clone(),
-                destination_address: merkleised_message.leaf.message.destination_address.clone(),
-                payload_hash: merkleised_message.leaf.message.payload_hash,
+                source_address: merklized_message.leaf.message.source_address.clone(),
+                destination_chain: merklized_message.leaf.message.destination_chain.clone(),
+                destination_address: merklized_message.leaf.message.destination_address.clone(),
+                payload_hash: merklized_message.leaf.message.payload_hash,
             },
-            position: merkleised_message.leaf.position,
-            set_size: merkleised_message.leaf.set_size,
-            domain_separator: merkleised_message.leaf.domain_separator,
+            position: merklized_message.leaf.position,
+            set_size: merklized_message.leaf.set_size,
+            domain_separator: merklized_message.leaf.domain_separator,
         },
-        proof: merkleised_message.proof.clone(),
+        proof: merklized_message.proof.clone(),
     };
 
     let approve_ix_data = solana_axelar_gateway::instruction::ApproveMessage {
-        merkleised_message: v2_merkleised_message,
+        merklized_message: v2_merklized_message,
         payload_merkle_root: execute_data.payload_merkle_root,
     }
     .data();
@@ -876,7 +876,7 @@ async fn submit_proof(
     )?;
 
     match execute_data.payload_items {
-        MerkleisedPayload::VerifierSetRotation {
+        MerklizedPayload::VerifierSetRotation {
             new_verifier_set_merkle_root,
         } => {
             println!("Building instruction to rotate signers");
@@ -909,7 +909,7 @@ async fn submit_proof(
                 data: rotate_ix_data,
             });
         }
-        MerkleisedPayload::NewMessages { messages } => {
+        MerklizedPayload::NewMessages { messages } => {
             for message in messages {
                 println!(
                     "Building instruction to approve message from {} with id: {}",
@@ -927,7 +927,7 @@ async fn submit_proof(
                     &solana_axelar_gateway::id(),
                 );
 
-                let v2_merkleised_message = solana_axelar_gateway::MerkleisedMessage {
+                let v2_merklized_message = solana_axelar_gateway::MerklizedMessage {
                     leaf: solana_axelar_gateway::MessageLeaf {
                         message: solana_axelar_gateway::Message {
                             cc_id: solana_axelar_gateway::CrossChainId {
@@ -947,7 +947,7 @@ async fn submit_proof(
                 };
 
                 let approve_ix_data = solana_axelar_gateway::instruction::ApproveMessage {
-                    merkleised_message: v2_merkleised_message,
+                    merklized_message: v2_merklized_message,
                     payload_merkle_root: execute_data.payload_merkle_root,
                 }
                 .data();
@@ -973,7 +973,7 @@ async fn submit_proof(
 }
 
 async fn execute(
-    fee_payer: &Pubkey,
+    _fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -996,32 +996,27 @@ async fn execute(
     };
 
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
-    let mut instructions = Vec::new();
+    let (_incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
 
-    if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
-        if destination_address == solana_axelar_its::id() {
-            let ix = its_instruction_builder::build_execute_instruction(
-                *fee_payer,
-                incoming_message_pda,
-                message.clone(),
-                payload.clone(),
-                &solana_client::nonblocking::rpc_client::RpcClient::new(config.url.clone()),
-            )
-            .await?;
-            instructions.push(ix);
-        } else if destination_address == solana_axelar_governance::id() {
-            eyre::bail!(
-                "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
-            );
-        } else {
-            eyre::bail!(
-                "Generic executable instruction building not yet implemented for v2. Use ITS or Governance specific commands."
-            );
-        }
+    let destination_address = Pubkey::from_str(&message.destination_address).map_err(|e| {
+        eyre::eyre!(
+            "Invalid destination address '{}': {}",
+            message.destination_address,
+            e
+        )
+    })?;
+
+    if destination_address == solana_axelar_its::id() {
+        eyre::bail!("ITS GMP execution not yet implemented.");
+    } else if destination_address == solana_axelar_governance::id() {
+        eyre::bail!(
+            "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
+        );
+    } else {
+        eyre::bail!(
+            "Generic executable instruction building not yet implemented for v2. Use ITS or Governance specific commands."
+        );
     }
-
-    Ok(instructions)
 }
 
 pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
@@ -1112,7 +1107,7 @@ fn parse_gateway_event(data: &[u8]) -> eyre::Result<Option<GatewayEvent>> {
     }
 
     let ev_disc = &data[0..8];
-    if ev_disc != event_cpi::EVENT_IX_TAG_LE {
+    if ev_disc != anchor_lang::event::EVENT_IX_TAG_LE {
         return Ok(None);
     }
 

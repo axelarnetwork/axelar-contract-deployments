@@ -52,15 +52,20 @@ CHAIN=xyz
 |-------------|----------|----------------------------------------------|----------------------------------------------|
 | **Testnet** | Ethereum | `0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6` | `0xdaee3a6b4196e3e46015b364f1dae54ceae74a91` |
 |             | Monad    | `0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6` | `0x641a6608e2959c0D7Fe2a5F267DFDA519ED43d98` |
-| **Mainnet** | Ethereum |                                              |                                              |
-|             | Monad    |                                              |                                              |
+| **Mainnet** | Ethereum |                     -                        | `0xc6793a32761a11e96c97A3D18fC6545ea931F0E9`                                            |
+|             | Monad    |                     -                        | `0x92957b3D0CaB3eA7110fEd1ccc4eF564981a59Fc` |
 
 4. Get address of already deployed transceiverStructs library and set value:
 `TRANSCEIVER_STRUCTS_ADDRESS=0x..`
 
-- Note: Deployed `TRANSCEIVER_STRUCTS_ADDRESS` should be confirmed with Wormhole for each chain
+- Note: Deployed `TRANSCEIVER_STRUCTS_ADDRESS` should be confirmed with Wormhole for each chain for testnet
 
-5. Run: `forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:$TRANSCEIVER_STRUCTS_ADDRESS"`
+5. Built contract artifacts
+#### Mainnet
+Run: `forge build --out out`
+
+#### Other ENVs
+Run: `forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:$TRANSCEIVER_STRUCTS_ADDRESS"`
 
 ### Deployment
 
@@ -79,6 +84,8 @@ CHAIN=xyz
   "TransceiverStructs": "$TRANSCEIVER_STRUCTS_ADDRESS"
 }
 ```
+
+- Note: Omit TransceiverStructs for mainnet
 
 3. Deploy MonadAxelarTransceiver contract
 
@@ -109,7 +116,7 @@ ts-node evm/deploy-contract.js \
   --forContract MonadAxelarTransceiver
 ```
 
-5. Initialize MonadAxelarTransceiver 
+5. Initialize MonadAxelarTransceiver
 
 - Initialize step will set
     - GmpManager's owner as `owner` of MonadAxelarTransceiver contract
@@ -136,8 +143,8 @@ THRESHOLD_VALUE=2 # Unconfirmed
 |-------------|----------|---------------------|---------------------|----------------------------------------------|
 | **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x50beAbe4883981624aEa01F737B040d1e3Fe83FB` |
 |             | Monad    |                     | `monad`             | `0x50beAbe4883981624aEa01F737B040d1e3Fe83FB` |
-| **Mainnet** | Ethereum |                     | `Ethereum`          |                                              |
-|             | Monad    |                     | `monad`             |                                              |
+| **Mainnet** | Ethereum |                     | `Ethereum`          | `0x50beAbe4883981624aEa01F737B040d1e3Fe83FB` |
+|             | Monad    |                     | `monad`             | `0x50beAbe4883981624aEa01F737B040d1e3Fe83FB` |
 
 2. Set Axelar Chain ID
 
@@ -173,7 +180,7 @@ Manually verify both contracts i.e. MonadAxelarTransceiver & ERC1967Proxy, found
 
 ## Checklist
 
-### Ethereum -> Monad 
+### Ethereum -> Monad
 
 1. Initiate a transaction from ethereum to monad on [Bridge](https://monadbridge.com/)
 
