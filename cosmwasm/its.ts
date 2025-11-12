@@ -81,6 +81,15 @@ export async function modifyTokenSupply(
         return;
     }
 
+    const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
+        token_config: { token_id: formatTokenId(tokenId) },
+    });
+
+    if (origin_chain === config.getChainConfig(chain).axelarId) {
+        printInfo(`Token ${tokenId} origin chain is ${chain}, it should be set to untracked.`);
+        return;
+    }
+
     const { tokenAddress } = await client.queryContractSmart(interchainTokenServiceAddress, {
         token_config: { token_id: formatTokenId(tokenId) },
     });
