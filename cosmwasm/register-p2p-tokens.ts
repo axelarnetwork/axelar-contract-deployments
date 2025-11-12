@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import fs from 'fs';
 
-import { printError } from '../common';
+import { addEnvOption, printError } from '../common';
 import { ConfigManager } from '../common/config';
 import { validateParameters } from '../common/utils';
 import { isConsensusChain } from '../evm/utils';
@@ -124,13 +124,12 @@ const programHandler = () => {
                 'The tokens file should follow the Squid config format.\n',
         );
 
-    program
+    const registerTokensCmd = program
         .command('register-tokens')
         .description('Register tokens to the ITS Hub.')
         .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
         .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'))
         .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
-        .addOption(new Option('-e, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
@@ -139,6 +138,8 @@ const programHandler = () => {
         .action((options) => {
             mainProcessor(registerTokensInFile, options, []);
         });
+
+    addEnvOption(registerTokensCmd);
 
     program.parse();
 };
