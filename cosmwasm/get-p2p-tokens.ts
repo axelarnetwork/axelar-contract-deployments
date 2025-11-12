@@ -101,7 +101,13 @@ async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
     const tokenAddress = await tokenManager.tokenAddress();
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    const decimals = await token.decimals();
+    let decimals: number | undefined = undefined;
+    try {
+        decimals = await token.decimals();
+    } catch (e) {
+        printWarn(`Could not get decimals for ${tokenAddress}: ${e}`);
+    }
+
     const trackSupply = await isTokenSupplyTracked(tokenManagerType, token);
     return { tokenAddress, decimals, trackSupply };
 }
