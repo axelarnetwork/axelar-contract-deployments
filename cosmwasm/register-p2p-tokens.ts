@@ -86,7 +86,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 isNumber: { decimals: token.decimals },
             });
             validateParameters({
-                isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
+                isNonEmptyString: { chainName: chain.axelarChainId },
             });
         } catch (e) {
             error = true;
@@ -125,7 +125,7 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
                 isNonEmptyString: { tokenId: token.tokenId },
             });
             validateParameters({
-                isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
+                isNonEmptyString: { chainName: chain.axelarChainId },
             });
         } catch (e) {
             error = true;
@@ -172,6 +172,8 @@ const programHandler = () => {
         .action((options) => {
             mainProcessor(registerTokensInFile, options, []);
         });
+
+    addEnvOption(registerTokensCmd);
 
     const modifyTokenSupplyCmd = program
         .command('modify-token-supply')
