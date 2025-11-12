@@ -14,6 +14,8 @@ const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
 const IInterchainToken = getContractJSON('IInterchainToken');
 
+const DEFAULT_QUERY_LIMIT = 2048;
+
 const queryLimit = {
     ethereum: 500000,
     'eth-sepolia': 1000,
@@ -183,7 +185,7 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
         }
         printInfo(`ITS at ${chain.axelarId} is at`, chain.contracts.InterchainTokenService.address);
 
-        const eventsLength = queryLimit[chain.axelarId.toLowerCase()] || 2048;
+        const eventsLength = queryLimit[chain.axelarId.toLowerCase()] || DEFAULT_QUERY_LIMIT;
         printInfo('processing... ', chain.axelarId);
 
         const rpc = currentChain?.rpcs?.[0] || chain.rpc;
