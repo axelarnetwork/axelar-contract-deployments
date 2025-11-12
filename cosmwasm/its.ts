@@ -262,9 +262,7 @@ const programHandler = () => {
         .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of'))
         .addOption(new Option('--chain <chain>', 'Chain to modify the supply of'))
         .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
-        .action((tokenId, chain, options) => {
-            options.tokenId = tokenId;
-            options.chain = chain;
+        .action((options) => {
             mainProcessor(modifyTokenSupplyCommand, options, []);
         });
 
