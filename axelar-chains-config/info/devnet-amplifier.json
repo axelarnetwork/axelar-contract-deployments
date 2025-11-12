@@ -1329,8 +1329,15 @@
       "axelarId": "avalanche-test-1",
       "chainId": 43113,
       "rpc": "https://avalanche-fuji.drpc.org",
-      "tokenSymbol": "ETH",
+      "tokenSymbol": "AVAX",
+      "decimals": 18,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
       "chainType": "evm",
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io"
+      },
       "confirmations": 1,
       "gasOptions": {
         "gasLimit": 5000000
