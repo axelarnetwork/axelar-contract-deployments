@@ -68,10 +68,10 @@ async function forEachTokenInFile(
 }
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
-    const interchainTokenServiceAddress = config.validateRequired(
-        config.getContractConfig('InterchainTokenService').address,
-        `Address of 'InterchainTokenService' not found in config`,
-    );
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
 
     let error = false;
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
