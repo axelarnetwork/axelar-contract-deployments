@@ -20,6 +20,7 @@ jobs:
               - 'common/**'
             github:
               - '.github/workflows/test-stellar.yaml'
+              - '.github/actions/setup-stellar/**'
       - name: Summarize Changes
         run: |
           echo "Changes in stellar: ${{ steps.filter.outputs.stellar }}"
