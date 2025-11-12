@@ -1368,11 +1368,6 @@
           "implementation": "0x57610afa7827b4C4035BC072Acd5311416f1c49d",
           "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB"
         },
-        "InterchainTokenService": {
-          "gasOptions": {
-            "gasLimit": 8000000
-          }
-        },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
