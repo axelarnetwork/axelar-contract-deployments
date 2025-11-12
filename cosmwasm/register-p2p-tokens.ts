@@ -97,7 +97,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         try {
             const tokenData: TokenData = {
                 tokenId: token.tokenId,
-                originChain: token.originAxelarChainId,
+                originChain: token.originAxelarChainId.toLowerCase(),
                 decimals: token.decimals,
                 chainName: chain.axelarChainId.toLowerCase(),
             } as TokenData;
