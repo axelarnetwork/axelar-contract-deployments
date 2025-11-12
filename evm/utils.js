@@ -258,11 +258,11 @@ function isValidTokenId(input) {
         return false;
     }
 
-    const minValue = BigInt('0x00');
-    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
-    const numericValue = BigInt(input);
+    if (input.length !== 66) {
+        return false;
+    }
 
-    return numericValue >= minValue && numericValue <= maxValue;
+    return true;
 }
 
 const validationFunctions = {
