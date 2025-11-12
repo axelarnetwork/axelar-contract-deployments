@@ -8,7 +8,7 @@ import { ChainConfig, ConfigManager } from '../common/config';
 import { printError, printInfo, printWarn } from '../common/utils';
 import { getContractJSON, isConsensusChain } from '../evm/utils';
 import { isTokenSupplyTracked } from './its';
-import { SquidToken, SquidTokenData, SquidTokenInfoFile, SquidTokenManagerType } from './register-p2p-tokens';
+import { SquidToken, SquidTokenData, SquidTokenInfoFile } from './register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
@@ -53,7 +53,6 @@ const BATCH_SIZE = 30;
 // Async mutex per tokenId to prevent race conditions
 const tokenWriteMutex = new Mutex();
 
-// TODO tkulik: use this method here:
 function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
     // If only a single chain is untracked, use that chain
     const untracked = tokenData.filter((chain) => !chain.trackSupply);
@@ -70,17 +69,6 @@ function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
 
     // Use the first chain that shows up.
     return tokenData[0].axelarChainId;
-}
-
-function getTokenManagerTypeString(numericValue: number): SquidTokenManagerType {
-    const mapping: Record<number, SquidTokenManagerType> = {
-        0: 'nativeInterchainToken',
-        1: 'mintBurnFrom',
-        2: 'lockUnlock',
-        3: 'lockUnlockFee',
-        4: 'mintBurn',
-    };
-    return mapping[numericValue];
 }
 
 type SquidTokenDataWithTokenId = SquidTokenData & {
@@ -166,8 +154,6 @@ async function getTokensFromBlock(
                     return {
                         axelarChainId,
                         tokenId,
-                        tokenManager: tokenManagerAddress,
-                        tokenManagerType: getTokenManagerTypeString(tokenManagerType) as SquidTokenManagerType,
                         conflictingInterchainTokenAddress:
                             interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0 ? interchainTokenAddress : null,
                         ...tokenInfo,
@@ -210,17 +196,6 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
         currentChain.max = await provider.getBlockNumber();
         const filter = its.filters.TokenManagerDeployed();
         printInfo(`${chain.axelarId} current block number: ${currentChain.max}`);
-
-        // TODO tkulik: find the first block to start from
-        // while (max - min > 1) {
-        //     const mid = Math.floor((min + max) / 2);
-        //     const timestamp = (await provider.getBlock(mid)).timestamp;
-        //     if (timestamp > endTimestamp) {
-        //         max = mid;
-        //     } else {
-        //         min = mid;
-        //     }
-        // }
 
         while (currentChain.end < currentChain.max) {
             const tokensPromises: Promise<SquidTokenDataWithTokenId[]>[] = [];
