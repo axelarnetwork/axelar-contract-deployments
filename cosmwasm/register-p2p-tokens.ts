@@ -5,7 +5,7 @@ import { addEnvOption, printError } from '../common';
 import { ConfigManager } from '../common/config';
 import { validateParameters } from '../common/utils';
 import { isConsensusChain } from '../evm/utils';
-import { TokenData, registerToken } from './its';
+import { TokenData, modifyTokenSupply, registerToken } from './its';
 import { ClientManager, mainProcessor } from './processor';
 
 export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
@@ -112,6 +112,40 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
     });
 }
 
+async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
+
+    let error = false;
+    await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
+        try {
+            validateParameters({
+                isNonEmptyString: { tokenId: token.tokenId },
+            });
+            validateParameters({
+                isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
+            });
+        } catch (e) {
+            error = true;
+            printError(`Error validating token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
+        }
+    });
+    if (error) {
+        throw new Error('Error validating tokens');
+    }
+
+    await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
+        try {
+            const chainName = chain.axelarChainId.toLowerCase();
+            await modifyTokenSupply(client, config, interchainTokenServiceAddress, token.tokenId, chainName, options.dryRun);
+        } catch (e) {
+            printError(`Error registering token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
+        }
+    });
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -139,7 +173,22 @@ const programHandler = () => {
             mainProcessor(registerTokensInFile, options, []);
         });
 
-    addEnvOption(registerTokensCmd);
+    const modifyTokenSupplyCmd = program
+        .command('modify-token-supply')
+        .description('Modify the supply of a token on a chain.')
+        .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
+        .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'))
+        .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
+        .addOption(
+            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
+                .makeOptionMandatory(true)
+                .env('MNEMONIC'),
+        )
+        .action((options) => {
+            mainProcessor(modifyTokenSupplyInFile, options, []);
+        });
+
+    addEnvOption(modifyTokenSupplyCmd);
 
     program.parse();
 };
