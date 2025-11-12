@@ -2,9 +2,9 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Argument, Command, Option } from 'commander';
 import { Contract, constants, getDefaultProvider } from 'ethers';
 
-import { tokenManagerTypes } from '../common';
+import { addEnvOption, tokenManagerTypes, validateParameters } from '../common';
 import { printError, printInfo } from '../common';
-import { ChainConfig, ConfigManager } from '../common/config';
+import { ConfigManager } from '../common/config';
 import { getContractJSON } from '../evm/utils';
 import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
 
@@ -96,10 +96,10 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
             decimals: decimals,
             chainName: chain,
         };
-        const interchainTokenServiceAddress = config.validateRequired(
-            config.getContractConfig('InterchainTokenService').address,
-            `Address of 'InterchainTokenService' not found in config`,
-        );
+        const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+        validateParameters({
+            isNonEmptyString: { interchainTokenServiceAddress },
+        });
 
         await registerToken(config, interchainTokenServiceAddress, client, tokenData, dryRun);
     } catch (e) {
@@ -110,27 +110,27 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
 async function checkTokenRegistration(client: ClientManager, config: ConfigManager, options) {
     const { tokenId } = options;
 
-    const interchainTokenServiceAddress = config.validateRequired(
-        config.getContractConfig('InterchainTokenService').address,
-        `Address of 'InterchainTokenService' not found in config`,
-    );
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
 
     const registeredChains = (
         await Promise.all(
-            Object.values(config.chains).map(async (chain: ChainConfig) => {
+            Object.keys(config.chains).map(async (axelarChainId: string) => {
                 const registered = await checkSingleTokenRegistration(
                     config,
                     client,
                     interchainTokenServiceAddress,
                     tokenId,
-                    chain.axelarId.toLowerCase(),
+                    axelarChainId,
                 );
                 if (registered) {
-                    return chain.axelarId.toLowerCase();
+                    return axelarChainId;
                 }
             }),
         )
-    ).filter((axelarChainId) => axelarChainId);
+    ).filter(Boolean);
 
     if (registeredChains.length === 0) {
         printInfo(`Token ${tokenId} is not registered on any chain`);
@@ -147,12 +147,11 @@ const programHandler = () => {
         .name('ITS p2p token registration')
         .description('Script to perform ITS p2p token registration and check tokens registration status.');
 
-    program
+    const registerP2pTokenCmd = program
         .command('register-p2p-token')
         .description('Register a single P2P consensus token to the ITS Hub.')
-        .addOption(new Option('-env, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
-        .addOption(new Option('-chain, --chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
-        .addOption(new Option('-tokenId, --tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
+        .addOption(new Option('--chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
         .addOption(new Option('--originChain <originChain>', 'Origin chain of the token').env('ORIGIN_CHAIN').makeOptionMandatory(true))
         .addOption(
             new Option('--decimals <decimals>', 'Decimals of the token').env('DECIMALS').makeOptionMandatory(true).argParser(parseInt),
@@ -167,15 +166,17 @@ const programHandler = () => {
             mainProcessor(registerP2pToken, options, []);
         });
 
-    program
+    addEnvOption(registerP2pTokenCmd);
+
+    const checkTokenRegistrationCmd = program
         .command('check-token-registration')
         .description('Check if a token is registered on a chain.')
-        .addOption(new Option('-e, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addArgument(new Argument('tokenId', 'Token ID to check the registration of'))
         .action((tokenId, options) => {
             options.tokenId = tokenId;
             mainQueryProcessor(checkTokenRegistration, options, []);
         });
+    addEnvOption(checkTokenRegistrationCmd);
 
     program.parse();
 };

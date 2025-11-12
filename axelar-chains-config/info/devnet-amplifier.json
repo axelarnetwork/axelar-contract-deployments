@@ -1795,9 +1795,9 @@
           "codeId": 1427,
           "address": "axelar109wjfgdx63num4xyvzhrt2djuvd7zdu3zv4m0hcjvt55r0mvhszssxl8gg"
         },
-        "lastUploadedCodeId": 1575,
-        "storeCodeProposalId": "1327",
-        "storeCodeProposalCodeHash": "cd0c28f81d0bb735ae9ac442f1d51688582be6d380b8756b6a12aeab8ceb8d92",
+        "lastUploadedCodeId": 1578,
+        "storeCodeProposalId": "1339",
+        "storeCodeProposalCodeHash": "d91b4afbb07c3265484d7127a0ff4298b1d249c52b4c6563899c5f76af501545",
         "solana-12": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1809,7 +1809,7 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "solana",
           "keyType": "ecdsa",
-          "codeId": 1575,
+          "codeId": 1578,
           "domainSeparator": "0xe5e3e24abb2001ec8cbea06c0ae1959186763ce0a16a4290073e448f51f402a1",
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar19ya79dpwl3nfmq44r5hh7t7nm37z0r3egkfxraltr696e3wtgegqnssprn"

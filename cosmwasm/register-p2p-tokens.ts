@@ -68,10 +68,10 @@ async function forEachTokenInFile(
 }
 
 async function registerTokensInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
-    const interchainTokenServiceAddress = config.validateRequired(
-        config.getContractConfig('InterchainTokenService').address,
-        `Address of 'InterchainTokenService' not found in config`,
-    );
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
 
     let error = false;
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
@@ -130,7 +130,7 @@ const programHandler = () => {
         .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
         .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'))
         .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
-        .addOption(new Option('--env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
+        .addOption(new Option('-e, --env <env>', 'environment to run the script for').env('ENV').makeOptionMandatory(true))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
