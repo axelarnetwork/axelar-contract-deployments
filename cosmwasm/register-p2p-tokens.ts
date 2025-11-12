@@ -86,7 +86,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 isNumber: { decimals: token.decimals },
             });
             validateParameters({
-                isNonEmptyString: { chainName: chain.axelarChainId },
+                isNonEmptyString: { axelarChainId: chain.axelarChainId },
             });
         } catch (e) {
             error = true;
@@ -125,7 +125,7 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
                 isNonEmptyString: { tokenId: token.tokenId },
             });
             validateParameters({
-                isNonEmptyString: { chainName: chain.axelarChainId },
+                isNonEmptyString: { axelarChainId: chain.axelarChainId },
             });
         } catch (e) {
             error = true;
