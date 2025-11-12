@@ -67,17 +67,72 @@ export async function checkSingleTokenRegistration(
     return registered;
 }
 
-// TODO tkulik: This command will be used to get the supply of the token on the chain.
-export async function getTokenSupply(tokenAddress: string, rpc: string): Promise<string> {
+export async function modifyTokenSupply(
+    client: ClientManager,
+    config: ConfigManager,
+    interchainTokenServiceAddress: string,
+    tokenId: string,
+    chain: string,
+    dryRun: boolean,
+) {
+    const tokenRegistered = await checkSingleTokenRegistration(config, client, interchainTokenServiceAddress, tokenId, chain);
+    if (!tokenRegistered) {
+        printInfo(`Token ${tokenId} on ${chain} is not registered`);
+        return;
+    }
+
+    const { tokenAddress } = await client.queryContractSmart(interchainTokenServiceAddress, {
+        token_config: { token_id: formatTokenId(tokenId) },
+    });
+
+    const { supply, isTokenSupplyTracked } = await getTokenInstanceInfo(tokenAddress, config.getChainConfig(chain).rpc);
+
+    if (!isTokenSupplyTracked) {
+        printInfo(`Token ${tokenId} on ${chain} supply should not be tracked`);
+        return;
+    }
+
+    const tokenInstanceOnHub = await client.queryContractSmart(interchainTokenServiceAddress, {
+        token_instance: { chain: config.getChainConfig(chain).axelarId, token_id: formatTokenId(tokenId) },
+    });
+
+    if (supply === tokenInstanceOnHub.supply) {
+        printInfo(`Token ${tokenId} on ${chain} supply is up-to-date`);
+        return;
+    }
+
+    const supplyModifier = supply > tokenInstanceOnHub.supply ? 'increase_supply' : 'decrease_supply';
+
+    const msg = {
+        modify_supply: {
+            chain: config.getChainConfig(chain).axelarId,
+            token_id: formatTokenId(tokenId),
+            supply_modifier: {
+                [supplyModifier]: Math.abs(Number(supply) - Number(tokenInstanceOnHub.supply)),
+            },
+        },
+    };
+
+    const [account] = client.accounts;
+
+    if (!dryRun) {
+        await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+    }
+}
+
+export async function isTokenSupplyTracked(tokenManagerType: number, token: Contract): Promise<boolean> {
+    return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
+}
+
+export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): Promise<{ supply: string; isTokenSupplyTracked: boolean }> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const supply = await token.totalSupply();
-    return supply.toString();
-}
-
-// TODO tkulik: This command will be used in the supply alignment command.
-export async function isTokenSupplyTracked(tokenManagerType: number, token: Contract): Promise<boolean> {
-    return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
+    const tokenManagerType = await token.tokenManagerType();
+    return {
+        supply: supply.toString(),
+        isTokenSupplyTracked: await isTokenSupplyTracked(tokenManagerType, token),
+    };
 }
 
 function formatTokenId(tokenAddress: string): string {
@@ -140,6 +195,20 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
     printInfo(`Token ${tokenId} is registered on: ${registeredChains.join(', ')}`);
 }
 
+async function modifyTokenSupplyCommand(client: ClientManager, config: ConfigManager, options) {
+    const { tokenId, chain, dryRun } = options;
+    try {
+        const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+        validateParameters({
+            isNonEmptyString: { interchainTokenServiceAddress },
+        });
+
+        await modifyTokenSupply(client, config, interchainTokenServiceAddress, tokenId, chain, dryRun);
+    } catch (e) {
+        printError(`Error modifying token supply ${tokenId} on ${chain}: ${e}`);
+    }
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -177,6 +246,20 @@ const programHandler = () => {
             mainQueryProcessor(checkTokenRegistration, options, []);
         });
     addEnvOption(checkTokenRegistrationCmd);
+
+    const modifyTokenSupplyCmd = program
+        .command('modify-token-supply')
+        .description('Modify the supply of a token on a chain.')
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of'))
+        .addOption(new Option('--chain <chain>', 'Chain to modify the supply of'))
+        .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
+        .action((tokenId, chain, options) => {
+            options.tokenId = tokenId;
+            options.chain = chain;
+            mainProcessor(modifyTokenSupplyCommand, options, []);
+        });
+
+    addEnvOption(modifyTokenSupplyCmd);
 
     program.parse();
 };
