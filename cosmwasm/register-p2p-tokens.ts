@@ -77,16 +77,12 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
             validateParameters({
-                isNonEmptyString: { tokenId: token.tokenId },
-            });
-            validateParameters({
-                isNonEmptyString: { originAxelarChainId: token.originAxelarChainId },
-            });
-            validateParameters({
+                isNonEmptyString: {
+                    tokenId: token.tokenId,
+                    originAxelarChainId: token.originAxelarChainId,
+                    axelarChainId: chain.axelarChainId,
+                },
                 isNumber: { decimals: token.decimals },
-            });
-            validateParameters({
-                isNonEmptyString: { axelarChainId: chain.axelarChainId },
             });
         } catch (e) {
             error = true;
@@ -122,10 +118,10 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
             validateParameters({
-                isNonEmptyString: { tokenId: token.tokenId },
-            });
-            validateParameters({
-                isNonEmptyString: { axelarChainId: chain.axelarChainId },
+                isNonEmptyString: {
+                    tokenId: token.tokenId,
+                    axelarChainId: chain.axelarChainId,
+                },
             });
         } catch (e) {
             error = true;
