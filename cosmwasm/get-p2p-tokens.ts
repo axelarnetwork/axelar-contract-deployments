@@ -1,6 +1,6 @@
 import { Mutex } from 'async-mutex';
 import 'dotenv/config';
-import { Contract, constants, getDefaultProvider, providers } from 'ethers';
+import { Contract, getDefaultProvider, providers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 
