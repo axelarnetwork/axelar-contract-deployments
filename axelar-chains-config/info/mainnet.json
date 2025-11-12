@@ -256,6 +256,18 @@
           "wstETH token": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
           "NttManager": "0xb948a93827d68a82F6513Ad178964Da487fe2BD9",
           "wormholeChainId": 2
+        },
+        "MonadAxelarTransceiver": {
+          "gmpManager": "0xc6793a32761a11e96c97A3D18fC6545ea931F0E9",
+          "implementation": "0xBEd6c98351204ac71795E7C923f02c22941Db3E0",
+          "gateway": "0x4F4495243837681061C4743b74B3eEdf548D56A5",
+          "gasService": "0x2d5d7d31F671F86C782533cc367F14109a082712",
+          "deployer": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "deploymentMethod": "create",
+          "codehash": "0xa8d97fae97c96dfda29d588bb9fe2d09144e48db6dc0b43f66932c2d7b07c6d8",
+          "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "owner": "0x308287fe52966daf1b36d3eA1FEcF8A110bC3aF1"
         }
       },
       "explorer": {
@@ -3504,6 +3516,18 @@
           "address": "0x2d5d7d31F671F86C782533cc367F14109a082712",
           "implementation": "0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "MonadAxelarTransceiver": {
+          "gmpManager": "0x92957b3D0CaB3eA7110fEd1ccc4eF564981a59Fc",
+          "implementation": "0xBEd6c98351204ac71795E7C923f02c22941Db3E0",
+          "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "gasService": "0x2d5d7d31F671F86C782533cc367F14109a082712",
+          "deployer": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "deploymentMethod": "create",
+          "codehash": "0xa8d97fae97c96dfda29d588bb9fe2d09144e48db6dc0b43f66932c2d7b07c6d8",
+          "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "owner": "0x308287fe52966daf1b36d3eA1FEcF8A110bC3aF1"
         }
       }
     }
