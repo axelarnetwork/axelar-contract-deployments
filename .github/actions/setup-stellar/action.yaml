@@ -34,23 +34,12 @@ runs:
 
         echo "Waiting for Stellar network to become ready..."
 
-        echo "Checking if Stellar container is running..."
-        docker ps | grep stellar/quickstart || echo "⚠️ Stellar container not found in docker ps"
-
         while true; do
           echo "Checking Friendbot: ${{ steps.env.outputs.friendbot }} ..."
           
-          RESPONSE=$(curl -s "${{ steps.env.outputs.friendbot }}" || echo "")
-          
-          if [ -n "$RESPONSE" ]; then
-            echo "Got response from Friendbot: ${RESPONSE:0:100}..."
-            
-            if echo "$RESPONSE" | grep -q '"status"\|"friendbot"'; then
-              echo "✅ Stellar Network is ready"
-              exit 0
-            fi
-          else
-            echo "No response from Friendbot yet"
+          if curl -s "${{ steps.env.outputs.friendbot }}" | grep -q '"status"\|"friendbot"'; then
+            echo "✅ Stellar Network is ready"
+            exit 0
           fi
 
           sleep 3
