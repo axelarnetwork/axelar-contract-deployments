@@ -3442,7 +3442,7 @@
       "name": "Monad",
       "axelarId": "monad",
       "chainId": 143,
-      "rpc": "TBD",
+      "rpc": "https://rpc.monad.xyz/",
       "tokenSymbol": "MON",
       "confirmations": 1,
       "finality": "finalized",
