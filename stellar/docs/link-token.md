@@ -99,15 +99,14 @@ Deploy test tokens on both chains:
 Update the private key in `.env` to EVM wallet
 
 ```bash
-ts-node evm/interchainTokenFactory \
-  --action deployInterchainToken \
-  --minter <minterAddress> \
+ts-node evm/interchainTokenFactory.js deploy-interchain-token \
   --name <name> \
   --symbol <symbol>
   --decimals <decimal>
-  --initialSupply <initialSupply>
+  --initialSupply <initial_supply>
+  --minter <minter_address> \
+  --chainNames <chain_name> \
   --salt <salt>
-  -n <network>
 ```
 
 **Chain B (Stellar):**
@@ -174,13 +173,12 @@ ts-node stellar/its register-token-metadata <tokenAddress> --gas-amount <gasAmou
 Register the token on the source chain (EVM):
 
 ```bash
-ts-node evm/interchainTokenFactory.js \
-  --action registerCustomToken \
-  --tokenAddress <tokenAddress> \
+ts-node evm/interchainTokenFactory.js register-custom-token \
+  --tokenAddress <token_address> \
   --tokenManagerType LOCK_UNLOCK \
   --operator <operator> \
+  --chainNames <chain_name> \
   --salt <salt> \
-  -n <network>
 ```
 
 ### Step 4: Link Token
@@ -189,16 +187,15 @@ Link the token to the destination chain:
 
 - `--operator`: Operator address for the token manager on the destination chain
 
+
 ```bash
-ts-node evm/interchainTokenFactory.js \
-  --action linkToken \
-  --destinationChain <destinationChain> \
-  --destinationTokenAddress <destinationTokenAddress> \
-  --tokenManagerType MINT_BURN (# or MINT_BURN_FROM) \
+ts-node evm/interchainTokenFactory.js link-token \
+  --destinationChain <destination_chain> \
+  --destinationTokenAddress <destination_token_dddress> \
+  --tokenManagerType MINT_BURN \ # or MINT_BURN_FROM
   --linkParams "0x" \
-  --salt <salt>> \
-  -n <network> \
-  --gasValue <gasAmount>
+  --chainNames <chain_name> \
+  --salt <salt> \
 ```
 
 ### Step 5: Transfer or Add Minter Permissions (MINT_BURN and MINT_BURN_FROM Types Only)
@@ -280,28 +277,32 @@ EVM_TOKEN_ADDRESS="EVM_TOKEN_ADDRESS"
 EVM_CHAIN_NAME="EVM_CHAIN_NAME"
 ts-node evm/its register-token-metadata $EVM_TOKEN_ADDRESS -n $EVM_CHAIN_NAME --gasValue 1000000000000000000
 
+ENV="testnet"
+
 # Register custom token - LOCK_UNLOCK type (2) on EVM
 LOCK_UNLOCK_TYPE=2
 SALT=0x1234
-ts-node evm/interchainTokenFactory.js \
-  --action registerCustomToken \
+
+ts-node evm/interchainTokenFactory.js register-custom-token \
   --tokenAddress $EVM_TOKEN_ADDRESS \
   --tokenManagerType $LOCK_UNLOCK_TYPE \
-  --operator 0x1234... \
+  --operator 0x1234.. \
+  --chainNames $EVM_CHAIN_NAME \
   --salt $SALT \
-  -n $EVM_CHAIN_NAME
+
 
 # Link token - MINT_BURN type (4) on Stellar
 MINT_BURN_TYPE=4
-ts-node evm/interchainTokenFactory.js \
-  --action linkToken \
+ts-node evm/interchainTokenFactory.js link-token \
   --destinationChain stellar \
   --destinationTokenAddress $STELLAR_TOKEN_ADDRESS \
   --tokenManagerType $MINT_BURN_TYPE \
   --linkParams "0x" \
+  --chainNames $EVM_CHAIN_NAME \
   --salt $SALT \
-  -n $EVM_CHAIN_NAME \
-  --gasValue 10000000000000000000
+
+
+
 # Result: 0x89a0...abcd (TOKEN_ID)
 
 # Get token manager address on Stellar
