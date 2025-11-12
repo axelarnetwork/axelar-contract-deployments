@@ -3,7 +3,7 @@
 import { StdFee } from '@cosmjs/stargate';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrateContractProposal, getCodeId, submitProposal } from '../utils';
+import { encodeMigrate, getCodeId, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -64,7 +64,7 @@ async function multisigToVersion2_3_1(
         address: multisigAddress,
     };
 
-    const proposal = encodeMigrateContractProposal(config, migrateOptions);
+    const proposal = encodeMigrate(config, migrateOptions);
 
     if (!options.dry) {
         try {
