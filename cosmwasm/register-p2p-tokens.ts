@@ -8,12 +8,8 @@ import { isConsensusChain } from '../evm/utils';
 import { TokenData, modifyTokenSupply, registerToken } from './its';
 import { ClientManager, mainProcessor } from './processor';
 
-export type SquidTokenManagerType = 'nativeInterchainToken' | 'mintBurnFrom' | 'lockUnlock' | 'lockUnlockFee' | 'mintBurn';
-
 export type SquidTokenData = {
     axelarChainId: string;
-    tokenManager: string;
-    tokenManagerType: SquidTokenManagerType;
     tokenAddress: string;
 };
 
