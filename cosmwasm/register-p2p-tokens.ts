@@ -77,16 +77,12 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
             validateParameters({
-                isNonEmptyString: { tokenId: token.tokenId },
-            });
-            validateParameters({
-                isNonEmptyString: { originAxelarChainId: token.originAxelarChainId },
-            });
-            validateParameters({
+                isNonEmptyString: {
+                    tokenId: token.tokenId,
+                    originAxelarChainId: token.originAxelarChainId,
+                    axelarChainId: chain.axelarChainId,
+                },
                 isNumber: { decimals: token.decimals },
-            });
-            validateParameters({
-                isNonEmptyString: { chainName: chain.axelarChainId.toLowerCase() },
             });
         } catch (e) {
             error = true;
