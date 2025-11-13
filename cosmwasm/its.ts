@@ -269,6 +269,11 @@ const programHandler = () => {
         .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--chain <chain>', 'Chain to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
+        .addOption(
+            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
+                .makeOptionMandatory(true)
+                .env('MNEMONIC'),
+        )
         .action((options) => {
             mainProcessor(modifyTokenSupplyCommand, options, []);
         });
