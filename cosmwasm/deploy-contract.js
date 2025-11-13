@@ -23,11 +23,19 @@ const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const upload = async (client, config, options, _args, fee) => {
-    const { contractName, instantiate2, salt, chainName } = options;
-    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+    let { contractName, instantiate2, salt, chainName } = options;
+
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error('upload only supports single contract at a time');
+        }
+        contractName = contractName[0];
+    }
+
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, { ...options, contractName });
 
     printInfo('Uploading contract binary');
-    const { checksum, codeId } = await uploadContract(client, options, fee);
+    const { checksum, codeId } = await uploadContract(client, { ...options, contractName }, fee);
 
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
@@ -43,11 +51,18 @@ const upload = async (client, config, options, _args, fee) => {
 };
 
 const instantiate = async (client, config, options, _args, fee) => {
-    const { contractName, chainName, yes } = options;
+    let { contractName, chainName, yes } = options;
 
-    const { contractConfig } = getAmplifierContractConfig(config, options);
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error('instantiate only supports single contract at a time');
+        }
+        contractName = contractName[0];
+    }
 
-    const codeId = await getCodeId(client, config, options);
+    const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName });
+
+    const codeId = await getCodeId(client, config, { ...options, contractName });
     printInfo('Using code id', codeId);
 
     if (prompt(`Proceed with instantiation on axelar?`, yes)) {
@@ -56,8 +71,8 @@ const instantiate = async (client, config, options, _args, fee) => {
 
     contractConfig.codeId = codeId;
 
-    const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
-    const contractAddress = await instantiateContract(client, initMsg, config, options, fee);
+    const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, { ...options, contractName }, contractConfig);
+    const contractAddress = await instantiateContract(client, initMsg, config, { ...options, contractName }, fee);
 
     contractConfig.address = contractAddress;
 
@@ -70,10 +85,18 @@ const uploadInstantiate = async (client, config, options, _args, fee) => {
 };
 
 const migrate = async (client, config, options, _args, fee) => {
-    const { yes } = options;
-    const { contractConfig } = getAmplifierContractConfig(config, options);
+    let { contractName, yes } = options;
 
-    const codeId = await getCodeId(client, config, options);
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error('migrate only supports single contract at a time');
+        }
+        contractName = contractName[0];
+    }
+
+    const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName });
+
+    const codeId = await getCodeId(client, config, { ...options, contractName });
     printInfo('Using code id', codeId);
 
     if (prompt(`Proceed with contract migration on axelar?`, yes)) {
@@ -82,7 +105,7 @@ const migrate = async (client, config, options, _args, fee) => {
 
     contractConfig.codeId = codeId;
 
-    const { transactionHash } = await migrateContract(client, config, options, fee);
+    const { transactionHash } = await migrateContract(client, config, { ...options, contractName }, fee);
     printInfo('Migration completed. Transaction hash', transactionHash);
 };
 
