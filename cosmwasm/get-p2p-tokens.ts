@@ -211,11 +211,12 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
         while (currentChain.end < currentChain.max) {
             const tokensPromises: Promise<SquidTokenDataWithTokenId[]>[] = [];
             for (let i = 0; i < BATCH_SIZE; i++) {
+                const startBlockNumber = currentChain.end + 1 + i * (eventsLength + 1);
                 const newEventsPromise: Promise<SquidTokenDataWithTokenId[]> = getTokensFromBlock(
                     chain.axelarId,
                     its,
                     filter,
-                    currentChain.end + 1 + i * eventsLength,
+                    startBlockNumber,
                     eventsLength,
                     currentChain.max,
                     provider,
@@ -248,7 +249,7 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
                 }),
             );
 
-            currentChain.end = Math.min(currentChain.end + BATCH_SIZE * eventsLength, currentChain.max);
+            currentChain.end = Math.min(currentChain.end + BATCH_SIZE * (eventsLength + 1), currentChain.max);
             currentChain.alreadyProcessedPercentage = ((currentChain.end / currentChain.max) * 100).toFixed(2);
         }
     } catch (e) {
