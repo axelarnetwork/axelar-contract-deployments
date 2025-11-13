@@ -228,7 +228,7 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
                 tokensData.map(async (token) => {
                     const tokenId = token.tokenId;
                     const decimals = token.decimals;
-                    tokenWriteMutex.runExclusive(async () => {
+                    await tokenWriteMutex.runExclusive(async () => {
                         if (!tokensInfo?.tokens?.[tokenId]) {
                             tokensInfo.tokens[tokenId] = {
                                 tokenId,
