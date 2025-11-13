@@ -105,19 +105,26 @@ export async function modifyTokenSupply(
         token_instance: { chain: config.getChainConfig(chain).axelarId, token_id: formatTokenId(tokenId) },
     });
 
-    if (supply === tokenInstanceOnHub.supply) {
+    let supplyOnHub: number;
+    if (tokenInstanceOnHub.supply === 'untracked') {
+        supplyOnHub = 0;
+    } else {
+        supplyOnHub = Number(tokenInstanceOnHub.supply.tracked);
+    }
+
+    if (supply === supplyOnHub) {
         printInfo(`Token ${tokenId} on ${chain} supply is up-to-date`);
         return;
     }
 
-    const supplyModifier = supply > tokenInstanceOnHub.supply ? 'increase_supply' : 'decrease_supply';
+    const supplyModifier = supply > supplyOnHub ? 'increase_supply' : 'decrease_supply';
 
     const msg = {
         modify_supply: {
             chain: config.getChainConfig(chain).axelarId,
             token_id: formatTokenId(tokenId),
             supply_modifier: {
-                [supplyModifier]: Math.abs(Number(supply) - Number(tokenInstanceOnHub.supply)),
+                [supplyModifier]: Math.abs(supply - supplyOnHub),
             },
         },
     };
@@ -133,13 +140,13 @@ export async function isTokenSupplyTracked(tokenManagerType: number, token: Cont
     return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
 }
 
-export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): Promise<{ supply: string; isTokenSupplyTracked: boolean }> {
+export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): Promise<{ supply: number; isTokenSupplyTracked: boolean }> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const supply = await token.totalSupply();
     const tokenManagerType = await token.tokenManagerType();
     return {
-        supply: supply.toString(),
+        supply: Number(supply.toString()),
         isTokenSupplyTracked: await isTokenSupplyTracked(tokenManagerType, token),
     };
 }
