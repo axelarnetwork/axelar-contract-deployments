@@ -1,13 +1,16 @@
 import { Mutex } from 'async-mutex';
+import { Command } from 'commander';
 import 'dotenv/config';
 import { Contract, getDefaultProvider, providers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { addEnvOption } from '../common/cli-utils';
 import { ChainConfig, ConfigManager } from '../common/config';
 import { printError, printInfo, printWarn } from '../common/utils';
 import { getContractJSON, isConsensusChain } from '../evm/utils';
 import { isTokenSupplyTracked } from './its';
+import { ClientManager, mainQueryProcessor } from './processor';
 import { SquidToken, SquidTokenData, SquidTokenInfoFile } from './register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -257,16 +260,15 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
     fs.writeFileSync(filePath, JSON.stringify(tokensInfo, null, 2));
 }
 
-(async () => {
-    const env = process.env.ENV;
-    const config = new ConfigManager(env);
-
+async function tokenIndexer(client: ClientManager, config: ConfigManager, options) {
+    const { env } = options;
     let tokensInfo: SquidTokenInfoFileWithChains = {
         chains: {},
         tokens: {},
     };
     const tokensInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`;
     const tokensInfoFileAbsolutePath = path.resolve(__dirname, tokensInfoFilePath);
+
     try {
         tokensInfo = JSON.parse(fs.readFileSync(tokensInfoFileAbsolutePath, 'utf-8'));
     } catch (e) {
@@ -301,4 +303,21 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
         writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
         process.exit(0);
     });
-})();
+}
+
+async function programHandler() {
+    const program = new Command();
+    const tokenIndexerCmd = program
+        .name('Get P2P tokens')
+        .description('Get P2P tokens from the ITS Hub.')
+        .action((options) => {
+            mainQueryProcessor(tokenIndexer, options, []);
+        });
+    addEnvOption(tokenIndexerCmd);
+
+    program.parse();
+}
+
+if (require.main === module) {
+    programHandler();
+}
