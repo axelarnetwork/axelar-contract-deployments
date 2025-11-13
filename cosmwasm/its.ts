@@ -266,8 +266,8 @@ const programHandler = () => {
     const modifyTokenSupplyCmd = program
         .command('modify-token-supply')
         .description('Modify the supply of a token on a chain.')
-        .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of'))
-        .addOption(new Option('--chain <chain>', 'Chain to modify the supply of'))
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
+        .addOption(new Option('--chain <chain>', 'Chain to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
         .action((options) => {
             mainProcessor(modifyTokenSupplyCommand, options, []);
