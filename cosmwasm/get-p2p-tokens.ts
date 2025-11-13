@@ -260,7 +260,7 @@ function writeTokensInfoToFile(tokensInfo, filePath) {
     fs.writeFileSync(filePath, JSON.stringify(tokensInfo, null, 2));
 }
 
-async function tokenIndexer(client: ClientManager, config: ConfigManager, options) {
+async function tokenIndexer(_client: ClientManager, config: ConfigManager, options) {
     const { env } = options;
     let tokensInfo: SquidTokenInfoFileWithChains = {
         chains: {},
@@ -276,23 +276,11 @@ async function tokenIndexer(client: ClientManager, config: ConfigManager, option
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        if (!fs.existsSync(tokensInfoFileAbsolutePath)) {
-            writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
-        }
     }
 
     const promises = Object.values(config.chains)
-        .filter((chain) => {
-            try {
-                return isConsensusChain(chain);
-            } catch (e) {
-                printError(`Error getting chain config for ${chain.axelarId} (skipping chain): ${e.message}`);
-                return false;
-            }
-        })
-        .map((chain) => {
-            return getTokensFromChain(chain, tokensInfo);
-        });
+        .filter((chain) => isConsensusChain(chain))
+        .map((chain) => getTokensFromChain(chain, tokensInfo));
 
     // Write to the output file every second
     setInterval(() => {
@@ -309,7 +297,7 @@ async function programHandler() {
     const program = new Command();
     const tokenIndexerCmd = program
         .name('Get P2P tokens')
-        .description('Get P2P tokens from the ITS Hub.')
+        .description('Get P2P tokens from consensus chains.')
         .action((options) => {
             mainQueryProcessor(tokenIndexer, options, []);
         });
