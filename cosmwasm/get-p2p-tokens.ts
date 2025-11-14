@@ -104,12 +104,10 @@ async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
     const tokenAddress = await tokenManager.tokenAddress();
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    let decimals: number | undefined = undefined;
+    let decimals: number | null = null;
     try {
-        decimals = await token.decimals();
-    } catch (e) {
-        printWarn(`Could not get decimals for ${tokenAddress}: ${e}`);
-    }
+        decimals = await runWithRetries(async () => await token.decimals());
+    } catch (e) {}
 
     const trackSupply = await isTokenSupplyTracked(tokenManagerType, token);
     return { tokenAddress, decimals, trackSupply };
@@ -153,13 +151,19 @@ async function getTokensFromBlock(
                     const tokenId = event[0];
                     const tokenManagerAddress = event[1];
                     const tokenManagerType = event[2];
-                    const tokenInfo = await getTokenInfo(tokenManagerAddress, tokenManagerType, provider);
-                    const interchainTokenAddress = await its.interchainTokenAddress(tokenId);
 
-                    if (interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0) {
-                        printWarn(
-                            `Token ${tokenId} is conflicting for ${axelarChainId} with interchain token address ${interchainTokenAddress}`,
-                        );
+                    let tokenInfo = { tokenAddress: null, decimals: null, trackSupply: null };
+                    try {
+                        tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, tokenManagerType, provider));
+                    } catch (e) {
+                        printWarn(`Error getting token info for ${tokenId}: ${e}`);
+                    }
+
+                    let interchainTokenAddress = null;
+                    try {
+                        interchainTokenAddress = await runWithRetries(async () => await its.registeredTokenAddress(tokenId));
+                    } catch (e) {
+                        printWarn(`Error getting interchain token address for ${tokenId}: ${e}`);
                     }
 
                     return {
@@ -241,6 +245,10 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
                                 tokenType: 'interchain',
                                 chains: [] as SquidTokenDataWithTokenId[],
                             };
+                        }
+
+                        if (decimals !== tokensInfo.tokens[tokenId].decimals) {
+                            printWarn(`Decimals mismatch for ${tokenId}: ${decimals} !== ${tokensInfo.tokens[tokenId].decimals}`);
                         }
 
                         tokensInfo.tokens[tokenId].chains.push(token);
