@@ -15,7 +15,6 @@ export type SquidTokenData = {
 
 export type SquidToken = {
     tokenId: string;
-    tokenAddress: string;
     decimals: number;
     tokenType: 'interchain' | 'customInterchain' | 'canonical';
     chains: SquidTokenData[];
@@ -137,7 +136,7 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
                 config,
                 interchainTokenServiceAddress,
                 token.tokenId,
-                token.tokenAddress,
+                chain.tokenAddress,
                 chainName,
                 options.dryRun,
             );
