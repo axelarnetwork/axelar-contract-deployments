@@ -15,6 +15,7 @@ export type SquidTokenData = {
 
 export type SquidToken = {
     tokenId: string;
+    tokenAddress: string;
     decimals: number;
     tokenType: 'interchain' | 'customInterchain' | 'canonical';
     chains: SquidTokenData[];
@@ -131,7 +132,15 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
     await forEachTokenInFile(config, options, async (token: SquidToken, chain: SquidTokenData) => {
         try {
             const chainName = chain.axelarChainId.toLowerCase();
-            await modifyTokenSupply(client, config, interchainTokenServiceAddress, token.tokenId, chainName, options.dryRun);
+            await modifyTokenSupply(
+                client,
+                config,
+                interchainTokenServiceAddress,
+                token.tokenId,
+                token.tokenAddress,
+                chainName,
+                options.dryRun,
+            );
         } catch (e) {
             printError(`Error registering token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }

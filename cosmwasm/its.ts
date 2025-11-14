@@ -72,6 +72,7 @@ export async function modifyTokenSupply(
     config: ConfigManager,
     interchainTokenServiceAddress: string,
     tokenId: string,
+    tokenAddress: string,
     chain: string,
     dryRun: boolean,
 ) {
@@ -89,10 +90,6 @@ export async function modifyTokenSupply(
         printInfo(`Token ${tokenId} origin chain is ${chain}, it should be set to untracked.`);
         return;
     }
-
-    const { tokenAddress } = await client.queryContractSmart(interchainTokenServiceAddress, {
-        token_config: { token_id: formatTokenId(tokenId) },
-    });
 
     const { supply, isTokenSupplyTracked } = await getTokenInstanceInfo(tokenAddress, config.getChainConfig(chain).rpc);
 
@@ -212,14 +209,14 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
 }
 
 async function modifyTokenSupplyCommand(client: ClientManager, config: ConfigManager, options) {
-    const { tokenId, chain, dryRun } = options;
+    const { tokenId, tokenAddress, chain, dryRun } = options;
     try {
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
         validateParameters({
             isNonEmptyString: { interchainTokenServiceAddress },
         });
 
-        await modifyTokenSupply(client, config, interchainTokenServiceAddress, tokenId, chain, dryRun);
+        await modifyTokenSupply(client, config, interchainTokenServiceAddress, tokenId, tokenAddress, chain, dryRun);
     } catch (e) {
         printError(`Error modifying token supply ${tokenId} on ${chain}: ${e}`);
     }
@@ -264,10 +261,11 @@ const programHandler = () => {
     addEnvOption(checkTokenRegistrationCmd);
 
     const modifyTokenSupplyCmd = program
-        .command('modify-token-supply')
-        .description('Modify the supply of a token on a chain.')
+        .command('align-token-supply')
+        .description('Align the supply of a token on a chain with the supply on the chain.')
         .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--chain <chain>', 'Chain to modify the supply of').makeOptionMandatory(true))
+        .addOption(new Option('--tokenAddress <tokenAddress>', 'Token address to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
