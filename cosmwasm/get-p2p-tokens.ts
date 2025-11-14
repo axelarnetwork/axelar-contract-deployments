@@ -80,7 +80,6 @@ type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
     decimals: number;
     trackSupply: boolean;
-    conflictingInterchainTokenAddress?: string;
 };
 
 type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
@@ -109,7 +108,10 @@ async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
         decimals = await runWithRetries(async () => await token.decimals());
     } catch (e) {}
 
-    const trackSupply = await isTokenSupplyTracked(tokenManagerType, token);
+    let trackSupply = null;
+    try {
+        trackSupply = await runWithRetries(async () => await isTokenSupplyTracked(tokenManagerType, token));
+    } catch (e) {}
     return { tokenAddress, decimals, trackSupply };
 }
 
@@ -124,7 +126,7 @@ async function runWithRetries<T>(fn: () => Promise<T>): Promise<T> {
             await new Promise((resolve) => setTimeout(resolve, delayMilliseconds));
         }
     }
-    throw new Error(`Failed to execute function after ${MAX_RETRIES} retries: ${lastError}`);
+    throw lastError;
 }
 
 async function getTokensFromBlock(
@@ -143,40 +145,26 @@ async function getTokensFromBlock(
     }
 
     const events = await runWithRetries(async () => await its.queryFilter(filter, startBlockNumber, end));
-    const tokens = await runWithRetries(async () => {
-        const tokenData: SquidTokenDataWithTokenId[] = await Promise.all(
-            events
-                .map((event) => event.args)
-                .map(async (event): Promise<SquidTokenDataWithTokenId> => {
-                    const tokenId = event[0];
-                    const tokenManagerAddress = event[1];
-                    const tokenManagerType = event[2];
+    const tokens: SquidTokenDataWithTokenId[] = await Promise.all(
+        events
+            .map((event) => event.args)
+            .map(async (event): Promise<SquidTokenDataWithTokenId> => {
+                const tokenId = event[0];
+                const tokenManagerAddress = event[1];
+                const tokenManagerType = event[2];
 
-                    let tokenInfo = { tokenAddress: null, decimals: null, trackSupply: null };
-                    try {
-                        tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, tokenManagerType, provider));
-                    } catch (e) {
-                        printWarn(`Error getting token info for ${tokenId}: ${e}`);
-                    }
+                let tokenInfo = { tokenAddress: null, decimals: null, trackSupply: null };
+                try {
+                    tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, tokenManagerType, provider));
+                } catch (e) {}
 
-                    let interchainTokenAddress = null;
-                    try {
-                        interchainTokenAddress = await runWithRetries(async () => await its.registeredTokenAddress(tokenId));
-                    } catch (e) {
-                        printWarn(`Error getting interchain token address for ${tokenId}: ${e}`);
-                    }
-
-                    return {
-                        axelarChainId,
-                        tokenId,
-                        conflictingInterchainTokenAddress:
-                            interchainTokenAddress !== tokenInfo.tokenAddress && tokenManagerType === 0 ? interchainTokenAddress : null,
-                        ...tokenInfo,
-                    } as SquidTokenDataWithTokenId;
-                }),
-        );
-        return tokenData;
-    });
+                return {
+                    axelarChainId,
+                    tokenId,
+                    ...tokenInfo,
+                } as SquidTokenDataWithTokenId;
+            }),
+    );
     return tokens;
 }
 
