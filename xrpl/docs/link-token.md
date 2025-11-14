@@ -61,6 +61,8 @@ GAS_FEE=  # Estimate using GMP API
 
 SOURCE_CHAIN= # EVM source chain name
 DESTINATION_CHAIN= # XRPL destination chain name
+
+ENV= #mainnet || testnet || stagenet || devnet-amplifier
 ```
 
 **API Reference**: Estimate using GMP [API](https://docs.axelarscan.io/gmp#estimateITSFee).
@@ -122,7 +124,7 @@ Wait for GMP transaction to finish executing before proceeding.
 Remove the `--operator` flag to not set any operator.
 
 ```bash
-ts-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --operator $OPERATOR --salt $SALT
+ts-node evm/interchainTokenFactory.js register-custom-token --tokenAddress $TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --operator $OPERATOR --chainNames $SOURCE_CHAIN --env $ENV --salt $SALT
 ```
 
 Extract the token ID from the output, without the `0x` prefix.
@@ -138,8 +140,7 @@ Only the first leg of the remote token deployment (towards the ITS Hub) is requi
 The second leg will fail expectedly.
 
 ```bash
-GAS_FEE=
-ts-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action linkToken --destinationChain $DESTINATION_CHAIN --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue $GAS_FEE
+ts-node evm/interchainTokenFactory.js link-token --destinationChain $DESTINATION_CHAIN --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --chainNames $SOURCE_CHAIN --env $ENV --salt $SALT 
 ```
 
 ### 6. XRPL Remote Token Registration

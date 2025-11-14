@@ -48,25 +48,29 @@ Register and deploy a canonical interchain token:
 ```bash
 TOKEN_ADDRESS=  # Token contract address on the native source chain
 TOKEN_DECIMALS= # Decimals of the token contract on the native source chain
+ENV= #mainnet || testnet || stagenet || devnet-amplifier
 
-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action registerCanonicalInterchainToken --tokenAddress $TOKEN_ADDRESS
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress $TOKEN_ADDRESS --chainNames $SOURCE_CHAIN --env $ENV
 
-GAS_FEE=
-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action deployRemoteCanonicalInterchainToken --tokenAddress $TOKEN_ADDRESS --destinationChain $DESTINATION_CHAIN --gasValue $GAS_FEE
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress $TOKEN_ADDRESS --destinationChain $DESTINATION_CHAIN --chainNames $SOURCE_CHAIN --env $ENV
 ```
 
 *Alternatively*, deploy a new interchain token:
 
 ```bash
+SOURCE_CHAIN=
+DESTINATION_CHAIN=
 TOKEN_NAME=
 TOKEN_SYMBOL=
 TOKEN_DECIMALS=
+INITIAL_SUPPLY=
+MINTER=
+ENV=
 SALT= # Random salt
 
-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action deployInterchainToken --name $TOKEN_NAME --symbol $TOKEN_SYMBOL --decimals $TOKEN_DECIMALS --salt $SALT
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name $TOKEN_NAME --symbol $TOKEN_SYMBOL --decimals $TOKEN_DECIMALS --initialSupply $INITIAL_SUPPLY --minter $MINTER --chainNames $SOURCE_CHAIN --env $ENV  --salt $SALT
 
-GAS_FEE=
-node evm/interchainTokenFactory.js -n $SOURCE_CHAIN --action deployRemoteInterchainToken --salt $SALT --destinationChain $DESTINATION_CHAIN --gasValue $GAS_FEE
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain $DESTINATION_CHAIN --chainNames $SOURCE_CHAIN --env $ENV --salt $SALT
 ```
 
 Only the first leg of the remote token deployment (towards the ITS Hub) is required to succeed.
