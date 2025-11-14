@@ -100,6 +100,9 @@
     "slice-ansi": "4.0.0",
     "is-arrayish": "0.2.1",
     "ansi-regex": "5.0.1",
-    "elliptic": "^6.6.1"
+    "elliptic": "^6.6.1",
+    "@cosmjs/encoding": {
+      "@scure/base": "1.2.6"
+    }
   }
 }
