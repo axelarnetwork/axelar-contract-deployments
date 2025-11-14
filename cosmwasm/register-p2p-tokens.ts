@@ -117,6 +117,7 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
                 isNonEmptyString: {
                     tokenId: token.tokenId,
                     axelarChainId: chain.axelarChainId,
+                    tokenAddress: chain.tokenAddress,
                 },
             });
         } catch (e) {
