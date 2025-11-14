@@ -178,7 +178,6 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
 
         currentChain.max = await provider.getBlockNumber();
         const filter = its.filters.TokenManagerDeployed();
-        printInfo(`${chain.axelarId} current block number: ${currentChain.max}`);
 
         while (currentChain.end < currentChain.max) {
             const tokensPromises: Promise<SquidTokenDataWithTokenId[]>[] = [];
