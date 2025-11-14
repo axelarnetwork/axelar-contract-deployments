@@ -102,11 +102,11 @@ export async function modifyTokenSupply(
         token_instance: { chain: config.getChainConfig(chain).axelarId, token_id: formatTokenId(tokenId) },
     });
 
-    let supplyOnHub: number;
+    let supplyOnHub: bigint;
     if (tokenInstanceOnHub.supply === 'untracked') {
-        supplyOnHub = 0;
+        supplyOnHub = BigInt(0);
     } else {
-        supplyOnHub = Number(tokenInstanceOnHub.supply.tracked);
+        supplyOnHub = BigInt(tokenInstanceOnHub.supply.tracked);
     }
 
     if (supply === supplyOnHub) {
@@ -121,7 +121,7 @@ export async function modifyTokenSupply(
             chain: config.getChainConfig(chain).axelarId,
             token_id: formatTokenId(tokenId),
             supply_modifier: {
-                [supplyModifier]: Math.abs(supply - supplyOnHub),
+                [supplyModifier]: BigInt(Math.abs(Number(supply - supplyOnHub))),
             },
         },
     };
@@ -137,13 +137,13 @@ export async function isTokenSupplyTracked(tokenManagerType: number, token: Cont
     return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
 }
 
-export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): Promise<{ supply: number; isTokenSupplyTracked: boolean }> {
+export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): Promise<{ supply: bigint; isTokenSupplyTracked: boolean }> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const supply = await token.totalSupply();
     const tokenManagerType = await token.tokenManagerType();
     return {
-        supply: Number(supply.toString()),
+        supply: BigInt(supply),
         isTokenSupplyTracked: await isTokenSupplyTracked(tokenManagerType, token),
     };
 }
