@@ -17,43 +17,8 @@ const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
 const IInterchainToken = getContractJSON('IInterchainToken');
 
-const DEFAULT_QUERY_LIMIT = 2048;
-
-const queryLimit = {
-    ethereum: 500000,
-    'eth-sepolia': 1000,
-    'ethereum-sepolia': 1000,
-    'core-ethereum': 1000,
-    avalanche: 2047,
-    'core-avalanche': 10000,
-    fantom: 500000,
-    polygon: 500000,
-    'polygon-sepolia': 500000,
-    moonbeam: 2000,
-    binance: 10000,
-    arbitrum: 500000,
-    'arbitrum-sepolia': 10000,
-    celo: 50000,
-    kava: 10000,
-    filecoin: 2880,
-    optimism: 10000,
-    'optimism-sepolia': 10000,
-    linea: 500000,
-    'linea-sepolia': 500000,
-    base: 10000,
-    'base-sepolia': 10000,
-    mantle: 10000,
-    'mantle-sepolia': 10000,
-    blast: 10000,
-    'blast-sepolia': 10000,
-    fraxtal: 50000,
-    scroll: 10000,
-    flow: 10000,
-    immutable: 5000,
-};
-
 const MAX_RETRIES = 3;
-const BATCH_SIZE = 30;
+const BATCH_SIZE = 2;
 
 // Async mutex per tokenId to prevent race conditions
 const tokenWriteMutex = new Mutex();
@@ -186,9 +151,6 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
         }
         printInfo(`ITS at ${chain.axelarId} is at`, chain.contracts.InterchainTokenService.address);
 
-        const eventsLength = queryLimit[chain.axelarId.toLowerCase()] || DEFAULT_QUERY_LIMIT;
-        printInfo('processing... ', chain.axelarId);
-
         const rpc = currentChain?.rpcs?.[0] || chain.rpc;
         if (!rpc) {
             printError(`No RPC for ${chain.axelarId}`);
@@ -196,6 +158,24 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
         }
         const provider = getDefaultProvider(rpc);
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
+
+        // Find eventsLenght for the given RPC
+        let eventsLength = 100000;
+        while (eventsLength > 0) {
+            try {
+                await its.queryFilter(its.filters.TokenManagerDeployed(), 1, eventsLength);
+            } catch (e) {
+                eventsLength = Math.floor(eventsLength / 2);
+                continue;
+            }
+            break;
+        }
+        if (eventsLength === 0) {
+            printError(`Events length not found for ${chain.axelarId}`);
+            return;
+        }
+        printInfo(`Events length found for ${chain.axelarId}: ${eventsLength}`);
+
         currentChain.max = await provider.getBlockNumber();
         const filter = its.filters.TokenManagerDeployed();
         printInfo(`${chain.axelarId} current block number: ${currentChain.max}`);
