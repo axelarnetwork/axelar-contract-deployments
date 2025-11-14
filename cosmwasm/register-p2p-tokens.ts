@@ -141,7 +141,7 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
                 options.dryRun,
             );
         } catch (e) {
-            printError(`Error registering token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
+            printError(`Error modifying token supply ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
         }
     });
 }

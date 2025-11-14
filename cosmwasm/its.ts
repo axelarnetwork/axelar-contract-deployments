@@ -115,13 +115,14 @@ export async function modifyTokenSupply(
     }
 
     const supplyModifier = supply > supplyOnHub ? 'increase_supply' : 'decrease_supply';
+    const supplyDifference = supply > supplyOnHub ? supply - supplyOnHub : supplyOnHub - supply;
 
     const msg = {
         modify_supply: {
             chain: config.getChainConfig(chain).axelarId,
             token_id: formatTokenId(tokenId),
             supply_modifier: {
-                [supplyModifier]: BigInt(Math.abs(Number(supply - supplyOnHub))),
+                [supplyModifier]: supplyDifference.toString(),
             },
         },
     };
@@ -143,7 +144,7 @@ export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): P
     const supply = await token.totalSupply();
     const tokenManagerType = await token.tokenManagerType();
     return {
-        supply: BigInt(supply),
+        supply: BigInt(supply.toString()),
         isTokenSupplyTracked: await isTokenSupplyTracked(tokenManagerType, token),
     };
 }
