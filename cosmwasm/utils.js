@@ -46,7 +46,7 @@ const {
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
 } = require('../common/utils');
-const { normalizeBech32 } = require('@cosmjs/encoding');
+const { bech32 } = require('bech32');
 
 const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const XRPLClient = require('../xrpl/xrpl-client');
@@ -64,8 +64,8 @@ const COSMOS_SDK_LEGACY_THRESHOLD = '0.50.0';
 
 const isValidCosmosAddress = (str) => {
     try {
-        normalizeBech32(str);
-
+        if (typeof str !== 'string') return false;
+        bech32.decode(str);
         return true;
     } catch (error) {
         return false;
