@@ -79,34 +79,34 @@ const stringifyObject = (obj) => {
     return stringifiedObj;
 };
 
-const printInfo = (msg, info = '', colour = chalk.green) => {
+const printInfo = (msg, dataObj = '', colour = chalk.green) => {
 
-    if (info) {
-        printMsg(`${msg}: ${colour(stringifyObject(info))}`);
+    if (dataObj) {
+        printMsg(`${msg}: ${colour(stringifyObject(dataObj))}`);
     } else {
         printMsg(`${msg}`);
     }
 };
 
-const printWarn = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${stringifyObject(info)}`;
+const printWarn = (msg, dataObj = '') => {
+    if (dataObj) {
+        msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
     printMsg(`${chalk.italic.yellow(msg)}`);
 };
 
-const printError = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${stringifyObject(info)}`;
+const printError = (msg, dataObj = '') => {
+    if (dataObj) {
+        msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
     printErrorMsg(`${chalk.bold.red(msg)}`);
 };
 
-const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
-    if (info) {
-        msg = `${msg}: ${stringifyObject(info)}`;
+const printHighlight = (msg, dataObj = '', colour = chalk.bgBlue) => {
+    if (dataObj) {
+        msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
     printMsg(`${colour(msg)}`);
