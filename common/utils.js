@@ -80,7 +80,6 @@ const stringifyObject = (obj) => {
 };
 
 const printInfo = (msg, dataObj = '', colour = chalk.green) => {
-
     if (dataObj) {
         printMsg(`${msg}: ${colour(stringifyObject(dataObj))}`);
     } else {
