@@ -3528,6 +3528,27 @@
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
           "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x308287fe52966daf1b36d3eA1FEcF8A110bC3aF1"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.2.0",
+          "proxySalt": "ITS v1.0.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.2.0",
+          "tokenManagerDeployer": "0x148feB2C0eFE43A1eD5C061e1AbbB609CD730c22",
+          "interchainToken": "0x7DECda0beb52deee4159d20b7bDFdded890649f3",
+          "interchainTokenDeployer": "0xfc50b14F6a1CcAf1D6A4E84441cED1094ACC1780",
+          "tokenManager": "0x2be6F57fb0E69D26F8c8FbbebD8403d88fbAc09c",
+          "tokenHandler": "0x79aE65Ea16E88D3a7303A7FF019353140B06F39B",
+          "implementation": "0x4Aca663c242D31F85b77bf27d5D7dA4cF69fa7bd",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.2.0",
+          "implementation": "0x6977477Bd4C053E1BfD0B6F287060c2A4E5E1aA1"
         }
       }
     }

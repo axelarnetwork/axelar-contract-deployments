@@ -65,15 +65,24 @@ const printErrorMsg = (msg) => {
     }
 };
 
-const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (typeof info === 'boolean') {
-        info = String(info);
-    } else if (Array.isArray(info) || typeof info === 'object') {
-        info = JSON.stringify(info, null, 2);
+const stringifyObject = (obj) => {
+    let stringifiedObj;
+
+    if (typeof obj === 'boolean') {
+        stringifiedObj = String(obj);
+    } else if (Array.isArray(obj) || typeof obj === 'object') {
+        stringifiedObj = JSON.stringify(obj, null, 2);
+    } else {
+        stringifiedObj = `${obj}`;
     }
 
+    return stringifiedObj;
+};
+
+const printInfo = (msg, info = '', colour = chalk.green) => {
+
     if (info) {
-        printMsg(`${msg}: ${colour(info)}`);
+        printMsg(`${msg}: ${colour(stringifyObject(info))}`);
     } else {
         printMsg(`${msg}`);
     }
@@ -81,7 +90,7 @@ const printInfo = (msg, info = '', colour = chalk.green) => {
 
 const printWarn = (msg, info = '') => {
     if (info) {
-        msg = `${msg}: ${info}`;
+        msg = `${msg}: ${stringifyObject(info)}`;
     }
 
     printMsg(`${chalk.italic.yellow(msg)}`);
@@ -89,7 +98,7 @@ const printWarn = (msg, info = '') => {
 
 const printError = (msg, info = '') => {
     if (info) {
-        msg = `${msg}: ${info}`;
+        msg = `${msg}: ${stringifyObject(info)}`;
     }
 
     printErrorMsg(`${chalk.bold.red(msg)}`);
@@ -97,7 +106,7 @@ const printError = (msg, info = '') => {
 
 const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
     if (info) {
-        msg = `${msg}: ${info}`;
+        msg = `${msg}: ${stringifyObject(info)}`;
     }
 
     printMsg(`${colour(msg)}`);
