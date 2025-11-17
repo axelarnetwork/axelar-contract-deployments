@@ -1,0 +1,32 @@
+{
+  "chains": {
+    "core-avalanche": {
+      "start": 0,
+      "end": 0,
+      "max": 0,
+      "alreadyProcessedPercentage": "0.00",
+      "rpcs": [
+        "https://avalanche-fuji-c-chain-rpc.publicnode.com"
+      ]
+    },
+    "core-ethereum": {
+      "start": 0,
+      "end": 3688090,
+      "max": 9649134,
+      "alreadyProcessedPercentage": "38.22",
+      "rpcs": [
+        "https://sepolia.drpc.org"
+      ]
+    },
+    "core-optimism": {
+      "start": 0,
+      "end": 8326332,
+      "max": 35794622,
+      "alreadyProcessedPercentage": "23.26",
+      "rpcs": [
+        "https://sepolia.optimism.io"
+      ]
+    }
+  },
+  "tokens": {}
+}
