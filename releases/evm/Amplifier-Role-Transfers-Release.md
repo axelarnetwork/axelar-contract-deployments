@@ -118,8 +118,12 @@ For each amplifier chain, add the following configuration:
 
 #### Deploy InterchainGovernance
 
+**TODO**: 
+- Confirm before deploying about using `create2` or `create3` method
+- Confirm salt as well
+
 ```bash
-ts-node evm/deploy-contract.js -c InterchainGovernance -m create2
+ts-node evm/deploy-contract.js -c InterchainGovernance -m create2/create3 -s "salt"
 ```
 
 #### Verify Deployment
