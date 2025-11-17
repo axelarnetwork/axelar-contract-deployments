@@ -3,8 +3,8 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command } from 'commander';
 
-import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../common';
-import { ConfigManager } from '../common/config';
+import { addEnvOption, getChainConfig, itsHubContractAddress, printError, printInfo, printWarn } from '../common';
+import { ConfigManager, ContractConfig } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
 
@@ -207,6 +207,49 @@ async function contractInfo(client: CosmWasmClient, config: ConfigManager, optio
     }
 }
 
+async function queryAllContractVersions(
+    client: CosmWasmClient,
+    config: ConfigManager,
+    _options: Options,
+    _args?: string[],
+    _fee?: unknown,
+): Promise<void> {
+    const axelarContracts = config.axelar.contracts;
+
+    await Promise.all(
+        Object.entries(axelarContracts).map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
+            if (contractConfig.address) {
+                try {
+                    const contractInfo = await getContractInfo(client, contractConfig.address);
+                    contractConfig.version = contractInfo.version;
+                } catch (error) {
+                    printError(`Failed to get contract info for ${contractName}`, error);
+                }
+            }
+
+            const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
+            const versions = {} as Record<string, string[]>;
+            await Promise.all(
+                chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
+                    try {
+                        const contractInfo = await getContractInfo(client, chainContractConfig.address);
+                        chainContractConfig.version = contractInfo.version;
+                        if (!versions[contractInfo.version]) {
+                            versions[contractInfo.version] = [];
+                        }
+                        versions[contractInfo.version].push(chainName);
+                    } catch (error) {
+                        printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                    }
+                }),
+            );
+            if (Object.keys(versions).length > 1) {
+                printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
+            }
+        }),
+    );
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -260,6 +303,15 @@ const programHandler = () => {
         .action((options: Options) => {
             mainQueryProcessor(contractInfo, options, []);
         });
+
+    const contractsVersions = program
+        .command('contract-versions')
+        .description('Query all cosmwasm axelar contract versions per environment')
+        .action((options) => {
+            mainQueryProcessor(queryAllContractVersions, options, []);
+        });
+
+    addEnvOption(contractsVersions);
 
     addAmplifierQueryOptions(rewardsCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
