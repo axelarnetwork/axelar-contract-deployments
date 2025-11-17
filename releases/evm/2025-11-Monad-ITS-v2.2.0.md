@@ -8,8 +8,8 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------  |
 | **Stagenet**         | Complete              | 2025-11-06 |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Completed             | 2025-11-16 |
+| **Mainnet**          | Completed             | 2025-11-16 |
 
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
@@ -89,7 +89,7 @@ ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 
 ```bash
 # Create a token on `<ChainName>`
-ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial-supply] --minter [minter] --salt "salt1234" -n $CHAIN 
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial-supply] --minter [minter] --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
 ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination-chain] --salt "salt1234" -n $CHAIN
