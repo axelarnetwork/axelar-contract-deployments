@@ -2,8 +2,8 @@
   "chains": {
     "ethereum-sepolia": {
       "start": 0,
-      "end": 9648156,
-      "max": 9648156,
+      "end": 9649370,
+      "max": 9649370,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
@@ -11,8 +11,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 47779635,
-      "max": 47779635,
+      "end": 47787569,
+      "max": 47787569,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax-test.network/ext/bc/C/rpc"
@@ -20,8 +20,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 71976889,
-      "max": 71976889,
+      "end": 71977341,
+      "max": 71977341,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.fantom.network"
@@ -29,17 +29,17 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 3906872,
-      "max": 14277605,
-      "alreadyProcessedPercentage": "27.36",
+      "end": 11559524,
+      "max": 14279136,
+      "alreadyProcessedPercentage": "80.95",
       "rpcs": [
         "https://rpc.api.moonbase.moonbeam.network"
       ]
     },
     "binance": {
       "start": 0,
-      "end": 73271053,
-      "max": 73271053,
+      "end": 73305881,
+      "max": 73305881,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://bsc-prebsc-dataseed.bnbchain.org"
@@ -47,8 +47,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 20712985,
-      "max": 20712985,
+      "end": 20716112,
+      "max": 20716112,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.testnet.kava.io"
@@ -65,8 +65,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 14959934,
-      "max": 14959934,
+      "end": 14963904,
+      "max": 14963904,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rpc.scroll.io"
@@ -74,8 +74,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 32194663,
-      "max": 32194663,
+      "end": 32202499,
+      "max": 32202499,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.immutable.com"
@@ -83,8 +83,8 @@
     },
     "arbitrum-sepolia": {
       "start": 0,
-      "end": 216134985,
-      "max": 216134985,
+      "end": 216196109,
+      "max": 216196109,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rollup.arbitrum.io/rpc"
@@ -101,8 +101,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 1459287,
-      "max": 1459287,
+      "end": 1467122,
+      "max": 1467122,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.frax.com"
@@ -110,8 +110,8 @@
     },
     "optimism-sepolia": {
       "start": 0,
-      "end": 35788287,
-      "max": 35788287,
+      "end": 35796122,
+      "max": 35796122,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"
@@ -119,8 +119,8 @@
     },
     "base-sepolia": {
       "start": 0,
-      "end": 33805413,
-      "max": 33805413,
+      "end": 33813248,
+      "max": 33813248,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.base.org"
@@ -128,8 +128,8 @@
     },
     "blast-sepolia": {
       "start": 0,
-      "end": 29346212,
-      "max": 29346212,
+      "end": 29354047,
+      "max": 29354047,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://blast-sepolia.drpc.org"
@@ -137,8 +137,8 @@
     },
     "mantle-sepolia": {
       "start": 0,
-      "end": 30917220,
-      "max": 30917220,
+      "end": 30925058,
+      "max": 30925058,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.mantle.xyz"
@@ -146,8 +146,8 @@
     },
     "polygon-sepolia": {
       "start": 0,
-      "end": 29160557,
-      "max": 29160557,
+      "end": 29168392,
+      "max": 29168392,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc-amoy.polygon.technology/"
@@ -155,8 +155,8 @@
     },
     "linea-sepolia": {
       "start": 0,
-      "end": 20849048,
-      "max": 20849048,
+      "end": 20856883,
+      "max": 20856883,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.linea.build"
@@ -264,6 +264,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x22b4b26d322209c7eefb3f49135b83868838e7355ff807a28faa55bd7f017aeb",
+          "tokenAddress": "0x3A96872247c4d1aA7E319841948BFcC206A545e9",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x22b4b26d322209c7eefb3f49135b83868838e7355ff807a28faa55bd7f017aeb",
           "tokenAddress": "0x3A96872247c4d1aA7E319841948BFcC206A545e9",
           "decimals": 18,
@@ -408,6 +415,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x03f6647125f4adc199e85b9f186546b85d12336eb3919af2ad4fa35d14d58beb",
+          "tokenAddress": "0xeAB77d1DCEBafaE8b651F8e5b55043851BE923a9",
+          "decimals": 9,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x03f6647125f4adc199e85b9f186546b85d12336eb3919af2ad4fa35d14d58beb",
           "tokenAddress": "0xeAB77d1DCEBafaE8b651F8e5b55043851BE923a9",
           "decimals": 9,
@@ -1170,6 +1184,13 @@
           "tokenAddress": "0x84740460D8C6E08523a0A44019699d281B0ee6a4",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x06c8963348d4275ac065327d1e5910722be27e64a513e5391f8141062cb7a8ab",
+          "tokenAddress": "0x84740460D8C6E08523a0A44019699d281B0ee6a4",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -1259,6 +1280,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x78807b9561ff2302dd587bee461471b367c3298147b711a35a6281d29dfc450a",
+          "tokenAddress": "0x8B118FDd8de468b4eD5D22319F957DaBad0e6beb",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x78807b9561ff2302dd587bee461471b367c3298147b711a35a6281d29dfc450a",
           "tokenAddress": "0x8B118FDd8de468b4eD5D22319F957DaBad0e6beb",
           "decimals": 18,
@@ -1503,6 +1531,13 @@
           "tokenAddress": "0x706163A2E192FBc8631Df767970983d8C85ff922",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xed56c230f3b6de59982b3f7daf75873e48bf328ee6d2fcb62d144d6cdb41fa3c",
+          "tokenAddress": "0x706163A2E192FBc8631Df767970983d8C85ff922",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -1550,6 +1585,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x9d1159882c543d26432d8e7386e43394436a6b13fab1a94507d7a0f61f2d6807",
+          "tokenAddress": "0x6b417494b364351995B62373024Bd7690D67F8c2",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x9d1159882c543d26432d8e7386e43394436a6b13fab1a94507d7a0f61f2d6807",
           "tokenAddress": "0x6b417494b364351995B62373024Bd7690D67F8c2",
           "decimals": 18,
@@ -1615,6 +1657,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xa8fe82b169ae04c225a3c40509f1e68e231791cdbc22b63bafbbe68e46658256",
+          "tokenAddress": "0x34eD75F9F4BD8515A5c5c04ca959024E6b7C6223",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xa8fe82b169ae04c225a3c40509f1e68e231791cdbc22b63bafbbe68e46658256",
           "tokenAddress": "0x34eD75F9F4BD8515A5c5c04ca959024E6b7C6223",
           "decimals": 18,
@@ -2284,6 +2333,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xa7b72f5a8e49a3e63ac6f89673a3a6b00ea7f2744c42a07201b86f10951a3d3e",
+          "tokenAddress": "0x7930A28E6532c5e88205c5e339eFBFD0b233a365",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xa7b72f5a8e49a3e63ac6f89673a3a6b00ea7f2744c42a07201b86f10951a3d3e",
           "tokenAddress": "0x7930A28E6532c5e88205c5e339eFBFD0b233a365",
           "decimals": 18,
@@ -3659,6 +3715,13 @@
           "tokenAddress": "0x21c58C71a94e3c75e51dAf07EB7dDF0AC93Ba90f",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5754ff0a3526c869d9df0bdd37cab37010391b9d10611879f1c7c50217df054b",
+          "tokenAddress": "0x21c58C71a94e3c75e51dAf07EB7dDF0AC93Ba90f",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -4116,6 +4179,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xabb63fc18e7558bc6af767c9f5492307eaed3df176a49801c9d489b4c054c866",
+          "tokenAddress": "0xA0C4679FE775aD5c5FAf4A9fD859248C401181AC",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xabb63fc18e7558bc6af767c9f5492307eaed3df176a49801c9d489b4c054c866",
           "tokenAddress": "0xA0C4679FE775aD5c5FAf4A9fD859248C401181AC",
           "decimals": 18,
@@ -6114,6 +6184,13 @@
           "tokenAddress": "0xA4128985Cc96Bd42f05861b7F108Dae186E1F11A",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x3af874433ccf8760875a356352e170d35c32cf82e78f6673c5d8d4fccd05eaeb",
+          "tokenAddress": "0xA4128985Cc96Bd42f05861b7F108Dae186E1F11A",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -6352,6 +6429,13 @@
           "tokenAddress": "0x958F7259CD72aC95bde8faEa5EA848851EA47054",
           "decimals": 6,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x2e9e339fc925b2c1fc1dd5dd511d205dab3a1b3481c292be562fe37f6bacb9f3",
+          "tokenAddress": "0x958F7259CD72aC95bde8faEa5EA848851EA47054",
+          "decimals": 6,
+          "trackSupply": true
         }
       ]
     },
@@ -6423,6 +6507,13 @@
           "tokenAddress": "0x4d1003B21767c34bd67e3579cDCbf1e6E43CeEa8",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x476997ac4001dc50c4c620ab345b3e8dd238993001b721cd486f8cf716952d92",
+          "tokenAddress": "0x4d1003B21767c34bd67e3579cDCbf1e6E43CeEa8",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -6490,6 +6581,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x2b69091512f7176ded64d4fbe4030385099882183bf845a02c434a4e1e68f221",
+          "tokenAddress": "0xE6e8fDDF5Bb92bd4613FDb91f23DE2BC77fa7d0C",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x2b69091512f7176ded64d4fbe4030385099882183bf845a02c434a4e1e68f221",
           "tokenAddress": "0xE6e8fDDF5Bb92bd4613FDb91f23DE2BC77fa7d0C",
           "decimals": 18,
@@ -8426,6 +8524,13 @@
           "tokenAddress": "0xFB6048b16323Fc09935Cd4357b1CaB34A49c57f2",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x0a53856698c9fc26c2e2974c8ac490ba33c36e7310653fe91be1e67cdeadfeef",
+          "tokenAddress": "0xFB6048b16323Fc09935Cd4357b1CaB34A49c57f2",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -8759,6 +8864,13 @@
           "tokenAddress": "0x04723646B10CB7134a56f7Da7a96162f999E1C0c",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x4be105fcedc88dc79bd14b0d8038dcf02cf1955bf79d9c10afc910dbebb3d2f9",
+          "tokenAddress": "0x04723646B10CB7134a56f7Da7a96162f999E1C0c",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -8805,6 +8917,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x794b511e54a461a6b0f479b4bb7bf5d0ee68d469d93884802abc4b62cfb491e5",
+          "tokenAddress": "0x440216dbA54a3CFB08207Cfebb790f951030caE5",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x794b511e54a461a6b0f479b4bb7bf5d0ee68d469d93884802abc4b62cfb491e5",
           "tokenAddress": "0x440216dbA54a3CFB08207Cfebb790f951030caE5",
           "decimals": 18,
@@ -8947,6 +9066,13 @@
           "tokenAddress": "0x864ef90DdD7b4cBB05a7B7b8A63988ec2aD0Ae17",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xfa6968ac5174c4d6417219e2d289ba9fb6a9b27b9a24802bedba51537b519ca2",
+          "tokenAddress": "0x864ef90DdD7b4cBB05a7B7b8A63988ec2aD0Ae17",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -8979,6 +9105,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0xa9c0cc29ebf529dc4e05b658bc176004ea8e74f207ea933899faf734e35f99a9",
+          "tokenAddress": "0xa4Ff20F1284355ECac81774029ef8ba32dc62bF7",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xa9c0cc29ebf529dc4e05b658bc176004ea8e74f207ea933899faf734e35f99a9",
           "tokenAddress": "0xa4Ff20F1284355ECac81774029ef8ba32dc62bF7",
           "decimals": 18,
@@ -9033,6 +9166,13 @@
           "tokenAddress": "0x8e2Cb07cC190Fb499E3EeaD9B54d20ea1e51dc96",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xad41cc23cd9e41f3488d164f2f48f1f71a0d8b69c4195a9ed6d5560a6a62f2d5",
+          "tokenAddress": "0x8e2Cb07cC190Fb499E3EeaD9B54d20ea1e51dc96",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -9079,6 +9219,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x2e4c3dd02f39985656d76234fab23357df1f0b59e65bb03f7137ab347cc90a57",
+          "tokenAddress": "0xDA5cd817E9768582b44D1C6427c57D50cE59bfBb",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x2e4c3dd02f39985656d76234fab23357df1f0b59e65bb03f7137ab347cc90a57",
           "tokenAddress": "0xDA5cd817E9768582b44D1C6427c57D50cE59bfBb",
           "decimals": 18,
@@ -9133,6 +9280,13 @@
           "tokenAddress": "0xE280532Bc53B0135B9a4076022B563118Cf838c9",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x977be77da4e97b7a71f7ed2b9d6bf8e49900f63c7f2e055e66746406ea575ace",
+          "tokenAddress": "0xE280532Bc53B0135B9a4076022B563118Cf838c9",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -9165,6 +9319,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x5fbb89f0df38a16bcbc01f1bd259047d6839647017d8e1c3697c5e5e1c7c68ed",
+          "tokenAddress": "0xFdfA53519920d2593FA568f8B522b4D8E0dB9b50",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x5fbb89f0df38a16bcbc01f1bd259047d6839647017d8e1c3697c5e5e1c7c68ed",
           "tokenAddress": "0xFdfA53519920d2593FA568f8B522b4D8E0dB9b50",
           "decimals": 18,
@@ -10064,6 +10225,13 @@
           "tokenAddress": "0xd210bFC3f8E5dd0535e7c4d76d6A453Df2929FEb",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x384d0913579193b14d8449b478c8d2e7741e4321ea3c389f47a081660f772dc5",
+          "tokenAddress": "0xd210bFC3f8E5dd0535e7c4d76d6A453Df2929FEb",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -10174,6 +10342,13 @@
           "tokenAddress": "0x4E5b402FB1Fe295d6ebb6893d346460cB0Ba86bd",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xdb728b718007b5ee476fdf19018b5808bc4e14338692f569e64114c567724d37",
+          "tokenAddress": "0x4E5b402FB1Fe295d6ebb6893d346460cB0Ba86bd",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -10220,6 +10395,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x1c909e05d9d141688b37c10d2a289ec3b5c5e32148fc3a5a7d300df3b679ec02",
+          "tokenAddress": "0x6567131b7BA657266cAE8672D491Ce37C9194A2c",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x1c909e05d9d141688b37c10d2a289ec3b5c5e32148fc3a5a7d300df3b679ec02",
           "tokenAddress": "0x6567131b7BA657266cAE8672D491Ce37C9194A2c",
           "decimals": 18,
@@ -10274,6 +10456,13 @@
           "tokenAddress": "0xbb68d37c674e964913f536c42C4FE96541acF4AA",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xbbfedb2681e892c3d685067b6134b1216c9d630c463568b9a4ee6631e0b17e48",
+          "tokenAddress": "0xbb68d37c674e964913f536c42C4FE96541acF4AA",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -10320,6 +10509,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x083d1bee5972b3e897f342f23edce8a0ec6ad8d514ba7f397327494704d9e067",
+          "tokenAddress": "0xd9Ce672039CEA797e40548464fe5a7aA97107e73",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x083d1bee5972b3e897f342f23edce8a0ec6ad8d514ba7f397327494704d9e067",
           "tokenAddress": "0xd9Ce672039CEA797e40548464fe5a7aA97107e73",
           "decimals": 18,
@@ -11445,6 +11641,13 @@
           "tokenAddress": "0x6233D071219756302d561255b03123e676065b94",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9063d27bbbf074535f95348b75b064b5a6beec0cb8482f2e74eec2229c1fb35e",
+          "tokenAddress": "0x6233D071219756302d561255b03123e676065b94",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -12462,6 +12665,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xb6c758ed4f33fb4d6558b649626194bb4a89f8459f94815efe37932eece1b6cd",
+          "tokenAddress": "0x36FfED5802c45A4c3B6556eFaB2a0f29a5A9286d",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xb6c758ed4f33fb4d6558b649626194bb4a89f8459f94815efe37932eece1b6cd",
           "tokenAddress": "0x36FfED5802c45A4c3B6556eFaB2a0f29a5A9286d",
           "decimals": 18,
@@ -13532,6 +13742,13 @@
           "tokenAddress": "0xaB247ec39E5CfDDe31B8b5790dB47912EBc65659",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf4c5856aba3342daf857dd45d0597b3f6b608393c49e5cbd0bef9a2ae9c08d1b",
+          "tokenAddress": "0xaB247ec39E5CfDDe31B8b5790dB47912EBc65659",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -13597,6 +13814,13 @@
           "tokenAddress": "0x32c87C0fAFB93dBD73F84CAC606A03EBbef00AaD",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5066430cbc6e8bcdb7d35fd754d826495bae3bf047effd8c6c7a25c8c984d07f",
+          "tokenAddress": "0x32c87C0fAFB93dBD73F84CAC606A03EBbef00AaD",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -13647,6 +13871,13 @@
           "tokenAddress": "0xEA1F0AA79054a10a9D905C5E03606b59F81244e3",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xfd7f44b6eb95c8ba9d80b9129daf7989398cb84eed904137121d8bd43c49934f",
+          "tokenAddress": "0xEA1F0AA79054a10a9D905C5E03606b59F81244e3",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -13693,6 +13924,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xfa405fea24cd102fe87d05c10f3c4eaf6a982843aff4d4ebf0e8e076c32e0f29",
+          "tokenAddress": "0x18779b739E8E556FfCf05320bc155cCBBb0a6Db0",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xfa405fea24cd102fe87d05c10f3c4eaf6a982843aff4d4ebf0e8e076c32e0f29",
           "tokenAddress": "0x18779b739E8E556FfCf05320bc155cCBBb0a6Db0",
           "decimals": 18,
@@ -15809,6 +16047,13 @@
           "tokenAddress": "0x9f7182F0B5b4508C818153446e16115688772A01",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xef1e3214ad6653070dee493280234776290b3e86499abc426f92d72ec5813895",
+          "tokenAddress": "0x9f7182F0B5b4508C818153446e16115688772A01",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -15934,6 +16179,13 @@
           "tokenAddress": "0x64d8573d161D291A87747D95FCEE15A34bb20995",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x03332b15cc3d678dcd7df33c4f5f0d15c834da681d2e95ccde544cdc52894c37",
+          "tokenAddress": "0x64d8573d161D291A87747D95FCEE15A34bb20995",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -15959,6 +16211,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xa71b50fe3269b4a9bcf4b4a0135b3c23b38807f3a1dcc86d17e3bd9e684ed7db",
+          "tokenAddress": "0x6ae4785229eB76EF71f3419AE98E66856f72466c",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xa71b50fe3269b4a9bcf4b4a0135b3c23b38807f3a1dcc86d17e3bd9e684ed7db",
           "tokenAddress": "0x6ae4785229eB76EF71f3419AE98E66856f72466c",
           "decimals": 18,
@@ -16014,6 +16273,13 @@
           "tokenAddress": "0x1773B62A8862501e9C9B215dE1340BE53D3D6085",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x790f746b834e29671266019b35a8da2a4d245ce127533d60bc740f0c4d81e9ca",
+          "tokenAddress": "0x1773B62A8862501e9C9B215dE1340BE53D3D6085",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16039,6 +16305,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x78ebbef0553aac01cc8c6fdbc86bfd2a09d54364e1b4a7b60e7cf42172c3b857",
+          "tokenAddress": "0x51b4DEa9Aba229057D664da029725ee42659c843",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x78ebbef0553aac01cc8c6fdbc86bfd2a09d54364e1b4a7b60e7cf42172c3b857",
           "tokenAddress": "0x51b4DEa9Aba229057D664da029725ee42659c843",
           "decimals": 18,
@@ -16072,6 +16345,13 @@
           "tokenAddress": "0x3e683Bb1dB927ABb0E9578BB60F93D62a49BB4A2",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9052d0702993ef504bc6f15122bab0245981a611b3d47c98ed6d57d582454955",
+          "tokenAddress": "0x3e683Bb1dB927ABb0E9578BB60F93D62a49BB4A2",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16097,6 +16377,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xba76f2acde2ef4dafa89941eee44cc4b79e9d1668d41de063b5fe229196cb72a",
+          "tokenAddress": "0xA7b9b579B538eF04CD72F55E469593A084Eb6cD2",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xba76f2acde2ef4dafa89941eee44cc4b79e9d1668d41de063b5fe229196cb72a",
           "tokenAddress": "0xA7b9b579B538eF04CD72F55E469593A084Eb6cD2",
           "decimals": 18,
@@ -16195,6 +16482,13 @@
           "tokenAddress": "0xDE9b68150b9B9451Bedb9225349400c1e44856A7",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xd44c328e8ebda3f5bd91356f0ed812e2593dcfc8b284f59b92e0b1bf542d2fd7",
+          "tokenAddress": "0xDE9b68150b9B9451Bedb9225349400c1e44856A7",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16254,6 +16548,13 @@
           "tokenAddress": "0x290864B4F424C717C23AD4eB9f641B808d0918FF",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf8a80d2792b39dc2497227c6afc4a88d3bd977ff58b198112c2672fadc57a95f",
+          "tokenAddress": "0x290864B4F424C717C23AD4eB9f641B808d0918FF",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16279,6 +16580,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x30f661922f4c4b7e912d2e6358e668f7fd240f7426c7a308ed2b4291c5071ebe",
+          "tokenAddress": "0xC9A09D373FBF4d5aE844979Ab5341E61B0220430",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x30f661922f4c4b7e912d2e6358e668f7fd240f7426c7a308ed2b4291c5071ebe",
           "tokenAddress": "0xC9A09D373FBF4d5aE844979Ab5341E61B0220430",
           "decimals": 18,
@@ -16322,6 +16630,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x51a1c0d4b698c8c378b80ae70ccb9babc74082af8c97a09d00cfac126c112436",
+          "tokenAddress": "0x19FE0a49a4F93cf63B83578049e438ed54b76e3D",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x51a1c0d4b698c8c378b80ae70ccb9babc74082af8c97a09d00cfac126c112436",
           "tokenAddress": "0x19FE0a49a4F93cf63B83578049e438ed54b76e3D",
           "decimals": 18,
@@ -16384,6 +16699,13 @@
           "tokenAddress": "0x4FbA20E6483B8290bB1aFeEd5043232c7305B9d4",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x796215630c3a437af6a9847ed4912f20f4f57cd424099c6c5aef2c81c8865135",
+          "tokenAddress": "0x4FbA20E6483B8290bB1aFeEd5043232c7305B9d4",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16442,6 +16764,13 @@
           "tokenAddress": "0xF40F2E70CdcA8C5b5773fEa0d4E60c2181e6bB74",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xaeaa75e1f56715f3b52864a38cca4ea1106ec498872058f672f31f2c2eeae72e",
+          "tokenAddress": "0xF40F2E70CdcA8C5b5773fEa0d4E60c2181e6bB74",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16471,6 +16800,13 @@
           "tokenAddress": "0x67Ca9B72547B94e8aB763D41a411FB2a87B0a12b",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xc47712e363f86e4ee4393581a5eddf65970a91a3cdcd0b99a07e2288733b3b05",
+          "tokenAddress": "0x67Ca9B72547B94e8aB763D41a411FB2a87B0a12b",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16493,6 +16829,13 @@
           "tokenAddress": "0xfa1e622b547AA88967cdf87be2f2e4a2566c0CA9",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xdc92bd703938538728711197e8a8f7978edc6ac1dbbfd65fc74c9a94e153528b",
+          "tokenAddress": "0xfa1e622b547AA88967cdf87be2f2e4a2566c0CA9",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -16511,6 +16854,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x8ddf35987d6349794e799e109e582fe44a82e5922f915b1a0f7bd80def23fc8a",
+          "tokenAddress": "0x424d77736565cCf277388dc56F7De23a4c101344",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x8ddf35987d6349794e799e109e582fe44a82e5922f915b1a0f7bd80def23fc8a",
           "tokenAddress": "0x424d77736565cCf277388dc56F7De23a4c101344",
           "decimals": 18,
@@ -16701,6 +17051,13 @@
           "tokenAddress": "0x11732Ec307dc5663cAb589E27485F4808A787520",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xb7987fc018c6948d7ea4418cd9d2b09f96c06bd68b850ebf86cacb8ffa51a4f0",
+          "tokenAddress": "0x11732Ec307dc5663cAb589E27485F4808A787520",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -16726,6 +17083,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x67f2262a0afe710c0f99761bf8bb4002433c6cea3c3ca124275a7bdb924b4341",
+          "tokenAddress": "0x6A5468a6bdB00887f24999E229d12101C10C7f45",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x67f2262a0afe710c0f99761bf8bb4002433c6cea3c3ca124275a7bdb924b4341",
           "tokenAddress": "0x6A5468a6bdB00887f24999E229d12101C10C7f45",
           "decimals": 18,
@@ -16777,6 +17141,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x0201386db0adae5317f340f787dfbb548f9aaa422f32f6a58d12853501cde7f3",
+          "tokenAddress": "0xAcdaf0d7e4b44b44B8c7f7A20E8306dC350eBf41",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x0201386db0adae5317f340f787dfbb548f9aaa422f32f6a58d12853501cde7f3",
           "tokenAddress": "0xAcdaf0d7e4b44b44B8c7f7A20E8306dC350eBf41",
           "decimals": 18,
@@ -16857,6 +17228,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0x171b1038519fc5b372c4b2061d9f30992733c27e446ba79367bb2677cec17b2d",
+          "tokenAddress": "0x527517b03F69baD6Ab64E01B17191b7Db18e4c32",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x171b1038519fc5b372c4b2061d9f30992733c27e446ba79367bb2677cec17b2d",
           "tokenAddress": "0x527517b03F69baD6Ab64E01B17191b7Db18e4c32",
           "decimals": 18,
@@ -17686,6 +18064,13 @@
           "tokenAddress": "0xFca3c20367C4597BF7Fc15C828C6E35D2D7fcf87",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5bae8c6f77494f22bedd3e20e18b1b2d0a7e8d5b8a486066a3d1d368028c5df3",
+          "tokenAddress": "0xFca3c20367C4597BF7Fc15C828C6E35D2D7fcf87",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -18082,6 +18467,13 @@
           "tokenAddress": "0xeccCAf43A81AADf68962346c62F07f8e9bfDa3AA",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x0960e15bfb1798f5e14851fe2c49da7638cfe825ee824a1bb9d8770e1dac19da",
+          "tokenAddress": "0x7B10B6C3291Ca7a9fF1CD524be290701A392Ea95",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -18133,6 +18525,13 @@
           "tokenAddress": "0x6104ee0269Dc550e80310299A65b2425ED1bFdb9",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9b319a26103fdf4b95d2fbf6b5bc05b6140f7e433289a756ce1741d349cc43a3",
+          "tokenAddress": "0x6104ee0269Dc550e80310299A65b2425ED1bFdb9",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -18148,6 +18547,13 @@
           "tokenAddress": "0x7b1caEd4Ffe4ac86eaa9704E315ED2b776FFAE7D",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xb966237c45d2b49b876f9215ae84506b516b210fcaffabfc67291247bf9c311f",
+          "tokenAddress": "0x3E90aa504b58303F55E0d3F8AdC3c49d077d7AE1",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -19336,6 +19742,13 @@
           "tokenAddress": "0x549483897B98C7f110C00c88Eb15C57fACD82b7a",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xda4e209e439c5c28eede0792efe4e1a18839c31d7f721f87fa1ea47d315b2395",
+          "tokenAddress": "0x549483897B98C7f110C00c88Eb15C57fACD82b7a",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -19372,6 +19785,13 @@
           "tokenAddress": "0x60FEdb0484e1C1b4eB8Cd2ea5a2b3bcf2aD78D91",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x39bc1e9e92ebdbf61084f02978996857556a941c97298cd94c0ed075e0474cf6",
+          "tokenAddress": "0x60FEdb0484e1C1b4eB8Cd2ea5a2b3bcf2aD78D91",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -19397,6 +19817,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x6caf20c6225a295d050b8b4f6449cd19cf6a58f31e457b4a2d9c55fffc00b105",
+          "tokenAddress": "0xA04c88589AaF6d55284c89BC5c2334EAdDF1ea3a",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x6caf20c6225a295d050b8b4f6449cd19cf6a58f31e457b4a2d9c55fffc00b105",
           "tokenAddress": "0xA04c88589AaF6d55284c89BC5c2334EAdDF1ea3a",
           "decimals": 18,
@@ -19494,6 +19921,13 @@
           "tokenAddress": "0xcFAe78ADbc9ed38F66f31B51e03d079c8Ee5b38F",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x3f4f34c91848fa925feb6a1119204c7ebae8f5cdd1730db5a89cc22924c11cbd",
+          "tokenAddress": "0xcFAe78ADbc9ed38F66f31B51e03d079c8Ee5b38F",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -19519,6 +19953,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x982607c6c67ad2ab293797286dd0bff55120a7e73b50ec7a2e4be184b280d75f",
+          "tokenAddress": "0x46BA67AebAd4C9C70625928a42CFdaD4543DaD1e",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x982607c6c67ad2ab293797286dd0bff55120a7e73b50ec7a2e4be184b280d75f",
           "tokenAddress": "0x46BA67AebAd4C9C70625928a42CFdaD4543DaD1e",
           "decimals": 18,
@@ -19661,6 +20102,13 @@
           "tokenAddress": "0xF1C3ecbD1263396218902A5C016a8cAccb53e899",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x36d74aab6ccfaf5b808608de7e171109b1f11ff3f4fc8e62c8677d7b28570b8e",
+          "tokenAddress": "0xF1C3ecbD1263396218902A5C016a8cAccb53e899",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -19707,6 +20155,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xc0690612af102e0b4cfbe66f4f69ba8a804d2ca1c6631f58e9f2c2bfd592864b",
+          "tokenAddress": "0xE01842F947C2f4fBd3A7A6C158cA08ED4b496039",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xc0690612af102e0b4cfbe66f4f69ba8a804d2ca1c6631f58e9f2c2bfd592864b",
           "tokenAddress": "0xE01842F947C2f4fBd3A7A6C158cA08ED4b496039",
           "decimals": 18,
@@ -19761,6 +20216,13 @@
           "tokenAddress": "0x2b53A68ceB437F4a2db9D83F284939495EfB28A6",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xde58d6e7134658c9d467fd05ef4ef9f16ec2d289216abbcb250fdd3872c5a303",
+          "tokenAddress": "0x2b53A68ceB437F4a2db9D83F284939495EfB28A6",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -19807,6 +20269,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xde6297aa7d5aeb082d769880961f07a1cb0bef053b94dcf2f87c08815bc393df",
+          "tokenAddress": "0xFAfA61E8931016b9f27384e29A7f1114bA5AADA8",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xde6297aa7d5aeb082d769880961f07a1cb0bef053b94dcf2f87c08815bc393df",
           "tokenAddress": "0xFAfA61E8931016b9f27384e29A7f1114bA5AADA8",
           "decimals": 18,
@@ -19926,6 +20395,13 @@
           "tokenAddress": "0xca7A2c3fd3feA2abF70732Ea4489Ab1Ba4c7e414",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x6eae309ecc932e2e50f408907f8441314a5211131c138376a6b9792f005d6580",
+          "tokenAddress": "0xca7A2c3fd3feA2abF70732Ea4489Ab1Ba4c7e414",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -19972,6 +20448,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x578b71ff48043d019d212084cd3a3e0776506f64b13bf35cb6536dd44a7979ae",
+          "tokenAddress": "0x54F94F45e9d2a060CF4875C22364378E1F9Ac0FE",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x578b71ff48043d019d212084cd3a3e0776506f64b13bf35cb6536dd44a7979ae",
           "tokenAddress": "0x54F94F45e9d2a060CF4875C22364378E1F9Ac0FE",
           "decimals": 18,
@@ -20026,6 +20509,13 @@
           "tokenAddress": "0xfD18336916e46Ac31982c6C6745A8a20D93aE46b",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x120f4e8231f60e385b655acc997785c83a86aa889eeb8d77f5c2f8ae863be22d",
+          "tokenAddress": "0xfD18336916e46Ac31982c6C6745A8a20D93aE46b",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -20072,6 +20562,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x3fa83962c7d5203864a980b77b90dc8353a21603e57f4ffd3486265546de61c9",
+          "tokenAddress": "0x55D5CFCbD6056f620a9233ff99F92cAb234BA061",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x3fa83962c7d5203864a980b77b90dc8353a21603e57f4ffd3486265546de61c9",
           "tokenAddress": "0x55D5CFCbD6056f620a9233ff99F92cAb234BA061",
           "decimals": 18,
@@ -20148,6 +20645,13 @@
           "tokenAddress": "0xe45903F66BE0D80a06cb355a64cD19273F18D894",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xba3e24bc7c82e19142b93d45ff1fd88042a4c8460332f3ac862f45ec7c5cdd8f",
+          "tokenAddress": "0xe45903F66BE0D80a06cb355a64cD19273F18D894",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -20198,6 +20702,13 @@
           "tokenAddress": "0xD4Ee5F5A230EcfB0114f06Fe9aBB340edf220284",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa3965e6edb3ecb95170e41c7ada941e6032b2e60c02dd2bdc8e8bf105dc555bf",
+          "tokenAddress": "0xD4Ee5F5A230EcfB0114f06Fe9aBB340edf220284",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -20216,6 +20727,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0xcf24134c93dcca4c1cfa6595dc337849d9e9e5507c3cbffd937d617e015e81f9",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xcf24134c93dcca4c1cfa6595dc337849d9e9e5507c3cbffd937d617e015e81f9",
           "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
           "decimals": 18,
@@ -20270,6 +20788,13 @@
           "tokenAddress": "0xc8172C25a6531259defcE7d73db3AaaEe2500257",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xff6cd44f2e953738ce135717de2d0590b4db765749ebf8e7e11f852fa0cdda4c",
+          "tokenAddress": "0xc8172C25a6531259defcE7d73db3AaaEe2500257",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -20318,6 +20843,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0x048f2d33803f85c5fc065e14697013e398754085fd29c42787e2bbd8db48f7bd",
+          "tokenAddress": "0x36D94cccFAdA3Bd302F850ecDFeB16E7739a4015",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x048f2d33803f85c5fc065e14697013e398754085fd29c42787e2bbd8db48f7bd",
           "tokenAddress": "0x36D94cccFAdA3Bd302F850ecDFeB16E7739a4015",
           "decimals": 18,
@@ -20542,6 +21074,13 @@
           "tokenAddress": "0x0124386d68062Ad0B8A584e84577207308ACDc5B",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x2a13a5c9b7ed37562451dddd2552e9f1f6bdf8fd821055a08e215b73992878ab",
+          "tokenAddress": "0x0124386d68062Ad0B8A584e84577207308ACDc5B",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -20611,6 +21150,13 @@
         },
         {
           "axelarChainId": "scroll",
+          "tokenId": "0x243a06d68c5437de3c792929d2e3d42436f832b75f44490a3973df3e115923c6",
+          "tokenAddress": "0xF3716DF7DC1Adf0422fa6A46550b32aea12DAA1F",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x243a06d68c5437de3c792929d2e3d42436f832b75f44490a3973df3e115923c6",
           "tokenAddress": "0xF3716DF7DC1Adf0422fa6A46550b32aea12DAA1F",
           "decimals": 18,
@@ -20694,6 +21240,13 @@
           "tokenAddress": "0x3954db5c405dF43C55fd9f567DAc105f9B9A74a8",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf030da3ce61138228ca4f12db6b0732a13e0ed625dc5fe2f031b713871cf20bb",
+          "tokenAddress": "0x3954db5c405dF43C55fd9f567DAc105f9B9A74a8",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -20719,6 +21272,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x7aaaa16f04c283ac2f2e586f940b041b708d46cae3654217adfacf92ab3e1b26",
+          "tokenAddress": "0x2eb5a186a3ACf4453Ced5E7a0Bf6fB12166eeE07",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x7aaaa16f04c283ac2f2e586f940b041b708d46cae3654217adfacf92ab3e1b26",
           "tokenAddress": "0x2eb5a186a3ACf4453Ced5E7a0Bf6fB12166eeE07",
           "decimals": 18,
@@ -20762,6 +21322,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x682692a97e89a639c0edcae099c56835a1cc0994038f506373385b6ea76a6366",
+          "tokenAddress": "0x91115A4c394083930999318dEBD41f0997668f89",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x682692a97e89a639c0edcae099c56835a1cc0994038f506373385b6ea76a6366",
           "tokenAddress": "0x91115A4c394083930999318dEBD41f0997668f89",
           "decimals": 18,
@@ -20831,6 +21398,13 @@
           "tokenAddress": "0xb5680C133c468B858a54f0C2aFa215b2D7e22702",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5038ac95653108b26ef989adecfa23fe99125a215b85ce39fe4ae1c685a1b45a",
+          "tokenAddress": "0xb5680C133c468B858a54f0C2aFa215b2D7e22702",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -20889,6 +21463,13 @@
           "tokenAddress": "0x8B4c09d30428017B70F38A4383d85C3833eC48E0",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf4bd9b198c4fa6818e4c0ea765fd5bc82f5f8fcdb4074417200005312c5838de",
+          "tokenAddress": "0x8B4c09d30428017B70F38A4383d85C3833eC48E0",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -20939,6 +21520,13 @@
           "tokenAddress": "0x7eb713978C7A54119D2f04318839817713F700B6",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x402e77d3808e23c67c8dc82f9d23e09c397e95592102f2943ed9b100859110d2",
+          "tokenAddress": "0x7eb713978C7A54119D2f04318839817713F700B6",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -20985,6 +21573,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x4dc6b2323afc0b741d73e515d6496e70dd4c12ec6d8b632a02aff320cff7038c",
+          "tokenAddress": "0x3fd1771C1300916CCfbA2C629bDb20f13d9621Ec",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x4dc6b2323afc0b741d73e515d6496e70dd4c12ec6d8b632a02aff320cff7038c",
           "tokenAddress": "0x3fd1771C1300916CCfbA2C629bDb20f13d9621Ec",
           "decimals": 18,
@@ -21061,6 +21656,13 @@
           "tokenAddress": "0x98A2Cebb6f637Ab2199b349ef02816f949080461",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9e07c1a4f8074fee6dd285990f29d5f8da7fe0ee6d5916009e1f6de4e6277d4d",
+          "tokenAddress": "0x98A2Cebb6f637Ab2199b349ef02816f949080461",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -21107,6 +21709,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x72ce1f9b8e2eac708479792c51504132f7c3499ef778e84c49ba14fbf72db337",
+          "tokenAddress": "0x08F4825C2D64DE6eBddbEa148846e7eafd9fDf49",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x72ce1f9b8e2eac708479792c51504132f7c3499ef778e84c49ba14fbf72db337",
           "tokenAddress": "0x08F4825C2D64DE6eBddbEa148846e7eafd9fDf49",
           "decimals": 18,
@@ -21161,6 +21770,13 @@
           "tokenAddress": "0xbC0580c1eef23f1e9F862c4EB116c9a45bf3dB79",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xcd4a48648860e0950ef329c55282777ad2852f7cc907563a9f4f248f84da6e6c",
+          "tokenAddress": "0xbC0580c1eef23f1e9F862c4EB116c9a45bf3dB79",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -21198,6 +21814,13 @@
           "tokenAddress": "0x8218A59a2185f477e96556435383432513ff379a",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x05950924305b2badd217eb4a6ece985736a9d5941f802732e123b493646e2704",
+          "tokenAddress": "0x8218A59a2185f477e96556435383432513ff379a",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -21209,6 +21832,13 @@
       "chains": [
         {
           "axelarChainId": "Fantom",
+          "tokenId": "0xf699b1fa1e5675d7093f0e2428ca9215f21f8d612861790c31a58f3189890cd4",
+          "tokenAddress": "0xe4722426CBCE44417C653C90C839aD5dbaeBC1D4",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xf699b1fa1e5675d7093f0e2428ca9215f21f8d612861790c31a58f3189890cd4",
           "tokenAddress": "0xe4722426CBCE44417C653C90C839aD5dbaeBC1D4",
           "decimals": 18,
@@ -21720,6 +22350,13 @@
           "tokenAddress": "0x25ee5B226f17902335f0d07263D2f65B11ae348F",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x6a67034bbeaba04f9ea1d9c2902a87b6d8557f3f22d86d9bf0df91f9479f84ed",
+          "tokenAddress": "0x8C0FABaE4fBbc59fc1f7FDCDbCd471e87118b412",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -21770,6 +22407,13 @@
           "tokenAddress": "0x22750c3b578197719d2270e0c334b14BFDbF45F7",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xd38c6acf0726fb06d6b6ea415b0bcf540b42c2b03cbcc54006c5aa9bcd063968",
+          "tokenAddress": "0x22750c3b578197719d2270e0c334b14BFDbF45F7",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -21816,6 +22460,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xb7b249fbb61752182e8dae71054d08dc7ec790af7466ad89e1b5c3d02ce7d280",
+          "tokenAddress": "0xF947764c333c3c66919e7155eF6f5A48ee2ed809",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xb7b249fbb61752182e8dae71054d08dc7ec790af7466ad89e1b5c3d02ce7d280",
           "tokenAddress": "0xF947764c333c3c66919e7155eF6f5A48ee2ed809",
           "decimals": 18,
@@ -21885,6 +22536,13 @@
           "tokenAddress": "0x8c67C973b05E5C2B1ffFe2C70E95c43c70E52431",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xe9c1c7fc0d085eedaeb3d1f06dd9192a7a8af4021343c2a22e9d16b6690d6b73",
+          "tokenAddress": "0x8c67C973b05E5C2B1ffFe2C70E95c43c70E52431",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -21931,6 +22589,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x124a2c55c3eef96f462b9b7cae17ce8eb980258336ac55c3fdd59f66cc0de4db",
+          "tokenAddress": "0xB38A01e812ceA3fb1F2F8c634068e1F3339aF0a4",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x124a2c55c3eef96f462b9b7cae17ce8eb980258336ac55c3fdd59f66cc0de4db",
           "tokenAddress": "0xB38A01e812ceA3fb1F2F8c634068e1F3339aF0a4",
           "decimals": 18,
@@ -22004,6 +22669,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0xf4489a71c2877f230c89b075d075075e9fb763e9ac1939305dd73c7004cce215",
+          "tokenAddress": "0xf3D19D48124D69382Dc9417cA39B0F0e84638305",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xf4489a71c2877f230c89b075d075075e9fb763e9ac1939305dd73c7004cce215",
           "tokenAddress": "0xf3D19D48124D69382Dc9417cA39B0F0e84638305",
           "decimals": 18,
@@ -22162,6 +22834,13 @@
           "tokenAddress": "0xe632F1BD3c38560A970FAD3f617aC4601468Aa5F",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa65d0fcad0b1bda48b3474a3fe76105750a0383dd9a9362d499294beef17a6b0",
+          "tokenAddress": "0xe632F1BD3c38560A970FAD3f617aC4601468Aa5F",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -22223,6 +22902,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x3b07fba90facf489758d5f65ea09360d4e6834731057f773bdfdea4cbbc61c37",
+          "tokenAddress": "0xB58c46164A7dbD12B7903BF24c04116347e8021e",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x3b07fba90facf489758d5f65ea09360d4e6834731057f773bdfdea4cbbc61c37",
           "tokenAddress": "0xB58c46164A7dbD12B7903BF24c04116347e8021e",
           "decimals": 18,
@@ -22322,6 +23008,13 @@
           "tokenAddress": "0x45B347C46a8fa0c2B59FBc1Ea0d835a99e0155f4",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xaa2d9f923c612c0d121d52a49265f17183385f49bf2622dd1cabb632c1c01ee6",
+          "tokenAddress": "0x45B347C46a8fa0c2B59FBc1Ea0d835a99e0155f4",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -22347,6 +23040,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xcdab9b6594592082dc1331928dd7528c9b7d586be7ae7c782f19e911b040e933",
+          "tokenAddress": "0xA612aF42c8560f500202B4da1a60BD703E9411dE",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xcdab9b6594592082dc1331928dd7528c9b7d586be7ae7c782f19e911b040e933",
           "tokenAddress": "0xA612aF42c8560f500202B4da1a60BD703E9411dE",
           "decimals": 18,
@@ -22551,6 +23251,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x834f2ec0800544c0fab95a2e0e73695efce217c7c923763997c1afeb62ec50c7",
+          "tokenAddress": "0xE5f798957CF76A14E5D43613B2d64042cb6f6bcA",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x834f2ec0800544c0fab95a2e0e73695efce217c7c923763997c1afeb62ec50c7",
           "tokenAddress": "0xE5f798957CF76A14E5D43613B2d64042cb6f6bcA",
           "decimals": 18,
@@ -23039,6 +23746,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xa6eed400ee08a34a44081dfa726ed66648f68bfb98292d197a177984d81ee5ab",
+          "tokenAddress": "0xB34192205a04193728960AfD5E3Cf5607cfeE30F",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xa6eed400ee08a34a44081dfa726ed66648f68bfb98292d197a177984d81ee5ab",
           "tokenAddress": "0xB34192205a04193728960AfD5E3Cf5607cfeE30F",
           "decimals": 18,
@@ -24015,6 +24729,13 @@
           "tokenAddress": "0xF659A577B56A8D5d124ac740670429AbEE9160C4",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x983a6a7dd823f919a0ac3fb4ab4f3de8fd1a174184c33e4dec2ad664b8807396",
+          "tokenAddress": "0xF659A577B56A8D5d124ac740670429AbEE9160C4",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -24280,6 +25001,13 @@
           "tokenId": "0x21323c68127eca5c087db05fe60352da0194c2956963a0081fce3f8264aa75cb",
           "tokenAddress": "0x9471C33f978A02B12CC81855D6F959484bf4924E",
           "decimals": null,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x21323c68127eca5c087db05fe60352da0194c2956963a0081fce3f8264aa75cb",
+          "tokenAddress": "0xa75868A530C5A3E717E25a092fd00339F83D64b7",
+          "decimals": 18,
           "trackSupply": false
         }
       ]
@@ -25960,6 +26688,13 @@
           "tokenAddress": "0x93c8521eF8CA4c1e8FDf8895a0C52199aaf05161",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9773ef368b77cec665537f45055ffd16bfa9863ebc6926f0c040409eaeb4b256",
+          "tokenAddress": "0x93c8521eF8CA4c1e8FDf8895a0C52199aaf05161",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -26132,6 +26867,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0x91453b0b18fd2f105bd23cb0d81f9850be0db5de2bf9a4408fb8b262ffefe5bc",
+          "tokenAddress": "0xc5059bE1D6E9944AC70AEaF813CbE51f7C38f56c",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x91453b0b18fd2f105bd23cb0d81f9850be0db5de2bf9a4408fb8b262ffefe5bc",
           "tokenAddress": "0xc5059bE1D6E9944AC70AEaF813CbE51f7C38f56c",
           "decimals": 18,
@@ -26723,6 +27465,13 @@
       "chains": [
         {
           "axelarChainId": "Fantom",
+          "tokenId": "0xe5cc9772ead43c030b770ab87a0c749cf2000e89b4807596efae346f610bc0c9",
+          "tokenAddress": "0x35ef29b6f4dc56D548346a1C9F1106F5AD744A39",
+          "decimals": 9,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xe5cc9772ead43c030b770ab87a0c749cf2000e89b4807596efae346f610bc0c9",
           "tokenAddress": "0x35ef29b6f4dc56D548346a1C9F1106F5AD744A39",
           "decimals": 9,
@@ -29478,6 +30227,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x6eafa00e72295ff968e65fc1edd64394e4adb1b47c9bb1db9ffedfe839e39105",
+          "tokenAddress": "0xbC0540cE1e6467C4117033E71803eCd481B17432",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x6eafa00e72295ff968e65fc1edd64394e4adb1b47c9bb1db9ffedfe839e39105",
           "tokenAddress": "0xbC0540cE1e6467C4117033E71803eCd481B17432",
           "decimals": 18,
@@ -33089,6 +33845,13 @@
           "tokenAddress": "0xEaD52ffa84Ac79156D18383dD689d9E9C17d1f7D",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x7e4087415b5ab47d5d9c5bb8994938e52b6a6fc90f2978f18ac9843ce9251699",
+          "tokenAddress": "0xEaD52ffa84Ac79156D18383dD689d9E9C17d1f7D",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -34894,6 +35657,13 @@
           "tokenId": "0xc53738d9476c35f1f3f853a7a3c9a2396a0caca0c4839b87380148ce47dbfc57",
           "tokenAddress": "0xc6a07d9c83C48e5Cc0f350cbF9737e07ee963C4F",
           "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xc53738d9476c35f1f3f853a7a3c9a2396a0caca0c4839b87380148ce47dbfc57",
+          "tokenAddress": "0x2FB9608c4D1c736760a63583275Ab1Dc60aF4064",
+          "decimals": 9,
           "trackSupply": false
         }
       ]
@@ -43858,6 +44628,13 @@
           "tokenAddress": "0x24AfbEa675b7c6e74D7c3D085dBB62a60568388c",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9bdb4e41ee77a52fa71e4824a353befb08ea1d8953251de704d0c18374da2f9d",
+          "tokenAddress": "0x24AfbEa675b7c6e74D7c3D085dBB62a60568388c",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -43876,6 +44653,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x6a862593421fac541c123577ef1346067cce0938c5e519b14941a3ff76ffa66c",
+          "tokenAddress": "0x6C307Af48b026819121AdEDfA6eD878F69FA48E9",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x6a862593421fac541c123577ef1346067cce0938c5e519b14941a3ff76ffa66c",
           "tokenAddress": "0x6C307Af48b026819121AdEDfA6eD878F69FA48E9",
           "decimals": 18,
@@ -44121,6 +44905,13 @@
       "chains": [
         {
           "axelarChainId": "blast-sepolia",
+          "tokenId": "0x7b67cc25339b7672cf91a3f00e2668346d148ada6b41e2fe3d8f4083222fe75b",
+          "tokenAddress": "0xC1f27617CfB42914Db6D188f2E99Ace5CD2eD9bc",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x7b67cc25339b7672cf91a3f00e2668346d148ada6b41e2fe3d8f4083222fe75b",
           "tokenAddress": "0xC1f27617CfB42914Db6D188f2E99Ace5CD2eD9bc",
           "decimals": 18,
@@ -44840,6 +45631,13 @@
           "tokenAddress": "0x91739B0f21B3Dfb673A6789aB973A022D7852f8a",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xec65f565f7ee238c1b64072747562b71df09aa4565650f898fd8a99c1d779692",
+          "tokenAddress": "0x91739B0f21B3Dfb673A6789aB973A022D7852f8a",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -45103,6 +45901,13 @@
           "tokenAddress": "0xd41F3BcB494053fD2a5c49F686AA0E6A0712968b",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x07d06a532512650b5e79af8ef70716843abab61bdacf84d33619c247665ad1fc",
+          "tokenAddress": "0xd41F3BcB494053fD2a5c49F686AA0E6A0712968b",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -45286,6 +46091,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x93efbb8f5e66b605c48f5be347e19a8e748d1f0fe10cc819533a3ffda1d22efc",
+          "tokenAddress": "0xcAed8a75AfB4205913aa567F05086056caA4786e",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x93efbb8f5e66b605c48f5be347e19a8e748d1f0fe10cc819533a3ffda1d22efc",
           "tokenAddress": "0xcAed8a75AfB4205913aa567F05086056caA4786e",
           "decimals": 18,
@@ -45594,6 +46406,13 @@
           "tokenAddress": "0x572Eca0EE4944690D6571CFe3ee92d1142564043",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa527a51d82ca39380a2c58ee83231d7be9c297b7fb8991d43d1bf97dd358c7fb",
+          "tokenAddress": "0x572Eca0EE4944690D6571CFe3ee92d1142564043",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -45612,6 +46431,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x466491514bfc65d97a88348cb5c4eb982c738a55045dd485282a20bf268e45cb",
+          "tokenAddress": "0xF73B4c3e57E34d0A9Da28F767fe7d39E79Bbe606",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x466491514bfc65d97a88348cb5c4eb982c738a55045dd485282a20bf268e45cb",
           "tokenAddress": "0xF73B4c3e57E34d0A9Da28F767fe7d39E79Bbe606",
           "decimals": 18,
@@ -45682,6 +46508,13 @@
           "tokenAddress": "0x3ee4b6d15dF4BF3f224574E74a8E7602C0cC1884",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x947ae22b87b40da0620ca91930c065bb7d3b712992f5c7fcfd08240c1fb22474",
+          "tokenAddress": "0x3ee4b6d15dF4BF3f224574E74a8E7602C0cC1884",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -45707,6 +46540,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xe9c5e5182379d9c78f90022379884492504b7bfda69fa36ff4b3ce53eb0663a0",
+          "tokenAddress": "0x020B19873594e045796f490D72bFb5189783c16C",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xe9c5e5182379d9c78f90022379884492504b7bfda69fa36ff4b3ce53eb0663a0",
           "tokenAddress": "0x020B19873594e045796f490D72bFb5189783c16C",
           "decimals": 18,
@@ -45774,6 +46614,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xe0801e8fe0531ffe2c33582741ece99da6e5087958092fcfc9a3d0d3470641c6",
+          "tokenAddress": "0xf262fA8259D29A5DdbA50257b08A45BD8fFB34fA",
+          "decimals": 7,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xe0801e8fe0531ffe2c33582741ece99da6e5087958092fcfc9a3d0d3470641c6",
           "tokenAddress": "0xf262fA8259D29A5DdbA50257b08A45BD8fFB34fA",
           "decimals": 7,
@@ -45908,6 +46755,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0x6520f7c3b8f61530308cdffb7cb758ce4a82c10f6a4edaa44bbee964e8c2a5d3",
+          "tokenAddress": "0x98bf68B0397ef08c6722F0aaDc563Ddd14da10EB",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x6520f7c3b8f61530308cdffb7cb758ce4a82c10f6a4edaa44bbee964e8c2a5d3",
           "tokenAddress": "0x98bf68B0397ef08c6722F0aaDc563Ddd14da10EB",
           "decimals": 18,
@@ -46704,6 +47558,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0x1b17f7f65c82de01a3e571472a4bfe69ed73ad43a56a084ea52cad06f2c98377",
+          "tokenAddress": "0xc9829026CAAD4cD39a5a98596DA1fEa05e7a6aFB",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x1b17f7f65c82de01a3e571472a4bfe69ed73ad43a56a084ea52cad06f2c98377",
           "tokenAddress": "0xc9829026CAAD4cD39a5a98596DA1fEa05e7a6aFB",
           "decimals": 18,
@@ -48330,6 +49191,13 @@
           "tokenAddress": "0x2Ee4BB986EDE7BaBf50BAdaB77943Dd2A9481e41",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xe2f18a2412978c0cbb834e4d8e79963a153f29902c027084344bcbcf4dc6b107",
+          "tokenAddress": "0x77093e4ccE3b8fB65721806EB367fdd765104aE0",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -48751,6 +49619,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xf5a13fde41aa0217ae0cecd0e9de5b1d7eefc19d90a2fb8a9ad2bb400d3e3197",
+          "tokenAddress": "0xe32173a23afC2a1D54adc9d119E82022e2e757D1",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0xf5a13fde41aa0217ae0cecd0e9de5b1d7eefc19d90a2fb8a9ad2bb400d3e3197",
           "tokenAddress": "0xe32173a23afC2a1D54adc9d119E82022e2e757D1",
           "decimals": 6,
@@ -53425,6 +54300,13 @@
           "tokenAddress": "0x9a76aa5fE096Be1C1845e03FfA17311f40c12e84",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x494dfb71f4e25158f34172fca3e39ce47c634d60e368c30968ff53ec284747b5",
+          "tokenAddress": "0x9a76aa5fE096Be1C1845e03FfA17311f40c12e84",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -55177,6 +56059,13 @@
       "chains": [
         {
           "axelarChainId": "binance",
+          "tokenId": "0x4b9cdd4e098cd078b4ed0164fa2ab47225c92d33d98aa86125752a82ef0f8ccd",
+          "tokenAddress": "0x708D1D5DFa146772Ae6c4EE4e4Da9ef8352E251A",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x4b9cdd4e098cd078b4ed0164fa2ab47225c92d33d98aa86125752a82ef0f8ccd",
           "tokenAddress": "0x708D1D5DFa146772Ae6c4EE4e4Da9ef8352E251A",
           "decimals": 18,
@@ -57295,6 +58184,1086 @@
           "tokenId": "0x5a482747c9ec017a79049622f29da25b498a5570558881125c78ad8833105d24",
           "tokenAddress": "0x80288bcC567de55fc13a2dAA2650E8b59eE48904",
           "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x514392e567e0ada80fbf704b95c530fc93ff739db938f6f08b772903114b95f1": {
+      "tokenId": "0x514392e567e0ada80fbf704b95c530fc93ff739db938f6f08b772903114b95f1",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 10,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x514392e567e0ada80fbf704b95c530fc93ff739db938f6f08b772903114b95f1",
+          "tokenAddress": "0xA8E12325A0CE45182D00dF9Ea9B1b2C9fe665c13",
+          "decimals": 10,
+          "trackSupply": null
+        }
+      ]
+    },
+    "0xb6e0332074d887544460ca35cb60865d8edd0bdb16f9e93e52c1328594bdd4c9": {
+      "tokenId": "0xb6e0332074d887544460ca35cb60865d8edd0bdb16f9e93e52c1328594bdd4c9",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xb6e0332074d887544460ca35cb60865d8edd0bdb16f9e93e52c1328594bdd4c9",
+          "tokenAddress": "0x50320c6b3E971cEb0f6E756E5577b2514bb43E9D",
+          "decimals": 18,
+          "trackSupply": null
+        }
+      ]
+    },
+    "0x84b39945c5bd635703be51075f6b99cd0996395bb84e3b2c5f7bf7997322df3f": {
+      "tokenId": "0x84b39945c5bd635703be51075f6b99cd0996395bb84e3b2c5f7bf7997322df3f",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x84b39945c5bd635703be51075f6b99cd0996395bb84e3b2c5f7bf7997322df3f",
+          "tokenAddress": "0x8835C64b9A11ab03282370Ef9885428b5fA4Bb52",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x230bcea89a67c733efd9dbea5821aa87f16bfd6f3d6c8083cfbbcee46b93148a": {
+      "tokenId": "0x230bcea89a67c733efd9dbea5821aa87f16bfd6f3d6c8083cfbbcee46b93148a",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x230bcea89a67c733efd9dbea5821aa87f16bfd6f3d6c8083cfbbcee46b93148a",
+          "tokenAddress": "0x984fa7dD9AF877B1dcA69009C98304bfE445F244",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x068574f0c83cb95fb5b68399d10b7173523b241362b2a4b992f6ceef10466c52": {
+      "tokenId": "0x068574f0c83cb95fb5b68399d10b7173523b241362b2a4b992f6ceef10466c52",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x068574f0c83cb95fb5b68399d10b7173523b241362b2a4b992f6ceef10466c52",
+          "tokenAddress": "0xC1754ac2E430856A2BfD333877732f53F1053923",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x4e75400c9fcc11c08742b4c717c5ec593e51bd9b43186f1c3e6a1d675729b80a": {
+      "tokenId": "0x4e75400c9fcc11c08742b4c717c5ec593e51bd9b43186f1c3e6a1d675729b80a",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x4e75400c9fcc11c08742b4c717c5ec593e51bd9b43186f1c3e6a1d675729b80a",
+          "tokenAddress": "0x236a8c4412C2EA713435fdE6ce27d6c1C388Ab6B",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x7f46006def788f6952bd1e019bb1a826a87182853ac5479c86bcf72565102119": {
+      "tokenId": "0x7f46006def788f6952bd1e019bb1a826a87182853ac5479c86bcf72565102119",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x7f46006def788f6952bd1e019bb1a826a87182853ac5479c86bcf72565102119",
+          "tokenAddress": "0x8686468570521bcfA1E4db01b8918d57505A27bf",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8bd50f4ef321f6da9b4ac9e544f397d203e4ca719cab63b26eea01f9a14325c9": {
+      "tokenId": "0x8bd50f4ef321f6da9b4ac9e544f397d203e4ca719cab63b26eea01f9a14325c9",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x8bd50f4ef321f6da9b4ac9e544f397d203e4ca719cab63b26eea01f9a14325c9",
+          "tokenAddress": "0xF0Ee8ab1aDb29A982273D52f9dFfb105cdBb480b",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5b9a5f983f8220aa040c60e3554d77edb21acbdb15067adfac9043010b938cf1": {
+      "tokenId": "0x5b9a5f983f8220aa040c60e3554d77edb21acbdb15067adfac9043010b938cf1",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5b9a5f983f8220aa040c60e3554d77edb21acbdb15067adfac9043010b938cf1",
+          "tokenAddress": "0x9dfA42f265949bDBBaA01a65415bdBfe0128CB41",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x20398e04752b3a3772dfb01738af7cbc378d898c384436ab09a02dbc666aa660": {
+      "tokenId": "0x20398e04752b3a3772dfb01738af7cbc378d898c384436ab09a02dbc666aa660",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x20398e04752b3a3772dfb01738af7cbc378d898c384436ab09a02dbc666aa660",
+          "tokenAddress": "0xa0f8969B4D7C5067Ef5c0B199D9F04e0F571e910",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc55e7bb0153d1f984b8c10262975f07fac6e7d3626aaecad69dcc0202bcd58d4": {
+      "tokenId": "0xc55e7bb0153d1f984b8c10262975f07fac6e7d3626aaecad69dcc0202bcd58d4",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xc55e7bb0153d1f984b8c10262975f07fac6e7d3626aaecad69dcc0202bcd58d4",
+          "tokenAddress": "0x633B3E7BC6611eA019Cb513535e2396Ac1BE50d1",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa1ada2e2f7d8ff3f02222de0bd273e379e8c49849a3ee781e932f7e0b6f41760": {
+      "tokenId": "0xa1ada2e2f7d8ff3f02222de0bd273e379e8c49849a3ee781e932f7e0b6f41760",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa1ada2e2f7d8ff3f02222de0bd273e379e8c49849a3ee781e932f7e0b6f41760",
+          "tokenAddress": "0xb1EA37b50D0067119CC7DAc319331041FA7a43f0",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x4edf321c51dc81f1f5e08bdbcd10fa3ce54faa3fe157617f7d78269d0e830945": {
+      "tokenId": "0x4edf321c51dc81f1f5e08bdbcd10fa3ce54faa3fe157617f7d78269d0e830945",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x4edf321c51dc81f1f5e08bdbcd10fa3ce54faa3fe157617f7d78269d0e830945",
+          "tokenAddress": "0x319B267B4F0fB581A5265CCBCb9C7638911F7Bc9",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xbefc3e657a4690d8fb878b9eb39588e3b9126d71de59efcb8160256b093d801e": {
+      "tokenId": "0xbefc3e657a4690d8fb878b9eb39588e3b9126d71de59efcb8160256b093d801e",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xbefc3e657a4690d8fb878b9eb39588e3b9126d71de59efcb8160256b093d801e",
+          "tokenAddress": "0xc0236CE113c99E933ab8e6Cd4Fa3BfC75F1ca443",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xcba4ff2c6bf1894b37b3e15f861f156d0226b4ee5343c82280d1120f5bf3c5e6": {
+      "tokenId": "0xcba4ff2c6bf1894b37b3e15f861f156d0226b4ee5343c82280d1120f5bf3c5e6",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xcba4ff2c6bf1894b37b3e15f861f156d0226b4ee5343c82280d1120f5bf3c5e6",
+          "tokenAddress": "0x2733ed67685480708eAa1Ce88bD90b16BE18A56A",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa2aac0848c8b7c62e231d03cf6456c3f55370913d0d027a6d75a17922dcc013c": {
+      "tokenId": "0xa2aac0848c8b7c62e231d03cf6456c3f55370913d0d027a6d75a17922dcc013c",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa2aac0848c8b7c62e231d03cf6456c3f55370913d0d027a6d75a17922dcc013c",
+          "tokenAddress": "0x6127246665c0021d3d7237b153AF7E963A7254b8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xafaa610348597f02812b8d669177d72bc20a7ec04aea8acd4f0834dea82428a0": {
+      "tokenId": "0xafaa610348597f02812b8d669177d72bc20a7ec04aea8acd4f0834dea82428a0",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xafaa610348597f02812b8d669177d72bc20a7ec04aea8acd4f0834dea82428a0",
+          "tokenAddress": "0x3881395AF28F60A962dd14Da5946FdEc39F2E2B0",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xfabf69f6ba6dce372cefdeee2c827ee63721992f88e30e044a3ae9f63fb1733b": {
+      "tokenId": "0xfabf69f6ba6dce372cefdeee2c827ee63721992f88e30e044a3ae9f63fb1733b",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xfabf69f6ba6dce372cefdeee2c827ee63721992f88e30e044a3ae9f63fb1733b",
+          "tokenAddress": "0x4FD8dFefb0525849B1012e2AA950b5DbD1Baae85",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8f221ca713dd5899969b7784fd4a23567d26b87df847ce4e3e1900556395c4cf": {
+      "tokenId": "0x8f221ca713dd5899969b7784fd4a23567d26b87df847ce4e3e1900556395c4cf",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x8f221ca713dd5899969b7784fd4a23567d26b87df847ce4e3e1900556395c4cf",
+          "tokenAddress": "0xf24C3df33bf380a69A75c0f1A0518A1676a2575c",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xe5b6900ca6eeb28529d4551bf53c8aacd893a1d334170e9dc8fd23de37d7a0d6": {
+      "tokenId": "0xe5b6900ca6eeb28529d4551bf53c8aacd893a1d334170e9dc8fd23de37d7a0d6",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xe5b6900ca6eeb28529d4551bf53c8aacd893a1d334170e9dc8fd23de37d7a0d6",
+          "tokenAddress": "0xA2a770D7731EB454Ddc3968a702B56e52a1285DE",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x7545845eb32819acbd2979db3bbea0e636183bfa6f3bc20cc01ea49517ca0664": {
+      "tokenId": "0x7545845eb32819acbd2979db3bbea0e636183bfa6f3bc20cc01ea49517ca0664",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x7545845eb32819acbd2979db3bbea0e636183bfa6f3bc20cc01ea49517ca0664",
+          "tokenAddress": "0x1af3671FDb8c9C3c4bB78Eb13430C0C5618F551B",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xb164d65def0e111451fdf3c788b1112d084b825df0cbd610c9c18179b8ca2c24": {
+      "tokenId": "0xb164d65def0e111451fdf3c788b1112d084b825df0cbd610c9c18179b8ca2c24",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xb164d65def0e111451fdf3c788b1112d084b825df0cbd610c9c18179b8ca2c24",
+          "tokenAddress": "0x248B2E98E7d2510635073492525C4eE1D9Ad020c",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x0d7979a6168ed8f49d017c34e4ebd7de5b83281b2e314940f81d4d8b5db99963": {
+      "tokenId": "0x0d7979a6168ed8f49d017c34e4ebd7de5b83281b2e314940f81d4d8b5db99963",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x0d7979a6168ed8f49d017c34e4ebd7de5b83281b2e314940f81d4d8b5db99963",
+          "tokenAddress": "0x34fBa63A2A33A24335eaB73e5121813956b687D6",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xfdc5ccb9bcb3ceb34ed6b10e977c2407714db9a2fbab356790acb2ce9140cde4": {
+      "tokenId": "0xfdc5ccb9bcb3ceb34ed6b10e977c2407714db9a2fbab356790acb2ce9140cde4",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xfdc5ccb9bcb3ceb34ed6b10e977c2407714db9a2fbab356790acb2ce9140cde4",
+          "tokenAddress": "0x26b9c45B7CC1363D9c7C3E03bFD4b05Bbd8E2F6e",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x618c95118374411b8b806fb99adf6ee33e4437c6c88c202ed94e2b10511c37d3": {
+      "tokenId": "0x618c95118374411b8b806fb99adf6ee33e4437c6c88c202ed94e2b10511c37d3",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x618c95118374411b8b806fb99adf6ee33e4437c6c88c202ed94e2b10511c37d3",
+          "tokenAddress": "0xAC6BD5f910A94ef15Bf589C7e19e333990cd0D59",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x91d8f021a1d0e0a8b384f942add7a33b46ac7ddecab4f5761a1cc03229e57fa6": {
+      "tokenId": "0x91d8f021a1d0e0a8b384f942add7a33b46ac7ddecab4f5761a1cc03229e57fa6",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x91d8f021a1d0e0a8b384f942add7a33b46ac7ddecab4f5761a1cc03229e57fa6",
+          "tokenAddress": "0x4b432560Ca70B09Abf0c97Fda87bcaB444b6892b",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3a48354b84bee471a13d24f378f8f716e8ca4ca18c078cf1679f09984e5dc1fe": {
+      "tokenId": "0x3a48354b84bee471a13d24f378f8f716e8ca4ca18c078cf1679f09984e5dc1fe",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x3a48354b84bee471a13d24f378f8f716e8ca4ca18c078cf1679f09984e5dc1fe",
+          "tokenAddress": "0x1863A6e2c2AD8680ea60635F6Df2DF2b174A2238",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3c9769f7a1730d6150c0f1d3ab3ef8b998f09f9b9427243d8f2f637c15113315": {
+      "tokenId": "0x3c9769f7a1730d6150c0f1d3ab3ef8b998f09f9b9427243d8f2f637c15113315",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x3c9769f7a1730d6150c0f1d3ab3ef8b998f09f9b9427243d8f2f637c15113315",
+          "tokenAddress": "0x465459557eafc41BF275065D9e5BAa779A021fb1",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xbb2012896219f933badb372f6d3fa92a62747e0af8bb208b0a6aac14fb09932d": {
+      "tokenId": "0xbb2012896219f933badb372f6d3fa92a62747e0af8bb208b0a6aac14fb09932d",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xbb2012896219f933badb372f6d3fa92a62747e0af8bb208b0a6aac14fb09932d",
+          "tokenAddress": "0xFFBccE995C2e655e3F958dAb210CfcD6a031f7b5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5b5c0f1702aa10224ead49f9eb43b5a01a7cd01754fc8495c069d69b28b07476": {
+      "tokenId": "0x5b5c0f1702aa10224ead49f9eb43b5a01a7cd01754fc8495c069d69b28b07476",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5b5c0f1702aa10224ead49f9eb43b5a01a7cd01754fc8495c069d69b28b07476",
+          "tokenAddress": "0xEc62b01342c0aB45754491C2a91Ec7794232861e",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xec20557fc4f163ad96318e07a53307dacd771eee495dfafe761e04dc8a8468a8": {
+      "tokenId": "0xec20557fc4f163ad96318e07a53307dacd771eee495dfafe761e04dc8a8468a8",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xec20557fc4f163ad96318e07a53307dacd771eee495dfafe761e04dc8a8468a8",
+          "tokenAddress": "0xA92FdccE6Becc7806403EDD3e24c51b6EE09Dfda",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xdf59ad44a0a7c8b633dfbb7762fb7ce75cc32cd501f7e8ebde9dbe5ec29abfbf": {
+      "tokenId": "0xdf59ad44a0a7c8b633dfbb7762fb7ce75cc32cd501f7e8ebde9dbe5ec29abfbf",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xdf59ad44a0a7c8b633dfbb7762fb7ce75cc32cd501f7e8ebde9dbe5ec29abfbf",
+          "tokenAddress": "0x7Bd22F3B51147E36f0425E261672cdabB3af9c80",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf0325002dac6bb2e47a90482ed6fdfe891b3a815ebc52457071bad021c06fd28": {
+      "tokenId": "0xf0325002dac6bb2e47a90482ed6fdfe891b3a815ebc52457071bad021c06fd28",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf0325002dac6bb2e47a90482ed6fdfe891b3a815ebc52457071bad021c06fd28",
+          "tokenAddress": "0xb2875C49B86a8A4B71244E493E16aA5E51B01580",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x20c1aaf501d19577c86a72419de11a42e4344026f5ba7349005642a105f64d56": {
+      "tokenId": "0x20c1aaf501d19577c86a72419de11a42e4344026f5ba7349005642a105f64d56",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x20c1aaf501d19577c86a72419de11a42e4344026f5ba7349005642a105f64d56",
+          "tokenAddress": "0xd1142039DF0BF6C0499f80B95747C1c8cB8c96B2",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x22f106c3a76497fbf39eaaa46486b04e6f5207167dff4e5030d4aff02b06acf6": {
+      "tokenId": "0x22f106c3a76497fbf39eaaa46486b04e6f5207167dff4e5030d4aff02b06acf6",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x22f106c3a76497fbf39eaaa46486b04e6f5207167dff4e5030d4aff02b06acf6",
+          "tokenAddress": "0x0D62f709F08c64634f1bdec90dB6530FF450985f",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x4ba19eba8e2c37095ddd3945a583c25f89f78c0043e963ab8cefb1c7cf3ea6da": {
+      "tokenId": "0x4ba19eba8e2c37095ddd3945a583c25f89f78c0043e963ab8cefb1c7cf3ea6da",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x4ba19eba8e2c37095ddd3945a583c25f89f78c0043e963ab8cefb1c7cf3ea6da",
+          "tokenAddress": "0x54d9C1999e467d3c7187Aac41a2AdB4373851E84",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xda386cfe9a7068b0876ccef52432e493d3c8b998190baaadde2295a2f33dfb42": {
+      "tokenId": "0xda386cfe9a7068b0876ccef52432e493d3c8b998190baaadde2295a2f33dfb42",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xda386cfe9a7068b0876ccef52432e493d3c8b998190baaadde2295a2f33dfb42",
+          "tokenAddress": "0x7E92938582E3E51Fc3a730Cb3f40fcC04133ccBD",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf690811cd17158c81345645f2ba80d8f791497ad2c2044d23f20dbfe3c0b8932": {
+      "tokenId": "0xf690811cd17158c81345645f2ba80d8f791497ad2c2044d23f20dbfe3c0b8932",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf690811cd17158c81345645f2ba80d8f791497ad2c2044d23f20dbfe3c0b8932",
+          "tokenAddress": "0xA18DdE2b48947C9cB87e67ee891e6CD51bccB818",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xb622342e44072a0b4e9216591336acbef3078e9733ca10e9c3055b42432fe8d4": {
+      "tokenId": "0xb622342e44072a0b4e9216591336acbef3078e9733ca10e9c3055b42432fe8d4",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xb622342e44072a0b4e9216591336acbef3078e9733ca10e9c3055b42432fe8d4",
+          "tokenAddress": "0x3491b4506018211E7136f418358714Cf92BCbb7b",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd40f1ae02e67c6822eb943745d48bd0b7615fa3df0eeb1d9603c04b8e2cc5965": {
+      "tokenId": "0xd40f1ae02e67c6822eb943745d48bd0b7615fa3df0eeb1d9603c04b8e2cc5965",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xd40f1ae02e67c6822eb943745d48bd0b7615fa3df0eeb1d9603c04b8e2cc5965",
+          "tokenAddress": "0x7b5aAcfF93eE4D9cA537795d8F80fecc910011a0",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x010c8705d9619714d4d4cf73f400160a3b55f59e2c42bedd8414ae2765af694d": {
+      "tokenId": "0x010c8705d9619714d4d4cf73f400160a3b55f59e2c42bedd8414ae2765af694d",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x010c8705d9619714d4d4cf73f400160a3b55f59e2c42bedd8414ae2765af694d",
+          "tokenAddress": "0x665Be62486A04359B792fC55250bB3731dA08fC5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc2a9a07e7ba865b5bd65d186ef976ad617d27a14d11a8293a1d3c34bac4929ce": {
+      "tokenId": "0xc2a9a07e7ba865b5bd65d186ef976ad617d27a14d11a8293a1d3c34bac4929ce",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xc2a9a07e7ba865b5bd65d186ef976ad617d27a14d11a8293a1d3c34bac4929ce",
+          "tokenAddress": "0x93dE39e471bd3b7e5D8bb575a12674bCF6087F86",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd54444489e6c8fbec82e0d3259ffbe5c8521fb23b6f039e50cb42146cae330b8": {
+      "tokenId": "0xd54444489e6c8fbec82e0d3259ffbe5c8521fb23b6f039e50cb42146cae330b8",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xd54444489e6c8fbec82e0d3259ffbe5c8521fb23b6f039e50cb42146cae330b8",
+          "tokenAddress": "0xcaC171ea90C12680049c0b5409fef806a0089281",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8fd82a17f22226a369bdae5d2f86cabc1acaf6091be64d2bf3808ef5b6d9f29e": {
+      "tokenId": "0x8fd82a17f22226a369bdae5d2f86cabc1acaf6091be64d2bf3808ef5b6d9f29e",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x8fd82a17f22226a369bdae5d2f86cabc1acaf6091be64d2bf3808ef5b6d9f29e",
+          "tokenAddress": "0xE8702da0ED91815FC23Fc44D83027563B55A03e7",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa39a8cb55ef3ad5a3be3c15b7b266fb5df72f2eb9ae198619c8e7bed5b6f20e8": {
+      "tokenId": "0xa39a8cb55ef3ad5a3be3c15b7b266fb5df72f2eb9ae198619c8e7bed5b6f20e8",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa39a8cb55ef3ad5a3be3c15b7b266fb5df72f2eb9ae198619c8e7bed5b6f20e8",
+          "tokenAddress": "0x8D27c266B2cF40Ebfc6c238889e27318921378dc",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x429c08ffa3927e1a787f913bc04e03929324e3c09cea045b93c0fd4b975e9a70": {
+      "tokenId": "0x429c08ffa3927e1a787f913bc04e03929324e3c09cea045b93c0fd4b975e9a70",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x429c08ffa3927e1a787f913bc04e03929324e3c09cea045b93c0fd4b975e9a70",
+          "tokenAddress": "0xf461e0f78080756A5A465BE629E7aC8C90Bd16B0",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x43840db3a5f911546a171429c5a27713f2fd2b7f3944f714dcc59dd848ceaaf3": {
+      "tokenId": "0x43840db3a5f911546a171429c5a27713f2fd2b7f3944f714dcc59dd848ceaaf3",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x43840db3a5f911546a171429c5a27713f2fd2b7f3944f714dcc59dd848ceaaf3",
+          "tokenAddress": "0x718E00eD56bF811965FEf853496C4fF368A2dB93",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x1c43365f43902635aa4249a68737e94d591bb3092673651f0ee8c4b2fe3337d4": {
+      "tokenId": "0x1c43365f43902635aa4249a68737e94d591bb3092673651f0ee8c4b2fe3337d4",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x1c43365f43902635aa4249a68737e94d591bb3092673651f0ee8c4b2fe3337d4",
+          "tokenAddress": "0xcC2cC00E8D420B2B06347555d154B5C07d6515F8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x50036bb459dc427f9befec9d1d0e7cd00fd9d350b4b387d7913571869504fdac": {
+      "tokenId": "0x50036bb459dc427f9befec9d1d0e7cd00fd9d350b4b387d7913571869504fdac",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x50036bb459dc427f9befec9d1d0e7cd00fd9d350b4b387d7913571869504fdac",
+          "tokenAddress": "0x955031CA2E280950604A55C4b8FEe1576fD47e01",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf496288a16a3f00a80f3e25d85f78fe9aea147dd30d21103694869097d2c240c": {
+      "tokenId": "0xf496288a16a3f00a80f3e25d85f78fe9aea147dd30d21103694869097d2c240c",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf496288a16a3f00a80f3e25d85f78fe9aea147dd30d21103694869097d2c240c",
+          "tokenAddress": "0xaaEd0A85B8ED4052352184F5840c184Ee3fA518D",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf63c28b1bcc5e2ef447c008e9df845bb64df62c3016968cfd9c3b7e9c3cdce10": {
+      "tokenId": "0xf63c28b1bcc5e2ef447c008e9df845bb64df62c3016968cfd9c3b7e9c3cdce10",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf63c28b1bcc5e2ef447c008e9df845bb64df62c3016968cfd9c3b7e9c3cdce10",
+          "tokenAddress": "0x8764902335Fabb8A4efA837CA66F2b6b0C42E434",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa396ba1a4a13667f85264d5cc2ae3b4cec074a6b1b134098ca3c92aa080b6c62": {
+      "tokenId": "0xa396ba1a4a13667f85264d5cc2ae3b4cec074a6b1b134098ca3c92aa080b6c62",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa396ba1a4a13667f85264d5cc2ae3b4cec074a6b1b134098ca3c92aa080b6c62",
+          "tokenAddress": "0x71813Ab23fD1F9E061De93773011A08F3f9245Ee",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf46333d36c7eb3d7e52322985290a0bff06f0c1f7392df38f8bd13d2c24d1011": {
+      "tokenId": "0xf46333d36c7eb3d7e52322985290a0bff06f0c1f7392df38f8bd13d2c24d1011",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xf46333d36c7eb3d7e52322985290a0bff06f0c1f7392df38f8bd13d2c24d1011",
+          "tokenAddress": "0x2145F8Db09fA4728AEBcEd2DaBF8B5146C894990",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa2bd4ed1ba00cfc1848d8b032e7dbfd174a00f115767b6f65982e9f6465dae3a": {
+      "tokenId": "0xa2bd4ed1ba00cfc1848d8b032e7dbfd174a00f115767b6f65982e9f6465dae3a",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa2bd4ed1ba00cfc1848d8b032e7dbfd174a00f115767b6f65982e9f6465dae3a",
+          "tokenAddress": "0x0b0DF05dE4D6453a938573EBfc9f3b83895aF8c2",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xfa584048a34a04c0dd6f8b94b2d7156c34fb21ce76e78db2769797be7d80add4": {
+      "tokenId": "0xfa584048a34a04c0dd6f8b94b2d7156c34fb21ce76e78db2769797be7d80add4",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xfa584048a34a04c0dd6f8b94b2d7156c34fb21ce76e78db2769797be7d80add4",
+          "tokenAddress": "0x736fc0E4EcDeF5F39004202a966BEE5cC5e6ba5a",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x1a5b55b058918ea6f26bd3592990d8f1a5939bc72c22d274354664cd7650102d": {
+      "tokenId": "0x1a5b55b058918ea6f26bd3592990d8f1a5939bc72c22d274354664cd7650102d",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x1a5b55b058918ea6f26bd3592990d8f1a5939bc72c22d274354664cd7650102d",
+          "tokenAddress": "0x405CCc5c4dd19c999a55f0AC32F4030a246b5471",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xddbbe4a67d89c66a7b373b20f8dc1abe55a50430f49009b399af92a802676af4": {
+      "tokenId": "0xddbbe4a67d89c66a7b373b20f8dc1abe55a50430f49009b399af92a802676af4",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xddbbe4a67d89c66a7b373b20f8dc1abe55a50430f49009b399af92a802676af4",
+          "tokenAddress": "0xCD2395Bc261f25eD9e63a7b6825b210BCEA1e7F5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x30b5a980a6ac86e2e4fff1094581c59622131d841f2e6a683bc7c811cc111a6f": {
+      "tokenId": "0x30b5a980a6ac86e2e4fff1094581c59622131d841f2e6a683bc7c811cc111a6f",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x30b5a980a6ac86e2e4fff1094581c59622131d841f2e6a683bc7c811cc111a6f",
+          "tokenAddress": "0x433669123c3c4d6173a1e44D9f2Aa2130174d08E",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8ae50f331b850972314c9c9d58624d0991395d32ca0b30fdca29918858199fd0": {
+      "tokenId": "0x8ae50f331b850972314c9c9d58624d0991395d32ca0b30fdca29918858199fd0",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x8ae50f331b850972314c9c9d58624d0991395d32ca0b30fdca29918858199fd0",
+          "tokenAddress": "0x8b57B0281400aC7bd61BcdE05e7cAE1624CD1854",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x9488b797404765a70f1c63b72ce6929fcf9225c564611a16457fb2d767ffaf45": {
+      "tokenId": "0x9488b797404765a70f1c63b72ce6929fcf9225c564611a16457fb2d767ffaf45",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x9488b797404765a70f1c63b72ce6929fcf9225c564611a16457fb2d767ffaf45",
+          "tokenAddress": "0xF13F1bdd6E02ad95cc0f43CD9c3D2F6D186af91e",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xb283607097fa564a66e0ed178c1ad3ce26f3ff194c68c1cc17b98e57b0a828f9": {
+      "tokenId": "0xb283607097fa564a66e0ed178c1ad3ce26f3ff194c68c1cc17b98e57b0a828f9",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xb283607097fa564a66e0ed178c1ad3ce26f3ff194c68c1cc17b98e57b0a828f9",
+          "tokenAddress": "0x147bA8bC389951Df234A4De6c36bD0b76fDEB5DA",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xabb99d13c4796954ce32e2cc9a9df8b76cd97b4222832e0a11ab06c6200ca875": {
+      "tokenId": "0xabb99d13c4796954ce32e2cc9a9df8b76cd97b4222832e0a11ab06c6200ca875",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xabb99d13c4796954ce32e2cc9a9df8b76cd97b4222832e0a11ab06c6200ca875",
+          "tokenAddress": "0x0D78af33C1492c3fFf874bD1c309DAfAD78FB221",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5cb6e5dd260eb0ea71031a55b9edc939ae291966ebdbc30d0a504c49244d99f8": {
+      "tokenId": "0x5cb6e5dd260eb0ea71031a55b9edc939ae291966ebdbc30d0a504c49244d99f8",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5cb6e5dd260eb0ea71031a55b9edc939ae291966ebdbc30d0a504c49244d99f8",
+          "tokenAddress": "0x9d6fe259f1CA2C5AcE2F7B5f630267c78aEC1CD5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd2c83f1e0d12dc9cffd1e44275cd0dbd27271d9e84ee217e5841c8be08f28b4b": {
+      "tokenId": "0xd2c83f1e0d12dc9cffd1e44275cd0dbd27271d9e84ee217e5841c8be08f28b4b",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xd2c83f1e0d12dc9cffd1e44275cd0dbd27271d9e84ee217e5841c8be08f28b4b",
+          "tokenAddress": "0xE518738AAd7cd2ADddeDaeed4B341a6384F29c2b",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc970ea6bfb2ea8717df828e4b425b073ce9016c3458763f2be974f44fdc0f7f7": {
+      "tokenId": "0xc970ea6bfb2ea8717df828e4b425b073ce9016c3458763f2be974f44fdc0f7f7",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xc970ea6bfb2ea8717df828e4b425b073ce9016c3458763f2be974f44fdc0f7f7",
+          "tokenAddress": "0x70Af0bB7b878a171098240990910873570cb79D9",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3c784b76e4c478ae037c7ebed68486a0f17d5547a1fdefece5d960472ede4649": {
+      "tokenId": "0x3c784b76e4c478ae037c7ebed68486a0f17d5547a1fdefece5d960472ede4649",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x3c784b76e4c478ae037c7ebed68486a0f17d5547a1fdefece5d960472ede4649",
+          "tokenAddress": "0xd57c211570281dB4960Cd053256Cd5f10F0fdE65",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5fc0514ec086539ffbe6bebff4efca877e6cfe83d439725de05e3a6636555b5b": {
+      "tokenId": "0x5fc0514ec086539ffbe6bebff4efca877e6cfe83d439725de05e3a6636555b5b",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5fc0514ec086539ffbe6bebff4efca877e6cfe83d439725de05e3a6636555b5b",
+          "tokenAddress": "0x553FC92dA0375CAf97261d3c2D4A5E7FAa2442E7",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa6cfbbbf92cffa61da12c769bb2054a380534eed4e203bbc58636df10714eb96": {
+      "tokenId": "0xa6cfbbbf92cffa61da12c769bb2054a380534eed4e203bbc58636df10714eb96",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xa6cfbbbf92cffa61da12c769bb2054a380534eed4e203bbc58636df10714eb96",
+          "tokenAddress": "0xcC6848F8265Cb8A9e94553956AeF85EA909bE6D7",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x8ff9db4e9f0a5884ed73e61e7d585b61031b7ab77d1b1144760e3d7251b0571b": {
+      "tokenId": "0x8ff9db4e9f0a5884ed73e61e7d585b61031b7ab77d1b1144760e3d7251b0571b",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x8ff9db4e9f0a5884ed73e61e7d585b61031b7ab77d1b1144760e3d7251b0571b",
+          "tokenAddress": "0x96BFcD59c23845da18D1bF0A34404De118BCF5F8",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x74e8e96d98c68952543a04232a043b575336b13a386a8cd53d9b3886b1fd594d": {
+      "tokenId": "0x74e8e96d98c68952543a04232a043b575336b13a386a8cd53d9b3886b1fd594d",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x74e8e96d98c68952543a04232a043b575336b13a386a8cd53d9b3886b1fd594d",
+          "tokenAddress": "0xddBF78a82Fa8083037f65926c0C43e03ce8C4f6e",
+          "decimals": 9,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xde14ab09332bb5fc229a9b81ac8ba9e962a6a6a8777648d56d7fc6229a279833": {
+      "tokenId": "0xde14ab09332bb5fc229a9b81ac8ba9e962a6a6a8777648d56d7fc6229a279833",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xde14ab09332bb5fc229a9b81ac8ba9e962a6a6a8777648d56d7fc6229a279833",
+          "tokenAddress": "0xA2c8A18Ba94b5F94db0956B94B207E3ec14E28E0",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x90783cfe3b04e84999ebfc7b4cba46b0d28cd4f1511399846ad111c2a0545b91": {
+      "tokenId": "0x90783cfe3b04e84999ebfc7b4cba46b0d28cd4f1511399846ad111c2a0545b91",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x90783cfe3b04e84999ebfc7b4cba46b0d28cd4f1511399846ad111c2a0545b91",
+          "tokenAddress": "0x2FB9608c4D1c736760a63583275Ab1Dc60aF4064",
+          "decimals": 9,
           "trackSupply": false
         }
       ]
