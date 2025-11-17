@@ -3,10 +3,11 @@
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
 | **Created By** | @sdavidson1177 <solomon@interoplabs.io> |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>                 |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | -          |
+| **Devnet Amplifier** | Complete              | 2025-11-17 |
 | **Stagenet**         | -                     | -          |
 | **Testnet**          | -                     | -          |
 | **Mainnet**          | -                     | -          |
