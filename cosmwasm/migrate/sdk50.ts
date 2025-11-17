@@ -3,7 +3,7 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command } from 'commander';
 
-import { printInfo, printWarn } from '../../common';
+import { printInfo, printWarn, prompt } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { VERIFIER_CONTRACT_NAME } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
@@ -94,7 +94,8 @@ async function migrateAllVotingVerifiers(
         // Update the codeId in config for this chain
         contractConfig.codeId = codeId;
 
-        const msg = {};
+        // Migration message must be a JSON string, not an object
+        const msg = '{}';
 
         return encodeMigrate(config, {
             ...options,
@@ -116,7 +117,7 @@ async function migrateAllVotingVerifiers(
         deposit: deposit || config.getProposalDepositAmount(),
     };
 
-    if (prompt(`Proceed with migration of ${migrationMessages} voting verifiers?`, yes ? 'y' : '')) {
+    if (prompt(`Proceed with migration of ${migrationMessages.length} voting verifier(s)?`, yes)) {
         return;
     }
 
