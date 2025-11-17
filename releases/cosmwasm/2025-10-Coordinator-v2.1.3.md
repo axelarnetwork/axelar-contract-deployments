@@ -8,7 +8,7 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Complete              | 2025-11-17 |
-| **Stagenet**         | -                     | -          |
+| **Stagenet**         | Complete              | 2025-11-17 |
 | **Testnet**          | -                     | -          |
 | **Mainnet**          | -                     | -          |
 
