@@ -100,7 +100,7 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
     > Verification is **only possible in mainnet**. If deploying for test environments you can skip this step.
 
     ```bash
-    anchor verify -p [axelar_solana_program_name] --provider.cluster $CLUSTER $(solana address -k $PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
+    anchor verify -p [solana_axelar_program_name] --provider.cluster $CLUSTER $(solana address -k $PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
     ```
 
 ## Checklist
