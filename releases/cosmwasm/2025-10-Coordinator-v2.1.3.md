@@ -3,13 +3,14 @@
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
 | **Created By** | @sdavidson1177 <solomon@interoplabs.io>         |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>                 |
 
-| **Network**          | **Deployment Status** | **Date**   | **Coordinator** |
-| -------------------- | --------------------- | ---------- | --------------- |
-| **Devnet Amplifier** | -                     | -          | -               |
-| **Stagenet**         | -                     | -          | -               |
-| **Testnet**          | -                     | -          | -               |
-| **Mainnet**          | -                     | -          | -               |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Complete              | 2025-11-17 |
+| **Stagenet**         | Complete              | 2025-11-17 |
+| **Testnet**          | -                     | -          |
+| **Mainnet**          | -                     | -          |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.3)
