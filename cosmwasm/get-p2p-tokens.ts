@@ -161,17 +161,19 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
 
         // Find eventsLenght for the given RPC
         let eventsLength = 100000;
+        let error = null;
         while (eventsLength > 0) {
             try {
                 await its.queryFilter(its.filters.TokenManagerDeployed(), 1, eventsLength);
             } catch (e) {
+                error = e;
                 eventsLength = Math.floor(eventsLength / 2);
                 continue;
             }
             break;
         }
         if (eventsLength === 0) {
-            printError(`Events length not found for ${chain.axelarId}`);
+            printError(`Events length not found for ${chain.axelarId}: ${error}`);
             return;
         }
         printInfo(`Events length found for ${chain.axelarId}: ${eventsLength}`);
