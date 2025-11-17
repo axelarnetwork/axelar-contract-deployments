@@ -2,8 +2,8 @@
   "chains": {
     "ethereum-sepolia": {
       "start": 0,
-      "end": 9647867,
-      "max": 9647867,
+      "end": 9648156,
+      "max": 9648156,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
@@ -11,8 +11,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 47777170,
-      "max": 47777170,
+      "end": 47779635,
+      "max": 47779635,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax-test.network/ext/bc/C/rpc"
@@ -20,8 +20,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 71976835,
-      "max": 71976835,
+      "end": 71976889,
+      "max": 71976889,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.fantom.network"
@@ -29,26 +29,26 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 1637508,
-      "max": 14277283,
-      "alreadyProcessedPercentage": "11.47",
+      "end": 3906872,
+      "max": 14277605,
+      "alreadyProcessedPercentage": "27.36",
       "rpcs": [
         "https://rpc.api.moonbase.moonbeam.network"
       ]
     },
     "binance": {
       "start": 0,
-      "end": 43314604,
-      "max": 73262790,
-      "alreadyProcessedPercentage": "59.12",
+      "end": 73271053,
+      "max": 73271053,
+      "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://bsc-prebsc-dataseed.bnbchain.org"
       ]
     },
     "kava": {
       "start": 0,
-      "end": 20712237,
-      "max": 20712237,
+      "end": 20712985,
+      "max": 20712985,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.testnet.kava.io"
@@ -65,8 +65,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 14959075,
-      "max": 14959075,
+      "end": 14959934,
+      "max": 14959934,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rpc.scroll.io"
@@ -74,8 +74,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 32192787,
-      "max": 32192787,
+      "end": 32194663,
+      "max": 32194663,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.immutable.com"
@@ -83,8 +83,8 @@
     },
     "arbitrum-sepolia": {
       "start": 0,
-      "end": 216120368,
-      "max": 216120368,
+      "end": 216134985,
+      "max": 216134985,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rollup.arbitrum.io/rpc"
@@ -101,8 +101,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 1457411,
-      "max": 1457411,
+      "end": 1459287,
+      "max": 1459287,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.frax.com"
@@ -110,8 +110,8 @@
     },
     "optimism-sepolia": {
       "start": 0,
-      "end": 35786411,
-      "max": 35786411,
+      "end": 35788287,
+      "max": 35788287,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"
@@ -119,8 +119,8 @@
     },
     "base-sepolia": {
       "start": 0,
-      "end": 33803537,
-      "max": 33803537,
+      "end": 33805413,
+      "max": 33805413,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.base.org"
@@ -128,8 +128,8 @@
     },
     "blast-sepolia": {
       "start": 0,
-      "end": 29344336,
-      "max": 29344336,
+      "end": 29346212,
+      "max": 29346212,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://blast-sepolia.drpc.org"
@@ -137,8 +137,8 @@
     },
     "mantle-sepolia": {
       "start": 0,
-      "end": 30915346,
-      "max": 30915346,
+      "end": 30917220,
+      "max": 30917220,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.mantle.xyz"
@@ -146,8 +146,8 @@
     },
     "polygon-sepolia": {
       "start": 0,
-      "end": 29158681,
-      "max": 29158681,
+      "end": 29160557,
+      "max": 29160557,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc-amoy.polygon.technology/"
@@ -155,8 +155,8 @@
     },
     "linea-sepolia": {
       "start": 0,
-      "end": 20847172,
-      "max": 20847172,
+      "end": 20849048,
+      "max": 20849048,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.linea.build"
@@ -257,6 +257,13 @@
         },
         {
           "axelarChainId": "blast-sepolia",
+          "tokenId": "0x22b4b26d322209c7eefb3f49135b83868838e7355ff807a28faa55bd7f017aeb",
+          "tokenAddress": "0x3A96872247c4d1aA7E319841948BFcC206A545e9",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x22b4b26d322209c7eefb3f49135b83868838e7355ff807a28faa55bd7f017aeb",
           "tokenAddress": "0x3A96872247c4d1aA7E319841948BFcC206A545e9",
           "decimals": 18,
@@ -394,6 +401,13 @@
         },
         {
           "axelarChainId": "blast-sepolia",
+          "tokenId": "0x03f6647125f4adc199e85b9f186546b85d12336eb3919af2ad4fa35d14d58beb",
+          "tokenAddress": "0xeAB77d1DCEBafaE8b651F8e5b55043851BE923a9",
+          "decimals": 9,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x03f6647125f4adc199e85b9f186546b85d12336eb3919af2ad4fa35d14d58beb",
           "tokenAddress": "0xeAB77d1DCEBafaE8b651F8e5b55043851BE923a9",
           "decimals": 9,
@@ -706,7 +720,7 @@
     },
     "0x713a92887e000a8f09f483d9e01400efe2f1302868aea771810b93df7822423f": {
       "tokenId": "0x713a92887e000a8f09f483d9e01400efe2f1302868aea771810b93df7822423f",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -779,6 +793,13 @@
           "tokenAddress": "0x0CaB68e360Fd78df29a2C9f8ab0e8FD87808623F",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x713a92887e000a8f09f483d9e01400efe2f1302868aea771810b93df7822423f",
+          "tokenAddress": "0x5A5063a749fCF050CE58Cae6bB76A29bb37BA4Ed",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -853,6 +874,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0x1e410165e9921d849787d966d43e354aceadfc779cf95df275a6726399293136",
+          "tokenAddress": "0x20b93c8a824fE9E8e98B84446478AAaF8C53DbB2",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x1e410165e9921d849787d966d43e354aceadfc779cf95df275a6726399293136",
           "tokenAddress": "0x20b93c8a824fE9E8e98B84446478AAaF8C53DbB2",
           "decimals": 18,
@@ -1038,6 +1066,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0xf1cacbd069ea4b2b6deb690027b37e489f2f0db27c4ed8b3dcd5f638c4e48fc3",
+          "tokenAddress": "0x7278Ab25e1c71d7d4F87B307Dcf2791c2b79F533",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xf1cacbd069ea4b2b6deb690027b37e489f2f0db27c4ed8b3dcd5f638c4e48fc3",
           "tokenAddress": "0x7278Ab25e1c71d7d4F87B307Dcf2791c2b79F533",
           "decimals": 6,
@@ -4533,6 +4568,13 @@
           "tokenAddress": "0xac365CeD0D1E1dCf1389e522E90e6DC3eCe15698",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x2140647e695ea51bc67bc51cc0a0e6e3f364e9d80a89cefea6014e2740b1196c",
+          "tokenAddress": "0xac365CeD0D1E1dCf1389e522E90e6DC3eCe15698",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -4793,7 +4835,7 @@
     },
     "0xf8e77bcc96a561f25dbc3a5e9aeb48134947b4c378c359e98fcfa3ba8a49743a": {
       "tokenId": "0xf8e77bcc96a561f25dbc3a5e9aeb48134947b4c378c359e98fcfa3ba8a49743a",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -4817,6 +4859,13 @@
           "tokenAddress": "0xD04f229434395322463e20a3313e1BD561b198c7",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xf8e77bcc96a561f25dbc3a5e9aeb48134947b4c378c359e98fcfa3ba8a49743a",
+          "tokenAddress": "0x2b840329a02bD34c24904913701a5896b62dBd1A",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -6866,6 +6915,13 @@
           "tokenAddress": "0xdc3DB37f981e9E6b50b0c0EE3F49662F509Aa780",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x7bb89b3a0fae001830c36d4fcc07ff8f5e40d9e8feb8fd6bcd5257cfb91ae2f8",
+          "tokenAddress": "0xdc3DB37f981e9E6b50b0c0EE3F49662F509Aa780",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -6891,6 +6947,13 @@
         },
         {
           "axelarChainId": "optimism-sepolia",
+          "tokenId": "0xf1e8c0ac86e2b47a026b222d78af30d6a7118f672f195ad8c80bbd17b59b970a",
+          "tokenAddress": "0x6A729e37B42fCd1b223fA98efE27b0D31A371786",
+          "decimals": 15,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xf1e8c0ac86e2b47a026b222d78af30d6a7118f672f195ad8c80bbd17b59b970a",
           "tokenAddress": "0x6A729e37B42fCd1b223fA98efE27b0D31A371786",
           "decimals": 15,
@@ -6991,6 +7054,13 @@
           "tokenAddress": "0x2764805B1ccdb250cE129E4f9526a2016ae5effD",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x33950d83f46d12e2bbc238452acb60bfef5fefce39e9b3950f559be379fa4f6c",
+          "tokenAddress": "0x2764805B1ccdb250cE129E4f9526a2016ae5effD",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -7009,6 +7079,13 @@
         },
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x8900498ee61f0ba501630542f253ff73afde2eb71ced9b170656c44178684241",
+          "tokenAddress": "0x43d21c964E20cA9311e8A2aDc0e240a73A4fb8fa",
+          "decimals": 16,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x8900498ee61f0ba501630542f253ff73afde2eb71ced9b170656c44178684241",
           "tokenAddress": "0x43d21c964E20cA9311e8A2aDc0e240a73A4fb8fa",
           "decimals": 16,
@@ -7551,7 +7628,7 @@
     },
     "0x31a7a6b13b402224657c40ad5b80ead16a65ff21bb261315a11743d114f9dce4": {
       "tokenId": "0x31a7a6b13b402224657c40ad5b80ead16a65ff21bb261315a11743d114f9dce4",
-      "originAxelarChainId": "base-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -7568,6 +7645,13 @@
           "tokenAddress": "0x98FC70bDa05F4E2a8C5826889227B0f9D2551586",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x31a7a6b13b402224657c40ad5b80ead16a65ff21bb261315a11743d114f9dce4",
+          "tokenAddress": "0xD83C5a1288F38C57B342EC9A3301BfCE95BE7313",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -7622,6 +7706,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x405a4468b0cf46f5bc3c67bfa2316d33dcaead4195e125da0f8ab70aed437b35",
+          "tokenAddress": "0x9F4360b71Ff69d467B32697822999247aE62e277",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x405a4468b0cf46f5bc3c67bfa2316d33dcaead4195e125da0f8ab70aed437b35",
           "tokenAddress": "0x9F4360b71Ff69d467B32697822999247aE62e277",
           "decimals": 18,
@@ -8324,6 +8415,13 @@
         },
         {
           "axelarChainId": "blast-sepolia",
+          "tokenId": "0x0a53856698c9fc26c2e2974c8ac490ba33c36e7310653fe91be1e67cdeadfeef",
+          "tokenAddress": "0xFB6048b16323Fc09935Cd4357b1CaB34A49c57f2",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x0a53856698c9fc26c2e2974c8ac490ba33c36e7310653fe91be1e67cdeadfeef",
           "tokenAddress": "0xFB6048b16323Fc09935Cd4357b1CaB34A49c57f2",
           "decimals": 18,
@@ -9182,6 +9280,13 @@
           "tokenAddress": "0xdfa813f5C57be5efD5Bf34F74887f5C8A7435db1",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x010b0c4c58326902834f95d8d7efa19fc6566126f8442d652f3fdf47e669dd6b",
+          "tokenAddress": "0xdfa813f5C57be5efD5Bf34F74887f5C8A7435db1",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -9248,6 +9353,13 @@
           "tokenAddress": "0xcE098e7A899c69A590e99a745F3e71FbcA75cc4c",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x688bfbae7e665f7f3af651e634dff5d260b14db11f09011b00c97ef109b8df66",
+          "tokenAddress": "0xcE098e7A899c69A590e99a745F3e71FbcA75cc4c",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -9280,6 +9392,13 @@
         },
         {
           "axelarChainId": "optimism-sepolia",
+          "tokenId": "0x30e85aaecbb7f723dc28e38926dc11f56f7ddcd726dbabf29f7b714dab548f76",
+          "tokenAddress": "0x9Ba7adDc0aDA9c8563DFFE7538dAf3cfF969e684",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x30e85aaecbb7f723dc28e38926dc11f56f7ddcd726dbabf29f7b714dab548f76",
           "tokenAddress": "0x9Ba7adDc0aDA9c8563DFFE7538dAf3cfF969e684",
           "decimals": 18,
@@ -9623,7 +9742,7 @@
     },
     "0x51ab69d8dcac94805b79eb847de70ccc4c27cc736cea62a497adb35ca8b32763": {
       "tokenId": "0x51ab69d8dcac94805b79eb847de70ccc4c27cc736cea62a497adb35ca8b32763",
-      "originAxelarChainId": "base-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -9633,6 +9752,13 @@
           "tokenAddress": "0xfDd85e31376Ec583eBbebc3b550035AE6Ca0eFEB",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x51ab69d8dcac94805b79eb847de70ccc4c27cc736cea62a497adb35ca8b32763",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -9786,6 +9912,13 @@
           "tokenAddress": "0x4Cd31C1dF0960B1ce60af7138282C75051720047",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x686fe445120bd64dc4e500446d6dc097d81e7e8553c5f7a6ed3aa2f492108200",
+          "tokenAddress": "0x4Cd31C1dF0960B1ce60af7138282C75051720047",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -9808,12 +9941,19 @@
           "tokenAddress": "0x8cC84b2Cd327056cfA0496B9f8f701b8ebC69E78",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc9bf67363414d2ed9dd3b7f8129c0fc2db7d71a1c69a545e0d419f3478f640e9",
+          "tokenAddress": "0x8cC84b2Cd327056cfA0496B9f8f701b8ebC69E78",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
     "0x0cfb81813bf589c41e766edb262ac407351e12ea6793305b2ebae722b69ebc25": {
       "tokenId": "0x0cfb81813bf589c41e766edb262ac407351e12ea6793305b2ebae722b69ebc25",
-      "originAxelarChainId": "base-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -9823,6 +9963,13 @@
           "tokenAddress": "0x824cEa5271519F3177D1A613090DE5c8D85Ef44f",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x0cfb81813bf589c41e766edb262ac407351e12ea6793305b2ebae722b69ebc25",
+          "tokenAddress": "0x3EF50BEB9405e73497B5564502a2b3bd58207723",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -9845,6 +9992,13 @@
           "tokenAddress": "0x74679354E7993Eb7Bc694b1Fe943EF4B78f62B42",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xceb4c2abd194433a06d41a7dc3eb78e9c2b2ab3c0042cc134dac6199b80d2390",
+          "tokenAddress": "0x0b9A3B5e0352D4c8192ac3D94ea3FF89981317b0",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -10679,6 +10833,13 @@
           "tokenAddress": "0xa5CA4b1a7B20d709CDA23C30EAB671c69fA682ea",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x8c2d9eb07be9e3f011cb567cc4f037ab5cf5848ca6974af6cea765b4610c6082",
+          "tokenAddress": "0xa5CA4b1a7B20d709CDA23C30EAB671c69fA682ea",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -10745,6 +10906,13 @@
           "tokenAddress": "0xF0D983bE2486429A56D8885C19cDb68a73440962",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x897bfdbb1b73133a8b38d1fcaa5528634e1548ffe6127e205881608d460fac63",
+          "tokenAddress": "0xF0D983bE2486429A56D8885C19cDb68a73440962",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -10763,6 +10931,13 @@
         },
         {
           "axelarChainId": "polygon-sepolia",
+          "tokenId": "0xf1de84b5e244ebd7a1549395b1cbab39f121ffe10c25077812043a4f7f32203b",
+          "tokenAddress": "0x5F6233Fd260577F4a4c93981baF8338250455882",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xf1de84b5e244ebd7a1549395b1cbab39f121ffe10c25077812043a4f7f32203b",
           "tokenAddress": "0x5F6233Fd260577F4a4c93981baF8338250455882",
           "decimals": 18,
@@ -10789,6 +10964,13 @@
           "tokenAddress": "0x9015C8Db97Aac3652cA7805Fcc1F0BCD5667CdEb",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x762a7be42a7c42fe13c2e6711932be47ade28a5392b0edb1026b58d0103b0a68",
+          "tokenAddress": "0x9015C8Db97Aac3652cA7805Fcc1F0BCD5667CdEb",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -10811,6 +10993,13 @@
           "tokenAddress": "0x4BC6102290b1830eEaDD75be3EA4EdD36c775bb0",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xaf0f940be5862e0c1a6770bef37ce16f99fdebd38b35aa337c931b5e90fdaa69",
+          "tokenAddress": "0x4BC6102290b1830eEaDD75be3EA4EdD36c775bb0",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -10822,6 +11011,13 @@
       "chains": [
         {
           "axelarChainId": "base-sepolia",
+          "tokenId": "0x1fa6e18e709200ddd6c7140cae35ffc6633180f0eac9c3734040168a0bcef31f",
+          "tokenAddress": "0x2a7c757a2c80906Ffa0568EC00807b91BB071215",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x1fa6e18e709200ddd6c7140cae35ffc6633180f0eac9c3734040168a0bcef31f",
           "tokenAddress": "0x2a7c757a2c80906Ffa0568EC00807b91BB071215",
           "decimals": 18,
@@ -10848,6 +11044,13 @@
           "tokenAddress": "0x6f7425b34d13Ca506A28B7E4E29C8d0101A9EC09",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x035f985b66e5e32f0d51c0b64c20278f3929242f09bd73e26cb6fecef163176e",
+          "tokenAddress": "0x6f7425b34d13Ca506A28B7E4E29C8d0101A9EC09",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -10866,6 +11069,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x6670a93fbb9d262e2d9c77cdac07bc3896fe86b01240af251ea6c2f258785954",
+          "tokenAddress": "0x2081f80902fc11409D834Ea30e352A7714681D23",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x6670a93fbb9d262e2d9c77cdac07bc3896fe86b01240af251ea6c2f258785954",
           "tokenAddress": "0x2081f80902fc11409D834Ea30e352A7714681D23",
           "decimals": 18,
@@ -10910,6 +11120,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x3cfee691c3fbddfff7a04edd516ee1e1bcb5af3d9ebdfc12a5137ac9cfae1bb7",
+          "tokenAddress": "0x08691ED8C03C1AD82137d6B91a30b36DdCD63332",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x3cfee691c3fbddfff7a04edd516ee1e1bcb5af3d9ebdfc12a5137ac9cfae1bb7",
           "tokenAddress": "0x08691ED8C03C1AD82137d6B91a30b36DdCD63332",
           "decimals": 18,
@@ -11002,6 +11219,13 @@
           "tokenAddress": "0xebCb46E14bCd0F8639A24b32fBC6Db6935F046Fe",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x12695932d205d7247da4cbdc2074da90e22f30d997c0a1401d12fa5e03c8f9d4",
+          "tokenAddress": "0xCE9DFbb7Bb9B54C82A7F01E7E2Bd04e03883A9CE",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -11616,6 +11840,13 @@
           "tokenAddress": "0xdE1cf494a8B1149CB01C51fB6D8f3e54E996aBD9",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb131239df1ec90efafc48e57d4d019f6fd32f0608ce520ad0a08c675e7a08dfd",
+          "tokenAddress": "0xdE1cf494a8B1149CB01C51fB6D8f3e54E996aBD9",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -11655,6 +11886,13 @@
         },
         {
           "axelarChainId": "blast-sepolia",
+          "tokenId": "0x41babb35ea4eb3f91fff96b1a0a9d2efca49c148a8b3e235ddfc6edecaa6e553",
+          "tokenAddress": "0x8EeA00E01FB3319c11ad2dEf5436e6C8b9854B4A",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x41babb35ea4eb3f91fff96b1a0a9d2efca49c148a8b3e235ddfc6edecaa6e553",
           "tokenAddress": "0x8EeA00E01FB3319c11ad2dEf5436e6C8b9854B4A",
           "decimals": 18,
@@ -11731,6 +11969,13 @@
           "tokenAddress": "0x08F77441C0d4F58786365FEfE8CB4Fe4A3Dd8654",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x4e47b005c0e7376145ea1119a8a86e6678d9b022c61230b383a4f1e12c6bd5e9",
+          "tokenAddress": "0x08F77441C0d4F58786365FEfE8CB4Fe4A3Dd8654",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -11763,6 +12008,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x532e0de470d0e976ec5bb7433eddce37114e52cc6f94d296bae3d7f7bb205b19",
+          "tokenAddress": "0x3a8a16efD525807b0fdD499B438A708845A7a0f6",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x532e0de470d0e976ec5bb7433eddce37114e52cc6f94d296bae3d7f7bb205b19",
           "tokenAddress": "0x3a8a16efD525807b0fdD499B438A708845A7a0f6",
           "decimals": 18,
@@ -12079,6 +12331,13 @@
         },
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x573dc5678086de03b384d034cba357be3c78f00a294965f5ad7b2b3f5248ac22",
+          "tokenAddress": "0x8c324F8aAd1F5D53BE95CB86CAbE834dCc195EdC",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x573dc5678086de03b384d034cba357be3c78f00a294965f5ad7b2b3f5248ac22",
           "tokenAddress": "0x8c324F8aAd1F5D53BE95CB86CAbE834dCc195EdC",
           "decimals": 18,
@@ -13084,12 +13343,19 @@
           "tokenAddress": "0xA8fF872082da5d9FAB8C517f8599e06125A4Be32",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe860638c7eeb68161ff0be91f38dec4840d8ce51ad20dcd20f6427de4da22b3a",
+          "tokenAddress": "0xA8fF872082da5d9FAB8C517f8599e06125A4Be32",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
     "0xc4e2eaaf4b88b10101fa01721f7940992a12f7c7e98a2d71bdffaa14be223b16": {
       "tokenId": "0xc4e2eaaf4b88b10101fa01721f7940992a12f7c7e98a2d71bdffaa14be223b16",
-      "originAxelarChainId": "base-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -13099,6 +13365,13 @@
           "tokenAddress": "0x98DfD8c4fDaDd8Bc87221dE753D088B002056913",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc4e2eaaf4b88b10101fa01721f7940992a12f7c7e98a2d71bdffaa14be223b16",
+          "tokenAddress": "0x98DfD8c4fDaDd8Bc87221dE753D088B002056913",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -13110,6 +13383,13 @@
       "chains": [
         {
           "axelarChainId": "base-sepolia",
+          "tokenId": "0xfa7ee8f4c8bd0bd5582653c060d86556effe1e9e854eebdf51eb4376808b4ea1",
+          "tokenAddress": "0xf0d5F0f8F886D83271371c494231E3D86Ab8A75e",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xfa7ee8f4c8bd0bd5582653c060d86556effe1e9e854eebdf51eb4376808b4ea1",
           "tokenAddress": "0xf0d5F0f8F886D83271371c494231E3D86Ab8A75e",
           "decimals": 18,
@@ -25065,6 +25345,13 @@
           "tokenAddress": "0xCe5070Dea7c90281FefeA16623953c0da35aE07b",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb1033a8cab04b9e96dd203b1018657f542f3b1f20df21f6976ed7ef1ed036aaa",
+          "tokenAddress": "0xCe5070Dea7c90281FefeA16623953c0da35aE07b",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -25183,6 +25470,13 @@
           "tokenAddress": "0x784Ce82c70B168703e749B9535Cf2ea73E45Ba9F",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xea2ebb2332b2a1f32dfaa297d2406966b89b7d02312a2e06b0a2b4def9486083",
+          "tokenAddress": "0xe5472EF8b3711DBFda2050355228314CF120c516",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -25203,6 +25497,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0xfa74755604340519e993789df37cdbeeb616085d86eb07209d0409c6f957c4cf",
           "tokenAddress": "0x784Ce82c70B168703e749B9535Cf2ea73E45Ba9F",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xfa74755604340519e993789df37cdbeeb616085d86eb07209d0409c6f957c4cf",
+          "tokenAddress": "0xe5472EF8b3711DBFda2050355228314CF120c516",
           "decimals": 18,
           "trackSupply": false
         }
@@ -25289,6 +25590,13 @@
         },
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x54157ef8a532309925a0df9d819333dbcd59b8f52cc68c331663be642e26042a",
+          "tokenAddress": "0x39A77418ffdf1E564F3F08161402c53611e34c38",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x54157ef8a532309925a0df9d819333dbcd59b8f52cc68c331663be642e26042a",
           "tokenAddress": "0x39A77418ffdf1E564F3F08161402c53611e34c38",
           "decimals": 18,
@@ -26040,7 +26348,7 @@
     },
     "0x30bd5dde75fd78f40b33437a8ff59760eb415a2c6b10650a25109719ae748107": {
       "tokenId": "0x30bd5dde75fd78f40b33437a8ff59760eb415a2c6b10650a25109719ae748107",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -26064,6 +26372,13 @@
           "tokenAddress": "0x9E7C5236d2759386c5CE2c61EfeD0022368bFBF0",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x30bd5dde75fd78f40b33437a8ff59760eb415a2c6b10650a25109719ae748107",
+          "tokenAddress": "0x860585c7a8118D162BcF3F9CbAEd34f3AB5a7979",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -26812,6 +27127,13 @@
           "tokenAddress": "0x8Bd286eCABa3B2C61aB26360C7f4eaDf1D88eD30",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe1c5b328579884ef68842db0e17a3b517097a053f503a302da7a32ea6b704ff0",
+          "tokenAddress": "0x8Bd286eCABa3B2C61aB26360C7f4eaDf1D88eD30",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -26889,6 +27211,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x345404f4026e3a7adc6a5daa550912de29c16f7ff7d44c3abb13d69925467ff0",
+          "tokenAddress": "0x28764f78F7616f7DeEbC818e82c083feb5431278",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x345404f4026e3a7adc6a5daa550912de29c16f7ff7d44c3abb13d69925467ff0",
           "tokenAddress": "0x28764f78F7616f7DeEbC818e82c083feb5431278",
           "decimals": 18,
@@ -28463,6 +28792,13 @@
           "tokenAddress": "0xe961CEcCE8961b1F8Dd204E55CcE0F5d3cb7122f",
           "decimals": 9,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x49aa4ebf42109909aa07356dc0f8d5b11673bc022236016fa1a51f8a4757e0d5",
+          "tokenAddress": "0xe961CEcCE8961b1F8Dd204E55CcE0F5d3cb7122f",
+          "decimals": 9,
+          "trackSupply": true
         }
       ]
     },
@@ -28914,6 +29250,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xa32687bb7d4e38619c15dabaf92274ced2a84686475894ec5f991d3be1d0cf4b",
+          "tokenAddress": "0x25e677d9cFFCFfb98ddb871B35F6a78EF8F4642F",
+          "decimals": 9,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xa32687bb7d4e38619c15dabaf92274ced2a84686475894ec5f991d3be1d0cf4b",
           "tokenAddress": "0x25e677d9cFFCFfb98ddb871B35F6a78EF8F4642F",
           "decimals": 9,
@@ -32001,12 +32344,19 @@
           "tokenAddress": "0xA6E2B4b3E6E58091E40c9EA964aEdcdFd3020313",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x41a2406ec040ae4080992475cf32ea911eff25c539003830169d92eeaf246a24",
+          "tokenAddress": "0xA6E2B4b3E6E58091E40c9EA964aEdcdFd3020313",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
     "0x1e872b349c54e59fc125d309b3f2582350765587bfa07fdd3d0ec2880fa30ece": {
       "tokenId": "0x1e872b349c54e59fc125d309b3f2582350765587bfa07fdd3d0ec2880fa30ece",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -32016,6 +32366,13 @@
           "tokenAddress": "0x3Da4CEA68cBB22595cf5F197Fb27A6f6E0dc4718",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x1e872b349c54e59fc125d309b3f2582350765587bfa07fdd3d0ec2880fa30ece",
+          "tokenAddress": "0xb88be3105A42F8Ab89139a93885fc6e8740CeFC9",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32036,7 +32393,7 @@
     },
     "0x8e53bd818e8a0b1c4e74b1e5c386f71d4b598de16ba1973603f3c74aee73215d": {
       "tokenId": "0x8e53bd818e8a0b1c4e74b1e5c386f71d4b598de16ba1973603f3c74aee73215d",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -32046,6 +32403,13 @@
           "tokenAddress": "0xDfa8143C329281244519Aaa5c497548B7fC105Ea",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x8e53bd818e8a0b1c4e74b1e5c386f71d4b598de16ba1973603f3c74aee73215d",
+          "tokenAddress": "0x4b2F033Ba7285643861a792C16239c8B4e0bA700",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32181,6 +32545,13 @@
           "tokenAddress": "0x080C499750e1e2F255fCe1EC9126db1Cb99eD3D4",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa648dda1c7ff94ccc2ba9fc8075a335990de75d076f6a5b85c28119e97fbab78",
+          "tokenAddress": "0x080C499750e1e2F255fCe1EC9126db1Cb99eD3D4",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32192,6 +32563,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x156e7ff08ac2072677c120accda3011fb618685e169774781984766d8e5234d2",
+          "tokenAddress": "0x798d75f27b0e93D4FEDaDb4563144fAA57AdEE91",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x156e7ff08ac2072677c120accda3011fb618685e169774781984766d8e5234d2",
           "tokenAddress": "0x798d75f27b0e93D4FEDaDb4563144fAA57AdEE91",
           "decimals": 18,
@@ -32256,6 +32634,13 @@
           "tokenAddress": "0x8ae48EcAB1a2719E4423B833Cb9f1ae82b43738C",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x35cd4eb552b569fe791671112ddb5a445ca9f4b3850abf0a15c065a3db4e5687",
+          "tokenAddress": "0x8ae48EcAB1a2719E4423B833Cb9f1ae82b43738C",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -32267,6 +32652,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xbc63ed12860b34cdaa01bf50b7183a4a168d517ed67bc52750b75684d2699dca",
+          "tokenAddress": "0x99970aa2647132E488a46aFe7CCD1a979C79d9c7",
+          "decimals": 0,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xbc63ed12860b34cdaa01bf50b7183a4a168d517ed67bc52750b75684d2699dca",
           "tokenAddress": "0x99970aa2647132E488a46aFe7CCD1a979C79d9c7",
           "decimals": 0,
@@ -32297,6 +32689,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xb8fa59ebefe774c05c3e2f3dcc86b060e3c66ee581a4bb5ee8d7974074417cd1",
+          "tokenAddress": "0x047f14b78D333f199165D2761a0215e51E48D004",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xb8fa59ebefe774c05c3e2f3dcc86b060e3c66ee581a4bb5ee8d7974074417cd1",
           "tokenAddress": "0x047f14b78D333f199165D2761a0215e51E48D004",
           "decimals": 18,
@@ -32420,6 +32819,13 @@
           "tokenAddress": "0x2a38201Def77Cdc07CB9FBBbE1e7C58D147845ab",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc3de8f7e130222b9acdc8e4ffb52d47665d07a5549921a0cb0dfb3750b07d04a",
+          "tokenAddress": "0xFd7deD6f69f4A0219c33843b17F9CEeDdd76B4aC",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32448,6 +32854,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0xf3cef502c3fc4af45521464ec3c3a61d69a29e0f501d5b9e0a8eed87297b04fd",
           "tokenAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+          "decimals": 6,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xf3cef502c3fc4af45521464ec3c3a61d69a29e0f501d5b9e0a8eed87297b04fd",
+          "tokenAddress": "0xa15F294f127DF1829C7285c48BA707c553a09478",
           "decimals": 6,
           "trackSupply": false
         }
@@ -32487,6 +32900,13 @@
           "tokenAddress": "0x4D74FC13E52F86f7EEDD7588dC3D12f135a0433E",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x49132915c2d76ede941ed1f56b6cdd27ff100dd8ce513316f590c5402403a4cd",
+          "tokenAddress": "0x4818E01cF5089113455F7A18DeFBf3bAAe298C15",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32502,6 +32922,13 @@
           "tokenAddress": "0xEf040980D764797d31a8EdEf5685915F5808B086",
           "decimals": null,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc646a78940c4389916ddd59eb93657cab350b264cd7ae55c04136a4dc8f80413",
+          "tokenAddress": "0x4501dc2E5Da9C3c8Eb6A68ecdE7a351229AA3134",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32515,6 +32942,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0x40f3314f7508b6d37f3270c2899610c6814343cd35f275639027497eb184d387",
           "tokenAddress": "0x8442572e07427cB8EC9e40726964afF60f683aB0",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x40f3314f7508b6d37f3270c2899610c6814343cd35f275639027497eb184d387",
+          "tokenAddress": "0xa32E8E15ED816814c8Dfa0B52902Ec8b61F13bB7",
           "decimals": 18,
           "trackSupply": false
         }
@@ -32544,6 +32978,13 @@
           "axelarChainId": "Avalanche",
           "tokenId": "0xde6c61eb699fa48ea516c38319e87f1ae5661dd7d6611e5209d4b995a969e743",
           "tokenAddress": "0xbc1195063CcB60a78Cd7D4d13dadA909cf4Ae265",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xde6c61eb699fa48ea516c38319e87f1ae5661dd7d6611e5209d4b995a969e743",
+          "tokenAddress": "0x3067f7AE9E689D7348353062778561a8D7C9a33e",
           "decimals": 18,
           "trackSupply": false
         }
@@ -32583,6 +33024,13 @@
           "tokenAddress": "0x0ab1763b21d0312f965986167c6797fb195149aC",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa3fa95f90a990429d934a0adf4edcbd90b1da077d4b4653e5e19af47dbda7e56",
+          "tokenAddress": "0x0ab1763b21d0312f965986167c6797fb195149aC",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -32601,6 +33049,13 @@
         },
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xa0f88992682ef152b8290c0427006227c79adc5f0a55afda16ec8a4ec15da5ed",
+          "tokenAddress": "0x6106c0128c9BaED8E3201433dE51b656BD438873",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xa0f88992682ef152b8290c0427006227c79adc5f0a55afda16ec8a4ec15da5ed",
           "tokenAddress": "0x6106c0128c9BaED8E3201433dE51b656BD438873",
           "decimals": 18,
@@ -32750,7 +33205,7 @@
     },
     "0x05e1993f4a09c3bafee1d5095a18c9c0f1fc3e58b0dddf48a7eb23522466e0f0": {
       "tokenId": "0x05e1993f4a09c3bafee1d5095a18c9c0f1fc3e58b0dddf48a7eb23522466e0f0",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -32760,6 +33215,13 @@
           "tokenAddress": "0x0098B3459fDa1ECc82715dA6C7b3848A25760420",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x05e1993f4a09c3bafee1d5095a18c9c0f1fc3e58b0dddf48a7eb23522466e0f0",
+          "tokenAddress": "0x6c68659ef31f1a51635489983f1AaFC98642453b",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -32786,6 +33248,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x3311d3ad12b2a7f74e0670c39d9d9c9fe9d3f8d497b8cfcee73ee4e8c9b2e059",
+          "tokenAddress": "0x5DF8Cc1e7D7240dB4d61e8c11CeB4D5F4236e0DF",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x3311d3ad12b2a7f74e0670c39d9d9c9fe9d3f8d497b8cfcee73ee4e8c9b2e059",
           "tokenAddress": "0x5DF8Cc1e7D7240dB4d61e8c11CeB4D5F4236e0DF",
           "decimals": 18,
@@ -32823,6 +33292,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x0db8a299e48f09abdd39dc1b545b0a7f43b3b3bf2d38a8798e29f0f7dc32d6ed",
+          "tokenAddress": "0x82C40766024Ca047850D1c01370F6a72C1179173",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x0db8a299e48f09abdd39dc1b545b0a7f43b3b3bf2d38a8798e29f0f7dc32d6ed",
           "tokenAddress": "0x82C40766024Ca047850D1c01370F6a72C1179173",
           "decimals": 6,
@@ -32919,6 +33395,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x81f39799dfb3429815082eb001464864b2a69ec86f10f0f7aba3dbcaa2013dfe",
+          "tokenAddress": "0x90d4c28bA8D00727723348a2fC96dEfbA7A60F1D",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x81f39799dfb3429815082eb001464864b2a69ec86f10f0f7aba3dbcaa2013dfe",
           "tokenAddress": "0x90d4c28bA8D00727723348a2fC96dEfbA7A60F1D",
           "decimals": 18,
@@ -33258,6 +33741,13 @@
           "tokenAddress": "0x21044238F5c55a7CD08ee479400AeB91eccB1769",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x0f919f60c78862f330da1abe1b308fba3d996a93a9aedf89da53d4dbe445a10b",
+          "tokenAddress": "0x21044238F5c55a7CD08ee479400AeB91eccB1769",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -33332,6 +33822,13 @@
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6548cf4b3de9ed9de253ecb153f96473e7cb40ec02cbdb303e66e0d5a7e11268",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -33343,6 +33840,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xc3be51935ac4619077ae347c2d844deb4b3a9e81cbd33c942c87efb178db3a7c",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xc3be51935ac4619077ae347c2d844deb4b3a9e81cbd33c942c87efb178db3a7c",
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
@@ -33365,6 +33869,13 @@
         },
         {
           "axelarChainId": "arbitrum-sepolia",
+          "tokenId": "0xd5cc1e008287662f7cf780b18b23fe9662107df4847b9607029b65c0ddbed2d6",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xd5cc1e008287662f7cf780b18b23fe9662107df4847b9607029b65c0ddbed2d6",
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
@@ -33395,6 +33906,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xc9b162ae4bab2847779e6b7a5f9652583a5a86f0586f493b4d5d3eb02f6fe995",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xc9b162ae4bab2847779e6b7a5f9652583a5a86f0586f493b4d5d3eb02f6fe995",
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
@@ -33444,6 +33962,13 @@
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x187743191e34f18ec0d32524d0915f53e28935da4faf051716e7bf82465a5d4a",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -33477,6 +34002,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xff68de9004a8079db3bbb6b604c68dcac55c2eb1228e7e4318037a052f8ccac6",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xff68de9004a8079db3bbb6b604c68dcac55c2eb1228e7e4318037a052f8ccac6",
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
@@ -33541,6 +34073,13 @@
           "tokenAddress": "0x324AF47ADd5692F04ff01ed1487681e239931E62",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x11625e1ff8184efa7a9e43829cf56bbda4ac07fa67e05c409f7048ef0a594dd0",
+          "tokenAddress": "0x3ee69ab455eC8EB86190ab316b979e12efcc467B",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -33556,6 +34095,13 @@
           "tokenAddress": "0x9D0fae8a2e08924295f6445F45C4DBD92a5ecE92",
           "decimals": null,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x02da58d2116773bebabc6ded72e975f7ce1e106c024c0d2b7842756946988071",
+          "tokenAddress": "0x9D0fae8a2e08924295f6445F45C4DBD92a5ecE92",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -33569,6 +34115,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0x6d84bd541ddc06ff829b90d40db57423b7f8c09f10fa635eaf384e66a0403b01",
           "tokenAddress": "0xB2b8EEcbBb398520702B0CC8b1F34B208E355eCd",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6d84bd541ddc06ff829b90d40db57423b7f8c09f10fa635eaf384e66a0403b01",
+          "tokenAddress": "0x45C1FDA5cDF860562B356D7608174c4a4775b02e",
           "decimals": 18,
           "trackSupply": false
         }
@@ -33586,6 +34139,13 @@
           "tokenAddress": "0xbFf75C511B8bD31047d3858D54C0438A7BFdb1AE",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xfe5dfec3999aaba4e40dbdeff4fa06b3e685517a9459c3779f95ad94ccb1934c",
+          "tokenAddress": "0x14d65c8622907B1aD68E72899a7c567e1cE9F2b7",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -33599,6 +34159,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0xa5e51d8675e0a043f79e3666ba1b726a6ca5136e122d0aa841fc53bcc712775f",
           "tokenAddress": "0xbFf75C511B8bD31047d3858D54C0438A7BFdb1AE",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa5e51d8675e0a043f79e3666ba1b726a6ca5136e122d0aa841fc53bcc712775f",
+          "tokenAddress": "0x14d65c8622907B1aD68E72899a7c567e1cE9F2b7",
           "decimals": 18,
           "trackSupply": false
         }
@@ -33686,6 +34253,13 @@
         },
         {
           "axelarChainId": "immutable",
+          "tokenId": "0xa39327ea2229b35783aa9d71104da82910fd5d14d836d9521e6625e702af3294",
+          "tokenAddress": "0x880cB9991217638A948ecd142f958cf680A5B88E",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xa39327ea2229b35783aa9d71104da82910fd5d14d836d9521e6625e702af3294",
           "tokenAddress": "0x880cB9991217638A948ecd142f958cf680A5B88E",
           "decimals": 6,
@@ -34150,7 +34724,7 @@
     },
     "0x304b1453f9cbca88744836699f6991f23285ac299e51ff0790e1d1eb1b869e02": {
       "tokenId": "0x304b1453f9cbca88744836699f6991f23285ac299e51ff0790e1d1eb1b869e02",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -34160,6 +34734,13 @@
           "tokenAddress": "0x86c113E090b6a39eddbaC3aD2545c0af8461Ee55",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x304b1453f9cbca88744836699f6991f23285ac299e51ff0790e1d1eb1b869e02",
+          "tokenAddress": "0x5C96109D6535e8AD49189950aeE836b84A1Bc10B",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -34218,6 +34799,13 @@
           "tokenAddress": "0xB53f3EF94766E7EA606Fa97ca03B3D3718f83a60",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x225944c963633e190c8c9db4f6d5a6d618606d8d0550c6cbef4a4c83ea45c26d",
+          "tokenAddress": "0xB53f3EF94766E7EA606Fa97ca03B3D3718f83a60",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -34270,6 +34858,13 @@
           "tokenAddress": "0x975ECB6a0E1cb54Deb2263cd2d386AB7a71ca8aa",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x4bc240508030854cfe10113dcbea733f1a9d3d023f82523f43e44469883239f9",
+          "tokenAddress": "0xA73FE9Ab36Cec302f187a6289f9Ba4bAD331c577",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -34996,7 +35591,7 @@
     },
     "0xaca4ef468eccf512e4b1bfe2a544908671c9b98900951beb1d145a393d270090": {
       "tokenId": "0xaca4ef468eccf512e4b1bfe2a544908671c9b98900951beb1d145a393d270090",
-      "originAxelarChainId": "immutable",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -35006,6 +35601,13 @@
           "tokenAddress": "0x167Bc149c62D54fB6bd6Beca26A2CbC42A82EDcC",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xaca4ef468eccf512e4b1bfe2a544908671c9b98900951beb1d145a393d270090",
+          "tokenAddress": "0x927042C8Fc096F1af115d527dC5c3E9c58DF3441",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -35017,6 +35619,13 @@
       "chains": [
         {
           "axelarChainId": "immutable",
+          "tokenId": "0x2ab3dc10707af337ac553b96383b5b924e11bbcf99907f42a2db15227848c213",
+          "tokenAddress": "0x00338322FA9ABc838C469BB6Ba5609329737CDc3",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x2ab3dc10707af337ac553b96383b5b924e11bbcf99907f42a2db15227848c213",
           "tokenAddress": "0x00338322FA9ABc838C469BB6Ba5609329737CDc3",
           "decimals": 18,
@@ -35036,6 +35645,13 @@
           "tokenAddress": "0x80CB1dc70e5F87A781F4EDe1a6e201840092108d",
           "decimals": 14,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc2a547854ef0704d2a526cae95df62e59dcc494800c5e12662e57410248d1759",
+          "tokenAddress": "0x5a34547C7A5EbBC5661722aA6c6356ce2B6Ae7db",
+          "decimals": 14,
+          "trackSupply": true
         }
       ]
     },
@@ -35280,6 +35896,13 @@
           "tokenAddress": "0xFd42bfb03212dA7e1A4608a44d7658641D99CF34",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x328a93c6e025c351ff8e8a2616880236c839eea5ec24e6ae6ff22e1305a46f5b",
+          "tokenAddress": "0x8657ffD984603DBA8386efBFBc275209F73A6348",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -36319,6 +36942,13 @@
           "tokenAddress": "0xabb441e77CB3747efE78F11932e5a1F5c220A3BF",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x9f8964861d076d5c3f4b895049b6f43b8144fb9835f590a68c75cc57853f1b7d",
+          "tokenAddress": "0x7234F21A53729c15dBE91eC19C9FbE90875E4BA0",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -36468,6 +37098,13 @@
           "tokenAddress": "0x7B1565466f566BE06b94d757692Ef4Bc20D17925",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x45dc85923673c1d82ddbe0bc8c021374b25cd14b9ba53dd79effec84d628ce85",
+          "tokenAddress": "0x9fc48Ed84E8160Ba8dB45c7Af42a02BF0024F2c4",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -37473,7 +38110,7 @@
     },
     "0xc7db3fcb9d5ca938e93ebabe8640d44ed92f84527f4baead80ead4c0c975943c": {
       "tokenId": "0xc7db3fcb9d5ca938e93ebabe8640d44ed92f84527f4baead80ead4c0c975943c",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -37483,6 +38120,13 @@
           "tokenAddress": "0x2A462B24C973908fC96085Db56043af880Cf80a5",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc7db3fcb9d5ca938e93ebabe8640d44ed92f84527f4baead80ead4c0c975943c",
+          "tokenAddress": "0x797531928bBB99ba324F869fAf10ffD5D09995cC",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -38036,6 +38680,13 @@
           "tokenAddress": "0x33FB69e6b0455116317E2e4fcb5B102d5DEAbF4B",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb658f60746429d362012c16a6db42ab679f068cd6ea3ac614a19219f51193168",
+          "tokenAddress": "0x33FB69e6b0455116317E2e4fcb5B102d5DEAbF4B",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -38266,6 +38917,13 @@
           "tokenAddress": "0xebCb46E14bCd0F8639A24b32fBC6Db6935F046Fe",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x3d56c966824298c14cf05a61871f705e20e243a077791802c86b580eec12b925",
+          "tokenAddress": "0xf428CBA91EBB125fa565e659d2cDDbd63108439A",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -38279,6 +38937,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0xa2b9fec53658947ac2d62fd4d71ebbacff6fa2852d9f3eddee615713511385a9",
           "tokenAddress": "0xebCb46E14bCd0F8639A24b32fBC6Db6935F046Fe",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa2b9fec53658947ac2d62fd4d71ebbacff6fa2852d9f3eddee615713511385a9",
+          "tokenAddress": "0x1f24Df1747C33bEFC8e2Da66fC2Ec30cC47C9a3B",
           "decimals": 18,
           "trackSupply": false
         }
@@ -38296,6 +38961,13 @@
           "tokenAddress": "0xebCb46E14bCd0F8639A24b32fBC6Db6935F046Fe",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x76a26f674cee3b3c9779a8896850540e88facc5beb43a68026acf4060a7f3b12",
+          "tokenAddress": "0x7EAc9a202ce6d6949d11aa171C1D00A45A74eFD8",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -38309,6 +38981,13 @@
           "axelarChainId": "ethereum-sepolia",
           "tokenId": "0xb8840bc6b37581672843b39ec2d3f068805460423efa512af987e510523e7931",
           "tokenAddress": "0xebCb46E14bCd0F8639A24b32fBC6Db6935F046Fe",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb8840bc6b37581672843b39ec2d3f068805460423efa512af987e510523e7931",
+          "tokenAddress": "0xE1B40fC70685B695D5Be753a338E40CCDEC86311",
           "decimals": 18,
           "trackSupply": false
         }
@@ -38482,6 +39161,13 @@
           "tokenAddress": "0xebCb46E14bCd0F8639A24b32fBC6Db6935F046Fe",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xff23548e8e54b66caa33428898f515f54b001aebb1d66ff125b612a3cfbb992d",
+          "tokenAddress": "0x8b34395F583a2069B7c2acAD0C119FF8cb581f50",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -38523,6 +39209,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xc71840c2e47c56e33eee0d9e0f568347ee31b949eed8c1adb5fc35f64c4364fb",
+          "tokenAddress": "0x8D8361EF9c479c88BCCE919eCa23D89C447889eB",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xc71840c2e47c56e33eee0d9e0f568347ee31b949eed8c1adb5fc35f64c4364fb",
           "tokenAddress": "0x8D8361EF9c479c88BCCE919eCa23D89C447889eB",
           "decimals": 18,
@@ -38709,6 +39402,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0xd44e2b9ae108e237d69970d1091d8d4e2ae2aa274ebea422669e95d369edd759",
+          "tokenAddress": "0xF5cd2ee358B7D1e27285a725a8742B82b6cD3cBF",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xd44e2b9ae108e237d69970d1091d8d4e2ae2aa274ebea422669e95d369edd759",
           "tokenAddress": "0xF5cd2ee358B7D1e27285a725a8742B82b6cD3cBF",
           "decimals": 18,
@@ -41068,6 +41768,13 @@
           "tokenAddress": "0xd865E499A63110cbDf35E9765e6e81457526E0fD",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x95509ecb5521dc15eef022604215bdf078ecf534bad9ef1e9417f7102b54d9e3",
+          "tokenAddress": "0xd865E499A63110cbDf35E9765e6e81457526E0fD",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -41205,6 +41912,13 @@
       "chains": [
         {
           "axelarChainId": "ethereum-sepolia",
+          "tokenId": "0x7c8618c00a97be256b39086e53cdbca01bac9a5a879f97a46da435c4936ccd2e",
+          "tokenAddress": "0x5EBcb43308A50aAb9cC67De5d68e487A081F6cB4",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x7c8618c00a97be256b39086e53cdbca01bac9a5a879f97a46da435c4936ccd2e",
           "tokenAddress": "0x5EBcb43308A50aAb9cC67De5d68e487A081F6cB4",
           "decimals": 18,
@@ -41370,6 +42084,13 @@
           "tokenAddress": "0x578eF3A63fFe4CF1dA993Adc82c764953e1998A3",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6e014dc0347c084dd6a431022be1ff8837ab18effda0422fff68a632b741d6e1",
+          "tokenAddress": "0x578eF3A63fFe4CF1dA993Adc82c764953e1998A3",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -41456,7 +42177,7 @@
     },
     "0x368b9c90112345d2481de9f7045f59df061d39f0ec4328cc6ac53a68d228182e": {
       "tokenId": "0x368b9c90112345d2481de9f7045f59df061d39f0ec4328cc6ac53a68d228182e",
-      "originAxelarChainId": "ethereum-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -41473,6 +42194,13 @@
           "tokenAddress": "0x868ACc045692b214db4D34399c703ed6bb8035B6",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x368b9c90112345d2481de9f7045f59df061d39f0ec4328cc6ac53a68d228182e",
+          "tokenAddress": "0x868ACc045692b214db4D34399c703ed6bb8035B6",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42200,7 +42928,7 @@
     },
     "0x1a810b75a0ceb336afdc172e004436d5ccd5973397b3d4d5f7a0033435769958": {
       "tokenId": "0x1a810b75a0ceb336afdc172e004436d5ccd5973397b3d4d5f7a0033435769958",
-      "originAxelarChainId": "polygon-sepolia",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -42210,6 +42938,13 @@
           "tokenAddress": "0x43467520C7830Ea468c98F8452bcCB477be98cDa",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x1a810b75a0ceb336afdc172e004436d5ccd5973397b3d4d5f7a0033435769958",
+          "tokenAddress": "0x1a4aF5520D6155eF38ae91d4e8b71D2e3a8a89C9",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42650,6 +43385,13 @@
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6b3899a92c850571e28dd29852e66c80c1230b5ab9359deb7dc19747c9f4214b",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42663,6 +43405,13 @@
           "axelarChainId": "immutable",
           "tokenId": "0x7b0d646e3445005c3bcc4ed166cd166d1a3b4f94a4993c892404c1589607f595",
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x7b0d646e3445005c3bcc4ed166cd166d1a3b4f94a4993c892404c1589607f595",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
           "decimals": 18,
           "trackSupply": false
         }
@@ -42680,6 +43429,13 @@
           "tokenAddress": "0x87007b985b04E2Df86268E26bBBf5d1EAf952d49",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xbc64679e5fa24873645f7df1ac56d6fdf763c6960615a8d7d98ff93679f7dab0",
+          "tokenAddress": "0x63755D5C52E4246127455ABc60643F66663F7571",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42695,6 +43451,13 @@
           "tokenAddress": "0x669B72702FcbaF3722da8e1484A99ab29192e991",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe9ad7b9e8809f7a2a52d634b659a90910ea777289694dfcfd485738a14f779bb",
+          "tokenAddress": "0x669B72702FcbaF3722da8e1484A99ab29192e991",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -42706,6 +43469,13 @@
       "chains": [
         {
           "axelarChainId": "immutable",
+          "tokenId": "0x16f9d4155ee08c200f410cf25b8ebc0bd03b26d8ac61d8e3f6c3e36fae18748f",
+          "tokenAddress": "0xD2341e19dF231308915c3e43Bc6e9ce8C95dCf4e",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x16f9d4155ee08c200f410cf25b8ebc0bd03b26d8ac61d8e3f6c3e36fae18748f",
           "tokenAddress": "0xD2341e19dF231308915c3e43Bc6e9ce8C95dCf4e",
           "decimals": 18,
@@ -42800,6 +43570,13 @@
           "tokenAddress": "0x667A99F25D890aFcd3dCBb229617Ed785Bee0439",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x3dee925959ca62560d3ed8af21e82732efec866f9a0cfde41091c40238a93ceb",
+          "tokenAddress": "0x667A99F25D890aFcd3dCBb229617Ed785Bee0439",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -42813,6 +43590,13 @@
           "axelarChainId": "immutable",
           "tokenId": "0xbd03d4e001ad1c3820a2dd148750ca24ace7ecace1e5af4cd4edb9949cdbb117",
           "tokenAddress": "0xde46Ab02341B6665Ec175C4EbBE39cB084812034",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xbd03d4e001ad1c3820a2dd148750ca24ace7ecace1e5af4cd4edb9949cdbb117",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
           "decimals": 18,
           "trackSupply": false
         }
@@ -42860,6 +43644,13 @@
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x406e9a84de6e9cda623dd5d7919c71ede09cf3d473e572e97f078f2b4a00080e",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42875,6 +43666,13 @@
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x749cbc1c9b2e896c62dbbbcc6af8f8b2f780d6fa72310a0e5d36664a0a11edb7",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42888,6 +43686,13 @@
           "axelarChainId": "immutable",
           "tokenId": "0x3aaade31c7fb5a07e378a883a05cdcd22e50ea857b50f6b3dd0e350e06035098",
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x3aaade31c7fb5a07e378a883a05cdcd22e50ea857b50f6b3dd0e350e06035098",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
           "decimals": 18,
           "trackSupply": false
         }
@@ -42980,6 +43785,13 @@
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xdaa54c277ed3578cbc9f529e6338641cbda9984baa7ea93a6f3f8b38de596579",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -42995,6 +43807,13 @@
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x66fa3ae6a3e5f4c604357a39ec44cb43c5ab4f17e0865e94e81ae90db3cee69b",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -43008,6 +43827,13 @@
           "axelarChainId": "immutable",
           "tokenId": "0x75d03b02d8bc55d9faa36bc5fc4d31372e4df91bd954eb41ff2cb0181468880b",
           "tokenAddress": "0xbe89Cb4204f196a1fF68BEc6680a136930566f5C",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x75d03b02d8bc55d9faa36bc5fc4d31372e4df91bd954eb41ff2cb0181468880b",
+          "tokenAddress": "0x9DF29EAB710AaD3d92cb4FDF5A322Cd4F070c578",
           "decimals": 18,
           "trackSupply": false
         }
@@ -43181,6 +44007,13 @@
           "tokenAddress": "0xBC44931f30BBA8225E52bACcFF30dA940113a73a",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x2ec5cee0d8848351205055eb933ebe84d3e9a10291523de37b14e4336fdb6688",
+          "tokenAddress": "0xcBB198b76dEC8631a0367B65c94CcD1393B4383F",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -43196,6 +44029,13 @@
           "tokenAddress": "0x1d6ac4E5259c9E2CB70B1e938f401eb3EbD89CFe",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x0fe26335dc3e21246f630e30b463df12dbbaa0b3464043ac22f4ac6e86ef0a40",
+          "tokenAddress": "0x1d6ac4E5259c9E2CB70B1e938f401eb3EbD89CFe",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -43207,6 +44047,13 @@
       "chains": [
         {
           "axelarChainId": "optimism-sepolia",
+          "tokenId": "0xfc924862fe972e28cb7d4e4c631116ecfd433a7ab96e922af184d932c75f9dc3",
+          "tokenAddress": "0xAFc7B35d6Dde5C0417bE8Ef2C648cAE47bE45c18",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xfc924862fe972e28cb7d4e4c631116ecfd433a7ab96e922af184d932c75f9dc3",
           "tokenAddress": "0xAFc7B35d6Dde5C0417bE8Ef2C648cAE47bE45c18",
           "decimals": 18,
@@ -43811,6 +44658,13 @@
       "chains": [
         {
           "axelarChainId": "arbitrum-sepolia",
+          "tokenId": "0x4437cb2c3fa39f5e5496e3292b6393eca99ef1c59dd555ea0c24c3883fab7a8d",
+          "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x4437cb2c3fa39f5e5496e3292b6393eca99ef1c59dd555ea0c24c3883fab7a8d",
           "tokenAddress": "0x419791890a7F02DD6FCEA028d33bA62C9f3cA276",
           "decimals": 18,
@@ -47608,7 +48462,7 @@
     },
     "0x0234d697b7fbc91e19e7e0f46c0d4a5115d528dd93ca9d74cf4f5249ee6bf5b8": {
       "tokenId": "0x0234d697b7fbc91e19e7e0f46c0d4a5115d528dd93ca9d74cf4f5249ee6bf5b8",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 9,
       "tokenType": "interchain",
       "chains": [
@@ -47618,6 +48472,13 @@
           "tokenAddress": "0x47804326Fb66bd4DcE396f16800feFeC6D33CB34",
           "decimals": 9,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x0234d697b7fbc91e19e7e0f46c0d4a5115d528dd93ca9d74cf4f5249ee6bf5b8",
+          "tokenAddress": "0x5bf65Df18EF641F8bF0Bed5138Ee0dE95B4e6701",
+          "decimals": 9,
+          "trackSupply": false
         }
       ]
     },
@@ -47693,6 +48554,13 @@
           "tokenAddress": "0x260b79fcbd9672b416B8e1285f5Cb1833Bd320a9",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x5a629f3f687f935a6fcf92e745c6b65980c409edffefbb9b661038d498779af2",
+          "tokenAddress": "0x9379d492d82211ab8504999Fb8F20a56e7042B22",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -47719,6 +48587,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x5940a6f0e95d624d7b4ae18ad6e00cf7df72fb154e670fc7fbb9839e800ebf9b",
+          "tokenAddress": "0xFB2358e591C90e7ca86cC6A5DB6c737cD54c0c8f",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x5940a6f0e95d624d7b4ae18ad6e00cf7df72fb154e670fc7fbb9839e800ebf9b",
           "tokenAddress": "0xFB2358e591C90e7ca86cC6A5DB6c737cD54c0c8f",
           "decimals": 18,
@@ -47839,6 +48714,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0xd4462733901a0e037b6ec5f855bec5ce4ca21cbfd9ad7bdd809dde0f2c684808",
+          "tokenAddress": "0x3D2aEEE70D5d938D31d23A46d5EA54BaF23839fD",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xd4462733901a0e037b6ec5f855bec5ce4ca21cbfd9ad7bdd809dde0f2c684808",
           "tokenAddress": "0x3D2aEEE70D5d938D31d23A46d5EA54BaF23839fD",
           "decimals": 18,
@@ -48053,6 +48935,13 @@
           "tokenAddress": "0xF616ec47826A6a4639E26427d9Ef7cb2ecFCcdC3",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x7036f9e0d8dd00205fc1401c22891c80fcf511a583b22e21d9cf468c88581c41",
+          "tokenAddress": "0xF616ec47826A6a4639E26427d9Ef7cb2ecFCcdC3",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -48139,6 +49028,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x8085368fa1dff853e6a654321fc4e7ef819118ea73c20497058c895a03c5cf9c",
+          "tokenAddress": "0x4f0F873748072F0A5071230Eb0B143bc19DAdb75",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x8085368fa1dff853e6a654321fc4e7ef819118ea73c20497058c895a03c5cf9c",
           "tokenAddress": "0x4f0F873748072F0A5071230Eb0B143bc19DAdb75",
           "decimals": 18,
@@ -48263,6 +49159,13 @@
           "tokenAddress": "0x3E1EFc8a1AF740B3424Dbbd2b14a967483deaC17",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x37045d260b6f0e99c6ba3cb0756f59540951e448fadf6bfcfd9acac712bc1fe3",
+          "tokenAddress": "0x3E1EFc8a1AF740B3424Dbbd2b14a967483deaC17",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -48283,7 +49186,7 @@
     },
     "0x46883a49f2798ae966b1bb98f1c2d577d6b4edbcd1fca9d0a28cc2a254852f1e": {
       "tokenId": "0x46883a49f2798ae966b1bb98f1c2d577d6b4edbcd1fca9d0a28cc2a254852f1e",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -48293,12 +49196,19 @@
           "tokenAddress": "0x5dcDf836212CAc43dacb81af07fF84D805422f6c",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x46883a49f2798ae966b1bb98f1c2d577d6b4edbcd1fca9d0a28cc2a254852f1e",
+          "tokenAddress": "0x5dcDf836212CAc43dacb81af07fF84D805422f6c",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
     "0x90d04b71cd22ebcf0821ff59dd15d10865bf927ed36f0ad6b8c4a8686f0ffe58": {
       "tokenId": "0x90d04b71cd22ebcf0821ff59dd15d10865bf927ed36f0ad6b8c4a8686f0ffe58",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -48308,6 +49218,13 @@
           "tokenAddress": "0xdDC50B4f520a31490eBcBBfD906cF3c9D2D735f0",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x90d04b71cd22ebcf0821ff59dd15d10865bf927ed36f0ad6b8c4a8686f0ffe58",
+          "tokenAddress": "0x31237275a42f79820D5dCc38a591043ee8342709",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -48336,6 +49253,13 @@
           "axelarChainId": "Avalanche",
           "tokenId": "0xe0898500c75902b24ca99e2bcb77317acfdf01e66b1cacfd1daf75c66ecd8dfb",
           "tokenAddress": "0xA41E40930CBCDB9fcC63A6307199b0EABC33b4A5",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe0898500c75902b24ca99e2bcb77317acfdf01e66b1cacfd1daf75c66ecd8dfb",
+          "tokenAddress": "0x0b769061149B1267e1979C4EA0b57b178dB9a53D",
           "decimals": 18,
           "trackSupply": false
         }
@@ -48383,6 +49307,13 @@
           "tokenAddress": "0xf216128eA8A1EFF4d880E49023efCc2975077C26",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x997c4594216e36357df3f5aefdb2d7d07bf202c64802cb40de9744097de10388",
+          "tokenAddress": "0xf216128eA8A1EFF4d880E49023efCc2975077C26",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -48409,6 +49340,13 @@
       "chains": [
         {
           "axelarChainId": "Avalanche",
+          "tokenId": "0x411f032d737b435fe36ef4266daed638c569c9af772c776fd7f5bc728e35518d",
+          "tokenAddress": "0xD0FeaF1a28b83ce3737BDA7CA1C348219B2654c8",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0x411f032d737b435fe36ef4266daed638c569c9af772c776fd7f5bc728e35518d",
           "tokenAddress": "0xD0FeaF1a28b83ce3737BDA7CA1C348219B2654c8",
           "decimals": 18,
@@ -48713,6 +49651,13 @@
           "tokenAddress": "0x36cb03620604b36B2E0652c6Ab66DA32066bbBc2",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6e799aec80eb8ae898e7f76c658ff0abce97bcb3262b84d6802612db0209e8e4",
+          "tokenAddress": "0x9667e8ea7849d80616F33598974EC791a49b8F9A",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -48733,7 +49678,7 @@
     },
     "0x9b0884930f0497b16dd4504cdcfe0e6fda8c7671494b0dee02a8e7b75eb70947": {
       "tokenId": "0x9b0884930f0497b16dd4504cdcfe0e6fda8c7671494b0dee02a8e7b75eb70947",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -48743,6 +49688,13 @@
           "tokenAddress": "0xF1Eccc78eab6F12A019cbcEbd31373Dd58296ea6",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x9b0884930f0497b16dd4504cdcfe0e6fda8c7671494b0dee02a8e7b75eb70947",
+          "tokenAddress": "0x5c5728e8047B2D9AE8393B237d06BC9E225b4E48",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -50280,12 +51232,19 @@
           "tokenAddress": "0x66e92E590F176EC860A9450f8ef46B17558d8fc5",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x7608481a3522ea81c0c6419e2b17a73ce0f683eeb9351a4892af1132291783ef",
+          "tokenAddress": "0x4f999483e47Be2dFFB55eE31757d94F476a47b90",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
     "0xba04eb3ddd1672d9d6930c6459a6e67691b2a51d7908f583897ed3ccd3a56f1b": {
       "tokenId": "0xba04eb3ddd1672d9d6930c6459a6e67691b2a51d7908f583897ed3ccd3a56f1b",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -50295,12 +51254,19 @@
           "tokenAddress": "0xd7A56620C9DabeeEAbe0F90c800010e8BAE62F10",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xba04eb3ddd1672d9d6930c6459a6e67691b2a51d7908f583897ed3ccd3a56f1b",
+          "tokenAddress": "0x86bF6A161588bf308D600830a58EF69b57B65428",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
     "0xc28a67feacea5d974471d1fd814cad7e584a544b02c95e87e5ff91d7cfebfb76": {
       "tokenId": "0xc28a67feacea5d974471d1fd814cad7e584a544b02c95e87e5ff91d7cfebfb76",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -50310,12 +51276,19 @@
           "tokenAddress": "0xB1069fB88dD50093e1F369ff95B6370d9723C4A1",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc28a67feacea5d974471d1fd814cad7e584a544b02c95e87e5ff91d7cfebfb76",
+          "tokenAddress": "0xE3C4c47685974B704bca0def8edd4898155E2B6e",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
     "0xfed58d68bea3ea518652dec92926a273a9de45c15415e932944570a2a50283c0": {
       "tokenId": "0xfed58d68bea3ea518652dec92926a273a9de45c15415e932944570a2a50283c0",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -50325,6 +51298,13 @@
           "tokenAddress": "0x48E2CFE6A5784Bf8956076BB973aED5776606921",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xfed58d68bea3ea518652dec92926a273a9de45c15415e932944570a2a50283c0",
+          "tokenAddress": "0x4D224153eec106aB73114d5b8365D9AF05c432F1",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -50870,7 +51850,7 @@
     },
     "0xb6430c681b73546d81546246d22bccb76695e749e277c8bb60834a49aa0abd8e": {
       "tokenId": "0xb6430c681b73546d81546246d22bccb76695e749e277c8bb60834a49aa0abd8e",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -50880,12 +51860,19 @@
           "tokenAddress": "0xCF586D4b88D281E0e4a6bBF70835f3226d3eDB52",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb6430c681b73546d81546246d22bccb76695e749e277c8bb60834a49aa0abd8e",
+          "tokenAddress": "0xCF586D4b88D281E0e4a6bBF70835f3226d3eDB52",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
     "0x84411c13890d3f162bfc531e162667c0678680524fe1a672bb092b09de26077b": {
       "tokenId": "0x84411c13890d3f162bfc531e162667c0678680524fe1a672bb092b09de26077b",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -50895,6 +51882,13 @@
           "tokenAddress": "0x7AE1981eb1bb7A4352020cbb3f2c300a68f2b89B",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x84411c13890d3f162bfc531e162667c0678680524fe1a672bb092b09de26077b",
+          "tokenAddress": "0x7AE1981eb1bb7A4352020cbb3f2c300a68f2b89B",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -51245,7 +52239,7 @@
     },
     "0xd84ad0a98fa87c3c2cb4e7526977fdab4f20d89926540d5f39ab432509076838": {
       "tokenId": "0xd84ad0a98fa87c3c2cb4e7526977fdab4f20d89926540d5f39ab432509076838",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "binance",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -51255,6 +52249,13 @@
           "tokenAddress": "0x4c193253D37CC65B4dFC5504c6B8038801694aD1",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xd84ad0a98fa87c3c2cb4e7526977fdab4f20d89926540d5f39ab432509076838",
+          "tokenAddress": "0x4c193253D37CC65B4dFC5504c6B8038801694aD1",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -51390,6 +52391,13 @@
           "tokenAddress": "0x6ce591971F33D5F364FB08993Ec686f7e7668F3b",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe9f5875a2d497d62521d5554f2feb7d003f5b8ca6cdea58fecbe579ee7743f8d",
+          "tokenAddress": "0x67D2a6b8FF0249A784a78e53c2011DB041C37738",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -51418,6 +52426,13 @@
           "axelarChainId": "Avalanche",
           "tokenId": "0x5ae72f44bc9720f3424594d5cb97435b4b3dc27961f9daf695fa5a4b802a7da3",
           "tokenAddress": "0xBf36f41A9c49E689AF79Fb07eB5ea89732B5d17d",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x5ae72f44bc9720f3424594d5cb97435b4b3dc27961f9daf695fa5a4b802a7da3",
+          "tokenAddress": "0x7D6eBC9EC8121eea4c3c2027b075354F18BafC5A",
           "decimals": 18,
           "trackSupply": false
         }
@@ -53474,6 +54489,13 @@
           "tokenAddress": "0x16be488963C7b4CDB4B02c0E3946E06D6ad8172C",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x36bdbf427586900b876b0a402957dbb46c0c9a79173d554cfa14bfc3b590e730",
+          "tokenAddress": "0x22ee1d74349232A51Dd1c45512e98Ed092f72d8F",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
@@ -53487,6 +54509,13 @@
           "axelarChainId": "Avalanche",
           "tokenId": "0xa0e7bce8240ed33b0693f6b4c928895e30213bbdb213f527dda49ad825523b14",
           "tokenAddress": "0x16be488963C7b4CDB4B02c0E3946E06D6ad8172C",
+          "decimals": 18,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa0e7bce8240ed33b0693f6b4c928895e30213bbdb213f527dda49ad825523b14",
+          "tokenAddress": "0x22ee1d74349232A51Dd1c45512e98Ed092f72d8F",
           "decimals": 18,
           "trackSupply": false
         }
@@ -53519,6 +54548,13 @@
           "tokenAddress": "0x868ACc045692b214db4D34399c703ed6bb8035B6",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x77450061fc1ff96d976ac153cc960057d9b7dca60b949b609872ecb8315bc4a5",
+          "tokenAddress": "0x2873A74293e8857a1455898510704c311CF458D9",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -53856,6 +54892,13 @@
           "tokenAddress": "0x30842223c17A8f9d936697D151991B40B573ba79",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb6887c7e1d001c73a56e825a3002278f5157070f6a698d6e9863c2732ae3361d",
+          "tokenAddress": "0xFF7672455e0A73b8f7A1C86890fD1f4cdC95F2fd",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -53886,6 +54929,13 @@
           "tokenAddress": "0x89b5402E11180068C279399Dbc902e6B8C300E3F",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xd61da9ba9aadf81e2b69eb4b8a28f5e84c3007ddfa28035b32e65165deb945a3",
+          "tokenAddress": "0xE598A3704CBCb135791D6907349112ee84D0C739",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -53927,6 +54977,13 @@
       "chains": [
         {
           "axelarChainId": "kava",
+          "tokenId": "0xc4f74632b6eca8f1b0d2063cc4ed7c6bec4ab9dd5776550a6d8e8fd510f2b971",
+          "tokenAddress": "0x3A1Fe0d5b811025e7634E6e738006DA4B82e6E7C",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "binance",
           "tokenId": "0xc4f74632b6eca8f1b0d2063cc4ed7c6bec4ab9dd5776550a6d8e8fd510f2b971",
           "tokenAddress": "0x3A1Fe0d5b811025e7634E6e738006DA4B82e6E7C",
           "decimals": 18,
@@ -55112,6 +56169,1131 @@
           "axelarChainId": "binance",
           "tokenId": "0xeeefcb2f1937fd799cabc13a8f51b62e4f174f767173a89c960ba188aea76786",
           "tokenAddress": "0x63755D5C52E4246127455ABc60643F66663F7571",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xe47f8f6a8a6015d69311ae147db3834da3cfd863c827066f9e0e6b3a77be652b": {
+      "tokenId": "0xe47f8f6a8a6015d69311ae147db3834da3cfd863c827066f9e0e6b3a77be652b",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe47f8f6a8a6015d69311ae147db3834da3cfd863c827066f9e0e6b3a77be652b",
+          "tokenAddress": "0x5F365eA69F1032996d0b890C2AFAA4d380ff46f2",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x515e58c2262c3955d52a5484adb598b21f4d17f7eae929fa2baad57f07023f48": {
+      "tokenId": "0x515e58c2262c3955d52a5484adb598b21f4d17f7eae929fa2baad57f07023f48",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x515e58c2262c3955d52a5484adb598b21f4d17f7eae929fa2baad57f07023f48",
+          "tokenAddress": "0xcBB198b76dEC8631a0367B65c94CcD1393B4383F",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x32870fae2180682594230f9fa84dc5b3b55d27f71d9ffc8dba56c0e5d4b59d43": {
+      "tokenId": "0x32870fae2180682594230f9fa84dc5b3b55d27f71d9ffc8dba56c0e5d4b59d43",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x32870fae2180682594230f9fa84dc5b3b55d27f71d9ffc8dba56c0e5d4b59d43",
+          "tokenAddress": "0x1d6ac4E5259c9E2CB70B1e938f401eb3EbD89CFe",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x59bcb1e891ef04c0a24a89ae9feea0073e3a12c550c538041882fa24974aa09f": {
+      "tokenId": "0x59bcb1e891ef04c0a24a89ae9feea0073e3a12c550c538041882fa24974aa09f",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x59bcb1e891ef04c0a24a89ae9feea0073e3a12c550c538041882fa24974aa09f",
+          "tokenAddress": "0xB222f7A98E7c1453153de55C1D93A2f752FA3E38",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd6d722b788a162b8645d71451c9e379f74e9dbf3a37ab765bf16e2e7f6b7647d": {
+      "tokenId": "0xd6d722b788a162b8645d71451c9e379f74e9dbf3a37ab765bf16e2e7f6b7647d",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xd6d722b788a162b8645d71451c9e379f74e9dbf3a37ab765bf16e2e7f6b7647d",
+          "tokenAddress": "0xBF94816a00d2F12Fc9bca44a690b170d807bC36A",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x91d3d8c5c51820ea9d0a29238374f3de281a3f7db003dbae0a58d5808f3ce0dd": {
+      "tokenId": "0x91d3d8c5c51820ea9d0a29238374f3de281a3f7db003dbae0a58d5808f3ce0dd",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x91d3d8c5c51820ea9d0a29238374f3de281a3f7db003dbae0a58d5808f3ce0dd",
+          "tokenAddress": "0xd6aB71200Ff6998Ab1313ef078675bFFF4e83B7b",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xe090d7fbc026f78cbf42592b964d92901afc6ac56e88ba39d35bf03043abfdf1": {
+      "tokenId": "0xe090d7fbc026f78cbf42592b964d92901afc6ac56e88ba39d35bf03043abfdf1",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xe090d7fbc026f78cbf42592b964d92901afc6ac56e88ba39d35bf03043abfdf1",
+          "tokenAddress": "0x7Bf3571be7361b93486A5a66b4Aa9Af14FA83f87",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa1adb0798115374c9bd1101a0c4e07819260f9a4e4c9a8134eb293190f1b0936": {
+      "tokenId": "0xa1adb0798115374c9bd1101a0c4e07819260f9a4e4c9a8134eb293190f1b0936",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa1adb0798115374c9bd1101a0c4e07819260f9a4e4c9a8134eb293190f1b0936",
+          "tokenAddress": "0x5Ff3044645153ad39c3A3cc77da447B54d29e70d",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x26b9eccefd8de9974f29e79b8017f8ff7341c5e192cf0e0012a7a306b202e603": {
+      "tokenId": "0x26b9eccefd8de9974f29e79b8017f8ff7341c5e192cf0e0012a7a306b202e603",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x26b9eccefd8de9974f29e79b8017f8ff7341c5e192cf0e0012a7a306b202e603",
+          "tokenAddress": "0xBEAb0894bC4d2490Ce00F0f24139248ac89595A6",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xaa0cc8e1c12ab61ce97ab88dea93d71a0ea5b77b0fd438d803d54f6cc25271b6": {
+      "tokenId": "0xaa0cc8e1c12ab61ce97ab88dea93d71a0ea5b77b0fd438d803d54f6cc25271b6",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xaa0cc8e1c12ab61ce97ab88dea93d71a0ea5b77b0fd438d803d54f6cc25271b6",
+          "tokenAddress": "0xc5318649a2607616F7376976A4d5Cb2eB9642aAF",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc2283add02c263ec0b5b345fa750e723aa9482b5901638c965440b17ffe5501d": {
+      "tokenId": "0xc2283add02c263ec0b5b345fa750e723aa9482b5901638c965440b17ffe5501d",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc2283add02c263ec0b5b345fa750e723aa9482b5901638c965440b17ffe5501d",
+          "tokenAddress": "0x1f09AEa7974041Fa78bcB15735143E1e8381661a",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf8e38e57af90a15ab966ed4f96ce9cf6b2023d008b3994180d49fa72280a260f": {
+      "tokenId": "0xf8e38e57af90a15ab966ed4f96ce9cf6b2023d008b3994180d49fa72280a260f",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xf8e38e57af90a15ab966ed4f96ce9cf6b2023d008b3994180d49fa72280a260f",
+          "tokenAddress": "0x4557D9603d9A7dF51304dCa7cca7D42CFe42732B",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x23fb959da4393b33e5d69461c38622899c2a0c0d8aa125dc3784e9109177b0e7": {
+      "tokenId": "0x23fb959da4393b33e5d69461c38622899c2a0c0d8aa125dc3784e9109177b0e7",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x23fb959da4393b33e5d69461c38622899c2a0c0d8aa125dc3784e9109177b0e7",
+          "tokenAddress": "0x977554D912B6bA36520D570aA983a3765D4bB8c9",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x9d6ef1a9fca66944445fb6cf2c8ca109f5422735d6641477d448c570a0cc8a8c": {
+      "tokenId": "0x9d6ef1a9fca66944445fb6cf2c8ca109f5422735d6641477d448c570a0cc8a8c",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x9d6ef1a9fca66944445fb6cf2c8ca109f5422735d6641477d448c570a0cc8a8c",
+          "tokenAddress": "0x71179E896C376d0ABc17B85CB91Da556E65Ff484",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc7552f392247cdf0a78e9981bbed056836b85a41ba52023381b43d9fac6e7b06": {
+      "tokenId": "0xc7552f392247cdf0a78e9981bbed056836b85a41ba52023381b43d9fac6e7b06",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc7552f392247cdf0a78e9981bbed056836b85a41ba52023381b43d9fac6e7b06",
+          "tokenAddress": "0x7D8744AB354BF5C20B0Aa2939BA2Cbd60bB15591",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8b5343841021842e1416bcdb83405bae5ff3a037b2ebf3d6bc72cc21af8bc7e5": {
+      "tokenId": "0x8b5343841021842e1416bcdb83405bae5ff3a037b2ebf3d6bc72cc21af8bc7e5",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x8b5343841021842e1416bcdb83405bae5ff3a037b2ebf3d6bc72cc21af8bc7e5",
+          "tokenAddress": "0x58DF3cF0ABbe6331cD3CADC7Fe8Ccb0a43E38Bd4",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc7085ed8c623c7582c874dbea52d99c0cc676d48a30031c47184afc969f6d8d6": {
+      "tokenId": "0xc7085ed8c623c7582c874dbea52d99c0cc676d48a30031c47184afc969f6d8d6",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc7085ed8c623c7582c874dbea52d99c0cc676d48a30031c47184afc969f6d8d6",
+          "tokenAddress": "0xE0B27b2eC91470867910a5BCAD9438ffc07cF452",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x2e2a534e3f265bd93617e5cbae9f8b2201edf0b8f1a6996e6b88a5425772a352": {
+      "tokenId": "0x2e2a534e3f265bd93617e5cbae9f8b2201edf0b8f1a6996e6b88a5425772a352",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x2e2a534e3f265bd93617e5cbae9f8b2201edf0b8f1a6996e6b88a5425772a352",
+          "tokenAddress": "0xb519F51c610Fc649a875A09422F4eF6bBDD28314",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x396a29827d32dfbb888596028767ec644769775b318eab0c21c527f5e50d9184": {
+      "tokenId": "0x396a29827d32dfbb888596028767ec644769775b318eab0c21c527f5e50d9184",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x396a29827d32dfbb888596028767ec644769775b318eab0c21c527f5e50d9184",
+          "tokenAddress": "0xBD2AD15063D94394f3Ffe1d796A2A914fb7C09E1",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x6c9d73256fb621dd0c1b5227be352d0080edcbc162aaca4ca602e3c8717eb88e": {
+      "tokenId": "0x6c9d73256fb621dd0c1b5227be352d0080edcbc162aaca4ca602e3c8717eb88e",
+      "originAxelarChainId": "binance",
+      "decimals": 2,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6c9d73256fb621dd0c1b5227be352d0080edcbc162aaca4ca602e3c8717eb88e",
+          "tokenAddress": "0x4D5C7eE1058F5d3F574018C28e21246875059121",
+          "decimals": 2,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xce8846125b4cd538abf9293b33e62922f2d9653fdb2f11a02d9b3335865a9686": {
+      "tokenId": "0xce8846125b4cd538abf9293b33e62922f2d9653fdb2f11a02d9b3335865a9686",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xce8846125b4cd538abf9293b33e62922f2d9653fdb2f11a02d9b3335865a9686",
+          "tokenAddress": "0x3Fb5304858F513C3aB313F8ad843f62F6E1942D9",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5c034f507180067b12b9156701b0fd3a1b5aceb060ff7b3632a4b87e2eda0146": {
+      "tokenId": "0x5c034f507180067b12b9156701b0fd3a1b5aceb060ff7b3632a4b87e2eda0146",
+      "originAxelarChainId": "binance",
+      "decimals": 2,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x5c034f507180067b12b9156701b0fd3a1b5aceb060ff7b3632a4b87e2eda0146",
+          "tokenAddress": "0x1E83D96c2082bAC06572A99B9Da50F39f39e383a",
+          "decimals": 2,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x48755dd15c099e5155b815467768f3256d4bce9331d5da748eb8ff56f58e6135": {
+      "tokenId": "0x48755dd15c099e5155b815467768f3256d4bce9331d5da748eb8ff56f58e6135",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x48755dd15c099e5155b815467768f3256d4bce9331d5da748eb8ff56f58e6135",
+          "tokenAddress": "0xC319226E5ab893fF7BE595624168b2F36A2ed8CC",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x51df66774bf7046bdb30d358bd568450f3cd7f06c04731faf29ec84268927457": {
+      "tokenId": "0x51df66774bf7046bdb30d358bd568450f3cd7f06c04731faf29ec84268927457",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x51df66774bf7046bdb30d358bd568450f3cd7f06c04731faf29ec84268927457",
+          "tokenAddress": "0x30AB86D68A2E6106810cc8A94FC900Cf709f39fb",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x736dc262804f62c41e71423f3e5a790cc6bf05be387a96b5b30144442beeaf98": {
+      "tokenId": "0x736dc262804f62c41e71423f3e5a790cc6bf05be387a96b5b30144442beeaf98",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x736dc262804f62c41e71423f3e5a790cc6bf05be387a96b5b30144442beeaf98",
+          "tokenAddress": "0x67c079f2b7A19f4850aE326b764EeEDD10df2c74",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8ccc46fa0ff7798d6fc91ba53c36ca5ba3ad972bdbd80d8882cd85e4b50371f7": {
+      "tokenId": "0x8ccc46fa0ff7798d6fc91ba53c36ca5ba3ad972bdbd80d8882cd85e4b50371f7",
+      "originAxelarChainId": "binance",
+      "decimals": 2,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x8ccc46fa0ff7798d6fc91ba53c36ca5ba3ad972bdbd80d8882cd85e4b50371f7",
+          "tokenAddress": "0x768e67d36DF22df1329cDb6E81D811A5BfA1764a",
+          "decimals": 2,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd65cf5acec96f26a98727cf3fe21d45138f36d14ad0007ac21f62b64c2441330": {
+      "tokenId": "0xd65cf5acec96f26a98727cf3fe21d45138f36d14ad0007ac21f62b64c2441330",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xd65cf5acec96f26a98727cf3fe21d45138f36d14ad0007ac21f62b64c2441330",
+          "tokenAddress": "0x021D83F2fC0F23A076b4788BE9D3c13b67FCEA0a",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x54ff3f0080f06a4afe3e5b85f58c49613eab68bc9c0cb5df334fb7b182e530aa": {
+      "tokenId": "0x54ff3f0080f06a4afe3e5b85f58c49613eab68bc9c0cb5df334fb7b182e530aa",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x54ff3f0080f06a4afe3e5b85f58c49613eab68bc9c0cb5df334fb7b182e530aa",
+          "tokenAddress": "0x432c7Df35d2e56CDC62766bCeAc555A2BB6ab30e",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc68824d57874c453dd8fb8a2e7ac36dbc6fd8cf91d4834ef47be48d00dbede3e": {
+      "tokenId": "0xc68824d57874c453dd8fb8a2e7ac36dbc6fd8cf91d4834ef47be48d00dbede3e",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc68824d57874c453dd8fb8a2e7ac36dbc6fd8cf91d4834ef47be48d00dbede3e",
+          "tokenAddress": "0x4e249A18D2c601eD1595BCE0aBeD0D4668471D33",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x4fb970ca99cf346a88b75432cf9a341d75a43ff31e95cc3d1ad75d27375cfabd": {
+      "tokenId": "0x4fb970ca99cf346a88b75432cf9a341d75a43ff31e95cc3d1ad75d27375cfabd",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x4fb970ca99cf346a88b75432cf9a341d75a43ff31e95cc3d1ad75d27375cfabd",
+          "tokenAddress": "0x2b049cd32C65202C3b9Fd74a5A7614Bf22bf9Ac4",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc31d0b42e4a4cbbbcc90545ead9cd5edbf52f44f163bdc26b74e22c34d6834e9": {
+      "tokenId": "0xc31d0b42e4a4cbbbcc90545ead9cd5edbf52f44f163bdc26b74e22c34d6834e9",
+      "originAxelarChainId": "binance",
+      "decimals": 2,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc31d0b42e4a4cbbbcc90545ead9cd5edbf52f44f163bdc26b74e22c34d6834e9",
+          "tokenAddress": "0x6022459a4D3FAE9e92d10863B886da539250fA8e",
+          "decimals": 2,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x7e5bc1142ad77f8f76d03bfb4a7ae788b5b1d3d8a74dc50f746c3d3601b0a3be": {
+      "tokenId": "0x7e5bc1142ad77f8f76d03bfb4a7ae788b5b1d3d8a74dc50f746c3d3601b0a3be",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x7e5bc1142ad77f8f76d03bfb4a7ae788b5b1d3d8a74dc50f746c3d3601b0a3be",
+          "tokenAddress": "0x784968531A5976c14cc17d5451D3a1b3De085B52",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xdecb1476da258cfa303ecae39dee09e73d2ef9b3559c21747ac08085ea2c2087": {
+      "tokenId": "0xdecb1476da258cfa303ecae39dee09e73d2ef9b3559c21747ac08085ea2c2087",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xdecb1476da258cfa303ecae39dee09e73d2ef9b3559c21747ac08085ea2c2087",
+          "tokenAddress": "0x1c40bFB90cBCd5F859b80A03AD1Ca751fb5CBd7C",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x68a7f79f7feef20b4e5d3581dde3307052ecc52cae4033ae02bc6f823edf48b1": {
+      "tokenId": "0x68a7f79f7feef20b4e5d3581dde3307052ecc52cae4033ae02bc6f823edf48b1",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x68a7f79f7feef20b4e5d3581dde3307052ecc52cae4033ae02bc6f823edf48b1",
+          "tokenAddress": "0xf1007d83E4603dE4124B2bd0f5D7ad903716863A",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xcf39d47fa1d5896f3f595f11a769c7325bc4987202877cac9cc9bbe89f64f897": {
+      "tokenId": "0xcf39d47fa1d5896f3f595f11a769c7325bc4987202877cac9cc9bbe89f64f897",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xcf39d47fa1d5896f3f595f11a769c7325bc4987202877cac9cc9bbe89f64f897",
+          "tokenAddress": "0xe77EFf894c6776a4aFEF0a449e06d2747cecEDf7",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x95d467f2db8baba36f1ccbbfd048a66462fe6c80de69bc20394e73f4922fb652": {
+      "tokenId": "0x95d467f2db8baba36f1ccbbfd048a66462fe6c80de69bc20394e73f4922fb652",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x95d467f2db8baba36f1ccbbfd048a66462fe6c80de69bc20394e73f4922fb652",
+          "tokenAddress": "0x146F0f693ADD5F87cB2990602d83c0b5355Ff545",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xef74683269dbc526ad3920e5b3a54364a20f87486a3601266ea64965d651d72d": {
+      "tokenId": "0xef74683269dbc526ad3920e5b3a54364a20f87486a3601266ea64965d651d72d",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xef74683269dbc526ad3920e5b3a54364a20f87486a3601266ea64965d651d72d",
+          "tokenAddress": "0x16972D709044990C2f7fFD0415a031acB7f57F89",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8fce35dbff774fdfde5f7b74650407ce02616c14d2aab09b73960e87def54362": {
+      "tokenId": "0x8fce35dbff774fdfde5f7b74650407ce02616c14d2aab09b73960e87def54362",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x8fce35dbff774fdfde5f7b74650407ce02616c14d2aab09b73960e87def54362",
+          "tokenAddress": "0xEA097B46EB9b19B950Be0376F9C4e3E64Ec12298",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3c350d2974d7ce4726f8ae378a29a852a00a8cbbd0aae75d78d84004672428e4": {
+      "tokenId": "0x3c350d2974d7ce4726f8ae378a29a852a00a8cbbd0aae75d78d84004672428e4",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x3c350d2974d7ce4726f8ae378a29a852a00a8cbbd0aae75d78d84004672428e4",
+          "tokenAddress": "0x74158cD977b864198A8989ff90152030c5B63359",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xb6e4c22aec438527e9ba6ef88b09c4a0574ab61586801d0abdbc44cef4be32f7": {
+      "tokenId": "0xb6e4c22aec438527e9ba6ef88b09c4a0574ab61586801d0abdbc44cef4be32f7",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xb6e4c22aec438527e9ba6ef88b09c4a0574ab61586801d0abdbc44cef4be32f7",
+          "tokenAddress": "0xEf040980D764797d31a8EdEf5685915F5808B086",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x46c35dba366f5bbb1b0f77f937ee1ebf6f26fc7237c835adb80ea5048548e1e3": {
+      "tokenId": "0x46c35dba366f5bbb1b0f77f937ee1ebf6f26fc7237c835adb80ea5048548e1e3",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x46c35dba366f5bbb1b0f77f937ee1ebf6f26fc7237c835adb80ea5048548e1e3",
+          "tokenAddress": "0x79cf662C123Cf7d01f1F6093eB5415fdA7B2aF4A",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x1e7491e73333642567f9d4acaa5375fe548747f921b5aafbde7afb2b06b8bfa3": {
+      "tokenId": "0x1e7491e73333642567f9d4acaa5375fe548747f921b5aafbde7afb2b06b8bfa3",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x1e7491e73333642567f9d4acaa5375fe548747f921b5aafbde7afb2b06b8bfa3",
+          "tokenAddress": "0x00A490A091269fDD2B35a894f8ed0DB03F99656F",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf15372fc03d3a45175489c8c1c1e95b060d9a5da6573ca27ccfa155cec9d7c78": {
+      "tokenId": "0xf15372fc03d3a45175489c8c1c1e95b060d9a5da6573ca27ccfa155cec9d7c78",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xf15372fc03d3a45175489c8c1c1e95b060d9a5da6573ca27ccfa155cec9d7c78",
+          "tokenAddress": "0x4501dc2E5Da9C3c8Eb6A68ecdE7a351229AA3134",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x62171ba4de4076b7440f3252ae7fb3eb0b15ed7fd544ab5d780b0865096ffdc4": {
+      "tokenId": "0x62171ba4de4076b7440f3252ae7fb3eb0b15ed7fd544ab5d780b0865096ffdc4",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x62171ba4de4076b7440f3252ae7fb3eb0b15ed7fd544ab5d780b0865096ffdc4",
+          "tokenAddress": "0x83aB0CE744855851a781d056ED5014a7872089B9",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x96e326011467313d42b9279f96c5efc32809c6e98c862200393cc6558c0c9fd5": {
+      "tokenId": "0x96e326011467313d42b9279f96c5efc32809c6e98c862200393cc6558c0c9fd5",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x96e326011467313d42b9279f96c5efc32809c6e98c862200393cc6558c0c9fd5",
+          "tokenAddress": "0x0Ef90D0437D17c5FFe5385E3b2a5f9326C46fB6C",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xce8d8355c3054da7c954df7c2cb9225017ffb85648559625858606c811d41b40": {
+      "tokenId": "0xce8d8355c3054da7c954df7c2cb9225017ffb85648559625858606c811d41b40",
+      "originAxelarChainId": "binance",
+      "decimals": 4,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xce8d8355c3054da7c954df7c2cb9225017ffb85648559625858606c811d41b40",
+          "tokenAddress": "0x3f7b391b143a9486949172F0f46ace9c5a1676Cf",
+          "decimals": 4,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x216a820a5d63fd7f295cb08f79a65b9ee55f697873f1d0eedaf7c72a7130d864": {
+      "tokenId": "0x216a820a5d63fd7f295cb08f79a65b9ee55f697873f1d0eedaf7c72a7130d864",
+      "originAxelarChainId": "binance",
+      "decimals": null,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x216a820a5d63fd7f295cb08f79a65b9ee55f697873f1d0eedaf7c72a7130d864",
+          "tokenAddress": "0x8D4a6B2A784749BBc412A41C1440C5A67EAB57EE",
+          "decimals": null,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x72f18fa8ced34af4ba3a5b1fe3d6f2287ffebba658fe86dfd9b318d6b7b25fe9": {
+      "tokenId": "0x72f18fa8ced34af4ba3a5b1fe3d6f2287ffebba658fe86dfd9b318d6b7b25fe9",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x72f18fa8ced34af4ba3a5b1fe3d6f2287ffebba658fe86dfd9b318d6b7b25fe9",
+          "tokenAddress": "0x5DF8Cc1e7D7240dB4d61e8c11CeB4D5F4236e0DF",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x16b48d0ea6cf7b0b5a1b167cbad6bbd7993ae74a235346a6847f7b0d6617cdd9": {
+      "tokenId": "0x16b48d0ea6cf7b0b5a1b167cbad6bbd7993ae74a235346a6847f7b0d6617cdd9",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x16b48d0ea6cf7b0b5a1b167cbad6bbd7993ae74a235346a6847f7b0d6617cdd9",
+          "tokenAddress": "0x9E24deCE266f4E34ECe318Ea4D8ae7c6FE468FE3",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x489d089c0c337c9536a02f9fa76f8379fc58e09294cae587f32b8d69291b130a": {
+      "tokenId": "0x489d089c0c337c9536a02f9fa76f8379fc58e09294cae587f32b8d69291b130a",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x489d089c0c337c9536a02f9fa76f8379fc58e09294cae587f32b8d69291b130a",
+          "tokenAddress": "0x6B991F6f55c1eF2fC48b546de0b7Ee840022e8e8",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xfeaf90cbd8d0622478f61d1b9aa82746a6d2f9434855cb510732f3df4bf47e59": {
+      "tokenId": "0xfeaf90cbd8d0622478f61d1b9aa82746a6d2f9434855cb510732f3df4bf47e59",
+      "originAxelarChainId": "binance",
+      "decimals": 2,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xfeaf90cbd8d0622478f61d1b9aa82746a6d2f9434855cb510732f3df4bf47e59",
+          "tokenAddress": "0x89dd6206CF63F7AF0C88D136e4D9D94e576d9E11",
+          "decimals": 2,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x1f3aa4492f556f89730239efc2771a7fe2e6927cf8e3f56239f01834f32b63b9": {
+      "tokenId": "0x1f3aa4492f556f89730239efc2771a7fe2e6927cf8e3f56239f01834f32b63b9",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x1f3aa4492f556f89730239efc2771a7fe2e6927cf8e3f56239f01834f32b63b9",
+          "tokenAddress": "0x28bD6a53731401e1cEcbc913860485469462130C",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x9c544b14365c68857e713b245500ec5f8bea2e8f9004b7878335b2800eb4271a": {
+      "tokenId": "0x9c544b14365c68857e713b245500ec5f8bea2e8f9004b7878335b2800eb4271a",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x9c544b14365c68857e713b245500ec5f8bea2e8f9004b7878335b2800eb4271a",
+          "tokenAddress": "0x5abA206c4B540F8e14B7D89727790c12Bded1d58",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x135b29a315f9f0466b27b1f730c10aab0143c28c6748bf77dfb842832ec097e7": {
+      "tokenId": "0x135b29a315f9f0466b27b1f730c10aab0143c28c6748bf77dfb842832ec097e7",
+      "originAxelarChainId": "binance",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x135b29a315f9f0466b27b1f730c10aab0143c28c6748bf77dfb842832ec097e7",
+          "tokenAddress": "0x541Ca258A0b5bFa3A3F6715c8715fa48BCa3787a",
+          "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc42e102338ddb18a4e8c9bd1f97eb5f05057b6a5509f73b720220100e2d3641c": {
+      "tokenId": "0xc42e102338ddb18a4e8c9bd1f97eb5f05057b6a5509f73b720220100e2d3641c",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xc42e102338ddb18a4e8c9bd1f97eb5f05057b6a5509f73b720220100e2d3641c",
+          "tokenAddress": "0xE709974c784E1aDCfFf4E134a19A0aE824DE4ac5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf7d24c10b1832d15b9712da88b199bc683d5fb24ac433ddeedea94afcf9e015d": {
+      "tokenId": "0xf7d24c10b1832d15b9712da88b199bc683d5fb24ac433ddeedea94afcf9e015d",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xf7d24c10b1832d15b9712da88b199bc683d5fb24ac433ddeedea94afcf9e015d",
+          "tokenAddress": "0x928b42e03e31e30c560f24c3d5413c419f7de6bc",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x20752ebe16c6d64f71bd1a2ad43dd75c660ac4dfdec4e6798ca8ca6842926937": {
+      "tokenId": "0x20752ebe16c6d64f71bd1a2ad43dd75c660ac4dfdec4e6798ca8ca6842926937",
+      "originAxelarChainId": "binance",
+      "decimals": 5,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x20752ebe16c6d64f71bd1a2ad43dd75c660ac4dfdec4e6798ca8ca6842926937",
+          "tokenAddress": "0x1169d6a2AF7C01bD6230e4287713735D2c56de6f",
+          "decimals": 5,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa5c1d7524446979e3ad1115e019f73446ae972fe8f6cc776d4ad3eb2cc1766c7": {
+      "tokenId": "0xa5c1d7524446979e3ad1115e019f73446ae972fe8f6cc776d4ad3eb2cc1766c7",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xa5c1d7524446979e3ad1115e019f73446ae972fe8f6cc776d4ad3eb2cc1766c7",
+          "tokenAddress": "0xF75F83cc2A128f2d1F607Ed845AFa6fB3e0E14D7",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x31e76d95addcae236db6cd50b3cbb8524a166b847fb167c8fd7acad86ad4e916": {
+      "tokenId": "0x31e76d95addcae236db6cd50b3cbb8524a166b847fb167c8fd7acad86ad4e916",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x31e76d95addcae236db6cd50b3cbb8524a166b847fb167c8fd7acad86ad4e916",
+          "tokenAddress": "0x084f53339a918a55ec4FD7A572867c1E48F71fb3",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xbe8160eb416ee3bc1a815f463d693568df2cf54b5b6155242c33e8d8485384c5": {
+      "tokenId": "0xbe8160eb416ee3bc1a815f463d693568df2cf54b5b6155242c33e8d8485384c5",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xbe8160eb416ee3bc1a815f463d693568df2cf54b5b6155242c33e8d8485384c5",
+          "tokenAddress": "0xC021736b417cD658568f1Efc2BFd3d4CD0de36f1",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x6363729b1089f7978b1f7c645330ee077f5a62879d902d0897df23229f0aaeb5": {
+      "tokenId": "0x6363729b1089f7978b1f7c645330ee077f5a62879d902d0897df23229f0aaeb5",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6363729b1089f7978b1f7c645330ee077f5a62879d902d0897df23229f0aaeb5",
+          "tokenAddress": "0x325dCD3e8669f0fe91E102405081a2f420a81B4F",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd3831e51ca0c6c7a8c7be1bb059593101682955fb492a0be75ad655703c35a8a": {
+      "tokenId": "0xd3831e51ca0c6c7a8c7be1bb059593101682955fb492a0be75ad655703c35a8a",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xd3831e51ca0c6c7a8c7be1bb059593101682955fb492a0be75ad655703c35a8a",
+          "tokenAddress": "0x0a76832b8B645d6eA412E558dC566130254C3795",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x011b6ea0017ae06b2d61970a8dfc5f4a98dec5009f982dd69122fada25cf9e71": {
+      "tokenId": "0x011b6ea0017ae06b2d61970a8dfc5f4a98dec5009f982dd69122fada25cf9e71",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x011b6ea0017ae06b2d61970a8dfc5f4a98dec5009f982dd69122fada25cf9e71",
+          "tokenAddress": "0xeAdA96D935193A3096448EF7F79fC5668f61b37A",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x2f3af4e67f0c84c4722548e4410bc3a55f42aa94ea3b61e63bec1e3695d1afe2": {
+      "tokenId": "0x2f3af4e67f0c84c4722548e4410bc3a55f42aa94ea3b61e63bec1e3695d1afe2",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x2f3af4e67f0c84c4722548e4410bc3a55f42aa94ea3b61e63bec1e3695d1afe2",
+          "tokenAddress": "0xd274E5EC94B42F42ff1fa4d3BC3235D9525bD1d3",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x2c069011cc81058a16acddf40ce38b9af78e861860a113ee088814c316f45b7f": {
+      "tokenId": "0x2c069011cc81058a16acddf40ce38b9af78e861860a113ee088814c316f45b7f",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x2c069011cc81058a16acddf40ce38b9af78e861860a113ee088814c316f45b7f",
+          "tokenAddress": "0x14d65c8622907B1aD68E72899a7c567e1cE9F2b7",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd05bf34bc2b43e46eced430aac7038a7c3fe56d57c375c75afe4502d65b2b828": {
+      "tokenId": "0xd05bf34bc2b43e46eced430aac7038a7c3fe56d57c375c75afe4502d65b2b828",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xd05bf34bc2b43e46eced430aac7038a7c3fe56d57c375c75afe4502d65b2b828",
+          "tokenAddress": "0xd1d49A4f846Abb31a92943b9551c84d354a102d8",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x8db4405d051f84c1c3b43d00594e28383bd54c1676a982052a50ae524eccbfa4": {
+      "tokenId": "0x8db4405d051f84c1c3b43d00594e28383bd54c1676a982052a50ae524eccbfa4",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x8db4405d051f84c1c3b43d00594e28383bd54c1676a982052a50ae524eccbfa4",
+          "tokenAddress": "0x3EF50BEB9405e73497B5564502a2b3bd58207723",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x211fdbbedfee6f9a3c718630b432e3fa4ecc1a064bd2374bd24537a88680c0b9": {
+      "tokenId": "0x211fdbbedfee6f9a3c718630b432e3fa4ecc1a064bd2374bd24537a88680c0b9",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x211fdbbedfee6f9a3c718630b432e3fa4ecc1a064bd2374bd24537a88680c0b9",
+          "tokenAddress": "0x380491816f1DfD9a8672ddc301fb2C5f730D1386",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x6dc44f256327f180b6da896599d06bcb6c8d8a9ae832f30ff0cc63c22e078c26": {
+      "tokenId": "0x6dc44f256327f180b6da896599d06bcb6c8d8a9ae832f30ff0cc63c22e078c26",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6dc44f256327f180b6da896599d06bcb6c8d8a9ae832f30ff0cc63c22e078c26",
+          "tokenAddress": "0x9AbF7043eA6120591A5311E92301F4ED10670B70",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xabcbe0650470be5fe78376f0eb74140c4ca89e32e3c791e9a78cc1c117492b13": {
+      "tokenId": "0xabcbe0650470be5fe78376f0eb74140c4ca89e32e3c791e9a78cc1c117492b13",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0xabcbe0650470be5fe78376f0eb74140c4ca89e32e3c791e9a78cc1c117492b13",
+          "tokenAddress": "0xf216128eA8A1EFF4d880E49023efCc2975077C26",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x6de3df83ca5e6335d50e35eedf0eccfff5bb292373689e061d9949067424d772": {
+      "tokenId": "0x6de3df83ca5e6335d50e35eedf0eccfff5bb292373689e061d9949067424d772",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x6de3df83ca5e6335d50e35eedf0eccfff5bb292373689e061d9949067424d772",
+          "tokenAddress": "0x6935eF3C2c8c3e88f3CdEEdcFabC5eA221eFf5B3",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x61fe0790c4c7d24059a85fa0cfdc7d7a6cb58263a0700e042e9a709ec1e9960e": {
+      "tokenId": "0x61fe0790c4c7d24059a85fa0cfdc7d7a6cb58263a0700e042e9a709ec1e9960e",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x61fe0790c4c7d24059a85fa0cfdc7d7a6cb58263a0700e042e9a709ec1e9960e",
+          "tokenAddress": "0x8Fc1062467ca1Eb6355FB080a6D8830AB094D491",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x060033ecdd6dae8a5274f2ca3c048d716f725294e337eb508fd431a4cab1c13c": {
+      "tokenId": "0x060033ecdd6dae8a5274f2ca3c048d716f725294e337eb508fd431a4cab1c13c",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x060033ecdd6dae8a5274f2ca3c048d716f725294e337eb508fd431a4cab1c13c",
+          "tokenAddress": "0xc17C78843580f5b4C01F6908B097CDAb36fd6204",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x927388ca20889fc6a69ef568f5a85ba8882255224e9c3f3433ca75961453f75f": {
+      "tokenId": "0x927388ca20889fc6a69ef568f5a85ba8882255224e9c3f3433ca75961453f75f",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x927388ca20889fc6a69ef568f5a85ba8882255224e9c3f3433ca75961453f75f",
+          "tokenAddress": "0xB45f8C79b6C56e1Ceb3972f8E4b96393B49c5FD3",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5a482747c9ec017a79049622f29da25b498a5570558881125c78ad8833105d24": {
+      "tokenId": "0x5a482747c9ec017a79049622f29da25b498a5570558881125c78ad8833105d24",
+      "originAxelarChainId": "binance",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "binance",
+          "tokenId": "0x5a482747c9ec017a79049622f29da25b498a5570558881125c78ad8833105d24",
+          "tokenAddress": "0x80288bcC567de55fc13a2dAA2650E8b59eE48904",
           "decimals": 18,
           "trackSupply": false
         }
