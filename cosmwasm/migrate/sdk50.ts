@@ -30,30 +30,25 @@ async function migrateAllVotingVerifiers(
     const chains = Object.keys(config.chains);
     const votingVerifiers: Array<{ chainName: string; address: string; codeId: number }> = [];
 
-    const title = 'Migrate Voting Verifiers';
-    const description = 'Migrate all voting verifiers to the new version';
+    const title = 'Migrate Voting Verifiers to update block time related parameters';
+    const description = 'Migrate all voting verifiers to update block time related parameters';
 
-    // Collect all voting verifiers that have addresses
     for (const chainName of chains) {
         try {
             const votingVerifierConfig = config.getVotingVerifierContract(chainName);
             if (votingVerifierConfig.address) {
-                // Get codeId - check chain-specific config first, then try getCodeId, or use options
                 let codeId: number;
 
-                // First, check if codeId is in the chain-specific config
                 if (votingVerifierConfig.codeId) {
                     codeId = votingVerifierConfig.codeId;
                     printInfo(`Using codeId from config for ${chainName}: ${codeId}`);
                 } else {
-                    // Try to get codeId using the utility function
                     try {
                         codeId = await getCodeId(client, config, {
                             ...options,
                             contractName: VERIFIER_CONTRACT_NAME,
                             chainName,
                         });
-                        // Update the config with the fetched codeId
                         votingVerifierConfig.codeId = codeId;
                         printInfo(`Fetched codeId for ${chainName}: ${codeId}`);
                     } catch (error) {
@@ -73,8 +68,7 @@ async function migrateAllVotingVerifiers(
                 printWarn(`Skipping ${chainName}: VotingVerifier address not found`);
             }
         } catch (error) {
-            // Chain doesn't have a VotingVerifier contract configured, skip it
-            printWarn(`Skipping ${chainName}: ${error instanceof Error ? error.message : String(error)}`);
+            printWarn(`Skipping ${chainName}: ${error}`);
         }
     }
 
@@ -84,17 +78,16 @@ async function migrateAllVotingVerifiers(
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
 
-    // Create migration messages for all voting verifiers
     const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) => {
         const { contractConfig } = getAmplifierContractConfig(config, {
             ...options,
             contractName: VERIFIER_CONTRACT_NAME,
             chainName,
         });
-        // Update the codeId in config for this chain
+
         contractConfig.codeId = codeId;
 
-        // Migration message must be a JSON string, not an object
+        // TODO tkulik: Add a proper migration message once it's implemented in the voting verifier contract
         const msg = '{}';
 
         return encodeMigrate(config, {
@@ -109,7 +102,6 @@ async function migrateAllVotingVerifiers(
 
     printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
 
-    // Submit the proposal with all migrations
     const proposalOptions = {
         ...options,
         title,
