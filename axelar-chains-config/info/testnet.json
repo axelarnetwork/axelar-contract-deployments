@@ -3468,8 +3468,8 @@
         "blockExpiry": 10,
         "storeCodeProposalId": "384",
         "storeCodeProposalCodeHash": "d3e7bc409d858ba35b294c63039dd4b203947fa263ad529d21a84c3b2559e639",
-        "codeId": 54,
-        "lastUploadedCodeId": 65,
+        "codeId": 68,
+        "lastUploadedCodeId": 68,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "115",
         "flow": {
