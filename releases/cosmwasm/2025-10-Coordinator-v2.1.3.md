@@ -9,7 +9,7 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Complete              | 2025-11-17 |
 | **Stagenet**         | Complete              | 2025-11-17 |
-| **Testnet**          | -                     | -          |
+| **Testnet**          | Complete              | 2025-11-17 |
 | **Mainnet**          | -                     | -          |
 
 
