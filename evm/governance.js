@@ -478,11 +478,11 @@ async function main(action, args, options) {
     });
 
     if (proposals.length > 0) {
-        const proposal = {
-            title: 'Interchain Governance Proposal',
-            description: 'Interchain Governance Proposal',
-            contract_calls: proposals,
-        };
+    const proposal = {
+        title: 'Interchain Governance Proposal',
+        description: 'Interchain Governance Proposal',
+        contract_calls: proposals,
+    };
 
         const proposalJSON = JSON.stringify(proposal, null, 2);
 
@@ -504,10 +504,10 @@ if (require.main === module) {
     const addCommonOptions = (cmd) => {
         addBaseOptions(cmd, { address: true });
         cmd.addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        );
+        new Option('-c, --contractName <contractName>', 'contract name')
+            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+            .default('InterchainGovernance'),
+    );
         cmd.addOption(new Option('--targetContractName <targetContractName>', 'target contract name'));
         cmd.addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']));
         cmd.addOption(new Option('--target <target>', 'governance execution target'));
@@ -539,35 +539,44 @@ if (require.main === module) {
     const scheduleCmd = program
         .command('schedule')
         .description('Schedule a new timelock proposal')
-        .addOption(
-            new Option('--action <action>', 'governance action')
-                .choices(['raw', 'upgrade', 'transferGovernance', 'withdraw'])
-                .makeOptionMandatory(true),
-        )
-        .addOption(new Option('--date <date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss)').makeOptionMandatory(true))
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC or relative seconds, e.g., 604800)')
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--target <target>', 'governance execution target'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'));
     addCommonOptions(scheduleCmd);
-    scheduleCmd.action((options, cmd) => {
+    scheduleCmd.hook('preAction', (thisCommand) => {
+        const action = thisCommand.args[0];
+        if (!['raw', 'upgrade', 'transferGovernance', 'withdraw'].includes(action)) {
+            throw new Error(`Invalid action: ${action}. Must be one of: raw, upgrade, transferGovernance, withdraw`);
+        }
+        thisCommand.setOptionValue('action', action);
+    });
+    scheduleCmd.action((action, date, options, cmd) => {
+        options.action = action;
+        options.date = date;
         main(cmd.name(), [], options);
     });
 
     const cancelCmd = program
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
-        .addOption(
-            new Option('--action <action>', 'governance action')
-                .choices(['raw', 'upgrade', 'transferGovernance', 'withdraw'])
-                .makeOptionMandatory(true),
-        )
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--target <target>', 'governance execution target'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'));
     addCommonOptions(cancelCmd);
-    cancelCmd.action((options, cmd) => {
+    cancelCmd.hook('preAction', (thisCommand) => {
+        const action = thisCommand.args[0];
+        if (!['raw', 'upgrade', 'transferGovernance', 'withdraw'].includes(action)) {
+            throw new Error(`Invalid action: ${action}. Must be one of: raw, upgrade, transferGovernance, withdraw`);
+        }
+        thisCommand.setOptionValue('action', action);
+    });
+    cancelCmd.action((action, options, cmd) => {
+        options.action = action;
         main(cmd.name(), [], options);
     });
 
@@ -591,53 +600,68 @@ if (require.main === module) {
     const scheduleMultisigCmd = program
         .command('schedule-multisig')
         .description('Schedule a multisig proposal (AxelarServiceGovernance only)')
-        .addOption(new Option('--target <target>', 'target address').makeOptionMandatory(true))
-        .addOption(new Option('--calldata <calldata>', 'call data').makeOptionMandatory(true))
-        .addOption(new Option('--date <date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss)').makeOptionMandatory(true))
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC or relative seconds, e.g., 604800)')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'));
     addCommonOptions(scheduleMultisigCmd);
-    scheduleMultisigCmd.action((options, cmd) => {
+    scheduleMultisigCmd.action((target, calldata, date, options, cmd) => {
+        options.target = target;
+        options.calldata = calldata;
+        options.date = date;
         main('scheduleMultisig', [], options);
     });
 
     const cancelMultisigCmd = program
         .command('cancel-multisig')
         .description('Cancel a multisig proposal (AxelarServiceGovernance only)')
-        .addOption(new Option('--target <target>', 'target address').makeOptionMandatory(true))
-        .addOption(new Option('--calldata <calldata>', 'call data').makeOptionMandatory(true))
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'));
     addCommonOptions(cancelMultisigCmd);
-    cancelMultisigCmd.action((options, cmd) => {
+    cancelMultisigCmd.action((target, calldata, options, cmd) => {
+        options.target = target;
+        options.calldata = calldata;
         main('cancelMultisig', [], options);
     });
 
     const submitCmd = program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .addOption(
-            new Option('--action <action>', 'governance action')
-                .choices(['raw', 'upgrade', 'transferGovernance', 'withdraw'])
-                .makeOptionMandatory(true),
-        )
-        .addOption(new Option('--commandId <commandId>', 'command id').makeOptionMandatory(true))
-        .addOption(new Option('--date <date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss)').makeOptionMandatory(true))
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<commandId>', 'command id')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC or relative seconds, e.g., 604800)')
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--target <target>', 'governance execution target'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'));
     addCommonOptions(submitCmd);
-    submitCmd.action((options, cmd) => {
+    submitCmd.hook('preAction', (thisCommand) => {
+        const action = thisCommand.args[0];
+        if (!['raw', 'upgrade', 'transferGovernance', 'withdraw'].includes(action)) {
+            throw new Error(`Invalid action: ${action}. Must be one of: raw, upgrade, transferGovernance, withdraw`);
+        }
+        thisCommand.setOptionValue('action', action);
+    });
+    submitCmd.action((action, commandId, date, options, cmd) => {
+        options.action = action;
+        options.commandId = commandId;
+        options.date = date;
         main(cmd.name(), [], options);
     });
 
     const submitMultisigCmd = program
         .command('submit-multisig')
         .description('Submit a multisig proposal via cross-chain message (AxelarServiceGovernance only)')
-        .addOption(new Option('--target <target>', 'target address').makeOptionMandatory(true))
-        .addOption(new Option('--calldata <calldata>', 'call data').makeOptionMandatory(true))
-        .addOption(new Option('--commandId <commandId>', 'command id').makeOptionMandatory(true))
-        .addOption(new Option('--date <date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss)').makeOptionMandatory(true));
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .argument('<commandId>', 'command id')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC or relative seconds, e.g., 604800)');
     addCommonOptions(submitMultisigCmd);
-    submitMultisigCmd.action((options, cmd) => {
+    submitMultisigCmd.action((target, calldata, commandId, date, options, cmd) => {
+        options.target = target;
+        options.calldata = calldata;
+        options.commandId = commandId;
+        options.date = date;
         main('submitMultisig', [], options);
     });
 
