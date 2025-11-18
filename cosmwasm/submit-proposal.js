@@ -638,7 +638,7 @@ const callContracts = async (client, config, options, _args, fee) => {
         printInfo('CallContractsProposal', JSON.stringify(proposalData, null, 2));
         printInfo('Encoded proposal typeUrl', proposal.typeUrl);
         printInfo('Encoded proposal value length', `${proposal.value.length} bytes`);
-        
+
         if (prompt(`Proceed with proposal submission?`, options.yes)) {
             return;
         }
@@ -802,7 +802,10 @@ const programHandler = () => {
     const callContractsCmd = program
         .command('call-contracts')
         .description('Submit a CallContractsProposal to execute contract calls on other chains')
-        .requiredOption('--proposalFile <proposalFile>', 'path to JSON file containing the proposal (with title, description, and contract_calls)')
+        .requiredOption(
+            '--proposalFile <proposalFile>',
+            'path to JSON file containing the proposal (with title, description, and contract_calls)',
+        )
         .action((options) => mainProcessor(callContracts, options));
     addAmplifierOptions(callContractsCmd, {
         runAs: true,
