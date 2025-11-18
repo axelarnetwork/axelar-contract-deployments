@@ -2,8 +2,8 @@
   "chains": {
     "celo": {
       "start": 0,
-      "end": 51567259,
-      "max": 51567259,
+      "end": 51569341,
+      "max": 51569341,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://celo.gateway.tenderly.co"
@@ -11,8 +11,8 @@
     },
     "Ethereum": {
       "start": 0,
-      "end": 23825932,
-      "max": 23825932,
+      "end": 23826104,
+      "max": 23826104,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://ethereum-rpc.publicnode.com"
@@ -20,8 +20,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 72170459,
-      "max": 72170459,
+      "end": 72171983,
+      "max": 72171983,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax.network/ext/bc/C/rpc"
@@ -29,8 +29,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 118006799,
-      "max": 118006799,
+      "end": 118007165,
+      "max": 118007165,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.fantom.network"
@@ -38,8 +38,8 @@
     },
     "Polygon": {
       "start": 0,
-      "end": 79181480,
-      "max": 79181480,
+      "end": 79182532,
+      "max": 79182532,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://polygon.gateway.tenderly.co"
@@ -47,8 +47,8 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 13390921,
-      "max": 13390921,
+      "end": 13391226,
+      "max": 13391226,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.api.moonbeam.network"
@@ -56,17 +56,17 @@
     },
     "binance": {
       "start": 0,
-      "end": 34325108,
-      "max": 68622543,
-      "alreadyProcessedPercentage": "50.02",
+      "end": 34411128,
+      "max": 68624282,
+      "alreadyProcessedPercentage": "50.14",
       "rpcs": [
         "https://bsc.llamarpc.com"
       ]
     },
     "arbitrum": {
       "start": 0,
-      "end": 401545431,
-      "max": 401545431,
+      "end": 401553761,
+      "max": 401553761,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://arb1.arbitrum.io/rpc"
@@ -74,8 +74,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 18054345,
-      "max": 18054345,
+      "end": 18054706,
+      "max": 18054706,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.kava.io"
@@ -92,17 +92,17 @@
     },
     "optimism": {
       "start": 0,
-      "end": 111201418,
-      "max": 143934628,
-      "alreadyProcessedPercentage": "77.26",
+      "end": 114064376,
+      "max": 143935662,
+      "alreadyProcessedPercentage": "79.25",
       "rpcs": [
         "https://optimism.drpc.org"
       ]
     },
     "linea": {
       "start": 0,
-      "end": 25780879,
-      "max": 25780879,
+      "end": 25781704,
+      "max": 25781704,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.linea.build"
@@ -110,8 +110,8 @@
     },
     "base": {
       "start": 0,
-      "end": 38339336,
-      "max": 38339336,
+      "end": 38340377,
+      "max": 38340377,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://developer-access-mainnet.base.org"
@@ -119,8 +119,8 @@
     },
     "mantle": {
       "start": 0,
-      "end": 87668854,
-      "max": 87668854,
+      "end": 87669895,
+      "max": 87669895,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.mantle.xyz"
@@ -128,8 +128,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 25046694,
-      "max": 25046694,
+      "end": 25047741,
+      "max": 25047741,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.scroll.io"
@@ -146,8 +146,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 30593102,
-      "max": 30593102,
+      "end": 30594142,
+      "max": 30594142,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.immutable.com/"
@@ -155,8 +155,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 28328654,
-      "max": 28328654,
+      "end": 28329694,
+      "max": 28329694,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.frax.com"
@@ -164,8 +164,8 @@
     },
     "blast": {
       "start": 0,
-      "end": 27329102,
-      "max": 27329102,
+      "end": 27330142,
+      "max": 27330142,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.blast.io"
@@ -5920,6 +5920,13 @@
           "tokenAddress": "0x97DCb0a55936B142e90Aa7275939B1aFcbDa1f41",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
+          "tokenId": "0x994302b495c45ae052a97aea4aa84f6e31e044d3edee4f56f4798f77e127cefb",
+          "tokenAddress": "0x97DCb0a55936B142e90Aa7275939B1aFcbDa1f41",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -5952,6 +5959,13 @@
         },
         {
           "axelarChainId": "arbitrum",
+          "tokenId": "0x1e5314b7e2e8e4a572ed880d4c3a05747a87dd618d155f5d57cb364a2e81a5cf",
+          "tokenAddress": "0x195bf8fFFa679Cf7C41c4fc5cF586A5Fda159170",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
           "tokenId": "0x1e5314b7e2e8e4a572ed880d4c3a05747a87dd618d155f5d57cb364a2e81a5cf",
           "tokenAddress": "0x195bf8fFFa679Cf7C41c4fc5cF586A5Fda159170",
           "decimals": 18,
@@ -6009,6 +6023,13 @@
         },
         {
           "axelarChainId": "Polygon",
+          "tokenId": "0xd9afaac49064d15b476f2a076eaee26e040f86ed8389db0394c877727708994a",
+          "tokenAddress": "0x9F82e452B79926151BF8965e5D0a3c1c68b9dE2b",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
           "tokenId": "0xd9afaac49064d15b476f2a076eaee26e040f86ed8389db0394c877727708994a",
           "tokenAddress": "0x9F82e452B79926151BF8965e5D0a3c1c68b9dE2b",
           "decimals": 18,
@@ -6258,6 +6279,13 @@
         },
         {
           "axelarChainId": "Moonbeam",
+          "tokenId": "0x03b0968d4cba741b8714de6cc4da13a2ccab75a87d01a9a9f3e0ebd0c57b705a",
+          "tokenAddress": "0x1fBBd2788a7eA97a767982f9734d112fD4009059",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
           "tokenId": "0x03b0968d4cba741b8714de6cc4da13a2ccab75a87d01a9a9f3e0ebd0c57b705a",
           "tokenAddress": "0x1fBBd2788a7eA97a767982f9734d112fD4009059",
           "decimals": 18,
@@ -6988,6 +7016,13 @@
         },
         {
           "axelarChainId": "arbitrum",
+          "tokenId": "0xebd272d6035967aac872fb220ac6076db49ddc7c8591e917cdfb0fee1c4a0277",
+          "tokenAddress": "0x0c6492b2235595DcDcEEfDE23ac210Df9455B157",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
           "tokenId": "0xebd272d6035967aac872fb220ac6076db49ddc7c8591e917cdfb0fee1c4a0277",
           "tokenAddress": "0x0c6492b2235595DcDcEEfDE23ac210Df9455B157",
           "decimals": 18,
@@ -14335,6 +14370,13 @@
           "tokenAddress": "0xeA3770025A5E30045eaD46897721753283250334",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
+          "tokenId": "0x4c489c118cc7f2adb26283a0b799f0a235690b8b95a89dc15ec2bf79a6771eeb",
+          "tokenAddress": "0xeA3770025A5E30045eaD46897721753283250334",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -14391,7 +14433,7 @@
     },
     "0x7569d71e8a9e3489f73c9e04ee0b35fff971e3373f94ef470261ba7665dedf0e": {
       "tokenId": "0x7569d71e8a9e3489f73c9e04ee0b35fff971e3373f94ef470261ba7665dedf0e",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "optimism",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -14401,12 +14443,19 @@
           "tokenAddress": "0xdfFaDae6dcA92f099B0EbfB9A20e262DFb8b99D9",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
+          "tokenId": "0x7569d71e8a9e3489f73c9e04ee0b35fff971e3373f94ef470261ba7665dedf0e",
+          "tokenAddress": "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
     "0xc8826ab06915607252f283bd9d21eedc2603bb6ee7c94491ff10d0077c3f65b9": {
       "tokenId": "0xc8826ab06915607252f283bd9d21eedc2603bb6ee7c94491ff10d0077c3f65b9",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "optimism",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -14416,6 +14465,13 @@
           "tokenAddress": "0xc229b9F53d5380605F5f569E76126F9C2908b242",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "optimism",
+          "tokenId": "0xc8826ab06915607252f283bd9d21eedc2603bb6ee7c94491ff10d0077c3f65b9",
+          "tokenAddress": "0xFdb794692724153d1488CcdBE0C56c252596735F",
+          "decimals": 18,
+          "trackSupply": false
         }
       ]
     },
