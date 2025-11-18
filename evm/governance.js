@@ -478,11 +478,11 @@ async function main(action, args, options) {
     });
 
     if (proposals.length > 0) {
-    const proposal = {
-        title: 'Interchain Governance Proposal',
-        description: 'Interchain Governance Proposal',
-        contract_calls: proposals,
-    };
+        const proposal = {
+            title: 'Interchain Governance Proposal',
+            description: 'Interchain Governance Proposal',
+            contract_calls: proposals,
+        };
 
         const proposalJSON = JSON.stringify(proposal, null, 2);
 
@@ -504,10 +504,10 @@ if (require.main === module) {
     const addCommonOptions = (cmd) => {
         addBaseOptions(cmd, { address: true });
         cmd.addOption(
-        new Option('-c, --contractName <contractName>', 'contract name')
-            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-            .default('InterchainGovernance'),
-    );
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        );
         cmd.addOption(new Option('--targetContractName <targetContractName>', 'target contract name'));
         cmd.addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']));
         cmd.addOption(new Option('--target <target>', 'governance execution target'));
