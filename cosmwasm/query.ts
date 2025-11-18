@@ -13,8 +13,25 @@ export interface ContractInfo {
     version: string;
 }
 
+export async function queryRewardsPool(
+    client: CosmWasmClient,
+    rewardsAddress: string,
+    chainName: string,
+    contractAddress: string,
+): Promise<any> {
+    return await client.queryContractSmart(rewardsAddress, {
+        rewards_pool: {
+            pool_id: {
+                chain_name: chainName,
+                contract: contractAddress,
+            },
+        },
+    });
+}
+
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
+    const rewardsAddress = config.getContractConfig('Rewards').address;
 
     const rewardsContractAddresses = {
         multisig: config.getContractConfig('Multisig').address,
@@ -23,15 +40,7 @@ async function rewards(client, config, _options, args, _fee) {
 
     for (const [key, address] of Object.entries(rewardsContractAddresses)) {
         try {
-            const result = await client.queryContractSmart(config.getContractConfig('Rewards').address, {
-                rewards_pool: {
-                    pool_id: {
-                        chain_name: chainName,
-                        contract: address,
-                    },
-                },
-            });
-
+            const result = await queryRewardsPool(client, rewardsAddress, chainName, address);
             printInfo(`Rewards pool for ${key} on ${chainName}`, JSON.stringify(result, null, 2));
         } catch (error) {
             printWarn(`Failed to fetch rewards pool for ${key} on ${chainName}`, `${error.message}`);
