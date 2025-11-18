@@ -5,6 +5,7 @@ mod deploy;
 mod gas_service;
 mod gateway;
 mod generate;
+mod gmp;
 mod governance;
 mod its;
 mod memo;
@@ -162,6 +163,10 @@ enum InstructionSubcommand {
     /// Commands to interface with the AxelarMemo program on Solana
     #[clap(subcommand)]
     Memo(memo::Commands),
+
+    /// Commands to interface with the AxelarGMP program on Solana
+    #[clap(subcommand)]
+    Gmp(gmp::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -359,5 +364,6 @@ async fn build_transaction(
             operators::build_transaction(fee_payer, command, config)
         }
         InstructionSubcommand::Memo(command) => memo::build_transaction(fee_payer, command, config),
+        InstructionSubcommand::Gmp(command) => gmp::build_transaction(fee_payer, command, config),
     }
 }
