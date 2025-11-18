@@ -644,52 +644,6 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
-    "solana-2": {
-      "name": "Solana",
-      "axelarId": "solana-2",
-      "rpc": "https://api.devnet.solana.com",
-      "chainType": "svm",
-      "decimals": 9,
-      "finality": "31",
-      "approxFinalityWaitTime": 1,
-      "tokenSymbol": "SOL",
-      "explorer": {
-        "name": "Solana Explorer",
-        "url": "https://explorer.solana.com/?cluster=devnet"
-      },
-      "contracts": {
-        "AxelarGateway": {
-          "address": "gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp",
-          "connectionType": "amplifier",
-          "domainSeparator": "0x25175689654ca91a6e0a80f7716bb966a67bb1162c9b89889eed7cfc4f03a6af",
-          "minimumRotationDelay": 0,
-          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k",
-          "previousSignersRetention": 15,
-          "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw"
-        },
-        "AxelarGasService": {
-          "address": "gasd4em72NAm7faq5dvjN5GkXE59dUkTThWmYDX95bK",
-          "configAccount": "GQ3Yde4evoph1qnogmb8VASZgqzXUxbVKx4oxnNbcZK9",
-          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k",
-          "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw"
-        },
-        "InterchainGovernance": {
-          "address": "govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9",
-          "configAccount": "Bj7r2VugtM6odjLX9YdWtDsrZfSKLQFbfoc5hTL9qVhe",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "governanceChain": "Axelarnet",
-          "minimumTimeDelay": 3600,
-          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k",
-          "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw"
-        },
-        "InterchainTokenService": {
-          "address": "itsqybuNsChBo3LgVhCWWnTJVJdoVTUJaodmqQcG6z7",
-          "configAccount": "8JYHzvaw7EQdck2xus8rqxELRSfD5iqi4aQx7UMFkswZ",
-          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k",
-          "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw"
-        }
-      }
-    },
     "sui-2": {
       "name": "Sui",
       "axelarId": "sui-2",
@@ -1422,10 +1376,6 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
-        "solana-2": {
-          "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 255
-        },
         "storeCodeProposalId": "989",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
         "lastUploadedCodeId": 1406
@@ -1786,21 +1736,6 @@
         "address": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7"
       },
       "SolanaMultisigProver": {
-        "solana-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
-          "serviceName": "validators",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "solana",
-          "keyType": "ecdsa",
-          "domainSeparator": "0x25175689654ca91a6e0a80f7716bb966a67bb1162c9b89889eed7cfc4f03a6af",
-          "codeId": 1427,
-          "address": "axelar109wjfgdx63num4xyvzhrt2djuvd7zdu3zv4m0hcjvt55r0mvhszssxl8gg"
-        },
         "lastUploadedCodeId": 1579,
         "storeCodeProposalId": "1341",
         "storeCodeProposalCodeHash": "171b94cb1f5514dc8537dcf2325ff8ca66d429f0892807bbcf8644c580cfea68",
