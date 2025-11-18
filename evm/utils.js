@@ -637,6 +637,20 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+async function handleTransactionWithEvent(tx, chain, contract, action, eventName) {
+    printInfo(`${action} transaction`, tx.hash);
+    const receipt = await tx.wait(chain.confirmations);
+
+    if (eventName) {
+        const eventEmitted = wasEventEmitted(receipt, contract, eventName);
+        if (!eventEmitted) {
+            printWarn(`Event ${eventName} not emitted in receipt.`);
+        }
+    }
+
+    return receipt;
+}
+
 const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 /**
@@ -1132,6 +1146,7 @@ module.exports = {
     getConfigByChainId,
     printWalletInfo,
     wasEventEmitted,
+    handleTransactionWithEvent,
     isContract,
     isValidAddress,
     isValidPrivateKey,

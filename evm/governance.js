@@ -17,7 +17,8 @@ const {
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
-    wasEventEmitted,
+    createGMPProposalJSON,
+    handleTransactionWithEvent,
     printWarn,
     getBytecodeHash,
     isValidAddress,
@@ -215,29 +216,6 @@ function encodeGovernanceProposal(commandType, target, calldata, nativeValue, et
     return defaultAbiCoder.encode(types, values);
 }
 
-function createProposalJSON(chain, governanceAddress, payload, title, description) {
-    const payloadBase64 = Buffer.from(payload.slice(2), 'hex').toString('base64');
-    return {
-        chain: chain.axelarId,
-        contract_address: governanceAddress,
-        payload: payloadBase64,
-    };
-}
-
-async function handleGovernanceTx(tx, chain, governance, action, eventName) {
-    printInfo(`${action} transaction`, tx.hash);
-    const receipt = await tx.wait(chain.confirmations);
-
-    if (eventName) {
-        const eventEmitted = wasEventEmitted(receipt, governance, eventName);
-        if (!eventEmitted) {
-            printWarn(`Event ${eventName} not emitted in receipt.`);
-        }
-    }
-
-    return receipt;
-}
-
 function getProposalHash(target, calldata, nativeValue) {
     return keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
 }
@@ -324,7 +302,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
-            return createProposalJSON(chain, governanceAddress, gmpPayload, title, description);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'cancel': {
@@ -343,7 +321,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.CancelTimelock, target, calldata, nativeValue, eta);
-            return createProposalJSON(chain, governanceAddress, gmpPayload, title, description);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'scheduleMultisig': {
@@ -361,7 +339,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             const eta = dateToEta(options.date);
             const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
-            return createProposalJSON(chain, governanceAddress, gmpPayload, title, description);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'cancelMultisig': {
@@ -381,7 +359,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.CancelMultisig, target, calldata, nativeValue, 0);
-            return createProposalJSON(chain, governanceAddress, gmpPayload, title, description);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'submit': {
@@ -406,7 +384,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 gasOptions,
             );
 
-            await handleGovernanceTx(tx, chain, governance, 'Proposal submission', 'ProposalScheduled');
+            await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'ProposalScheduled');
             return null;
         }
 
@@ -436,7 +414,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 gasOptions,
             );
 
-            await handleGovernanceTx(tx, chain, governance, 'Proposal submission', 'OperatorProposalApproved');
+            await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'OperatorProposalApproved');
             return null;
         }
 
@@ -475,7 +453,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
-            await handleGovernanceTx(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
+            await handleTransactionWithEvent(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
 
             printInfo('Proposal executed.');
             return null;
@@ -660,8 +638,6 @@ module.exports = {
     createGovernanceContract,
     getProposalCalldata,
     encodeGovernanceProposal,
-    createProposalJSON,
-    handleGovernanceTx,
     getProposalHash,
     getSetupParams,
     getGovernanceAddress,
