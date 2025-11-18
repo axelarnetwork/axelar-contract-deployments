@@ -83,7 +83,7 @@ fn send_gmp_message(fee_payer: &Pubkey, args: SendArgs) -> eyre::Result<Instruct
     )?;
 
     println!("------------------------------------------");
-    println!("📨 GMP Message Details:");
+    println!("GMP Message Details:");
     println!();
     println!("  Destination Chain: {}", args.destination_chain);
     println!(
