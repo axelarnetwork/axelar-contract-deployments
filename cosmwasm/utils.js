@@ -62,6 +62,17 @@ const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 const GOVERNANCE_MODULE_ADDRESS = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 const COSMOS_SDK_LEGACY_THRESHOLD = '0.50.0';
 
+const loadProtoDefinition = (relativePath) => {
+    const fs = require('fs');
+    const path = require('path');
+    const fullPath = path.join(__dirname, relativePath);
+    try {
+        return fs.readFileSync(fullPath, 'utf8');
+    } catch (error) {
+        throw new Error(`Failed to load proto: ${fullPath}. ${error.message}`);
+    }
+};
+
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -239,6 +250,68 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
         rewards_address: rewardsAddress,
         block_expiry: toBigNumberString(blockExpiry),
         coordinator_address: coordinatorAddress,
+    };
+};
+
+const encodeCallContracts = (config, options) => {
+    const { title, description, contract_calls } = options;
+    const isLegacy = isLegacySDK(config);
+
+    if (!isLegacy) {
+        throw new Error('CallContractsProposal is only supported on legacy SDK (< v0.50)');
+    }
+
+    // For legacy SDK, CallContractsProposal is encoded as a proposal content, we need to manually encode it using protobuf wire format via protobufjs
+    const protobuf = require('protobufjs');
+    const protoDefinition = loadProtoDefinition('proto/axelarnet_call_contracts.proto');
+
+    let root;
+    try {
+        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+        root = parsed.root;
+    } catch (error) {
+        throw new Error(`Failed to parse proto definition: ${error.message}`);
+    }
+
+    const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
+    const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
+
+    if (!CallContractsProposal || !ContractCall) {
+        throw new Error('Failed to lookup proto types');
+    }
+
+    const contractCalls = contract_calls.map((cc) => {
+        const payload = Buffer.from(cc.payload, 'base64');
+        const contractCall = ContractCall.create({
+            chain: cc.chain,
+            contract_address: cc.contract_address,
+            payload,
+        });
+
+        const errMsg = ContractCall.verify(contractCall);
+        if (errMsg) {
+            throw new Error(`Invalid ContractCall: ${errMsg}`);
+        }
+
+        return contractCall;
+    });
+
+    const proposal = CallContractsProposal.create({
+        title,
+        description,
+        contract_calls: contractCalls,
+    });
+
+    const errMsg = CallContractsProposal.verify(proposal);
+    if (errMsg) {
+        throw new Error(`Invalid CallContractsProposal: ${errMsg}`);
+    }
+
+    const message = CallContractsProposal.encode(proposal).finish();
+
+    return {
+        typeUrl: '/axelar.axelarnet.v1beta1.CallContractsProposal',
+        value: Uint8Array.from(message),
     };
 };
 
@@ -1519,6 +1592,7 @@ module.exports = {
     encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeUpdateInstantiateConfigProposal,
+    encodeCallContracts,
     encodeMigrate,
     encodeSubmitProposal,
     submitProposal,

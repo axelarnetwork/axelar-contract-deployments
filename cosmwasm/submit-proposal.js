@@ -23,6 +23,7 @@ const {
     encodeMigrate,
     isLegacySDK,
     encodeUpdateInstantiateConfigProposal,
+    encodeCallContracts,
     submitProposal,
     validateItsChainChange,
 } = require('./utils');
@@ -598,6 +599,57 @@ const registerDeployment = async (client, config, options, _args, fee) => {
     return proposalId;
 };
 
+const callContracts = async (client, config, options, _args, fee) => {
+    const fs = require('fs');
+    const { proposalFile } = options;
+
+    if (!proposalFile) {
+        throw new Error('--proposalFile is required for call-contracts command');
+    }
+
+    // Read the proposal JSON file
+    let proposalData;
+    try {
+        const fileContent = fs.readFileSync(proposalFile, 'utf8');
+        proposalData = JSON.parse(fileContent);
+    } catch (error) {
+        throw new Error(`Failed to read proposal file ${proposalFile}: ${error.message}`);
+    }
+
+    if (!proposalData.title || !proposalData.description || !proposalData.contract_calls) {
+        throw new Error('Proposal file must contain title, description, and contract_calls fields');
+    }
+    if (!Array.isArray(proposalData.contract_calls) || proposalData.contract_calls.length === 0) {
+        throw new Error('Proposal must contain at least one contract_call');
+    }
+
+    const proposalOptions = {
+        ...options,
+        title: proposalData.title,
+        description: proposalData.description,
+        contract_calls: proposalData.contract_calls,
+    };
+
+    const proposal = encodeCallContracts(config, proposalOptions);
+
+    // For legacy SDK, we need to wrap it in an Any type for MsgSubmitProposal
+    const isLegacy = isLegacySDK(config);
+    if (isLegacy) {
+        printInfo('CallContractsProposal', JSON.stringify(proposalData, null, 2));
+        printInfo('Encoded proposal typeUrl', proposal.typeUrl);
+        printInfo('Encoded proposal value length', `${proposal.value.length} bytes`);
+        
+        if (prompt(`Proceed with proposal submission?`, options.yes)) {
+            return;
+        }
+
+        const proposalId = await callSubmitProposal(client, config, proposalOptions, proposal, fee);
+        return proposalId;
+    } else {
+        throw new Error('CallContractsProposal is only supported on legacy SDK (< v0.50)');
+    }
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -744,6 +796,15 @@ const programHandler = () => {
         .action((options) => mainProcessor(registerDeployment, options));
     addAmplifierOptions(registerDeploymentCmd, {
         proposalOptions: true,
+        runAs: true,
+    });
+
+    const callContractsCmd = program
+        .command('call-contracts')
+        .description('Submit a CallContractsProposal to execute contract calls on other chains')
+        .requiredOption('--proposalFile <proposalFile>', 'path to JSON file containing the proposal (with title, description, and contract_calls)')
+        .action((options) => mainProcessor(callContracts, options));
+    addAmplifierOptions(callContractsCmd, {
         runAs: true,
     });
 
