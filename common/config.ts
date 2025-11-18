@@ -404,6 +404,7 @@ export class ConfigManager implements FullConfig {
     public getMultisigProverContractForChainType(chainType: string): string {
         const chainProverMapping: Record<string, string> = {
             svm: 'SolanaMultisigProver',
+            xrpl: 'XrplMultisigProver',
         };
         return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
     }
@@ -426,8 +427,17 @@ export class ConfigManager implements FullConfig {
         return multisigProverConfig;
     }
 
+    public getVotingVerifierContractForChainType(chainType: string): string {
+        const chainVerifierMapping: Record<string, string> = {
+            xrpl: 'XrplVotingVerifier',
+        };
+        return chainVerifierMapping[chainType] || VERIFIER_CONTRACT_NAME;
+    }
+
     public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
-        const votingVerifierConfig = this.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName) as VotingVerifierChainConfig;
+        const chainConfig = this.getChainConfig(chainName);
+        const verifierContractName = this.getVotingVerifierContractForChainType(chainConfig.chainType);
+        const votingVerifierConfig = this.getContractConfigByChain(verifierContractName, chainName) as VotingVerifierChainConfig;
 
         this.validateRequired(votingVerifierConfig.governanceAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`);
         this.validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
@@ -441,8 +451,17 @@ export class ConfigManager implements FullConfig {
         return votingVerifierConfig;
     }
 
+    public getGatewayContractForChainType(chainType: string): string {
+        const chainGatewayMapping: Record<string, string> = {
+            xrpl: 'XrplGateway',
+        };
+        return chainGatewayMapping[chainType] || GATEWAY_CONTRACT_NAME;
+    }
+
     public getGatewayContract(chainName: string): GatewayChainConfig {
-        const gatewayConfig = this.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
+        const chainConfig = this.getChainConfig(chainName);
+        const gatewayContractName = this.getGatewayContractForChainType(chainConfig.chainType);
+        const gatewayConfig = this.getContractConfigByChain(gatewayContractName, chainName) as GatewayChainConfig;
 
         return gatewayConfig;
     }
