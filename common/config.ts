@@ -71,12 +71,12 @@ export interface AxelarContractConfig extends ContractConfig {
 export interface VotingVerifierChainConfig {
     governanceAddress: string;
     serviceName: string;
-    sourceGatewayAddress: string;
+    sourceGatewayAddress?: string;
     votingThreshold: [string, string];
     blockExpiry: number;
     confirmationHeight: number;
-    msgIdFormat: string;
-    addressFormat: string;
+    msgIdFormat?: string;
+    addressFormat?: string;
     codeId: number;
     contractAdmin?: string;
     address?: string;
@@ -84,8 +84,8 @@ export interface VotingVerifierChainConfig {
 
 export interface MultisigProverChainConfig {
     governanceAddress: string;
-    encoder: string;
-    keyType: string;
+    encoder?: string;
+    keyType?: string;
     adminAddress: string;
     verifierSetDiffThreshold: number;
     signingThreshold: [string, string];
@@ -414,8 +414,6 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.encoder, `${multisigProverContractName}[${chainName}].encoder`);
-        this.validateRequired(multisigProverConfig.keyType, `${multisigProverContractName}[${chainName}].keyType`);
         this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`);
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
@@ -441,12 +439,9 @@ export class ConfigManager implements FullConfig {
 
         this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`);
         this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`);
-        this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${verifierContractName}[${chainName}].sourceGatewayAddress`);
         this.validateThreshold(votingVerifierConfig.votingThreshold, `${verifierContractName}[${chainName}].votingThreshold`);
         this.validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`);
         this.validateRequired(votingVerifierConfig.confirmationHeight, `${verifierContractName}[${chainName}].confirmationHeight`);
-        this.validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
-        this.validateRequired(votingVerifierConfig.addressFormat, `${verifierContractName}[${chainName}].addressFormat`);
 
         return votingVerifierConfig;
     }
