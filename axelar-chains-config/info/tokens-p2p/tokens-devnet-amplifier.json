@@ -2,31 +2,4085 @@
   "chains": {
     "core-avalanche": {
       "start": 0,
-      "end": 0,
-      "max": 0,
-      "alreadyProcessedPercentage": "0.00",
+      "end": 47811289,
+      "max": 47811289,
+      "alreadyProcessedPercentage": "100.00",
       "rpcs": [
-        "https://avalanche-fuji-c-chain-rpc.publicnode.com"
+        "https://api.avax-test.network/ext/bc/C/rpc"
       ]
     },
     "core-ethereum": {
       "start": 0,
-      "end": 3688090,
-      "max": 9649134,
-      "alreadyProcessedPercentage": "38.22",
+      "end": 9654795,
+      "max": 9654795,
+      "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
       ]
     },
     "core-optimism": {
       "start": 0,
-      "end": 8326332,
-      "max": 35794622,
-      "alreadyProcessedPercentage": "23.26",
+      "end": 35831115,
+      "max": 35831115,
+      "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"
       ]
     }
   },
-  "tokens": {}
+  "tokens": {
+    "0xeae26b7423baa05a8e077943f5acde2d32b55cb7b3bff5a0f0713d6853fa282a": {
+      "tokenId": "0xeae26b7423baa05a8e077943f5acde2d32b55cb7b3bff5a0f0713d6853fa282a",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xeae26b7423baa05a8e077943f5acde2d32b55cb7b3bff5a0f0713d6853fa282a",
+          "tokenAddress": "0x2bf43548A42edEf82096559FB232357A75e4aDaD",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xeae26b7423baa05a8e077943f5acde2d32b55cb7b3bff5a0f0713d6853fa282a",
+          "tokenAddress": "0x2bf43548A42edEf82096559FB232357A75e4aDaD",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x5e08e90f3b9865dcc501cb1a0a3bb106264136e915544b5c7ab987f1132d2943": {
+      "tokenId": "0x5e08e90f3b9865dcc501cb1a0a3bb106264136e915544b5c7ab987f1132d2943",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x5e08e90f3b9865dcc501cb1a0a3bb106264136e915544b5c7ab987f1132d2943",
+          "tokenAddress": "0x4647E06C6530fE11d9Af77bCf173EccaFf653Dcf",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x5e08e90f3b9865dcc501cb1a0a3bb106264136e915544b5c7ab987f1132d2943",
+          "tokenAddress": "0x4647E06C6530fE11d9Af77bCf173EccaFf653Dcf",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xbec54c96cdc6bec0d9d7356cdfbeac3b6cfdb95197ff06deb05a7e8ee6878f52": {
+      "tokenId": "0xbec54c96cdc6bec0d9d7356cdfbeac3b6cfdb95197ff06deb05a7e8ee6878f52",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xbec54c96cdc6bec0d9d7356cdfbeac3b6cfdb95197ff06deb05a7e8ee6878f52",
+          "tokenAddress": "0xEf2325De60A494ef6939243caC0aaD98b01aa328",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xbec54c96cdc6bec0d9d7356cdfbeac3b6cfdb95197ff06deb05a7e8ee6878f52",
+          "tokenAddress": "0xEf2325De60A494ef6939243caC0aaD98b01aa328",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf078bc069d7d6ca60a52614323d6c57082046be97f07051a2bbc904defdb54e8": {
+      "tokenId": "0xf078bc069d7d6ca60a52614323d6c57082046be97f07051a2bbc904defdb54e8",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xf078bc069d7d6ca60a52614323d6c57082046be97f07051a2bbc904defdb54e8",
+          "tokenAddress": "0x5A5065bB8851275733814fC8b0469eD28776459A",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf078bc069d7d6ca60a52614323d6c57082046be97f07051a2bbc904defdb54e8",
+          "tokenAddress": "0x5A5065bB8851275733814fC8b0469eD28776459A",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x77e08163e34dc8e47d04b030896cbb41124e2dae23def0760c2bc1e93fd22ffa": {
+      "tokenId": "0x77e08163e34dc8e47d04b030896cbb41124e2dae23def0760c2bc1e93fd22ffa",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x77e08163e34dc8e47d04b030896cbb41124e2dae23def0760c2bc1e93fd22ffa",
+          "tokenAddress": "0x869aD26D4574792E52c9b9121190D0B66bEf29aE",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x77e08163e34dc8e47d04b030896cbb41124e2dae23def0760c2bc1e93fd22ffa",
+          "tokenAddress": "0x869aD26D4574792E52c9b9121190D0B66bEf29aE",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x26fb05d93b106227a5977b56f5e7dd8cc3118a9d8b70c00c02a02721dd071ddf": {
+      "tokenId": "0x26fb05d93b106227a5977b56f5e7dd8cc3118a9d8b70c00c02a02721dd071ddf",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x26fb05d93b106227a5977b56f5e7dd8cc3118a9d8b70c00c02a02721dd071ddf",
+          "tokenAddress": "0x9d0225a387826b1d488516E24C43343283e7B979",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x26fb05d93b106227a5977b56f5e7dd8cc3118a9d8b70c00c02a02721dd071ddf",
+          "tokenAddress": "0x9d0225a387826b1d488516E24C43343283e7B979",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa02c27f0ed4e1fc34192e03760aff4054a56ee0fba57fc71cf39e44e893ae5db": {
+      "tokenId": "0xa02c27f0ed4e1fc34192e03760aff4054a56ee0fba57fc71cf39e44e893ae5db",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xa02c27f0ed4e1fc34192e03760aff4054a56ee0fba57fc71cf39e44e893ae5db",
+          "tokenAddress": "0xc69A244283Ce1b55c7497eBBa4bc15b8b331CDf2",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa02c27f0ed4e1fc34192e03760aff4054a56ee0fba57fc71cf39e44e893ae5db",
+          "tokenAddress": "0xc69A244283Ce1b55c7497eBBa4bc15b8b331CDf2",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa0fd83c6677be72d84691da73f52f60ed4539785cd57b313bbc12950baa74d68": {
+      "tokenId": "0xa0fd83c6677be72d84691da73f52f60ed4539785cd57b313bbc12950baa74d68",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xa0fd83c6677be72d84691da73f52f60ed4539785cd57b313bbc12950baa74d68",
+          "tokenAddress": "0x42C0226485498bAD4f297bdf21709C317E65C124",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa0fd83c6677be72d84691da73f52f60ed4539785cd57b313bbc12950baa74d68",
+          "tokenAddress": "0x42C0226485498bAD4f297bdf21709C317E65C124",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf776f2a9b01f4f55aaab5aa64ab01c1cb8700f4e80b5e3af6ea0e77929ff5116": {
+      "tokenId": "0xf776f2a9b01f4f55aaab5aa64ab01c1cb8700f4e80b5e3af6ea0e77929ff5116",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xf776f2a9b01f4f55aaab5aa64ab01c1cb8700f4e80b5e3af6ea0e77929ff5116",
+          "tokenAddress": "0x36F8B09CD080AbB80fa78F4298F96352B04Ab4B4",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf776f2a9b01f4f55aaab5aa64ab01c1cb8700f4e80b5e3af6ea0e77929ff5116",
+          "tokenAddress": "0x36F8B09CD080AbB80fa78F4298F96352B04Ab4B4",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x3fecedd7ec75d5b44e644e4cc81246b919da664f649bb55c32be9e9626235f96": {
+      "tokenId": "0x3fecedd7ec75d5b44e644e4cc81246b919da664f649bb55c32be9e9626235f96",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x3fecedd7ec75d5b44e644e4cc81246b919da664f649bb55c32be9e9626235f96",
+          "tokenAddress": "0xa8A6B334501BF542BC6390168cDdF81a0d384031",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x3fecedd7ec75d5b44e644e4cc81246b919da664f649bb55c32be9e9626235f96",
+          "tokenAddress": "0xa8A6B334501BF542BC6390168cDdF81a0d384031",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x35fb0687d80afd50c5a7200fc018a1f5d101bfe7220c5d6c0c312bdc1cf92db7": {
+      "tokenId": "0x35fb0687d80afd50c5a7200fc018a1f5d101bfe7220c5d6c0c312bdc1cf92db7",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x35fb0687d80afd50c5a7200fc018a1f5d101bfe7220c5d6c0c312bdc1cf92db7",
+          "tokenAddress": "0x929AE3B269548edB43E0c9aE356ac9642D410226",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x35fb0687d80afd50c5a7200fc018a1f5d101bfe7220c5d6c0c312bdc1cf92db7",
+          "tokenAddress": "0x929AE3B269548edB43E0c9aE356ac9642D410226",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xfc67d3b30114a11e9a8da41062758ef84f128a656448589ed7a9cd22cf1ea16c": {
+      "tokenId": "0xfc67d3b30114a11e9a8da41062758ef84f128a656448589ed7a9cd22cf1ea16c",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xfc67d3b30114a11e9a8da41062758ef84f128a656448589ed7a9cd22cf1ea16c",
+          "tokenAddress": "0x2769a08Ea042A5bb3aa04365fCeE10f86bf29e7B",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xfc67d3b30114a11e9a8da41062758ef84f128a656448589ed7a9cd22cf1ea16c",
+          "tokenAddress": "0x2769a08Ea042A5bb3aa04365fCeE10f86bf29e7B",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x62ae31934a8a0ed8ffba9c78af384632f348559a8d7dd30bafb1b52cfc6ac8f6": {
+      "tokenId": "0x62ae31934a8a0ed8ffba9c78af384632f348559a8d7dd30bafb1b52cfc6ac8f6",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x62ae31934a8a0ed8ffba9c78af384632f348559a8d7dd30bafb1b52cfc6ac8f6",
+          "tokenAddress": "0x6D1e2bf76b735700819837b532BfeB5086aaBBF4",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x62ae31934a8a0ed8ffba9c78af384632f348559a8d7dd30bafb1b52cfc6ac8f6",
+          "tokenAddress": "0x6D1e2bf76b735700819837b532BfeB5086aaBBF4",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x04b6d4652e485b1fc3d5fcef2a0ff81430842e1bf10414ce5aba47cdd8a53214": {
+      "tokenId": "0x04b6d4652e485b1fc3d5fcef2a0ff81430842e1bf10414ce5aba47cdd8a53214",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x04b6d4652e485b1fc3d5fcef2a0ff81430842e1bf10414ce5aba47cdd8a53214",
+          "tokenAddress": "0x37F461A117cE8087897c6AF437f4Cf42eFc11668",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x04b6d4652e485b1fc3d5fcef2a0ff81430842e1bf10414ce5aba47cdd8a53214",
+          "tokenAddress": "0x37F461A117cE8087897c6AF437f4Cf42eFc11668",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xca2c89b4f0d4160399a4a4e0658420351af6b3b8a33e501eb5423c676530ddfe": {
+      "tokenId": "0xca2c89b4f0d4160399a4a4e0658420351af6b3b8a33e501eb5423c676530ddfe",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xca2c89b4f0d4160399a4a4e0658420351af6b3b8a33e501eb5423c676530ddfe",
+          "tokenAddress": "0x5b44F6229F7aEE19c504333dF23a3797cE1ef165",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xca2c89b4f0d4160399a4a4e0658420351af6b3b8a33e501eb5423c676530ddfe",
+          "tokenAddress": "0x5b44F6229F7aEE19c504333dF23a3797cE1ef165",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x2f29d687f7d791592347de32491900adfce124e84606a8815db79fd83d0644f7": {
+      "tokenId": "0x2f29d687f7d791592347de32491900adfce124e84606a8815db79fd83d0644f7",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x2f29d687f7d791592347de32491900adfce124e84606a8815db79fd83d0644f7",
+          "tokenAddress": "0xC0D4fC1c582dF3CdF1F34Cae670D8aDdB40fC0F5",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2f29d687f7d791592347de32491900adfce124e84606a8815db79fd83d0644f7",
+          "tokenAddress": "0xC0D4fC1c582dF3CdF1F34Cae670D8aDdB40fC0F5",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x970979eaf2bb607a8a9bc91d3158d149a23a8eb8b68eb79062a56c6536b566ae": {
+      "tokenId": "0x970979eaf2bb607a8a9bc91d3158d149a23a8eb8b68eb79062a56c6536b566ae",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x970979eaf2bb607a8a9bc91d3158d149a23a8eb8b68eb79062a56c6536b566ae",
+          "tokenAddress": "0x7bA3bf7a8867011c4E81cC8a6ad20D59ffBF473C",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x970979eaf2bb607a8a9bc91d3158d149a23a8eb8b68eb79062a56c6536b566ae",
+          "tokenAddress": "0x7bA3bf7a8867011c4E81cC8a6ad20D59ffBF473C",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa123b5d61ef06f02d3c51b1d74e0b9ca3b50becb3438f566cf5ea029415ecaaa": {
+      "tokenId": "0xa123b5d61ef06f02d3c51b1d74e0b9ca3b50becb3438f566cf5ea029415ecaaa",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xa123b5d61ef06f02d3c51b1d74e0b9ca3b50becb3438f566cf5ea029415ecaaa",
+          "tokenAddress": "0xda0467017f7B759e8eC4Ff23077578e6ad801F9F",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa123b5d61ef06f02d3c51b1d74e0b9ca3b50becb3438f566cf5ea029415ecaaa",
+          "tokenAddress": "0xda0467017f7B759e8eC4Ff23077578e6ad801F9F",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf8e9776fb9aff37e421517c29a3f84bc30831982473ff44edba5a531ac30fdb2": {
+      "tokenId": "0xf8e9776fb9aff37e421517c29a3f84bc30831982473ff44edba5a531ac30fdb2",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xf8e9776fb9aff37e421517c29a3f84bc30831982473ff44edba5a531ac30fdb2",
+          "tokenAddress": "0x9755Ad3e84aABFbD1480fe09Fcf906b3eE4A0d5d",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf8e9776fb9aff37e421517c29a3f84bc30831982473ff44edba5a531ac30fdb2",
+          "tokenAddress": "0x9755Ad3e84aABFbD1480fe09Fcf906b3eE4A0d5d",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x569ddf876d860e5868ac8755694452c7ecef7da2c16372f7a730357fc2b1f438": {
+      "tokenId": "0x569ddf876d860e5868ac8755694452c7ecef7da2c16372f7a730357fc2b1f438",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x569ddf876d860e5868ac8755694452c7ecef7da2c16372f7a730357fc2b1f438",
+          "tokenAddress": "0x107dD4AbFaaaB4ABFb1C78c1FAf7E49Bfd053562",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x569ddf876d860e5868ac8755694452c7ecef7da2c16372f7a730357fc2b1f438",
+          "tokenAddress": "0x107dD4AbFaaaB4ABFb1C78c1FAf7E49Bfd053562",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x59f289345f5f98cb4803fa30b734dbb702ee8b9ab1aa6287d39f078baafaed13": {
+      "tokenId": "0x59f289345f5f98cb4803fa30b734dbb702ee8b9ab1aa6287d39f078baafaed13",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x59f289345f5f98cb4803fa30b734dbb702ee8b9ab1aa6287d39f078baafaed13",
+          "tokenAddress": "0xeCa8D58c351979d0D4cFd3148C3F837d0f3ecDeD",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x59f289345f5f98cb4803fa30b734dbb702ee8b9ab1aa6287d39f078baafaed13",
+          "tokenAddress": "0xeCa8D58c351979d0D4cFd3148C3F837d0f3ecDeD",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xb932606b351af29144d7db0121d6eadc6fcb909e00e3a91d6348f83543005d8c": {
+      "tokenId": "0xb932606b351af29144d7db0121d6eadc6fcb909e00e3a91d6348f83543005d8c",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xb932606b351af29144d7db0121d6eadc6fcb909e00e3a91d6348f83543005d8c",
+          "tokenAddress": "0xe2642226e752351D43E6b1e8E15350D118fB969A",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xb932606b351af29144d7db0121d6eadc6fcb909e00e3a91d6348f83543005d8c",
+          "tokenAddress": "0xe2642226e752351D43E6b1e8E15350D118fB969A",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x85220c09fc1662b96615c832a8026e2049b8dee77968b694a33888e74feea1d3": {
+      "tokenId": "0x85220c09fc1662b96615c832a8026e2049b8dee77968b694a33888e74feea1d3",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x85220c09fc1662b96615c832a8026e2049b8dee77968b694a33888e74feea1d3",
+          "tokenAddress": "0xC2D3f7f8B1f6DB170bFC23db6e723725Eb758a9e",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x85220c09fc1662b96615c832a8026e2049b8dee77968b694a33888e74feea1d3",
+          "tokenAddress": "0xC2D3f7f8B1f6DB170bFC23db6e723725Eb758a9e",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x970ac01f2c418777c7247ff05966b4640ab69fbe146440d80b90f416be737e36": {
+      "tokenId": "0x970ac01f2c418777c7247ff05966b4640ab69fbe146440d80b90f416be737e36",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x970ac01f2c418777c7247ff05966b4640ab69fbe146440d80b90f416be737e36",
+          "tokenAddress": "0xF251A311Cfd412817ea76D6029Ba549a5745c7cf",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x13243e4c57f0a3953c1170fc579ebc67e2ec352aad23f419b52637c5170d45d2": {
+      "tokenId": "0x13243e4c57f0a3953c1170fc579ebc67e2ec352aad23f419b52637c5170d45d2",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x13243e4c57f0a3953c1170fc579ebc67e2ec352aad23f419b52637c5170d45d2",
+          "tokenAddress": "0xa833c462B808d8A11E21937FA0A545fec8488525",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x7d5ce1da43f3f845d4b7300ebb169d41dc36c83af746629b070ada50f0cd57a0": {
+      "tokenId": "0x7d5ce1da43f3f845d4b7300ebb169d41dc36c83af746629b070ada50f0cd57a0",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x7d5ce1da43f3f845d4b7300ebb169d41dc36c83af746629b070ada50f0cd57a0",
+          "tokenAddress": "0xba25C5E7Efdb869EC651Bd6143a79D6c1D2b88B7",
+          "decimals": 9,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x0026dcae63fdbeceeadaa7c4350c1ec8803feca53576ff8eee9e4297f3fb6b2c": {
+      "tokenId": "0x0026dcae63fdbeceeadaa7c4350c1ec8803feca53576ff8eee9e4297f3fb6b2c",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x0026dcae63fdbeceeadaa7c4350c1ec8803feca53576ff8eee9e4297f3fb6b2c",
+          "tokenAddress": "0xE26AA3363f19E78b4508Bb87E068097E4BC46345",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x809cbffdc5ce05a88e8995787457878c6e64695fa8b5581d6840745006d79552": {
+      "tokenId": "0x809cbffdc5ce05a88e8995787457878c6e64695fa8b5581d6840745006d79552",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x809cbffdc5ce05a88e8995787457878c6e64695fa8b5581d6840745006d79552",
+          "tokenAddress": "0x82AeFDAe34fa5eDe2Ad35A4926AbCe566cb67B7C",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x9dc8130833e3495cadb8e8125ccd5f9e9efc4c166178109e278bf84f60f87d98": {
+      "tokenId": "0x9dc8130833e3495cadb8e8125ccd5f9e9efc4c166178109e278bf84f60f87d98",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x9dc8130833e3495cadb8e8125ccd5f9e9efc4c166178109e278bf84f60f87d98",
+          "tokenAddress": "0x774AfbA1015c8B60DEa2375d6E787d50D015709b",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x0f7514af781b0d5444a633ed4084c625d3cc4972937bb5481c90a896a0b816d8": {
+      "tokenId": "0x0f7514af781b0d5444a633ed4084c625d3cc4972937bb5481c90a896a0b816d8",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x0f7514af781b0d5444a633ed4084c625d3cc4972937bb5481c90a896a0b816d8",
+          "tokenAddress": "0x57543F8A4846A7daB123C7FceFC570Fd651f6275",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x529281b0a44d8b1d56045626369e31a2f90a1a6f960b268d6bee2d0266e12f7e": {
+      "tokenId": "0x529281b0a44d8b1d56045626369e31a2f90a1a6f960b268d6bee2d0266e12f7e",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x529281b0a44d8b1d56045626369e31a2f90a1a6f960b268d6bee2d0266e12f7e",
+          "tokenAddress": "0xd88F7b962E245ca6b2365Ef5ce2B020934BF7619",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x77826338d66ab43ee9cec43e506f40d8419e7226122bc078c619ad4719c838c2": {
+      "tokenId": "0x77826338d66ab43ee9cec43e506f40d8419e7226122bc078c619ad4719c838c2",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x77826338d66ab43ee9cec43e506f40d8419e7226122bc078c619ad4719c838c2",
+          "tokenAddress": "0x9C429AaCB59Ad5Ce821F6febD4649612999BBBcB",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x2b0f30f7ee90f185a0133dd60454dd73dd0fd4c4bca6b859c735477c1420af46": {
+      "tokenId": "0x2b0f30f7ee90f185a0133dd60454dd73dd0fd4c4bca6b859c735477c1420af46",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x2b0f30f7ee90f185a0133dd60454dd73dd0fd4c4bca6b859c735477c1420af46",
+          "tokenAddress": "0x72ac5C29fcF4ce4dB1654d71Ce50bAa479271AF0",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xb0d311a1865120aef2f442fe3ee08f8a69b12be15da1f047602142dc095d929d": {
+      "tokenId": "0xb0d311a1865120aef2f442fe3ee08f8a69b12be15da1f047602142dc095d929d",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xb0d311a1865120aef2f442fe3ee08f8a69b12be15da1f047602142dc095d929d",
+          "tokenAddress": "0x0ddF3Ea3078b7cAD5c31F4895cCC6b2bdFDb0ADa",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x178da59f9bc9e51f74dd717b108defd0bd73dc18a394348740d5351421658609": {
+      "tokenId": "0x178da59f9bc9e51f74dd717b108defd0bd73dc18a394348740d5351421658609",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x178da59f9bc9e51f74dd717b108defd0bd73dc18a394348740d5351421658609",
+          "tokenAddress": "0x2708fF2caD53d59581B7503B2D7aF47aA80ea361",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x08f2f87ec1f25541e80629cc555f7c04b65685b5a950f60d58a1fccd50672af9": {
+      "tokenId": "0x08f2f87ec1f25541e80629cc555f7c04b65685b5a950f60d58a1fccd50672af9",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x08f2f87ec1f25541e80629cc555f7c04b65685b5a950f60d58a1fccd50672af9",
+          "tokenAddress": "0xd3529ADFf8654617c426a30589d343Ee9a406711",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x6a35a275f16022c800b2c382fd40914b9ef25646cad10e4acd1708517cbafcaa": {
+      "tokenId": "0x6a35a275f16022c800b2c382fd40914b9ef25646cad10e4acd1708517cbafcaa",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x6a35a275f16022c800b2c382fd40914b9ef25646cad10e4acd1708517cbafcaa",
+          "tokenAddress": "0x96bDaf5E7955AdE6225247f613B0a6e378eea1EA",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x73286fdd7f49c53c61902849a112c909808297a6171485f6227cfa5f16e0467d": {
+      "tokenId": "0x73286fdd7f49c53c61902849a112c909808297a6171485f6227cfa5f16e0467d",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x73286fdd7f49c53c61902849a112c909808297a6171485f6227cfa5f16e0467d",
+          "tokenAddress": "0xdD542f8E8CD40ce3D5C7efb8C9Da7CA13e929e88",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xb915e86723cac3efec585710efd21c2861edbfbabe5074cc31b5bb6d702a13ca": {
+      "tokenId": "0xb915e86723cac3efec585710efd21c2861edbfbabe5074cc31b5bb6d702a13ca",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xb915e86723cac3efec585710efd21c2861edbfbabe5074cc31b5bb6d702a13ca",
+          "tokenAddress": "0x6FD3dbdf3f75Bd87B8950AB491C84df02cEc4d5F",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x36e2d7685f520f5ef77dc5f5dcc9f111c33ad606fc13d117e52dd7cd60376940": {
+      "tokenId": "0x36e2d7685f520f5ef77dc5f5dcc9f111c33ad606fc13d117e52dd7cd60376940",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x36e2d7685f520f5ef77dc5f5dcc9f111c33ad606fc13d117e52dd7cd60376940",
+          "tokenAddress": "0x54B24D77b143aBfe2e8A5351Cd05434bbf0F46b0",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x7f619964b3440c6a71d1d03425769bc444bd7d61d79d3a6d04167f6d1ff04540": {
+      "tokenId": "0x7f619964b3440c6a71d1d03425769bc444bd7d61d79d3a6d04167f6d1ff04540",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x7f619964b3440c6a71d1d03425769bc444bd7d61d79d3a6d04167f6d1ff04540",
+          "tokenAddress": "0x02Ef8a0208604bDD5BF43b7DF3b2402be9f228ae",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x3e6d1ec28fadd0bdba04e7f302bc1c4b64675160409708e8d2dddf4b9dd4f5cb": {
+      "tokenId": "0x3e6d1ec28fadd0bdba04e7f302bc1c4b64675160409708e8d2dddf4b9dd4f5cb",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x3e6d1ec28fadd0bdba04e7f302bc1c4b64675160409708e8d2dddf4b9dd4f5cb",
+          "tokenAddress": "0xC895E5a33C55363FB45B1985d07e770a7b06e047",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xfc2bb21edf9ead33d689413e0c3a03661c5889cf3904acb7d03fc7e86eb018ff": {
+      "tokenId": "0xfc2bb21edf9ead33d689413e0c3a03661c5889cf3904acb7d03fc7e86eb018ff",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xfc2bb21edf9ead33d689413e0c3a03661c5889cf3904acb7d03fc7e86eb018ff",
+          "tokenAddress": "0xEDa7b7156f386EC792844b069EF6a7f004D0c689",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x65d10a88db8cc880bbc3fc04034779894c9b7a2e05c0ffb9955345c7b210a2cc": {
+      "tokenId": "0x65d10a88db8cc880bbc3fc04034779894c9b7a2e05c0ffb9955345c7b210a2cc",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x65d10a88db8cc880bbc3fc04034779894c9b7a2e05c0ffb9955345c7b210a2cc",
+          "tokenAddress": "0xBE07F66a5ea6F3E0df467B3012cFaa7a85168035",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x8daad5f22083bfd50ce89130ba755cb61c61a7c8e95279eb84c06894a6a14d4a": {
+      "tokenId": "0x8daad5f22083bfd50ce89130ba755cb61c61a7c8e95279eb84c06894a6a14d4a",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x8daad5f22083bfd50ce89130ba755cb61c61a7c8e95279eb84c06894a6a14d4a",
+          "tokenAddress": "0x68FC23fe53aDcE395dd38FCE82F6c9D27b3dC8CD",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x953d5d33fc1ef46c3bf05b4ade3bccb6b2825940c9cd6a55ab5b2a900e72a604": {
+      "tokenId": "0x953d5d33fc1ef46c3bf05b4ade3bccb6b2825940c9cd6a55ab5b2a900e72a604",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x953d5d33fc1ef46c3bf05b4ade3bccb6b2825940c9cd6a55ab5b2a900e72a604",
+          "tokenAddress": "0xF0137C1d70bCD58718d549cd007e0729E9EDC6E0",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xbd7b8219b95d36adcc2c5b3e1720690a4a1114d86892880754bd8a34c8d1cc14": {
+      "tokenId": "0xbd7b8219b95d36adcc2c5b3e1720690a4a1114d86892880754bd8a34c8d1cc14",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xbd7b8219b95d36adcc2c5b3e1720690a4a1114d86892880754bd8a34c8d1cc14",
+          "tokenAddress": "0x1AD276d09c4Bbe4E33b0bd7ff3DAD8D01FA6A487",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xffa7efd8fa85a34bcdff3b3c4a5db5bb2e377d5c92b89f789b9ab080ef5e25b2": {
+      "tokenId": "0xffa7efd8fa85a34bcdff3b3c4a5db5bb2e377d5c92b89f789b9ab080ef5e25b2",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xffa7efd8fa85a34bcdff3b3c4a5db5bb2e377d5c92b89f789b9ab080ef5e25b2",
+          "tokenAddress": "0x9278a89920233FC2552EFF46e7f3fdE33A9DfD91",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x5cdddfd4c59d20a764639ccd3b9e811d4b7eb1a068fb038cb89744866665f61e": {
+      "tokenId": "0x5cdddfd4c59d20a764639ccd3b9e811d4b7eb1a068fb038cb89744866665f61e",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x5cdddfd4c59d20a764639ccd3b9e811d4b7eb1a068fb038cb89744866665f61e",
+          "tokenAddress": "0xb3cca30bBC1d95024C8d7693D99cc352d8FE07a7",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf83025cbbd6419448afc502b1bbb5ddd4363a57d86bc9abb1c258b64a2fae86c": {
+      "tokenId": "0xf83025cbbd6419448afc502b1bbb5ddd4363a57d86bc9abb1c258b64a2fae86c",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xf83025cbbd6419448afc502b1bbb5ddd4363a57d86bc9abb1c258b64a2fae86c",
+          "tokenAddress": "0x29d13b81DD6919bF7E40778a52A4F297b99C750e",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x841cfb96ea486a3946ee9f6a1d80ffb14521e101b7c25b987e9e32eae27e6a56": {
+      "tokenId": "0x841cfb96ea486a3946ee9f6a1d80ffb14521e101b7c25b987e9e32eae27e6a56",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x841cfb96ea486a3946ee9f6a1d80ffb14521e101b7c25b987e9e32eae27e6a56",
+          "tokenAddress": "0x345cc0ad50ee4F7cB500648C7cd4D68e99462D9B",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xc581a335ee4b44501fd47c7decfb3703e511aa1a971cb9635d344d881f0a4a41": {
+      "tokenId": "0xc581a335ee4b44501fd47c7decfb3703e511aa1a971cb9635d344d881f0a4a41",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xc581a335ee4b44501fd47c7decfb3703e511aa1a971cb9635d344d881f0a4a41",
+          "tokenAddress": "0x613B676A43246F00B078F5dF7C97f411298E6724",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xc00c5acb418418ab03c88eac1a6e28700a5efe0ca6c8e6bd3bcbd24686effaae": {
+      "tokenId": "0xc00c5acb418418ab03c88eac1a6e28700a5efe0ca6c8e6bd3bcbd24686effaae",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0xc00c5acb418418ab03c88eac1a6e28700a5efe0ca6c8e6bd3bcbd24686effaae",
+          "tokenAddress": "0x073cA925E7b68B1751c093E4872d54101551F1B4",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x71bd938d0cd44ab22a5cbe514ea9ff2cec44f36c5cfbb05f2f7a282efcdafcb6": {
+      "tokenId": "0x71bd938d0cd44ab22a5cbe514ea9ff2cec44f36c5cfbb05f2f7a282efcdafcb6",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x71bd938d0cd44ab22a5cbe514ea9ff2cec44f36c5cfbb05f2f7a282efcdafcb6",
+          "tokenAddress": "0xb542bf2273E23FB2F4Dc68985A960740d48ba20F",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xbb6652e46f57aa4d074a366235e1e6eaeb6cf5039d62663d8130f2cf92917478": {
+      "tokenId": "0xbb6652e46f57aa4d074a366235e1e6eaeb6cf5039d62663d8130f2cf92917478",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xbb6652e46f57aa4d074a366235e1e6eaeb6cf5039d62663d8130f2cf92917478",
+          "tokenAddress": "0x450a4E9e3579b04Df83c3CDa55CB092673F0BC68",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x048fe95964bfdd84c168d16843e33e91f79c749b1e865cf2dbbcaaf798d0c85d": {
+      "tokenId": "0x048fe95964bfdd84c168d16843e33e91f79c749b1e865cf2dbbcaaf798d0c85d",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x048fe95964bfdd84c168d16843e33e91f79c749b1e865cf2dbbcaaf798d0c85d",
+          "tokenAddress": "0x1D6A8e85aa47b47649169BbC3DaB7aAC1905F652",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x18b7f22822e90b2ad2fa872b07ca363830d2e1264f6478574b5740798c9a5aeb": {
+      "tokenId": "0x18b7f22822e90b2ad2fa872b07ca363830d2e1264f6478574b5740798c9a5aeb",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x18b7f22822e90b2ad2fa872b07ca363830d2e1264f6478574b5740798c9a5aeb",
+          "tokenAddress": "0xD78934335a5f4Ebcf56D430859CE4a7635e3C150",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x18b7f22822e90b2ad2fa872b07ca363830d2e1264f6478574b5740798c9a5aeb",
+          "tokenAddress": "0xD78934335a5f4Ebcf56D430859CE4a7635e3C150",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x9378c1ec4d3bcdfa343b8b76f3bceb964ae760537c42279ea3b27365f619ae44": {
+      "tokenId": "0x9378c1ec4d3bcdfa343b8b76f3bceb964ae760537c42279ea3b27365f619ae44",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x9378c1ec4d3bcdfa343b8b76f3bceb964ae760537c42279ea3b27365f619ae44",
+          "tokenAddress": "0xFAfb5F161e95ce955b95d57A688d2D290ecbEEeA",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x9378c1ec4d3bcdfa343b8b76f3bceb964ae760537c42279ea3b27365f619ae44",
+          "tokenAddress": "0xFAfb5F161e95ce955b95d57A688d2D290ecbEEeA",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x405bd7e1fe2a9616d5836d90f709e49a69d043f8488e12237e6876a240319c9f": {
+      "tokenId": "0x405bd7e1fe2a9616d5836d90f709e49a69d043f8488e12237e6876a240319c9f",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x405bd7e1fe2a9616d5836d90f709e49a69d043f8488e12237e6876a240319c9f",
+          "tokenAddress": "0x30CEe8cc73Ed16c324B143b3A97c26611DeB3e59",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x405bd7e1fe2a9616d5836d90f709e49a69d043f8488e12237e6876a240319c9f",
+          "tokenAddress": "0x30CEe8cc73Ed16c324B143b3A97c26611DeB3e59",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x2df0fcbe5c74bf399b6e278b401937adc7e5c6b393c25984b53dd0eee58ccb08": {
+      "tokenId": "0x2df0fcbe5c74bf399b6e278b401937adc7e5c6b393c25984b53dd0eee58ccb08",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x2df0fcbe5c74bf399b6e278b401937adc7e5c6b393c25984b53dd0eee58ccb08",
+          "tokenAddress": "0x53473F1D222ECb6774BD9C0BFaAb9f7295D56970",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2df0fcbe5c74bf399b6e278b401937adc7e5c6b393c25984b53dd0eee58ccb08",
+          "tokenAddress": "0x53473F1D222ECb6774BD9C0BFaAb9f7295D56970",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xade898de1de0a9800acfcef07344d638496d035daf9a796a0373bac10849409c": {
+      "tokenId": "0xade898de1de0a9800acfcef07344d638496d035daf9a796a0373bac10849409c",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xade898de1de0a9800acfcef07344d638496d035daf9a796a0373bac10849409c",
+          "tokenAddress": "0x43686535b396f2C4D5FF0F326E375a3089dd39F6",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xade898de1de0a9800acfcef07344d638496d035daf9a796a0373bac10849409c",
+          "tokenAddress": "0x43686535b396f2C4D5FF0F326E375a3089dd39F6",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x579cf72655d61b73a9f131c5f2b963d4c649814078db445bae610421b683f81f": {
+      "tokenId": "0x579cf72655d61b73a9f131c5f2b963d4c649814078db445bae610421b683f81f",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x579cf72655d61b73a9f131c5f2b963d4c649814078db445bae610421b683f81f",
+          "tokenAddress": "0xe9367F5390aAAb0dC7D60888Ed83c6a0716d89c9",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x579cf72655d61b73a9f131c5f2b963d4c649814078db445bae610421b683f81f",
+          "tokenAddress": "0xe9367F5390aAAb0dC7D60888Ed83c6a0716d89c9",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x750a317500477d22632237e4dbed544bee711b73a083b0cf8ec98f4bcd020532": {
+      "tokenId": "0x750a317500477d22632237e4dbed544bee711b73a083b0cf8ec98f4bcd020532",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x750a317500477d22632237e4dbed544bee711b73a083b0cf8ec98f4bcd020532",
+          "tokenAddress": "0x869A395BCE9B136771CB8D7a290FC7B77E3B4d73",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x750a317500477d22632237e4dbed544bee711b73a083b0cf8ec98f4bcd020532",
+          "tokenAddress": "0x869A395BCE9B136771CB8D7a290FC7B77E3B4d73",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x6d85cfc60f0ff1a915933564e51405ed8ee78fcb4b7f6073c3770eb4d56868d1": {
+      "tokenId": "0x6d85cfc60f0ff1a915933564e51405ed8ee78fcb4b7f6073c3770eb4d56868d1",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x6d85cfc60f0ff1a915933564e51405ed8ee78fcb4b7f6073c3770eb4d56868d1",
+          "tokenAddress": "0x08bBAe16C70E844029BAc8DDae273A7171c1fD04",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6d85cfc60f0ff1a915933564e51405ed8ee78fcb4b7f6073c3770eb4d56868d1",
+          "tokenAddress": "0x08bBAe16C70E844029BAc8DDae273A7171c1fD04",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x8da524ecf032647d7a27b2b0a83083d03afc10b829944e9779a2df605208b588": {
+      "tokenId": "0x8da524ecf032647d7a27b2b0a83083d03afc10b829944e9779a2df605208b588",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x8da524ecf032647d7a27b2b0a83083d03afc10b829944e9779a2df605208b588",
+          "tokenAddress": "0xC058C7b9AF712dF42764880da70aB1264e73623f",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x8da524ecf032647d7a27b2b0a83083d03afc10b829944e9779a2df605208b588",
+          "tokenAddress": "0xC058C7b9AF712dF42764880da70aB1264e73623f",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x05a3e865844bce4d5e232161e28ad7189489b66aa80a63f8b4243eab80a44e64": {
+      "tokenId": "0x05a3e865844bce4d5e232161e28ad7189489b66aa80a63f8b4243eab80a44e64",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x05a3e865844bce4d5e232161e28ad7189489b66aa80a63f8b4243eab80a44e64",
+          "tokenAddress": "0xf3cF585B7fee10F159EB284C5C86C5AeA785C4F4",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x05a3e865844bce4d5e232161e28ad7189489b66aa80a63f8b4243eab80a44e64",
+          "tokenAddress": "0xf3cF585B7fee10F159EB284C5C86C5AeA785C4F4",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4f85983acdab7334e8eee402e6766d0bb038fd5a2414af5a9c0c974434a4e2aa": {
+      "tokenId": "0x4f85983acdab7334e8eee402e6766d0bb038fd5a2414af5a9c0c974434a4e2aa",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x4f85983acdab7334e8eee402e6766d0bb038fd5a2414af5a9c0c974434a4e2aa",
+          "tokenAddress": "0x1B4D39CC93060EA98EA05C1c4889a58E958349ec",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4f85983acdab7334e8eee402e6766d0bb038fd5a2414af5a9c0c974434a4e2aa",
+          "tokenAddress": "0x1B4D39CC93060EA98EA05C1c4889a58E958349ec",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x013e3c9b23c9b7a7b804940e8eb8bcce518865ba744ea674b2561c3334f0519a": {
+      "tokenId": "0x013e3c9b23c9b7a7b804940e8eb8bcce518865ba744ea674b2561c3334f0519a",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x013e3c9b23c9b7a7b804940e8eb8bcce518865ba744ea674b2561c3334f0519a",
+          "tokenAddress": "0x53337a41cc7c8953Ae0af17A7e8e9Afd068c28Ef",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x013e3c9b23c9b7a7b804940e8eb8bcce518865ba744ea674b2561c3334f0519a",
+          "tokenAddress": "0x53337a41cc7c8953Ae0af17A7e8e9Afd068c28Ef",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x0e645b7db111e070cd16e8439247a4c05a06a1e8029fb5340918bd8f887aa838": {
+      "tokenId": "0x0e645b7db111e070cd16e8439247a4c05a06a1e8029fb5340918bd8f887aa838",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x0e645b7db111e070cd16e8439247a4c05a06a1e8029fb5340918bd8f887aa838",
+          "tokenAddress": "0xaB9864C2DEe3dd0a15A15c23a6b19A785360c569",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x0e645b7db111e070cd16e8439247a4c05a06a1e8029fb5340918bd8f887aa838",
+          "tokenAddress": "0xaB9864C2DEe3dd0a15A15c23a6b19A785360c569",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x80cd1af4de7e2024e113a0e61833e14dff44844f790cfa30aa191383fe0f2a71": {
+      "tokenId": "0x80cd1af4de7e2024e113a0e61833e14dff44844f790cfa30aa191383fe0f2a71",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x80cd1af4de7e2024e113a0e61833e14dff44844f790cfa30aa191383fe0f2a71",
+          "tokenAddress": "0x64c933928257D82c2A70aEE18f92e2C12D53D2E6",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x80cd1af4de7e2024e113a0e61833e14dff44844f790cfa30aa191383fe0f2a71",
+          "tokenAddress": "0x64c933928257D82c2A70aEE18f92e2C12D53D2E6",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xee78a2eb795c0b868cb6d7fb379c73a45bc7199b41a4ffbe5d9f688e9cf99e26": {
+      "tokenId": "0xee78a2eb795c0b868cb6d7fb379c73a45bc7199b41a4ffbe5d9f688e9cf99e26",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xee78a2eb795c0b868cb6d7fb379c73a45bc7199b41a4ffbe5d9f688e9cf99e26",
+          "tokenAddress": "0x17dE55862A7CfA280f9464337b7A9398A26468aF",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xee78a2eb795c0b868cb6d7fb379c73a45bc7199b41a4ffbe5d9f688e9cf99e26",
+          "tokenAddress": "0x17dE55862A7CfA280f9464337b7A9398A26468aF",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf20ab3f3d58c5fa83cbcb5ac8688f7ab93c7063a1e9b2a651edcb18ca22db9f1": {
+      "tokenId": "0xf20ab3f3d58c5fa83cbcb5ac8688f7ab93c7063a1e9b2a651edcb18ca22db9f1",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xf20ab3f3d58c5fa83cbcb5ac8688f7ab93c7063a1e9b2a651edcb18ca22db9f1",
+          "tokenAddress": "0x684d903E9BEb4BCD9e4CF1ae8784d71a54b9a682",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf20ab3f3d58c5fa83cbcb5ac8688f7ab93c7063a1e9b2a651edcb18ca22db9f1",
+          "tokenAddress": "0x684d903E9BEb4BCD9e4CF1ae8784d71a54b9a682",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x021f6d7a3ebbb817d7c9ccb84d3200f4c6cb90d06d16cca847181687511e69ec": {
+      "tokenId": "0x021f6d7a3ebbb817d7c9ccb84d3200f4c6cb90d06d16cca847181687511e69ec",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x021f6d7a3ebbb817d7c9ccb84d3200f4c6cb90d06d16cca847181687511e69ec",
+          "tokenAddress": "0xB87dCC915aA8e3A60c41793D605FC73E2261DC86",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x021f6d7a3ebbb817d7c9ccb84d3200f4c6cb90d06d16cca847181687511e69ec",
+          "tokenAddress": "0xB87dCC915aA8e3A60c41793D605FC73E2261DC86",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x426fae42a95c9cd7a96fdece7a112cebd34d373af30b10dc7c882c538c0955c5": {
+      "tokenId": "0x426fae42a95c9cd7a96fdece7a112cebd34d373af30b10dc7c882c538c0955c5",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x426fae42a95c9cd7a96fdece7a112cebd34d373af30b10dc7c882c538c0955c5",
+          "tokenAddress": "0x0D7f6847551c26e561552235Bef24D5a436597Aa",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x426fae42a95c9cd7a96fdece7a112cebd34d373af30b10dc7c882c538c0955c5",
+          "tokenAddress": "0x0D7f6847551c26e561552235Bef24D5a436597Aa",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x286f47bd1ba038545f2ed769cda03a0ddf224a4b1efb27764fea611fec56f422": {
+      "tokenId": "0x286f47bd1ba038545f2ed769cda03a0ddf224a4b1efb27764fea611fec56f422",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x286f47bd1ba038545f2ed769cda03a0ddf224a4b1efb27764fea611fec56f422",
+          "tokenAddress": "0x4F5910F960B925F3B94a71ADe5419363EAe442ed",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x286f47bd1ba038545f2ed769cda03a0ddf224a4b1efb27764fea611fec56f422",
+          "tokenAddress": "0x4F5910F960B925F3B94a71ADe5419363EAe442ed",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x59b55fd186dd3cf36e491d288aa04aa4f294673fbcc8d90550e2ffbd191f8fe9": {
+      "tokenId": "0x59b55fd186dd3cf36e491d288aa04aa4f294673fbcc8d90550e2ffbd191f8fe9",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x59b55fd186dd3cf36e491d288aa04aa4f294673fbcc8d90550e2ffbd191f8fe9",
+          "tokenAddress": "0xc2B9dCC4F16390b41Db1EcAeB1d3a6A9e2A7d75e",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x59b55fd186dd3cf36e491d288aa04aa4f294673fbcc8d90550e2ffbd191f8fe9",
+          "tokenAddress": "0xc2B9dCC4F16390b41Db1EcAeB1d3a6A9e2A7d75e",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x2b43bb05d8d4cac2970983931d2566781c471f197e59b24f15fbf8a65305f80f": {
+      "tokenId": "0x2b43bb05d8d4cac2970983931d2566781c471f197e59b24f15fbf8a65305f80f",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x2b43bb05d8d4cac2970983931d2566781c471f197e59b24f15fbf8a65305f80f",
+          "tokenAddress": "0xD10f1ae8cEC84feF267e2463b99649C0E0B4fEb0",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2b43bb05d8d4cac2970983931d2566781c471f197e59b24f15fbf8a65305f80f",
+          "tokenAddress": "0xD10f1ae8cEC84feF267e2463b99649C0E0B4fEb0",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x8db45b182ff0626de4dc76ea5cb6c547ec0a382114144872d68d0b2535c93f8d": {
+      "tokenId": "0x8db45b182ff0626de4dc76ea5cb6c547ec0a382114144872d68d0b2535c93f8d",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x8db45b182ff0626de4dc76ea5cb6c547ec0a382114144872d68d0b2535c93f8d",
+          "tokenAddress": "0x6425d55A5863A257b8305c6EEda38D42A73CC07b",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x8db45b182ff0626de4dc76ea5cb6c547ec0a382114144872d68d0b2535c93f8d",
+          "tokenAddress": "0x6425d55A5863A257b8305c6EEda38D42A73CC07b",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x77f4478f52fa54b7fb2f9ad8157617e85a803562844992b9032b8b48507e7581": {
+      "tokenId": "0x77f4478f52fa54b7fb2f9ad8157617e85a803562844992b9032b8b48507e7581",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x77f4478f52fa54b7fb2f9ad8157617e85a803562844992b9032b8b48507e7581",
+          "tokenAddress": "0x1A76e8744644331EaCA7F96064144f1C03ac69B4",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x77f4478f52fa54b7fb2f9ad8157617e85a803562844992b9032b8b48507e7581",
+          "tokenAddress": "0x1A76e8744644331EaCA7F96064144f1C03ac69B4",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xbb61b64952a26347a353424ee4268f99e0bf3762cabdb6df9cdca4816bdd2932": {
+      "tokenId": "0xbb61b64952a26347a353424ee4268f99e0bf3762cabdb6df9cdca4816bdd2932",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xbb61b64952a26347a353424ee4268f99e0bf3762cabdb6df9cdca4816bdd2932",
+          "tokenAddress": "0xfBA67f31989e825005eafFa931EF47E8E8E9B67d",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xbb61b64952a26347a353424ee4268f99e0bf3762cabdb6df9cdca4816bdd2932",
+          "tokenAddress": "0xfBA67f31989e825005eafFa931EF47E8E8E9B67d",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x12e230f2d2158acb2baf0cd6e7da92acd04326391909b6a4fe42c13178d7bfbe": {
+      "tokenId": "0x12e230f2d2158acb2baf0cd6e7da92acd04326391909b6a4fe42c13178d7bfbe",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x12e230f2d2158acb2baf0cd6e7da92acd04326391909b6a4fe42c13178d7bfbe",
+          "tokenAddress": "0x42BEAAB4fA5DdEbb07b392BAB66Ac7A17a1b0e23",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x12e230f2d2158acb2baf0cd6e7da92acd04326391909b6a4fe42c13178d7bfbe",
+          "tokenAddress": "0x42BEAAB4fA5DdEbb07b392BAB66Ac7A17a1b0e23",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf5753fad58ff9b12a6df43f7fde5f969f8a2048b60eb44b23635cc39f98e74e2": {
+      "tokenId": "0xf5753fad58ff9b12a6df43f7fde5f969f8a2048b60eb44b23635cc39f98e74e2",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xf5753fad58ff9b12a6df43f7fde5f969f8a2048b60eb44b23635cc39f98e74e2",
+          "tokenAddress": "0xD663ec969229bb3B83bC1ADeB96aA7A6d45F73d3",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf5753fad58ff9b12a6df43f7fde5f969f8a2048b60eb44b23635cc39f98e74e2",
+          "tokenAddress": "0xD663ec969229bb3B83bC1ADeB96aA7A6d45F73d3",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x6af783d9c110009dce89a61dc4db127f89322e68e09f5314e0c2824f5086aba0": {
+      "tokenId": "0x6af783d9c110009dce89a61dc4db127f89322e68e09f5314e0c2824f5086aba0",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x6af783d9c110009dce89a61dc4db127f89322e68e09f5314e0c2824f5086aba0",
+          "tokenAddress": "0x9725DA935e34A2c3FF8De232DA829d45259f5596",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6af783d9c110009dce89a61dc4db127f89322e68e09f5314e0c2824f5086aba0",
+          "tokenAddress": "0x9725DA935e34A2c3FF8De232DA829d45259f5596",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x1e5c613a577c48c87768f07511356c66cc83d9ea18eb51eb754df3ff6f827882": {
+      "tokenId": "0x1e5c613a577c48c87768f07511356c66cc83d9ea18eb51eb754df3ff6f827882",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x1e5c613a577c48c87768f07511356c66cc83d9ea18eb51eb754df3ff6f827882",
+          "tokenAddress": "0x49FB7966EB87A5B897416985Fb8a6c7001f0b0Fb",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x1e5c613a577c48c87768f07511356c66cc83d9ea18eb51eb754df3ff6f827882",
+          "tokenAddress": "0x49FB7966EB87A5B897416985Fb8a6c7001f0b0Fb",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xe0991fe4718cb5dd14012ae995f5b5121db08775e2247cf4ac7c2f14eaebbcab": {
+      "tokenId": "0xe0991fe4718cb5dd14012ae995f5b5121db08775e2247cf4ac7c2f14eaebbcab",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xe0991fe4718cb5dd14012ae995f5b5121db08775e2247cf4ac7c2f14eaebbcab",
+          "tokenAddress": "0x05D1314b16A14a1B55DAFBFA09e99B75BaC92363",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xe0991fe4718cb5dd14012ae995f5b5121db08775e2247cf4ac7c2f14eaebbcab",
+          "tokenAddress": "0x05D1314b16A14a1B55DAFBFA09e99B75BaC92363",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x49d54bf4771d4ec848c35bcb5f3873a165dafec198e86d60cdaa4d9e349cdf7b": {
+      "tokenId": "0x49d54bf4771d4ec848c35bcb5f3873a165dafec198e86d60cdaa4d9e349cdf7b",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x49d54bf4771d4ec848c35bcb5f3873a165dafec198e86d60cdaa4d9e349cdf7b",
+          "tokenAddress": "0x952b6456bDe8ab776Ab2101449FCe9aA5B07dF46",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x49d54bf4771d4ec848c35bcb5f3873a165dafec198e86d60cdaa4d9e349cdf7b",
+          "tokenAddress": "0x952b6456bDe8ab776Ab2101449FCe9aA5B07dF46",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4c5ec16982a2f1dfa65ec8ee4aa37ead2f87901e9f00e9cf90414bdfdc4cb56c": {
+      "tokenId": "0x4c5ec16982a2f1dfa65ec8ee4aa37ead2f87901e9f00e9cf90414bdfdc4cb56c",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x4c5ec16982a2f1dfa65ec8ee4aa37ead2f87901e9f00e9cf90414bdfdc4cb56c",
+          "tokenAddress": "0x7218D366d93860c53a35AaDd139484b603e25d90",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4c5ec16982a2f1dfa65ec8ee4aa37ead2f87901e9f00e9cf90414bdfdc4cb56c",
+          "tokenAddress": "0x7218D366d93860c53a35AaDd139484b603e25d90",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x58e9dd40fac3313a60dd375a44cb9c8814860d7f2f308c504f06559a25cf0522": {
+      "tokenId": "0x58e9dd40fac3313a60dd375a44cb9c8814860d7f2f308c504f06559a25cf0522",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x58e9dd40fac3313a60dd375a44cb9c8814860d7f2f308c504f06559a25cf0522",
+          "tokenAddress": "0xbc87A1cff15bB3657717E7FDeB012c39908C4dd4",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x58e9dd40fac3313a60dd375a44cb9c8814860d7f2f308c504f06559a25cf0522",
+          "tokenAddress": "0xbc87A1cff15bB3657717E7FDeB012c39908C4dd4",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x10c035fe209052e13d494502b572025a814dd75d177ee9146f02f65885bd52bb": {
+      "tokenId": "0x10c035fe209052e13d494502b572025a814dd75d177ee9146f02f65885bd52bb",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x10c035fe209052e13d494502b572025a814dd75d177ee9146f02f65885bd52bb",
+          "tokenAddress": "0xAa6489A7bcc3C116Dc59484646E40F620f7C3cc5",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x10c035fe209052e13d494502b572025a814dd75d177ee9146f02f65885bd52bb",
+          "tokenAddress": "0xAa6489A7bcc3C116Dc59484646E40F620f7C3cc5",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x5588a7b4904497449dd25ef96b4e99e6a73a1a917ac42bbb6040694c3a08b082": {
+      "tokenId": "0x5588a7b4904497449dd25ef96b4e99e6a73a1a917ac42bbb6040694c3a08b082",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x5588a7b4904497449dd25ef96b4e99e6a73a1a917ac42bbb6040694c3a08b082",
+          "tokenAddress": "0x7D309108b30F198D98654fC6d75DCb6e5E91a566",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x5588a7b4904497449dd25ef96b4e99e6a73a1a917ac42bbb6040694c3a08b082",
+          "tokenAddress": "0x7D309108b30F198D98654fC6d75DCb6e5E91a566",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xe0399b3c38238d94552e6c543442da01d6061bab2010e3438a20f71a49690ef0": {
+      "tokenId": "0xe0399b3c38238d94552e6c543442da01d6061bab2010e3438a20f71a49690ef0",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xe0399b3c38238d94552e6c543442da01d6061bab2010e3438a20f71a49690ef0",
+          "tokenAddress": "0x341A63eCa4DD930A9007492c9Ff82a25bDa36b86",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xe0399b3c38238d94552e6c543442da01d6061bab2010e3438a20f71a49690ef0",
+          "tokenAddress": "0x341A63eCa4DD930A9007492c9Ff82a25bDa36b86",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x69e0f063f91ab279dd3567b091bc195f3f0e33091b4d22c30eea57acd1eaa262": {
+      "tokenId": "0x69e0f063f91ab279dd3567b091bc195f3f0e33091b4d22c30eea57acd1eaa262",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x69e0f063f91ab279dd3567b091bc195f3f0e33091b4d22c30eea57acd1eaa262",
+          "tokenAddress": "0x4f0a4EC43Ad671D52c0FF08B7059788cACDFfF6d",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x69e0f063f91ab279dd3567b091bc195f3f0e33091b4d22c30eea57acd1eaa262",
+          "tokenAddress": "0x4f0a4EC43Ad671D52c0FF08B7059788cACDFfF6d",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xdec26511ba4b87aab8957a2f60287deeab03513a7b39f69adf5364a5551a46bc": {
+      "tokenId": "0xdec26511ba4b87aab8957a2f60287deeab03513a7b39f69adf5364a5551a46bc",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xdec26511ba4b87aab8957a2f60287deeab03513a7b39f69adf5364a5551a46bc",
+          "tokenAddress": "0x76Cec15081Fdb6fb382c63899eA09394b063ffE6",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xdec26511ba4b87aab8957a2f60287deeab03513a7b39f69adf5364a5551a46bc",
+          "tokenAddress": "0x76Cec15081Fdb6fb382c63899eA09394b063ffE6",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x7ad57d0873189262b4d343e3e7dfd8230309b285ea907099a8cc4ed1908a9d5c": {
+      "tokenId": "0x7ad57d0873189262b4d343e3e7dfd8230309b285ea907099a8cc4ed1908a9d5c",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x7ad57d0873189262b4d343e3e7dfd8230309b285ea907099a8cc4ed1908a9d5c",
+          "tokenAddress": "0x633c0C5D4DBEB80EA148b3Bf79c8914568471f7D",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x7ad57d0873189262b4d343e3e7dfd8230309b285ea907099a8cc4ed1908a9d5c",
+          "tokenAddress": "0x633c0C5D4DBEB80EA148b3Bf79c8914568471f7D",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x60c903056b356fe7d270bf4934289bf80c9abab62a161bca548526d11d5fb1c4": {
+      "tokenId": "0x60c903056b356fe7d270bf4934289bf80c9abab62a161bca548526d11d5fb1c4",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x60c903056b356fe7d270bf4934289bf80c9abab62a161bca548526d11d5fb1c4",
+          "tokenAddress": "0xa8f4511Ab3eC8dffec6075E02f68A354b9A43C6a",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x60c903056b356fe7d270bf4934289bf80c9abab62a161bca548526d11d5fb1c4",
+          "tokenAddress": "0xa8f4511Ab3eC8dffec6075E02f68A354b9A43C6a",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x2f81effb5f3e978ecffa589b6b6b56bd457af5aba3e6d1abfbf1f840daa64482": {
+      "tokenId": "0x2f81effb5f3e978ecffa589b6b6b56bd457af5aba3e6d1abfbf1f840daa64482",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x2f81effb5f3e978ecffa589b6b6b56bd457af5aba3e6d1abfbf1f840daa64482",
+          "tokenAddress": "0x7B09Ad594C88F08F6a8eA95C39c4520D1A90A20D",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2f81effb5f3e978ecffa589b6b6b56bd457af5aba3e6d1abfbf1f840daa64482",
+          "tokenAddress": "0x7B09Ad594C88F08F6a8eA95C39c4520D1A90A20D",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x3f63a13cb3f4badeb2fe4cac4c1ae50946dc0dbda7294228a4f153ad8ad938d7": {
+      "tokenId": "0x3f63a13cb3f4badeb2fe4cac4c1ae50946dc0dbda7294228a4f153ad8ad938d7",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x3f63a13cb3f4badeb2fe4cac4c1ae50946dc0dbda7294228a4f153ad8ad938d7",
+          "tokenAddress": "0xeeD7be10553aa6d822878C82f36CdB95680F0050",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x3f63a13cb3f4badeb2fe4cac4c1ae50946dc0dbda7294228a4f153ad8ad938d7",
+          "tokenAddress": "0xeeD7be10553aa6d822878C82f36CdB95680F0050",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x0815884885003c943e5f11196e8f76813112728bf65e42eebea4a2b7c7140623": {
+      "tokenId": "0x0815884885003c943e5f11196e8f76813112728bf65e42eebea4a2b7c7140623",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x0815884885003c943e5f11196e8f76813112728bf65e42eebea4a2b7c7140623",
+          "tokenAddress": "0x6A0E482381cc6362e1E90EE1A3255B074349CCC6",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x0815884885003c943e5f11196e8f76813112728bf65e42eebea4a2b7c7140623",
+          "tokenAddress": "0x6A0E482381cc6362e1E90EE1A3255B074349CCC6",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xb87bfe6852951d03c2feea1a3f05e3f7e8220a5a7b452e464986c1b03afbeaa1": {
+      "tokenId": "0xb87bfe6852951d03c2feea1a3f05e3f7e8220a5a7b452e464986c1b03afbeaa1",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xb87bfe6852951d03c2feea1a3f05e3f7e8220a5a7b452e464986c1b03afbeaa1",
+          "tokenAddress": "0xB4151FA511e52B7309f76C29cC520FA6Fd9EdAC7",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xb87bfe6852951d03c2feea1a3f05e3f7e8220a5a7b452e464986c1b03afbeaa1",
+          "tokenAddress": "0xB4151FA511e52B7309f76C29cC520FA6Fd9EdAC7",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf813cd1c52dcf92dcf18c631395b07f8103d746c646aa394fd02fc239192c6f6": {
+      "tokenId": "0xf813cd1c52dcf92dcf18c631395b07f8103d746c646aa394fd02fc239192c6f6",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xf813cd1c52dcf92dcf18c631395b07f8103d746c646aa394fd02fc239192c6f6",
+          "tokenAddress": "0x870B487F5065F205f4f1444B1eA849c8CB398dCE",
+          "decimals": 6,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf813cd1c52dcf92dcf18c631395b07f8103d746c646aa394fd02fc239192c6f6",
+          "tokenAddress": "0x870B487F5065F205f4f1444B1eA849c8CB398dCE",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x36c865c8addab2fc585bbaee9288dce4a8a19722509741d58b959c1cd7fbd640": {
+      "tokenId": "0x36c865c8addab2fc585bbaee9288dce4a8a19722509741d58b959c1cd7fbd640",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x36c865c8addab2fc585bbaee9288dce4a8a19722509741d58b959c1cd7fbd640",
+          "tokenAddress": "0x6441Be255c01A787EA4bCc2a43f2e3C931845C4E",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xcf97a417f8ec4ae9b924480d9a4c394ff3c68f47564f5fd06c59b197e3516099": {
+      "tokenId": "0xcf97a417f8ec4ae9b924480d9a4c394ff3c68f47564f5fd06c59b197e3516099",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xcf97a417f8ec4ae9b924480d9a4c394ff3c68f47564f5fd06c59b197e3516099",
+          "tokenAddress": "0x65F77220958C627cD96e60Cf74f07da365899688",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xc3f31f5859a0a7fdef3ae864b580fbf49282cb0a692db2f633ce673637896943": {
+      "tokenId": "0xc3f31f5859a0a7fdef3ae864b580fbf49282cb0a692db2f633ce673637896943",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0xc3f31f5859a0a7fdef3ae864b580fbf49282cb0a692db2f633ce673637896943",
+          "tokenAddress": "0x65F77220958C627cD96e60Cf74f07da365899688",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x7873b041d9861f39f4bc4e72417863969865fb1fd48bfb33b6ce5c3db1b8484e": {
+      "tokenId": "0x7873b041d9861f39f4bc4e72417863969865fb1fd48bfb33b6ce5c3db1b8484e",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": null,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x7873b041d9861f39f4bc4e72417863969865fb1fd48bfb33b6ce5c3db1b8484e",
+          "tokenAddress": "0x374A64D65819392718A8A66cf3472b0631A92B1a",
+          "decimals": null,
+          "trackSupply": false
+        },
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x7873b041d9861f39f4bc4e72417863969865fb1fd48bfb33b6ce5c3db1b8484e",
+          "tokenAddress": "0x374A64D65819392718A8A66cf3472b0631A92B1a",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5ce5d2f648b9cabeaa21a3e46cb7c38ba4dcdc67fee2fa70393d70ae80873d30": {
+      "tokenId": "0x5ce5d2f648b9cabeaa21a3e46cb7c38ba4dcdc67fee2fa70393d70ae80873d30",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x5ce5d2f648b9cabeaa21a3e46cb7c38ba4dcdc67fee2fa70393d70ae80873d30",
+          "tokenAddress": "0x0F7821A524ad6FCD336A05b5285D68634fE848c0",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x7e9263090e0db89f3cc89fae72f7692ff7e99ffbf77c553483447dd6adc2e1c6": {
+      "tokenId": "0x7e9263090e0db89f3cc89fae72f7692ff7e99ffbf77c553483447dd6adc2e1c6",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x7e9263090e0db89f3cc89fae72f7692ff7e99ffbf77c553483447dd6adc2e1c6",
+          "tokenAddress": "0x9258f2dD7F23A98d50e3914dFc6c0E2494A95BF0",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x3c4be0964d4fb565d72bd388af05187c512c7266683f8e1d7ba80cac2bc0f10f": {
+      "tokenId": "0x3c4be0964d4fb565d72bd388af05187c512c7266683f8e1d7ba80cac2bc0f10f",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x3c4be0964d4fb565d72bd388af05187c512c7266683f8e1d7ba80cac2bc0f10f",
+          "tokenAddress": "0xD0a53EAa7df03Ac2203f52Fd71DcE1D4b508E7Be",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x10d39851ad9144dd18e2169cb59ea655b1e0956fc1fbda599c5ddf8508dd86fe": {
+      "tokenId": "0x10d39851ad9144dd18e2169cb59ea655b1e0956fc1fbda599c5ddf8508dd86fe",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x10d39851ad9144dd18e2169cb59ea655b1e0956fc1fbda599c5ddf8508dd86fe",
+          "tokenAddress": "0xC5E84184B4b0368E8Bf1B44FB41D8D43471f26Dc",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x08921479153dcd0bc3e2cc48657a6ee45946dcee11a6de97ed25ce2e353f35ba": {
+      "tokenId": "0x08921479153dcd0bc3e2cc48657a6ee45946dcee11a6de97ed25ce2e353f35ba",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x08921479153dcd0bc3e2cc48657a6ee45946dcee11a6de97ed25ce2e353f35ba",
+          "tokenAddress": "0xcEE626EaDb9ab93670a7228584E0057a7c8214A3",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x29748ffcfd0cbc5918ee6f6d424a13a475831849563f7142630988520f68a387": {
+      "tokenId": "0x29748ffcfd0cbc5918ee6f6d424a13a475831849563f7142630988520f68a387",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x29748ffcfd0cbc5918ee6f6d424a13a475831849563f7142630988520f68a387",
+          "tokenAddress": "0xf8E862Db76a79a47aa32E85B57a5DDC7405F9fBC",
+          "decimals": 9,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x542106e6404db381e8fa69ad08d137411f3c8cc8dc1751e66c0610d6f16c8921": {
+      "tokenId": "0x542106e6404db381e8fa69ad08d137411f3c8cc8dc1751e66c0610d6f16c8921",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x542106e6404db381e8fa69ad08d137411f3c8cc8dc1751e66c0610d6f16c8921",
+          "tokenAddress": "0xEfE243b96ECbeD565D840cAC042eb940bBAA5978",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x936cd76231cb18e40ef75b3ee7e1565a79830113f07650775f5c3974a12efe78": {
+      "tokenId": "0x936cd76231cb18e40ef75b3ee7e1565a79830113f07650775f5c3974a12efe78",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x936cd76231cb18e40ef75b3ee7e1565a79830113f07650775f5c3974a12efe78",
+          "tokenAddress": "0x9c07A9AA9548646E00ad696adC6d6f8461145C3c",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x936cd76231cb18e40ef75b3ee7e1565a79830113f07650775f5c3974a12efe78",
+          "tokenAddress": "0x9c07A9AA9548646E00ad696adC6d6f8461145C3c",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x16c912e025222c55c57eddc00b4218ef65a318865c5196cdece9edfc1ff8f856": {
+      "tokenId": "0x16c912e025222c55c57eddc00b4218ef65a318865c5196cdece9edfc1ff8f856",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x16c912e025222c55c57eddc00b4218ef65a318865c5196cdece9edfc1ff8f856",
+          "tokenAddress": "0xe474Cc1674FDA49675f623303EFeDF1f013336d9",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4d0928f15d3b96759740e06f8418066d79df571f6fef5a7d262ac32621250ec5": {
+      "tokenId": "0x4d0928f15d3b96759740e06f8418066d79df571f6fef5a7d262ac32621250ec5",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x4d0928f15d3b96759740e06f8418066d79df571f6fef5a7d262ac32621250ec5",
+          "tokenAddress": "0xfb3756880Eb4a02313271AA8823CB29CF82a96C9",
+          "decimals": 18,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x156d635b12b653c8dfb6966c1336b722fd9bd8ec01243a33fb1b864eebc5fab8": {
+      "tokenId": "0x156d635b12b653c8dfb6966c1336b722fd9bd8ec01243a33fb1b864eebc5fab8",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x156d635b12b653c8dfb6966c1336b722fd9bd8ec01243a33fb1b864eebc5fab8",
+          "tokenAddress": "0x7E871aCC12B8b6C3D8CFe47dE67151cDBDdD70Cc",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x40b471a50d81aad988466cbdac582c0881e7c3443012c59f5ed8e7d2900f877f": {
+      "tokenId": "0x40b471a50d81aad988466cbdac582c0881e7c3443012c59f5ed8e7d2900f877f",
+      "originAxelarChainId": "core-ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-ethereum",
+          "tokenId": "0x40b471a50d81aad988466cbdac582c0881e7c3443012c59f5ed8e7d2900f877f",
+          "tokenAddress": "0x4Bfe3E4CF492CbfA3c88FD6d62E01E67adE51e67",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x0816a8799f7102eb86ff78ff160d38665c9427dc256556fd4d42ffe6d558c056": {
+      "tokenId": "0x0816a8799f7102eb86ff78ff160d38665c9427dc256556fd4d42ffe6d558c056",
+      "originAxelarChainId": "core-optimism",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-optimism",
+          "tokenId": "0x0816a8799f7102eb86ff78ff160d38665c9427dc256556fd4d42ffe6d558c056",
+          "tokenAddress": "0xaCED8a5eF61AC62305Ff83D132a47f7f2669A6d9",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xe898dc15ac7fd6102e26d96dc6ce8d7af67ef938ad0bca927b2106f8078e8547": {
+      "tokenId": "0xe898dc15ac7fd6102e26d96dc6ce8d7af67ef938ad0bca927b2106f8078e8547",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xe898dc15ac7fd6102e26d96dc6ce8d7af67ef938ad0bca927b2106f8078e8547",
+          "tokenAddress": "0xC081296Eb988c97d420d9Dbf9268cf875e7B14ED",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x97d8142ebb31d5949378ae96d8a2e4d54c08c07007e5d1aaa6daba200d5f87cf": {
+      "tokenId": "0x97d8142ebb31d5949378ae96d8a2e4d54c08c07007e5d1aaa6daba200d5f87cf",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x97d8142ebb31d5949378ae96d8a2e4d54c08c07007e5d1aaa6daba200d5f87cf",
+          "tokenAddress": "0xf88043d5555174d0822DD52515D5A90F66189570",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x6da3ca517e7c55b6ab6ed83f3248036472b5444e65bf6be45659b7b2601f7e5f": {
+      "tokenId": "0x6da3ca517e7c55b6ab6ed83f3248036472b5444e65bf6be45659b7b2601f7e5f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6da3ca517e7c55b6ab6ed83f3248036472b5444e65bf6be45659b7b2601f7e5f",
+          "tokenAddress": "0x080dF0440224DA95055d8228C671A8A5dA3B36fD",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x6d80ac3f079ed66dac8076ae4cd2b8efc771dee15e0e249e183850f13da56d88": {
+      "tokenId": "0x6d80ac3f079ed66dac8076ae4cd2b8efc771dee15e0e249e183850f13da56d88",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6d80ac3f079ed66dac8076ae4cd2b8efc771dee15e0e249e183850f13da56d88",
+          "tokenAddress": "0x0d565E6Ff4b022BF3Ae0E500e17e6A97028E3091",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x7a0a823a4cdb8ca4dbf505caf49cacc96ae9c61ace4b3f0fc0cee1ea643a36b9": {
+      "tokenId": "0x7a0a823a4cdb8ca4dbf505caf49cacc96ae9c61ace4b3f0fc0cee1ea643a36b9",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x7a0a823a4cdb8ca4dbf505caf49cacc96ae9c61ace4b3f0fc0cee1ea643a36b9",
+          "tokenAddress": "0x4C640693e6eDE4ef2dbC94e1F7E4012251220AAf",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x85a82616093a54d2c96160610d55e9c1d0b808451de9916472f4b7cb229a2fe3": {
+      "tokenId": "0x85a82616093a54d2c96160610d55e9c1d0b808451de9916472f4b7cb229a2fe3",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x85a82616093a54d2c96160610d55e9c1d0b808451de9916472f4b7cb229a2fe3",
+          "tokenAddress": "0x29bEDF74F248B98929F6b5A8ee5921640ae50210",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xfc1f3c46eedec08cc2ff62e622660676912df74e7d7c1e29e3411c43e26f61a8": {
+      "tokenId": "0xfc1f3c46eedec08cc2ff62e622660676912df74e7d7c1e29e3411c43e26f61a8",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xfc1f3c46eedec08cc2ff62e622660676912df74e7d7c1e29e3411c43e26f61a8",
+          "tokenAddress": "0x62001737432708fAb0864cbF014AD1F651B9aB34",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf79bb31be3372890a77fcd9bca64050cfa63a42ab26389ca4df0e3a582ff966a": {
+      "tokenId": "0xf79bb31be3372890a77fcd9bca64050cfa63a42ab26389ca4df0e3a582ff966a",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf79bb31be3372890a77fcd9bca64050cfa63a42ab26389ca4df0e3a582ff966a",
+          "tokenAddress": "0x8173D4d2A06A37ADE380d14cA3Ccb4C2D1035D89",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa4b082c068fb16ef540b82a8e31543bdfb32710f7696fee742fd077e6c29f87e": {
+      "tokenId": "0xa4b082c068fb16ef540b82a8e31543bdfb32710f7696fee742fd077e6c29f87e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa4b082c068fb16ef540b82a8e31543bdfb32710f7696fee742fd077e6c29f87e",
+          "tokenAddress": "0x6db93df67A3A28754D57035fFDeb0387fB9aDDC1",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xfeaea33c53b9064ae42b4be32ac207a879d30b4fff173542bda1730e9f550f5f": {
+      "tokenId": "0xfeaea33c53b9064ae42b4be32ac207a879d30b4fff173542bda1730e9f550f5f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xfeaea33c53b9064ae42b4be32ac207a879d30b4fff173542bda1730e9f550f5f",
+          "tokenAddress": "0xB3E8eFbDb780Db31d48E84ba045838d928999070",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x19ce5907b959602cb44544fe946a21bd9ee2f10101b6dddc87f80adf6f44d654": {
+      "tokenId": "0x19ce5907b959602cb44544fe946a21bd9ee2f10101b6dddc87f80adf6f44d654",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x19ce5907b959602cb44544fe946a21bd9ee2f10101b6dddc87f80adf6f44d654",
+          "tokenAddress": "0x8831a21789Fe9f04E9fBc879D50Eeb72247f2341",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4e07ebfa03a1f262caf2e17eb27cfe101a2f30547027630c082410096258dbfb": {
+      "tokenId": "0x4e07ebfa03a1f262caf2e17eb27cfe101a2f30547027630c082410096258dbfb",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4e07ebfa03a1f262caf2e17eb27cfe101a2f30547027630c082410096258dbfb",
+          "tokenAddress": "0x27B852462F73Eaf22c205bfbDe6Fad32463EECe7",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa4fcafb92dc1c12cbba68d59e0d1c3910a88ab1abd07704f41961d53d2465e3e": {
+      "tokenId": "0xa4fcafb92dc1c12cbba68d59e0d1c3910a88ab1abd07704f41961d53d2465e3e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa4fcafb92dc1c12cbba68d59e0d1c3910a88ab1abd07704f41961d53d2465e3e",
+          "tokenAddress": "0x16003b9Cc074664fd6d5828A8B4E72c03FA61583",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xc27cacae800b29598e1241b4ecf8d406bc28dff8e39a6e9ffa04958c2d684ed8": {
+      "tokenId": "0xc27cacae800b29598e1241b4ecf8d406bc28dff8e39a6e9ffa04958c2d684ed8",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xc27cacae800b29598e1241b4ecf8d406bc28dff8e39a6e9ffa04958c2d684ed8",
+          "tokenAddress": "0xC62ea5bB5bE2bf0bCfCb93685924C339138f2191",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xfeb7fa257edf2735eb9edfb6254b220e961212b1925d7c598c5daa7ac3bc7266": {
+      "tokenId": "0xfeb7fa257edf2735eb9edfb6254b220e961212b1925d7c598c5daa7ac3bc7266",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xfeb7fa257edf2735eb9edfb6254b220e961212b1925d7c598c5daa7ac3bc7266",
+          "tokenAddress": "0xCec38480E326459FDbf7F788d5E0a0dE7d709Baa",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x7363e78b6f44f6b80b255a9969ab1581a8600ba0cff8c42aa38ee6d18b614da5": {
+      "tokenId": "0x7363e78b6f44f6b80b255a9969ab1581a8600ba0cff8c42aa38ee6d18b614da5",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x7363e78b6f44f6b80b255a9969ab1581a8600ba0cff8c42aa38ee6d18b614da5",
+          "tokenAddress": "0x736284f61B3119F7e9548fBe031Aa899dd428DFA",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x63116aeccfb68810deb7b41b5c91224aad6cc4bd42be0d08d573c8b46087fa5e": {
+      "tokenId": "0x63116aeccfb68810deb7b41b5c91224aad6cc4bd42be0d08d573c8b46087fa5e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x63116aeccfb68810deb7b41b5c91224aad6cc4bd42be0d08d573c8b46087fa5e",
+          "tokenAddress": "0x61E30e773A0fF85dE2f896Ac15c136917CE1bAc5",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x6ae55e80b2c7a47b7b67ddc88a2967b54e1a4bf8c7b34016228a2503ff858d86": {
+      "tokenId": "0x6ae55e80b2c7a47b7b67ddc88a2967b54e1a4bf8c7b34016228a2503ff858d86",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6ae55e80b2c7a47b7b67ddc88a2967b54e1a4bf8c7b34016228a2503ff858d86",
+          "tokenAddress": "0x3Ca6A4bF54C5e1a7333716BCde19078e5FF46865",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x22ddfc5c4ae434d401bc79f121729375bab326ab0cdc3287f507f0e27e4021b0": {
+      "tokenId": "0x22ddfc5c4ae434d401bc79f121729375bab326ab0cdc3287f507f0e27e4021b0",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x22ddfc5c4ae434d401bc79f121729375bab326ab0cdc3287f507f0e27e4021b0",
+          "tokenAddress": "0x6E0CF4C9b876333d59b3d5775f1584d75f6e5181",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa0fcc1252acbb1ef25403a598bcbc9c3112735cb1896ff3b2cfcce7a026425b8": {
+      "tokenId": "0xa0fcc1252acbb1ef25403a598bcbc9c3112735cb1896ff3b2cfcce7a026425b8",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa0fcc1252acbb1ef25403a598bcbc9c3112735cb1896ff3b2cfcce7a026425b8",
+          "tokenAddress": "0x23153B2f1c1a6FE747cA76E6820FB25ff8140dEc",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xe841b24fef6f902f3a8d928957359ccf83de6501c904c16bf1028bce28caf40e": {
+      "tokenId": "0xe841b24fef6f902f3a8d928957359ccf83de6501c904c16bf1028bce28caf40e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xe841b24fef6f902f3a8d928957359ccf83de6501c904c16bf1028bce28caf40e",
+          "tokenAddress": "0xe0977Cd2B01E5e68a95B7b8dce082C486786ab89",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa057b2d00f00bf6ca755f11c58ccb692792826fe1567b2a1ce7b326bd1a78d0b": {
+      "tokenId": "0xa057b2d00f00bf6ca755f11c58ccb692792826fe1567b2a1ce7b326bd1a78d0b",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa057b2d00f00bf6ca755f11c58ccb692792826fe1567b2a1ce7b326bd1a78d0b",
+          "tokenAddress": "0x9f253be502d036DAB540276A98d7EdF5C9651584",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xb0ccc611d7838bcfff6a4b1a10260344f5ef4d0774b835e4e66d2d7bc8cfab57": {
+      "tokenId": "0xb0ccc611d7838bcfff6a4b1a10260344f5ef4d0774b835e4e66d2d7bc8cfab57",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xb0ccc611d7838bcfff6a4b1a10260344f5ef4d0774b835e4e66d2d7bc8cfab57",
+          "tokenAddress": "0x21737FD183B046Ee42d75e61A673a02868Ea0fEb",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4ee6dfa30532250f07958f8bdc8a2c4bb80a5948bb6e235898a992b35429938f": {
+      "tokenId": "0x4ee6dfa30532250f07958f8bdc8a2c4bb80a5948bb6e235898a992b35429938f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4ee6dfa30532250f07958f8bdc8a2c4bb80a5948bb6e235898a992b35429938f",
+          "tokenAddress": "0x9b1ba20857F723B03dCdC976605946415cBA7BD2",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa5b5d15c95ba799df8d1def2fdae966adb2987e96ec7e63044108fd080d8a992": {
+      "tokenId": "0xa5b5d15c95ba799df8d1def2fdae966adb2987e96ec7e63044108fd080d8a992",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa5b5d15c95ba799df8d1def2fdae966adb2987e96ec7e63044108fd080d8a992",
+          "tokenAddress": "0x5CA3765cE6A687fB2a29b305644BBBBB71865A82",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x2457faccdf87ac9bce38abec6055a2709581eb498ab38faafab60fc90a0de494": {
+      "tokenId": "0x2457faccdf87ac9bce38abec6055a2709581eb498ab38faafab60fc90a0de494",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2457faccdf87ac9bce38abec6055a2709581eb498ab38faafab60fc90a0de494",
+          "tokenAddress": "0x3e5387259d2a2f7A2eb6F59c17D96A0E36cdd0D3",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x60a0d8c3bb96b443804afcac925dcc644a06c538853fdaffc98d14732beb7f24": {
+      "tokenId": "0x60a0d8c3bb96b443804afcac925dcc644a06c538853fdaffc98d14732beb7f24",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x60a0d8c3bb96b443804afcac925dcc644a06c538853fdaffc98d14732beb7f24",
+          "tokenAddress": "0xf82C319eDA398C0B712fef34A2030B8252C5692c",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xb9d94fd584ff9c982c3b9ad3af1fed04db1bddd89c949bd76112d609eb34c4e5": {
+      "tokenId": "0xb9d94fd584ff9c982c3b9ad3af1fed04db1bddd89c949bd76112d609eb34c4e5",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xb9d94fd584ff9c982c3b9ad3af1fed04db1bddd89c949bd76112d609eb34c4e5",
+          "tokenAddress": "0x4F8899F2035651e4f0FD29a6ecFBD96E15Fb2280",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xeb202e8dddeb6cdd7043763c5afc9b260db902745ff0e66e6d2ee19e76f5907f": {
+      "tokenId": "0xeb202e8dddeb6cdd7043763c5afc9b260db902745ff0e66e6d2ee19e76f5907f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xeb202e8dddeb6cdd7043763c5afc9b260db902745ff0e66e6d2ee19e76f5907f",
+          "tokenAddress": "0xA191307c25340A524562e0486D8Df0f59e7e9801",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x38954aa36f2fcfe8e526ab80adafd657fbf7c766c484ffe29f6e89138dd8947e": {
+      "tokenId": "0x38954aa36f2fcfe8e526ab80adafd657fbf7c766c484ffe29f6e89138dd8947e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x38954aa36f2fcfe8e526ab80adafd657fbf7c766c484ffe29f6e89138dd8947e",
+          "tokenAddress": "0x2CC603e0D5D0F63e0B12a4D63e03e620Ed48612b",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4bd0a7ff96121e2137b00fa875b328a1c990d6a9abe545d39cc4cf25cdf864ea": {
+      "tokenId": "0x4bd0a7ff96121e2137b00fa875b328a1c990d6a9abe545d39cc4cf25cdf864ea",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4bd0a7ff96121e2137b00fa875b328a1c990d6a9abe545d39cc4cf25cdf864ea",
+          "tokenAddress": "0x50069b388a9888dBA9739F795A76584f1484eEFC",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x1640519319556703b268edb301e151aaed4d62e3019dc4ddecf35f4919da7d25": {
+      "tokenId": "0x1640519319556703b268edb301e151aaed4d62e3019dc4ddecf35f4919da7d25",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x1640519319556703b268edb301e151aaed4d62e3019dc4ddecf35f4919da7d25",
+          "tokenAddress": "0x2df78e677E0b5869C47Fcb6b03c9dFA688560757",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x32e1b60c463704725295b7b6520da328acf8e32bdcbfd20946ca7f427fa4dd5d": {
+      "tokenId": "0x32e1b60c463704725295b7b6520da328acf8e32bdcbfd20946ca7f427fa4dd5d",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x32e1b60c463704725295b7b6520da328acf8e32bdcbfd20946ca7f427fa4dd5d",
+          "tokenAddress": "0xd2FD9c3A449D3f13F791A3c05dDE144235861531",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x5fa27a7cccf0f4db2212eaaf5bc470a01810d8cc5dcf927babf898cacaa3b801": {
+      "tokenId": "0x5fa27a7cccf0f4db2212eaaf5bc470a01810d8cc5dcf927babf898cacaa3b801",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x5fa27a7cccf0f4db2212eaaf5bc470a01810d8cc5dcf927babf898cacaa3b801",
+          "tokenAddress": "0x5f90780FA043E9D7690128BDbC81028Aad871DC5",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x4dad3af9af9ad91299d032e1868a25177021360b378c75d91c60b66768cc87d7": {
+      "tokenId": "0x4dad3af9af9ad91299d032e1868a25177021360b378c75d91c60b66768cc87d7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4dad3af9af9ad91299d032e1868a25177021360b378c75d91c60b66768cc87d7",
+          "tokenAddress": "0x2956FC32d5C2B7cde49f794c59Fb5D277E8ea9c1",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x591f46cf6bcbedb16b6ea09128b978ebbf6f8b59c69dc996ede32fe9fc5e2590": {
+      "tokenId": "0x591f46cf6bcbedb16b6ea09128b978ebbf6f8b59c69dc996ede32fe9fc5e2590",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x591f46cf6bcbedb16b6ea09128b978ebbf6f8b59c69dc996ede32fe9fc5e2590",
+          "tokenAddress": "0xFeAE32A3C1a18e0EA2bA4C04504935c29C97889F",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x37734d43ae19e2a225e1d83cf58f702e8cb8184c518041723b1ed82fc8378b40": {
+      "tokenId": "0x37734d43ae19e2a225e1d83cf58f702e8cb8184c518041723b1ed82fc8378b40",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x37734d43ae19e2a225e1d83cf58f702e8cb8184c518041723b1ed82fc8378b40",
+          "tokenAddress": "0xC7debe028bE140db0b6327f56514a3927Dc556D1",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x64227df597a8e89c5294b3531d1f88ee6e58a2f35f4a741f74491b3957f533ce": {
+      "tokenId": "0x64227df597a8e89c5294b3531d1f88ee6e58a2f35f4a741f74491b3957f533ce",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x64227df597a8e89c5294b3531d1f88ee6e58a2f35f4a741f74491b3957f533ce",
+          "tokenAddress": "0x22fE9EDCF67D3fBA4f9E8c5B743e75f74f8a8707",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x9b97af53bb9505cf74d96c9a9d9a8bf464a98eaa2bdda1b6c61ea1ec12e04ead": {
+      "tokenId": "0x9b97af53bb9505cf74d96c9a9d9a8bf464a98eaa2bdda1b6c61ea1ec12e04ead",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x9b97af53bb9505cf74d96c9a9d9a8bf464a98eaa2bdda1b6c61ea1ec12e04ead",
+          "tokenAddress": "0x9FbCBb17C747b9ECeBf5BdA4206efF6D2d1F951D",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xbc99f6840f2832d1e55321c6e980d19c8f3d8e21ac586f2710558596fc14102c": {
+      "tokenId": "0xbc99f6840f2832d1e55321c6e980d19c8f3d8e21ac586f2710558596fc14102c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xbc99f6840f2832d1e55321c6e980d19c8f3d8e21ac586f2710558596fc14102c",
+          "tokenAddress": "0x2bbb1EeF6785d4B308AfE4F3669Bde3E92c3E964",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x8fbeaa95d1a0ab695b973193cae26635434d8fac1572f1eca3515c13ac81ad3b": {
+      "tokenId": "0x8fbeaa95d1a0ab695b973193cae26635434d8fac1572f1eca3515c13ac81ad3b",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x8fbeaa95d1a0ab695b973193cae26635434d8fac1572f1eca3515c13ac81ad3b",
+          "tokenAddress": "0xca92fe35493892055dcA04C83A8BACacb7BB5899",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x53f01d252f396754c954f6778fca2dcc8df471da18b742bfae97063726cef50c": {
+      "tokenId": "0x53f01d252f396754c954f6778fca2dcc8df471da18b742bfae97063726cef50c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x53f01d252f396754c954f6778fca2dcc8df471da18b742bfae97063726cef50c",
+          "tokenAddress": "0xFD543Ff03E79cB57434980B4FD7D9f972733AcDF",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x381ce7a9163a9a9f5256d68288ab702e4c07c2c59ce625775ea9c84f4bf4795b": {
+      "tokenId": "0x381ce7a9163a9a9f5256d68288ab702e4c07c2c59ce625775ea9c84f4bf4795b",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x381ce7a9163a9a9f5256d68288ab702e4c07c2c59ce625775ea9c84f4bf4795b",
+          "tokenAddress": "0x67d2af11A5E8778c46fAe2ff686F97c32658EBef",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x7141f4c392f0e61611357a20729afec8f15164b192f7d8594bb01caa3b246ad4": {
+      "tokenId": "0x7141f4c392f0e61611357a20729afec8f15164b192f7d8594bb01caa3b246ad4",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x7141f4c392f0e61611357a20729afec8f15164b192f7d8594bb01caa3b246ad4",
+          "tokenAddress": "0x5d2265BcBa58401701C864A1aF77D92dc2968d0a",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xa81de895e2bd3240d120567e36b7c7c8d85c317168578ff092b09d6ded7de260": {
+      "tokenId": "0xa81de895e2bd3240d120567e36b7c7c8d85c317168578ff092b09d6ded7de260",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa81de895e2bd3240d120567e36b7c7c8d85c317168578ff092b09d6ded7de260",
+          "tokenAddress": "0xdd9658Ba3Ac64D21297e8B3dE20174ba5f2Db0D8",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x12224235e7e464c42941eee1a705ce9bc4f8bb0d9e01ff43e1c7de6cf696e1c4": {
+      "tokenId": "0x12224235e7e464c42941eee1a705ce9bc4f8bb0d9e01ff43e1c7de6cf696e1c4",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x12224235e7e464c42941eee1a705ce9bc4f8bb0d9e01ff43e1c7de6cf696e1c4",
+          "tokenAddress": "0x4a84E8b0F345fF6fF04d8eAeD8f68B92574DE4D5",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x823c321d33f21488da5f5c3eb481ceaec35c716dd854f50852071e1fbec47e44": {
+      "tokenId": "0x823c321d33f21488da5f5c3eb481ceaec35c716dd854f50852071e1fbec47e44",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x823c321d33f21488da5f5c3eb481ceaec35c716dd854f50852071e1fbec47e44",
+          "tokenAddress": "0x0dE42160f2Da0D14A1bE0E0a839BD1647246a7aE",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xdcaa9dcfd3dadd55b50ecbb61bd203a25938893f990717980906e0ca3b5062d9": {
+      "tokenId": "0xdcaa9dcfd3dadd55b50ecbb61bd203a25938893f990717980906e0ca3b5062d9",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xdcaa9dcfd3dadd55b50ecbb61bd203a25938893f990717980906e0ca3b5062d9",
+          "tokenAddress": "0x374A64D65819392718A8A66cf3472b0631A92B1a",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x20fdaa57f044b1baf3f32b403fc62da3354abe1a276df9cc160957fcb660102d": {
+      "tokenId": "0x20fdaa57f044b1baf3f32b403fc62da3354abe1a276df9cc160957fcb660102d",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x20fdaa57f044b1baf3f32b403fc62da3354abe1a276df9cc160957fcb660102d",
+          "tokenAddress": "0xf472010D9F2505a90703C69b3c6e373473Be5048",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0x995a427e76461d6a8a17aaaa2e1d446631bd851e0f5ffbf2f0e1159282f30332": {
+      "tokenId": "0x995a427e76461d6a8a17aaaa2e1d446631bd851e0f5ffbf2f0e1159282f30332",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x995a427e76461d6a8a17aaaa2e1d446631bd851e0f5ffbf2f0e1159282f30332",
+          "tokenAddress": "0xC0E2d0d06d2B901A08CeDb48E39bF925a6CA05cd",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xad5c639d87b584b252363b92f6df80183540b98710bb50fe2c3237e536d2aec1": {
+      "tokenId": "0xad5c639d87b584b252363b92f6df80183540b98710bb50fe2c3237e536d2aec1",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xad5c639d87b584b252363b92f6df80183540b98710bb50fe2c3237e536d2aec1",
+          "tokenAddress": "0xEA1Cef5E8A466e5A565A7564712A2B9eEfd6880A",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x79cbee510136016af5661aa9e5d2162fa840b84f34e8b02dde6aab2f9a6dc8e1": {
+      "tokenId": "0x79cbee510136016af5661aa9e5d2162fa840b84f34e8b02dde6aab2f9a6dc8e1",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x79cbee510136016af5661aa9e5d2162fa840b84f34e8b02dde6aab2f9a6dc8e1",
+          "tokenAddress": "0x72181550C64bFb21c767F97d6C6CAcb4415dFAC7",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x03dcc70926d5eecc0a5510c66e1e72d3d68621facbd6d7a8724667f5cc2592a0": {
+      "tokenId": "0x03dcc70926d5eecc0a5510c66e1e72d3d68621facbd6d7a8724667f5cc2592a0",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x03dcc70926d5eecc0a5510c66e1e72d3d68621facbd6d7a8724667f5cc2592a0",
+          "tokenAddress": "0x48a0D3270ba03043312A4aF4dC09ED41d40872e8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x34e72afcc4062852cbcbd9d7a46762949c76e2539eee3ad3e8de76d24b17ece9": {
+      "tokenId": "0x34e72afcc4062852cbcbd9d7a46762949c76e2539eee3ad3e8de76d24b17ece9",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x34e72afcc4062852cbcbd9d7a46762949c76e2539eee3ad3e8de76d24b17ece9",
+          "tokenAddress": "0x91f0748daCD10F027C298956206A068DE2eA6eC3",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x468e47abb12d177bc099146cb54813ab9eae45a41f8b7b325cb094f75c036e3a": {
+      "tokenId": "0x468e47abb12d177bc099146cb54813ab9eae45a41f8b7b325cb094f75c036e3a",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x468e47abb12d177bc099146cb54813ab9eae45a41f8b7b325cb094f75c036e3a",
+          "tokenAddress": "0x7dBfd0Ac3E5A9151Cd129aD75990757D41940ad7",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x51939ea0e53b5b0a13a71c4d445eccace643ef9aa0f808a9eb91cb59c0bf2a03": {
+      "tokenId": "0x51939ea0e53b5b0a13a71c4d445eccace643ef9aa0f808a9eb91cb59c0bf2a03",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x51939ea0e53b5b0a13a71c4d445eccace643ef9aa0f808a9eb91cb59c0bf2a03",
+          "tokenAddress": "0x7dBfd0Ac3E5A9151Cd129aD75990757D41940ad7",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x24ab0e750d16cd89d4763ad9c0243a0aae9e10a998af9300fb04fc275bf103fe": {
+      "tokenId": "0x24ab0e750d16cd89d4763ad9c0243a0aae9e10a998af9300fb04fc275bf103fe",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x24ab0e750d16cd89d4763ad9c0243a0aae9e10a998af9300fb04fc275bf103fe",
+          "tokenAddress": "0xAdFCC6cB663dF94f9b96840B380941F38EfE6784",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5e6d03a5d06bd0f12f5c05e4f770d3ff59d0b036b739026312ad5d5db606f791": {
+      "tokenId": "0x5e6d03a5d06bd0f12f5c05e4f770d3ff59d0b036b739026312ad5d5db606f791",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x5e6d03a5d06bd0f12f5c05e4f770d3ff59d0b036b739026312ad5d5db606f791",
+          "tokenAddress": "0xAdFCC6cB663dF94f9b96840B380941F38EfE6784",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xfdec1f8193bafb0bcd076d4aa2e916ebd6fd6fb31add9a1e396cfc5a90f1615d": {
+      "tokenId": "0xfdec1f8193bafb0bcd076d4aa2e916ebd6fd6fb31add9a1e396cfc5a90f1615d",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xfdec1f8193bafb0bcd076d4aa2e916ebd6fd6fb31add9a1e396cfc5a90f1615d",
+          "tokenAddress": "0xF08501B1fa83E62bbfAECb95057c74499b43551c",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3a8bd185c71d763e82ab9f9c995b90db8aac97b8c082c213f409dd026a59de3e": {
+      "tokenId": "0x3a8bd185c71d763e82ab9f9c995b90db8aac97b8c082c213f409dd026a59de3e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x3a8bd185c71d763e82ab9f9c995b90db8aac97b8c082c213f409dd026a59de3e",
+          "tokenAddress": "0xF08501B1fa83E62bbfAECb95057c74499b43551c",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x159ed1814ad0266abf78b2a2ae0c0960cf256b865c4ded4b5a4b9ec358bfe298": {
+      "tokenId": "0x159ed1814ad0266abf78b2a2ae0c0960cf256b865c4ded4b5a4b9ec358bfe298",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x159ed1814ad0266abf78b2a2ae0c0960cf256b865c4ded4b5a4b9ec358bfe298",
+          "tokenAddress": "0xF08501B1fa83E62bbfAECb95057c74499b43551c",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x8acf830ede205afaf8d2e22c1f3ec44f31da7ab58e43ad7b8cc905adb7079cf2": {
+      "tokenId": "0x8acf830ede205afaf8d2e22c1f3ec44f31da7ab58e43ad7b8cc905adb7079cf2",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x8acf830ede205afaf8d2e22c1f3ec44f31da7ab58e43ad7b8cc905adb7079cf2",
+          "tokenAddress": "0xaDfD3145BAD65348CA3DD15bCd63EF0365614C2C",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x205ccb46fdc3990eaa5a28c31ed71c79eccf0829a5d902a3886aaa32bec673e7": {
+      "tokenId": "0x205ccb46fdc3990eaa5a28c31ed71c79eccf0829a5d902a3886aaa32bec673e7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x205ccb46fdc3990eaa5a28c31ed71c79eccf0829a5d902a3886aaa32bec673e7",
+          "tokenAddress": "0xaDfD3145BAD65348CA3DD15bCd63EF0365614C2C",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf34e55565ad080bcfcc1cd61b56d119e07fa5eb31aec0903a55948fcc415dac9": {
+      "tokenId": "0xf34e55565ad080bcfcc1cd61b56d119e07fa5eb31aec0903a55948fcc415dac9",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 8,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf34e55565ad080bcfcc1cd61b56d119e07fa5eb31aec0903a55948fcc415dac9",
+          "tokenAddress": "0x213F5942588E431818ECd06A2E0D776fc8c9a9be",
+          "decimals": 8,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x852b348cdb2cf4cbc183741448b76481d97f127264f2f2027f27ac5becac76db": {
+      "tokenId": "0x852b348cdb2cf4cbc183741448b76481d97f127264f2f2027f27ac5becac76db",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 8,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x852b348cdb2cf4cbc183741448b76481d97f127264f2f2027f27ac5becac76db",
+          "tokenAddress": "0x213F5942588E431818ECd06A2E0D776fc8c9a9be",
+          "decimals": 8,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xeb2d977f76f4489b492bf9af3d3bcb7dd65bc4178e1ffcdddbce0d73504ea798": {
+      "tokenId": "0xeb2d977f76f4489b492bf9af3d3bcb7dd65bc4178e1ffcdddbce0d73504ea798",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xeb2d977f76f4489b492bf9af3d3bcb7dd65bc4178e1ffcdddbce0d73504ea798",
+          "tokenAddress": "0x3943950C6AbFeAe51CbBD581b3f2BAc5DbE2E079",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc6939b0b357241125e3dad106e0f6daa64f38a9a3ae5879ad238d9f1bf4b3b75": {
+      "tokenId": "0xc6939b0b357241125e3dad106e0f6daa64f38a9a3ae5879ad238d9f1bf4b3b75",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xc6939b0b357241125e3dad106e0f6daa64f38a9a3ae5879ad238d9f1bf4b3b75",
+          "tokenAddress": "0x8C2cb39F466223C05073745176B7dB5d5b36e1f8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xdd6bddfc03c3a50bc4787dc5e5b7a79b0da3b73633c974c12a74a8a9148678ca": {
+      "tokenId": "0xdd6bddfc03c3a50bc4787dc5e5b7a79b0da3b73633c974c12a74a8a9148678ca",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xdd6bddfc03c3a50bc4787dc5e5b7a79b0da3b73633c974c12a74a8a9148678ca",
+          "tokenAddress": "0x8C2cb39F466223C05073745176B7dB5d5b36e1f8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf530d9222feabd16ea99559922101c7b552f7a51ece0fc9555e48b460b711bd7": {
+      "tokenId": "0xf530d9222feabd16ea99559922101c7b552f7a51ece0fc9555e48b460b711bd7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf530d9222feabd16ea99559922101c7b552f7a51ece0fc9555e48b460b711bd7",
+          "tokenAddress": "0x541E23658dDe8Cc970866ed4872aca7be958927A",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x83e29fd319d59d44653d709bebbf7364ebb0346003c6350cc84c1f119936b91f": {
+      "tokenId": "0x83e29fd319d59d44653d709bebbf7364ebb0346003c6350cc84c1f119936b91f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x83e29fd319d59d44653d709bebbf7364ebb0346003c6350cc84c1f119936b91f",
+          "tokenAddress": "0x8624378370eb1A9ACe68e3F85bD13f501080323C",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x179448f123c69059779404f17fd6c77b2f3bf75d3d14b21e1cb4776800b508bc": {
+      "tokenId": "0x179448f123c69059779404f17fd6c77b2f3bf75d3d14b21e1cb4776800b508bc",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 9,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x179448f123c69059779404f17fd6c77b2f3bf75d3d14b21e1cb4776800b508bc",
+          "tokenAddress": "0x13380d91DAD155A150258386f07f875F6eAC0fd6",
+          "decimals": 9,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xc99187ada7a129c2128ea9745f2506a4a7450712c20404bf0112d6712aa7948e": {
+      "tokenId": "0xc99187ada7a129c2128ea9745f2506a4a7450712c20404bf0112d6712aa7948e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xc99187ada7a129c2128ea9745f2506a4a7450712c20404bf0112d6712aa7948e",
+          "tokenAddress": "0x39940590439e4D6F636e379Fe23d62A2b20919a9",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x760610f38b5f92b1e66adc990184e8fffcb7bee7fe06149e47c9411b46a58b58": {
+      "tokenId": "0x760610f38b5f92b1e66adc990184e8fffcb7bee7fe06149e47c9411b46a58b58",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x760610f38b5f92b1e66adc990184e8fffcb7bee7fe06149e47c9411b46a58b58",
+          "tokenAddress": "0x5417528979D0cC0b6cfBD177d1a0d46Fc539Edf5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf1022b8637d1ac760688da965387441079b418a122e41a34591cd0271c9c3e58": {
+      "tokenId": "0xf1022b8637d1ac760688da965387441079b418a122e41a34591cd0271c9c3e58",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf1022b8637d1ac760688da965387441079b418a122e41a34591cd0271c9c3e58",
+          "tokenAddress": "0x0Ef5683FbF61B0920d034412a7239B8fDFCaE101",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x1bdb7b2e4b076adff624f360fda19e80db7ff387c46e01bbcd5ba057998e90b7": {
+      "tokenId": "0x1bdb7b2e4b076adff624f360fda19e80db7ff387c46e01bbcd5ba057998e90b7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x1bdb7b2e4b076adff624f360fda19e80db7ff387c46e01bbcd5ba057998e90b7",
+          "tokenAddress": "0xA9FC12381D453bF972bb415768D9e5D80DC60DC2",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xc1b0236acc6dc0964e47679fae203e66aa2aabe26e8bbc192dc475247e43dc00": {
+      "tokenId": "0xc1b0236acc6dc0964e47679fae203e66aa2aabe26e8bbc192dc475247e43dc00",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xc1b0236acc6dc0964e47679fae203e66aa2aabe26e8bbc192dc475247e43dc00",
+          "tokenAddress": "0x0c59E3f36A567FDd66317BE1F9244f166ca28FE1",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x6c9d4a0fcfcf30a47356e0e299a89d3002d28871d1e3b58f4d068ba0a32fa979": {
+      "tokenId": "0x6c9d4a0fcfcf30a47356e0e299a89d3002d28871d1e3b58f4d068ba0a32fa979",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6c9d4a0fcfcf30a47356e0e299a89d3002d28871d1e3b58f4d068ba0a32fa979",
+          "tokenAddress": "0x212351b6BDdB5eD7467C4fE771f587F6Fa796B0D",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x9294ad8f62a9ab6bba251fd1ebf18cca6c85ffebd8c747de92552297e42762d7": {
+      "tokenId": "0x9294ad8f62a9ab6bba251fd1ebf18cca6c85ffebd8c747de92552297e42762d7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x9294ad8f62a9ab6bba251fd1ebf18cca6c85ffebd8c747de92552297e42762d7",
+          "tokenAddress": "0x385f6520C49D222681332132c6eD2c28aaDf5211",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x12a4ab10b45875afa19434b22f8d3d688a8750bbd5cc3681f42b0509d88174f5": {
+      "tokenId": "0x12a4ab10b45875afa19434b22f8d3d688a8750bbd5cc3681f42b0509d88174f5",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x12a4ab10b45875afa19434b22f8d3d688a8750bbd5cc3681f42b0509d88174f5",
+          "tokenAddress": "0x90DBd522fa6A669AC8c273F7d12eCA20ddA544C8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x495b0596061427d1240d478b3601c021266bcb38e79a18aa9b671c96996f391f": {
+      "tokenId": "0x495b0596061427d1240d478b3601c021266bcb38e79a18aa9b671c96996f391f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x495b0596061427d1240d478b3601c021266bcb38e79a18aa9b671c96996f391f",
+          "tokenAddress": "0xe1CeA6DDD95e6a6209e28843d57Eb51A2e081E57",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x4e3aa162538ba4d63c1b250e54d9fcca50f045268958593d365f955a63edd70b": {
+      "tokenId": "0x4e3aa162538ba4d63c1b250e54d9fcca50f045268958593d365f955a63edd70b",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4e3aa162538ba4d63c1b250e54d9fcca50f045268958593d365f955a63edd70b",
+          "tokenAddress": "0x9d9C8af7bee25048a1Dc4F34B7C0cdab02aa1648",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa49f33ade299b78158aa113ba271c4e7419ffe505be7edf3cdb1e3fc1e731dc4": {
+      "tokenId": "0xa49f33ade299b78158aa113ba271c4e7419ffe505be7edf3cdb1e3fc1e731dc4",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa49f33ade299b78158aa113ba271c4e7419ffe505be7edf3cdb1e3fc1e731dc4",
+          "tokenAddress": "0x1647901544D9259B3C265428544967762511bE9B",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x02d203bb4ecd18d0d78d65bf72be9cf9f65e911d13b2423907290fe2bbf5bf8f": {
+      "tokenId": "0x02d203bb4ecd18d0d78d65bf72be9cf9f65e911d13b2423907290fe2bbf5bf8f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x02d203bb4ecd18d0d78d65bf72be9cf9f65e911d13b2423907290fe2bbf5bf8f",
+          "tokenAddress": "0xd579766fFB8845d949498E4221D292594FAf6D2D",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x47895a3616df93c027ed42db7e80bf9d9d74561a82ab23f494dacfaf99f50d62": {
+      "tokenId": "0x47895a3616df93c027ed42db7e80bf9d9d74561a82ab23f494dacfaf99f50d62",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x47895a3616df93c027ed42db7e80bf9d9d74561a82ab23f494dacfaf99f50d62",
+          "tokenAddress": "0xA65056a70fAb872d5Ad86Ef00a24D06CEE8a6aa7",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x9417f443eef0971292bc20e932295d84f09cece00673b59048164772cd446b9b": {
+      "tokenId": "0x9417f443eef0971292bc20e932295d84f09cece00673b59048164772cd446b9b",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x9417f443eef0971292bc20e932295d84f09cece00673b59048164772cd446b9b",
+          "tokenAddress": "0x8cFca53F9550542E53093C13801b2813f3E0CfD8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x623774a7eae6c1cdc24f6d860c040821aba7298a34d54fe6dd0fa1538f2b3922": {
+      "tokenId": "0x623774a7eae6c1cdc24f6d860c040821aba7298a34d54fe6dd0fa1538f2b3922",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x623774a7eae6c1cdc24f6d860c040821aba7298a34d54fe6dd0fa1538f2b3922",
+          "tokenAddress": "0x1E30b666678641aE97e1Dcf5eEe07052f26c3f14",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf827ae686d44fa0f796027efa00c4944a4daa4e3d33ce674afb5b33d595c6bc1": {
+      "tokenId": "0xf827ae686d44fa0f796027efa00c4944a4daa4e3d33ce674afb5b33d595c6bc1",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf827ae686d44fa0f796027efa00c4944a4daa4e3d33ce674afb5b33d595c6bc1",
+          "tokenAddress": "0xd9d93A23B5E85FFf12456A663022B3EB8f25464E",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xbf3e4f9560811f7b644c36e86286f2ad6a17b26eef035e2f2ccfbead4680625c": {
+      "tokenId": "0xbf3e4f9560811f7b644c36e86286f2ad6a17b26eef035e2f2ccfbead4680625c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xbf3e4f9560811f7b644c36e86286f2ad6a17b26eef035e2f2ccfbead4680625c",
+          "tokenAddress": "0xD8a1007a51CFD0f7bA022De8056aBB0F70fbB45E",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x4c9c8012f5194e1d2212ed8bad8e46a22e33e749476aa50600c83b5ad9bf1f28": {
+      "tokenId": "0x4c9c8012f5194e1d2212ed8bad8e46a22e33e749476aa50600c83b5ad9bf1f28",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x4c9c8012f5194e1d2212ed8bad8e46a22e33e749476aa50600c83b5ad9bf1f28",
+          "tokenAddress": "0x768248AACF7e00f6153FFf2b4a3ef1416FdFe785",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf85d41e38284414816fdad991ac2961e722782efdde905fce0a5c21c3ab6ec52": {
+      "tokenId": "0xf85d41e38284414816fdad991ac2961e722782efdde905fce0a5c21c3ab6ec52",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf85d41e38284414816fdad991ac2961e722782efdde905fce0a5c21c3ab6ec52",
+          "tokenAddress": "0x2B67d21fFfDc7f7f6FB48C86b2714cf32713a3b6",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x081b441421b8e8850ecbc13a793027ef156013aebe6accce881dd061464b7ae7": {
+      "tokenId": "0x081b441421b8e8850ecbc13a793027ef156013aebe6accce881dd061464b7ae7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x081b441421b8e8850ecbc13a793027ef156013aebe6accce881dd061464b7ae7",
+          "tokenAddress": "0xF289a09736dC5Cf72746D84E6c6e8F2D02183B36",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa985dc8bee9ed8ab79481b7cef7b37a3ce3fd6d053a3f2a9c4663b86432f1cd3": {
+      "tokenId": "0xa985dc8bee9ed8ab79481b7cef7b37a3ce3fd6d053a3f2a9c4663b86432f1cd3",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa985dc8bee9ed8ab79481b7cef7b37a3ce3fd6d053a3f2a9c4663b86432f1cd3",
+          "tokenAddress": "0xe0Ab7FeeFDFffe26e77917feC02A0DE1772047Cd",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xe40267c59c5d463756664cc163cfe532a4db28731d297656159b89c13c3d2124": {
+      "tokenId": "0xe40267c59c5d463756664cc163cfe532a4db28731d297656159b89c13c3d2124",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xe40267c59c5d463756664cc163cfe532a4db28731d297656159b89c13c3d2124",
+          "tokenAddress": "0x5e801728EE119EcfC093C6C3a1696D2823287c86",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x21a53ac10ea77571f32a5e3eaae0750a2a87d713b18315d15ffdf65ddd073a62": {
+      "tokenId": "0x21a53ac10ea77571f32a5e3eaae0750a2a87d713b18315d15ffdf65ddd073a62",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x21a53ac10ea77571f32a5e3eaae0750a2a87d713b18315d15ffdf65ddd073a62",
+          "tokenAddress": "0xff29290d1a126cc42990cD17A0F91eb926bBC7A9",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd006681b1c3adcea02c6d4f7d16e5aec81fbfaf02e888cd7a59dea5e356f6f55": {
+      "tokenId": "0xd006681b1c3adcea02c6d4f7d16e5aec81fbfaf02e888cd7a59dea5e356f6f55",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xd006681b1c3adcea02c6d4f7d16e5aec81fbfaf02e888cd7a59dea5e356f6f55",
+          "tokenAddress": "0x02d2aBe4F7D2982212BDaB05164f9ae38C1BB60a",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x2e5451960b947012379b399a1ea51e61788bfabfaa4be9bc79ad33435990a166": {
+      "tokenId": "0x2e5451960b947012379b399a1ea51e61788bfabfaa4be9bc79ad33435990a166",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2e5451960b947012379b399a1ea51e61788bfabfaa4be9bc79ad33435990a166",
+          "tokenAddress": "0xC50AbE131E4BF2f0d67c9A30EC68f978751Bd223",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5ec11190a0246608f18c03cc9a3c7f0d839314eb9ceb2780ff5aaba1e5438157": {
+      "tokenId": "0x5ec11190a0246608f18c03cc9a3c7f0d839314eb9ceb2780ff5aaba1e5438157",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x5ec11190a0246608f18c03cc9a3c7f0d839314eb9ceb2780ff5aaba1e5438157",
+          "tokenAddress": "0x15Dd59f5627Cdab5B19087D279D930E428F5e4F8",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x219e718c1b720c47de7fb6ba4489f97c6bf8f53e5a4c4b526647cda2f9b93a73": {
+      "tokenId": "0x219e718c1b720c47de7fb6ba4489f97c6bf8f53e5a4c4b526647cda2f9b93a73",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x219e718c1b720c47de7fb6ba4489f97c6bf8f53e5a4c4b526647cda2f9b93a73",
+          "tokenAddress": "0x464CB0392ED9193eD5F7D271Ecc81402941E2E7E",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x6da828d2f371ec4c804435dbc843b964f296490f1f14fa6eacec61d33be40bf0": {
+      "tokenId": "0x6da828d2f371ec4c804435dbc843b964f296490f1f14fa6eacec61d33be40bf0",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x6da828d2f371ec4c804435dbc843b964f296490f1f14fa6eacec61d33be40bf0",
+          "tokenAddress": "0xaBc8d9f7Ec0A73496E232c5435fE7f0891021926",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd5f2392cfec2280013c9c32f57f0a4a4b297f3f67580d4e139c29209ed6d83e9": {
+      "tokenId": "0xd5f2392cfec2280013c9c32f57f0a4a4b297f3f67580d4e139c29209ed6d83e9",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xd5f2392cfec2280013c9c32f57f0a4a4b297f3f67580d4e139c29209ed6d83e9",
+          "tokenAddress": "0x47c39C9fB96C17136b7a627Fbd8BC6De6E9A3fd5",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xcac81621867da944ce99fb3f1968c52a8e925ba80f6d1132944274e57921fb76": {
+      "tokenId": "0xcac81621867da944ce99fb3f1968c52a8e925ba80f6d1132944274e57921fb76",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xcac81621867da944ce99fb3f1968c52a8e925ba80f6d1132944274e57921fb76",
+          "tokenAddress": "0xbfa75Af06F824Fd4Caa2A23c197d40e0EFD1Fe43",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x725457af6e7bacc94f0e839ca28cadb012b4b7f2e74d4376c7b6d6bef73401b9": {
+      "tokenId": "0x725457af6e7bacc94f0e839ca28cadb012b4b7f2e74d4376c7b6d6bef73401b9",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x725457af6e7bacc94f0e839ca28cadb012b4b7f2e74d4376c7b6d6bef73401b9",
+          "tokenAddress": "0x7ebB35F453e9C00851bdd7bc2cd4931ddA5884Ce",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x588ac69d9b549488f7ac12cda15d40ad34a0f26c96186b597c040d5ab57ff73e": {
+      "tokenId": "0x588ac69d9b549488f7ac12cda15d40ad34a0f26c96186b597c040d5ab57ff73e",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x588ac69d9b549488f7ac12cda15d40ad34a0f26c96186b597c040d5ab57ff73e",
+          "tokenAddress": "0x52B30950c3B85248926a7c61EC9c5948993C6E1d",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3f7e35f4ecf7db395cf6c934798990dd1e64320ca8eda03c6d27c7d755c9753c": {
+      "tokenId": "0x3f7e35f4ecf7db395cf6c934798990dd1e64320ca8eda03c6d27c7d755c9753c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x3f7e35f4ecf7db395cf6c934798990dd1e64320ca8eda03c6d27c7d755c9753c",
+          "tokenAddress": "0xC963065FDC70E23823f237454984C6F3A51760cD",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x5bb900d3a3ed0d5f14a2fabdf3dc4df2a78eebbf5e8092ca4c4317f5b88b90d2": {
+      "tokenId": "0x5bb900d3a3ed0d5f14a2fabdf3dc4df2a78eebbf5e8092ca4c4317f5b88b90d2",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x5bb900d3a3ed0d5f14a2fabdf3dc4df2a78eebbf5e8092ca4c4317f5b88b90d2",
+          "tokenAddress": "0xfa5D377637a0f367f2DBD0BA79FC9FEf6c8CB45B",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x56a8dce580cd76fe31937a53e3c7553be196cceed56b5811325e7cef6f6ce5f4": {
+      "tokenId": "0x56a8dce580cd76fe31937a53e3c7553be196cceed56b5811325e7cef6f6ce5f4",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x56a8dce580cd76fe31937a53e3c7553be196cceed56b5811325e7cef6f6ce5f4",
+          "tokenAddress": "0xBf7572355947dC8dDb98BA2CB58Ba24142cC59E6",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x2e0e880df99bda8203e83687685c3ea66cbd79714fe0eb2be9fdefd639acd32c": {
+      "tokenId": "0x2e0e880df99bda8203e83687685c3ea66cbd79714fe0eb2be9fdefd639acd32c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x2e0e880df99bda8203e83687685c3ea66cbd79714fe0eb2be9fdefd639acd32c",
+          "tokenAddress": "0x8d21c7f322A6eF908B64a670219661678Ddb4676",
+          "decimals": 6,
+          "trackSupply": true
+        }
+      ]
+    },
+    "0xf5f43a740add36221056dbbf8fc0925e32bdbb71264233c3772ce2f27e34c4bd": {
+      "tokenId": "0xf5f43a740add36221056dbbf8fc0925e32bdbb71264233c3772ce2f27e34c4bd",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf5f43a740add36221056dbbf8fc0925e32bdbb71264233c3772ce2f27e34c4bd",
+          "tokenAddress": "0x788bc05f5eF799163AEc3B54B4bCE1945932256F",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa1efd8c2aab37e0c5c022cb80f13e82780bc8181c9bc11cbdc7a0d582631aa4f": {
+      "tokenId": "0xa1efd8c2aab37e0c5c022cb80f13e82780bc8181c9bc11cbdc7a0d582631aa4f",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xa1efd8c2aab37e0c5c022cb80f13e82780bc8181c9bc11cbdc7a0d582631aa4f",
+          "tokenAddress": "0xFD076e5BDa9fD08Da137D44d5B6A11426399716f",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x40fdeb8448d970c92cbfd91f23663dd57262456c6757733da31542d62dd89b7c": {
+      "tokenId": "0x40fdeb8448d970c92cbfd91f23663dd57262456c6757733da31542d62dd89b7c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x40fdeb8448d970c92cbfd91f23663dd57262456c6757733da31542d62dd89b7c",
+          "tokenAddress": "0x5634715996bf9d6c20D19e72ea8c41BBC815AFAc",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3ed57319c4a4fa1ccb43b7804c185d2f2074989d6fd742781aa6f7e9e803ddbd": {
+      "tokenId": "0x3ed57319c4a4fa1ccb43b7804c185d2f2074989d6fd742781aa6f7e9e803ddbd",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x3ed57319c4a4fa1ccb43b7804c185d2f2074989d6fd742781aa6f7e9e803ddbd",
+          "tokenAddress": "0x69faAd375fEC89DA940E20341D4eBE12D21BF907",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xafad38209f627e55f1941e493366d14f91d6030f379c11c83ad564da579fc322": {
+      "tokenId": "0xafad38209f627e55f1941e493366d14f91d6030f379c11c83ad564da579fc322",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xafad38209f627e55f1941e493366d14f91d6030f379c11c83ad564da579fc322",
+          "tokenAddress": "0x784a8A9224ee5E9371d783f2aACE6F9bBA274872",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x59c36cf1b6e499d7828850f36bc5889bad6ef642161ff818c6e1f8368913eda0": {
+      "tokenId": "0x59c36cf1b6e499d7828850f36bc5889bad6ef642161ff818c6e1f8368913eda0",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x59c36cf1b6e499d7828850f36bc5889bad6ef642161ff818c6e1f8368913eda0",
+          "tokenAddress": "0x4cA7C91f291148B5F6144EdBF7bddd3c2CeFa8A7",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xf7717b1d6ecc98d73c1691a330c0e8f8a46f03b39d50064c7b4b8e8d1e7918da": {
+      "tokenId": "0xf7717b1d6ecc98d73c1691a330c0e8f8a46f03b39d50064c7b4b8e8d1e7918da",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xf7717b1d6ecc98d73c1691a330c0e8f8a46f03b39d50064c7b4b8e8d1e7918da",
+          "tokenAddress": "0x594313A41763bfD9663219B5046e4c5A42F406e5",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x77672e22120ed8aa6f24157cd66cddf8bb271ea18eb4ab8530611416eb38a82b": {
+      "tokenId": "0x77672e22120ed8aa6f24157cd66cddf8bb271ea18eb4ab8530611416eb38a82b",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x77672e22120ed8aa6f24157cd66cddf8bb271ea18eb4ab8530611416eb38a82b",
+          "tokenAddress": "0x62Fbc6b7d2f2B4E5995c86d00D2Ea783Aa491dCf",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x736df1744e52f20bade23085fd0aa7efd1be17f6cf8d824b230f62dd1a7b0664": {
+      "tokenId": "0x736df1744e52f20bade23085fd0aa7efd1be17f6cf8d824b230f62dd1a7b0664",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x736df1744e52f20bade23085fd0aa7efd1be17f6cf8d824b230f62dd1a7b0664",
+          "tokenAddress": "0x4C3C42a5F7E8C74F13b82aF3eF135E75379c1A9c",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xd491af043016eaa371b66f3c3abb3185ec3eadd75fa1859dfcefe6b9f6668e0d": {
+      "tokenId": "0xd491af043016eaa371b66f3c3abb3185ec3eadd75fa1859dfcefe6b9f6668e0d",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0xd491af043016eaa371b66f3c3abb3185ec3eadd75fa1859dfcefe6b9f6668e0d",
+          "tokenAddress": "0xef8F1175985139F4543F09697Cb68F23Ff497CdF",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x613be9d500a7613674addd1b5a3004348d8120d8fa651ae7fb4ba65b954d57d7": {
+      "tokenId": "0x613be9d500a7613674addd1b5a3004348d8120d8fa651ae7fb4ba65b954d57d7",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x613be9d500a7613674addd1b5a3004348d8120d8fa651ae7fb4ba65b954d57d7",
+          "tokenAddress": "0xFeb6285e54Ed626DBe21c6eFe260B647909D541C",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3c334a823a513003850c0fdcb0e0e05c29a286464d12d7fa77a15603fd08842c": {
+      "tokenId": "0x3c334a823a513003850c0fdcb0e0e05c29a286464d12d7fa77a15603fd08842c",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x3c334a823a513003850c0fdcb0e0e05c29a286464d12d7fa77a15603fd08842c",
+          "tokenAddress": "0xD56299c500402c6AeC080C46FF7a26465c6a01e6",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x47dda4d2be5a2201ee96882526a9f906baf86e2e77ba2f698d28056e6b6db7d3": {
+      "tokenId": "0x47dda4d2be5a2201ee96882526a9f906baf86e2e77ba2f698d28056e6b6db7d3",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x47dda4d2be5a2201ee96882526a9f906baf86e2e77ba2f698d28056e6b6db7d3",
+          "tokenAddress": "0x40dd1c02AE2D803AC50F93Ae4b42BE647D084e3F",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x69d4f8683ffa062272413b717f5962e96cc274f5c3d319b29c48febc926281ec": {
+      "tokenId": "0x69d4f8683ffa062272413b717f5962e96cc274f5c3d319b29c48febc926281ec",
+      "originAxelarChainId": "core-avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "core-avalanche",
+          "tokenId": "0x69d4f8683ffa062272413b717f5962e96cc274f5c3d319b29c48febc926281ec",
+          "tokenAddress": "0x43bE6e2F822730Aaf9B9BF05E7429F2AE30D89A0",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    }
+  }
 }

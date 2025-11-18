@@ -2,8 +2,8 @@
   "chains": {
     "ethereum-sepolia": {
       "start": 0,
-      "end": 9649370,
-      "max": 9649370,
+      "end": 9655081,
+      "max": 9655081,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
@@ -11,8 +11,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 47787569,
-      "max": 47787569,
+      "end": 47813494,
+      "max": 47813494,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax-test.network/ext/bc/C/rpc"
@@ -20,8 +20,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 71977341,
-      "max": 71977341,
+      "end": 71978599,
+      "max": 71978599,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.fantom.network"
@@ -29,17 +29,17 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 11559524,
-      "max": 14279136,
-      "alreadyProcessedPercentage": "80.95",
+      "end": 14286302,
+      "max": 14286302,
+      "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.api.moonbase.moonbeam.network"
       ]
     },
     "binance": {
       "start": 0,
-      "end": 73305881,
-      "max": 73305881,
+      "end": 73469458,
+      "max": 73469458,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://bsc-prebsc-dataseed.bnbchain.org"
@@ -47,8 +47,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 20716112,
-      "max": 20716112,
+      "end": 20730804,
+      "max": 20730804,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.testnet.kava.io"
@@ -65,8 +65,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 14963904,
-      "max": 14963904,
+      "end": 14982466,
+      "max": 14982466,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rpc.scroll.io"
@@ -74,8 +74,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 32202499,
-      "max": 32202499,
+      "end": 32239322,
+      "max": 32239322,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.immutable.com"
@@ -83,8 +83,8 @@
     },
     "arbitrum-sepolia": {
       "start": 0,
-      "end": 216196109,
-      "max": 216196109,
+      "end": 216487005,
+      "max": 216487005,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rollup.arbitrum.io/rpc"
@@ -101,8 +101,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 1467122,
-      "max": 1467122,
+      "end": 1503946,
+      "max": 1503946,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.frax.com"
@@ -110,8 +110,8 @@
     },
     "optimism-sepolia": {
       "start": 0,
-      "end": 35796122,
-      "max": 35796122,
+      "end": 35832946,
+      "max": 35832946,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"
@@ -119,8 +119,8 @@
     },
     "base-sepolia": {
       "start": 0,
-      "end": 33813248,
-      "max": 33813248,
+      "end": 33850072,
+      "max": 33850072,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.base.org"
@@ -128,8 +128,8 @@
     },
     "blast-sepolia": {
       "start": 0,
-      "end": 29354047,
-      "max": 29354047,
+      "end": 29390871,
+      "max": 29390871,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://blast-sepolia.drpc.org"
@@ -137,8 +137,8 @@
     },
     "mantle-sepolia": {
       "start": 0,
-      "end": 30925058,
-      "max": 30925058,
+      "end": 30961879,
+      "max": 30961879,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.mantle.xyz"
@@ -146,8 +146,8 @@
     },
     "polygon-sepolia": {
       "start": 0,
-      "end": 29168392,
-      "max": 29168392,
+      "end": 29205203,
+      "max": 29205203,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc-amoy.polygon.technology/"
@@ -155,8 +155,8 @@
     },
     "linea-sepolia": {
       "start": 0,
-      "end": 20856883,
-      "max": 20856883,
+      "end": 20893707,
+      "max": 20893707,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.linea.build"
@@ -725,6 +725,13 @@
         },
         {
           "axelarChainId": "kava",
+          "tokenId": "0x373447d6989fd2ed65343f583130325b4a415d1acfcf9d68edcd3ee7e011c5b9",
+          "tokenAddress": "0xD7f1e2Ba0B9B5251ebF516F9497cA0D18b5d0Fe8",
+          "decimals": 18,
+          "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
           "tokenId": "0x373447d6989fd2ed65343f583130325b4a415d1acfcf9d68edcd3ee7e011c5b9",
           "tokenAddress": "0xD7f1e2Ba0B9B5251ebF516F9497cA0D18b5d0Fe8",
           "decimals": 18,
@@ -29945,6 +29952,13 @@
           "tokenAddress": "0xce5f146BE761865B8C0e56FDcE770b26E9806aa2",
           "decimals": 18,
           "trackSupply": true
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xdd754a687626cabed48750c9e592c161e5a97b7b10ef2280933c1a71639d59e9",
+          "tokenAddress": "0xce5f146BE761865B8C0e56FDcE770b26E9806aa2",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -58185,6 +58199,13 @@
           "tokenAddress": "0x80288bcC567de55fc13a2dAA2650E8b59eE48904",
           "decimals": 18,
           "trackSupply": false
+        },
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x5a482747c9ec017a79049622f29da25b498a5570558881125c78ad8833105d24",
+          "tokenAddress": "0x80288bcC567de55fc13a2dAA2650E8b59eE48904",
+          "decimals": 18,
+          "trackSupply": true
         }
       ]
     },
@@ -59264,6 +59285,51 @@
           "tokenId": "0x90783cfe3b04e84999ebfc7b4cba46b0d28cd4f1511399846ad111c2a0545b91",
           "tokenAddress": "0x2FB9608c4D1c736760a63583275Ab1Dc60aF4064",
           "decimals": 9,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xe3b24de055b60cac9a72900a92d80c0922fab05165fafc8e878a6231a1a2a650": {
+      "tokenId": "0xe3b24de055b60cac9a72900a92d80c0922fab05165fafc8e878a6231a1a2a650",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0xe3b24de055b60cac9a72900a92d80c0922fab05165fafc8e878a6231a1a2a650",
+          "tokenAddress": "0xA6c2cC07021077f9A391E1bccEb6564CBE0B8376",
+          "decimals": 18,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0x3d5de156ee75f36e829c9066974eb7dbd54c468f43d33c47bb2bb72f385b3b2e": {
+      "tokenId": "0x3d5de156ee75f36e829c9066974eb7dbd54c468f43d33c47bb2bb72f385b3b2e",
+      "originAxelarChainId": "Moonbeam",
+      "decimals": 6,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Moonbeam",
+          "tokenId": "0x3d5de156ee75f36e829c9066974eb7dbd54c468f43d33c47bb2bb72f385b3b2e",
+          "tokenAddress": "0x36edFC278FE81Ce094a9Eb25FacE468a101EF751",
+          "decimals": 6,
+          "trackSupply": false
+        }
+      ]
+    },
+    "0xa78d10a846750f77b404ee263d8026da8412f5a1bc71f90b6043be4b9742afc3": {
+      "tokenId": "0xa78d10a846750f77b404ee263d8026da8412f5a1bc71f90b6043be4b9742afc3",
+      "originAxelarChainId": "polygon-sepolia",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "polygon-sepolia",
+          "tokenId": "0xa78d10a846750f77b404ee263d8026da8412f5a1bc71f90b6043be4b9742afc3",
+          "tokenAddress": "0x4A82133c99252996B96380BAaeD6D003682491Db",
+          "decimals": 18,
           "trackSupply": false
         }
       ]
