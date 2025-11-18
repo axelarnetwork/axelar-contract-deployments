@@ -13,12 +13,26 @@ export interface ContractInfo {
     version: string;
 }
 
+export interface RewardsPoolParams {
+    epoch_duration: string;
+    participation_threshold: [string, string];
+    rewards_per_epoch: string;
+}
+
+export interface RewardsPoolResponse {
+    params: RewardsPoolParams;
+    pool_id: {
+        chain_name: string;
+        contract: string;
+    };
+}
+
 export async function queryRewardsPool(
     client: CosmWasmClient,
     rewardsAddress: string,
     chainName: string,
     contractAddress: string,
-): Promise<any> {
+): Promise<RewardsPoolResponse> {
     return await client.queryContractSmart(rewardsAddress, {
         rewards_pool: {
             pool_id: {
