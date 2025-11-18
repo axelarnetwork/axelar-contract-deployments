@@ -65,9 +65,7 @@ fn load_and_validate_signatures(
         if let Some(existing_sig) = signatures_map.insert(signer_pubkey, signature)
             && existing_sig != signature
         {
-            eyre::bail!(
-                "Conflicting signatures provided for the same signer: {signer_pubkey}."
-            );
+            eyre::bail!("Conflicting signatures provided for the same signer: {signer_pubkey}.");
         }
     }
 
