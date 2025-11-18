@@ -478,11 +478,11 @@ async function main(action, args, options) {
     });
 
     if (proposals.length > 0) {
-    const proposal = {
-        title: 'Interchain Governance Proposal',
-        description: 'Interchain Governance Proposal',
-        contract_calls: proposals,
-    };
+        const proposal = {
+            title: 'Interchain Governance Proposal',
+            description: 'Interchain Governance Proposal',
+            contract_calls: proposals,
+        };
 
         const proposalJSON = JSON.stringify(proposal, null, 2);
 
@@ -504,10 +504,10 @@ if (require.main === module) {
     const addCommonOptions = (cmd) => {
         addBaseOptions(cmd, { address: true });
         cmd.addOption(
-        new Option('-c, --contractName <contractName>', 'contract name')
-            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-            .default('InterchainGovernance'),
-    );
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        );
         cmd.addOption(new Option('--targetContractName <targetContractName>', 'target contract name'));
         cmd.addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']));
         cmd.addOption(new Option('--target <target>', 'governance execution target'));
@@ -539,7 +539,11 @@ if (require.main === module) {
     const scheduleCmd = program
         .command('schedule')
         .description('Schedule a new timelock proposal')
-        .addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']).makeOptionMandatory(true))
+        .addOption(
+            new Option('--action <action>', 'governance action')
+                .choices(['raw', 'upgrade', 'transferGovernance', 'withdraw'])
+                .makeOptionMandatory(true),
+        )
         .addOption(new Option('--date <date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss)').makeOptionMandatory(true))
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--target <target>', 'governance execution target'))
@@ -553,7 +557,11 @@ if (require.main === module) {
     const cancelCmd = program
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
-        .addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']).makeOptionMandatory(true))
+        .addOption(
+            new Option('--action <action>', 'governance action')
+                .choices(['raw', 'upgrade', 'transferGovernance', 'withdraw'])
+                .makeOptionMandatory(true),
+        )
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--target <target>', 'governance execution target'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
@@ -606,7 +614,11 @@ if (require.main === module) {
     const submitCmd = program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']).makeOptionMandatory(true))
+        .addOption(
+            new Option('--action <action>', 'governance action')
+                .choices(['raw', 'upgrade', 'transferGovernance', 'withdraw'])
+                .makeOptionMandatory(true),
+        )
         .addOption(new Option('--commandId <commandId>', 'command id').makeOptionMandatory(true))
         .addOption(new Option('--date <date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss)').makeOptionMandatory(true))
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
