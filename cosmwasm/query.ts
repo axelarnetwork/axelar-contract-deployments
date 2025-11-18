@@ -13,18 +13,13 @@ export interface ContractInfo {
     version: string;
 }
 
-export interface RewardsPoolParams {
+export interface RewardsPoolResponse {
+    balance: string;
     epoch_duration: string;
     participation_threshold: [string, string];
     rewards_per_epoch: string;
-}
-
-export interface RewardsPoolResponse {
-    params: RewardsPoolParams;
-    pool_id: {
-        chain_name: string;
-        contract: string;
-    };
+    current_epoch_num: string;
+    last_distribution_epoch: string | null;
 }
 
 export async function queryRewardsPool(
