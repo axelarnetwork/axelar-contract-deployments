@@ -3,8 +3,8 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command } from 'commander';
 
-import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../common';
-import { ConfigManager } from '../common/config';
+import { addEnvOption, getChainConfig, itsHubContractAddress, printError, printInfo, printWarn } from '../common';
+import { ConfigManager, ContractConfig } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
 
@@ -13,8 +13,39 @@ export interface ContractInfo {
     version: string;
 }
 
+export interface RewardsPoolParams {
+    epoch_duration: string;
+    participation_threshold: [string, string];
+    rewards_per_epoch: string;
+}
+
+export interface RewardsPoolResponse {
+    params: RewardsPoolParams;
+    pool_id: {
+        chain_name: string;
+        contract: string;
+    };
+}
+
+export async function queryRewardsPool(
+    client: CosmWasmClient,
+    rewardsAddress: string,
+    chainName: string,
+    contractAddress: string,
+): Promise<RewardsPoolResponse> {
+    return await client.queryContractSmart(rewardsAddress, {
+        rewards_pool: {
+            pool_id: {
+                chain_name: chainName,
+                contract: contractAddress,
+            },
+        },
+    });
+}
+
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
+    const rewardsAddress = config.getContractConfig('Rewards').address;
 
     const rewardsContractAddresses = {
         multisig: config.getContractConfig('Multisig').address,
@@ -23,15 +54,7 @@ async function rewards(client, config, _options, args, _fee) {
 
     for (const [key, address] of Object.entries(rewardsContractAddresses)) {
         try {
-            const result = await client.queryContractSmart(config.getContractConfig('Rewards').address, {
-                rewards_pool: {
-                    pool_id: {
-                        chain_name: chainName,
-                        contract: address,
-                    },
-                },
-            });
-
+            const result = await queryRewardsPool(client, rewardsAddress, chainName, address);
             printInfo(`Rewards pool for ${key} on ${chainName}`, JSON.stringify(result, null, 2));
         } catch (error) {
             printWarn(`Failed to fetch rewards pool for ${key} on ${chainName}`, `${error.message}`);
@@ -207,6 +230,49 @@ async function contractInfo(client: CosmWasmClient, config: ConfigManager, optio
     }
 }
 
+async function queryAllContractVersions(
+    client: CosmWasmClient,
+    config: ConfigManager,
+    _options: Options,
+    _args?: string[],
+    _fee?: unknown,
+): Promise<void> {
+    const axelarContracts = config.axelar.contracts;
+
+    await Promise.all(
+        Object.entries(axelarContracts).map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
+            if (contractConfig.address) {
+                try {
+                    const contractInfo = await getContractInfo(client, contractConfig.address);
+                    contractConfig.version = contractInfo.version;
+                } catch (error) {
+                    printError(`Failed to get contract info for ${contractName}`, error);
+                }
+            }
+
+            const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
+            const versions = {} as Record<string, string[]>;
+            await Promise.all(
+                chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
+                    try {
+                        const contractInfo = await getContractInfo(client, chainContractConfig.address);
+                        chainContractConfig.version = contractInfo.version;
+                        if (!versions[contractInfo.version]) {
+                            versions[contractInfo.version] = [];
+                        }
+                        versions[contractInfo.version].push(chainName);
+                    } catch (error) {
+                        printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                    }
+                }),
+            );
+            if (Object.keys(versions).length > 1) {
+                printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
+            }
+        }),
+    );
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -260,6 +326,15 @@ const programHandler = () => {
         .action((options: Options) => {
             mainQueryProcessor(contractInfo, options, []);
         });
+
+    const contractsVersions = program
+        .command('contract-versions')
+        .description('Query all cosmwasm axelar contract versions per environment')
+        .action((options) => {
+            mainQueryProcessor(queryAllContractVersions, options, []);
+        });
+
+    addEnvOption(contractsVersions);
 
     addAmplifierQueryOptions(rewardsCmd);
     addAmplifierQueryOptions(tokenConfigCmd);

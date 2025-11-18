@@ -731,6 +731,15 @@ const itsEdgeChains = (chains) =>
         .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
+const getAmplifierChains = (chains) => {
+    if (!chains) {
+        return [];
+    }
+    return Object.entries(chains)
+        .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
+        .map(([chainName, chainConfig]) => ({ name: chainName, config: chainConfig }));
+};
+
 const parseTrustedChains = (chains, trustedChains) => {
     return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(chains) : trustedChains;
 };
@@ -938,6 +947,7 @@ module.exports = {
     SHORT_COMMIT_HASH_REGEX,
     itsEdgeContract,
     tryItsEdgeContract,
+    getAmplifierChains,
     parseTrustedChains,
     isValidStellarAddress,
     isValidStellarAccount,
