@@ -439,14 +439,14 @@ export class ConfigManager implements FullConfig {
         const verifierContractName = this.getVotingVerifierContractForChainType(chainConfig.chainType);
         const votingVerifierConfig = this.getContractConfigByChain(verifierContractName, chainName) as VotingVerifierChainConfig;
 
-        this.validateRequired(votingVerifierConfig.governanceAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`);
-        this.validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
-        this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`);
-        this.validateThreshold(votingVerifierConfig.votingThreshold, `${VERIFIER_CONTRACT_NAME}[${chainName}].votingThreshold`);
-        this.validateRequired(votingVerifierConfig.blockExpiry, `${VERIFIER_CONTRACT_NAME}[${chainName}].blockExpiry`);
-        this.validateRequired(votingVerifierConfig.confirmationHeight, `${VERIFIER_CONTRACT_NAME}[${chainName}].confirmationHeight`);
-        this.validateRequired(votingVerifierConfig.msgIdFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].msgIdFormat`);
-        this.validateRequired(votingVerifierConfig.addressFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].addressFormat`);
+        this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`);
+        this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`);
+        this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${verifierContractName}[${chainName}].sourceGatewayAddress`);
+        this.validateThreshold(votingVerifierConfig.votingThreshold, `${verifierContractName}[${chainName}].votingThreshold`);
+        this.validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`);
+        this.validateRequired(votingVerifierConfig.confirmationHeight, `${verifierContractName}[${chainName}].confirmationHeight`);
+        this.validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
+        this.validateRequired(votingVerifierConfig.addressFormat, `${verifierContractName}[${chainName}].addressFormat`);
 
         return votingVerifierConfig;
     }
