@@ -19,7 +19,7 @@ pub(crate) struct SendArgs {
     destination_chain: String,
 
     #[clap(long)]
-    destination_address: String,
+    destination_contract_address: String,
 
     #[clap(long)]
     payload: String,
@@ -77,8 +77,8 @@ fn send_gmp_message(fee_payer: &Pubkey, args: SendArgs) -> eyre::Result<Instruct
     // Build gateway call instruction
     let gateway_instruction = build_gateway_call_instruction(
         fee_payer,
-        &args.destination_chain,
-        &args.destination_address,
+        args.destination_chain.clone(),
+        args.destination_contract_address.clone(),
         payload.clone(),
     )?;
 
@@ -86,7 +86,10 @@ fn send_gmp_message(fee_payer: &Pubkey, args: SendArgs) -> eyre::Result<Instruct
     println!("📨 GMP Message Details:");
     println!();
     println!("  Destination Chain: {}", args.destination_chain);
-    println!("  Destination Address: {}", args.destination_address);
+    println!(
+        "  Destination Contract Address: {}",
+        args.destination_contract_address
+    );
     println!("  Payload: {} bytes", payload.len());
     println!("------------------------------------------");
 
@@ -95,8 +98,8 @@ fn send_gmp_message(fee_payer: &Pubkey, args: SendArgs) -> eyre::Result<Instruct
 
 fn build_gateway_call_instruction(
     fee_payer: &Pubkey,
-    destination_chain: &str,
-    destination_address: &str,
+    destination_chain: String,
+    destination_contract_address: String,
     payload: Vec<u8>,
 ) -> eyre::Result<Instruction> {
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
@@ -106,8 +109,8 @@ fn build_gateway_call_instruction(
 
     let ix_data = solana_axelar_gateway::instruction::CallContract {
         // CallContract struct determines anchor discriminator
-        destination_chain: destination_chain.to_string(),
-        destination_contract_address: destination_address.to_string(),
+        destination_chain,
+        destination_contract_address,
         payload,
         signing_pda_bump: 0, // no signing pda needed for self-CPI call
     }

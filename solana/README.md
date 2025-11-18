@@ -54,6 +54,6 @@ solana/cli send \
   --fee-payer ~/.config/solana/id.json \
   gmp send \
   --destination-chain "$DESTINATION_CHAIN" \
-  --destination-address "$DESTINATION_ADDRESS" \
+  --destination-contract-address "$DESTINATION_ADDRESS" \
   --payload "$GMP_PAYLOAD"
 ```
