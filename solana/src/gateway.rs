@@ -2,12 +2,6 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use anchor_lang::InstructionData;
-use solana_axelar_std::execute_data::{ExecuteData, MerklizedPayload, Payload, hash_payload, encode};
-use solana_axelar_std::hasher::Hasher;
-use solana_axelar_std::message::{CrossChainId, Message, Messages, MerklizedMessage, MessageLeaf};
-use solana_axelar_std::pubkey::{PublicKey, Signature};
-use solana_axelar_std::verifier_set::{VerifierSet, verifier_set_hash};
-use solana_axelar_std::U256;
 use base64::Engine as _;
 use borsh::BorshDeserialize;
 use clap::{ArgGroup, Args, Parser, Subcommand};
@@ -18,6 +12,14 @@ use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde_json::json;
 use solana_axelar_gateway::state::config::RotationDelaySecs;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
+use solana_axelar_std::U256;
+use solana_axelar_std::execute_data::{
+    ExecuteData, MerklizedPayload, Payload, encode, hash_payload,
+};
+use solana_axelar_std::hasher::Hasher;
+use solana_axelar_std::message::{CrossChainId, MerklizedMessage, Message, MessageLeaf, Messages};
+use solana_axelar_std::pubkey::{PublicKey, Signature};
+use solana_axelar_std::verifier_set::{VerifierSet, verifier_set_hash};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::message::Message as SolanaMessage;
@@ -374,7 +376,8 @@ async fn get_verifier_set(
 
             cosmrs::AccountId::from_str(&address).unwrap()
         };
-        let axelar_grpc_endpoint = <String as serde::Deserialize>::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
+        let axelar_grpc_endpoint =
+            <String as serde::Deserialize>::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
         let multisig_prover_response =
             query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
                 axelar_grpc_endpoint,
@@ -525,9 +528,7 @@ async fn init(
     )
     .await?;
     let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
-    let verifier_set_hash = verifier_set_hash::<
-        Hasher,
-    >(&verifier_set, &domain_separator)?;
+    let verifier_set_hash = verifier_set_hash::<Hasher>(&verifier_set, &domain_separator)?;
     let (verifier_set_tracker_pda, _bump) =
         solana_axelar_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
     let payer = *fee_payer;
@@ -757,12 +758,9 @@ async fn rotate(
     )
     .await?;
     let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
-    let current_verifier_set_hash = verifier_set_hash::<
-        Hasher,
-    >(&signer_set.verifier_set(), &domain_separator)?;
-    let new_verifier_set_hash = verifier_set_hash::<
-        Hasher,
-    >(&new_verifier_set, &domain_separator)?;
+    let current_verifier_set_hash =
+        verifier_set_hash::<Hasher>(&signer_set.verifier_set(), &domain_separator)?;
+    let new_verifier_set_hash = verifier_set_hash::<Hasher>(&new_verifier_set, &domain_separator)?;
     let (verifier_set_tracker_pda, _bump) =
         solana_axelar_gateway::VerifierSetTracker::find_pda(&current_verifier_set_hash);
     let (new_verifier_set_tracker_pda, _bump) =
@@ -818,7 +816,8 @@ async fn submit_proof(
 
         cosmrs::AccountId::from_str(&address).unwrap()
     };
-    let axelar_grpc_endpoint = <String as serde::Deserialize>::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
+    let axelar_grpc_endpoint =
+        <String as serde::Deserialize>::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
     let multisig_prover_response = query_axelar::<crate::multisig_prover_types::ProofResponse>(
         axelar_grpc_endpoint,
         multisig_prover_address,
@@ -831,7 +830,9 @@ async fn submit_proof(
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let execute_data: ExecuteData = match multisig_prover_response.status {
         ProofStatus::Pending => eyre::bail!("Proof is not completed yet"),
-        ProofStatus::Completed { execute_data } => ExecuteData::try_from_slice(&mut execute_data.as_slice())?,
+        ProofStatus::Completed { execute_data } => {
+            ExecuteData::try_from_slice(execute_data.as_slice())?
+        }
     };
 
     let mut instructions = Vec::new();

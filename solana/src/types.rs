@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use solana_axelar_std::pubkey::PublicKey;
-use solana_axelar_std::verifier_set::VerifierSet;
 use clap::ArgEnum;
 use eyre::eyre;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::{Deserialize, Serialize};
+use solana_axelar_std::pubkey::PublicKey;
+use solana_axelar_std::verifier_set::VerifierSet;
 use solana_sdk::instruction::Instruction as SolanaInstruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;

@@ -1,10 +1,10 @@
 //! Types from multisig_prover::msg module that we need in our codebase
 //! This is a simplified version that only contains what we need to compile
 
-use solana_axelar_std::pubkey::PublicKey;
 use axelar_wasm_std::nonempty::Uint128;
 use cosmwasm_std::HexBinary;
 use serde::{Deserialize, Serialize};
+use solana_axelar_std::pubkey::PublicKey;
 use std::convert::TryFrom;
 
 // Extension trait to add u128() method to Uint128
@@ -61,9 +61,7 @@ impl TryFrom<Pubkey> for PublicKey {
                     .map_err(|_| eyre::eyre!("Invalid Secp256k1 key length"))?;
                 Ok(PublicKey(arr))
             }
-            Pubkey::Ed25519(_) => {
-                Err(eyre::eyre!("Ed25519 keys are not supported by the gateway"))
-            }
+            Pubkey::Ed25519(_) => Err(eyre::eyre!("Ed25519 keys are not supported by the gateway")),
             Pubkey::Ecdsa(bytes) => {
                 let arr: [u8; 33] = bytes
                     .as_slice()
