@@ -41,11 +41,11 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
       -c VotingVerifier \
-      -t "Store VotingVerifier contract v1.2.0" \
-      -d "Store VotingVerifier contract v1.2.0" \
+      -t "Store VotingVerifier contract v2.0.0" \
+      -d "Store VotingVerifier contract v2.0.0" \
       -r $RUN_AS_ACCOUNT \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 1.2.0
+      --version 2.0.0
     ```
 
 1. Store Multisig code
