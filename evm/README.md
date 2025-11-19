@@ -218,7 +218,20 @@ A governance contract is used to manage some contracts such as the AxelarGateway
 ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 --targetContractName AxelarGateway --file proposal.json -n [chain]
 ```
 
-2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
+2. Submit the proposal on Axelar.
+
+Prerequisites: set your Cosmos wallet mnemonic and environment (or pass them via flags).
+
+```bash
+export MNEMONIC="<your-cosmos-mnemonic>"
+export ENV="<environment>"  # e.g., devnet-amplifier | stagenet | mainnet
+```
+
+```bash
+ts-node cosmwasm/submit-proposal.js call-contracts --proposalFile path/to/proposal.json
+```
+
+Optional (Cosmos CLI alternative). A min deposit needs to be provided. This can be found via `axelard q gov params` and `axelard q axelarnet params` (if an override is set for the specific contract).
 
 ```bash
 axelard tx gov submit-proposal call-contracts proposal.json --deposit [min-deposit]uaxl --from [wallet] --chain-id [chain-id] --gas auto --gas-adjustment 1.4 --node [rpc]
