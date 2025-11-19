@@ -72,7 +72,7 @@ fn build_instruction(
 }
 
 fn send_gmp_message(fee_payer: &Pubkey, args: SendArgs) -> eyre::Result<Instruction> {
-    let payload = hex::decode(&args.payload)?;
+    let payload = hex::decode(args.payload.strip_prefix("0x").unwrap_or(&args.payload))?;
 
     // Build gateway call instruction
     let gateway_instruction = build_gateway_call_instruction(
