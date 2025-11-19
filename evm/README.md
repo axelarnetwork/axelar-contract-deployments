@@ -250,6 +250,39 @@ ts-node evm/governance.js execute --targetContractName AxelarGateway --target [t
 
 8. Verify the governance command went through correctly.
 
+### AxelarServiceGovernance (operator) extensions
+
+The CLI includes convenience commands for AxelarServiceGovernance operator-style proposals:
+
+- Schedule operator approval (aka multisig):
+  - `ts-node evm/governance.js schedule-multisig <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
+- Cancel operator approval JSON:
+  - `ts-node evm/governance.js cancel-multisig <target> <calldata> -c AxelarServiceGovernance -n <chain> --file proposal.json`
+- Submit operator approval via GMP:
+  - `ts-node evm/governance.js submit-multisig <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
+- Submit operator approval cancel via GMP:
+  - `ts-node evm/governance.js submit-cancel-multisig <target> <calldata> <commandId> -c AxelarServiceGovernance -n <chain>`
+- Execute an approved operator proposal (operator EOA must call):
+  - `ts-node evm/governance.js execute-operator-proposal <target> <calldata> -c AxelarServiceGovernance -n <chain>`
+- Check approval status:
+  - `ts-node evm/governance.js is-operator-approved <target> <calldata> -c AxelarServiceGovernance -n <chain>`
+
+Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  -c AxelarServiceGovernance -n <chain> --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  -c AxelarServiceGovernance -n <chain> --newOperator 0xNewOperator
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  -c AxelarServiceGovernance -n <chain> --newOperator 0xNewOperator
+```
+
 ## Utilities
 
 ### Decode Function Calldata
