@@ -539,7 +539,7 @@ if (require.main === module) {
         .command('schedule')
         .description('Schedule a new timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(
             new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
         )
@@ -615,7 +615,7 @@ if (require.main === module) {
         .description('Schedule a multisig proposal (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
@@ -655,7 +655,7 @@ if (require.main === module) {
         .description('Submit a scheduled proposal via cross-chain message')
         .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .argument('<commandId>', 'command id')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(
             new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
         )
@@ -685,7 +685,7 @@ if (require.main === module) {
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .argument('<commandId>', 'command id')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
