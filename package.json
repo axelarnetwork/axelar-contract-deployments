@@ -44,7 +44,7 @@
     "@stellar/stellar-sdk": "v14.2.0",
     "abort-controller": "^3.0.0",
     "axios": "^1.7.2",
-    "bech32": "1.1.4",
+    "bech32": "2.0.0",
     "bs58": "^6.0.0",
     "csv-parser": "^3.0.0",
     "msgpack-lite": "^0.1.26",
