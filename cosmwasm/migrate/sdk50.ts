@@ -5,7 +5,6 @@ import { Command } from 'commander';
 
 import { printInfo, printWarn, prompt } from '../../common';
 import { ConfigManager } from '../../common/config';
-import { VERIFIER_CONTRACT_NAME } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager } from '../processor';
 import { mainProcessor } from '../processor';
@@ -56,26 +55,19 @@ async function migrateAllVotingVerifiers(
         }
     }
 
+    // config.getContractConfig('VotingVerifier').codeId = ;
+    // config.getContractConfig('XrplVotingVerifier').codeId;
+
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
 
     const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) => {
-        const { contractConfig } = getAmplifierContractConfig(config, {
-            ...options,
-            contractName: config.getVotingVerifierContractForChainType(chainName),
-            chainName,
-        });
-
-        contractConfig.codeId = codeId;
-
-        const msg = '{}';
-
         return encodeMigrate(config, {
             ...options,
             contractName: config.getVotingVerifierContractForChainType(chainName),
             chainName,
             address,
             codeId,
-            msg,
+            msg: '{}',
         });
     });
 
@@ -96,6 +88,24 @@ async function migrateAllVotingVerifiers(
     printInfo('Migration proposal submitted successfully', proposalId);
 }
 
+async function updateBlockTimeRelatedParameters(
+    client: ClientManager,
+    config: ConfigManager,
+    options: MigrationOptions,
+    _args: string[],
+    fee: string | StdFee,
+): Promise<void> {
+    const { deposit, yes } = options;
+    const chains = Object.entries(config.chains)
+        .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
+        .map(([chainName]) => chainName);
+    const votingVerifiers: Array<{ chainName: string; address: string; codeId: number }> = [];
+    const title = 'Update block time related parameters for all voting verifiers';
+    const description = 'Update block time related parameters for all voting verifiers';
+
+    for (const chainName of chains) {}
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -109,6 +119,19 @@ const programHandler = () => {
         });
 
     addAmplifierOptions(migrateVotingVerifiersCmd, {
+        codeId: true,
+        fetchCodeId: true,
+        runAs: true,
+    });
+
+    const updateBlockTimeRelatedParametersCmd = program
+        .command('update-voting-verifiers')
+        .description('Update block time related parameters for all voting verifiers')
+        .action((options) => {
+            mainProcessor(updateBlockTimeRelatedParameters, options);
+        });
+
+    addAmplifierOptions(updateBlockTimeRelatedParametersCmd, {
         codeId: true,
         fetchCodeId: true,
         runAs: true,
