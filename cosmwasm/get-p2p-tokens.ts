@@ -146,7 +146,7 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
         }
         const currentChain = tokensInfo.chains[chain.axelarId];
         if (!chain.contracts.InterchainTokenService) {
-            printWarn(`InterchainTokenService contract not found for ${chain.axelarId}`);
+            printError(`InterchainTokenService contract not found for ${chain.axelarId}`);
             return;
         }
         printInfo(`ITS at ${chain.axelarId} is at`, chain.contracts.InterchainTokenService.address);
