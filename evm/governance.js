@@ -103,7 +103,6 @@ async function getProposalCalldata(governance, chain, wallet, options) {
     const targetContractName = options.targetContractName;
     let target = options.target || chain.contracts[targetContractName]?.address;
 
-    
     let calldata;
     const provider = getDefaultProvider(chain.rpc);
     let title = `Governance proposal for chain ${chain.name}`;
@@ -492,11 +491,11 @@ async function main(action, args, options) {
     });
 
     if (proposals.length > 0) {
-    const proposal = {
-        title: 'Interchain Governance Proposal',
-        description: 'Interchain Governance Proposal',
-        contract_calls: proposals,
-    };
+        const proposal = {
+            title: 'Interchain Governance Proposal',
+            description: 'Interchain Governance Proposal',
+            contract_calls: proposals,
+        };
 
         const proposalJSON = JSON.stringify(proposal, null, 2);
 
@@ -514,7 +513,6 @@ async function main(action, args, options) {
 if (require.main === module) {
     const program = new Command();
     program.name('governance').description('Script to manage interchain governance actions');
-
 
     const etaCmd = program
         .command('eta')
@@ -542,14 +540,16 @@ if (require.main === module) {
         .description('Schedule a new timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
-        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'))
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
         .addOption(
-        new Option('-c, --contractName <contractName>', 'contract name')
-            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-            .default('InterchainGovernance'),
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
@@ -567,7 +567,9 @@ if (require.main === module) {
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
-        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'))
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
@@ -654,7 +656,9 @@ if (require.main === module) {
         .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .argument('<commandId>', 'command id')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
-        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'))
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
