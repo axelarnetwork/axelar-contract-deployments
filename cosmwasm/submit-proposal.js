@@ -475,15 +475,15 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     } else {
         config.validateRequired(
             gatewayConfig.codeId || gatewayCodeId,
-            'No Gateway code ID found. Use --gatewayCodeId or fetch the code ID from the network with --fetchCodeId'
+            'No Gateway code ID found. Use --gatewayCodeId or fetch the code ID from the network with --fetchCodeId',
         );
         config.validateRequired(
             votingVerifierConfig.codeId || verifierCodeId,
-            'No VotingVerifier code ID found. Use --verifierCodeId or fetch the code ID from the network with --fetchCodeId'
+            'No VotingVerifier code ID found. Use --verifierCodeId or fetch the code ID from the network with --fetchCodeId',
         );
         config.validateRequired(
             multisigProverConfig.codeId || proverCodeId,
-            'No MultisigProver code ID found. Use --proverCodeId or fetch the code ID from the network with --fetchCodeId'
+            'No MultisigProver code ID found. Use --proverCodeId or fetch the code ID from the network with --fetchCodeId',
         );
         gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
         votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
