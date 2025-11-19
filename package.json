@@ -9,10 +9,9 @@
     "build": "tsc",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
-    "test": "TS_NODE_TRANSPILE_ONLY=true mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js' 'cosmwasm/**/*.test.js'",
+    "test": "mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js' 'cosmwasm/**/*.test.js'",
     "test:evm": "mocha 'evm/test/**/*.js'",
     "test:unit": "mocha -r ts-node/register 'test/**/*.ts'",
-    "test:cosmwasm": "TS_NODE_TRANSPILE_ONLY=true mocha -r ts-node/register cosmwasm/submit-proposal.test.js",
     "prepare": "husky",
     "postinstall": "safe-chain setup"
   },
