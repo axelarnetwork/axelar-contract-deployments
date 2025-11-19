@@ -78,9 +78,12 @@ export class CoordinatorManager {
             const rewardsConfig = this.configManager.getContractConfig('Rewards');
             const multisigConfig = this.configManager.getContractConfig('Multisig');
             const routerConfig = this.configManager.getContractConfig('Router');
-
             const multisigAddress = this.configManager.validateRequired(multisigConfig.address, `Multisig.address`);
+
             const proverContractName = this.configManager.getMultisigProverContractForChainType(chainConfig.chainType);
+            const verifierContractName = this.configManager.getVotingVerifierContractForChainType(chainConfig.chainType);
+            const gatewayContractName = this.configManager.getGatewayContractForChainType(chainConfig.chainType);
+
             const votingVerifierConfig = this.configManager.getVotingVerifierContract(chainName);
             const multisigProverConfig = this.configManager.getMultisigProverContract(chainName);
             const gatewayConfig = this.configManager.getGatewayContract(chainName);
@@ -106,6 +109,16 @@ export class CoordinatorManager {
 
             printInfo(`Code IDs - Gateway: ${gatewayCodeId}, Verifier: ${verifierCodeId}, Prover: ${proverCodeId}`);
 
+            // Note: These are required for standard chains, but not for XRPL chains
+            this.configManager.validateRequired(
+                votingVerifierConfig.sourceGatewayAddress,
+                `${verifierContractName}[${chainName}].sourceGatewayAddress`,
+            );
+            this.configManager.validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
+            this.configManager.validateRequired(votingVerifierConfig.addressFormat, `${verifierContractName}[${chainName}].addressFormat`);
+            this.configManager.validateRequired(multisigProverConfig.encoder, `${proverContractName}[${chainName}].encoder`);
+            this.configManager.validateRequired(multisigProverConfig.keyType, `${proverContractName}[${chainName}].keyType`);
+
             return {
                 instantiate_chain_contracts: {
                     deployment_name: deploymentName,
@@ -114,13 +127,13 @@ export class CoordinatorManager {
                         manual: {
                             gateway: {
                                 code_id: gatewayCodeId,
-                                label: `${GATEWAY_CONTRACT_NAME}-${chainName}`,
+                                label: `${gatewayContractName}-${chainName}`,
                                 msg: null,
                                 contract_admin: gatewayConfig.contractAdmin,
                             },
                             verifier: {
                                 code_id: verifierCodeId,
-                                label: `${VERIFIER_CONTRACT_NAME}-${chainName}`,
+                                label: `${verifierContractName}-${chainName}`,
                                 msg: {
                                     governance_address: votingVerifierConfig.governanceAddress,
                                     service_name: votingVerifierConfig.serviceName,

@@ -1,4 +1,4 @@
-# Cosmwasm Coordinator v2.1
+# Cosmwasm Coordinator v2.1.1
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
@@ -9,7 +9,7 @@
 | **Devnet Amplifier** | Completed             | 2025-10-01 | v2.1.2          | v1.3.0     | v2.3.1       |
 | **Stagenet**         | Completed             | 2025-10-14 | v2.1.1          | v1.3.0     | v2.3.1       |
 | **Testnet**          | Completed             | 2025-10-15 | v2.1.1          | v1.3.0     | v2.3.1       |
-| **Mainnet**          | Partially Completed   | 2025-10-23 | TBD             | v1.3.0     | v2.3.1       |
+| **Mainnet**          | Completed             | 2025-10-28 | v2.1.1          | v1.3.0     | v2.3.1       |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.1)

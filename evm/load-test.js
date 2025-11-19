@@ -2,7 +2,7 @@
 
 const { loadConfig, printInfo, printWarn, printError, printHighlight, callAxelarscanApi, printDivider } = require('../common/index.js');
 const { Command, Option } = require('commander');
-const { addBaseOptions } = require('../common/cli-utils.js');
+const { addBaseOptions } = require('../common/cli-utils');
 
 const { deriveAccounts } = require('./utils.js');
 
