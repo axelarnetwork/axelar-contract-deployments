@@ -462,36 +462,29 @@ const instantiateChainContracts = async (client, config, options, _args, fee) =>
     const chainConfig = config.getChainConfig(chainName);
     const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
 
-    // validate that the contract configs exist
     let gatewayConfig = config.getGatewayContract(chainName);
     let votingVerifierConfig = config.getVotingVerifierContract(chainName);
     let multisigProverConfig = config.getMultisigProverContract(chainName);
 
     if (options.fetchCodeId) {
-        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
-        const votingVerifierCode =
+        gatewayConfig.codeId = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
+        votingVerifierConfig.codeId =
             verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        const multisigProverCode =
+        multisigProverConfig.codeId =
             proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
-        gatewayConfig.codeId = gatewayCode;
-        votingVerifierConfig.codeId = votingVerifierCode;
-        multisigProverConfig.codeId = multisigProverCode;
     } else {
-        if (!gatewayConfig.codeId && !gatewayCodeId) {
-            throw new Error(
-                'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
-            );
-        }
-        if (!votingVerifierConfig.codeId && !verifierCodeId) {
-            throw new Error(
-                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
-            );
-        }
-        if (!multisigProverConfig.codeId && !proverCodeId) {
-            throw new Error(
-                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
-            );
-        }
+        assert(
+            gatewayConfig.codeId || gatewayCodeId,
+            'No Gateway code ID found. Use --gatewayCodeId or fetch the code ID from the network with --fetchCodeId',
+        );
+        assert(
+            votingVerifierConfig.codeId || verifierCodeId,
+            'No VotingVerifier code ID found. Use --verifierCodeId or fetch the code ID from the network with --fetchCodeId',
+        );
+        assert(
+            multisigProverConfig.codeId || proverCodeId,
+            'No MultisigProver code ID found. Use --proverCodeId or fetch the code ID from the network with --fetchCodeId',
+        );
 
         gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
         votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
