@@ -23,7 +23,6 @@ const PREFIX_CANONICAL_TOKEN_SALT: &[u8] = b"canonical-token-salt";
 const PREFIX_CUSTOM_TOKEN_SALT: &[u8] = b"solana-custom-token-salt";
 
 #[derive(Debug, Clone, Copy, borsh::BorshDeserialize)]
-#[borsh(use_discriminant = true)]
 #[repr(u8)]
 enum TokenManagerType {
     NativeInterchainToken = 0,
