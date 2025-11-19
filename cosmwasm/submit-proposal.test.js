@@ -131,13 +131,13 @@ describe('instantiateChainContracts', () => {
     });
 
     const getMockedModule = () => {
-        // Pre-load common modules before clearing cache to ensure TypeScript files are loaded with ts-node
+        // Pre-load modules to ensure TypeScript files and ESM dependencies are loaded properly
         require('../common/utils');
         require('../common');
+        const utils = require('./utils');
 
+        // Only clear submit-proposal cache, not utils or common (they have ESM/TS dependencies)
         delete require.cache[require.resolve('./submit-proposal')];
-        delete require.cache[require.resolve('./utils')];
-        // Don't clear common cache to avoid issues with TypeScript files that need ts-node
 
         const commonUtils = require('../common/utils');
         originalPrompt = commonUtils.prompt;
@@ -145,7 +145,7 @@ describe('instantiateChainContracts', () => {
         commonUtils.prompt = () => false;
         commonUtils.printInfo = () => {};
 
-        const utils = require('./utils');
+        // Mock utils functions (don't re-require to avoid ESM issues)
         originalGetCodeId = utils.getCodeId;
         originalSubmitProposal = utils.submitProposal;
         utils.getCodeId = async (client, config, options) => {
@@ -190,8 +190,7 @@ describe('instantiateChainContracts', () => {
             commonUtils.printInfo = originalPrintInfo;
         }
         delete require.cache[require.resolve('./submit-proposal')];
-        delete require.cache[require.resolve('./utils')];
-        // Don't clear common cache to avoid issues with TypeScript files that need to be built
+        // Don't clear utils or common cache to avoid issues with ESM dependencies and TypeScript files
     });
 
     describe('Error handling', () => {
