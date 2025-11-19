@@ -918,7 +918,6 @@ module.exports = {
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
-    parseDateOrSeconds,
     createGMPProposalJSON,
     prompt,
     findProjectRoot,
