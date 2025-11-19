@@ -54,6 +54,7 @@ export interface DeploymentConfig {
 }
 
 export interface ContractConfig {
+    connectionType?: string;
     version?: string;
     deployments?: Record<string, DeploymentConfig>;
     address?: string;

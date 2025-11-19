@@ -27,53 +27,33 @@ async function migrateAllVotingVerifiers(
     fee: string | StdFee,
 ): Promise<void> {
     const { deposit, yes } = options;
-    const chains = Object.keys(config.chains);
+    const chains = Object.entries(config.chains)
+        .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
+        .map(([chainName]) => chainName);
     const votingVerifiers: Array<{ chainName: string; address: string; codeId: number }> = [];
-
     const title = 'Migrate Voting Verifiers to update block time related parameters';
     const description = 'Migrate all voting verifiers to update block time related parameters';
 
     for (const chainName of chains) {
         try {
             const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-            if (votingVerifierConfig.address) {
-                let codeId: number;
+            const codeId = await getCodeId(client, config, {
+                ...options,
+                contractName: config.getVotingVerifierContractForChainType(chainName),
+                chainName,
+            });
+            votingVerifierConfig.codeId = codeId;
+            printInfo(`Using codeId from config for ${chainName}: ${codeId}`);
 
-                if (votingVerifierConfig.codeId) {
-                    codeId = votingVerifierConfig.codeId;
-                    printInfo(`Using codeId from config for ${chainName}: ${codeId}`);
-                } else {
-                    try {
-                        codeId = await getCodeId(client, config, {
-                            ...options,
-                            contractName: VERIFIER_CONTRACT_NAME,
-                            chainName,
-                        });
-                        votingVerifierConfig.codeId = codeId;
-                        printInfo(`Fetched codeId for ${chainName}: ${codeId}`);
-                    } catch (error) {
-                        throw new Error(
-                            `CodeId not found for ${chainName}. Use --codeId or --fetchCodeId option, or set codeId in config. Error: ${error instanceof Error ? error.message : String(error)}`,
-                        );
-                    }
-                }
-
-                votingVerifiers.push({
-                    chainName,
-                    address: votingVerifierConfig.address,
-                    codeId,
-                });
-                printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
-            } else {
-                printWarn(`Skipping ${chainName}: VotingVerifier address not found`);
-            }
+            votingVerifiers.push({
+                chainName,
+                address: votingVerifierConfig.address,
+                codeId,
+            });
+            printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
         } catch (error) {
             printWarn(`Skipping ${chainName}: ${error}`);
         }
-    }
-
-    if (votingVerifiers.length === 0) {
-        throw new Error('No voting verifiers found with addresses configured');
     }
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
@@ -81,18 +61,17 @@ async function migrateAllVotingVerifiers(
     const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) => {
         const { contractConfig } = getAmplifierContractConfig(config, {
             ...options,
-            contractName: VERIFIER_CONTRACT_NAME,
+            contractName: config.getVotingVerifierContractForChainType(chainName),
             chainName,
         });
 
         contractConfig.codeId = codeId;
 
-        // TODO tkulik: Add a proper migration message once it's implemented in the voting verifier contract
         const msg = '{}';
 
         return encodeMigrate(config, {
             ...options,
-            contractName: VERIFIER_CONTRACT_NAME,
+            contractName: config.getVotingVerifierContractForChainType(chainName),
             chainName,
             address,
             codeId,
@@ -106,7 +85,7 @@ async function migrateAllVotingVerifiers(
         ...options,
         title,
         description,
-        deposit: deposit || config.getProposalDepositAmount(),
+        deposit,
     };
 
     if (prompt(`Proceed with migration of ${migrationMessages.length} voting verifier(s)?`, yes)) {
