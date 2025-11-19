@@ -515,24 +515,6 @@ const getCurrentTimeInSeconds = () => {
     return currentTimeInSecs;
 };
 
-const parseDateOrSeconds = (input) => {
-    if (input === '0' || input === 0) {
-        return 0;
-    }
-
-    if (typeof input === 'number' || (typeof input === 'string' && /^\d+$/.test(input))) {
-        const value = typeof input === 'number' ? input : parseInt(input, 10);
-        if (isNaN(value) || value < 0) {
-            throw new Error(`Invalid seconds value: ${input}`);
-        }
-
-        const currentTimeInSeconds = getCurrentTimeInSeconds();
-        return currentTimeInSeconds + value;
-    }
-
-    return dateToEta(input);
-};
-
 const createGMPProposalJSON = (chain, contractAddress, payload) => {
     const payloadBase64 = Buffer.from(payload.slice(2), 'hex').toString('base64');
     return {
@@ -936,7 +918,6 @@ module.exports = {
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
-    parseDateOrSeconds,
     createGMPProposalJSON,
     prompt,
     findProjectRoot,
