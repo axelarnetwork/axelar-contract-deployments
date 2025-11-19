@@ -131,10 +131,13 @@ describe('instantiateChainContracts', () => {
     });
 
     const getMockedModule = () => {
+        // Pre-load common modules before clearing cache to ensure TypeScript files are loaded with ts-node
+        require('../common/utils');
+        require('../common');
+
         delete require.cache[require.resolve('./submit-proposal')];
         delete require.cache[require.resolve('./utils')];
-        delete require.cache[require.resolve('../common/utils')];
-        delete require.cache[require.resolve('../common')];
+        // Don't clear common cache to avoid issues with TypeScript files that need ts-node
 
         const commonUtils = require('../common/utils');
         originalPrompt = commonUtils.prompt;
@@ -188,8 +191,7 @@ describe('instantiateChainContracts', () => {
         }
         delete require.cache[require.resolve('./submit-proposal')];
         delete require.cache[require.resolve('./utils')];
-        delete require.cache[require.resolve('../common/utils')];
-        delete require.cache[require.resolve('../common')];
+        // Don't clear common cache to avoid issues with TypeScript files that need to be built
     });
 
     describe('Error handling', () => {
