@@ -1,4 +1,4 @@
-# Amplifier Chains Role Transfers & InterchainGovernance Deployment
+# Amplifier Chains Role Transfers & AxelarServiceGovernance Deployment
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
@@ -13,10 +13,6 @@
 | | `flow` | - | TBD |
 | | `optimism-sepolia` | - | TBD |
 | | `plume-2` | - | TBD |
-| | `solana-12` | - | TBD |
-| | `solana-2` | - | TBD |
-| | `sui-2` | - | TBD |
-| | `xrpl-dev` | - | TBD |
 | | `xrpl-evm-devnet` | - | TBD |
 | **Stagenet** | `berachain` | - | TBD |
 | | `celo-sepolia` | - | TBD |
@@ -25,9 +21,6 @@
 | | `hyperliquid` | - | TBD |
 | | `monad` | - | TBD |
 | | `plume` | - | TBD |
-| | `stellar-2025-q3` | - | TBD |
-| | `sui` | - | TBD |
-| | `xrpl` | - | TBD |
 | | `xrpl-evm` | - | TBD |
 | **Testnet** | `berachain` | - | TBD |
 | | `celo-sepolia` | - | TBD |
@@ -37,9 +30,6 @@
 | | `memento-demo` | - | TBD |
 | | `monad` | - | TBD |
 | | `plume` | - | TBD |
-| | `stellar-2025-q3` | - | TBD |
-| | `sui` | - | TBD |
-| | `xrpl` | - | TBD |
 | | `xrpl-evm` | - | TBD |
 | **Mainnet** | `berachain` | - | TBD |
 | | `flow` | - | TBD |
@@ -47,26 +37,25 @@
 | | `hyperliquid` | - | TBD |
 | | `monad` | - | TBD |
 | | `plume` | - | TBD |
-| | `stellar` | - | TBD |
-| | `sui` | - | TBD |
-| | `xrpl` | - | TBD |
 | | `xrpl-evm` | - | TBD |
 
 ## Background
 
-This release implements role transfers for critical protocol contracts on amplifier chains and deploys InterchainGovernance contracts where they are missing. The role transfers are necessary to move control from EOA addresses to governance contracts and multisigs for better security and operational management.
+This release implements role transfers for critical protocol contracts on amplifier chains and deploys AxelarServiceGovernance contracts where they are missing. The role transfers are necessary to move control from EOA addresses to governance contracts and multisigs for better security and operational management.
 
 ### Role Transfer Summary
 
-| Contract | Role | Assign To | Operations |
-|----------|------|-----------|------------|
-| **AxelarAmplifierGateway** | owner | Governance | `upgrade()`, `transferOwnership()`, `proposeOwnership()`, `transferOperatorship()` |
-| **AxelarAmplifierGateway** | operator | AXELARONS EOA | `rotateSigners()`, `transferOperatorship()` |
-| **AxelarGasService** | owner | Multisig | `upgrade()` |
-| **AxelarGasService** | collector | AXELARONS EOA | `collectFees()`, `updateGasInfo()`, `refund()` |
-| **Operators** | owner | Multisig | `addOperator()`, `removeOperator()`, `transferOwnership()`, `proposeOwnership()` |
-| **InterchainTokenService** | owner | Multisig | `setTrustedAddress()`, `removeTrustedAddress()`, `setPauseStatus()`, `migrateInterchainToken()` |
-| **InterchainTokenService** | operator | Multisig | `setFlowLimits()`, `transferOperatorship()`, `proposeOperatorship()` |
+| Contract | Role | Current Role Address | Operations | Assign To | Reasoning |
+|----------|------|----------------------|-----------|-----------|-----------|
+| AxelarAmplifierGateway | deployer | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | - | - | Informational only (initial deployer EOA, no on-chain role to transfer) |
+| AxelarAmplifierGateway | owner | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` (6 chains), `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` (Monad) | `upgrade`, `transferOwnership`, `proposeOwnership`, `transferOperatorship` | AxelarServiceGovernance | Critical protocol control over amplifier gateway upgrades and ownership/operatorship management |
+| AxelarAmplifierGateway | operator | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | `rotateSigners`, `transferOperatorship` | Emergency Operator EOA | Emergency account to rotate to a prior honest verifier set if latest set is compromised |
+| AxelarGasService | owner | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `upgrade` | AxelarServiceGovernance | Critical protocol upgrade control over gas service implementation |
+| AxelarGasService | collector | `0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC` | `collectFees`, `updateGasInfo`, `refund` | Operators | Treasury and operational management of gas fee collection and refunds |
+| Operators | owner | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `addOperator`, `removeOperator`, `transferOwnership`, `proposeOwnership` | Relayer Operators EOA | Operational registry management for relayer operators |
+| InterchainTokenService | deployer | EOA: `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | - | - | Informational only (initial deployer EOA, no on-chain role to transfer) |
+| InterchainTokenService | owner | EOA: `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `setTrustedAddress`, `removeTrustedAddress`, `setPauseStatus`, `migrateInterchainToken`, `upgrade` | AxelarServiceGovernance | Operational token service management and upgrade control |
+| InterchainTokenService | operator | EOA: `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `setFlowLimits`, `transferOperatorship`, `proposeOperatorship` | Rate Limiter EOA | Operational flow limit management for cross-chain token flows |
 
 ## Pre-requisites
 
@@ -81,15 +70,17 @@ This release implements role transfers for critical protocol contracts on amplif
    CHAIN=<chain name>
    ```
 3. Verify current contract addresses and roles in `${ENV}.json` for each chain
-4. TODO: Confirm governance contract addresses for each environment
-5. TODO: Confirm multisig addresses for each environment
-6. TODO: Confirm AXELARONS EOA addresses for each environment
+4. TODO: Confirm `AxelarServiceGovernance` contract addresses for each environment
+5. TODO: Confirm Emergency Operator EOA addresses for each environment
+6. TODO: Confirm Relayer Operators EOA addresses for each environment
+7. TODO: Confirm Rate Limiter EOA addresses for each environment
+8. TODO: Confirm `Operators` contract addresses for each environment
 
 ## Deployment Steps
 
-### Step 1: Deploy InterchainGovernance (if not deployed)
+### Step 1: Deploy AxelarServiceGovernance (if not deployed)
 
-**Note**: InterchainGovernance contracts are not deployed on amplifier chains. They need to be deployed before role transfers can be executed via governance.
+**Note**: AxelarServiceGovernance contracts are not deployed on amplifier chains. They need to be deployed before role transfers can be executed via governance.
 
 #### Configuration
 
@@ -100,85 +91,85 @@ This release implements role transfers for critical protocol contracts on amplif
 | **Testnet**          | `axelar`          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `axelar`          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
-#### Add InterchainGovernance config to `${ENV}.json`
+#### Add AxelarServiceGovernance config to `${ENV}.json`
 
 For each amplifier chain, add the following configuration:
 
 ```json
 {
-  "InterchainGovernance": {
+  "AxelarServiceGovernance": {
     "governanceChain": "[governanceChain]",
     "governanceAddress": "[governanceAddress]",
     "minimumTimeDelay": [minimumTimeDelay],
     "deploymentMethod": "create2",
-    "salt": "InterchainGovernance [ENV]"
+    "salt": "AxelarServiceGovernance [ENV]"
   }
 }
 ```
 
-#### Deploy InterchainGovernance
+#### Deploy AxelarServiceGovernance
 
 **TODO**: 
 - Confirm before deploying about using `create2` or `create3` method
-- Confirm salt as well
+- Confirm salt for AxelarServiceGovernance as well
 
 ```bash
-ts-node evm/deploy-contract.js -c InterchainGovernance -m create2/create3 -s "salt"
+ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create2/create3 -s "salt"
 ```
 
 #### Verify Deployment
 
 ```bash
-# Query the deployed address
-ts-node evm/governance.js -n $CHAIN --contractName InterchainGovernance --action owner
+# Query the deployed address / owner
+ts-node evm/governance.js -n $CHAIN --contractName AxelarServiceGovernance --action owner
+```
 
-# Verify governance chain and address are set correctly
-# TODO: Add verification script or manual check
+```bash
+# Verify AxelarServiceGovernance constructor / implementation via explorer
+ts-node evm/verify-contract.js -e $ENV -n $CHAIN -c AxelarServiceGovernance --dir /path/to/axelar-gmp-sdk-solidity
 ```
 
 ### Step 2: Transfer AxelarAmplifierGateway Owner Role
 
-**New Owner**: Governance Contract (InterchainGovernance)
+**New Owner**: AxelarServiceGovernance contract
 
 | Network              | Current Owner | Target Address                                    |
 | -------------------- | ------------- | ------------------------------------------------- |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | InterchainGovernance (deployed address)          |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | InterchainGovernance (deployed address)          |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | InterchainGovernance (deployed address)         |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | InterchainGovernance (deployed address)          |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | AxelarServiceGovernance (governance contract address) |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | AxelarServiceGovernance (governance contract address) |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance (governance contract address) |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance (governance contract address) |
 
 ```bash
 # Verify current owner
 ts-node evm/ownership.js -c AxelarAmplifierGateway --action owner
 
-# Transfer ownership to InterchainGovernance
-INTERCHAIN_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.InterchainGovernance.address" | tr -d '"')
-ts-node evm/ownership.js -c AxelarAmplifierGateway --action transferOwnership --newOwner $INTERCHAIN_GOVERNANCE
+# Transfer ownership to AxelarServiceGovernance
+AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+ts-node evm/ownership.js -c AxelarAmplifierGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
-**TODO**: 
-- Add verification step after transfer
 
 ### Step 3: Transfer AxelarAmplifierGateway Operator Role
 
-**New Operator**: AXELARONS EOA
+**New Operator**: Emergency Operator EOA
 
 | Network              | Current Operator | Target Address           |
 | -------------------- | ---------------- | ------------------------ |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TODO: AXELARONS EOA      |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TODO: AXELARONS EOA      |
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: AXELARONS EOA      |
-| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: AXELARONS EOA      |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TODO: Emergency Operator EOA      |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TODO: Emergency Operator EOA      |
+| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Emergency Operator EOA      |
+| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Emergency Operator EOA      |
 
 ```bash
-# Get the AXELARONS EOA address from the table above
-AXELARONS_EOA="<AXELARONS_EOA_ADDRESS>"
+# Get the Emergency Operator EOA address from the table above
+EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
 
 # Verify current operator
 # TODO: Add script to query operator role or use gateway.js
 
 # Transfer operatorship
-ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $AXELARONS_EOA
+ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA
 ```
 
 **TODO**: 
@@ -186,24 +177,24 @@ ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $AX
 
 ### Step 4: Transfer AxelarGasService Owner Role
 
-**New Owner**: Multisig
+**New Owner**: AxelarServiceGovernance
 
 | Network              | Current Owner | Target Address      |
 | -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | Not set in config | TODO: Multisig      |
-| **Stagenet**         | Not set in config | TODO: Multisig      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: Multisig      |
-| **Mainnet**          | Not set in config | TODO: Multisig      |
+| **Devnet Amplifier** | Not set in config | TODO: AxelarServiceGovernance contract      |
+| **Stagenet**         | Not set in config | TODO: AxelarServiceGovernance contract      |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: AxelarServiceGovernance contract      |
+| **Mainnet**          | Not set in config | TODO: AxelarServiceGovernance contract      |
 
 ```bash
-# Get the multisig address from the table above
-MULTISIG_ADDRESS="<MULTISIG_ADDRESS>"
+# Get the AxelarServiceGovernance contract address for this environment
+AXELAR_SERVICE_GOVERNANCE="<AXELAR_SERVICE_GOVERNANCE_ADDRESS>"
 
 # Verify current owner
 ts-node evm/ownership.js -c AxelarGasService --action owner
 
 # Transfer ownership to Multisig
-ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $MULTISIG_ADDRESS
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
 **TODO**: 
@@ -212,75 +203,68 @@ ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwn
 
 ### Step 5: Transfer AxelarGasService Collector Role
 
-**New Collector**: AXELARONS EOA
+**New Collector**: Operators contract
 
 | Network              | Current Collector | Target Address           |
 | -------------------- | ----------------- | ------------------------ |
-| **Devnet Amplifier** | `0x505381EEd15c828b3158836d0196bC2E6B51c49f`,`0x2e1C331cE54863555Ee1638c99eA9154b02bA831`,`0x217D3F23884beD1B13177DaC309634E4A30fe5F1` | TODO: AXELARONS EOA      |
-| **Stagenet**         | `0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392` | TODO: AXELARONS EOA      |
-| **Testnet**          | `0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5`,`0x7AC8A53528bD497d7Ac8AEC4CcfDbA556e32BDD6` | TODO: AXELARONS EOA      |
-| **Mainnet**          | `0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC` | TODO: AXELARONS EOA      |
+| **Devnet Amplifier** | `0x505381EEd15c828b3158836d0196bC2E6B51c49f`,`0x2e1C331cE54863555Ee1638c99eA9154b02bA831`,`0x217D3F23884beD1B13177DaC309634E4A30fe5F1` | Operators contract address |
+| **Stagenet**         | `0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392` | Operators contract address |
+| **Testnet**          | `0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5`,`0x7AC8A53528bD497d7Ac8AEC4CcfDbA556e32BDD6` | Operators contract address |
+| **Mainnet**          | `0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC` | Operators contract address |
 
 ```bash
-# Get the AXELARONS EOA address from the table above
-AXELARONS_EOA="<AXELARONS_EOA_ADDRESS>"
+# Get the Operators contract address from config
+OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
 
 # Verify current collector (query contract directly)
 GAS_SERVICE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarGasService.address" | tr -d '"')
 
 # Update collector via upgrade (collector is set in constructor, requires upgrade)
-ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args "{\"collector\": \"$AXELARONS_EOA\"}" --reuseProxy
+ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args "{\"collector\": \"$OPERATORS\"}" --reuseProxy
 ```
-
-**TODO**: 
-- Verify the current collector address for each chain before executing transfer
-- Add verification step after transfer
 
 ### Step 6: Transfer Operators Owner Role
 
-**New Owner**: Multisig
+**New Owner**: Relayer Operators EOA
 
 | Network              | Current Owner | Target Address      |
 | -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TODO: Multisig      |
-| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TODO: Multisig      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`,`0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Multisig      |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: Multisig      |
+| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TODO: Relayer Operators EOA      |
+| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TODO: Relayer Operators EOA      |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`,`0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Relayer Operators EOA      |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: Relayer Operators EOA      |
 
 ```bash
-# Get the multisig address from the table above
-MULTISIG_ADDRESS="<MULTISIG_ADDRESS>"
+# Get the Relayer Operators EOA address from the table above
+RELAYER_OPERATORS_EOA="<RELAYER_OPERATORS_EOA_ADDRESS>"
 
 # Verify current owner
 ts-node evm/ownership.js -c Operators --action owner
 
 # Transfer ownership to Multisig
-ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $MULTISIG_ADDRESS
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $RELAYER_OPERATORS_EOA
 ```
-
-**TODO**: 
-- Add verification step after transfer
 
 ### Step 7: Transfer InterchainTokenService Owner Role
 
-**New Owner**: Multisig
+**New Owner**: AxelarServiceGovernance
 
 | Network              | Current Owner | Target Address      |
 | -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | Not set in config | TODO: Multisig      |
-| **Stagenet**         | Not set in config | TODO: Multisig      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: Multisig      |
-| **Mainnet**          | Not set in config | TODO: Multisig      |
+| Devnet Amplifier     | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | AxelarServiceGovernance contract address      |
+| Stagenet             | `0xBeF25f4733b9d451072416360609e5A4c115293E` | AxelarServiceGovernance contract address      |
+| Testnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance contract address      |
+| Mainnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance contract address      |
 
 ```bash
-# Get the multisig address from the table above
-MULTISIG_ADDRESS="<MULTISIG_ADDRESS>"
+# Get the AxelarServiceGovernance contract address for this environment
+AXELAR_SERVICE_GOVERNANCE="<AXELAR_SERVICE_GOVERNANCE_ADDRESS>"
 
 # Verify current owner
 ts-node evm/ownership.js -c InterchainTokenService --action owner
 
 # Transfer ownership to Multisig
-ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $MULTISIG_ADDRESS
+ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
 **TODO**: 
@@ -289,39 +273,35 @@ ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --
 
 ### Step 8: Transfer InterchainTokenService Operator Role
 
-**New Operator**: Multisig
+**New Operator**: Rate Limiter EOA
 
 | Network              | Current Operator | Target Address      |
 | -------------------- | ---------------- | ------------------- |
-| **Devnet Amplifier** | Not set in config | TODO: Multisig      |
-| **Stagenet**         | Not set in config | TODO: Multisig      |
-| **Testnet**          | Not set in config | TODO: Multisig      |
-| **Mainnet**          | Not set in config | TODO: Multisig      |
+| **Devnet Amplifier** | Not set in config | TODO: Rate Limiter EOA      |
+| **Stagenet**         | Not set in config | TODO: Rate Limiter EOA      |
+| **Testnet**          | Not set in config | TODO: Rate Limiter EOA      |
+| **Mainnet**          | Not set in config | TODO: Rate Limiter EOA      |
 
 ```bash
-# Get the multisig address from the table above
-MULTISIG_ADDRESS="<MULTISIG_ADDRESS>"
+# Get the Rate Limiter EOA address from the table above
+RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
 
 # Transfer operatorship
-ts-node evm/its.js -n $CHAIN --action transferOperatorship --newOperator $MULTISIG_ADDRESS
+ts-node evm/its.js -n $CHAIN --action transferOperatorship --newOperator $RATE_LIMITER_EOA
 ```
-
-**TODO**: 
-- Verify the correct command/script to transfer ITS operatorship
-- Add verification step after transfer
 
 ## Verification Checklist
 
 After completing role transfers for each chain, verify:
 
-- [ ] InterchainGovernance is deployed and configured correctly
-- [ ] AxelarAmplifierGateway owner is transferred to InterchainGovernance
-- [ ] AxelarAmplifierGateway operator is transferred to AXELARONS EOA
-- [ ] AxelarGasService owner is transferred to Multisig
-- [ ] AxelarGasService collector is transferred to AXELARONS EOA
-- [ ] Operators owner is transferred to Multisig
-- [ ] InterchainTokenService owner is transferred to Multisig
-- [ ] InterchainTokenService operator is transferred to Multisig
+- [ ] AxelarServiceGovernance is deployed and configured correctly
+- [ ] AxelarAmplifierGateway owner is transferred to AxelarServiceGovernance
+- [ ] AxelarAmplifierGateway operator is transferred to Emergency Operator EOA
+- [ ] AxelarGasService owner is transferred to AxelarServiceGovernance
+- [ ] AxelarGasService collector is transferred to Operators contract
+- [ ] Operators owner is transferred to Relayer Operators EOA
+- [ ] InterchainTokenService owner is transferred to AxelarServiceGovernance
+- [ ] InterchainTokenService operator is transferred to Rate Limiter EOA
 - [ ] All role transfers are verified on-chain
 - [ ] Contract addresses are updated in `${ENV}.json`
 - [ ] Documentation is updated with new role addresses
