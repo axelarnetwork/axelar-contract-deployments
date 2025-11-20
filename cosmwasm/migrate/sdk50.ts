@@ -17,6 +17,7 @@ interface MigrationOptions extends Options {
     deposit?: string;
     yes?: boolean;
     fetchCodeId?: boolean;
+    codeId?: number;
     runAs?: string;
 }
 
@@ -40,7 +41,7 @@ async function migrateAllVotingVerifiers(
         const votingVerifierConfig = config.getVotingVerifierContract(chainName);
         config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
         const codeId = await getCodeId(client, config, {
-            fetchCodeId,
+            ...options,
             contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
         });
 
