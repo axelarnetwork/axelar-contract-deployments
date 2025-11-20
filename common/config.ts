@@ -406,6 +406,9 @@ export class ConfigManager implements FullConfig {
         if (typeof value[1] !== 'number' && typeof value[1] !== 'string') {
             throw new Error(`Invalid threshold configuration for the chain. Denominator must be a number or a string.`);
         }
+        if (Number(value[0] === Number.NaN || Number(value[1]) === Number.NaN)) {
+            throw new Error(`Invalid threshold configuration for the chain. Numerator and denominator must be valid numbers.`);
+        }
         if (Number(value[0]) > Number(value[1])) {
             throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
         }
@@ -425,7 +428,7 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`);
+        this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`, 'string');
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
             `${multisigProverContractName}[${chainName}].verifierSetDiffThreshold`,
@@ -453,11 +456,15 @@ export class ConfigManager implements FullConfig {
         const verifierContractName = this.getVotingVerifierContractForChainType(chainConfig.chainType);
         const votingVerifierConfig = this.getContractConfigByChain(verifierContractName, chainName) as VotingVerifierChainConfig;
 
-        this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`);
-        this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`);
+        this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`, 'string');
+        this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`, 'string');
         this.validateThreshold(votingVerifierConfig.votingThreshold, `${verifierContractName}[${chainName}].votingThreshold`);
-        this.validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`);
-        this.validateRequired(votingVerifierConfig.confirmationHeight, `${verifierContractName}[${chainName}].confirmationHeight`);
+        this.validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`, 'number');
+        this.validateRequired(
+            votingVerifierConfig.confirmationHeight,
+            `${verifierContractName}[${chainName}].confirmationHeight`,
+            'number',
+        );
 
         return votingVerifierConfig;
     }
