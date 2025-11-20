@@ -16,6 +16,7 @@ interface MigrationOptions extends Options {
     description: string;
     deposit?: string;
     yes?: boolean;
+    fetchCodeId?: boolean;
 }
 
 async function migrateAllVotingVerifiers(
@@ -25,7 +26,7 @@ async function migrateAllVotingVerifiers(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const { deposit, yes } = options;
+    const { deposit, yes, fetchCodeId } = options;
     const chains = Object.entries(config.chains)
         .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
         .map(([chainName]) => chainName);
@@ -36,7 +37,7 @@ async function migrateAllVotingVerifiers(
     for (const chainName of chains) {
         const votingVerifierConfig = config.getVotingVerifierContract(chainName);
         const codeId = await getCodeId(client, config, {
-            fetchCodeId: true,
+            fetchCodeId,
             contractName: config.getVotingVerifierContractForChainType(chainName),
         });
 
@@ -90,7 +91,7 @@ async function updateBlockTimeRelatedParameters(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const { deposit, yes } = options;
+    const { yes } = options;
     const chains = Object.entries(config.chains)
         .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
         .map(([chainName]) => chainName);
@@ -138,7 +139,6 @@ async function updateBlockTimeRelatedParameters(
         ...options,
         title,
         description,
-        deposit,
     };
 
     if (prompt(`Proceed with migration of ${votingVerifierMessages.length} voting verifier(s)?`, yes)) {
@@ -151,7 +151,7 @@ async function updateBlockTimeRelatedParameters(
     }
 }
 
-async function updateBlockTimeRelatedParametersForMultisig(
+async function updateSigningParametersForMultisig(
     client: ClientManager,
     config: ConfigManager,
     options: MigrationOptions,
@@ -161,24 +161,21 @@ async function updateBlockTimeRelatedParametersForMultisig(
     const multisigConfig = config.getContractConfig('Multisig');
     config.validateRequired(multisigConfig.address, 'multisigConfig.address');
 
-    // TODO tkulik: align with the actual contract API once it is implemented
-    const currentBlockExpiry = await client.queryContractSmart(multisigConfig.address, 'block_expiry');
-    printInfo(`Current block expiry: ${currentBlockExpiry}`);
+    const { block_expiry } = await client.queryContractSmart(multisigConfig.address, 'signing_parameters');
+    printInfo(`Current signing parameters: block_expiry: ${block_expiry}`);
 
-    // TODO tkulik: align with the actual contract API once it is implemented
     const msg = {
-        update_block_expiry: {
-            new_block_expiry: currentBlockExpiry * 5,
+        update_signing_parameters: {
+            block_expiry: block_expiry * 5,
         },
     };
 
-    printInfo(`New block expiry: ${msg.update_block_expiry.new_block_expiry}`);
+    printInfo(`New block expiry: ${msg.update_signing_parameters.block_expiry}`);
 
     const proposalOptions = {
         ...options,
-        title: 'Update block time related parameters for multisig',
-        description: 'Update block time related parameters for multisig',
-        deposit: options.deposit,
+        title: 'Update signing parameters for multisig',
+        description: 'Update signing parameters for multisig',
         contractName: 'Multisig',
         msg,
     };
@@ -222,14 +219,14 @@ const programHandler = () => {
         runAs: true,
     });
 
-    const updateBlockTimeRelatedParametersForMultisigCmd = program
-        .command('update-block-time-related-parameters-for-multisig')
-        .description('Update block time related parameters for multisig')
+    const updateSigningParametersForMultisigCmd = program
+        .command('update-signing-parameters-for-multisig')
+        .description('Update signing parameters for multisig')
         .action((options) => {
-            mainProcessor(updateBlockTimeRelatedParametersForMultisig, options);
+            mainProcessor(updateSigningParametersForMultisig, options);
         });
 
-    addAmplifierOptions(updateBlockTimeRelatedParametersForMultisigCmd, {
+    addAmplifierOptions(updateSigningParametersForMultisigCmd, {
         executeProposalOptions: true,
         runAs: true,
     });
