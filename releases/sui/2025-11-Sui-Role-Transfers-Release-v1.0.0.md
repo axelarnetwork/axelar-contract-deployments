@@ -14,7 +14,7 @@
 
 ## Background
 
-This release implements capability (cap) transfers for critical protocol contracts on Sui and documents the assignments to Multisig/EOA holders. The caps include `OwnerCap`, `UpgradeCap`, and `OperatorCap`, which control ownership, upgrades, and operational actions. Moving these from EOAs to governance-controlled addresses improves security and operational hygiene.
+Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to Multisig contract. This enforces correct permissions, separation of duties, and stronger security.
 
 ### Role Transfer Summary
 
@@ -50,9 +50,10 @@ This release implements capability (cap) transfers for critical protocol contrac
    - `chains["sui"].contracts.Operators.{packageId, ownerCapId, upgradeCapId, address}`
    - `chains["sui"].contracts.InterchainTokenService.{packageId, ownerCapId, upgradeCapId, operatorCapId}`
    - `chains["sui"].roles.{multisig, relayerOperatorsEOA, rateLimiterEOA}`
-4. TODO: Confirm final `multisig` addresses per environment
-5. TODO: Confirm `relayerOperatorsEOA` and `rateLimiterEOA` per environment
-6. TODO: Confirm all Cap object IDs (OwnerCap/UpgradeCap/OperatorCap) and package IDs
+4. TODO: Ensure `multisig` contract is tested and scripts are functional
+5. TODO: Confirm final `multisig` addresses per environment
+6. TODO: Confirm `relayerOperatorsEOA` and `rateLimiterEOA` per environment
+7. TODO: Confirm all Cap object IDs (OwnerCap/UpgradeCap/OperatorCap) and package IDs
 
 ## Deployment Steps
 
@@ -64,10 +65,10 @@ Notes:
 
 | Network | Current OwnerCap Holder | Target Address |
 | -------- | ----------------------- | -------------- |
-| **Devnet** | `0x3a6f...ee88` | Multisig |
-| **Stagenet** | `0x3a6f...ee88` | Multisig |
-| **Testnet** | `0x3a6f...ee88` | Multisig |
-| **Mainnet** | `0x9803...41c9` | Multisig |
+| **Devnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Stagenet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Testnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Mainnet** | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig |
 
 ```bash
 cd /Users/socrates/Axelar/axelar-contract-deployments
@@ -126,21 +127,7 @@ ts-node sui/transfer-object.js --objectId "$GS_UPG_CAP_ID" --recipient "$MULTISI
 sui client object "$GS_UPG_CAP_ID"
 ```
 
-### Step 5: Assign GasService OperatorCap to Operators contract
-
-The `OperatorCap` should be held by the `Operators` contract for fee collection and refunds.
-
-```bash
-GS_OPERATORCAP_ID=$(jq -r '.chains["sui"].contracts.GasService.operatorCapId' ./axelar-chains-config/info/$ENV.json)
-
-# Using helper script to store cap into Operators (uses IDs from config)
-ts-node sui/operators.js storeCap
-
-# Verify (OperatorCap should now be managed by Operators)
-sui client object "$GS_OPERATORCAP_ID"
-```
-
-### Step 6: Transfer Operators OwnerCap to Relayer Operators EOA
+### Step 5: Transfer Operators OwnerCap to Relayer Operators EOA
 
 ```bash
 OPERATORS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.Operators.ownerCapId' ./axelar-chains-config/info/$ENV.json)
@@ -155,7 +142,7 @@ ts-node sui/transfer-object.js --objectId "$OPERATORS_OWNERCAP_ID" --recipient "
 sui client object "$OPERATORS_OWNERCAP_ID"
 ```
 
-### Step 7: Transfer Operators UpgradeCap to Relayer Operators EOA
+### Step 6: Transfer Operators UpgradeCap to Relayer Operators EOA
 
 ```bash
 OPERATORS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.Operators.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
@@ -170,7 +157,7 @@ ts-node sui/transfer-object.js --objectId "$OPERATORS_UPG_CAP_ID" --recipient "$
 sui client object "$OPERATORS_UPG_CAP_ID"
 ```
 
-### Step 8: Transfer InterchainTokenService OwnerCap to Multisig
+### Step 7: Transfer InterchainTokenService OwnerCap to Multisig
 
 ```bash
 ITS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.ownerCapId' ./axelar-chains-config/info/$ENV.json)
@@ -184,7 +171,7 @@ ts-node sui/transfer-object.js --objectId "$ITS_OWNERCAP_ID" --recipient "$MULTI
 sui client object "$ITS_OWNERCAP_ID"
 ```
 
-### Step 9: Transfer InterchainTokenService UpgradeCap to Multisig
+### Step 8: Transfer InterchainTokenService UpgradeCap to Multisig
 
 ```bash
 ITS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
@@ -198,7 +185,7 @@ ts-node sui/transfer-object.js --objectId "$ITS_UPG_CAP_ID" --recipient "$MULTIS
 sui client object "$ITS_UPG_CAP_ID"
 ```
 
-### Step 10: Transfer InterchainTokenService OperatorCap to Rate Limiter EOA
+### Step 9: Transfer InterchainTokenService OperatorCap to Rate Limiter EOA
 
 ```bash
 ITS_OPERATORCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.operatorCapId' ./axelar-chains-config/info/$ENV.json)
@@ -222,7 +209,6 @@ After completing cap transfers:
 - [ ] AxelarGateway `UpgradeCap` is held by Multisig
 - [ ] GasService `OwnerCap` is held by Multisig
 - [ ] GasService `UpgradeCap` is held by Multisig
-- [ ] GasService `OperatorCap` is held by `Operators` contract (or designated owner)
 - [ ] Operators `OwnerCap` is held by Relayer Operators EOA
 - [ ] Operators `UpgradeCap` is held by Relayer Operators EOA
 - [ ] InterchainTokenService `OwnerCap` is held by Multisig
@@ -231,5 +217,3 @@ After completing cap transfers:
 - [ ] All transfers verified via `sui client object <cap_id>`
 - [ ] Contract addresses and cap object IDs updated in `${ENV}.json`
 - [ ] Documentation updated with new role addresses
-
-
