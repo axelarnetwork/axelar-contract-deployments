@@ -17,6 +17,7 @@ interface MigrationOptions extends Options {
     deposit?: string;
     yes?: boolean;
     fetchCodeId?: boolean;
+    runAs?: string;
 }
 
 async function migrateAllVotingVerifiers(
@@ -71,11 +72,10 @@ async function migrateAllVotingVerifiers(
 
     printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
 
-    if (prompt(`Proceed with migration of ${migrationMessages.length} voting verifier(s)?`, options.yes)) {
-        return;
-    }
-
     for (const { chainName, message } of migrationMessages) {
+        if (prompt(`Proceed with migration of voting verifier for chain ${chainName}?`)) {
+            return;
+        }
         const proposalId = await submitProposal(client, config, options, message, fee);
         printInfo(`Migration proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
@@ -107,8 +107,8 @@ async function updateBlockTimeRelatedParameters(
 
             const msg = {
                 update_voting_parameters: {
-                    block_expiry: block_expiry * 5,
-                    confirmation_height: confirmation_height * 5,
+                    block_expiry: votingVerifierConfig.blockExpiry,
+                    confirmation_height: votingVerifierConfig.confirmationHeight,
                 },
             };
             printInfo(
@@ -132,13 +132,12 @@ async function updateBlockTimeRelatedParameters(
         }),
     );
 
-    if (prompt(`Proceed with migration of ${votingVerifierMessages.length} voting verifier(s)?`, options.yes)) {
-        return;
-    }
-
     for (const { chainName, message } of votingVerifierMessages) {
+        if (prompt(`Proceed with updating block time related parameters for chain ${chainName}?`)) {
+            return;
+        }
         const proposalId = await submitProposal(client, config, options, message, fee);
-        printInfo(`Migration proposal for chain ${chainName} submitted successfully: ${proposalId}`);
+        printInfo(`Update block time parameters proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
 }
 
@@ -159,7 +158,7 @@ async function updateSigningParametersForMultisig(
 
     const msg = {
         update_signing_parameters: {
-            block_expiry: block_expiry * 5,
+            block_expiry: multisigConfig.blockExpiry,
         },
     };
 
