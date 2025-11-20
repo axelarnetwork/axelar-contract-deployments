@@ -54,6 +54,7 @@ export interface DeploymentConfig {
 }
 
 export interface ContractConfig {
+    version?: string;
     deployments?: Record<string, DeploymentConfig>;
     address?: string;
     codeId?: number;
@@ -71,12 +72,12 @@ export interface AxelarContractConfig extends ContractConfig {
 export interface VotingVerifierChainConfig {
     governanceAddress: string;
     serviceName: string;
-    sourceGatewayAddress: string;
+    sourceGatewayAddress?: string;
     votingThreshold: [string, string];
     blockExpiry: number;
     confirmationHeight: number;
-    msgIdFormat: string;
-    addressFormat: string;
+    msgIdFormat?: string;
+    addressFormat?: string;
     codeId: number;
     contractAdmin?: string;
     address?: string;
@@ -84,8 +85,8 @@ export interface VotingVerifierChainConfig {
 
 export interface MultisigProverChainConfig {
     governanceAddress: string;
-    encoder: string;
-    keyType: string;
+    encoder?: string;
+    keyType?: string;
     adminAddress: string;
     verifierSetDiffThreshold: number;
     signingThreshold: [string, string];
@@ -404,6 +405,7 @@ export class ConfigManager implements FullConfig {
     public getMultisigProverContractForChainType(chainType: string): string {
         const chainProverMapping: Record<string, string> = {
             svm: 'SolanaMultisigProver',
+            xrpl: 'XrplMultisigProver',
         };
         return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
     }
@@ -413,8 +415,6 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.encoder, `${multisigProverContractName}[${chainName}].encoder`);
-        this.validateRequired(multisigProverConfig.keyType, `${multisigProverContractName}[${chainName}].keyType`);
         this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`);
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
@@ -426,23 +426,38 @@ export class ConfigManager implements FullConfig {
         return multisigProverConfig;
     }
 
-    public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
-        const votingVerifierConfig = this.getContractConfigByChain(VERIFIER_CONTRACT_NAME, chainName) as VotingVerifierChainConfig;
+    public getVotingVerifierContractForChainType(chainType: string): string {
+        const chainVerifierMapping: Record<string, string> = {
+            xrpl: 'XrplVotingVerifier',
+        };
+        return chainVerifierMapping[chainType] || VERIFIER_CONTRACT_NAME;
+    }
 
-        this.validateRequired(votingVerifierConfig.governanceAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].governanceAddress`);
-        this.validateRequired(votingVerifierConfig.serviceName, `${VERIFIER_CONTRACT_NAME}[${chainName}].serviceName`);
-        this.validateRequired(votingVerifierConfig.sourceGatewayAddress, `${VERIFIER_CONTRACT_NAME}[${chainName}].sourceGatewayAddress`);
-        this.validateThreshold(votingVerifierConfig.votingThreshold, `${VERIFIER_CONTRACT_NAME}[${chainName}].votingThreshold`);
-        this.validateRequired(votingVerifierConfig.blockExpiry, `${VERIFIER_CONTRACT_NAME}[${chainName}].blockExpiry`);
-        this.validateRequired(votingVerifierConfig.confirmationHeight, `${VERIFIER_CONTRACT_NAME}[${chainName}].confirmationHeight`);
-        this.validateRequired(votingVerifierConfig.msgIdFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].msgIdFormat`);
-        this.validateRequired(votingVerifierConfig.addressFormat, `${VERIFIER_CONTRACT_NAME}[${chainName}].addressFormat`);
+    public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
+        const chainConfig = this.getChainConfig(chainName);
+        const verifierContractName = this.getVotingVerifierContractForChainType(chainConfig.chainType);
+        const votingVerifierConfig = this.getContractConfigByChain(verifierContractName, chainName) as VotingVerifierChainConfig;
+
+        this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`);
+        this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`);
+        this.validateThreshold(votingVerifierConfig.votingThreshold, `${verifierContractName}[${chainName}].votingThreshold`);
+        this.validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`);
+        this.validateRequired(votingVerifierConfig.confirmationHeight, `${verifierContractName}[${chainName}].confirmationHeight`);
 
         return votingVerifierConfig;
     }
 
+    public getGatewayContractForChainType(chainType: string): string {
+        const chainGatewayMapping: Record<string, string> = {
+            xrpl: 'XrplGateway',
+        };
+        return chainGatewayMapping[chainType] || GATEWAY_CONTRACT_NAME;
+    }
+
     public getGatewayContract(chainName: string): GatewayChainConfig {
-        const gatewayConfig = this.getContractConfigByChain(GATEWAY_CONTRACT_NAME, chainName) as GatewayChainConfig;
+        const chainConfig = this.getChainConfig(chainName);
+        const gatewayContractName = this.getGatewayContractForChainType(chainConfig.chainType);
+        const gatewayConfig = this.getContractConfigByChain(gatewayContractName, chainName) as GatewayChainConfig;
 
         return gatewayConfig;
     }
