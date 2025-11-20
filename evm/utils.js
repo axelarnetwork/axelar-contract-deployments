@@ -292,7 +292,6 @@ const validationFunctions = {
     isValidTimeFormat,
     isContract,
     isValidAddress,
-    getGovernanceAddress,
     isValidPrivateKey,
     isValidTokenId,
     isValidBytesArray,
