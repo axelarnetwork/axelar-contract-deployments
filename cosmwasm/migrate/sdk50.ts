@@ -117,14 +117,14 @@ async function updateBlockTimeRelatedParameters(
                 update_voting_parameters: {
                     block_expiry: block_expiry * 5,
                     confirmation_height: confirmation_height * 5,
-                    voting_threshold: voting_threshold * 5,
+                    voting_threshold: [String(Number(voting_threshold[0]) * 5), String(Number(voting_threshold[1]) * 5)],
                 },
             };
             printInfo(
-                `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}, confirmation_height: ${confirmation_height}, voting_threshold: ${voting_threshold}`,
+                `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}, confirmation_height: ${confirmation_height}, voting_threshold: ${JSON.stringify(voting_threshold)}`,
             );
             printInfo(
-                `New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}, confirmation_height: ${msg.update_voting_parameters.confirmation_height}, voting_threshold: ${msg.update_voting_parameters.voting_threshold}`,
+                `New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}, confirmation_height: ${msg.update_voting_parameters.confirmation_height}, voting_threshold: ${JSON.stringify(msg.update_voting_parameters.voting_threshold)}`,
             );
             return {
                 chainName,
