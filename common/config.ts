@@ -406,10 +406,22 @@ export class ConfigManager implements FullConfig {
         if (typeof value[1] !== 'number' && typeof value[1] !== 'string') {
             throw new Error(`Invalid threshold configuration for the chain. Denominator must be a number or a string.`);
         }
-        if (Number(value[0] === Number.NaN || Number(value[1]) === Number.NaN)) {
-            throw new Error(`Invalid threshold configuration for the chain. Numerator and denominator must be valid numbers.`);
+
+        const numNumerator = Number(value[0]);
+        const numDenominator = Number(value[1]);
+
+        if (Number.isNaN(numNumerator) || !isFinite(numNumerator)) {
+            throw new Error(
+                `Invalid threshold configuration for the chain. Numerator must be a valid number, got: ${JSON.stringify(value[0])}`,
+            );
         }
-        if (Number(value[0]) > Number(value[1])) {
+        if (Number.isNaN(numDenominator) || !isFinite(numDenominator)) {
+            throw new Error(
+                `Invalid threshold configuration for the chain. Denominator must be a valid number, got: ${JSON.stringify(value[1])}`,
+            );
+        }
+
+        if (numNumerator > numDenominator) {
             throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
         }
         return [String(value[0]), String(value[1])];
