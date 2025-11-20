@@ -1,4 +1,4 @@
-# Amplifier Chains Role Transfers & AxelarServiceGovernance Deployment
+# Amplifier Chains Role Transfers & AxelarServiceGovernance Alignment v1.0.0
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
@@ -41,7 +41,7 @@
 
 ## Background
 
-This release implements role transfers for critical protocol contracts on amplifier chains and deploys AxelarServiceGovernance contracts where they are missing. The role transfers are necessary to move control from EOA addresses to governance contracts and multisigs for better security and operational management.
+Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to AxelarServiceGovernance. This enforces correct permissions, separation of duties, and stronger security.
 
 ### Role Transfer Summary
 
@@ -50,7 +50,6 @@ This release implements role transfers for critical protocol contracts on amplif
 | AxelarAmplifierGateway | owner | EOA | upgrade, transferOwnership, proposeOwnership, transferOperatorship | AxelarServiceGovernance | Critical protocol control over amplifier gateway upgrades and ownership/operatorship management |
 | AxelarAmplifierGateway | operator | EOA | rotateSigners, transferOperatorship | Emergency Operator EOA | Emergency account to rotate to a prior honest verifier set if latest set is compromised |
 | AxelarGasService | owner | EOA | upgrade | AxelarServiceGovernance | Critical protocol upgrade control over gas service implementation |
-| AxelarGasService | collector | EOA | collectFees, updateGasInfo, refund | Operators | Treasury and operational management of gas fee collection and refunds |
 | Operators | owner | EOA | addOperator, removeOperator, transferOwnership, proposeOwnership | Relayer Operators EOA | Operational registry management for relayer operators |
 | InterchainTokenService | owner | EOA | setTrustedAddress, removeTrustedAddress, setPauseStatus, migrateInterchainToken, upgrade | AxelarServiceGovernance | Operational token service management and upgrade control |
 | InterchainTokenService | operator | EOA | setFlowLimits, transferOperatorship, proposeOperatorship | Rate Limiter EOA | Operational flow limit management for cross-chain token flows |
@@ -199,29 +198,7 @@ ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwn
 - Verify the current owner address for each chain before executing transfer
 - Add verification step after transfer
 
-### Step 5: Transfer AxelarGasService Collector Role
-
-**New Collector**: Operators contract
-
-| Network              | Current Collector | Target Address           |
-| -------------------- | ----------------- | ------------------------ |
-| **Devnet Amplifier** | `0x505381EEd15c828b3158836d0196bC2E6B51c49f`,`0x2e1C331cE54863555Ee1638c99eA9154b02bA831`,`0x217D3F23884beD1B13177DaC309634E4A30fe5F1` | Operators contract address |
-| **Stagenet**         | `0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392` | Operators contract address |
-| **Testnet**          | `0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5`,`0x7AC8A53528bD497d7Ac8AEC4CcfDbA556e32BDD6` | Operators contract address |
-| **Mainnet**          | `0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC` | Operators contract address |
-
-```bash
-# Get the Operators contract address from config
-OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
-
-# Verify current collector (query contract directly)
-GAS_SERVICE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarGasService.address" | tr -d '"')
-
-# Update collector via upgrade (collector is set in constructor, requires upgrade)
-ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args "{\"collector\": \"$OPERATORS\"}" --reuseProxy
-```
-
-### Step 6: Transfer Operators Owner Role
+### Step 5: Transfer Operators Owner Role
 
 **New Owner**: Relayer Operators EOA
 
@@ -243,7 +220,7 @@ ts-node evm/ownership.js -c Operators --action owner
 ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $RELAYER_OPERATORS_EOA
 ```
 
-### Step 7: Transfer InterchainTokenService Owner Role
+### Step 6: Transfer InterchainTokenService Owner Role
 
 **New Owner**: AxelarServiceGovernance
 
@@ -269,7 +246,7 @@ ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --
 - Verify the current owner address for each chain before executing transfer
 - Add verification step after transfer
 
-### Step 8: Transfer InterchainTokenService Operator Role
+### Step 7: Transfer InterchainTokenService Operator Role
 
 **New Operator**: Rate Limiter EOA
 
@@ -296,7 +273,6 @@ After completing role transfers for each chain, verify:
 - [ ] AxelarAmplifierGateway owner is transferred to AxelarServiceGovernance
 - [ ] AxelarAmplifierGateway operator is transferred to Emergency Operator EOA
 - [ ] AxelarGasService owner is transferred to AxelarServiceGovernance
-- [ ] AxelarGasService collector is transferred to Operators contract
 - [ ] Operators owner is transferred to Relayer Operators EOA
 - [ ] InterchainTokenService owner is transferred to AxelarServiceGovernance
 - [ ] InterchainTokenService operator is transferred to Rate Limiter EOA
