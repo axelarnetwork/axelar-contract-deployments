@@ -2,8 +2,8 @@
   "chains": {
     "celo": {
       "start": 0,
-      "end": 51728450,
-      "max": 51728450,
+      "end": 51738991,
+      "max": 51738991,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://celo.gateway.tenderly.co"
@@ -11,8 +11,8 @@
     },
     "Ethereum": {
       "start": 0,
-      "end": 23839220,
-      "max": 23839220,
+      "end": 23840089,
+      "max": 23840089,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://ethereum-rpc.publicnode.com"
@@ -20,8 +20,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 72271665,
-      "max": 72271665,
+      "end": 72277660,
+      "max": 72277660,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax.network/ext/bc/C/rpc"
@@ -29,8 +29,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 118047291,
-      "max": 118047291,
+      "end": 118050338,
+      "max": 118050338,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.fantom.network"
@@ -38,8 +38,8 @@
     },
     "Polygon": {
       "start": 0,
-      "end": 79262086,
-      "max": 79262086,
+      "end": 79267346,
+      "max": 79267346,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://polygon.gateway.tenderly.co"
@@ -47,8 +47,8 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 13413262,
-      "max": 13413262,
+      "end": 13414761,
+      "max": 13414761,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.api.moonbeam.network"
@@ -56,17 +56,17 @@
     },
     "binance": {
       "start": 0,
-      "end": 58962800,
-      "max": 68837200,
-      "alreadyProcessedPercentage": "85.66",
+      "end": 63371716,
+      "max": 68851254,
+      "alreadyProcessedPercentage": "92.04",
       "rpcs": [
         "https://bsc.llamarpc.com"
       ]
     },
     "arbitrum": {
       "start": 0,
-      "end": 402190417,
-      "max": 402190417,
+      "end": 402232642,
+      "max": 402232642,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://arb1.arbitrum.io/rpc"
@@ -74,8 +74,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 18082234,
-      "max": 18082234,
+      "end": 18084058,
+      "max": 18084058,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.kava.io"
@@ -92,8 +92,8 @@
     },
     "optimism": {
       "start": 0,
-      "end": 144015216,
-      "max": 144015216,
+      "end": 144020486,
+      "max": 144020486,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://gateway.tenderly.co/public/optimism",
@@ -102,8 +102,8 @@
     },
     "linea": {
       "start": 0,
-      "end": 25839795,
-      "max": 25839795,
+      "end": 25844129,
+      "max": 25844129,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.linea.build"
@@ -111,8 +111,8 @@
     },
     "base": {
       "start": 0,
-      "end": 38419932,
-      "max": 38419932,
+      "end": 38425202,
+      "max": 38425202,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://developer-access-mainnet.base.org"
@@ -120,8 +120,8 @@
     },
     "mantle": {
       "start": 0,
-      "end": 87749450,
-      "max": 87749450,
+      "end": 87754719,
+      "max": 87754719,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.mantle.xyz"
@@ -129,8 +129,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 25140222,
-      "max": 25140222,
+      "end": 25146942,
+      "max": 25146942,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.scroll.io"
@@ -147,8 +147,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 30673697,
-      "max": 30673697,
+      "end": 30678968,
+      "max": 30678968,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.immutable.com/"
@@ -156,8 +156,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 28409249,
-      "max": 28409249,
+      "end": 28414520,
+      "max": 28414520,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.frax.com"
@@ -165,8 +165,8 @@
     },
     "blast": {
       "start": 0,
-      "end": 27409697,
-      "max": 27409697,
+      "end": 27414967,
+      "max": 27414967,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.blast.io"
