@@ -9,7 +9,7 @@ import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager } from '../processor';
 import { mainProcessor } from '../processor';
 import { Options } from '../processor';
-import { encodeMigrate, getCodeId, submitProposal } from '../utils';
+import { encodeExecuteContract, encodeMigrate, getCodeId, submitProposal } from '../utils';
 
 interface MigrationOptions extends Options {
     title: string;
@@ -72,10 +72,9 @@ async function migrateAllVotingVerifiers(
     printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
 
     const proposalOptions = {
-        ...options,
         title,
         description,
-        deposit,
+        deposit: options.deposit,
     };
 
     if (prompt(`Proceed with migration of ${migrationMessages.length} voting verifier(s)?`, yes)) {
@@ -128,22 +127,22 @@ async function updateBlockTimeRelatedParameters(
             );
             return {
                 chainName,
-                message: encodeMigrate(config, {
-                    ...options,
-                    contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
+                message: encodeExecuteContract(
+                    config,
+                    {
+                        contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
+                        msg,
+                    },
                     chainName,
-                    address: votingVerifierConfig.address,
-                    codeId: votingVerifierConfig.codeId,
-                    msg,
-                }),
+                ),
             };
         }),
     );
 
     const proposalOptions = {
-        ...options,
         title,
         description,
+        deposit: options.deposit,
     };
 
     if (prompt(`Proceed with migration of ${votingVerifierMessages.length} voting verifier(s)?`, yes)) {
@@ -178,18 +177,18 @@ async function updateSigningParametersForMultisig(
     printInfo(`New block expiry: ${msg.update_signing_parameters.block_expiry}`);
 
     const proposalOptions = {
-        ...options,
         title: 'Update signing parameters for multisig',
         description: 'Update signing parameters for multisig',
         contractName: 'Multisig',
-        msg,
+        msg: JSON.stringify(msg),
+        deposit: options.deposit,
     };
 
     if (prompt(`Proceed with migration of multisig?`, options.yes)) {
         return;
     }
 
-    const migrationMessage = encodeMigrate(config, proposalOptions);
+    const migrationMessage = encodeExecuteContract(config, proposalOptions);
     const proposalId = await submitProposal(client, config, proposalOptions, migrationMessage, fee);
     printInfo('Migration proposal submitted successfully', proposalId);
 }
