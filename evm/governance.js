@@ -22,6 +22,7 @@ const {
     printWarn,
     getBytecodeHash,
     isValidAddress,
+    getGovernanceAddress,
     mainProcessor,
     isValidDecimal,
     prompt,
@@ -44,19 +45,6 @@ const ProposalType = {
 
 function createGovernanceContract(address, wallet, contractName) {
     return new Contract(address, IAxelarServiceGovernance.abi, wallet);
-}
-
-function getGovernanceAddress(chain, contractName, address) {
-    if (isValidAddress(address)) {
-        return address;
-    }
-
-    const contractConfig = chain.contracts[contractName];
-    if (!contractConfig?.address) {
-        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
-    }
-
-    return contractConfig.address;
 }
 
 async function getSetupParams(governance, targetContractName, target, contracts, wallet, options) {
@@ -514,186 +502,194 @@ if (require.main === module) {
     const program = new Command();
     program.name('governance').description('Script to manage interchain governance actions');
 
-    const etaCmd = program
-        .command('eta')
-        .description('Get the ETA (estimated time of arrival) for a proposal')
-        .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
-        .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
-        .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(etaCmd, { address: true });
-    etaCmd.action((options, cmd) => {
+    addBaseOptions(
+        program
+            .command('eta')
+            .description('Get the ETA (estimated time of arrival) for a proposal')
+            .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
+            .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
+            .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0')),
+        { address: true },
+    ).action((options, cmd) => {
         if (!options.proposal && (!options.target || !options.calldata)) {
             throw new Error('Either --proposal or both --target and --calldata must be provided');
         }
         main(cmd.name(), [], options);
     });
 
-    const scheduleCmd = program
-        .command('schedule')
-        .description('Schedule a new timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
-        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
-        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
-        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
-        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
-        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
-        .addOption(new Option('--amount <amount>', 'withdraw amount'));
-    addBaseOptions(scheduleCmd, { address: true });
-    scheduleCmd.action((action, date, options, cmd) => {
+    addBaseOptions(
+        program
+            .command('schedule')
+            .description('Schedule a new timelock proposal')
+            .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+            .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+            .addOption(
+                new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+            )
+            .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+            .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+            .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+            .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+            .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+            .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+            .addOption(new Option('--amount <amount>', 'withdraw amount')),
+        { address: true },
+    ).action((action, date, options, cmd) => {
         options.action = action;
         options.date = date;
         main(cmd.name(), [], options);
     });
 
-    const cancelCmd = program
-        .command('cancel')
-        .description('Cancel a scheduled timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
-        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
-        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
-        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
-        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
-        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
-        .addOption(new Option('--amount <amount>', 'withdraw amount'));
-    addBaseOptions(cancelCmd, { address: true });
-    cancelCmd.action((action, options, cmd) => {
+    addBaseOptions(
+        program
+            .command('cancel')
+            .description('Cancel a scheduled timelock proposal')
+            .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+            .addOption(
+                new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+            )
+            .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+            .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+            .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+            .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+            .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+            .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+            .addOption(new Option('--amount <amount>', 'withdraw amount')),
+        { address: true },
+    ).action((action, options, cmd) => {
         options.action = action;
         main(cmd.name(), [], options);
     });
 
-    const executeCmd = program
-        .command('execute')
-        .description('Execute a scheduled proposal')
-        .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
-        .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
-        .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(executeCmd, { address: true });
-    executeCmd.action((options, cmd) => {
+    addBaseOptions(
+        program
+            .command('execute')
+            .description('Execute a scheduled proposal')
+            .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
+            .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
+            .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0')),
+        { address: true },
+    ).action((options, cmd) => {
         if (!options.proposal && (!options.target || !options.calldata)) {
             throw new Error('Either --proposal or both --target and --calldata must be provided');
         }
         main(cmd.name(), [], options);
     });
 
-    const scheduleMultisigCmd = program
-        .command('schedule-multisig')
-        .description('Schedule a multisig proposal (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(scheduleMultisigCmd, { address: true });
-    scheduleMultisigCmd.action((target, calldata, date, options, cmd) => {
+    addBaseOptions(
+        program
+            .command('schedule-multisig')
+            .description('Schedule a multisig proposal (AxelarServiceGovernance only)')
+            .argument('<target>', 'target address')
+            .argument('<calldata>', 'call data')
+            .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+            .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0')),
+        { address: true },
+    ).action((target, calldata, date, options, cmd) => {
         options.target = target;
         options.calldata = calldata;
         options.date = date;
         main('scheduleMultisig', [], options);
     });
 
-    const cancelMultisigCmd = program
-        .command('cancel-multisig')
-        .description('Cancel a multisig proposal (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(cancelMultisigCmd, { address: true });
-    cancelMultisigCmd.action((target, calldata, options, cmd) => {
+    addBaseOptions(
+        program
+            .command('cancel-multisig')
+            .description('Cancel a multisig proposal (AxelarServiceGovernance only)')
+            .argument('<target>', 'target address')
+            .argument('<calldata>', 'call data')
+            .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0')),
+        { address: true },
+    ).action((target, calldata, options, cmd) => {
         options.target = target;
         options.calldata = calldata;
         main('cancelMultisig', [], options);
     });
 
-    const submitCmd = program
-        .command('submit')
-        .description('Submit a scheduled proposal via cross-chain message')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
-        .argument('<commandId>', 'command id')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
-        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
-        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
-        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
-        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
-        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
-        .addOption(new Option('--amount <amount>', 'withdraw amount'));
-    addBaseOptions(submitCmd, { address: true });
-    submitCmd.action((action, commandId, date, options, cmd) => {
+    addBaseOptions(
+        program
+            .command('submit')
+            .description('Submit a scheduled proposal via cross-chain message')
+            .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+            .argument('<commandId>', 'command id')
+            .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+            .addOption(
+                new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+            )
+            .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+            .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+            .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+            .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+            .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+            .addOption(new Option('--amount <amount>', 'withdraw amount')),
+        { address: true },
+    ).action((action, commandId, date, options, cmd) => {
         options.action = action;
         options.commandId = commandId;
         options.date = date;
         main(cmd.name(), [], options);
     });
 
-    const submitMultisigCmd = program
-        .command('submit-multisig')
-        .description('Submit a multisig proposal via cross-chain message (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
-        .argument('<commandId>', 'command id')
-        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC)')
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(submitMultisigCmd, { address: true });
-    submitMultisigCmd.action((target, calldata, commandId, date, options, cmd) => {
+    addBaseOptions(
+        program
+            .command('submit-multisig')
+            .description('Submit a multisig proposal via cross-chain message (AxelarServiceGovernance only)')
+            .argument('<target>', 'target address')
+            .argument('<calldata>', 'call data')
+            .argument('<commandId>', 'command id')
+            .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+            .addOption(
+                new Option('-c, --contractName <contractName>', 'contract name')
+                    .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                    .default('InterchainGovernance'),
+            )
+            .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0')),
+        { address: true },
+    ).action((target, calldata, commandId, date, options, cmd) => {
         options.target = target;
         options.calldata = calldata;
         options.commandId = commandId;
@@ -712,5 +708,4 @@ module.exports = {
     encodeGovernanceProposal,
     getProposalHash,
     getSetupParams,
-    getGovernanceAddress,
 };
