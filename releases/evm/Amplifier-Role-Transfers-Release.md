@@ -2,7 +2,7 @@
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** |                                       |
 
 | **Environment** | **Chain** | **Deployment Status** | **Date** |
@@ -45,17 +45,15 @@ This release implements role transfers for critical protocol contracts on amplif
 
 ### Role Transfer Summary
 
-| Contract | Role | Current Role Address | Operations | Assign To | Reasoning |
+| Contract | Role | Current Role Owner | Operations | Assign To | Reasoning |
 |----------|------|----------------------|-----------|-----------|-----------|
-| AxelarAmplifierGateway | deployer | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | - | - | Informational only (initial deployer EOA, no on-chain role to transfer) |
-| AxelarAmplifierGateway | owner | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` (6 chains), `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` (Monad) | `upgrade`, `transferOwnership`, `proposeOwnership`, `transferOperatorship` | AxelarServiceGovernance | Critical protocol control over amplifier gateway upgrades and ownership/operatorship management |
-| AxelarAmplifierGateway | operator | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | `rotateSigners`, `transferOperatorship` | Emergency Operator EOA | Emergency account to rotate to a prior honest verifier set if latest set is compromised |
-| AxelarGasService | owner | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `upgrade` | AxelarServiceGovernance | Critical protocol upgrade control over gas service implementation |
-| AxelarGasService | collector | `0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC` | `collectFees`, `updateGasInfo`, `refund` | Operators | Treasury and operational management of gas fee collection and refunds |
-| Operators | owner | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `addOperator`, `removeOperator`, `transferOwnership`, `proposeOwnership` | Relayer Operators EOA | Operational registry management for relayer operators |
-| InterchainTokenService | deployer | EOA: `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | - | - | Informational only (initial deployer EOA, no on-chain role to transfer) |
-| InterchainTokenService | owner | EOA: `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `setTrustedAddress`, `removeTrustedAddress`, `setPauseStatus`, `migrateInterchainToken`, `upgrade` | AxelarServiceGovernance | Operational token service management and upgrade control |
-| InterchainTokenService | operator | EOA: `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `setFlowLimits`, `transferOperatorship`, `proposeOperatorship` | Rate Limiter EOA | Operational flow limit management for cross-chain token flows |
+| AxelarAmplifierGateway | owner | EOA | upgrade, transferOwnership, proposeOwnership, transferOperatorship | AxelarServiceGovernance | Critical protocol control over amplifier gateway upgrades and ownership/operatorship management |
+| AxelarAmplifierGateway | operator | EOA | rotateSigners, transferOperatorship | Emergency Operator EOA | Emergency account to rotate to a prior honest verifier set if latest set is compromised |
+| AxelarGasService | owner | EOA | upgrade | AxelarServiceGovernance | Critical protocol upgrade control over gas service implementation |
+| AxelarGasService | collector | EOA | collectFees, updateGasInfo, refund | Operators | Treasury and operational management of gas fee collection and refunds |
+| Operators | owner | EOA | addOperator, removeOperator, transferOwnership, proposeOwnership | Relayer Operators EOA | Operational registry management for relayer operators |
+| InterchainTokenService | owner | EOA | setTrustedAddress, removeTrustedAddress, setPauseStatus, migrateInterchainToken, upgrade | AxelarServiceGovernance | Operational token service management and upgrade control |
+| InterchainTokenService | operator | EOA | setFlowLimits, transferOperatorship, proposeOperatorship | Rate Limiter EOA | Operational flow limit management for cross-chain token flows |
 
 ## Pre-requisites
 
