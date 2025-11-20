@@ -1,4 +1,4 @@
-## Consensus Chains Role Transfers & AxelarServiceGovernance Alignment
+## Consensus Chains Role Transfers & AxelarServiceGovernance Alignment v1.0.0
 
 |                | **Owner**                              |
 | -------------- | -------------------------------------- |
@@ -31,7 +31,7 @@
 
 ## Background
 
-This release implements role transfers for critical protocol contracts on consensus-connected EVM chains and aligns them with AxelarServiceGovernance, rate limiting, and operational EOAs. The goal is to move control from EOAs to governance contracts and designated multisigs where appropriate, while keeping high-frequency operational actions on specialized EOAs.
+Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to AxelarServiceGovernance. This enforces correct permissions, separation of duties, and stronger security.
 
 ### Role Transfer Summary
 
@@ -73,7 +73,7 @@ CHAIN=<chain name>
 
 ## Deployment Steps
 
-### Step 1: Ensure AxelarServiceGovernance is Deployed
+### Step 1: Deploy AxelarServiceGovernance Contract
 
 AxelarServiceGovernance should already be deployed on the governance chain and visible in the EVM config JSONs. If not, follow the governance deployment playbook and add it under `contracts.AxelarServiceGovernance` for each chain.
 
@@ -148,29 +148,7 @@ ts-node evm/ownership.js -c AxelarGasService --action owner
 ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
-### Step 5: Align AxelarGasService Collector Role
-
-New collector: Operators contract.
-
-| Network  | Current Collector                                                                                  | Target Address          |
-| -------- | -------------------------------------------------------------------------------------------------- | ----------------------- |
-| **Devnet-Amplifier**   | Not set in config | Operators contract      |
-| **Stagenet** | `0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392`                                   | Operators contract      |
-| **Testnet**  | `0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5` (per-chain) | Operators contract      |
-| **Mainnet**  | `0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC`, `0xfEF5c90d84a1C93804496f5e7fbf98ec0C85243C` (per-chain) | Operators contract      |
-
-```bash
-# Get Operators contract address from config
-OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
-
-# Verify current collector via config/on-chain call
-GAS_SERVICE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarGasService.address" | tr -d '"')
-
-# Update collector via upgrade (collector is set in constructor, requires upgrade)
-ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args "{\"collector\": \"$OPERATORS\"}" --reuseProxy
-```
-
-### Step 6: Transfer Operators Owner Role
+### Step 5: Transfer Operators Owner Role
 
 New owner: Relayer Operators EOA.
 
@@ -192,7 +170,7 @@ ts-node evm/ownership.js -c Operators --action owner
 ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $RELAYER_OPERATORS_EOA
 ```
 
-### Step 7: Transfer InterchainTokenService Owner Role
+### Step 6: Transfer InterchainTokenService Owner Role
 
 New owner: AxelarServiceGovernance.
 
@@ -214,12 +192,12 @@ ts-node evm/ownership.js -c InterchainTokenService --action owner
 ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
-### Step 8: Transfer / Confirm InterchainTokenService Operator Role
+### Step 7: Transfer / Confirm InterchainTokenService Operator Role
 
 New operator: Rate Limiter EOA.
 
-| Network  | Current Operator                             | Target Address      |
-| -------- | -------------------------------------------- | ------------------- |
+| Network  | Current Operator         | Target Address      |
+| -------- | ------------------------- | ------------------- |
 | **Devnet-Amplifier**   | Not set in config | Rate Limiter EOA    |
 | **Stagenet** | Not set in config | Rate Limiter EOA    |
 | **Testnet**  | Not set in config | Rate Limiter EOA    |
@@ -241,7 +219,6 @@ After completing role transfers for each consensus chain, verify:
 - [ ] AxelarGateway governance is transferred to AxelarServiceGovernance.
 - [ ] AxelarGateway mintLimiter is updated to the Rate Limiter EOA / mint-limiter multisig.
 - [ ] AxelarGasService owner is transferred to AxelarServiceGovernance.
-- [ ] AxelarGasService collector is set to the Operators contract.
 - [ ] Operators owner is transferred to the Relayer Operators EOA.
 - [ ] InterchainTokenService owner is transferred to AxelarServiceGovernance.
 - [ ] InterchainTokenService operator is transferred to the Rate Limiter EOA.
