@@ -131,7 +131,7 @@ async function updateBlockTimeRelatedParameters(
                     config,
                     {
                         contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
-                        msg,
+                        msg: JSON.stringify(msg),
                     },
                     chainName,
                 ),
