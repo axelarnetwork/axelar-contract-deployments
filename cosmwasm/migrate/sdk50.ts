@@ -26,13 +26,13 @@ async function migrateAllVotingVerifiers(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const { deposit, yes, fetchCodeId } = options;
+    let { yes, fetchCodeId, title, description } = options;
     const chains = Object.entries(config.chains)
         .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
         .map(([chainName]) => chainName);
     const votingVerifiers: Array<{ chainName: string; address: string; codeId: number }> = [];
-    const title = 'Migrate Voting Verifiers to update block time related parameters';
-    const description = 'Migrate all voting verifiers to update block time related parameters';
+    title = title || 'Migrate Voting Verifiers to update block time related parameters';
+    description = description || 'Migrate all voting verifiers to update block time related parameters';
 
     for (const chainName of chains) {
         const chainConfig = config.getChainConfig(chainName);
@@ -72,9 +72,9 @@ async function migrateAllVotingVerifiers(
     printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
 
     const proposalOptions = {
+        ...options,
         title,
         description,
-        deposit: options.deposit,
     };
 
     if (prompt(`Proceed with migration of ${migrationMessages.length} voting verifier(s)?`, yes)) {
@@ -94,12 +94,12 @@ async function updateBlockTimeRelatedParameters(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const { yes } = options;
+    let { title, description, yes } = options;
     const chains = Object.entries(config.chains)
         .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
         .map(([chainName]) => chainName);
-    const title = 'Update block time related parameters for all voting verifiers';
-    const description = 'Update block time related parameters for all voting verifiers';
+    title = title || 'Update block time related parameters for all voting verifiers';
+    description = description || 'Update block time related parameters for all voting verifiers';
 
     const votingVerifierMessages = await Promise.all(
         chains.map(async (chainName) => {
@@ -107,7 +107,7 @@ async function updateBlockTimeRelatedParameters(
             const votingVerifierConfig = config.getVotingVerifierContract(chainName);
             config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
 
-            const { block_expiry, confirmation_height, voting_threshold } = await client.queryContractSmart(
+            const { block_expiry, confirmation_height } = await client.queryContractSmart(
                 votingVerifierConfig.address,
                 'voting_parameters',
             );
@@ -116,20 +116,20 @@ async function updateBlockTimeRelatedParameters(
                 update_voting_parameters: {
                     block_expiry: block_expiry * 5,
                     confirmation_height: confirmation_height * 5,
-                    voting_threshold: [String(Number(voting_threshold[0]) * 5), String(Number(voting_threshold[1]) * 5)],
                 },
             };
             printInfo(
-                `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}, confirmation_height: ${confirmation_height}, voting_threshold: ${JSON.stringify(voting_threshold)}`,
+                `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}, confirmation_height: ${confirmation_height}`,
             );
             printInfo(
-                `New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}, confirmation_height: ${msg.update_voting_parameters.confirmation_height}, voting_threshold: ${JSON.stringify(msg.update_voting_parameters.voting_threshold)}`,
+                `New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}, confirmation_height: ${msg.update_voting_parameters.confirmation_height}`,
             );
             return {
                 chainName,
                 message: encodeExecuteContract(
                     config,
                     {
+                        ...options,
                         contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
                         msg: JSON.stringify(msg),
                     },
@@ -139,18 +139,12 @@ async function updateBlockTimeRelatedParameters(
         }),
     );
 
-    const proposalOptions = {
-        title,
-        description,
-        deposit: options.deposit,
-    };
-
     if (prompt(`Proceed with migration of ${votingVerifierMessages.length} voting verifier(s)?`, yes)) {
         return;
     }
 
     for (const { chainName, message } of votingVerifierMessages) {
-        const proposalId = await submitProposal(client, config, proposalOptions, message, fee);
+        const proposalId = await submitProposal(client, config, options, message, fee);
         printInfo(`Migration proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
 }
@@ -164,6 +158,9 @@ async function updateSigningParametersForMultisig(
 ): Promise<void> {
     const multisigConfig = config.getContractConfig('Multisig');
     config.validateRequired(multisigConfig.address, 'multisigConfig.address');
+    let { title, description, yes } = options;
+    title = title || 'Update signing parameters for multisig';
+    description = description || 'Update signing parameters for multisig';
 
     const { block_expiry } = await client.queryContractSmart(multisigConfig.address, 'signing_parameters');
     printInfo(`Current signing parameters: block_expiry: ${block_expiry}`);
@@ -177,11 +174,11 @@ async function updateSigningParametersForMultisig(
     printInfo(`New block expiry: ${msg.update_signing_parameters.block_expiry}`);
 
     const proposalOptions = {
-        title: 'Update signing parameters for multisig',
-        description: 'Update signing parameters for multisig',
+        ...options,
+        title,
+        description,
         contractName: 'Multisig',
         msg: JSON.stringify(msg),
-        deposit: options.deposit,
     };
 
     if (prompt(`Proceed with migration of multisig?`, options.yes)) {
