@@ -35,10 +35,11 @@ async function migrateAllVotingVerifiers(
     const description = 'Migrate all voting verifiers to update block time related parameters';
 
     for (const chainName of chains) {
+        const chainConfig = config.getChainConfig(chainName);
         const votingVerifierConfig = config.getVotingVerifierContract(chainName);
         const codeId = await getCodeId(client, config, {
             fetchCodeId,
-            contractName: config.getVotingVerifierContractForChainType(chainName),
+            contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
         });
 
         votingVerifierConfig.codeId = codeId;
@@ -53,17 +54,20 @@ async function migrateAllVotingVerifiers(
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
 
-    const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) => ({
-        chainName,
-        message: encodeMigrate(config, {
-            ...options,
-            contractName: config.getVotingVerifierContractForChainType(chainName),
+    const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) => {
+        const chainConfig = config.getChainConfig(chainName);
+        return {
             chainName,
-            address,
-            codeId,
-            msg: '{}',
-        }),
-    }));
+            message: encodeMigrate(config, {
+                ...options,
+                contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
+                chainName,
+                address,
+                codeId,
+                msg: '{}',
+            }),
+        };
+    });
 
     printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
 
@@ -100,6 +104,7 @@ async function updateBlockTimeRelatedParameters(
 
     const votingVerifierMessages = await Promise.all(
         chains.map(async (chainName) => {
+            const chainConfig = config.getChainConfig(chainName);
             const votingVerifierConfig = config.getVotingVerifierContract(chainName);
             config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
 
@@ -125,7 +130,7 @@ async function updateBlockTimeRelatedParameters(
                 chainName,
                 message: encodeMigrate(config, {
                     ...options,
-                    contractName: config.getVotingVerifierContractForChainType(chainName),
+                    contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
                     chainName,
                     address: votingVerifierConfig.address,
                     codeId: votingVerifierConfig.codeId,
