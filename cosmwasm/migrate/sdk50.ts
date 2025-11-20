@@ -3,7 +3,7 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command } from 'commander';
 
-import { printInfo, printWarn, prompt } from '../../common';
+import { printInfo, prompt } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager } from '../processor';
@@ -34,31 +34,27 @@ async function migrateAllVotingVerifiers(
     const description = 'Migrate all voting verifiers to update block time related parameters';
 
     for (const chainName of chains) {
-        try {
-            const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-            const codeId = await getCodeId(client, config, {
-                fetchCodeId: true,
-                contractName: config.getVotingVerifierContractForChainType(chainName),
-            });
+        const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+        const codeId = await getCodeId(client, config, {
+            fetchCodeId: true,
+            contractName: config.getVotingVerifierContractForChainType(chainName),
+        });
 
-            votingVerifierConfig.codeId = codeId;
-            printInfo(`Using codeId from config for ${chainName}: ${codeId}`);
+        votingVerifierConfig.codeId = codeId;
 
-            votingVerifiers.push({
-                chainName,
-                address: votingVerifierConfig.address,
-                codeId,
-            });
-            printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
-        } catch (error) {
-            printWarn(`Skipping ${chainName}: ${error}`);
-        }
+        votingVerifiers.push({
+            chainName,
+            address: votingVerifierConfig.address,
+            codeId,
+        });
+        printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
     }
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
 
-    const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) =>
-        encodeMigrate(config, {
+    const migrationMessages = votingVerifiers.map(({ chainName, address, codeId }) => ({
+        chainName,
+        message: encodeMigrate(config, {
             ...options,
             contractName: config.getVotingVerifierContractForChainType(chainName),
             chainName,
@@ -66,7 +62,7 @@ async function migrateAllVotingVerifiers(
             codeId,
             msg: '{}',
         }),
-    );
+    }));
 
     printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
 
@@ -81,9 +77,9 @@ async function migrateAllVotingVerifiers(
         return;
     }
 
-    for (const [index, migrationMessage] of migrationMessages.entries()) {
-        const proposalId = await submitProposal(client, config, proposalOptions, migrationMessage, fee);
-        printInfo(`Migration proposal for ${votingVerifiers[index].chainName} submitted successfully: ${proposalId}`);
+    for (const { chainName, message } of migrationMessages) {
+        const proposalId = await submitProposal(client, config, proposalOptions, message, fee);
+        printInfo(`Migration proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
 }
 
@@ -122,20 +118,21 @@ async function updateBlockTimeRelatedParameters(
                 `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}, confirmation_height: ${confirmation_height}, voting_threshold: ${voting_threshold}`,
             );
             printInfo(
-                `New voting parameters for ${chainName}: block_expiry: ${block_expiry * 5}, confirmation_height: ${confirmation_height * 5}, voting_threshold: ${voting_threshold * 5}`,
+                `New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}, confirmation_height: ${msg.update_voting_parameters.confirmation_height}, voting_threshold: ${msg.update_voting_parameters.voting_threshold}`,
             );
-            return encodeMigrate(config, {
-                ...options,
-                contractName: config.getVotingVerifierContractForChainType(chainName),
+            return {
                 chainName,
-                address: votingVerifierConfig.address,
-                codeId: votingVerifierConfig.codeId,
-                msg,
-            });
+                message: encodeMigrate(config, {
+                    ...options,
+                    contractName: config.getVotingVerifierContractForChainType(chainName),
+                    chainName,
+                    address: votingVerifierConfig.address,
+                    codeId: votingVerifierConfig.codeId,
+                    msg,
+                }),
+            };
         }),
     );
-
-    printInfo(`Prepared ${votingVerifierMessages.length} migration message(s) for the proposal`);
 
     const proposalOptions = {
         ...options,
@@ -148,9 +145,9 @@ async function updateBlockTimeRelatedParameters(
         return;
     }
 
-    for (const [index, votingVerifierMessage] of votingVerifierMessages.entries()) {
-        const proposalId = await submitProposal(client, config, proposalOptions, [votingVerifierMessage], fee);
-        printInfo(`Migration proposal for ${chains[index]} submitted successfully: ${proposalId}`);
+    for (const { chainName, message } of votingVerifierMessages) {
+        const proposalId = await submitProposal(client, config, proposalOptions, message, fee);
+        printInfo(`Migration proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
 }
 
@@ -175,7 +172,7 @@ async function updateBlockTimeRelatedParametersForMultisig(
         },
     };
 
-    printInfo(`New block expiry: ${currentBlockExpiry * 5}`);
+    printInfo(`New block expiry: ${msg.update_block_expiry.new_block_expiry}`);
 
     const proposalOptions = {
         ...options,
