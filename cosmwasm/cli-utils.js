@@ -195,9 +195,16 @@ const addProposalOptions = (program) => {
     program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
 };
 
+const addOptionalProposalOptions = (program) => {
+    program.addOption(new Option('-t, --title <title>', 'title of proposal (required for proposals)'));
+    program.addOption(new Option('-d, --description <description>', 'description of proposal (required for proposals)'));
+    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
+};
+
 module.exports = {
     addAmplifierOptions,
     addAmplifierQueryOptions,
     addAmplifierQueryContractOptions,
     addChainNameOption,
+    addOptionalProposalOptions,
 };

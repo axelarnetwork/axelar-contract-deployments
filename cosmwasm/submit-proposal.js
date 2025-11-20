@@ -13,7 +13,6 @@ const {
     getAmplifierContractConfig,
     getCodeId,
     getCodeDetails,
-    getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiate,
@@ -24,10 +23,9 @@ const {
     isLegacySDK,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
-    validateItsChainChange,
 } = require('./utils');
 const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
-const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
+const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -325,79 +323,6 @@ const execute = async (client, config, options, _args, fee) => {
     }
 };
 
-const registerItsChain = async (client, config, options, _args, fee) => {
-    if (options.itsEdgeContract && options.chains.length > 1) {
-        throw new Error('Cannot use --its-edge-contract option with multiple chains.');
-    }
-
-    const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
-
-    if (!itsMsgTranslator) {
-        throw new Error('ItsMsgTranslator address is required for registerItsChain');
-    }
-
-    const chains = options.chains.map((chain) => {
-        const chainConfig = getChainConfig(config.chains, chain);
-        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
-
-        return {
-            chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContractAddress,
-            msg_translator: itsMsgTranslator,
-            truncation: {
-                max_uint_bits: maxUintBits,
-                max_decimals_when_truncating: maxDecimalsWhenTruncating,
-            },
-        };
-    });
-
-    if (options.update) {
-        for (let i = 0; i < options.chains.length; i++) {
-            const chain = options.chains[i];
-            await validateItsChainChange(client, config, chain, chains[i]);
-        }
-    }
-
-    const operation = options.update ? 'update' : 'register';
-
-    return execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'InterchainTokenService',
-            msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
-        },
-        undefined,
-        fee,
-    );
-};
-
-const registerProtocol = async (client, config, options, _args, fee) => {
-    const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
-    const router = config.axelar?.contracts?.Router?.address;
-    const multisig = config.axelar?.contracts?.Multisig?.address;
-
-    return execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'Coordinator',
-            msg: JSON.stringify({
-                register_protocol: {
-                    service_registry_address: serviceRegistry,
-                    router_address: router,
-                    multisig_address: multisig,
-                },
-            }),
-        },
-        undefined,
-        fee,
-    );
-};
-
 const paramChange = async (client, config, options, _args, fee) => {
     const isLegacy = isLegacySDK(config);
 
@@ -584,19 +509,6 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
 
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
-const registerDeployment = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructRegisterDeploymentMessage(chainName);
-    const proposalId = await execute(
-        client,
-        config,
-        { ...options, contractName: 'Coordinator', msg: JSON.stringify(message) },
-        undefined,
-        fee,
-    );
-    return proposalId;
-};
 
 const programHandler = () => {
     const program = new Command();
@@ -654,35 +566,6 @@ const programHandler = () => {
         runAs: true,
     });
 
-    const registerItsChainCmd = program
-        .command('its-hub-register-chains')
-        .description('Submit an execute wasm contract proposal to register or update an InterchainTokenService chain')
-        .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
-        .addOption(
-            new Option(
-                '--its-msg-translator <itsMsgTranslator>',
-                'address for the message translation contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(
-            new Option(
-                '--its-edge-contract <itsEdgeContract>',
-                'address for the ITS edge contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
-        .action((chains, options) => {
-            options.chains = chains;
-            return mainProcessor(registerItsChain, options);
-        });
-    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
-
-    const registerProtocolCmd = program
-        .command('register-protocol-contracts')
-        .description('Submit an execute wasm contract proposal to register the main protocol contracts (e.g. Router)')
-        .action((options) => mainProcessor(registerProtocol, options));
-    addAmplifierOptions(registerProtocolCmd, { proposalOptions: true, runAs: true });
-
     const paramChangeCmd = program
         .command('paramChange')
         .description('Submit a parameter change proposal')
@@ -737,19 +620,13 @@ const programHandler = () => {
         },
     );
 
-    const registerDeploymentCmd = program
-        .command('register-deployment')
-        .description('Submit an execute wasm contract proposal to register a deployment')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .action((options) => mainProcessor(registerDeployment, options));
-    addAmplifierOptions(registerDeploymentCmd, {
-        proposalOptions: true,
-        runAs: true,
-    });
-
     program.parse();
 };
 
 if (require.main === module) {
     programHandler();
 }
+
+module.exports = {
+    execute,
+};
