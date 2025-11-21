@@ -60,11 +60,24 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
         --version 2.x.x # get correct version
     ```
 
-1. Upgrade all VotingVerifier contracts
+1. Update `blockExpiry` on Multisig and all Voting Verifier contracts in chain config
 
-TODO: add instructions for `migrateAllVotingVerifiers` script
+    | Network          | new `blockExpiry` |
+    | ---------------- | ----------------- |
+    | devnet-amplifier | 50                |
+    | stagenet         | TBD               |
+    | testnet          | TBD               |
+    | mainnet          | TBD               |
 
-1. Upgrade Multisig contract
+1. Migrate all VotingVerifier contracts
+
+    ```bash
+    ts-node cosmwasm/migrate/sdk50.ts migrate-voting-verifiers \
+    --fetchCodeId \
+    -r $RUN_AS_ACCOUNT
+    ```
+
+1. Migrate Multisig contract
 
     ```bash
     ts-node cosmwasm/submit-proposal.js migrate \
@@ -72,6 +85,7 @@ TODO: add instructions for `migrateAllVotingVerifiers` script
     -t "Migrate Multisig to v2.x.x" \ # get correct version
     -d "Multisig to v2.x.x" \ # get correct version
     --msg '{}' \
+    -r $RUN_AS_ACCOUNT \
     --fetchCodeId
     ```
 
@@ -89,6 +103,22 @@ TODO: add instructions for `migrateAllVotingVerifiers` script
     ```bash
     {"contract":"multisig","version":"2.x.x"} # get correct version
     ```
+
+1. Update block expiry on all Voting Verifier contracts
+
+    ```bash
+    ts-node cosmwasm/migrate/sdk50.ts update-voting-verifiers
+    -r $RUN_AS_ACCOUNT
+    ```
+
+1. Update block expiry on Multisig contract
+
+    ```bash
+    ts-node cosmwasm/migrate/sdk50.ts update-signing-parameters-for-multisig
+    -r $RUN_AS_ACCOUNT
+    ```
+
+1. TODO: verify updated params
 
 ## Reward pools epoch duration
 
