@@ -112,8 +112,16 @@ async function updateBlockTimeRelatedParameters(
                             voting_threshold: null,
                         },
                     };
-                    printInfo(`Current voting parameters for ${chainName}: block_expiry: ${block_expiry}`);
-                    printInfo(`New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}`);
+
+                    if (votingVerifierConfig.blockExpiry === block_expiry) {
+                        printInfo(`Block expiry for ${chainName} is already up to date, skipping...`);
+                        return undefined;
+                    }
+
+                    printInfo(
+                        `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}. New proposed block_expiry: ${msg.update_voting_parameters.block_expiry}`,
+                    );
+
                     return {
                         chainName,
                         message: encodeExecuteContract(
@@ -157,15 +165,13 @@ async function updateSigningParametersForMultisig(
     options.description = options.description || 'Update signing parameters for multisig';
 
     const { block_expiry } = await client.queryContractSmart(multisigConfig.address, { signing_parameters: {} });
-    printInfo(`Current signing parameters: block_expiry: ${block_expiry}`);
+    printInfo(`Current signing parameters: block_expiry: ${block_expiry}. New proposed block_expiry: ${multisigConfig.blockExpiry}`);
 
     const msg = {
         update_signing_parameters: {
             block_expiry: multisigConfig.blockExpiry,
         },
     };
-
-    printInfo(`New block expiry: ${msg.update_signing_parameters.block_expiry}`);
 
     const proposalOptions = {
         ...options,
