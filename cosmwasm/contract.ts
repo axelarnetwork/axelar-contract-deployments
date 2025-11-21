@@ -55,6 +55,35 @@ const executeDirectly = async (
     }
 };
 
+const executeContractMessage = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    contractName: string,
+    msg: string | string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractAddress = config.getContractConfig(contractName).address;
+
+    if (!contractAddress) {
+        throw new Error(`${contractName} contract address not found in config`);
+    }
+
+    const msgArray = Array.isArray(msg) ? msg : [msg];
+
+    if (usesGovernanceBypass(config, contractName)) {
+        if (!confirmDirectExecution(options, msgArray, contractAddress)) {
+            return;
+        }
+        return executeDirectly(client, contractAddress, msg, fee);
+    } else {
+        if (!options.title || !options.description) {
+            throw new Error('Title and description are required for proposal submission');
+        }
+        return execute(client, config, { ...options, contractName, msg }, undefined, fee);
+    }
+};
+
 const registerItsChain = async (
     client: ClientManager,
     config: ConfigManager,
@@ -101,33 +130,8 @@ const registerItsChain = async (
 
     const operation = options.update ? 'update' : 'register';
     const msg = `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`;
-    const contractAddress = config.getContractConfig('InterchainTokenService').address;
 
-    if (!contractAddress) {
-        throw new Error('InterchainTokenService contract address not found in config');
-    }
-
-    if (usesGovernanceBypass(config, 'InterchainTokenService')) {
-        if (!confirmDirectExecution(options, [msg], contractAddress)) {
-            return;
-        }
-        return executeDirectly(client, contractAddress, msg, fee);
-    } else {
-        if (!options.title || !options.description) {
-            throw new Error('Title and description are required for proposal submission');
-        }
-        return execute(
-            client,
-            config,
-            {
-                ...options,
-                contractName: 'InterchainTokenService',
-                msg,
-            },
-            undefined,
-            fee,
-        );
-    }
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee);
 };
 
 const registerProtocol = async (
@@ -148,23 +152,8 @@ const registerProtocol = async (
             multisig_address: multisig,
         },
     });
-    const contractAddress = config.getContractConfig('Coordinator').address;
 
-    if (!contractAddress) {
-        throw new Error('Coordinator contract address not found in config');
-    }
-
-    if (usesGovernanceBypass(config, 'Coordinator')) {
-        if (!confirmDirectExecution(options, [msg], contractAddress)) {
-            return;
-        }
-        return executeDirectly(client, contractAddress, msg, fee);
-    } else {
-        if (!options.title || !options.description) {
-            throw new Error('Title and description are required for proposal submission');
-        }
-        return execute(client, config, { ...options, contractName: 'Coordinator', msg }, undefined, fee);
-    }
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee);
 };
 
 const registerDeployment = async (
@@ -178,23 +167,8 @@ const registerDeployment = async (
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructRegisterDeploymentMessage(chainName);
     const msg = JSON.stringify(message);
-    const contractAddress = config.getContractConfig('Coordinator').address;
 
-    if (!contractAddress) {
-        throw new Error('Coordinator contract address not found in config');
-    }
-
-    if (usesGovernanceBypass(config, 'Coordinator')) {
-        if (!confirmDirectExecution(options, [msg], contractAddress)) {
-            return;
-        }
-        return executeDirectly(client, contractAddress, msg, fee);
-    } else {
-        if (!options.title || !options.description) {
-            throw new Error('Title and description are required for proposal submission');
-        }
-        return execute(client, config, { ...options, contractName: 'Coordinator', msg }, undefined, fee);
-    }
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee);
 };
 
 const programHandler = () => {
