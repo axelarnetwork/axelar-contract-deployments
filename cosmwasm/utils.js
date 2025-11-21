@@ -1526,4 +1526,5 @@ module.exports = {
     getContractCodePath,
     validateItsChainChange,
     isLegacySDK,
+    GOVERNANCE_MODULE_ADDRESS,
 };
