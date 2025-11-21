@@ -1314,13 +1314,13 @@
       "Multisig": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "blockExpiry": 10,
-        "codeId": 1581,
-        "lastUploadedCodeId": 1581,
+        "codeId": 1586,
+        "lastUploadedCodeId": 1586,
         "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
         "executeProposalId": "55",
         "storeCodeProposalId": "1357",
         "storeCodeProposalCodeHash": "d3e7bc409d858ba35b294c63039dd4b203947fa263ad529d21a84c3b2559e639",
-        "version": "2.3.2"
+        "version": "2.4.0"
       },
       "Coordinator": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
