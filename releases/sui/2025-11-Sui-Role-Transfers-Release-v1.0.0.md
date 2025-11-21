@@ -51,9 +51,6 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
    - `chains["sui"].contracts.InterchainTokenService.{packageId, ownerCapId, upgradeCapId, operatorCapId}`
    - `chains["sui"].roles.{multisig, relayerOperatorsEOA, rateLimiterEOA}`
 4. TODO: Ensure `multisig` contract is tested and scripts are functional
-5. TODO: Confirm final `multisig` addresses per environment
-6. TODO: Confirm `relayerOperatorsEOA` and `rateLimiterEOA` per environment
-7. TODO: Confirm all Cap object IDs (OwnerCap/UpgradeCap/OperatorCap) and package IDs
 
 ## Deployment Steps
 
@@ -129,9 +126,18 @@ sui client object "$GS_UPG_CAP_ID"
 
 ### Step 5: Transfer Operators OwnerCap to Relayer Operators EOA
 
+**New Owner**: Relayer Operators EOA
+
+| Network              | Current Owner | Target Address      |
+| -------------------- | ------------- | ------------------- |
+| **Devnet Amplifier** | Not set in config | TBD      |
+| **Stagenet**         | Not set in config | TBD      |
+| **Testnet**          | Not set in config | TBD      |
+| **Mainnet**          | Not set in config | TBD      |
+
 ```bash
 OPERATORS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.Operators.ownerCapId' ./axelar-chains-config/info/$ENV.json)
-RELAYER_OPERATORS_EOA=$(jq -r '.chains["sui"].roles.relayerOperatorsEOA' ./axelar-chains-config/info/$ENV.json)
+RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName Operators --objectName OwnerCap --recipient "$RELAYER_OPERATORS_EOA"
@@ -144,9 +150,19 @@ sui client object "$OPERATORS_OWNERCAP_ID"
 
 ### Step 6: Transfer Operators UpgradeCap to Relayer Operators EOA
 
+
+**New Owner**: Relayer Operators EOA
+
+| Network              | Current Owner | Target Address      |
+| -------------------- | ------------- | ------------------- |
+| **Devnet Amplifier** | Not set in config | TBD      |
+| **Stagenet**         | Not set in config | TBD      |
+| **Testnet**          | Not set in config | TBD      |
+| **Mainnet**          | Not set in config | TBD      |
+
 ```bash
 OPERATORS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.Operators.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
-RELAYER_OPERATORS_EOA=$(jq -r '.chains["sui"].roles.relayerOperatorsEOA' ./axelar-chains-config/info/$ENV.json)
+RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName Operators --objectName UpgradeCap --recipient "$RELAYER_OPERATORS_EOA"
@@ -187,9 +203,18 @@ sui client object "$ITS_UPG_CAP_ID"
 
 ### Step 9: Transfer InterchainTokenService OperatorCap to Rate Limiter EOA
 
+**New Operator**: Rate Limiter EOA
+
+| Network              | Current Operator | Target Address      |
+| -------------------- | ---------------- | ------------------- |
+| **Devnet Amplifier** | Not set in config | TBD      |
+| **Stagenet**         | Not set in config | TBD      |
+| **Testnet**          | Not set in config | TBD      |
+| **Mainnet**          | Not set in config | TBD      |
+
 ```bash
 ITS_OPERATORCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.operatorCapId' ./axelar-chains-config/info/$ENV.json)
-RATE_LIMITER_EOA=$(jq -r '.chains["sui"].roles.rateLimiterEOA' ./axelar-chains-config/info/$ENV.json)
+RATE_LIMITER_EOA=<RATE_LIMITER_EOA_ADDRESS>
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName InterchainTokenService --objectName OperatorCap --recipient "$RATE_LIMITER_EOA"
