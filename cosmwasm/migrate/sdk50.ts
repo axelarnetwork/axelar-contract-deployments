@@ -153,7 +153,7 @@ async function updateSigningParametersForMultisig(
     options.title = options.title || 'Update signing parameters for multisig';
     options.description = options.description || 'Update signing parameters for multisig';
 
-    const { block_expiry } = await client.queryContractSmart(multisigConfig.address, { signing_parameters: {} });
+    const { block_expiry } = await client.queryContractSmart(multisigConfig.address, 'signing_parameters');
     printInfo(`Current signing parameters: block_expiry: ${block_expiry}. New proposed block_expiry: ${multisigConfig.blockExpiry}`);
 
     const msg = {
@@ -170,8 +170,10 @@ async function updateSigningParametersForMultisig(
         {
             ...options,
             contractName: 'Multisig',
+            address: multisigConfig.address,
             msg: JSON.stringify(msg),
         },
+        undefined,
         fee,
     );
 }
