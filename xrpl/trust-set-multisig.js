@@ -6,7 +6,7 @@ const { printInfo, printError } = require('../common');
 const { executeTransaction } = require('../cosmwasm/utils');
 const { mainProcessor } = require('../cosmwasm/processor');
 
-const trustSet = async (config, options, wallet, client, fee) => {
+const trustSet = async (client, config, options, args, fee) => {
     const { chainName, tokenId } = options;
 
     const xrplMultisigProver = config.axelar.contracts.XrplMultisigProver[chainName];
