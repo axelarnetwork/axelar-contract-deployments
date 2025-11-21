@@ -1,13 +1,13 @@
 'use strict';
 
 import { CosmWasmClient, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { AccountData, DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { GasPrice, StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
 import { AxelarContractConfig, ConfigManager } from '../../common/config';
-import { getAmplifierChains, loadConfig, printHighlight, printInfo, prompt } from '../../common/utils';
+import { getAmplifierChains, loadConfig, printError, printHighlight, printInfo, printWarn, prompt } from '../../common/utils';
 import { addAmplifierOptions } from '../cli-utils';
+import { ClientManager, prepareClient } from '../processor';
 import { RewardsPoolResponse, queryRewardsPool } from '../query';
 import { confirmProposalSubmission } from '../submit-proposal';
 import { GOVERNANCE_MODULE_ADDRESS, encodeExecuteContract, submitProposal } from '../utils';
@@ -73,7 +73,7 @@ async function queryAllRewardsPools(env: string): Promise<PoolParams[]> {
                 rewards_per_epoch: result.rewards_per_epoch,
             });
         } catch (error) {
-            console.error(`Failed to query Multisig pool for ${chainName}: ${error instanceof Error ? error.message : String(error)}`);
+            printError(`Failed to query Multisig pool for ${chainName}`, error instanceof Error ? error.message : String(error));
         }
 
         const votingVerifier = configManager.getVotingVerifierContract(chainName);
@@ -89,9 +89,7 @@ async function queryAllRewardsPools(env: string): Promise<PoolParams[]> {
                     rewards_per_epoch: result.rewards_per_epoch,
                 });
             } catch (error) {
-                console.error(
-                    `Failed to query VotingVerifier pool for ${chainName}: ${error instanceof Error ? error.message : String(error)}`,
-                );
+                printError(`Failed to query VotingVerifier pool for ${chainName}`, error instanceof Error ? error.message : String(error));
             }
         }
 
@@ -160,10 +158,6 @@ function isGovernanceRequired(configManager: ConfigManager): boolean {
     return rewardsGovernanceAddress === GOVERNANCE_MODULE_ADDRESS;
 }
 
-interface ClientManager extends SigningCosmWasmClient {
-    accounts: readonly AccountData[];
-}
-
 async function submitAsGovernanceProposal(
     client: ClientManager,
     config: ConfigManager,
@@ -209,7 +203,7 @@ async function executeDirectly(
     printInfo('Rewards contract', rewardsAddress);
     printInfo('Total messages to execute', messages.length.toString());
 
-    console.log('\nMessages to execute:');
+    printInfo('Messages to execute', '');
     messages.forEach((msg, index) => {
         printInfo(`Message ${index + 1}`, JSON.stringify(msg, null, 2));
     });
@@ -228,45 +222,15 @@ async function executeDirectly(
             const result = await (client as SigningCosmWasmClient).execute(account.address, rewardsAddress, msg, executeFee, '');
             printInfo(`✅ Successfully executed message ${i + 1}`, result.transactionHash);
         } catch (error) {
-            throw new Error(
-                `Failed to execute message ${i + 1} for ${poolInfo}: ${error instanceof Error ? error.message : String(error)}`,
-            );
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            printError(`Failed to execute message ${i + 1} for ${poolInfo}`, errorMessage);
         }
     }
 
-    printInfo('✅ All messages executed successfully', '');
+    printInfo('✅ Execution completed', '');
 }
 
-const program = new Command();
-
-program.name('update-rewards-pool-epoch-duration').description('Query and update rewards pool epoch_duration for amplifier chains');
-
-const getRewardPoolsCmd = program
-    .command('get-reward-pools')
-    .description('Query and display current rewards pool parameters')
-    .action(async (options) => {
-        try {
-            const poolParams = await queryAllRewardsPools(options.env);
-            printPoolParams(poolParams, options.env);
-        } catch (error) {
-            console.error(`Error getting reward pools: ${error instanceof Error ? error.message : String(error)}`);
-            process.exit(1);
-        }
-    });
-
-addAmplifierOptions(getRewardPoolsCmd, {});
-
-const updateCmd = program
-    .command('update')
-    .description('Update rewards pool epoch_duration for amplifier chains')
-    .addOption(new Option('--epoch-duration <epochDuration>', 'new epoch_duration value (in blocks)').makeOptionMandatory(true))
-    .addOption(new Option('-t, --title <title>', 'governance proposal title (optional, auto-generated if not provided)'))
-    .addOption(new Option('-d, --description <description>', 'governance proposal description (optional, auto-generated if not provided)'))
-    .addOption(new Option('--deposit <deposit>', 'governance proposal deposit amount'));
-
-addAmplifierOptions(updateCmd, {});
-
-updateCmd.action(async (options) => {
+async function updateRewardsPoolEpochDuration(options: any): Promise<void> {
     const epochDurationNum = Number(options.epochDuration);
     if (isNaN(epochDurationNum) || epochDurationNum <= 0 || !Number.isInteger(epochDurationNum)) {
         throw new Error('--epoch-duration must be a positive integer');
@@ -284,7 +248,7 @@ updateCmd.action(async (options) => {
     const expectedPoolCount = amplifierChains.length * 2;
 
     if (poolParams.length < expectedPoolCount) {
-        console.warn(`Warning: Expected ${expectedPoolCount} pools but only found ${poolParams.length}. Some pools may be missing.`);
+        printWarn(`Expected ${expectedPoolCount} pools but only found ${poolParams.length}. Some pools may be missing.`);
     }
 
     const messages = buildUpdateMessages(poolParams, options.epochDuration);
@@ -293,7 +257,7 @@ updateCmd.action(async (options) => {
     const executionMethod = requiresGovernance ? 'governance proposal' : 'direct execution (admin bypass)';
     printInfo('Execution method', executionMethod);
 
-    const client = await prepareSigningClient(options.mnemonic, configManager);
+    const client = await prepareClient(options.mnemonic, configManager.axelar.rpc, GasPrice.fromString(configManager.axelar.gasPrice));
     const fee = configManager.getFee();
 
     if (requiresGovernance) {
@@ -317,16 +281,38 @@ updateCmd.action(async (options) => {
     } else {
         await executeDirectly(client, configManager.getContractConfig('Rewards').address!, messages, { yes: options.yes }, fee);
     }
-});
-
-async function prepareSigningClient(mnemonic: string, configManager: ConfigManager): Promise<ClientManager> {
-    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-    const client = (await SigningCosmWasmClient.connectWithSigner(configManager.axelar.rpc, wallet, {
-        gasPrice: GasPrice.fromString(configManager.axelar.gasPrice),
-    })) as ClientManager;
-    client.accounts = await wallet.getAccounts();
-    return client;
 }
+
+const program = new Command();
+
+program.name('update-rewards-pool-epoch-duration').description('Query and update rewards pool epoch_duration for amplifier chains');
+
+addAmplifierOptions(
+    program
+        .command('get-reward-pools')
+        .description('Query and display current rewards pool parameters')
+        .action(async (options) => {
+            const poolParams = await queryAllRewardsPools(options.env);
+            printPoolParams(poolParams, options.env);
+        }),
+    {},
+);
+
+addAmplifierOptions(
+    program
+        .command('update')
+        .description('Update rewards pool epoch_duration for amplifier chains')
+        .addOption(new Option('--epoch-duration <epochDuration>', 'new epoch_duration value (in blocks)').makeOptionMandatory(true))
+        .addOption(new Option('-t, --title <title>', 'governance proposal title (optional, auto-generated if not provided)'))
+        .addOption(
+            new Option('-d, --description <description>', 'governance proposal description (optional, auto-generated if not provided)'),
+        )
+        .addOption(new Option('--deposit <deposit>', 'governance proposal deposit amount'))
+        .action(async (options) => {
+            await updateRewardsPoolEpochDuration(options);
+        }),
+    {},
+);
 
 if (require.main === module) {
     program.parse();
