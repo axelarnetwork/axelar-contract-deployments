@@ -5,13 +5,13 @@ import { Contract, getDefaultProvider, providers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { addEnvOption } from '../common/cli-utils';
-import { ChainConfig, ConfigManager } from '../common/config';
-import { printError, printInfo, printWarn } from '../common/utils';
-import { getContractJSON, isConsensusChain } from '../evm/utils';
-import { isTokenSupplyTracked } from './its';
-import { ClientManager, mainQueryProcessor } from './processor';
-import { SquidToken, SquidTokenData, SquidTokenInfoFile } from './register-p2p-tokens';
+import { addEnvOption } from '../../common/cli-utils';
+import { ChainConfig, ConfigManager } from '../../common/config';
+import { printError, printInfo, printWarn } from '../../common/utils';
+import { getContractJSON, isConsensusChain } from '../../evm/utils';
+import { isTokenSupplyTracked } from '../its';
+import { ClientManager, mainQueryProcessor } from '../processor';
+import { SquidToken, SquidTokenData, SquidTokenInfoFile } from '../register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
@@ -244,7 +244,7 @@ async function tokenIndexer(_client: ClientManager, config: ConfigManager, optio
         chains: {},
         tokens: {},
     };
-    const tokensInfoFilePath = `../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`;
+    const tokensInfoFilePath = `../../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`;
     const tokensInfoFileAbsolutePath = path.resolve(__dirname, tokensInfoFilePath);
 
     try {
