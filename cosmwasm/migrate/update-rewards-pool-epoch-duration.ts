@@ -6,7 +6,7 @@ import { GasPrice, StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
 import { AxelarContractConfig, ConfigManager } from '../../common/config';
-import { getAmplifierChains, loadConfig, printInfo, prompt } from '../../common/utils';
+import { getAmplifierChains, loadConfig, printHighlight, printInfo, prompt } from '../../common/utils';
 import { addAmplifierOptions } from '../cli-utils';
 import { RewardsPoolResponse, queryRewardsPool } from '../query';
 import { confirmProposalSubmission } from '../submit-proposal';
@@ -102,11 +102,11 @@ async function queryAllRewardsPools(env: string): Promise<PoolParams[]> {
 }
 
 function printPoolParams(poolParams: PoolParams[], env: string): void {
-    console.log(`REWARDS POOL PARAMETERS - ${env}`);
-    console.log(`Found ${poolParams.length} rewards pools\n`);
+    printHighlight(`REWARDS POOL PARAMETERS - ${env}`);
+    printInfo('Found rewards pools', poolParams.length.toString());
 
     if (poolParams.length === 0) {
-        console.log('No rewards pools found');
+        printInfo('No rewards pools found', '');
         return;
     }
 
@@ -122,15 +122,14 @@ function printPoolParams(poolParams: PoolParams[], env: string): void {
     );
 
     Object.entries(poolsByChain).forEach(([chainName, pools]) => {
-        console.log(`${chainName}:`);
+        printInfo('Chain', chainName);
         pools.forEach((pool) => {
-            console.log(`  ${pool.contractType}:`);
-            console.log(`    Contract: ${pool.contractAddress}`);
-            console.log(`    Epoch duration: ${pool.epoch_duration}`);
-            console.log(`    Rewards per epoch: ${pool.rewards_per_epoch}`);
-            console.log(`    Participation threshold: [${pool.participation_threshold[0]}, ${pool.participation_threshold[1]}]`);
+            printInfo(`  ${pool.contractType}`, pool.contractAddress);
+            printInfo('    Epoch duration', pool.epoch_duration);
+            printInfo('    Rewards per epoch', pool.rewards_per_epoch);
+            printInfo('    Participation threshold', `[${pool.participation_threshold[0]}, ${pool.participation_threshold[1]}]`);
         });
-        console.log('');
+        printInfo('', '');
     });
 }
 
