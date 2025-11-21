@@ -55,7 +55,7 @@ export interface DeploymentConfig {
 
 export interface ContractConfig {
     blockExpiry?: number;
-    connectionType?: string;
+    connectionType?: 'consensus' | 'amplifier';
     version?: string;
     deployments?: Record<string, DeploymentConfig>;
     address?: string;
