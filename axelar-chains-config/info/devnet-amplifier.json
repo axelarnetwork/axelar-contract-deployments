@@ -1399,7 +1399,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1416,7 +1416,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1432,7 +1432,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1448,7 +1448,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1hn4hf23pqy2s2yacs4cuzjqe72hxn0rtxugy2vq485l7cngtcavqu9d0zq",
@@ -1466,7 +1466,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "codeId": 854,
           "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5",
           "version": "1.1.0"
@@ -1480,7 +1480,7 @@
             "1"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1496,7 +1496,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1512,7 +1512,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5,
+          "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1530,7 +1530,7 @@
             "10"
           ],
           "blockExpiry": 50,
-          "confirmationHeight": 5000000,
+          "confirmationHeight": 1000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
           "addressFormat": "solana",
           "codeId": 1573,

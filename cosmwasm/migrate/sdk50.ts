@@ -101,16 +101,12 @@ async function updateBlockTimeRelatedParameters(
             const msg = {
                 update_voting_parameters: {
                     block_expiry: votingVerifierConfig.blockExpiry,
-                    confirmation_height: votingVerifierConfig.confirmationHeight,
+                    confirmation_height: null,
                     voting_threshold: null,
                 },
             };
-            printInfo(
-                `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}, confirmation_height: ${confirmation_height}`,
-            );
-            printInfo(
-                `New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}, confirmation_height: ${msg.update_voting_parameters.confirmation_height}`,
-            );
+            printInfo(`Current voting parameters for ${chainName}: block_expiry: ${block_expiry}`);
+            printInfo(`New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}`);
             return {
                 chainName,
                 message: encodeExecuteContract(
