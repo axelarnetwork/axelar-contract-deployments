@@ -38,66 +38,67 @@ interface UpdatePoolParamsMessage {
 async function queryAllRewardsPools(env: string): Promise<PoolParams[]> {
     const poolParams: PoolParams[] = [];
 
-    try {
-        const configManager = new ConfigManager(env);
-        const client = await CosmWasmClient.connect(configManager.axelar.rpc);
-        const rewardsAddress = configManager.getContractConfig('Rewards').address;
+    const configManager = new ConfigManager(env);
+    const client = await CosmWasmClient.connect(configManager.axelar.rpc);
+    const rewardsAddress = configManager.getContractConfig('Rewards').address;
 
-        if (!rewardsAddress) {
-            throw new Error(`Rewards contract address not found for ${env}`);
-        }
-
-        const config = loadConfig(env);
-        const amplifierChains = getAmplifierChains(config.chains);
-
-        if (amplifierChains.length === 0) {
-            throw new Error(`No amplifier chains found in ${env}`);
-        }
-
-        for (const { name: chainName } of amplifierChains) {
-            const multisigAddress = configManager.getContractConfig('Multisig').address;
-            if (multisigAddress) {
-                try {
-                    const result: RewardsPoolResponse = await queryRewardsPool(client, rewardsAddress, chainName, multisigAddress);
-                    poolParams.push({
-                        chainName,
-                        contractAddress: multisigAddress,
-                        contractType: 'Multisig',
-                        epoch_duration: result.epoch_duration,
-                        participation_threshold: result.participation_threshold,
-                        rewards_per_epoch: result.rewards_per_epoch,
-                    });
-                } catch (error) {
-                    console.error(
-                        `Failed to query Multisig pool for ${chainName}: ${error instanceof Error ? error.message : String(error)}`,
-                    );
-                }
-            }
-
-            const votingVerifier = configManager.getVotingVerifierContract(chainName);
-            if (votingVerifier.address) {
-                try {
-                    const result: RewardsPoolResponse = await queryRewardsPool(client, rewardsAddress, chainName, votingVerifier.address);
-                    poolParams.push({
-                        chainName,
-                        contractAddress: votingVerifier.address,
-                        contractType: 'VotingVerifier',
-                        epoch_duration: result.epoch_duration,
-                        participation_threshold: result.participation_threshold,
-                        rewards_per_epoch: result.rewards_per_epoch,
-                    });
-                } catch (error) {
-                    console.error(
-                        `Failed to query VotingVerifier pool for ${chainName}: ${error instanceof Error ? error.message : String(error)}`,
-                    );
-                }
-            }
-        }
-
-        return poolParams;
-    } catch (error) {
-        throw new Error(`Error querying rewards pools for ${env}: ${error instanceof Error ? error.message : String(error)}`);
+    if (!rewardsAddress) {
+        throw new Error(`Rewards contract address not found for ${env}`);
     }
+
+    const config = loadConfig(env);
+    const amplifierChains = getAmplifierChains(config.chains);
+
+    if (amplifierChains.length === 0) {
+        throw new Error(`No amplifier chains found in ${env}`);
+    }
+
+    const multisigAddress = configManager.getContractConfig('Multisig').address;
+
+    if (!multisigAddress) {
+        throw new Error(`Multisig contract address not found for ${env}`);
+    }
+
+    for (const { name: chainName } of amplifierChains) {
+        const chainPools: PoolParams[] = [];
+
+        try {
+            const result: RewardsPoolResponse = await queryRewardsPool(client, rewardsAddress, chainName, multisigAddress);
+            chainPools.push({
+                chainName,
+                contractAddress: multisigAddress,
+                contractType: 'Multisig',
+                epoch_duration: result.epoch_duration,
+                participation_threshold: result.participation_threshold,
+                rewards_per_epoch: result.rewards_per_epoch,
+            });
+        } catch (error) {
+            console.error(`Failed to query Multisig pool for ${chainName}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+
+        const votingVerifier = configManager.getVotingVerifierContract(chainName);
+        if (votingVerifier.address) {
+            try {
+                const result: RewardsPoolResponse = await queryRewardsPool(client, rewardsAddress, chainName, votingVerifier.address);
+                chainPools.push({
+                    chainName,
+                    contractAddress: votingVerifier.address,
+                    contractType: 'VotingVerifier',
+                    epoch_duration: result.epoch_duration,
+                    participation_threshold: result.participation_threshold,
+                    rewards_per_epoch: result.rewards_per_epoch,
+                });
+            } catch (error) {
+                console.error(
+                    `Failed to query VotingVerifier pool for ${chainName}: ${error instanceof Error ? error.message : String(error)}`,
+                );
+            }
+        }
+
+        poolParams.push(...chainPools);
+    }
+
+    return poolParams;
 }
 
 function printPoolParams(poolParams: PoolParams[], env: string): void {
