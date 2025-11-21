@@ -230,7 +230,7 @@ async function executeDirectly(
     printInfo('✅ Execution completed', '');
 }
 
-async function updateRewardsPoolEpochDuration(options: any): Promise<void> {
+async function updateRewardsPoolEpochDuration(options): Promise<void> {
     const epochDurationNum = Number(options.epochDuration);
     if (isNaN(epochDurationNum) || epochDurationNum <= 0 || !Number.isInteger(epochDurationNum)) {
         throw new Error('--epoch-duration must be a positive integer');
