@@ -225,10 +225,6 @@ ts-node evm/ownership.js -c InterchainTokenService --action owner
 ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
-**TODO**: 
-- Verify the current owner address for each chain before executing transfer
-- Add verification step after transfer
-
 ### Step 7: Transfer InterchainTokenService Operator Role
 
 **New Operator**: Rate Limiter EOA
