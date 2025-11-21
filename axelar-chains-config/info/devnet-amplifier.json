@@ -1537,7 +1537,8 @@
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar1rumy2paal47vfarnehaygfkvdchd3lrttkredrugpwnju6zug9pquej6l3",
           "version": "2.0.0"
-        }
+        },
+        "codeId": 1585
       },
       "Gateway": {
         "avalanche-fuji": {

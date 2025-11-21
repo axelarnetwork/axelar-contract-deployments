@@ -7,7 +7,7 @@ import { addOptionsToCommands, getAmplifierChains, printInfo, printWarn, prompt 
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor } from '../processor';
-import { encodeExecuteContract, encodeMigrate, getCodeId, submitProposal } from '../utils';
+import { execute, migrate } from '../submit-proposal';
 
 interface MigrationOptions extends Options {
     title?: string;
@@ -27,58 +27,43 @@ async function migrateAllVotingVerifiers(
     fee: string | StdFee,
 ): Promise<void> {
     const chains = getAmplifierChains(config.chains);
-    const votingVerifiers: Array<{ chainName: string; address: string; codeId: number; contractName: string }> = [];
+    const votingVerifiers: Array<{ chainName: string; address: string; contractName: string }> = [];
     options.title = options.title || 'Migrate Voting Verifiers to update block time related parameters';
     options.description = options.description || 'Migrate all voting verifiers to update block time related parameters';
 
     for (const { name: chainName, config: chainConfig } of chains) {
-        try {
-            const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-            const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-            config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
-            const codeId = await getCodeId(client, config, {
-                ...options,
-                contractName,
-            });
+        const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+        const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+        config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
 
-            votingVerifierConfig.codeId = codeId;
-
-            votingVerifiers.push({
-                chainName,
-                address: votingVerifierConfig.address,
-                codeId,
-                contractName,
-            });
-            printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
-        } catch (error) {
-            printWarn(`Error adding ${chainName} voting verifier: ${error}, skipping...`);
-        }
+        votingVerifiers.push({
+            chainName,
+            address: votingVerifierConfig.address,
+            contractName,
+        });
+        printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address})`);
     }
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
 
-    const migrationMessages = votingVerifiers.map(({ chainName, address, codeId, contractName }) => {
-        return {
-            chainName,
-            message: encodeMigrate(config, {
-                ...options,
-                contractName,
-                chainName,
-                address,
-                codeId,
-                msg: '{}',
-            }),
-        };
-    });
-
-    printInfo(`Prepared ${migrationMessages.length} migration message(s) for the proposal`);
-
-    for (const { chainName, message } of migrationMessages) {
-        if (prompt(`Proceed with migration of voting verifier for chain ${chainName}?`)) {
-            continue;
+    for (const { chainName, address, contractName } of votingVerifiers) {
+        try {
+            printInfo(`Proceeding with migration of voting verifier for chain ${chainName}...`);
+            await migrate(
+                client,
+                config,
+                {
+                    ...options,
+                    contractName,
+                    address,
+                    msg: JSON.stringify({}),
+                },
+                undefined,
+                fee,
+            );
+        } catch (error) {
+            printWarn(`Error migrating voting verifier for chain ${chainName}: ${error}, skipping...`);
         }
-        const proposalId = await submitProposal(client, config, options, message, fee);
-        printInfo(`Migration proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
 }
 
@@ -93,19 +78,16 @@ async function updateBlockTimeRelatedParameters(
     options.title = options.title || 'Update block time related parameters for all voting verifiers';
     options.description = options.description || 'Update block time related parameters for all voting verifiers';
 
-    const votingVerifierMessages = await Promise.all(
-        chains
-            .map(async ({ name: chainName, config: chainConfig }) => {
+    const votingVerifierMessages = (
+        await Promise.all(
+            chains.map(async ({ name: chainName, config: chainConfig }) => {
                 try {
                     const votingVerifierConfig = config.getVotingVerifierContract(chainName);
                     config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
 
-                    const { block_expiry, confirmation_height, voting_threshold } = await client.queryContractSmart(
-                        votingVerifierConfig.address,
-                        'voting_parameters',
-                    );
+                    const { block_expiry } = await client.queryContractSmart(votingVerifierConfig.address, 'voting_parameters');
 
-                    const msg = {
+                    const message = {
                         update_voting_parameters: {
                             block_expiry: votingVerifierConfig.blockExpiry,
                             confirmation_height: null,
@@ -119,35 +101,44 @@ async function updateBlockTimeRelatedParameters(
                     }
 
                     printInfo(
-                        `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}. New proposed block_expiry: ${msg.update_voting_parameters.block_expiry}`,
+                        `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}. New proposed block_expiry: ${message.update_voting_parameters.block_expiry}`,
                     );
+
+                    const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
 
                     return {
                         chainName,
-                        message: encodeExecuteContract(
-                            config,
-                            {
-                                ...options,
-                                contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
-                                msg: JSON.stringify(msg),
-                            },
-                            chainName,
-                        ),
+                        contractName,
+                        address: votingVerifierConfig.address,
+                        message,
                     };
                 } catch (error) {
-                    printWarn(`Error updating block time related parameters for ${chainName}: ${error}, skipping...`);
+                    printWarn(`Error getting voting parameters for chain ${chainName}: ${error}, skipping...`);
                     return undefined;
                 }
-            })
-            .filter(Boolean),
-    );
+            }),
+        )
+    ).filter(Boolean);
 
-    for (const { chainName, message } of votingVerifierMessages) {
-        if (prompt(`Proceed with updating block time related parameters for chain ${chainName}?`)) {
-            continue;
+    for (const { chainName, contractName, address, message } of votingVerifierMessages) {
+        try {
+            printInfo(`Proceeding with updating block time related parameters for chain ${chainName}...`);
+            await execute(
+                client,
+                config,
+                {
+                    ...options,
+                    contractName,
+                    address,
+                    chainName,
+                    msg: JSON.stringify(message),
+                },
+                undefined,
+                fee,
+            );
+        } catch (error) {
+            printWarn(`Error updating block time related parameters for chain ${chainName}: ${error}, skipping...`);
         }
-        const proposalId = await submitProposal(client, config, options, message, fee);
-        printInfo(`Update block time parameters proposal for chain ${chainName} submitted successfully: ${proposalId}`);
     }
 }
 
@@ -173,19 +164,18 @@ async function updateSigningParametersForMultisig(
         },
     };
 
-    const proposalOptions = {
-        ...options,
-        contractName: 'Multisig',
-        msg: JSON.stringify(msg),
-    };
+    printInfo(`Proceeding with updating signing parameters for multisig...`);
 
-    if (prompt(`Proceed with updating signing parameters for multisig?`)) {
-        return;
-    }
-
-    const migrationMessage = encodeExecuteContract(config, proposalOptions, undefined);
-    const proposalId = await submitProposal(client, config, proposalOptions, migrationMessage, fee);
-    printInfo('Migration proposal submitted successfully', proposalId);
+    await execute(
+        client,
+        config,
+        {
+            ...options,
+            contractName: 'Multisig',
+            msg: JSON.stringify(msg),
+        },
+        fee,
+    );
 }
 
 const programHandler = () => {
