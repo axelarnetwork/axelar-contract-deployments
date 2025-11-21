@@ -89,13 +89,11 @@ async function updateBlockTimeRelatedParameters(
 
                     const message = {
                         update_voting_parameters: {
-                            block_expiry: votingVerifierConfig.blockExpiry,
-                            confirmation_height: null,
-                            voting_threshold: null,
+                            block_expiry: String(votingVerifierConfig.blockExpiry),
                         },
                     };
 
-                    if (votingVerifierConfig.blockExpiry === block_expiry) {
+                    if (String(votingVerifierConfig.blockExpiry) === block_expiry) {
                         printInfo(`Block expiry for ${chainName} is already up to date, skipping...`);
                         return undefined;
                     }
@@ -160,7 +158,7 @@ async function updateSigningParametersForMultisig(
 
     const msg = {
         update_signing_parameters: {
-            block_expiry: multisigConfig.blockExpiry,
+            block_expiry: String(multisigConfig.blockExpiry),
         },
     };
 
