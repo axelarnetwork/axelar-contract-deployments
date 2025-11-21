@@ -829,21 +829,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "axelar-solana-encoding"
-version = "0.1.0"
-dependencies = [
- "arrayref",
- "borsh 1.5.7",
- "bs58",
- "hex",
- "rs_merkle",
- "sha3",
- "solana-program",
- "thiserror 1.0.69",
- "udigest",
-]
-
-[[package]]
 name = "axelar-wasm-std"
 version = "1.0.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier.git?rev=voting-verifier-v1.1.0#17792515ed9953ce6bd6ceabe59d2febe5eab2e7"
@@ -1386,11 +1371,10 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
- "axelar-solana-encoding",
  "axelar-wasm-std",
  "base64 0.22.1",
  "bincode 2.0.1",
- "borsh 1.5.7",
+ "borsh 0.10.4",
  "clap 3.2.25",
  "cosmrs",
  "cosmwasm-std",
@@ -1408,6 +1392,7 @@ dependencies = [
  "solana-axelar-its",
  "solana-axelar-memo",
  "solana-axelar-operators",
+ "solana-axelar-std",
  "solana-clap-v3-utils",
  "solana-cli-config",
  "solana-client",
@@ -5580,7 +5565,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gas-service"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -5590,25 +5575,23 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gateway"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "anchor-lang",
- "axelar-solana-encoding",
  "bitvec",
- "bnum",
  "bytemuck",
  "libsecp256k1",
  "num-derive 0.4.2",
  "num-traits",
  "program-utils",
- "udigest",
+ "solana-axelar-std",
 ]
 
 [[package]]
 name = "solana-axelar-governance"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-sol-types",
  "anchor-lang",
@@ -5619,7 +5602,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-its"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
@@ -5637,7 +5620,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-memo"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anchor-lang",
  "program-utils",
@@ -5647,10 +5630,27 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-operators"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anchor-lang",
  "program-utils",
+]
+
+[[package]]
+name = "solana-axelar-std"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "anchor-lang",
+ "arrayref",
+ "bnum",
+ "borsh 0.10.4",
+ "bytemuck",
+ "hex",
+ "rs_merkle",
+ "solana-keccak-hasher",
+ "thiserror 1.0.69",
+ "udigest",
 ]
 
 [[package]]
