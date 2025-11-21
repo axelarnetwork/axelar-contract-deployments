@@ -56,7 +56,7 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 ## Pre-requisites
 
-1. Update npm dependencies (including contracts)
+1. Update npm dependencies
    ```bash
    npm ci && npm run build
    ```
@@ -66,12 +66,6 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
    ENV=<devnet-amplifier|stagenet|testnet|mainnet>
    CHAIN=<chain name>
    ```
-3. Verify current contract addresses and roles in `${ENV}.json` for each chain
-4. TODO: Confirm `AxelarServiceGovernance` contract addresses for each environment
-5. TODO: Confirm Emergency Operator EOA addresses for each environment
-6. TODO: Confirm Relayer Operators EOA addresses for each environment
-7. TODO: Confirm Rate Limiter EOA addresses for each environment
-8. TODO: Confirm `Operators` contract addresses for each environment
 
 ## Deployment Steps
 
@@ -81,12 +75,12 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 #### Configuration
 
-| Network              | `governanceChain` | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   |
-| -------------------- | ----------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- |
-| **Devnet-amplifier** | `axelar`          | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `axelar`          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `axelar`          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | `axelar`          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   |
+| -------------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -95,23 +89,19 @@ For each amplifier chain, add the following configuration:
 ```json
 {
   "AxelarServiceGovernance": {
-    "governanceChain": "[governanceChain]",
+    "governanceChain": "axelar",
     "governanceAddress": "[governanceAddress]",
     "minimumTimeDelay": [minimumTimeDelay],
-    "deploymentMethod": "create2",
-    "salt": "AxelarServiceGovernance [ENV]"
+    "deploymentMethod": "TBD",
+    "salt": "TBD"
   }
 }
 ```
 
 #### Deploy AxelarServiceGovernance
 
-**TODO**: 
-- Confirm before deploying about using `create2` or `create3` method
-- Confirm salt for AxelarServiceGovernance as well
-
 ```bash
-ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create2/create3 -s "salt"
+ts-node evm/deploy-contract.js -c AxelarServiceGovernance 
 ```
 
 #### Verify Deployment
@@ -132,10 +122,10 @@ ts-node evm/verify-contract.js -e $ENV -n $CHAIN -c AxelarServiceGovernance --di
 
 | Network              | Current Owner | Target Address                                    |
 | -------------------- | ------------- | ------------------------------------------------- |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | AxelarServiceGovernance (governance contract address) |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | AxelarServiceGovernance (governance contract address) |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance (governance contract address) |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance (governance contract address) |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD |
 
 ```bash
 # Verify current owner
@@ -153,24 +143,18 @@ ts-node evm/ownership.js -c AxelarAmplifierGateway --action transferOwnership --
 
 | Network              | Current Operator | Target Address           |
 | -------------------- | ---------------- | ------------------------ |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TODO: Emergency Operator EOA      |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TODO: Emergency Operator EOA      |
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Emergency Operator EOA      |
-| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Emergency Operator EOA      |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD      |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD      |
+| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD      |
+| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD      |
 
 ```bash
 # Get the Emergency Operator EOA address from the table above
 EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
 
-# Verify current operator
-# TODO: Add script to query operator role or use gateway.js
-
 # Transfer operatorship
 ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA
 ```
-
-**TODO**: 
-- Add verification step after transfer
 
 ### Step 4: Transfer AxelarGasService Owner Role
 
@@ -178,10 +162,10 @@ ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EM
 
 | Network              | Current Owner | Target Address      |
 | -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | Not set in config | TODO: AxelarServiceGovernance contract      |
-| **Stagenet**         | Not set in config | TODO: AxelarServiceGovernance contract      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: AxelarServiceGovernance contract      |
-| **Mainnet**          | Not set in config | TODO: AxelarServiceGovernance contract      |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD      |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD      |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
@@ -204,10 +188,10 @@ ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwn
 
 | Network              | Current Owner | Target Address      |
 | -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TODO: Relayer Operators EOA      |
-| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TODO: Relayer Operators EOA      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`,`0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TODO: Relayer Operators EOA      |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TODO: Relayer Operators EOA      |
+| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TBD      |
+| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TBD      |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`,`0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD      |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
 
 ```bash
 # Get the Relayer Operators EOA address from the table above
@@ -222,14 +206,13 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $REL
 
 ### Step 6: Transfer InterchainTokenService Owner Role
 
-**New Owner**: AxelarServiceGovernance
 
 | Network              | Current Owner | Target Address      |
 | -------------------- | ------------- | ------------------- |
-| Devnet Amplifier     | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | AxelarServiceGovernance contract address      |
-| Stagenet             | `0xBeF25f4733b9d451072416360609e5A4c115293E` | AxelarServiceGovernance contract address      |
-| Testnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance contract address      |
-| Mainnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance contract address      |
+| Devnet Amplifier     | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD      |
+| Stagenet             | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD      |
+| Testnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
+| Mainnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
@@ -252,10 +235,10 @@ ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --
 
 | Network              | Current Operator | Target Address      |
 | -------------------- | ---------------- | ------------------- |
-| **Devnet Amplifier** | Not set in config | TODO: Rate Limiter EOA      |
-| **Stagenet**         | Not set in config | TODO: Rate Limiter EOA      |
-| **Testnet**          | Not set in config | TODO: Rate Limiter EOA      |
-| **Mainnet**          | Not set in config | TODO: Rate Limiter EOA      |
+| **Devnet Amplifier** | Not set in config | TBD      |
+| **Stagenet**         | Not set in config | TBD      |
+| **Testnet**          | Not set in config | TBD      |
+| **Mainnet**          | Not set in config | TBD      |
 
 ```bash
 # Get the Rate Limiter EOA address from the table above
