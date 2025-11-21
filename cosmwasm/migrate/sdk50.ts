@@ -26,7 +26,7 @@ async function migrateAllVotingVerifiers(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const chains = getAmplifierChains(config);
+    const chains = getAmplifierChains(config.chains);
     const votingVerifiers: Array<{ chainName: string; address: string; codeId: number; contractName: string }> = [];
     options.title = options.title || 'Migrate Voting Verifiers to update block time related parameters';
     options.description = options.description || 'Migrate all voting verifiers to update block time related parameters';
@@ -85,7 +85,7 @@ async function updateBlockTimeRelatedParameters(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const chains = getAmplifierChains(config);
+    const chains = getAmplifierChains(config.chains);
     options.title = options.title || 'Update block time related parameters for all voting verifiers';
     options.description = options.description || 'Update block time related parameters for all voting verifiers';
 
@@ -201,7 +201,6 @@ const programHandler = () => {
         });
 
     addAmplifierOptions(updateBlockTimeRelatedParametersCmd, {
-        fetchCodeId: true,
         runAs: true,
     });
 
@@ -213,7 +212,6 @@ const programHandler = () => {
         });
 
     addAmplifierOptions(updateSigningParametersForMultisigCmd, {
-        executeProposalOptions: true,
         runAs: true,
     });
 
