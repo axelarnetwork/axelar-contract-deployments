@@ -3618,10 +3618,10 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "390",
         "storeCodeProposalCodeHash": "1cdf4d35ce0f2356741ab13d8d3ba115c1aa7ec7c0db1007fede7eb13eb45373",
-        "codeId": 45,
+        "codeId": 46,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "executeProposalId": "245",
-        "lastUploadedCodeId": 45
+        "lastUploadedCodeId": 46
       },
       "Multisig": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
