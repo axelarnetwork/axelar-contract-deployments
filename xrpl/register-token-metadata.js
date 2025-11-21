@@ -13,7 +13,6 @@ const TOKEN_METADATA_REGISTERED_EVENT_TYPE = 'wasm-token_metadata_registered';
 const registerTokenMetadata = async (client, config, options, args, fee) => {
     const { chainName, issuer, currency } = options;
 
-
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
     if (!xrplGateway) {
         printError(`No XRPLGateway contract found on chain ${chainName}`);
