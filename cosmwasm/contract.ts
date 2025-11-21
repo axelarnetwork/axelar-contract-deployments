@@ -1,0 +1,220 @@
+import { StdFee } from '@cosmjs/stargate';
+import { Command, Option } from 'commander';
+
+import { getChainConfig, itsEdgeContract, printInfo, prompt } from '../common';
+import { ConfigManager } from '../common/config';
+import { addAmplifierOptions } from './cli-utils';
+import { CoordinatorManager } from './coordinator';
+import { ClientManager, Options } from './processor';
+import { mainProcessor } from './processor';
+import { execute } from './submit-proposal';
+import { executeTransaction, getChainTruncationParams, usesGovernanceBypass, validateItsChainChange } from './utils';
+
+interface ContractCommandOptions extends Omit<Options, 'contractName'> {
+    yes?: boolean;
+    title?: string;
+    description?: string;
+    chains?: string[];
+    itsEdgeContract?: string;
+    itsMsgTranslator?: string;
+    update?: boolean;
+    contractName?: string;
+    msg?: string | string[];
+    [key: string]: unknown;
+}
+
+const confirmDirectExecution = (options: ContractCommandOptions, messages: string | string[], contractAddress: string): boolean => {
+    printInfo('Contract address', contractAddress);
+
+    const msgs = Array.isArray(messages) ? messages : [messages];
+    msgs.forEach((msg, index) => {
+        const message = typeof msg === 'string' ? JSON.parse(msg) : msg;
+        printInfo(`Message ${index + 1}/${msgs.length}`, JSON.stringify(message, null, 2));
+    });
+
+    if (prompt('Proceed with direct execution?', options.yes)) {
+        return false;
+    }
+    return true;
+};
+
+const executeDirectly = async (
+    client: ClientManager,
+    contractAddress: string,
+    msg: string | string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msgs = Array.isArray(msg) ? msg : [msg];
+
+    for (let i = 0; i < msgs.length; i++) {
+        const msgJson = msgs[i];
+        const message = typeof msgJson === 'string' ? JSON.parse(msgJson) : msgJson;
+
+        const { transactionHash } = await executeTransaction(client, contractAddress, message, fee);
+        printInfo(`Transaction ${i + 1}/${msgs.length} executed`, transactionHash);
+    }
+};
+
+const executeContractMessage = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    contractName: string,
+    msg: string | string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractAddress = config.getContractConfig(contractName).address;
+
+    if (!contractAddress) {
+        throw new Error(`${contractName} contract address not found in config`);
+    }
+
+    const msgArray = Array.isArray(msg) ? msg : [msg];
+
+    if (usesGovernanceBypass(config, contractName)) {
+        if (!confirmDirectExecution(options, msgArray, contractAddress)) {
+            return;
+        }
+        return executeDirectly(client, contractAddress, msg, fee);
+    } else {
+        if (!options.title || !options.description) {
+            throw new Error('Title and description are required for proposal submission');
+        }
+        return execute(client, config, { ...options, contractName, msg }, undefined, fee);
+    }
+};
+
+const registerItsChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    if (!options.chains || options.chains.length === 0) {
+        throw new Error('At least one chain is required');
+    }
+
+    if (options.itsEdgeContract && options.chains.length > 1) {
+        throw new Error('Cannot use --its-edge-contract option with multiple chains.');
+    }
+
+    const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
+
+    if (!itsMsgTranslator) {
+        throw new Error('ItsMsgTranslator address is required for registerItsChain');
+    }
+
+    const chains = options.chains.map((chain) => {
+        const chainConfig = getChainConfig(config.chains, chain);
+        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
+        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
+
+        return {
+            chain: chainConfig.axelarId,
+            its_edge_contract: itsEdgeContractAddress,
+            msg_translator: itsMsgTranslator,
+            truncation: {
+                max_uint_bits: maxUintBits,
+                max_decimals_when_truncating: maxDecimalsWhenTruncating,
+            },
+        };
+    });
+
+    if (options.update) {
+        for (let i = 0; i < options.chains.length; i++) {
+            const chain = options.chains[i];
+            await validateItsChainChange(client, config, chain, chains[i]);
+        }
+    }
+
+    const operation = options.update ? 'update' : 'register';
+    const msg = `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`;
+
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee);
+};
+
+const registerProtocol = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
+    const router = config.axelar?.contracts?.Router?.address;
+    const multisig = config.axelar?.contracts?.Multisig?.address;
+
+    const msg = JSON.stringify({
+        register_protocol: {
+            service_registry_address: serviceRegistry,
+            router_address: router,
+            multisig_address: multisig,
+        },
+    });
+
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee);
+};
+
+const registerDeployment = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const { chainName } = options;
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructRegisterDeploymentMessage(chainName);
+    const msg = JSON.stringify(message);
+
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee);
+};
+
+const programHandler = () => {
+    const program = new Command();
+
+    program.name('contract').description('Execute contract operations');
+
+    const registerItsChainCmd = program
+        .command('its-hub-register-chains')
+        .description('Register or update an InterchainTokenService chain')
+        .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
+        .addOption(
+            new Option(
+                '--its-msg-translator <itsMsgTranslator>',
+                'address for the message translation contract associated with the chain being registered or updated on ITS Hub',
+            ),
+        )
+        .addOption(
+            new Option(
+                '--its-edge-contract <itsEdgeContract>',
+                'address for the ITS edge contract associated with the chain being registered or updated on ITS Hub',
+            ),
+        )
+        .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
+        .action((chains, options) => {
+            options.chains = chains;
+            return mainProcessor(registerItsChain, options);
+        });
+    addAmplifierOptions(registerItsChainCmd, { optionalProposalOptions: true });
+
+    const registerProtocolCmd = program
+        .command('register-protocol-contracts')
+        .description('Register the main protocol contracts (e.g. Router)')
+        .action((options) => mainProcessor(registerProtocol, options));
+    addAmplifierOptions(registerProtocolCmd, { optionalProposalOptions: true });
+
+    const registerDeploymentCmd = program
+        .command('register-deployment')
+        .description('Register a deployment')
+        .requiredOption('-n, --chainName <chainName>', 'chain name')
+        .action((options) => mainProcessor(registerDeployment, options));
+    addAmplifierOptions(registerDeploymentCmd, { optionalProposalOptions: true });
+
+    program.parse();
+};
+
+if (require.main === module) {
+    programHandler();
+}

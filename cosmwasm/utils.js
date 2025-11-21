@@ -114,6 +114,17 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
+const usesGovernanceBypass = (config, contractName, chainName) => {
+    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
+    const governanceAddress = contractConfig.governanceAddress;
+
+    if (!governanceAddress) {
+        return false;
+    }
+
+    return governanceAddress !== GOVERNANCE_MODULE_ADDRESS;
+};
+
 const getCodeId = async (client, config, options) => {
     const { fetchCodeId, codeId, contractName } = options;
 
@@ -1526,4 +1537,6 @@ module.exports = {
     getContractCodePath,
     validateItsChainChange,
     isLegacySDK,
+    usesGovernanceBypass,
+    GOVERNANCE_MODULE_ADDRESS,
 };
