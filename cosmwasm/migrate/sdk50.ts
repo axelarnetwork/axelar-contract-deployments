@@ -3,7 +3,7 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command } from 'commander';
 
-import { getAmplifierChains, printInfo, prompt } from '../../common';
+import { addOptionsToCommands, getAmplifierChains, printInfo, prompt } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor } from '../processor';
@@ -190,30 +190,23 @@ const programHandler = () => {
     addAmplifierOptions(migrateVotingVerifiersCmd, {
         codeId: true,
         fetchCodeId: true,
-        runAs: true,
     });
 
-    const updateBlockTimeRelatedParametersCmd = program
+    program
         .command('update-voting-verifiers')
         .description('Update block time related parameters for all voting verifiers')
         .action((options) => {
             mainProcessor(updateBlockTimeRelatedParameters, options);
         });
 
-    addAmplifierOptions(updateBlockTimeRelatedParametersCmd, {
-        runAs: true,
-    });
-
-    const updateSigningParametersForMultisigCmd = program
+    program
         .command('update-signing-parameters-for-multisig')
         .description('Update signing parameters for multisig')
         .action((options) => {
             mainProcessor(updateSigningParametersForMultisig, options);
         });
 
-    addAmplifierOptions(updateSigningParametersForMultisigCmd, {
-        runAs: true,
-    });
+    addOptionsToCommands(program, addAmplifierOptions, { runAs: true });
 
     program.parse();
 };
