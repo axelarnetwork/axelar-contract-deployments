@@ -88,12 +88,12 @@ Key checks:
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
-For each amplifier chain, add the following configuration:
+For each consensus chain where AxelarServiceGovernance is not deployed, add the following configuration:
 
 ```json
 {
   "AxelarServiceGovernance": {
-    "governanceChain": "axelar",
+    "governanceChain": "Axelarnet",
     "governanceAddress": "[governanceAddress]",
     "minimumTimeDelay": [minimumTimeDelay],
     "deploymentMethod": "TBD",
@@ -188,7 +188,7 @@ New owner: Relayer Operators EOA.
 
 | **Network**  | Current Owner                                 | Target Address          |
 | -------- | --------------------------------------------- | ----------------------- |
-| **Devnet-Amplifier**   | Not set in config      | Relayer Operators EOA   |
+| **Devnet-Amplifier**   | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | Relayer Operators EOA   |
 | **Stagenet** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`  | Relayer Operators EOA   |
 | **Testnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`  | Relayer Operators EOA   |
 | **Mainnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`  | Relayer Operators EOA   |
