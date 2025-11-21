@@ -1402,9 +1402,9 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "lastUploadedCodeId": 1585,
         "eth-sepolia": {
@@ -1419,9 +1419,9 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "optimism-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1435,9 +1435,9 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar1qtg2es55w6zp539a2xh9mnajxqq2rsqghf604muyw85vrn0ky97qyu795s",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "flow": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1452,8 +1452,8 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1hn4hf23pqy2s2yacs4cuzjqe72hxn0rtxugy2vq485l7cngtcavqu9d0zq",
-          "codeId": 854,
-          "version": "1.1.0"
+          "codeId": 1585,
+          "version": "2.0.0"
         },
         "sui-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1467,9 +1467,9 @@
           ],
           "blockExpiry": 50,
           "confirmationHeight": 1,
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "xrpl-evm-devnet": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1483,9 +1483,9 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar1yrhlkqr0x20knf2j454lm2r3m03qry9gsl485aj0ssz4mhegewjqyauz85",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "plume-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1499,9 +1499,9 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "berachain": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1515,9 +1515,9 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
+          "codeId": 1585,
           "address": "axelar1uypvvkd820cs4t6y47hqszawegwyrxaxr9ehpla74e98g0rezr5sw9lj4z",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "storeCodeProposalId": "1325",
         "storeCodeProposalCodeHash": "11877b06b4021d2ec15a02338bcaa97fe932aaec03dcd21e09a2de005a59779a",
@@ -1533,10 +1533,10 @@
           "confirmationHeight": 1000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
           "addressFormat": "solana",
-          "codeId": 1573,
+          "codeId": 1585,
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar1rumy2paal47vfarnehaygfkvdchd3lrttkredrugpwnju6zug9pquej6l3",
-          "version": "1.2.0"
+          "version": "2.0.0"
         }
       },
       "Gateway": {
