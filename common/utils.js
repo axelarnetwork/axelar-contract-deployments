@@ -523,6 +523,15 @@ const getCurrentTimeInSeconds = () => {
     return currentTimeInSecs;
 };
 
+const createGMPProposalJSON = (chain, contractAddress, payload) => {
+    const payloadBase64 = Buffer.from(payload.slice(2), 'hex').toString('base64');
+    return {
+        chain: chain.axelarId,
+        contract_address: contractAddress,
+        payload: payloadBase64,
+    };
+};
+
 /**
  * Prompt the user for confirmation
  * @param {string} question Prompt question
@@ -926,6 +935,7 @@ module.exports = {
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
+    createGMPProposalJSON,
     prompt,
     findProjectRoot,
     toBigNumberString,

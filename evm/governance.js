@@ -13,22 +13,20 @@ const {
     printInfo,
     getGasOptions,
     printWalletInfo,
-    isValidTimeFormat,
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
-    wasEventEmitted,
+    createGMPProposalJSON,
+    handleTransactionWithEvent,
     printWarn,
     getBytecodeHash,
-    isValidAddress,
+    getGovernanceAddress,
     mainProcessor,
-    isValidDecimal,
     prompt,
-    isValidCalldata,
     writeJSON,
-    isKeccak256Hash,
+    validateParameters,
 } = require('./utils.js');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
@@ -40,10 +38,9 @@ const ProposalType = {
     CancelMultisig: 3,
 };
 
-/**
- * Array of proposals across multiple chains. Convenient for constructing Axelar governance proposal file.
- */
-let proposals = [];
+function createGovernanceContract(address, wallet, contractName) {
+    return new Contract(address, IAxelarServiceGovernance.abi, wallet);
+}
 
 async function getSetupParams(governance, targetContractName, target, contracts, wallet, options) {
     let setupParams = '0x';
@@ -59,13 +56,11 @@ async function getSetupParams(governance, targetContractName, target, contracts,
             }
 
             let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address || AddressZero;
-
             if (newGovernance === currGovernance) {
                 newGovernance = AddressZero;
             }
 
             let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address || AddressZero;
-
             if (newMintLimiter === currMintLimiter) {
                 newMintLimiter = AddressZero;
             }
@@ -77,12 +72,8 @@ async function getSetupParams(governance, targetContractName, target, contracts,
             break;
         }
 
-        // eslint-disable-next-line no-fallthrough
         case 'InterchainTokenService':
-
-        // eslint-disable-next-line no-fallthrough
         case 'InterchainTokenFactory': {
-            // upgrades aren't needed to override any setup params as they can changed via direct methods
             break;
         }
     }
@@ -92,9 +83,9 @@ async function getSetupParams(governance, targetContractName, target, contracts,
 
 async function getProposalCalldata(governance, chain, wallet, options) {
     const { action } = options;
-
     const targetContractName = options.targetContractName;
     let target = options.target || chain.contracts[targetContractName]?.address;
+
     let calldata;
     const provider = getDefaultProvider(chain.rpc);
     let title = `Governance proposal for chain ${chain.name}`;
@@ -111,7 +102,11 @@ async function getProposalCalldata(governance, chain, wallet, options) {
                 options.implementation ||
                 (targetContractName === 'AxelarGateway' ? chain.contracts[targetContractName]?.implementation : '');
 
-            if (!isValidAddress(implementation)) {
+            validateParameters({
+                isValidAddress: { implementation },
+            });
+
+            if (!implementation) {
                 throw new Error(`Invalid new implementation address: ${implementation}\nDo you need to pass in 'targetContractName'?`);
             }
 
@@ -133,8 +128,8 @@ async function getProposalCalldata(governance, chain, wallet, options) {
 
             calldata = upgradable.interface.encodeFunctionData('upgrade', [implementation, newImplementationCodeHash, setupParams]);
 
-            title = `Chain ${chain.name} ${options.action} proposal`;
-            description = `This proposal ${options.action}s the contract ${target} on chain ${chain.name} to a new implementation contract ${implementation}`;
+            title = `Chain ${chain.name} ${action} proposal`;
+            description = `This proposal ${action}s the contract ${target} on chain ${chain.name} to a new implementation contract ${implementation}`;
 
             break;
         }
@@ -142,7 +137,11 @@ async function getProposalCalldata(governance, chain, wallet, options) {
         case 'transferGovernance': {
             const newGovernance = options.newGovernance || chain.contracts.InterchainGovernance?.address;
 
-            if (!isValidAddress(newGovernance)) {
+            validateParameters({
+                isValidAddress: { newGovernance },
+            });
+
+            if (!newGovernance) {
                 throw new Error(`Invalid new gateway governance address: ${newGovernance}`);
             }
 
@@ -161,9 +160,9 @@ async function getProposalCalldata(governance, chain, wallet, options) {
         }
 
         case 'withdraw': {
-            if (!isValidDecimal(options.amount)) {
-                throw new Error(`Invalid withdraw amount: ${options.amount}`);
-            }
+            validateParameters({
+                isValidDecimal: { amount: options.amount },
+            });
 
             const amount = parseEther(options.amount);
             calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
@@ -173,94 +172,87 @@ async function getProposalCalldata(governance, chain, wallet, options) {
         }
 
         default: {
-            throw new Error(`Unknown governance action ${action}`);
+            throw new Error(`Unknown governance action: ${action}`);
         }
     }
 
-    if (!isValidAddress(target)) {
-        throw new Error(`Target address required for this governance action: ${action}`);
-    }
-
-    if (!isValidCalldata(calldata)) {
-        throw new Error(`Calldata required for this governance action: ${action}`);
-    }
+    validateParameters({
+        isValidAddress: { target },
+        isValidCalldata: { calldata },
+    });
 
     return { target, calldata, title, description };
 }
 
-function getGovernanceProposal(commandType, target, calldata, nativeValue, eta) {
+function encodeGovernanceProposal(commandType, target, calldata, nativeValue, eta) {
     const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
     const values = [commandType, target, calldata, nativeValue, eta];
-
     return defaultAbiCoder.encode(types, values);
 }
 
-async function processCommand(_axelar, chain, _chains, options) {
-    const { contractName, address, action, proposalAction, date, privateKey, yes } = options;
+function getProposalHash(target, calldata, nativeValue) {
+    return keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
+}
 
-    const contracts = chain.contracts;
-    const contractConfig = contracts[contractName];
+async function processCommand(_axelar, chain, _chains, action, options) {
+    const { contractName, address, privateKey } = options;
 
-    let governanceAddress;
-
-    if (isValidAddress(address)) {
-        governanceAddress = address;
-    } else {
-        if (!contractConfig?.address) {
-            throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
-        }
-
-        governanceAddress = contractConfig.address;
-    }
-
-    let nativeValue = options.nativeValue;
-
-    if (!isValidDecimal(nativeValue)) {
-        throw new Error(`Invalid native value: ${nativeValue}`);
-    }
-
+    const governanceAddress = getGovernanceAddress(chain, contractName, address);
     const provider = getDefaultProvider(chain.rpc);
-
     const wallet = await getWallet(privateKey, provider, options);
     await printWalletInfo(wallet, options);
 
     printInfo('Contract name', contractName);
     printInfo('Contract address', governanceAddress);
 
-    const governance = new Contract(governanceAddress, IAxelarServiceGovernance.abi, wallet);
-
+    const governance = createGovernanceContract(governanceAddress, wallet, contractName);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
-    printInfo('Proposal Action', action);
+    let nativeValue = options.nativeValue || '0';
+    validateParameters({
+        isValidDecimal: { nativeValue },
+    });
+    nativeValue = nativeValue.toString();
 
-    let { target, calldata, title, description } = await getProposalCalldata(governance, chain, wallet, options);
-    let commandType = -1;
-    let eta = 0;
-
-    // Axelar governance proposal data
-    let gmpPayload;
-
-    switch (proposalAction) {
+    switch (action) {
         case 'eta': {
-            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
-            eta = await governance.getTimeLock(proposalHash);
+            let target = options.target;
+            let calldata = options.calldata;
+
+            if (options.proposal) {
+                const decoded = defaultAbiCoder.decode(['uint256', 'address', 'bytes', 'uint256', 'uint256'], options.proposal);
+                target = decoded[1];
+                calldata = decoded[2];
+                nativeValue = decoded[3].toString();
+            }
+
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
+
+            const proposalHash = getProposalHash(target, calldata, nativeValue);
+            const eta = await governance.getTimeLock(proposalHash);
 
             if (eta.eq(0)) {
                 printWarn('Proposal does not exist.');
+            } else {
+                printInfo('Proposal ETA', etaToDate(eta));
             }
 
-            printInfo('Proposal ETA', etaToDate(eta));
-
-            return;
+            return null;
         }
 
         case 'schedule': {
-            if (!isValidTimeFormat(date)) {
-                throw new Error(`Invalid ETA: ${date}. Please pass the eta in the format YYYY-MM-DDTHH:mm:ss`);
-            }
+            const calldataResult = await getProposalCalldata(governance, chain, wallet, options);
+            const target = calldataResult.target;
+            const calldata = calldataResult.calldata;
 
-            eta = dateToEta(date);
+            validateParameters({
+                isValidTimeFormat: { date: options.date },
+            });
 
+            const eta = dateToEta(options.date);
             const currTime = getCurrentTimeInSeconds();
             printInfo('Current time', etaToDate(currTime));
 
@@ -268,89 +260,107 @@ async function processCommand(_axelar, chain, _chains, options) {
             printInfo('Minimum eta', etaToDate(minEta));
 
             if (eta < minEta) {
-                printWarn(`${date} is less than the minimum eta.`);
+                printWarn(`${options.date} is less than the minimum eta.`);
             }
 
             printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
 
             const existingProposalEta = await governance.getProposalEta(target, calldata, nativeValue);
-
             if (!existingProposalEta.eq(BigNumber.from(0))) {
                 throw new Error(`Proposal already exists with eta: ${existingProposalEta}.`);
             }
 
-            commandType = ProposalType.ScheduleTimelock;
-
-            break;
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'cancel': {
+            const calldataResult = await getProposalCalldata(governance, chain, wallet, options);
+            const target = calldataResult.target;
+            const calldata = calldataResult.calldata;
+
             const currTime = getCurrentTimeInSeconds();
             printInfo('Current time', etaToDate(currTime));
 
-            eta = await governance.geteta(target, calldata, nativeValue);
+            const eta = await governance.getProposalEta(target, calldata, nativeValue);
             printInfo('Proposal eta', etaToDate(eta));
 
             if (eta.eq(BigNumber.from(0))) {
-                printWarn(`Proposal does not exist.`);
+                printWarn('Proposal does not exist.');
             }
 
             if (eta <= currTime) {
-                printWarn(`Proposal eta has already passed.`);
+                printWarn('Proposal eta has already passed.');
             }
 
-            commandType = ProposalType.CancelTimelock;
-            gmpPayload = getGovernanceProposal(ProposalType.CancelTimelock, target, calldata, nativeValue, eta);
-
-            break;
+            const gmpPayload = encodeGovernanceProposal(ProposalType.CancelTimelock, target, calldata, nativeValue, eta);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'scheduleMultisig': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
+                throw new Error(`Invalid governance action for InterchainGovernance: scheduleMultisig`);
             }
 
-            if (!calldata) {
-                throw new Error(`Calldata required for this governance action: ${action}`);
-            }
+            const target = options.target;
+            const calldata = options.calldata;
 
-            commandType = ProposalType.ApproveMultisig;
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
 
-            break;
+            validateParameters({
+                isValidTimeFormat: { date: options.date },
+            });
+
+            const eta = dateToEta(options.date);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'cancelMultisig': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
+                throw new Error(`Invalid governance action for InterchainGovernance: cancelMultisig`);
             }
 
-            if (!calldata) {
-                throw new Error(`Calldata required for this governance action: ${action}`);
+            const target = options.target;
+            const calldata = options.calldata;
+
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
+
+            const proposalHash = getProposalHash(target, calldata, nativeValue);
+            const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
+
+            if (!isApproved) {
+                printWarn('Operator proposal is not approved.');
             }
 
-            commandType = ProposalType.CancelMultisig;
-
-            break;
+            const gmpPayload = encodeGovernanceProposal(ProposalType.CancelMultisig, target, calldata, nativeValue, 0);
+            return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
-        // eslint-disable-next-line no-fallthrough
-        case 'submit':
+        case 'submit': {
+            const calldataResult = await getProposalCalldata(governance, chain, wallet, options);
+            const target = calldataResult.target;
+            const calldata = calldataResult.calldata;
 
-        // eslint-disable-next-line no-fallthrough
-        case 'submitMultisig': {
-            if (!isKeccak256Hash(options.commandId)) {
-                throw new Error(`Invalid command id: ${options.commandId}`);
-            }
+            validateParameters({
+                isKeccak256Hash: { commandId: options.commandId },
+                isValidTimeFormat: { date: options.date },
+            });
 
-            eta = dateToEta(date);
-            const commandType = proposalAction === 'submit' ? ProposalType.ScheduleTimelock : ProposalType.ApproveMultisig;
+            const eta = dateToEta(options.date);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
 
-            gmpPayload = getGovernanceProposal(commandType, target, calldata, nativeValue, eta);
-
-            if (prompt('Proceed with submitting this proposal?', yes)) {
+            if (prompt('Proceed with submitting this proposal?', options.yes)) {
                 throw new Error('Proposal submission cancelled.');
             }
 
+            const contracts = chain.contracts;
             const tx = await governance.execute(
                 options.commandId,
                 contracts.InterchainGovernance.governanceChain,
@@ -359,35 +369,67 @@ async function processCommand(_axelar, chain, _chains, options) {
                 gasOptions,
             );
 
-            printInfo('Proposal submitted', tx.hash);
+            await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'ProposalScheduled');
+            return null;
+        }
 
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, governance, 'ProposalScheduled');
-
-            if (!eventEmitted) {
-                throw new Error('Proposal submission failed.');
+        case 'submitMultisig': {
+            if (contractName === 'InterchainGovernance') {
+                throw new Error(`Invalid governance action for InterchainGovernance: submitMultisig`);
             }
 
-            return;
+            const target = options.target;
+            const calldata = options.calldata;
+
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
+
+            validateParameters({
+                isKeccak256Hash: { commandId: options.commandId },
+                isValidTimeFormat: { date: options.date },
+            });
+
+            const eta = dateToEta(options.date);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
+
+            if (prompt('Proceed with submitting this proposal?', options.yes)) {
+                throw new Error('Proposal submission cancelled.');
+            }
+
+            const contracts = chain.contracts;
+            const tx = await governance.execute(
+                options.commandId,
+                contracts.InterchainGovernance.governanceChain,
+                contracts.InterchainGovernance.governanceAddress,
+                gmpPayload,
+                gasOptions,
+            );
+
+            await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'OperatorProposalApproved');
+            return null;
         }
 
         case 'execute': {
+            let target = options.target;
+            let calldata = options.calldata;
+
             if (options.proposal) {
                 printInfo('Decoding proposal to get governance data');
-
-                [_, target, calldata, nativeValue, _] = defaultAbiCoder.decode(
-                    ['uint256', 'address', 'bytes', 'uint256', 'uint256'],
-                    options.proposal,
-                );
-
-                if (!isValidCalldata(calldata)) {
-                    throw new Error(`Calldata required for this governance action: ${action}`);
-                }
+                const decoded = defaultAbiCoder.decode(['uint256', 'address', 'bytes', 'uint256', 'uint256'], options.proposal);
+                target = decoded[1];
+                calldata = decoded[2];
+                nativeValue = decoded[3].toString();
             }
 
-            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
-            eta = await governance.getTimeLock(proposalHash);
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
+
+            const proposalHash = getProposalHash(target, calldata, nativeValue);
+            const eta = await governance.getTimeLock(proposalHash);
 
             if (eta.eq(0)) {
                 throw new Error('Proposal does not exist.');
@@ -398,81 +440,46 @@ async function processCommand(_axelar, chain, _chains, options) {
             const currTime = getCurrentTimeInSeconds();
             printInfo('Current time', etaToDate(currTime));
 
-            if (currTime < eta) {
-                throw new Error(`TimeLock proposal is not yet eligible for execution.`);
+            if (currTime < eta.toNumber()) {
+                throw new Error(`TimeLock proposal is not yet eligible for execution. ETA: ${etaToDate(eta)}`);
             }
 
-            if (prompt('Proceed with executing this proposal?', yes)) {
+            if (prompt('Proceed with executing this proposal?', options.yes)) {
                 throw new Error('Proposal execution cancelled.');
             }
 
             const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
-            printInfo('Proposal execution tx', tx.hash);
-
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, governance, 'ProposalExecuted');
-
-            if (!eventEmitted) {
-                throw new Error('Proposal execution failed.');
-            }
+            await handleTransactionWithEvent(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
 
             printInfo('Proposal executed.');
-
-            break;
+            return null;
         }
 
         default: {
-            throw new Error(`Unknown proposal action ${proposalAction}`);
+            throw new Error(`Unknown proposal action: ${action}`);
         }
-    }
-
-    if (commandType !== -1) {
-        gmpPayload = getGovernanceProposal(commandType, target, calldata, nativeValue, eta);
-
-        const payloadBase64 = Buffer.from(`${gmpPayload}`.slice(2), 'hex').toString('base64');
-
-        printInfo('Destination chain', chain.name);
-        printInfo('Destination governance contract', governanceAddress);
-        printInfo('Axelar Proposal call contract payload', gmpPayload);
-        printInfo('Axelar Proposal payload hash', keccak256(gmpPayload));
-        printInfo('Governance target', target);
-        printInfo('Governance data', calldata);
-        printInfo('Governance native value', nativeValue || '0');
-        printInfo('Date', date);
-
-        const proposal = {
-            title,
-            description,
-            contract_calls: [
-                {
-                    chain: chain.axelarId,
-                    contract_address: governanceAddress,
-                    payload: payloadBase64,
-                },
-            ],
-        };
-
-        // Print all proposals together
-        proposals.push(proposal.contract_calls[0]);
-
-        // printInfo('Proposal', JSON.stringify(proposal, null, 2));
-        // console.log(JSON.stringify(proposal.contract_calls[0]));
     }
 }
 
-async function main(options) {
-    proposals = [];
+async function main(action, args, options) {
+    options.args = args;
+    const proposals = [];
 
-    await mainProcessor(options, processCommand);
-
-    const proposal = {
-        title: 'Interchain Governance Proposal',
-        description: 'Interchain Governance Proposal',
-        contract_calls: proposals,
-    };
+    await mainProcessor(options, (axelar, chain, chains, options) => {
+        return processCommand(axelar, chain, chains, action, options).then((proposal) => {
+            if (proposal) {
+                proposals.push(proposal);
+            }
+        });
+    });
 
     if (proposals.length > 0) {
+        const proposal = {
+            title: 'Interchain Governance Proposal',
+            description: 'Interchain Governance Proposal',
+            contract_calls: proposals,
+        };
+
         const proposalJSON = JSON.stringify(proposal, null, 2);
 
         if (options.file) {
@@ -482,49 +489,204 @@ async function main(options) {
             printInfo('Proposal', proposalJSON);
         }
     }
+
+    return proposals;
 }
 
 if (require.main === module) {
     const program = new Command();
-
     program.name('governance').description('Script to manage interchain governance actions');
 
-    addBaseOptions(program, { address: true });
+    program
+        .command('eta')
+        .description('Get the ETA (estimated time of arrival) for a proposal')
+        .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
+        .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
+        .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .action((options) => {
+            if (!options.proposal && (!options.target || !options.calldata)) {
+                throw new Error('Either --proposal or both --target and --calldata must be provided');
+            }
+            main('eta', [], options);
+        });
 
-    program.addOption(
-        new Option('-c, --contractName <contractName>', 'contract name')
-            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-            .default('InterchainGovernance'),
-    );
-    program.addOption(new Option('--targetContractName <targetContractName>', 'target contract name'));
-    program.addOption(new Option('--action <action>', 'governance action').choices(['raw', 'upgrade', 'transferGovernance', 'withdraw']));
-    program.addOption(
-        new Option('--proposalAction <proposalAction>', 'governance proposal action').choices([
-            'eta',
-            'schedule',
-            'submit',
-            'execute',
-            'cancel',
-            'scheduleMultisig',
-            'submitMultisig',
-            'cancelMultisig',
-        ]),
-    );
-    program.addOption(new Option('--date <date>', 'proposal activation date'));
-    program.addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'));
-    program.addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'));
-    program.addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
-    program.addOption(new Option('--commandId <commandId>', 'command id'));
-    program.addOption(new Option('--target <target>', 'governance execution target'));
-    program.addOption(new Option('--calldata <calldata>', 'calldata'));
-    program.addOption(new Option('--nativeValue <nativeValue>', 'nativeValue').default(0));
-    program.addOption(new Option('--proposal <proposal>', 'governance proposal payload'));
-    program.addOption(new Option('--amount <amount>', 'withdraw amount'));
-    program.addOption(new Option('--implementation <implementation>', 'new gateway implementation'));
+    program
+        .command('schedule')
+        .description('Schedule a new timelock proposal')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
+        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .action((action, date, options) => {
+            options.action = action;
+            options.date = date;
+            main('schedule', [], options);
+        });
 
-    program.action((options) => {
-        main(options);
-    });
+    program
+        .command('cancel')
+        .description('Cancel a scheduled timelock proposal')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
+        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .action((action, options) => {
+            options.action = action;
+            main('cancel', [], options);
+        });
+
+    program
+        .command('execute')
+        .description('Execute a scheduled proposal')
+        .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
+        .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
+        .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .action((options) => {
+            if (!options.proposal && (!options.target || !options.calldata)) {
+                throw new Error('Either --proposal or both --target and --calldata must be provided');
+            }
+            main('execute', [], options);
+        });
+
+    program
+        .command('schedule-multisig')
+        .description('Schedule a multisig proposal (AxelarServiceGovernance only)')
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .action((target, calldata, date, options) => {
+            options.target = target;
+            options.calldata = calldata;
+            options.date = date;
+            main('scheduleMultisig', [], options);
+        });
+
+    program
+        .command('cancel-multisig')
+        .description('Cancel a multisig proposal (AxelarServiceGovernance only)')
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .action((target, calldata, options) => {
+            options.target = target;
+            options.calldata = calldata;
+            main('cancelMultisig', [], options);
+        });
+
+    program
+        .command('submit')
+        .description('Submit a scheduled proposal via cross-chain message')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<commandId>', 'command id')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
+        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .action((action, commandId, date, options) => {
+            options.action = action;
+            options.commandId = commandId;
+            options.date = date;
+            main('submit', [], options);
+        });
+
+    program
+        .command('submit-multisig')
+        .description('Submit a multisig proposal via cross-chain message (AxelarServiceGovernance only)')
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .argument('<commandId>', 'command id')
+        .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('InterchainGovernance'),
+        )
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .action((target, calldata, commandId, date, options) => {
+            options.target = target;
+            options.calldata = calldata;
+            options.commandId = commandId;
+            options.date = date;
+            main('submitMultisig', [], options);
+        });
+
+    addOptionsToCommands(program, addBaseOptions, { address: true });
 
     program.parse();
 }
+
+module.exports = {
+    governance: main,
+    processCommand,
+    createGovernanceContract,
+    getProposalCalldata,
+    encodeGovernanceProposal,
+    getProposalHash,
+    getSetupParams,
+};
