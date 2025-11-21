@@ -3,7 +3,7 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command } from 'commander';
 
-import { addOptionsToCommands, getAmplifierChains, printInfo, prompt } from '../../common';
+import { addOptionsToCommands, getAmplifierChains, printInfo, printWarn, prompt } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor } from '../processor';
@@ -32,23 +32,27 @@ async function migrateAllVotingVerifiers(
     options.description = options.description || 'Migrate all voting verifiers to update block time related parameters';
 
     for (const { name: chainName, config: chainConfig } of chains) {
-        const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-        const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-        config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
-        const codeId = await getCodeId(client, config, {
-            ...options,
-            contractName,
-        });
+        try {
+            const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+            const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+            config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
+            const codeId = await getCodeId(client, config, {
+                ...options,
+                contractName,
+            });
 
-        votingVerifierConfig.codeId = codeId;
+            votingVerifierConfig.codeId = codeId;
 
-        votingVerifiers.push({
-            chainName,
-            address: votingVerifierConfig.address,
-            codeId,
-            contractName,
-        });
-        printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
+            votingVerifiers.push({
+                chainName,
+                address: votingVerifierConfig.address,
+                codeId,
+                contractName,
+            });
+            printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, codeId: ${codeId})`);
+        } catch (error) {
+            printWarn(`Error adding ${chainName} voting verifier: ${error}, skipping...`);
+        }
     }
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
