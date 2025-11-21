@@ -3,12 +3,11 @@
 const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
 const { printInfo, printError } = require('../common');
-const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
-const { mainCosmosProcessor } = require('./utils');
+const { executeTransaction } = require('../cosmwasm/utils');
+const { mainProcessor } = require('../cosmwasm/processor');
 
 const trustSet = async (config, options, wallet, client, fee) => {
     const { chainName, tokenId } = options;
-    const [account] = await wallet.getAccounts();
 
     const xrplMultisigProver = config.axelar.contracts.XrplMultisigProver[chainName];
     if (!xrplMultisigProver) {
@@ -22,7 +21,7 @@ const trustSet = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplMultisigProver.address, execMsg, fee);
+    const { transactionHash, events } = await executeTransaction(client, xrplMultisigProver.address, execMsg, fee);
 
     printInfo('Creating trust line between token and multisig', transactionHash);
     const multisigSessionId = events
@@ -45,7 +44,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        mainCosmosProcessor(trustSet, options);
+        mainProcessor(trustSet, options);
     });
 
     program.parse();

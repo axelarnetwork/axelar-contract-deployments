@@ -2,16 +2,17 @@
 
 const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
-const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
+const { executeTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
-const { mainCosmosProcessor, getEvent, getEventAttr } = require('./utils');
+const { getEvent, getEventAttr } = require('./utils');
+const { mainProcessor } = require('../cosmwasm/processor');
 
 const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
 const TOKEN_METADATA_REGISTERED_EVENT_TYPE = 'wasm-token_metadata_registered';
 
-const registerTokenMetadata = async (config, options, wallet, client, fee) => {
+const registerTokenMetadata = async (client, config, options, args, fee) => {
     const { chainName, issuer, currency } = options;
-    const [account] = await wallet.getAccounts();
+
 
     const xrplGateway = config.axelar.contracts.XrplGateway[chainName];
     if (!xrplGateway) {
@@ -30,7 +31,7 @@ const registerTokenMetadata = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
+    const { transactionHash, events } = await executeTransaction(client, xrplGateway.address, execMsg, fee);
 
     printInfo('Initiated token metadata registration', transactionHash);
 
@@ -66,7 +67,7 @@ const programHandler = () => {
     });
 
     program.action((options) => {
-        mainCosmosProcessor(registerTokenMetadata, options);
+        mainProcessor(registerTokenMetadata, options);
     });
 
     program.parse();
