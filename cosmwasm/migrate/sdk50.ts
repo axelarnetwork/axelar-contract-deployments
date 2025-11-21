@@ -94,10 +94,9 @@ async function updateBlockTimeRelatedParameters(
             const votingVerifierConfig = config.getVotingVerifierContract(chainName);
             config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
 
-            const { block_expiry, confirmation_height, voting_threshold } = await client.queryContractSmart(
-                votingVerifierConfig.address,
-                'voting_parameters',
-            );
+            const { block_expiry, confirmation_height, voting_threshold } = await client.queryContractSmart(votingVerifierConfig.address, {
+                voting_parameters: {},
+            });
 
             const msg = {
                 update_voting_parameters: {
@@ -149,7 +148,7 @@ async function updateSigningParametersForMultisig(
     options.title = options.title || 'Update signing parameters for multisig';
     options.description = options.description || 'Update signing parameters for multisig';
 
-    const { block_expiry } = await client.queryContractSmart(multisigConfig.address, 'signing_parameters');
+    const { block_expiry } = await client.queryContractSmart(multisigConfig.address, { signing_parameters: {} });
     printInfo(`Current signing parameters: block_expiry: ${block_expiry}`);
 
     const msg = {
