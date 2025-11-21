@@ -43,8 +43,8 @@ function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
 
 type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
-    decimals: number;
-    trackSupply: boolean;
+    decimals: number | null;
+    trackSupply: boolean | null;
 };
 
 type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
