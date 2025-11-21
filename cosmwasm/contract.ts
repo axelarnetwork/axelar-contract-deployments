@@ -1,13 +1,29 @@
+import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
 import { getChainConfig, itsEdgeContract, printInfo, prompt } from '../common';
-import { addAmplifierOptions, addOptionalProposalOptions } from './cli-utils';
+import { ConfigManager } from '../common/config';
+import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
+import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { execute } from './submit-proposal';
 import { executeTransaction, getChainTruncationParams, usesGovernanceBypass, validateItsChainChange } from './utils';
 
-const confirmDirectExecution = (options, messages, contractAddress) => {
+interface ContractCommandOptions extends Omit<Options, 'contractName'> {
+    yes?: boolean;
+    title?: string;
+    description?: string;
+    chains?: string[];
+    itsEdgeContract?: string;
+    itsMsgTranslator?: string;
+    update?: boolean;
+    contractName?: string;
+    msg?: string | string[];
+    [key: string]: unknown;
+}
+
+const confirmDirectExecution = (options: ContractCommandOptions, messages: string | string[], contractAddress: string): boolean => {
     printInfo('Contract address', contractAddress);
 
     const msgs = Array.isArray(messages) ? messages : [messages];
@@ -22,7 +38,12 @@ const confirmDirectExecution = (options, messages, contractAddress) => {
     return true;
 };
 
-const executeDirectly = async (client, config, options, contractAddress, msg, fee) => {
+const executeDirectly = async (
+    client: ClientManager,
+    contractAddress: string,
+    msg: string | string[],
+    fee?: string | StdFee,
+): Promise<void> => {
     const msgs = Array.isArray(msg) ? msg : [msg];
 
     for (let i = 0; i < msgs.length; i++) {
@@ -34,7 +55,17 @@ const executeDirectly = async (client, config, options, contractAddress, msg, fe
     }
 };
 
-const registerItsChain = async (client, config, options, _args, fee) => {
+const registerItsChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    if (!options.chains || options.chains.length === 0) {
+        throw new Error('At least one chain is required');
+    }
+
     if (options.itsEdgeContract && options.chains.length > 1) {
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
@@ -80,7 +111,7 @@ const registerItsChain = async (client, config, options, _args, fee) => {
         if (!confirmDirectExecution(options, [msg], contractAddress)) {
             return;
         }
-        return executeDirectly(client, config, options, contractAddress, msg, fee);
+        return executeDirectly(client, contractAddress, msg, fee);
     } else {
         if (!options.title || !options.description) {
             throw new Error('Title and description are required for proposal submission');
@@ -99,7 +130,13 @@ const registerItsChain = async (client, config, options, _args, fee) => {
     }
 };
 
-const registerProtocol = async (client, config, options, _args, fee) => {
+const registerProtocol = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
     const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
     const router = config.axelar?.contracts?.Router?.address;
     const multisig = config.axelar?.contracts?.Multisig?.address;
@@ -121,7 +158,7 @@ const registerProtocol = async (client, config, options, _args, fee) => {
         if (!confirmDirectExecution(options, [msg], contractAddress)) {
             return;
         }
-        return executeDirectly(client, config, options, contractAddress, msg, fee);
+        return executeDirectly(client, contractAddress, msg, fee);
     } else {
         if (!options.title || !options.description) {
             throw new Error('Title and description are required for proposal submission');
@@ -130,7 +167,13 @@ const registerProtocol = async (client, config, options, _args, fee) => {
     }
 };
 
-const registerDeployment = async (client, config, options, _args, fee) => {
+const registerDeployment = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
     const { chainName } = options;
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructRegisterDeploymentMessage(chainName);
@@ -145,7 +188,7 @@ const registerDeployment = async (client, config, options, _args, fee) => {
         if (!confirmDirectExecution(options, [msg], contractAddress)) {
             return;
         }
-        return executeDirectly(client, config, options, contractAddress, msg, fee);
+        return executeDirectly(client, contractAddress, msg, fee);
     } else {
         if (!options.title || !options.description) {
             throw new Error('Title and description are required for proposal submission');
@@ -180,23 +223,20 @@ const programHandler = () => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, {});
-    addOptionalProposalOptions(registerItsChainCmd);
+    addAmplifierOptions(registerItsChainCmd, { optionalProposalOptions: true });
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
         .description('Register the main protocol contracts (e.g. Router)')
         .action((options) => mainProcessor(registerProtocol, options));
-    addAmplifierOptions(registerProtocolCmd, {});
-    addOptionalProposalOptions(registerProtocolCmd);
+    addAmplifierOptions(registerProtocolCmd, { optionalProposalOptions: true });
 
     const registerDeploymentCmd = program
         .command('register-deployment')
         .description('Register a deployment')
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .action((options) => mainProcessor(registerDeployment, options));
-    addAmplifierOptions(registerDeploymentCmd, {});
-    addOptionalProposalOptions(registerDeploymentCmd);
+    addAmplifierOptions(registerDeploymentCmd, { optionalProposalOptions: true });
 
     program.parse();
 };

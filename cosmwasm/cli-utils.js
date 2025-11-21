@@ -69,6 +69,10 @@ const addAmplifierOptions = (program, options) => {
         addProposalOptions(program);
     }
 
+    if (options.optionalProposalOptions) {
+        addOptionalProposalOptions(program);
+    }
+
     if (options.codeId) {
         program.addOption(
             new Option('--codeId <codeId>', 'the code id of the contract previously uploaded').argParser((value) => {
