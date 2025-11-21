@@ -1398,15 +1398,15 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj",
           "version": "1.1.0"
         },
-        "lastUploadedCodeId": 1573,
+        "lastUploadedCodeId": 1585,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1415,8 +1415,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1431,8 +1431,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1447,8 +1447,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1hn4hf23pqy2s2yacs4cuzjqe72hxn0rtxugy2vq485l7cngtcavqu9d0zq",
@@ -1465,8 +1465,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "codeId": 854,
           "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5",
           "version": "1.1.0"
@@ -1479,8 +1479,8 @@
             "1",
             "1"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1495,8 +1495,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1511,8 +1511,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
+          "blockExpiry": 50,
+          "confirmationHeight": 5,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
@@ -1529,8 +1529,8 @@
             "6",
             "10"
           ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1000000,
+          "blockExpiry": 50,
+          "confirmationHeight": 5000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
           "addressFormat": "solana",
           "codeId": 1573,
