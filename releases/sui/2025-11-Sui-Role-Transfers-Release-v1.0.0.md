@@ -84,6 +84,13 @@ sui client object "$GATEWAY_OWNERCAP_ID"
 
 ### Step 2: Transfer AxelarGateway UpgradeCap to Multisig
 
+| Network | Current OwnerCap Holder | Target Address |
+| -------- | ----------------------- | -------------- |
+| **Devnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Stagenet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Testnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Mainnet** | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig |
+
 ```bash
 UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.AxelarGateway.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
 
@@ -98,6 +105,13 @@ sui client object "$UPG_CAP_ID"
 
 ### Step 3: Transfer GasService OwnerCap to Multisig
 
+| Network | Current OwnerCap Holder | Target Address |
+| -------- | ----------------------- | -------------- |
+| **Devnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Stagenet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Testnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Mainnet** | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig |
+
 ```bash
 GS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.GasService.ownerCapId' ./axelar-chains-config/info/$ENV.json)
 
@@ -111,6 +125,13 @@ sui client object "$GS_OWNERCAP_ID"
 ```
 
 ### Step 4: Transfer GasService UpgradeCap to Multisig
+
+| Network | Current OwnerCap Holder | Target Address |
+| -------- | ----------------------- | -------------- |
+| **Devnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Stagenet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Testnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Mainnet** | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig |
 
 ```bash
 GS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.GasService.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
@@ -175,6 +196,13 @@ sui client object "$OPERATORS_UPG_CAP_ID"
 
 ### Step 7: Transfer InterchainTokenService OwnerCap to Multisig
 
+| Network | Current OwnerCap Holder | Target Address |
+| -------- | ----------------------- | -------------- |
+| **Devnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Stagenet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Testnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Mainnet** | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig |
+
 ```bash
 ITS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.ownerCapId' ./axelar-chains-config/info/$ENV.json)
 
@@ -188,6 +216,13 @@ sui client object "$ITS_OWNERCAP_ID"
 ```
 
 ### Step 8: Transfer InterchainTokenService UpgradeCap to Multisig
+
+| Network | Current OwnerCap Holder | Target Address |
+| -------- | ----------------------- | -------------- |
+| **Devnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Stagenet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Testnet** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | Multisig |
+| **Mainnet** | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig |
 
 ```bash
 ITS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
