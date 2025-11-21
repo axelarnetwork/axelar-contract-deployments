@@ -51,7 +51,7 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 ## Pre-requisites
 
-1. Update npm dependencies (including contracts)
+1. Update npm dependencies
 
 ```bash
 npm ci && npm run build
@@ -65,55 +65,89 @@ ENV=<devnet|stagenet|testnet|mainnet>
 CHAIN=<chain name>
 ```
 
-3. Verify current contract addresses and roles in `${ENV}.json` for each consensus chain (excluding Sui, Stellar, Solana).
-4. Confirm AxelarServiceGovernance contract addresses for each environment.
-5. Confirm Rate Limiter EOA addresses for each environment.
-6. Confirm Relayer Operators EOA and broadcaster EOAs for each environment.
-7. Confirm `Operators` contract addresses for each environment.
-
 ## Deployment Steps
 
 ### Step 1: Deploy AxelarServiceGovernance Contract
 
-AxelarServiceGovernance should already be deployed on the governance chain and visible in the EVM config JSONs. If not, follow the governance deployment playbook and add it under `contracts.AxelarServiceGovernance` for each chain.
+AxelarServiceGovernance should already be deployed on the governance chain and visible in the EVM config JSONs. If not, follow the steps below.
 
 Key checks:
 
 - `AxelarServiceGovernance` is deployed and verified on the governance chain.
 - Each consensus chain has the correct `governanceChain`, `governanceAddress`, and `minimumTimeDelay` configured off-chain.
 
+
+#### Configuration (if not deployed)
+
+| Network              | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   |
+| -------------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+
+#### Add AxelarServiceGovernance config to `${ENV}.json`
+
+For each amplifier chain, add the following configuration:
+
+```json
+{
+  "AxelarServiceGovernance": {
+    "governanceChain": "axelar",
+    "governanceAddress": "[governanceAddress]",
+    "minimumTimeDelay": [minimumTimeDelay],
+    "deploymentMethod": "TBD",
+    "salt": "TBD"
+  }
+}
+```
+
+#### Deploy AxelarServiceGovernance
+
+```bash
+ts-node evm/deploy-contract.js -c AxelarServiceGovernance 
+```
+
+#### Verify Deployment
+
+```bash
+# Query the deployed address / owner
+ts-node evm/governance.js -n $CHAIN --contractName AxelarServiceGovernance --action owner
+```
+
+```bash
+# Verify AxelarServiceGovernance constructor / implementation via explorer
+ts-node evm/verify-contract.js -e $ENV -n $CHAIN -c AxelarServiceGovernance --dir /path/to/axelar-gmp-sdk-solidity
+```
+
 ### Step 2: Transfer AxelarGateway Governance Role
 
-New governance: AxelarServiceGovernance (governance contract).
-
-| Network | Current Governance                                                                                 | Target Address                                    |
-| -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| **Devnet-Amplifier**   | Not set in config                                                                    | AxelarServiceGovernance (governance contract)     |
-| **Stagenet** | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                                   | AxelarServiceGovernance (governance contract)     |
-| **Testnet**  | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`, `0x4F0f42bF41ba60895134EC99dE79A041E5269003` (per-chain) | AxelarServiceGovernance (governance contract)     |
-| **Mainnet**  | `0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0`                                                   | AxelarServiceGovernance (governance contract)     |
+| Network | Current Governance                    | Target Address                              |
+| ------- | ------------------------------------- | ------------------------------------------ |
+| **Devnet-Amplifier**   | Not set in config      | TBD     |
+| **Stagenet** | Not set in config                | TBD     |
+| **Testnet**  | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`, `0x4F0f42bF41ba60895134EC99dE79A041E5269003` | TBD     |
+| **Mainnet**  | `0xBbEE71e2fE7741Cdd7787DC46D73Af6715D47Dc0`                | TBD     |
 
 ```bash
 # Verify current governance
 ts-node evm/governance.js -n $CHAIN --contractName AxelarGateway --action governance
 
-# Load AxelarServiceGovernance address from config
-AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
 # Transfer governance to AxelarServiceGovernance
 ts-node evm/governance.js -n $CHAIN --contractName AxelarGateway --action transferGovernance --newGovernance $AXELAR_SERVICE_GOVERNANCE
 ```
 
-### Step 3: Align AxelarGateway MintLimiter to Rate Limiter EOA / Multisig
+### Step 3: Align AxelarGateway MintLimiter to Rate Limiter EOA
 
 New mintLimiter: Rate Limiter EOA / mint-limiter multisig.
 
-| Network  | Current MintLimiter                          | Target Address                    |
-| -------- | -------------------------------------------- | --------------------------------- |
-| **Devnet-Amplifier**   | Not set in config | Rate Limiter EOA / mint-limiter multisig |
-| **Stagenet** | Not set in config | Rate Limiter EOA / mint-limiter multisig |
-| **Testnet**  | `0xF0E17583C906f3e672e591791a88c1116F53081c`, `0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68` (per-chain) | Rate Limiter EOA / mint-limiter multisig |
-| **Mainnet**  | `0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68` | Rate Limiter EOA / mint-limiter multisig |
+| Network  | Current MintLimiter               | Target Address                    |
+| -------- | --------------------------------- | --------------------------------- |
+| **Devnet-Amplifier**   | Not set in config | TBD |
+| **Stagenet** | Not set in config | TBD |
+| **Testnet**  | Not set in config | TBD |
+| **Mainnet**  | Not set in config | TBD |
 
 ```bash
 # Get Rate Limiter EOA / mint-limiter multisig for this environment
@@ -130,12 +164,12 @@ ts-node evm/governance.js -n $CHAIN --contractName AxelarGateway --action transf
 
 New owner: AxelarServiceGovernance.
 
-| **Network**  | Current Owner                                                                         | Target Address                       |
-| -------- | ------------------------------------------------------------------------------------- | ------------------------------------ |
-| **Devnet**   | Not set in config                                                                    | AxelarServiceGovernance (governance) |
-| **Stagenet** | Not set in config                                                                    | AxelarServiceGovernance (governance) |
-| **Testnet**  | Not set in config                                                                    | AxelarServiceGovernance (governance) |
-| **Mainnet**  | Not set in config                                                                    | AxelarServiceGovernance (governance) |
+| **Network**  | Current Owner                    | Target Address                       |
+| ------------ | -------------------------------- | ------------------------------------ |
+| **Devnet**   | Not set in config                | TBD |
+| **Stagenet** | Not set in config                | TBD |
+| **Testnet**  | Not set in config                | TBD |
+| **Mainnet**  | Not set in config                | TBD |
 
 ```bash
 # Get AxelarServiceGovernance contract address for this environment
@@ -174,12 +208,12 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $REL
 
 New owner: AxelarServiceGovernance.
 
-| Network  | Current Owner                                 | Target Address                       |
-| -------- | --------------------------------------------- | ------------------------------------ |
-| **Devnet-Amplifier**   | Not set in config | AxelarServiceGovernance (governance) |
-| **Stagenet** | Not set in config | AxelarServiceGovernance (governance) |
-| **Testnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | AxelarServiceGovernance (governance) |
-| **Mainnet**  | Not set in config | AxelarServiceGovernance (governance) |
+| Network  | Current Owner               | Target Address                       |
+| -------- | --------------------------- | ------------------------------------ |
+| **Devnet-Amplifier**   | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD |
+| **Stagenet** | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD |
+| **Testnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD |
+| **Mainnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD |
 
 ```bash
 # Get AxelarServiceGovernance contract address for this environment
@@ -192,16 +226,16 @@ ts-node evm/ownership.js -c InterchainTokenService --action owner
 ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
-### Step 7: Transfer / Confirm InterchainTokenService Operator Role
+### Step 7: Transfer InterchainTokenService Operator Role
 
 New operator: Rate Limiter EOA.
 
 | Network  | Current Operator         | Target Address      |
 | -------- | ------------------------- | ------------------- |
-| **Devnet-Amplifier**   | Not set in config | Rate Limiter EOA    |
-| **Stagenet** | Not set in config | Rate Limiter EOA    |
-| **Testnet**  | Not set in config | Rate Limiter EOA    |
-| **Mainnet**  | Not set in config | Rate Limiter EOA    |
+| **Devnet-Amplifier**  | Not set in config | TBD    |
+| **Stagenet** | Not set in config | TBD    |
+| **Testnet**  | Not set in config | TBD    |
+| **Mainnet**  | Not set in config | TBD    |
 
 ```bash
 # Get Rate Limiter EOA for this environment
