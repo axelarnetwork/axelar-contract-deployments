@@ -89,7 +89,7 @@ For each amplifier chain, add the following configuration:
 ```json
 {
   "AxelarServiceGovernance": {
-    "governanceChain": "axelar",
+    "governanceChain": "Axelarnet",
     "governanceAddress": "[governanceAddress]",
     "minimumTimeDelay": [minimumTimeDelay],
     "deploymentMethod": "TBD",
@@ -133,7 +133,7 @@ ts-node evm/ownership.js -c AxelarAmplifierGateway --action owner
 
 # Transfer ownership to AxelarServiceGovernance
 AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-ts-node evm/ownership.js -c AxelarAmplifierGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
 ```
 
 
