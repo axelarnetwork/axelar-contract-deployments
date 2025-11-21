@@ -43,7 +43,6 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
       -c VotingVerifier \
       -t "Store VotingVerifier contract v2.0.0" \
       -d "Store VotingVerifier contract v2.0.0" \
-      -r $RUN_AS_ACCOUNT \
       --instantiateAddresses $INIT_ADDRESSES \
       --version 2.0.0
     ```
@@ -55,7 +54,6 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
         -c Multisig \
         -t "Upload Multisig contract v2.x.x" \ # get correct version
         -d "Upload Multisig contract v2.x.x" \ # get correct version
-        -r $RUN_AS_ACCOUNT \
         --instantiateAddresses $INIT_ADDRESSES \
         --version 2.x.x # get correct version
     ```
