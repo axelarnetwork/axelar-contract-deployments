@@ -94,36 +94,44 @@ async function updateBlockTimeRelatedParameters(
     options.description = options.description || 'Update block time related parameters for all voting verifiers';
 
     const votingVerifierMessages = await Promise.all(
-        chains.map(async ({ name: chainName, config: chainConfig }) => {
-            const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-            config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
+        chains
+            .map(async ({ name: chainName, config: chainConfig }) => {
+                try {
+                    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+                    config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
 
-            const { block_expiry, confirmation_height, voting_threshold } = await client.queryContractSmart(votingVerifierConfig.address, {
-                voting_parameters: {},
-            });
+                    const { block_expiry, confirmation_height, voting_threshold } = await client.queryContractSmart(
+                        votingVerifierConfig.address,
+                        'voting_parameters',
+                    );
 
-            const msg = {
-                update_voting_parameters: {
-                    block_expiry: votingVerifierConfig.blockExpiry,
-                    confirmation_height: null,
-                    voting_threshold: null,
-                },
-            };
-            printInfo(`Current voting parameters for ${chainName}: block_expiry: ${block_expiry}`);
-            printInfo(`New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}`);
-            return {
-                chainName,
-                message: encodeExecuteContract(
-                    config,
-                    {
-                        ...options,
-                        contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
-                        msg: JSON.stringify(msg),
-                    },
-                    chainName,
-                ),
-            };
-        }),
+                    const msg = {
+                        update_voting_parameters: {
+                            block_expiry: votingVerifierConfig.blockExpiry,
+                            confirmation_height: null,
+                            voting_threshold: null,
+                        },
+                    };
+                    printInfo(`Current voting parameters for ${chainName}: block_expiry: ${block_expiry}`);
+                    printInfo(`New voting parameters for ${chainName}: block_expiry: ${msg.update_voting_parameters.block_expiry}`);
+                    return {
+                        chainName,
+                        message: encodeExecuteContract(
+                            config,
+                            {
+                                ...options,
+                                contractName: config.getVotingVerifierContractForChainType(chainConfig.chainType),
+                                msg: JSON.stringify(msg),
+                            },
+                            chainName,
+                        ),
+                    };
+                } catch (error) {
+                    printWarn(`Error updating block time related parameters for ${chainName}: ${error}, skipping...`);
+                    return undefined;
+                }
+            })
+            .filter(Boolean),
     );
 
     for (const { chainName, message } of votingVerifierMessages) {
