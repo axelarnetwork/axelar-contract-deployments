@@ -747,6 +747,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+    confirmProposalSubmission,
     execute,
     migrate,
 };
