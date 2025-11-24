@@ -68,21 +68,21 @@ async function queryAllRewardsPools(client: CosmWasmClient, configManager: Confi
 
         const votingVerifier = configManager.getVotingVerifierContract(chainName);
         if (!votingVerifier.address) {
-            throw new Error(`VotingVerifier address not found for amplifier chain ${chainName}`);
-        }
-
-        try {
-            const result: RewardsPoolResponse = await queryRewardsPool(client, rewardsAddress, chainName, votingVerifier.address);
-            chainPools.push({
-                chainName,
-                contractAddress: votingVerifier.address,
-                contractType: 'VotingVerifier',
-                epoch_duration: result.epoch_duration,
-                participation_threshold: result.participation_threshold,
-                rewards_per_epoch: result.rewards_per_epoch,
-            });
-        } catch (error) {
-            printError(`Failed to query VotingVerifier pool for ${chainName}`, error instanceof Error ? error.message : String(error));
+            printError(`VotingVerifier address not found for ${chainName}`, '');
+        } else {
+            try {
+                const result: RewardsPoolResponse = await queryRewardsPool(client, rewardsAddress, chainName, votingVerifier.address);
+                chainPools.push({
+                    chainName,
+                    contractAddress: votingVerifier.address,
+                    contractType: 'VotingVerifier',
+                    epoch_duration: result.epoch_duration,
+                    participation_threshold: result.participation_threshold,
+                    rewards_per_epoch: result.rewards_per_epoch,
+                });
+            } catch (error) {
+                printError(`Failed to query VotingVerifier pool for ${chainName}`, error instanceof Error ? error.message : String(error));
+            }
         }
 
         poolParams.push(...chainPools);
