@@ -47,32 +47,41 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
       --version 2.0.0
     ```
 
+1. Store XRPL Voting Verifier code
+
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+      -c XrplVotingVerifier \
+      -t "Store XrplVotingVerifier contract v2.0.0" \
+      -d "Store XrplVotingVerifier contract v2.0.0" \
+      --instantiateAddresses $INIT_ADDRESSES \
+      --version 2.0.0
+    ```
+
 1. Store Multisig code
 
     ```bash
         ts-node cosmwasm/submit-proposal.js store \
         -c Multisig \
-        -t "Upload Multisig contract v2.x.x" \ # get correct version
-        -d "Upload Multisig contract v2.x.x" \ # get correct version
+        -t "Upload Multisig contract v2.4.0" \
+        -d "Upload Multisig contract v2.4.0" \
         --instantiateAddresses $INIT_ADDRESSES \
-        --version 2.x.x # get correct version
+        --version 2.4.0
     ```
 
 1. Update `blockExpiry` on Multisig and all Voting Verifier contracts in chain config
 
-    | Network          | new `blockExpiry` |
-    | ---------------- | ----------------- |
-    | devnet-amplifier | 50                |
-    | stagenet         | TBD               |
-    | testnet          | TBD               |
-    | mainnet          | TBD               |
+    | Network          | old `blockExpiry` | new `blockExpiry` |
+    | ---------------- | ----------------- | ----------------- |
+    | devnet-amplifier | 10                | 50                |
+    | stagenet         | 10                | 50                |
+    | testnet          | TBD               | TBD               |
+    | mainnet          | TBD               | TBD               |
 
 1. Migrate all VotingVerifier contracts
 
     ```bash
-    ts-node cosmwasm/migrate/sdk50.ts migrate-voting-verifiers \
-    --fetchCodeId \
-    -r $RUN_AS_ACCOUNT
+    ts-node cosmwasm/migrate/sdk50.ts migrate-voting-verifiers --fetchCodeId
     ```
 
 1. Migrate Multisig contract
@@ -80,40 +89,33 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     ```bash
     ts-node cosmwasm/submit-proposal.js migrate \
     -c Multisig \
-    -t "Migrate Multisig to v2.x.x" \ # get correct version
-    -d "Multisig to v2.x.x" \ # get correct version
+    -t "Migrate Multisig to v2.4.0" \
+    -d "Multisig to v2.4.0" \
     --msg '{}' \
     -r $RUN_AS_ACCOUNT \
     --fetchCodeId
     ```
 
-1. Verify Voting Verifier contract version
-    - TODO: add script to check all VV migrations
+1. Verify Voting Verifier & Multisig contract version
 
-1. Verify Multisig contract version
-
-    ```bash
-    ts-node cosmwasm/query.ts contract-info --contractName Multisig -e $ENV
-    ```
-
-    Expected output
+    Run this command:
 
     ```bash
-    {"contract":"multisig","version":"2.x.x"} # get correct version
+    ts-node cosmwasm/query.ts contract-versions
     ```
+
+    Check the Voting Verifiers and Multisig contracts versions in the `${ENV}.json` file. Voting Verifiers should be upgraded to `v2.0.0` and Multisig to `v2.0.0`.
 
 1. Update block expiry on all Voting Verifier contracts
 
     ```bash
     ts-node cosmwasm/migrate/sdk50.ts update-voting-verifiers
-    -r $RUN_AS_ACCOUNT
     ```
 
 1. Update block expiry on Multisig contract
 
     ```bash
     ts-node cosmwasm/migrate/sdk50.ts update-signing-parameters-for-multisig
-    -r $RUN_AS_ACCOUNT
     ```
 
 1. TODO: verify updated params
