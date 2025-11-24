@@ -2749,8 +2749,8 @@
         "blockExpiry": 10,
         "storeCodeProposalId": "296",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
-        "codeId": 75,
-        "lastUploadedCodeId": 75,
+        "codeId": 76,
+        "lastUploadedCodeId": 76,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
@@ -3144,7 +3144,8 @@
         },
         "storeCodeProposalId": "297",
         "storeCodeProposalCodeHash": "d8a38e71c635c28bec1106f0cc5274d6d130c23e0b7ded88364d41aee17328e1",
-        "lastUploadedCodeId": 24
+        "lastUploadedCodeId": 77,
+        "codeId": 77
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "239",
