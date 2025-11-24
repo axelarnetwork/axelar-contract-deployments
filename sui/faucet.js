@@ -18,7 +18,7 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const host = getFaucetHost(chain.networkType);
+    const host = options.rpc ?? getFaucetHost(chain.networkType);
 
     switch (chain.networkType) {
         case 'localnet': {
@@ -47,6 +47,7 @@ if (require.main === module) {
     program
         .name('faucet')
         .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
+        .addOption(new Option('--rpc <rpc>', 'rpc for Sui'))
         .addOption(
             new Option(
                 '--minBalance <amount>',
