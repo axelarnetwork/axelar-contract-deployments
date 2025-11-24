@@ -7,7 +7,7 @@ import { Command, Option } from 'commander';
 import { AxelarContractConfig, ConfigManager } from '../../common/config';
 import { getAmplifierChains, printError, printHighlight, printInfo, printWarn, prompt } from '../../common/utils';
 import { addAmplifierOptions } from '../cli-utils';
-import { ClientManager, Options, mainProcessor } from '../processor';
+import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { RewardsPoolResponse, queryRewardsPool } from '../query';
 import { confirmProposalSubmission } from '../submit-proposal';
 import { GOVERNANCE_MODULE_ADDRESS, encodeExecuteContract, submitProposal } from '../utils';
@@ -35,22 +35,19 @@ interface UpdatePoolParamsMessage {
     };
 }
 
-async function queryAllRewardsPools(env: string, configManager?: ConfigManager): Promise<PoolParams[]> {
+async function queryAllRewardsPools(client: CosmWasmClient, configManager: ConfigManager): Promise<PoolParams[]> {
     const poolParams: PoolParams[] = [];
+    const rewardsConfig = configManager.getContractConfig('Rewards');
+    const rewardsAddress = configManager.validateRequired(rewardsConfig.address, 'Rewards.address');
 
-    const manager = configManager || new ConfigManager(env);
-    const client = await CosmWasmClient.connect(manager.axelar.rpc);
-    const rewardsConfig = manager.getContractConfig('Rewards');
-    const rewardsAddress = manager.validateRequired(rewardsConfig.address, 'Rewards.address');
-
-    const amplifierChains = getAmplifierChains(manager.chains);
+    const amplifierChains = getAmplifierChains(configManager.chains);
 
     if (amplifierChains.length === 0) {
-        throw new Error(`No amplifier chains found in ${env}`);
+        throw new Error('No amplifier chains found');
     }
 
-    const multisigConfig = manager.getContractConfig('Multisig');
-    const multisigAddress = manager.validateRequired(multisigConfig.address, 'Multisig.address');
+    const multisigConfig = configManager.getContractConfig('Multisig');
+    const multisigAddress = configManager.validateRequired(multisigConfig.address, 'Multisig.address');
 
     for (const { name: chainName } of amplifierChains) {
         const chainPools: PoolParams[] = [];
@@ -69,7 +66,7 @@ async function queryAllRewardsPools(env: string, configManager?: ConfigManager):
             printError(`Failed to query Multisig pool for ${chainName}`, error instanceof Error ? error.message : String(error));
         }
 
-        const votingVerifier = manager.getVotingVerifierContract(chainName);
+        const votingVerifier = configManager.getVotingVerifierContract(chainName);
         if (!votingVerifier.address) {
             throw new Error(`VotingVerifier address not found for amplifier chain ${chainName}`);
         }
@@ -233,7 +230,7 @@ async function updateRewardsPoolEpochDuration(
         throw new Error('--epoch-duration must be a positive integer');
     }
 
-    const poolParams = await queryAllRewardsPools(options.env, configManager);
+    const poolParams = await queryAllRewardsPools(client, configManager);
 
     if (poolParams.length === 0) {
         throw new Error('No rewards pools found. Cannot proceed with update.');
@@ -284,8 +281,17 @@ addAmplifierOptions(
         .command('get-reward-pools')
         .description('Query and display current rewards pool parameters')
         .action(async (options) => {
-            const poolParams = await queryAllRewardsPools(options.env);
-            printPoolParams(poolParams, options.env);
+            await mainQueryProcessor(
+                async (client, configManager, options, _args, _fee) => {
+                    const poolParams = await queryAllRewardsPools(client, configManager);
+                    printPoolParams(poolParams, options.env);
+                },
+                {
+                    ...options,
+                    contractName: 'Rewards',
+                    chainName: '',
+                },
+            );
         }),
     {},
 );
