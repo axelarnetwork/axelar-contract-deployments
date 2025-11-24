@@ -5623,6 +5623,7 @@ name = "solana-axelar-memo"
 version = "0.1.1"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "program-utils",
  "solana-axelar-gateway",
  "solana-axelar-its",
