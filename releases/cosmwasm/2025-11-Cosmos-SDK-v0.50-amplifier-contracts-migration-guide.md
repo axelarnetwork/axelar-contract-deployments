@@ -34,8 +34,6 @@ MNEMONIC=<cosm wasm deployer key mnemonic>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 ```
 
-- TODO: get contract versions, build artifacts
-
     | Network          | `INIT_ADDRESSES`                                                                                                                                | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
     | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
     | devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                                 | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
