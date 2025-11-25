@@ -615,9 +615,7 @@ if (require.main === module) {
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
         .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+            new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
@@ -632,9 +630,7 @@ if (require.main === module) {
         .argument('<calldata>', 'call data')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
         .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+            new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
@@ -676,9 +672,7 @@ if (require.main === module) {
         .argument('<commandId>', 'command id')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+            new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
