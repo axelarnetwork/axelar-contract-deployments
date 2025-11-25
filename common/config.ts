@@ -50,7 +50,6 @@ export interface ExplorerConfig {
 export interface DeploymentConfig {
     deploymentName: string;
     salt: string;
-    proposalId: string;
 }
 
 export interface ContractConfig {

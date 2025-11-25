@@ -24,7 +24,6 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
 } = require('./utils');
-const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
@@ -368,86 +367,6 @@ const migrate = async (client, config, options, _args, fee) => {
     }
 };
 
-const instantiateChainContracts = async (client, config, options, _args, fee) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
-    if (!coordinatorAddress) {
-        throw new Error('Coordinator contract address not found in config');
-    }
-
-    if (!admin) {
-        throw new Error('Admin address is required when instantiating chain contracts');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required when instantiating chain contracts');
-    }
-
-    const chainConfig = config.getChainConfig(chainName);
-    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
-
-    // validate that the contract configs exist
-    let gatewayConfig = config.getGatewayContract(chainName);
-    let votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    let multisigProverConfig = config.getMultisigProverContract(chainName);
-
-    if (options.fetchCodeId) {
-        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
-        const votingVerifierCode =
-            verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        const multisigProverCode =
-            proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
-        gatewayConfig.codeId = gatewayCode;
-        votingVerifierConfig.codeId = votingVerifierCode;
-        multisigProverConfig.codeId = multisigProverCode;
-    } else {
-        if (!gatewayConfig.codeId && !gatewayCodeId) {
-            throw new Error(
-                'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
-            );
-        }
-        if (!votingVerifierConfig.codeId && !verifierCodeId) {
-            throw new Error(
-                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
-            );
-        }
-        if (!multisigProverConfig.codeId && !proverCodeId) {
-            throw new Error(
-                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
-            );
-        }
-
-        gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
-        votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
-        multisigProverConfig.codeId = proverCodeId || multisigProverConfig.codeId;
-    }
-
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
-
-    const proposalId = await execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'Coordinator',
-            msg: JSON.stringify(message),
-        },
-        undefined,
-        fee,
-    );
-
-    if (!config.axelar.contracts.Coordinator.deployments) {
-        config.axelar.contracts.Coordinator.deployments = {};
-    }
-    config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: salt,
-        proposalId,
-    };
-};
-
 async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
     const addresses = [...permittedAddresses, coordinatorAddress];
 
@@ -583,24 +502,6 @@ const programHandler = () => {
         codeId: true,
         fetchCodeId: true,
         runAs: true,
-    });
-
-    const instantiateChainContractsCmd = program
-        .command('instantiate-chain-contracts')
-        .description(
-            'Submit an execute wasm contract proposal to instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator',
-        )
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
-        .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
-        .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
-        .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
-        .action((options) => mainProcessor(instantiateChainContracts, options));
-    addAmplifierOptions(instantiateChainContractsCmd, {
-        proposalOptions: true,
-        runAs: true,
-        fetchCodeId: true,
-        instantiateOptions: true,
     });
 
     addAmplifierOptions(
