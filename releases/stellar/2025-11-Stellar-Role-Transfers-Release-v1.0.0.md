@@ -215,7 +215,7 @@ ts-node stellar/contract.js operator AxelarGasService
 If the operator is NOT the Operators contract, transfer it:
 
 ```bash
-OPERATORS_CONTRACT=$(jq -r '.chains[$CHAIN].contracts.AxelarOperators.address' ./axelar-chains-config/info/$ENV.json)
+OPERATORS_CONTRACT=$(jq -r '.chains[\"$CHAIN\"].contracts.AxelarOperators.address' ./axelar-chains-config/info/$ENV.json)
 
 # Transfer operatorship if needed
 ts-node stellar/contract.js transfer-operatorship AxelarGasService $OPERATORS_CONTRACT
