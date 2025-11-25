@@ -2746,11 +2746,11 @@
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "blockExpiry": 10,
-        "storeCodeProposalId": "294",
-        "storeCodeProposalCodeHash": "d3e7bc409d858ba35b294c63039dd4b203947fa263ad529d21a84c3b2559e639",
-        "codeId": 75,
-        "lastUploadedCodeId": 75,
+        "blockExpiry": 50,
+        "storeCodeProposalId": "296",
+        "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
+        "codeId": 76,
+        "lastUploadedCodeId": 76,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
@@ -2759,7 +2759,7 @@
         "hedera": {
           "executeProposalId": "47"
         },
-        "version": "2.3.2"
+        "version": "2.4.0"
       },
       "MultisigProver": {
         "flow": {
@@ -2990,13 +2990,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3006,13 +3006,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1h8gx392pzlj6ff5lv3kc9jwegu0wwqjrur7ht93frus5czape9ns3j3d0a",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3024,11 +3024,11 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "codeId": 24,
           "address": "axelar1x8rqw5l5gzye7d063zupr5zlelfvjxq5z6rr7wy643ufuflhl6xqhgr5wt",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "xrpl-evm": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3038,13 +3038,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1hmdnsrs8c8v8mr7vxg3rzdzxasxdpfj09muxakhth73sywg929qsczjscj",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "plume": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3054,13 +3054,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1t49krzwl0sc6z8qwdst5d7kmgn3xutjtp4ku8u2c06quy7w8hp4q5zsqn2",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "hyperliquid": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3070,13 +3070,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1n72sdsdclpffc0jw5mf7vc97zpy6czqw9glmcqhm8sp73nczu57sn3kplc",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "monad": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3086,13 +3086,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1v72l84ar9nhl7xt44hn374xm60a7huhfnulh65aagtk55x8uzpsqfdr6tq",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "berachain": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3102,13 +3102,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar18xzlzgjcypassfs3sglfn7u8re3kuafxf233c2e8fyu7muxe8xmskeyg92",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "stellar-2025-q3": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3118,13 +3118,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stellar",
           "codeId": 57,
           "address": "axelar1jgp9mfalnwk0p9xfycyrrc69e9kw5l2qytvs0tz6znv5ke89q0psgcyarh",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
         "celo-sepolia": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3134,17 +3134,18 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1pexeladrveekp689w67j94ftcvxhcqwy2ly6w4ntn8caz26r3waqxy54kz",
-          "version": "1.1.0"
+          "version": "2.0.0"
         },
-        "storeCodeProposalId": "72",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
-        "lastUploadedCodeId": 24
+        "storeCodeProposalId": "297",
+        "storeCodeProposalCodeHash": "d8a38e71c635c28bec1106f0cc5274d6d130c23e0b7ded88364d41aee17328e1",
+        "lastUploadedCodeId": 77,
+        "codeId": 77
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "239",
