@@ -5,6 +5,13 @@
 | **Created By** | @AttissNgo <attiss@interoplabs.io>, @kulikthebird <tomasz@interoplabs.io> |
 | **Deployment** |                                                                           |
 
+| **Network**          | **Voting Verifier & Multisig Upgrade** | **Date**   |
+| -------------------- | -------------------------------------- | ---------- |
+| **Devnet Amplifier** | Completed                              | 2025-11-21 |
+| **Stagenet**         | Completed                              | 2025-11-24 |
+| **Testnet**          | -                                      | TBD        |
+| **Mainnet**          | -                                      | TBD        |
+
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | -                     | TBD      |
@@ -98,7 +105,7 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 
 1. Verify Voting Verifier & Multisig contract version
 
-    Run this command:
+    Once all the store and migration related proposals pass, run this command:
 
     ```bash
     ts-node cosmwasm/query.ts contract-versions
@@ -118,7 +125,15 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     ts-node cosmwasm/migrate/sdk50.ts update-signing-parameters-for-multisig
     ```
 
-1. TODO: verify updated params
+1. Verify updated params
+
+    Wait for all the above proposals to pass and run the following commands:
+    ```bash
+    ts-node cosmwasm/migrate/sdk50.ts update-voting-verifiers
+    ts-node cosmwasm/migrate/sdk50.ts update-signing-parameters-for-multisig
+    ```
+
+    Both the above commands should either skip chains that are already updated or print the current value of the `block_expiry`. The parameters should match the expected values.
 
 ## Reward pools epoch duration
 
