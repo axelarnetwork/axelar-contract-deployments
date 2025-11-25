@@ -1267,7 +1267,6 @@ const loadProtoDefinition = (protoName) => {
     }
 };
 
-
 const encodeCallContracts = (proposalData) => {
     const { title, description, contract_calls: contractCallsInput } = proposalData;
 
@@ -1296,9 +1295,7 @@ const encodeCallContracts = (proposalData) => {
         const { chain, contract_address: contractAddress, payload } = call || {};
 
         if (!chain || !contractAddress || !payload) {
-            throw new Error(
-                `Invalid contract_call at index ${index}: must have chain, contract_address, and payload`,
-            );
+            throw new Error(`Invalid contract_call at index ${index}: must have chain, contract_address, and payload`);
         }
 
         const payloadBytes = Buffer.from(payload, 'base64');

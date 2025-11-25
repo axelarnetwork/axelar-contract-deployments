@@ -244,13 +244,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'schedule': {
             const [action, date] = args;
 
-            const { target, calldata } = await getProposalCalldata(
-                governance,
-                chain,
-                wallet,
-                action,
-                options,
-            );
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
             validateParameters({
                 isValidTimeFormat: { date },
@@ -281,13 +275,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'cancel': {
             const [action] = args;
 
-            const { target, calldata } = await getProposalCalldata(
-                governance,
-                chain,
-                wallet,
-                action,
-                options,
-            );
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
             const currTime = getCurrentTimeInSeconds();
             printInfo('Current time', etaToDate(currTime));
@@ -354,13 +342,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'submit': {
             const [action, commandId, date] = args;
 
-            const { target, calldata } = await getProposalCalldata(
-                governance,
-                chain,
-                wallet,
-                action,
-                options,
-            );
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
             validateParameters({
                 isKeccak256Hash: { commandId },
@@ -475,7 +457,6 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 }
 
 async function submitProposalToAxelar(proposal, options) {
-
     const submitFn = async (client, config, submitOptions, _args, fee) => {
         printInfo('Proposal details:');
         printInfo('Proposal title', proposal.title);
