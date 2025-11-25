@@ -12,12 +12,12 @@
 | **Testnet**          | -                                      | TBD        |
 | **Mainnet**          | -                                      | TBD        |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-11-24 |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 ## Background
 
@@ -128,6 +128,7 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 1. Verify updated params
 
     Wait for all the above proposals to pass and run the following commands:
+
     ```bash
     ts-node cosmwasm/migrate/sdk50.ts update-voting-verifiers
     ts-node cosmwasm/migrate/sdk50.ts update-signing-parameters-for-multisig
@@ -139,6 +140,20 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 
 Update `epoch_duration` on all reward pools. Note that these parameter changes should be executed _AFTER_ the Axelard v1.3.0 upgrade.
 
-- TODO: add table for epoch duration by network after observing new block times
-- TODO: add instructions for epoch duration update script
-- TODO: add script to verify update
+| Network              | `epoch_duration` |
+| -------------------- | ---------------- |
+| **Devnet-amplifier** | `500`            |
+| **Stagenet**         | `3000`           |
+| **Testnet**          | `3000`           |
+| **Mainnet**          | `74225`          |
+
+1. Update epoch duration
+
+    ```bash
+    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch-duration]
+    ```
+
+1. Verify epoch duration was updated on all pools
+    ```bash
+    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts get-reward-pools
+    ```
