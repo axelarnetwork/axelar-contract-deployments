@@ -104,10 +104,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
                 isValidAddress: { implementation },
             });
 
-            if (!implementation) {
-                throw new Error(`Invalid new implementation address: ${implementation}\nDo you need to pass in 'targetContractName'?`);
-            }
-
             const upgradable = new Contract(target, IUpgradable.abi, wallet);
             const currImplementation = await upgradable.implementation();
 
@@ -138,10 +134,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidAddress: { newGovernance },
             });
-
-            if (!newGovernance) {
-                throw new Error(`Invalid new gateway governance address: ${newGovernance}`);
-            }
 
             const gateway = new Contract(target, AxelarGateway.abi, wallet);
             const currGovernance = await gateway.governance();
@@ -512,7 +504,6 @@ async function main(action, args, options) {
             printInfo('Proposal written to file', options.file);
         } else {
             if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
-                printInfo('Proposal submitted to Axelar.');
                 await submitProposalToAxelar(proposal, options);
             }
         }
@@ -536,6 +527,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((options, cmd) => {
             if (!options.proposal && (!options.target || !options.calldata)) {
                 throw new Error('Either --proposal or both --target and --calldata must be provided');
@@ -563,6 +555,7 @@ if (require.main === module) {
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .action((governanceAction, date, options, cmd) => {
             main(cmd.name(), [governanceAction, date], options);
@@ -588,6 +581,7 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((governanceAction, options, cmd) => {
             main(cmd.name(), [governanceAction], options);
         });
@@ -605,6 +599,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((options, cmd) => {
             if (!options.proposal && (!options.target || !options.calldata)) {
                 throw new Error('Either --proposal or both --target and --calldata must be provided');
@@ -625,6 +620,7 @@ if (require.main === module) {
                 .default('InterchainGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, date, options, cmd) => {
             main(cmd.name(), [target, calldata, date], options);
         });
@@ -641,6 +637,7 @@ if (require.main === module) {
                 .default('InterchainGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, options, cmd) => {
             main(cmd.name(), [target, calldata], options);
         });
@@ -666,6 +663,7 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((governanceAction, commandId, date, options, cmd) => {
             main(cmd.name(), [governanceAction, commandId, date], options);
         });
@@ -683,12 +681,12 @@ if (require.main === module) {
                 .default('InterchainGovernance'),
         )
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, commandId, date, options, cmd) => {
             main(cmd.name(), [target, calldata, commandId, date], options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { address: true });
-    addOptionsToCommands(program, addAmplifierOptions, { env: true, mnemonic: true });
     program.parse();
 }
 
