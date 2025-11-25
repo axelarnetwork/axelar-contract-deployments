@@ -614,9 +614,7 @@ if (require.main === module) {
         .argument('<calldata>', 'call data')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'),
-        )
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, date, options, cmd) => {
@@ -629,9 +627,7 @@ if (require.main === module) {
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'),
-        )
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, options, cmd) => {
@@ -671,9 +667,7 @@ if (require.main === module) {
         .argument('<calldata>', 'call data')
         .argument('<commandId>', 'command id')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'),
-        )
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, commandId, date, options, cmd) => {
