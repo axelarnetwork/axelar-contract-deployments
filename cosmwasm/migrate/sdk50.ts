@@ -28,8 +28,6 @@ async function migrateAllVotingVerifiers(
 ): Promise<void> {
     const chains = getAmplifierChains(config.chains);
     const votingVerifiers: Array<{ chainName: string; address: string; contractName: string }> = [];
-    options.title = options.title || 'Migrate Voting Verifiers to update block time related parameters';
-    options.description = options.description || 'Migrate all voting verifiers to update block time related parameters';
 
     for (const { name: chainName, config: chainConfig } of chains) {
         const votingVerifierConfig = config.getVotingVerifierContract(chainName);
@@ -54,6 +52,8 @@ async function migrateAllVotingVerifiers(
                 config,
                 {
                     ...options,
+                    title: `Migrate Voting Verifier to v2.0.0 for chain ${chainName}`,
+                    description: `Migrate Voting Verifier to v2.0.0 for chain ${chainName}`,
                     contractName,
                     address,
                     msg: JSON.stringify({}),
@@ -75,8 +75,6 @@ async function updateBlockTimeRelatedParameters(
     fee: string | StdFee,
 ): Promise<void> {
     const chains = getAmplifierChains(config.chains);
-    options.title = options.title || 'Update block time related parameters for all voting verifiers';
-    options.description = options.description || 'Update block time related parameters for all voting verifiers';
 
     const votingVerifierMessages = (
         await Promise.all(
@@ -120,12 +118,14 @@ async function updateBlockTimeRelatedParameters(
 
     for (const { chainName, contractName, address, message } of votingVerifierMessages) {
         try {
-            printInfo(`Proceeding with updating block time related parameters for chain ${chainName}...`);
+            printInfo(`Proceeding with updating block-expiry parameter for chain ${chainName}...`);
             await execute(
                 client,
                 config,
                 {
                     ...options,
+                    title: `Update block-expiry parameterfor chain ${chainName}`,
+                    description: `Update block-expiry parameter for chain ${chainName}`,
                     contractName,
                     address,
                     chainName,
@@ -150,8 +150,6 @@ async function updateSigningParametersForMultisig(
     const multisigConfig = config.getContractConfig('Multisig');
     config.validateRequired(multisigConfig.address, 'axelar.contracts.Multisig.address', 'string');
     config.validateRequired(multisigConfig.blockExpiry, 'axelar.contracts.Multisig.blockExpiry', 'number');
-    options.title = options.title || 'Update signing parameters for multisig';
-    options.description = options.description || 'Update signing parameters for multisig';
 
     const { block_expiry } = await client.queryContractSmart(multisigConfig.address, 'signing_parameters');
     printInfo(`Current signing parameters: block_expiry: ${block_expiry}. New proposed block_expiry: ${multisigConfig.blockExpiry}`);
@@ -162,13 +160,15 @@ async function updateSigningParametersForMultisig(
         },
     };
 
-    printInfo(`Proceeding with updating signing parameters for multisig...`);
+    printInfo(`Proceeding with updating block-expiry parameter for Multisig...`);
 
     await execute(
         client,
         config,
         {
             ...options,
+            title: `Update block-expiry parameter for Multisig`,
+            description: `Update block-expiry parameter for Multisig`,
             contractName: 'Multisig',
             address: multisigConfig.address,
             msg: JSON.stringify(msg),
@@ -197,14 +197,14 @@ const programHandler = () => {
 
     program
         .command('update-voting-verifiers')
-        .description('Update block time related parameters for all voting verifiers')
+        .description('Update block-expiry parameter for all voting verifiers')
         .action((options) => {
             mainProcessor(updateBlockTimeRelatedParameters, options);
         });
 
     program
         .command('update-signing-parameters-for-multisig')
-        .description('Update signing parameters for multisig')
+        .description('Update block-expiry parameter for Multisig')
         .action((options) => {
             mainProcessor(updateSigningParametersForMultisig, options);
         });
