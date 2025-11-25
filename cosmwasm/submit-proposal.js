@@ -745,3 +745,9 @@ const programHandler = () => {
 if (require.main === module) {
     programHandler();
 }
+
+module.exports = {
+    confirmProposalSubmission,
+    execute,
+    migrate,
+};
