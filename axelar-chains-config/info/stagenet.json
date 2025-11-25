@@ -3200,13 +3200,13 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "codeId": 50,
+          "codeId": 78,
           "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6",
-          "version": "1.3.0"
+          "version": "2.0.0"
         },
         "storeCodeProposalId": "332",
         "storeCodeProposalCodeHash": "2abe2cbdcf0b3f983ea9121521aede7269b0b2e08787e104a7f249c217eac083",
-        "lastUploadedCodeId": 50
+        "lastUploadedCodeId": 78
       },
       "XrplMultisigProver": {
         "xrpl": {
