@@ -7,6 +7,7 @@ mod gateway;
 mod generate;
 mod governance;
 mod its;
+mod load_test;
 mod memo;
 mod misc;
 mod multisig_prover_types;
@@ -98,6 +99,10 @@ enum Command {
 
     /// Query data from Solana.
     Query(QueryCommandArgs),
+
+    /// Load testing tools for ITS operations.
+    #[clap(subcommand)]
+    LoadTest(load_test::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -335,6 +340,9 @@ async fn run() -> eyre::Result<()> {
                 its::query(command, &config)?;
             }
         },
+        Command::LoadTest(command) => {
+            load_test::handle_command(command, &config).await?;
+        }
     }
     Ok(())
 }

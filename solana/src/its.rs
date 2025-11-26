@@ -565,46 +565,46 @@ pub(crate) struct LinkTokenArgs {
 pub(crate) struct InterchainTransferArgs {
     /// The token account from which tokens should transferred
     #[clap(long)]
-    source_account: Pubkey,
+    pub(crate) source_account: Pubkey,
 
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
+    pub(crate) token_id: [u8; 32],
 
     /// The chain to which the tokens should be transferred
     #[clap(long)]
-    destination_chain: String,
+    pub(crate) destination_chain: String,
 
     /// The address on the destination chain to which the tokens should be transferred
     #[clap(long)]
-    destination_address: String,
+    pub(crate) destination_address: String,
 
     /// The amount of tokens to transfer (supports fractional amounts like 123.55)
     #[clap(long)]
-    amount: String,
+    pub(crate) amount: String,
 
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
-    gas_value: u64,
+    pub(crate) gas_value: u64,
 
     /// Optional AxelarGasService program id on Solana
     #[clap(long)]
-    gas_service: Option<Pubkey>,
+    pub(crate) gas_service: Option<Pubkey>,
 
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
-    gas_config_account: Option<Pubkey>,
+    pub(crate) gas_config_account: Option<Pubkey>,
 
     /// Optional timestamp for the transaction. If not provided, the current time will be used.
     /// This is used to track the token flow. Attention must be paid when generating the
     /// transaction for offline signing, when this value should be set to the expected time the
     /// transaction will be broadcasted.
     #[clap(long)]
-    timestamp: Option<i64>,
+    pub(crate) timestamp: Option<i64>,
 
     /// The authority account (owner or delegate of the source account)
     #[clap(long)]
-    authority: Option<Pubkey>,
+    pub(crate) authority: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -1145,7 +1145,7 @@ fn deploy_remote_canonical_interchain_token(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1316,7 +1316,7 @@ fn deploy_remote_interchain_token(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1381,7 +1381,7 @@ fn register_token_metadata(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1523,7 +1523,7 @@ fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instr
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1622,7 +1622,7 @@ fn interchain_transfer(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1681,8 +1681,8 @@ fn interchain_transfer(
     }])
 }
 
-fn set_flow_limit(_fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
-    let operator = args.operator.unwrap_or(*_fee_payer);
+fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
+    let operator = args.operator.unwrap_or(*fee_payer);
     let (its_root_pda, _) = find_its_root_pda();
     let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, &args.token_id);
 
@@ -1703,7 +1703,7 @@ fn set_flow_limit(_fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<V
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
     let accounts = vec![
-        AccountMeta::new(*_fee_payer, true),
+        AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(operator, true),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(its_roles_pda, false),
