@@ -257,7 +257,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowLimit = await interchainTokenService.flowLimit(tokenId);
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowLimit = await tokenManager.flowLimit();
             printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
 
             break;
@@ -267,7 +271,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowOutAmount = await interchainTokenService.flowOutAmount(tokenId);
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowOutAmount = await tokenManager.flowOutAmount();
             printInfo(`Flow out amount for tokenId ${tokenId}`, flowOutAmount);
 
             break;
@@ -277,7 +285,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowInAmount = await interchainTokenService.flowInAmount(tokenId);
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowInAmount = await tokenManager.flowInAmount();
             printInfo(`Flow in amount for tokenId ${tokenId}`, flowInAmount);
 
             break;
