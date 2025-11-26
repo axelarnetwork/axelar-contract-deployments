@@ -45,7 +45,7 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 **Notes:**
 - **AxelarnetGateway**: This contract only has a `nexus` parameter and does not require governance or admin roles. No action needed.
 - **NexusGateway**: This contract has been deprecated and is no longer in use. No action needed.
-- **Controller and Governance Multisig**: These are under development (TBD) and will be addressed in a future release.
+- **Controller and Governance Multisig**: The role assignment strategy for these is still to be determined (TBD) and will be addressed in a future release once finalized.
 - **Future Change - XrplMultisigProver**: The `UpdateVerifierSet` operation in the admin role will be moved to a dedicated Key Rotation role in a future contract upgrade, allowing the Key Rotation EOA to handle verifier set updates independently from other admin operations.
 
 ## Prerequisites
@@ -91,6 +91,62 @@ Chain config should exist under `${ENV}.json` file.
 | XrplGateway                 | adminAddress      | `axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 | XrplMultisigProver          | governanceAddress | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
 | XrplMultisigProver          | adminAddress      | `axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
+| Governance Multisig         | signers           | See below                                    | See below                                    | See below                                    | See below                                    |
+| Controller                  | -                 | TBD                                          | TBD                                          | TBD                                          | TBD                                          |
+
+### Governance Multisig Signers
+
+**Devnet Amplifier:**
+```yaml
+public_keys:
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: AsphpgV7Lf7PB53R2XhPu4rjAk0mq8O6/F+uHNWzzgZR
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: AgbSPHIOu18pN4O3ffUD3lKRuqvlZocSlxL8zNfHoleM
+```
+
+**Stagenet:**
+```yaml
+public_keys:
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: AzPKnu1am1+s1o4vsMS03QA6oc/1kTbdHCO4gjmODnGv
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: AxrcLnd9D6ZA3EGdZ9IIrJEx8wUp7JJUj05bFAT9WKdW
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A3Zt7M5XyMG3QVBVhQjPRHP5nvi2IZjV9Ru3T4ozrtM/
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: Ag8xmDDx8roBJArN03oBSaM2SuxgV+4uWfwYlmJ/+zMj
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A6YjBmrjroiQDUdYcgmdUbvK9ZFEPwnpcwImBHXT2oGv
+```
+
+**Testnet:**
+```yaml
+public_keys:
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A0kRUhRv5V/ht0xKWRxRTtPD1QnjPEz9R5/N7PbjbaM/
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: AkfJDWilArWNwP8gmj1Uqg/gnZCfPzDb8gAs9807I4We
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A+CWaOdqcJsE2GJjdLqfUNBT65CNIAqqrbYIsXhiHpE3
+```
+
+**Mainnet:**
+```yaml
+public_keys:
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: Atc53p473TT6qQl0PsaH9p8oEo6hWW95ETA+KjuT4lQt
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A3yUotXxw/YqE6FMuzy37zbT05fo71kPzlQ2GYiZ0KUb
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: AyMZlWEpYSTXronit0uGL5r/NXwozzT6btvg6LLAbf/T
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A/+aBgM++3skGAp1hRk9FBHkcrnx7vBmlH6nX9gmlpyZ
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: A0fY1ohSp9CqaPj8Gl3jv8veCaxGpKnx3iSOlgEtTzXZ
+  - '@type': /cosmos.crypto.secp256k1.PubKey
+    key: Ay9hXng2C9sg38HZZX+c2e/zzTi+ygtu2ATXcrtrP0xv
+```
 
 ## Target Role Addresses
 
@@ -471,8 +527,10 @@ After completing role transfers, verify all changes:
 5. **Future Change - XrplMultisigProver**: The `UpdateVerifierSet` operation will be migrated to a dedicated Key Rotation role in a future contract upgrade. This will separate verifier set rotation from other admin operations, allowing the Key Rotation EOA to handle it independently while other admin operations remain with the Emergency Operator EOA.
 
 6. **No Action Contracts**: 
-   - **AxelarnetGateway** and **NexusGateway**: Only have `nexus` parameter, no governance/admin roles
-   - **Controller and Governance Multisig**: Under development, will be addressed in future release
+   - **AxelarnetGateway**: Only has `nexus` parameter, no governance/admin roles - no action needed
+   - **NexusGateway**: Deprecated contract - no action needed
+   - **Controller**: Current address information is TBD - will be addressed when determined
+   - **Governance Multisig**: Signers are documented but role assignment strategy is TBD - will be addressed in future release once finalized
 
 7. **Chain-Specific Contracts**: MultisigProver and VotingVerifier are deployed for multiple chains (Flow, Sui, Stellar, XRPL-EVM, Plume, Hedera, Berachain, Hyperliquid, Monad). Each chain's instance requires separate role transfer.
 
