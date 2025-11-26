@@ -109,6 +109,9 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
         let count = args
             .addresses_to_derive
             .ok_or_else(|| eyre!("Must specify --addresses-to-derive when using mnemonic"))?;
+        if count == 0 {
+            return Err(eyre!("--addresses-to-derive must be at least 1"));
+        }
         derive_keypairs_from_mnemonic(mnemonic, count)?
     } else {
         return Err(eyre!(
@@ -215,8 +218,12 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
     println!("Total transactions: {final_count}");
     println!("Elapsed time: {elapsed:.2} seconds");
     #[allow(clippy::cast_precision_loss, clippy::float_arithmetic)]
-    let tps = final_count as f64 / elapsed;
-    println!("Transactions per second: {tps:.2}");
+    if elapsed > 0.0 {
+        let tps = final_count as f64 / elapsed;
+        println!("Transactions per second: {tps:.2}");
+    } else {
+        println!("Transactions per second: N/A (elapsed time too short to measure)");
+    }
     println!("Output file: {}", args.output.display());
     println!("========================================\n");
 
