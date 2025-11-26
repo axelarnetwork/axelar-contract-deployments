@@ -44,7 +44,7 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 
 **Notes:**
 - **AxelarnetGateway**: This contract only has a `nexus` parameter and does not require governance or admin roles. No action needed.
-- **NexusGateway**: Similar to AxelarnetGateway, this contract only has a `nexus` parameter. No action needed.
+- **NexusGateway**: This contract has been deprecated and is no longer in use. No action needed.
 - **Controller and Governance Multisig**: These are under development (TBD) and will be addressed in a future release.
 - **Future Change - XrplMultisigProver**: The `UpdateVerifierSet` operation in the admin role will be moved to a dedicated Key Rotation role in a future contract upgrade, allowing the Key Rotation EOA to handle verifier set updates independently from other admin operations.
 
