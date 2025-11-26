@@ -777,7 +777,8 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
             }
             // For Sui token addresses (X -> Sui), encode as ASCII string
             return asciiToBytes(destinationTokenAddress.replace('0x', ''));
-
+        case 'xrpl':
+            return destinationTokenAddress;
         default:
             // For all other chains, use the same encoding as destination addresses
             return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
