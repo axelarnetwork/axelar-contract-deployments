@@ -214,7 +214,7 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
     println!("Load test completed!");
     println!("Total transactions: {final_count}");
     println!("Elapsed time: {elapsed:.2} seconds");
-    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_precision_loss, clippy::float_arithmetic)]
     let tps = final_count as f64 / elapsed;
     println!("Transactions per second: {tps:.2}");
     println!("Output file: {}", args.output.display());
@@ -566,7 +566,7 @@ fn derive_keypairs_from_mnemonic(
     Ok(keypairs)
 }
 
-#[allow(clippy::big_endian_bytes)]
+#[allow(clippy::big_endian_bytes, clippy::missing_asserts_for_indexing)]
 fn derive_key_from_seed(seed: &[u8], path: &str) -> eyre::Result<[u8; 64]> {
     use hmac::Hmac;
     use hmac::Mac;
@@ -578,7 +578,9 @@ fn derive_key_from_seed(seed: &[u8], path: &str) -> eyre::Result<[u8; 64]> {
     let result = hmac.finalize();
     let bytes = result.into_bytes();
 
-    assert!(bytes.len() > 63, "HMAC output too short");
+    if bytes.len() <= 63 {
+        return Err(eyre!("HMAC output too short"));
+    }
     let mut key = [0u8; 64];
     key[..32].copy_from_slice(&bytes[..32]);
     key[32..].copy_from_slice(&bytes[32..64]);
@@ -608,7 +610,9 @@ fn derive_key_from_seed(seed: &[u8], path: &str) -> eyre::Result<[u8; 64]> {
         let result = hmac.finalize();
         let bytes = result.into_bytes();
 
-        assert!(bytes.len() > 63, "HMAC output too short");
+        if bytes.len() <= 63 {
+            return Err(eyre!("HMAC output too short"));
+        }
         key[..32].copy_from_slice(&bytes[..32]);
         key[32..].copy_from_slice(&bytes[32..64]);
     }
