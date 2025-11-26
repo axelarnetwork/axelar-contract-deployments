@@ -850,10 +850,6 @@ function validateDestinationChain(chains, destinationChain) {
 }
 
 async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, axelar) {
-    if (env === 'devnet-amplifier' || env === 'local') {
-        return { gasValue: 0, gasFeeValue: 0 };
-    }
-
     if (gasValue !== 'auto' && !isValidNumber(gasValue)) {
         throw new Error(`Invalid gas value: ${gasValue}`);
     }
@@ -864,7 +860,8 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     }
 
     if (!axelar?.axelarscanApi) {
-        throw new Error(`axelarscanApi is not configured for environment: ${env}`);
+        printWarn(`axelarscanApi is not configured for environment: ${env}. Using default gas value to estimate ITS fee: 0`);
+        return { gasValue: 0, gasFeeValue: 0 };
     }
 
     const url = `${axelar.axelarscanApi}/gmp/estimateITSFee`;
