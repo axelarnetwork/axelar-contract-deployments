@@ -212,10 +212,25 @@ ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
 
-1. Generate the governance proposal for Axelar
+1. Generate and submit the proposal on Axelar 
+ 
+- Note: `MNEMONIC` must be set in your .env
+
+```
+ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
+  --targetContractName AxelarGateway 
+```
+
+If `--file` is not supplied, the script will prompt for confirmation and then submit a `call-contracts` type proposal to the Axelar network using `MNEMONIC`.
+
+OR follow these steps:
+
+- Generate the governance proposal for Axelar (JSON only)
 
 ```bash
-ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 --targetContractName AxelarGateway --file proposal.json -n [chain]
+ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
+  --targetContractName AxelarGateway \
+  --file proposal.json
 ```
 
 The date can be specified in two formats:
@@ -223,32 +238,32 @@ The date can be specified in two formats:
 - **Relative seconds**: Numeric value representing seconds from current UTC time (e.g., `3600` for 1 hour from now)
 
 2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
+- Submit the proposal via Cosmos CLI instead  
+   A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
 
 ```bash
 axelard tx gov submit-proposal call-contracts proposal.json --deposit [min-deposit]uaxl --from [wallet] --chain-id [chain-id] --gas auto --gas-adjustment 1.4 --node [rpc]
 ```
 
-3. Ask validators and community to vote on the proposal
+2. Ask validators and community to vote on the proposal
 
 ```bash
 axelard tx gov vote [proposal-id] [vote-option] --from [wallet] --chain-id [chain-id] --node [rpc]
 ```
 
-4. Once the proposal passes after the voting period, a GMP call is initiated from Axelar to the EVM Governance contract.
-5. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
+3. Once the proposal passes after the voting period, a GMP call is initiated from Axelar to the EVM Governance contract.
+4. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
 
 ```bash
 ts-node evm/governance.js submit upgrade [commandId] 2023-12-11T08:45:00 --targetContractName AxelarGateway -n [chain] 
 ```
 
-6. Wait for timelock to pass on the proposal
-7. Execute the proposal
+5. Wait for timelock to pass on the proposal
+6. Execute the proposal
 
 ```bash
 ts-node evm/governance.js execute --targetContractName AxelarGateway --target [target-address] --calldata [calldata] -n [chain]
 ```
-
-8. Verify the governance command went through correctly.
 
 ## Utilities
 
