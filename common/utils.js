@@ -849,8 +849,8 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
-    if (env === 'devnet-amplifier') {
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, axelar) {
+    if (env === 'devnet-amplifier' || env === 'local') {
         return { gasValue: 0, gasFeeValue: 0 };
     }
 
@@ -863,7 +863,11 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         return { gasValue, gasFeeValue };
     }
 
-    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+    if (!axelar?.axelarscanApi) {
+        throw new Error(`axelarscanApi is not configured for environment: ${env}`);
+    }
+
+    const url = `${axelar.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
