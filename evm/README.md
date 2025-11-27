@@ -277,8 +277,6 @@ The CLI includes convenience commands for AxelarServiceGovernance operator-style
   - `ts-node evm/governance.js cancel-multisig <target> <calldata> -c AxelarServiceGovernance -n <chain> --file proposal.json`
 - Submit operator approval via GMP:
   - `ts-node evm/governance.js submit-multisig <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
-- Submit operator approval cancel via GMP:
-  - `ts-node evm/governance.js submit-cancel-multisig <target> <calldata> <commandId> -c AxelarServiceGovernance -n <chain>`
 - Execute an approved operator proposal (operator EOA must call):
   - `ts-node evm/governance.js execute-operator-proposal <target> <calldata> -c AxelarServiceGovernance -n <chain>`
 - Check approval status:
