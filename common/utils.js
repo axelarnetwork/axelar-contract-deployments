@@ -864,7 +864,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     }
 
     if (!axelar?.axelarscanApi) {
-        throw new Error(`axelarscanApi is not configured for environment: ${env}. Using default gas value to estimate ITS fee: 0`);
+        throw new Error(`axelarscanApi is not configured for environment: ${env}. Please check the environment config and try again.`);
     }
 
     const url = `${axelar.axelarscanApi}/gmp/estimateITSFee`;
