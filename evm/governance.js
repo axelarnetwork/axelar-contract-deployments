@@ -128,6 +128,22 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             break;
         }
 
+        case 'transferOperatorship': {
+            const newOperator = options.newOperator;
+
+            validateParameters({
+                isValidAddress: { newOperator },
+            });
+
+            target = governance.address;
+            calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
+
+            title = `Chain ${chain.name} transfer operatorship`;
+            description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
+
+            break;
+        }
+
         case 'transferGovernance': {
             const newGovernance = options.newGovernance || chain.contracts.InterchainGovernance?.address;
 
@@ -435,10 +451,56 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Proposal execution cancelled.');
             }
 
+            if (nativeValue === '0') {
+                printWarn('nativeValue is 0; no native token will be forwarded to the target call.');
+            }
+
             const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
 
             printInfo('Proposal executed.');
+            return null;
+        }
+
+        case 'execute-operator-proposal': {
+            if (contractName === 'InterchainGovernance') {
+                throw new Error(`Invalid governance action for InterchainGovernance: execute-operator-proposal`);
+            }
+
+            const [target, calldata] = args;
+
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
+
+            if (prompt('Proceed with executing this operator proposal?', options.yes)) {
+                throw new Error('Operator proposal execution cancelled.');
+            }
+
+            if (nativeValue === '0') {
+                printWarn('nativeValue is 0; no native token will be forwarded to the target call.');
+            }
+
+            const tx = await governance.executeOperatorProposal(target, calldata, nativeValue, gasOptions);
+            await handleTransactionWithEvent(tx, chain, governance, 'Operator proposal execution', 'OperatorProposalExecuted');
+            return null;
+        }
+
+        case 'is-operator-approved': {
+            if (contractName === 'InterchainGovernance') {
+                throw new Error(`Invalid governance action for InterchainGovernance: is-operator-approved`);
+            }
+
+            const [target, calldata] = args;
+
+            validateParameters({
+                isValidAddress: { target },
+                isValidCalldata: { calldata },
+            });
+
+            const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
+            printInfo('Operator proposal approved', isApproved ? 'true' : 'false');
             return null;
         }
 
@@ -538,7 +600,7 @@ if (require.main === module) {
     program
         .command('schedule')
         .description('Schedule a new timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(
             new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
@@ -554,6 +616,7 @@ if (require.main === module) {
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
@@ -564,7 +627,7 @@ if (require.main === module) {
     program
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
         .addOption(
             new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
         )
@@ -579,6 +642,7 @@ if (require.main === module) {
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
@@ -637,7 +701,7 @@ if (require.main === module) {
     program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
         .addOption(
@@ -653,6 +717,7 @@ if (require.main === module) {
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
@@ -672,6 +737,30 @@ if (require.main === module) {
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, commandId, date, options, cmd) => {
             main(cmd.name(), [target, calldata, commandId, date], options);
+        });
+
+    program
+        .command('execute-operator-proposal')
+        .description('Execute an approved operator proposal (AxelarServiceGovernance only)')
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
+        .action((target, calldata, options, cmd) => {
+            main(cmd.name(), [target, calldata], options);
+        });
+
+    program
+        .command('is-operator-approved')
+        .description('Check whether an operator proposal has been approved (AxelarServiceGovernance only)')
+        .argument('<target>', 'target address')
+        .argument('<calldata>', 'call data')
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
+        .action((target, calldata, options, cmd) => {
+            main(cmd.name(), [target, calldata], options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { address: true });
