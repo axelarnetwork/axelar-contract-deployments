@@ -231,6 +231,19 @@ function isValidAddress(address, allowZeroAddress) {
     return isAddress(address);
 }
 
+function getGovernanceAddress(chain, contractName, address) {
+    if (isValidAddress(address)) {
+        return address;
+    }
+
+    const contractConfig = chain.contracts[contractName];
+    if (!contractConfig?.address) {
+        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+    }
+
+    return contractConfig.address;
+}
+
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
@@ -1150,6 +1163,7 @@ module.exports = {
     handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceAddress,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
