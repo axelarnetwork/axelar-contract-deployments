@@ -3,8 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
-    BigNumber,
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits },
     Contract,
 } = ethers;
 const { Command, Option, Argument } = require('commander');
@@ -18,7 +17,6 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
-    isValidTokenId,
     getGasOptions,
     isNonEmptyString,
     encodeITSDestination,
@@ -27,14 +25,7 @@ const {
     isTrustedChain,
     loadConfig,
 } = require('./utils');
-const {
-    getChainConfigByAxelarId,
-    validateDestinationChain,
-    validateChain,
-    tokenManagerTypes,
-    validateLinkType,
-    estimateITSFee,
-} = require('../common/utils');
+const { getChainConfigByAxelarId, validateChain, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -257,8 +248,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowLimit = await tokenManager.flowLimit();
@@ -271,8 +261,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowOutAmount = await tokenManager.flowOutAmount();
@@ -285,8 +274,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowInAmount = await tokenManager.flowInAmount();
