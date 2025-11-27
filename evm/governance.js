@@ -129,14 +129,12 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
         }
 
         case 'transferOperatorship': {
-            // Only applicable to AxelarServiceGovernance
             const newOperator = options.newOperator;
 
             validateParameters({
                 isValidAddress: { newOperator },
             });
 
-            // self-targeted call to the governance contract
             target = governance.address;
             calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
 
@@ -416,39 +414,6 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             return null;
         }
 
-        case 'submitCancelMultisig': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: submitCancelMultisig`);
-            }
-
-            const target = options.target;
-            const calldata = options.calldata;
-
-            validateParameters({
-                isValidAddress: { target },
-                isValidCalldata: { calldata },
-                isKeccak256Hash: { commandId: options.commandId },
-            });
-
-            const gmpPayload = encodeGovernanceProposal(ProposalType.CancelMultisig, target, calldata, nativeValue, 0);
-
-            if (prompt('Proceed with submitting this cancel proposal?', options.yes)) {
-                throw new Error('Proposal submission cancelled.');
-            }
-
-            const contracts = chain.contracts;
-            const tx = await governance.execute(
-                options.commandId,
-                contracts.InterchainGovernance.governanceChain,
-                contracts.InterchainGovernance.governanceAddress,
-                gmpPayload,
-                gasOptions,
-            );
-
-            await handleTransactionWithEvent(tx, chain, governance, 'Cancel submission', 'OperatorProposalCancelled');
-            return null;
-        }
-
         case 'execute': {
             let target = options.target;
             let calldata = options.calldata;
@@ -497,13 +462,12 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             return null;
         }
 
-        case 'executeOperator': {
+        case 'execute-operator-proposal': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: executeOperator`);
+                throw new Error(`Invalid governance action for InterchainGovernance: execute-operator-proposal`);
             }
 
-            const target = options.target;
-            const calldata = options.calldata;
+            const [target, calldata] = args;
 
             validateParameters({
                 isValidAddress: { target },
@@ -523,13 +487,12 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             return null;
         }
 
-        case 'isOperatorApproved': {
+        case 'is-operator-approved': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: isOperatorApproved`);
+                throw new Error(`Invalid governance action for InterchainGovernance: is-operator-approved`);
             }
 
-            const target = options.target;
-            const calldata = options.calldata;
+            const [target, calldata] = args;
 
             validateParameters({
                 isValidAddress: { target },
@@ -776,41 +739,29 @@ if (require.main === module) {
             main(cmd.name(), [target, calldata, commandId, date], options);
         });
 
-    const executeOperatorCmd = program
+    program
         .command('execute-operator-proposal')
         .description('Execute an approved operator proposal (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('AxelarServiceGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(executeOperatorCmd, { address: true });
-    executeOperatorCmd.action((target, calldata, options, cmd) => {
-        options.target = target;
-        options.calldata = calldata;
-        main('executeOperator', [], options);
-    });
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
+        .action((target, calldata, options, cmd) => {
+            main(cmd.name(), [target, calldata], options);
+        });
 
-    const isOperatorApprovedCmd = program
+    program
         .command('is-operator-approved')
         .description('Check whether an operator proposal has been approved (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
-        .addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
-                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('AxelarServiceGovernance'),
-        )
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
-    addBaseOptions(isOperatorApprovedCmd, { address: true });
-    isOperatorApprovedCmd.action((target, calldata, options, cmd) => {
-        options.target = target;
-        options.calldata = calldata;
-        main('isOperatorApproved', [], options);
-    });
+        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
+        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
+        .action((target, calldata, options, cmd) => {
+            main(cmd.name(), [target, calldata], options);
+        });
 
     addOptionsToCommands(program, addBaseOptions, { address: true });
     program.parse();
