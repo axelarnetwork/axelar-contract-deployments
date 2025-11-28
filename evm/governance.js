@@ -359,7 +359,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const tx = await governance.execute(
                 commandId,
                 contracts.InterchainGovernance.governanceChain,
-                contracts.InterchainGovernance.governanceAddress,
+                _axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
