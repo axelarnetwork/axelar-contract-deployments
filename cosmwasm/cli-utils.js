@@ -104,11 +104,12 @@ const addAmplifierQueryOptions = (program) => {
 };
 
 const addAxelarNodeOption = (program) => {
-    program.addOption(new Option('-a, --node <axelarNode>', 'axelar node url').env('AXELAR_NODE'));
+    program.addOption(new Option('-u, --node <axelarNode>', 'axelar node url').env('AXELAR_NODE'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     addContractOptions(program);
 };
