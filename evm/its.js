@@ -432,6 +432,34 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        case 'operator': {
+            const operator = await interchainTokenService.operator();
+            printInfo('InterchainTokenService operator', operator);
+
+            break;
+        }
+
+        case 'transferOperatorship': {
+            const { newOperator } = options;
+
+            validateParameters({ isValidAddress: { newOperator } });
+
+            const currentOperator = await interchainTokenService.operator();
+
+            if (currentOperator.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`Caller ${walletAddress} is not the operator but ${currentOperator} is.`);
+            }
+
+            if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
+                return;
+            }
+
+            const tx = await interchainTokenService.transferOperatorship(newOperator, gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action, 'RolesRemoved', 'RolesAdded');
+
+            break;
+        }
+
         case 'is-trusted-chain': {
             const [itsChain] = args;
 
@@ -867,6 +895,22 @@ if (require.main === module) {
         .argument('<token-ids...>', 'Token IDs')
         .action((tokenIds, options, cmd) => {
             main(cmd.name(), [tokenIds], options);
+        });
+
+    program
+        .command('operator')
+        .description('Get InterchainTokenService operator address')
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
+        });
+
+    program
+        .command('transferOperatorship')
+        .description('Transfer InterchainTokenService operatorship')
+        .argument('<new-operator>', 'New operator address')
+        .action((newOperator, options, cmd) => {
+            options.newOperator = newOperator;
+            main(cmd.name(), [], options);
         });
 
     program
