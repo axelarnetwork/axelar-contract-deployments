@@ -10,6 +10,7 @@ const { Option, InvalidArgumentError } = require('commander');
 
 const addAmplifierOptions = (program, options) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
@@ -98,8 +99,12 @@ const addChainNameOption = (program) => {
 
 const addAmplifierQueryOptions = (program) => {
     addEnvOption(program);
-
+    addAxelarNodeOption(program);
     addChainNameOption(program);
+};
+
+const addAxelarNodeOption = (program) => {
+    program.addOption(new Option('-a, --node <axelarNode>', 'axelar node url').env('AXELAR_NODE'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
