@@ -59,7 +59,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -190,7 +189,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -342,7 +340,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -469,7 +466,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -600,7 +596,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -730,7 +725,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -858,7 +852,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -999,7 +992,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1131,7 +1123,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1258,7 +1249,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1390,7 +1380,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1526,7 +1515,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1657,7 +1645,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1790,7 +1777,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1921,7 +1907,6 @@
         },
         "InterchainGovernance": {
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2050,7 +2035,6 @@
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
@@ -2132,7 +2116,6 @@
           "address": "0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD",
           "minimumTimeDelay": 604800,
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create",
           "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
@@ -2277,7 +2260,6 @@
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
@@ -2380,7 +2362,6 @@
           "minimumTimeDelay": 604800,
           "address": "0xfDF36A30070ea0241d69052ea85ff44Ad0476a66",
           "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "deploymentMethod": "create3",
           "codehash": "0x70cb562f5d856fab1b0eee1e91dfcbb568be85f28e184c6a096b4c63b145a6c2",
@@ -3554,6 +3535,7 @@
     }
   },
   "axelar": {
+    "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
     "rpc": "https://rpc-axelar.imperator.co:443",
@@ -3578,13 +3560,11 @@
         "storeCodeProposalId": "422",
         "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
         "codeId": 51,
-        "lastUploadedCodeId": 51,
-        "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
+        "lastUploadedCodeId": 51,        "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
         "version": "1.2.1"
       },
       "Router": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "382",
         "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "codeId": 43,
@@ -3603,7 +3583,6 @@
         "version": "1.0.0"
       },
       "Rewards": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "rewardsDenom": "uaxl",
         "params": {
           "epoch_duration": "14400",
@@ -3621,18 +3600,16 @@
         "version": "1.2.0"
       },
       "Coordinator": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "390",
-        "storeCodeProposalCodeHash": "1cdf4d35ce0f2356741ab13d8d3ba115c1aa7ec7c0db1007fede7eb13eb45373",
-        "codeId": 46,
+        "storeCodeProposalId": "384",
+        "storeCodeProposalCodeHash": "5a12c166833e73f12b17bf8480c51b638afbae6aba13bf6ea9870bdddc78e681",
+        "codeId": 45,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "executeProposalId": "245",
-        "lastUploadedCodeId": 46,
-        "version": "2.1.3"
+        "lastUploadedCodeId": 45,
+        "version": "2.1.1"
       },
       "Multisig": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 50,
         "storeCodeProposalId": "394",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
@@ -3644,7 +3621,6 @@
       },
       "MultisigProver": {
         "flow": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3659,7 +3635,6 @@
           "version": "1.1.1"
         },
         "sui": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3675,7 +3650,6 @@
           "version": "1.1.1"
         },
         "stellar": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3691,7 +3665,6 @@
           "version": "1.1.1"
         },
         "xrpl-evm": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3707,7 +3680,6 @@
           "version": "1.1.1"
         },
         "plume": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3723,7 +3695,6 @@
           "version": "1.1.1"
         },
         "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3739,7 +3710,6 @@
           "version": "1.1.1"
         },
         "berachain": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3755,7 +3725,6 @@
           "version": "1.1.1"
         },
         "hyperliquid": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3771,7 +3740,6 @@
           "version": "1.1.1"
         },
         "monad": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
@@ -3843,7 +3811,6 @@
       },
       "VotingVerifier": {
         "flow": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3858,7 +3825,6 @@
           "version": "2.0.0"
         },
         "sui": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "sourceGatewayAddress": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373",
           "serviceName": "amplifier",
           "votingThreshold": [
@@ -3874,7 +3840,6 @@
           "version": "2.0.0"
         },
         "stellar": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF",
           "votingThreshold": [
@@ -3890,7 +3855,6 @@
           "version": "2.0.0"
         },
         "xrpl-evm": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3906,7 +3870,6 @@
           "version": "2.0.0"
         },
         "plume": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3922,7 +3885,6 @@
           "version": "2.0.0"
         },
         "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3938,7 +3900,6 @@
           "version": "2.0.0"
         },
         "berachain": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3954,7 +3915,6 @@
           "version": "2.0.0"
         },
         "hyperliquid": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3970,7 +3930,6 @@
           "version": "2.0.0"
         },
         "monad": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "votingThreshold": [
@@ -3993,7 +3952,6 @@
       "InterchainTokenService": {
         "storeCodeProposalId": "364",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "lastUploadedCodeId": 38,
         "codeId": 38,
@@ -4023,7 +3981,6 @@
       },
       "XrplVotingVerifier": {
         "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "serviceName": "amplifier",
           "votingThreshold": [
@@ -4043,7 +4000,6 @@
       },
       "XrplGateway": {
         "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "address": "axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd",
           "codeId": 41,
@@ -4055,7 +4011,6 @@
       },
       "XrplMultisigProver": {
         "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",

@@ -54,7 +54,7 @@ async function upgradeTransceiver(contractConfig, contractAbi, wallet, chain, op
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
  */
-async function getConstructorArgs(contractName, contracts, contractConfig, wallet, options) {
+async function getConstructorArgs(contractName, contracts, contractConfig, wallet, options, axelar) {
     // Safety check for undefined contractConfig
     if (!contractConfig) {
         throw new Error(
@@ -70,7 +70,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            const governanceAddress = axelar?.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
             const multisig = contractConfig.multisig;
@@ -99,7 +99,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+            const governanceAddress = axelar?.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
@@ -360,7 +360,7 @@ async function processCommand(_axelar, chain, chains, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName, artifactPath);
-    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options, _axelar);
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);

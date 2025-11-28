@@ -12,6 +12,7 @@ export interface FullConfig {
 }
 
 export interface AxelarConfig {
+    governanceAddress?: string;
     contracts: Record<string, AxelarContractConfig>;
     rpc: string;
     gasPrice: string;
@@ -395,6 +396,10 @@ export class ConfigManager implements FullConfig {
         return expeditedAmount;
     }
 
+    public getGov(): string | undefined {
+        return this.axelar.governanceAddress;
+    }
+
     public getChainConfig(chainName: string): ChainConfig {
         const chainConfig = this.chains[chainName];
         if (!chainConfig) {
@@ -495,6 +500,8 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
+        multisigProverConfig.governanceAddress = this.axelar.governanceAddress;
+
         this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`, 'string');
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
@@ -543,6 +550,8 @@ export class ConfigManager implements FullConfig {
         const chainConfig = this.getChainConfig(chainName);
         const verifierContractName = this.getVotingVerifierContractForChainType(chainConfig.chainType);
         const votingVerifierConfig = this.getContractConfigByChain(verifierContractName, chainName) as VotingVerifierChainConfig;
+
+        votingVerifierConfig.governanceAddress = this.axelar.governanceAddress;
 
         this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`, 'string');
         this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`, 'string');
