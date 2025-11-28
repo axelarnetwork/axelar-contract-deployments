@@ -286,7 +286,7 @@ pub(crate) async fn build_transaction(
         Commands::SubmitProof(submit_proof_args) => {
             submit_proof(fee_payer, submit_proof_args, config).await?
         }
-        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config).await?,
+        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config)?,
     };
 
     let blockhash = fetch_latest_blockhash(&config.url)?;
@@ -940,7 +940,7 @@ async fn submit_proof(
     Ok(instructions)
 }
 
-async fn execute(
+fn execute(
     _fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
