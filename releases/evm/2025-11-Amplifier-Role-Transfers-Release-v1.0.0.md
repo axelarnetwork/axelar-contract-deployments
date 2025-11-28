@@ -5,39 +5,39 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** |                                       |
 
-| **Environment** | **Chain** | **Deployment Status** | **Date** |
-| --------------- | --------- | --------------------- | -------- |
-| **Devnet Amplifier** | `avalanche-fuji` | - | TBD |
-| | `berachain` | - | TBD |
-| | `eth-sepolia` | - | TBD |
-| | `flow` | - | TBD |
-| | `optimism-sepolia` | - | TBD |
-| | `plume-2` | - | TBD |
-| | `xrpl-evm-devnet` | - | TBD |
-| **Stagenet** | `berachain` | - | TBD |
-| | `celo-sepolia` | - | TBD |
-| | `flow` | - | TBD |
-| | `hedera` | - | TBD |
-| | `hyperliquid` | - | TBD |
-| | `monad` | - | TBD |
-| | `plume` | - | TBD |
-| | `xrpl-evm` | - | TBD |
-| **Testnet** | `berachain` | - | TBD |
-| | `celo-sepolia` | - | TBD |
-| | `flow` | - | TBD |
-| | `hedera` | - | TBD |
-| | `hyperliquid` | - | TBD |
-| | `memento-demo` | - | TBD |
-| | `monad` | - | TBD |
-| | `plume` | - | TBD |
-| | `xrpl-evm` | - | TBD |
-| **Mainnet** | `berachain` | - | TBD |
-| | `flow` | - | TBD |
-| | `hedera` | - | TBD |
-| | `hyperliquid` | - | TBD |
-| | `monad` | - | TBD |
-| | `plume` | - | TBD |
-| | `xrpl-evm` | - | TBD |
+| **Environment**      | **Chain**          | **Deployment Status** | **Date** |
+| -------------------- | ------------------ | --------------------- | -------- |
+| **Devnet Amplifier** | `avalanche-fuji`   | -                     | TBD      |
+|                      | `berachain`        | -                     | TBD      |
+|                      | `eth-sepolia`      | -                     | TBD      |
+|                      | `flow`             | -                     | TBD      |
+|                      | `optimism-sepolia` | -                     | TBD      |
+|                      | `plume-2`          | -                     | TBD      |
+|                      | `xrpl-evm-devnet`  | -                     | TBD      |
+| **Stagenet**         | `berachain`        | -                     | TBD      |
+|                      | `celo-sepolia`     | -                     | TBD      |
+|                      | `flow`             | -                     | TBD      |
+|                      | `hedera`           | -                     | TBD      |
+|                      | `hyperliquid`      | -                     | TBD      |
+|                      | `monad`            | -                     | TBD      |
+|                      | `plume`            | -                     | TBD      |
+|                      | `xrpl-evm`         | -                     | TBD      |
+| **Testnet**          | `berachain`        | -                     | TBD      |
+|                      | `celo-sepolia`     | -                     | TBD      |
+|                      | `flow`             | -                     | TBD      |
+|                      | `hedera`           | -                     | TBD      |
+|                      | `hyperliquid`      | -                     | TBD      |
+|                      | `memento-demo`     | -                     | TBD      |
+|                      | `monad`            | -                     | TBD      |
+|                      | `plume`            | -                     | TBD      |
+|                      | `xrpl-evm`         | -                     | TBD      |
+| **Mainnet**          | `berachain`        | -                     | TBD      |
+|                      | `flow`             | -                     | TBD      |
+|                      | `hedera`           | -                     | TBD      |
+|                      | `hyperliquid`      | -                     | TBD      |
+|                      | `monad`            | -                     | TBD      |
+|                      | `plume`            | -                     | TBD      |
+|                      | `xrpl-evm`         | -                     | TBD      |
 
 ## Background
 
@@ -75,12 +75,12 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 #### Configuration
 
-| Network              | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   |
-| -------------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   | `deploymentMethod` | `salt`                    | `operatorAddress`                            |
+| -------------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- | ------------------ | ------------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `create2`          | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `create2`          | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`          | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`          | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -92,16 +92,28 @@ For each amplifier chain, add the following configuration:
     "governanceChain": "Axelarnet",
     "governanceAddress": "[governanceAddress]",
     "minimumTimeDelay": [minimumTimeDelay],
-    "deploymentMethod": "TBD",
-    "salt": "TBD"
+    "multisig": "[operator-address]",
+    "deploymentMethod": "[deploymentMethod]",
+    "salt": "[salt]"
   }
 }
 ```
 
+**Note**: The `multisig` field in the config is a legacy field name used by the deployment script. It actually represents the `operator` address required by the AxelarServiceGovernance constructor (5th parameter). The field name will be updated to `operator` in a future release as part of the multisig deprecation.
+
 #### Deploy AxelarServiceGovernance
 
+**Note**: The `deploy-contract.js` script supports parallel deployment using the `--parallel` flag. To deploy on all amplifier chains, first get the amplifier chain names using the `getAmplifierChains` helper function.
+
+**For a single chain:**
 ```bash
-ts-node evm/deploy-contract.js -c AxelarServiceGovernance 
+ts-node evm/deploy-contract.js -c AxelarServiceGovernance
+```
+
+**For all amplifier chains in parallel:**
+```bash
+# Deploy to all amplifier chains in parallel
+ts-node evm/deploy-contract.js -c AxelarServiceGovernance --parallel
 ```
 
 #### Verify Deployment
@@ -113,135 +125,156 @@ ts-node evm/governance.js -n $CHAIN --contractName AxelarServiceGovernance --act
 
 ```bash
 # Verify AxelarServiceGovernance constructor / implementation via explorer
-ts-node evm/verify-contract.js -e $ENV -n $CHAIN -c AxelarServiceGovernance --dir /path/to/axelar-gmp-sdk-solidity
+ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-gmp-sdk-solidity
 ```
 
 ### Step 2: Transfer AxelarAmplifierGateway Owner Role
 
 **New Owner**: AxelarServiceGovernance contract
 
-| Network              | Current Owner | Target Address                                    |
-| -------------------- | ------------- | ------------------------------------------------- |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD |
+| Network              | Current Owner                                    | Target Address |
+| -------------------- | ------------------------------------------------ | ------------- |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`     | TBD           |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`     | TBD           |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`     | TBD           |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`     | TBD           |
 
 ```bash
+# Get the AxelarServiceGovernance contract address for this environment
+AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+
 # Verify current owner
-ts-node evm/ownership.js -c AxelarAmplifierGateway --action owner
+ts-node evm/ownership.js -c AxelarGateway --action owner --parallel
 
 # Transfer ownership to AxelarServiceGovernance
-AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
-```
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE  --parallel
 
+# Verify transfer completed successfully
+ts-node evm/ownership.js -c AxelarGateway --action owner --parallel
+```
 
 ### Step 3: Transfer AxelarAmplifierGateway Operator Role
 
 **New Operator**: Emergency Operator EOA
 
-| Network              | Current Operator | Target Address           |
-| -------------------- | ---------------- | ------------------------ |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD      |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD      |
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD      |
-| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD      |
+| Network              | Current Operator                                 | Target Address                               |
+| -------------------- | ------------------------------------------------ | -------------------------------------------- |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`     | TBD                                          |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`     | `0x5cb17b091c0d9ed922862ff7843fb1f865f925c9` |
+| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`     | TBD                                          |
+| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`     | TBD                                          |
 
 ```bash
 # Get the Emergency Operator EOA address from the table above
 EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
 
 # Transfer operatorship
-ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA
+ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA  --parallel
+
+# Verify transfer completed successfully
+ts-node evm/gateway.js -n $CHAIN --action operator --parallel
 ```
 
 ### Step 4: Transfer AxelarGasService Owner Role
 
 **New Owner**: AxelarServiceGovernance
 
-| Network              | Current Owner | Target Address      |
-| -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD      |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
+| Network              | Current Owner                                    | Target Address |
+| -------------------- | ------------------------------------------------ | -------------- |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`     | TBD            |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`     | TBD            |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`     | TBD            |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`     | TBD            |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
-AXELAR_SERVICE_GOVERNANCE="<AXELAR_SERVICE_GOVERNANCE_ADDRESS>"
+AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
 # Verify current owner
-ts-node evm/ownership.js -c AxelarGasService --action owner
+ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
 
-# Transfer ownership to Multisig
-ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+# Transfer ownership to AxelarServiceGovernance
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE --parallel
+
+# Verify transfer completed successfully
+ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
 ```
-
-**TODO**: 
-- Verify the current owner address for each chain before executing transfer
-- Add verification step after transfer
 
 ### Step 5: Transfer Operators Owner Role
 
-**New Owner**: Relayer Operators EOA
+**New Owner**: Operators Owner EOA
 
-| Network              | Current Owner | Target Address      |
-| -------------------- | ------------- | ------------------- |
-| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TBD      |
-| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | TBD      |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`,`0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD      |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
+| Network              | Current Owner                                                                              | Target Address                               |
+| -------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | TBD                                          |
+| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | `0xd86fb81139f3bc86559ab495094fe2aa24b0a8af` |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD                                          |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`                                               | TBD                                          |
 
 ```bash
 # Get the Relayer Operators EOA address from the table above
-RELAYER_OPERATORS_EOA="<RELAYER_OPERATORS_EOA_ADDRESS>"
+OPERATORS_OWNER_EOA="<RELAYER_OPERATORS_EOA_ADDRESS>"
 
 # Verify current owner
-ts-node evm/ownership.js -c Operators --action owner
+ts-node evm/ownership.js -c Operators --action owner --parallel
 
-# Transfer ownership to Multisig
-ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $RELAYER_OPERATORS_EOA
+# Transfer ownership to Relayer Operators EOA
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_EOA --parallel
+
+# Verify transfer completed successfully
+ts-node evm/ownership.js -c Operators --action owner --parallel
 ```
 
 ### Step 6: Transfer InterchainTokenService Owner Role
 
+**New Owner**: AxelarServiceGovernance
 
-| Network              | Current Owner | Target Address      |
-| -------------------- | ------------- | ------------------- |
-| Devnet Amplifier     | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD      |
-| Stagenet             | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD      |
-| Testnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
-| Mainnet              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD      |
+| Network              | Current Owner                                    | Target Address |
+| -------------------- | ------------------------------------------------ | -------------- |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`     | TBD            |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`     | TBD            |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`     | TBD            |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`     | TBD            |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
-AXELAR_SERVICE_GOVERNANCE="<AXELAR_SERVICE_GOVERNANCE_ADDRESS>"
+AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
 # Verify current owner
-ts-node evm/ownership.js -c InterchainTokenService --action owner
+ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
 
-# Transfer ownership to Multisig
-ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+# Transfer ownership to AxelarServiceGovernance
+ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE --parallel
+
+# Verify transfer completed successfully
+ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
 ```
 
 ### Step 7: Transfer InterchainTokenService Operator Role
 
 **New Operator**: Rate Limiter EOA
 
-| Network              | Current Operator | Target Address      |
-| -------------------- | ---------------- | ------------------- |
-| **Devnet Amplifier** | Not set in config | TBD      |
-| **Stagenet**         | Not set in config | TBD      |
-| **Testnet**          | Not set in config | TBD      |
-| **Mainnet**          | Not set in config | TBD      |
+| Network              | Current Operator  | Target Address                               |
+| -------------------- | ----------------- | -------------------------------------------- |                        
+| **Devnet Amplifier** | Not set in config | TBD                                          |
+| **Stagenet**         | Not set in config | `0xc81184546e7432b98e33a7184ea2423710344e7c` |
+| **Testnet**          | Not set in config | TBD                                          |
+| **Mainnet**          | Not set in config | TBD                                          |
+
+**Note**: If the operator is not set in the config, check the current operator on-chain before transferring. If the operator is `address(0)`, the owner must set the operator first before transferring.
 
 ```bash
 # Get the Rate Limiter EOA address from the table above
 RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
 
+# Verify current owner
+ts-node evm/its.js operator --parallel
+
 # Transfer operatorship
-ts-node evm/its.js -n $CHAIN --action transferOperatorship --newOperator $RATE_LIMITER_EOA
+ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA --parallel
+
+# Verify transfer completed successfully
+ts-node evm/its.js operator --parallel
 ```
 
 ## Verification Checklist
