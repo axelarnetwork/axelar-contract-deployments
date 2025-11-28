@@ -92,7 +92,7 @@ Chain config should exist under `${ENV}.json` file.
 | XrplMultisigProver          | governanceAddress | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
 | XrplMultisigProver          | adminAddress      | `axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 | Governance Multisig         | signers           | See below                                    | See below                                    | See below                                    | See below                                    |
-| Controller                  | -                 | N/A (Devnet)                                 | `axelar1z5fkx8jt4qthpg5dm0vwgluehuf295jgay6fs5` | `axelar1tf298zq9fn0rjlj23dmw04jfpu2whyrqsch5qn` | `axelar1s952p4ye4hs24hqtnwjpggl0akzpcd5uany5rw` |
+| Controller                  | -                 | `axelar10dwjv6xj0flfj5m3ce4t5v7xpjmrt5du7h6zs6` | `axelar1z5fkx8jt4qthpg5dm0vwgluehuf295jgay6fs5` | `axelar1tf298zq9fn0rjlj23dmw04jfpu2whyrqsch5qn` | `axelar1s952p4ye4hs24hqtnwjpggl0akzpcd5uany5rw` |
 
 ### Governance Multisig Signers
 
