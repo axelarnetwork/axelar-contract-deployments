@@ -231,6 +231,19 @@ function isValidAddress(address, allowZeroAddress) {
     return isAddress(address);
 }
 
+function getGovernanceAddress(chain, contractName, address) {
+    if (isValidAddress(address)) {
+        return address;
+    }
+
+    const contractConfig = chain.contracts[contractName];
+    if (!contractConfig?.address) {
+        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+    }
+
+    return contractConfig.address;
+}
+
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
@@ -633,6 +646,20 @@ function wasEventEmitted(receipt, contract, eventName) {
     const event = contract.filters[eventName]();
 
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
+}
+
+async function handleTransactionWithEvent(tx, chain, contract, action, eventName) {
+    printInfo(`${action} transaction`, tx.hash);
+    const receipt = await tx.wait(chain.confirmations);
+
+    if (eventName) {
+        const eventEmitted = wasEventEmitted(receipt, contract, eventName);
+        if (!eventEmitted) {
+            printWarn(`Event ${eventName} not emitted in receipt.`);
+        }
+    }
+
+    return receipt;
 }
 
 const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
@@ -1134,8 +1161,10 @@ module.exports = {
     getConfigByChainId,
     printWalletInfo,
     wasEventEmitted,
+    handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceAddress,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
