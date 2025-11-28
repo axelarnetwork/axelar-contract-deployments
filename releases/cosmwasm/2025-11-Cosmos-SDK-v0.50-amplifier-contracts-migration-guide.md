@@ -52,16 +52,8 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
       --version 2.0.0
     ```
 
-1. Store XRPL Voting Verifier code
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-      -c XrplVotingVerifier \
-      -t "Store XrplVotingVerifier contract v2.0.0" \
-      -d "Store XrplVotingVerifier contract v2.0.0" \
-      --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.0.0
-    ```
+1. Store and migrate XRPL Voting Verifier code
+    Please follow the [XRPL Voting Verifier v2.0.0 release doc](./2025-11-XRPLVotingVerifier-v2.0.0.md)
 
 1. Store Multisig code
 
