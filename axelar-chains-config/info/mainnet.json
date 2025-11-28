@@ -3634,10 +3634,10 @@
         "blockExpiry": 10,
         "storeCodeProposalId": "394",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
-        "codeId": 47,
+        "codeId": 48,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "244",
-        "lastUploadedCodeId": 47,
+        "lastUploadedCodeId": 48,
         "version": "2.3.2"
       },
       "MultisigProver": {
@@ -3985,8 +3985,8 @@
         },
         "storeCodeProposalId": "395",
         "storeCodeProposalCodeHash": "d8a38e71c635c28bec1106f0cc5274d6d130c23e0b7ded88364d41aee17328e1",
-        "codeId": 20,
-        "lastUploadedCodeId": 20
+        "codeId": 49,
+        "lastUploadedCodeId": 49
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "364",
@@ -4036,8 +4036,9 @@
         },
         "storeCodeProposalId": "396",
         "storeCodeProposalCodeHash": "2abe2cbdcf0b3f983ea9121521aede7269b0b2e08787e104a7f249c217eac083",
-        "lastUploadedCodeId": 34,
-        "flow": {}
+        "lastUploadedCodeId": 50,
+        "flow": {},
+        "codeId": 50
       },
       "XrplGateway": {
         "xrpl": {
