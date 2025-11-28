@@ -25,7 +25,7 @@ Migrating to v1.2.0 does not create an entry for existing services in the AUTHOR
 
 ## Deployment
 
-This rollout upgrades the amplifier service registry contract to `v1.2.1`
+This rollout upgrades the amplifier service registry contract from `v1.2.0` to `v1.2.1`.
 
 1. Upload new Service Registry contract
 
