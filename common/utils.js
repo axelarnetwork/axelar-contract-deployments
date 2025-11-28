@@ -524,10 +524,11 @@ const getCurrentTimeInSeconds = () => {
 };
 
 const createGMPProposalJSON = (chain, contractAddress, payload) => {
+    const payloadBase64 = Buffer.from(payload.slice(2), 'hex').toString('base64');
     return {
         chain: chain.axelarId,
         contract_address: contractAddress,
-        payload: payload,
+        payload: payloadBase64,
     };
 };
 
