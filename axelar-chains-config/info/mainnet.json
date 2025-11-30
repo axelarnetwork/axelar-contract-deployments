@@ -3621,7 +3621,6 @@
       },
       "MultisigProver": {
         "flow": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3635,7 +3634,6 @@
           "version": "1.1.1"
         },
         "sui": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3650,7 +3648,6 @@
           "version": "1.1.1"
         },
         "stellar": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3665,7 +3662,6 @@
           "version": "1.1.1"
         },
         "xrpl-evm": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3680,7 +3676,6 @@
           "version": "1.1.1"
         },
         "plume": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3695,7 +3690,6 @@
           "version": "1.1.1"
         },
         "hedera": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3710,7 +3704,6 @@
           "version": "1.1.1"
         },
         "berachain": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3725,7 +3718,6 @@
           "version": "1.1.1"
         },
         "hyperliquid": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3740,7 +3732,6 @@
           "version": "1.1.1"
         },
         "monad": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"
@@ -3981,7 +3972,6 @@
       },
       "XrplVotingVerifier": {
         "xrpl": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "serviceName": "amplifier",
           "votingThreshold": [
             "2",
@@ -4000,7 +3990,6 @@
       },
       "XrplGateway": {
         "xrpl": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "address": "axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd",
           "codeId": 41,
           "version": "1.3.2"
@@ -4011,7 +4000,6 @@
       },
       "XrplMultisigProver": {
         "xrpl": {
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
           "signingThreshold": [
             "2",
             "3"

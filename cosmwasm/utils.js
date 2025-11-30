@@ -735,8 +735,9 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const chainConfig = config.getChainConfig(chainName);
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
 
-    const { adminAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
+    const { domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
         contractConfig;
+    const adminAddress = config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {

@@ -3348,7 +3348,6 @@
       },
       "MultisigProver": {
         "flow": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3363,7 +3362,6 @@
           "version": "1.1.1"
         },
         "hedera": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3378,7 +3376,6 @@
           "version": "1.1.1"
         },
         "sui": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3393,7 +3390,6 @@
           "version": "1.1.1"
         },
         "xrpl-evm": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3408,7 +3404,6 @@
           "version": "1.1.1"
         },
         "plume": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3423,7 +3418,6 @@
           "version": "1.1.1"
         },
         "berachain": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3438,7 +3432,6 @@
           "version": "1.1.1"
         },
         "monad": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3453,7 +3446,6 @@
           "version": "1.1.1"
         },
         "hyperliquid": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3468,7 +3460,6 @@
           "version": "1.1.1"
         },
         "stellar-2025-q3": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3483,7 +3474,6 @@
           "version": "1.1.1"
         },
         "celo-sepolia": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3498,7 +3488,6 @@
           "version": "1.1.1"
         },
         "memento-demo": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3779,7 +3768,6 @@
       },
       "XrplMultisigProver": {
         "xrpl": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "signingThreshold": [
             "51",
             "100"
@@ -3816,7 +3804,6 @@
       },
       "XrplGateway": {
         "xrpl": {
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "codeId": 62,
           "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh",
           "version": "1.3.2"
