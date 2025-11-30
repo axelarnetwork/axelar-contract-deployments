@@ -139,11 +139,11 @@ ts-node stellar/contract.js owner AxelarGateway
 
 **New Operator**: Emergency Operator EOA
 
-| Network      | Target Address |
-| ------------ | -------------- |
-| **Stagenet** | TBD            |
-| **Testnet**  | TBD            |
-| **Mainnet**  | TBD            |
+| Network      | Target Address                                               |
+| ------------ | ------------------------------------------------------------ |
+| **Stagenet** | `GAXI5GBJW3CZFDA73Z3MEOZWWRJSIB7P7RMONBVDIHD3TU5AMRQCVFKF` |
+| **Testnet**  | TBD                                                          |
+| **Mainnet**  | TBD                                                          |
 
 ```bash
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
@@ -159,11 +159,11 @@ ts-node stellar/contract.js operator AxelarGateway
 
 **New Owner**: Relayer Operators EOA
 
-| Network      | Target Address |
-| ------------ | -------------- |
-| **Stagenet** | TBD            |
-| **Testnet**  | TBD            |
-| **Mainnet**  | TBD            |
+| Network      | Target Address                                               |
+| ------------ | ------------------------------------------------------------ |
+| **Stagenet** | `GCUW5QT4NADN4FVP2E4JZ6263DZLTLN57SURDSRGT3MKQR55KRLZS6TO` |
+| **Testnet**  | TBD                                                          |
+| **Mainnet**  | TBD                                                          |
 
 ```bash
 RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
@@ -248,11 +248,11 @@ ts-node stellar/contract.js owner InterchainTokenService
 
 **New Operator**: Rate Limiter EOA
 
-| Network      | Target Address |
-| ------------ | -------------- |
-| **Stagenet** | TBD            |
-| **Testnet**  | TBD            |
-| **Mainnet**  | TBD            |
+| Network      | Target Address                                               |
+| ------------ | ------------------------------------------------------------ |
+| **Stagenet** | `GAOP7ADEODM5NVPMMDACAR7BVNHVN4A7OOUYTVIQOTGPZM2LWX3OKG5N` |
+| **Testnet**  | TBD                                                          |
+| **Mainnet**  | TBD                                                          |
 
 ```bash
 RATE_LIMITER_EOA=<RATE_LIMITER_EOA_ADDRESS>
