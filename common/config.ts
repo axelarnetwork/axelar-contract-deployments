@@ -13,6 +13,7 @@ export interface FullConfig {
 
 export interface AxelarConfig {
     governanceAddress?: string;
+    adminAddress?: string;
     contracts: Record<string, AxelarContractConfig>;
     rpc: string;
     gasPrice: string;
@@ -366,6 +367,10 @@ export class ConfigManager implements FullConfig {
 
     public getGov(): string | undefined {
         return this.axelar.governanceAddress;
+    }
+
+    public getAdmin(): string | undefined {
+        return this.axelar.adminAddress;
     }
 
     public getChainConfig(chainName: string): ChainConfig {
