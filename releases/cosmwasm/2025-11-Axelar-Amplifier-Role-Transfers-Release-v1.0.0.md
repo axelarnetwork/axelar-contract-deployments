@@ -155,9 +155,9 @@ Before executing the role transfers, confirm the target addresses for each envir
 | Role Target            | Devnet Amplifier | Stagenet | Testnet | Mainnet |
 | ---------------------- | ---------------- | -------- | ------- | ------- |
 | Axelar Governance Module | Governance Module | Governance Module | Governance Module | Governance Module |
-| Emergency Operator EOA | axelar15kkglkna4jhjtc5vhwla7lmwt2edyv4xg03jl6              | axelar1ygf7zjukhjhhzyjl0w4qta9872zywsqhj9fqh2      | TBD     | TBD     |
-| Key Rotation EOA       | axelar1ea7vjq5txwa6uqqgmv3gxv80w6nssvqjtxuk8e              | axelar1yfu0pyp0vhf9n978ch2wwsmhklzqpwy6dmfpfr      | TBD     | TBD     |
-| Relayer Operators EOA  | axelar1zu6dcqk3cpww7srg2sz6ft5xa8jfwxnpz0xx2s              | axelar179mu034s39kghzr0dl2yvxqn9zqma7ccs86rhu      | TBD     | TBD     |
+| Emergency Operator EOA | TBD              | TBD      | TBD     | TBD     |
+| Key Rotation EOA       | TBD              | TBD      | TBD     | TBD     |
+| Relayer Operators EOA  | TBD              | TBD      | TBD     | TBD     |
 
 **Note:** Axelar Governance Module is the built-in on-chain governance system, not an EOA address. Role transfers to governance will be executed through governance proposals.
 
