@@ -1,0 +1,91 @@
+{
+  "$schema": "../../schemas/interchain-tokenlist.schema.json",
+  "name": "Squid Interchain Token List",
+  "version": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0
+  },
+  "tokens": {
+    "0xcf24134c93dcca4c1cfa6595dc337849d9e9e5507c3cbffd937d617e015e81f9": {
+      "tokenId": "0xcf24134c93dcca4c1cfa6595dc337849d9e9e5507c3cbffd937d617e015e81f9",
+      "deployer": "0x25A967Ab86b379356AAf9Ad8264f78EAE82D5dc9",
+      "originalMinter": null,
+      "prettySymbol": "YSLC",
+      "decimals": 18,
+      "originAxelarChainId": "moonbeam",
+      "tokenType": "interchain",
+      "deploySalt": "0x7a71c517e9782dcb798591899dc5ee04a0cd836e06ecd7edc7df5ba4ad658e14",
+      "iconUrls": {
+        "svg": "https://raw.githubusercontent.com/axelarnetwork/axelar-configs/main/images/tokens/yslc.svg"
+      },
+      "deploymentMessageId": "0xa415b4a4c28c71b37c59c49c3def35e447a6fce9c4f230cff8800ebd550a9faf-0",
+      "chains": [
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "moonbeam",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "arbitrum",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "linea",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "polygon-zkevm",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "celo",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "fantom",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "kava",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        },
+        {
+          "symbol": "YSLC",
+          "name": "Slime Coin",
+          "axelarChainId": "filecoin-2",
+          "tokenAddress": "0x8eb86b18a8AB66bAC3Be592e67bf0B2E975e07c5",
+          "tokenManager": "0xc5380cEC8576671d2B271beD0F5ADe9b7Fb7de85",
+          "tokenManagerType": "mintBurn"
+        }
+      ]
+    }
+  }
+}
