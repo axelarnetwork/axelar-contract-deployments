@@ -2656,7 +2656,7 @@ dependencies = [
 
 [[package]]
 name = "governance-gmp"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3234,7 +3234,7 @@ dependencies = [
 
 [[package]]
 name = "interchain-token-transfer-gmp"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4172,7 +4172,7 @@ dependencies = [
 
 [[package]]
 name = "program-utils"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "mpl-token-metadata",
  "solana-program",
@@ -5565,7 +5565,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gas-service"
-version = "0.1.1"
+version = "0.1.4"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -5575,7 +5575,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gateway"
-version = "0.1.1"
+version = "0.1.4"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -5591,7 +5591,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-governance"
-version = "0.1.1"
+version = "0.1.4"
 dependencies = [
  "alloy-sol-types",
  "anchor-lang",
@@ -5602,7 +5602,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-its"
-version = "0.1.1"
+version = "0.1.4"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
@@ -5620,9 +5620,10 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-memo"
-version = "0.1.1"
+version = "0.1.4"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "program-utils",
  "solana-axelar-gateway",
  "solana-axelar-its",
@@ -5630,7 +5631,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-operators"
-version = "0.1.1"
+version = "0.1.4"
 dependencies = [
  "anchor-lang",
  "program-utils",
@@ -5638,7 +5639,7 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-std"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
@@ -5648,7 +5649,7 @@ dependencies = [
  "bytemuck",
  "hex",
  "rs_merkle",
- "solana-keccak-hasher",
+ "sha3",
  "thiserror 1.0.69",
  "udigest",
 ]
