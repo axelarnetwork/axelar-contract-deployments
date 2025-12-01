@@ -74,6 +74,10 @@ const isValidCosmosAddress = (str) => {
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
 
+const toArray = (value) => {
+    return Array.isArray(value) ? value : [value];
+};
+
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
@@ -1329,7 +1333,7 @@ const submitProposal = async (client, config, options, proposal, fee) => {
         printInfo('Proposer address', account.address);
     }
 
-    const normalizedProposal = isLegacy ? proposal : Array.isArray(proposal) ? proposal : [proposal];
+    const normalizedProposal = isLegacy ? proposal : toArray(proposal);
 
     const submitProposalMsg = encodeSubmitProposal(normalizedProposal, config, options, account.address);
 
@@ -1511,6 +1515,7 @@ module.exports = {
     CONTRACTS,
     AXELAR_GATEWAY_CONTRACT_NAME,
     fromHex,
+    toArray,
     getSalt,
     calculateDomainSeparator,
     getAmplifierContractConfig,

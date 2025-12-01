@@ -9,6 +9,7 @@ const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     CONTRACTS,
     fromHex,
+    toArray,
     getSalt,
     getAmplifierContractConfig,
     getCodeId,
@@ -293,7 +294,7 @@ const execute = async (client, config, options, _args, fee) => {
     const isLegacy = isLegacySDK(config);
 
     if (isLegacy) {
-        const msgs = Array.isArray(options.msg) ? options.msg : [options.msg];
+        const msgs = toArray(options.msg);
         if (msgs.length > 1) {
             throw new Error('Legacy SDK only supports one message per proposal. Please provide a single --msg flag.');
         }
@@ -307,7 +308,7 @@ const execute = async (client, config, options, _args, fee) => {
         return callSubmitProposal(client, config, options, proposal, fee);
     } else {
         const { msg } = options;
-        const msgs = Array.isArray(msg) ? msg : [msg];
+        const msgs = toArray(msg);
 
         const messages = msgs.map((msgJson) => {
             const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };

@@ -8,7 +8,7 @@ import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { execute } from './submit-proposal';
-import { executeTransaction, getChainTruncationParams, getCodeId, usesGovernanceBypass, validateItsChainChange } from './utils';
+import { executeTransaction, getChainTruncationParams, getCodeId, toArray, usesGovernanceBypass, validateItsChainChange } from './utils';
 
 interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
@@ -35,7 +35,7 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
 const confirmDirectExecution = (options: ContractCommandOptions, messages: string | string[], contractAddress: string): boolean => {
     printInfo('Contract address', contractAddress);
 
-    const msgs = Array.isArray(messages) ? messages : [messages];
+    const msgs = toArray(messages);
     msgs.forEach((msg, index) => {
         const message = typeof msg === 'string' ? JSON.parse(msg) : msg;
         printInfo(`Message ${index + 1}/${msgs.length}`, JSON.stringify(message, null, 2));
@@ -53,7 +53,7 @@ const executeDirectly = async (
     msg: string | string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const msgs = Array.isArray(msg) ? msg : [msg];
+    const msgs = toArray(msg);
 
     for (let i = 0; i < msgs.length; i++) {
         const msgJson = msgs[i];
@@ -72,13 +72,9 @@ const executeContractMessage = async (
     msg: string | string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const contractAddress = config.getContractConfig(contractName).address;
+    const contractAddress = config.validateRequired(config.getContractConfig(contractName).address, `${contractName}.address`);
 
-    if (!contractAddress) {
-        throw new Error(`${contractName} contract address not found in config`);
-    }
-
-    const msgArray = Array.isArray(msg) ? msg : [msg];
+    const msgArray = toArray(msg);
 
     if (usesGovernanceBypass(config, contractName)) {
         if (!confirmDirectExecution(options, msgArray, contractAddress)) {
@@ -327,7 +323,7 @@ const instantiateChainContracts = async (
 
     // Need to save deployment info to config, so we can't use executeContractMessage
     // Handle direct execution and proposal submission separately
-    const msgArray = Array.isArray(msg) ? [msg] : [msg];
+    const msgArray = toArray(msg);
 
     if (usesGovernanceBypass(config, 'Coordinator')) {
         if (!confirmDirectExecution(options, msgArray, coordinatorAddress)) {
