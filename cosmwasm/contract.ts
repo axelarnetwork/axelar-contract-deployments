@@ -284,9 +284,9 @@ const instantiateChainContracts = async (
     const chainConfig = config.getChainConfig(chainName);
     const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
 
-    let gatewayConfig = config.getGatewayContract(chainName);
-    let votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    let multisigProverConfig = config.getMultisigProverContract(chainName);
+    const gatewayConfig = config.getGatewayContract(chainName);
+    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+    const multisigProverConfig = config.getMultisigProverContract(chainName);
 
     if (options.fetchCodeId) {
         const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
