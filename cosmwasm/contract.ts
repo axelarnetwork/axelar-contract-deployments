@@ -136,8 +136,8 @@ const registerItsChain = async (
 
     if (!options.title || !options.description) {
         const chainsList = options.chains.join(', ');
-        options.title = options.title || `Register ${chainsList} on ITS Hub`;
-        options.description = options.description || `Register ${chainsList} on ITS Hub`;
+        options.title = options.title || `${operation} ${chainsList} on ITS Hub`;
+        options.description = options.description || `${operation} ${chainsList} on ITS Hub`;
     }
 
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee);
