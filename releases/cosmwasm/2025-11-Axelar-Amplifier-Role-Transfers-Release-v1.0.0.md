@@ -155,9 +155,9 @@ Before executing the role transfers, confirm the target addresses for each envir
 | Role Target            | Devnet Amplifier | Stagenet | Testnet | Mainnet |
 | ---------------------- | ---------------- | -------- | ------- | ------- |
 | Axelar Governance Module | Governance Module | Governance Module | Governance Module | Governance Module |
-| Emergency Operator EOA | TBD              | TBD      | TBD     | TBD     |
-| Key Rotation EOA       | TBD              | TBD      | TBD     | TBD     |
-| Relayer Operators EOA  | TBD              | TBD      | TBD     | TBD     |
+| Emergency Operator EOA | axelar15kkglkna4jhjtc5vhwla7lmwt2edyv4xg03jl6              | axelar1ygf7zjukhjhhzyjl0w4qta9872zywsqhj9fqh2      | TBD     | TBD     |
+| Key Rotation EOA       | axelar1ea7vjq5txwa6uqqgmv3gxv80w6nssvqjtxuk8e              | axelar1yfu0pyp0vhf9n978ch2wwsmhklzqpwy6dmfpfr      | TBD     | TBD     |
+| Relayer Operators EOA  | axelar1zu6dcqk3cpww7srg2sz6ft5xa8jfwxnpz0xx2s              | axelar179mu034s39kghzr0dl2yvxqn9zqma7ccs86rhu      | TBD     | TBD     |
 
 **Note:** Axelar Governance Module is the built-in on-chain governance system, not an EOA address. Role transfers to governance will be executed through governance proposals.
 
@@ -177,32 +177,46 @@ Before making any transfers, query the current contract state to verify role own
 ```bash
 # Query ServiceRegistry governance account
 axelard query wasm contract-state smart <SERVICE_REGISTRY_CONTRACT_ADDRESS> \
-  '{"governance_address": {}}'
+  '{"governanceAccount": {}}'
 
 # Query Router admin and governance
 axelard query wasm contract-state smart <ROUTER_CONTRACT_ADDRESS> \
-  '{"admin_address": {}}'
+  '{"adminAddress": {}}'
 axelard query wasm contract-state smart <ROUTER_CONTRACT_ADDRESS> \
-  '{"governance_address": {}}'
+  '{"governanceAddress": {}}'
 
 # Query Multisig admin and governance
 axelard query wasm contract-state smart <MULTISIG_CONTRACT_ADDRESS> \
-  '{"admin_address": {}}'
+  '{"adminAddress": {}}'
 axelard query wasm contract-state smart <MULTISIG_CONTRACT_ADDRESS> \
-  '{"governance_address": {}}'
+  '{"governanceAddress": {}}'
 
 # Query MultisigProver for a specific chain
 axelard query wasm contract-state smart <MULTISIG_PROVER_CONTRACT_ADDRESS> \
-  '{"admin": {}}'
+  '{"adminAddress": {}}'
 axelard query wasm contract-state smart <MULTISIG_PROVER_CONTRACT_ADDRESS> \
-  '{"governance": {}}'
+  '{"governanceAddress": {}}'
 
 # Query InterchainTokenService admin and governance
 axelard query wasm contract-state smart <ITS_CONTRACT_ADDRESS> \
-  '{"admin": {}}'
+  '{"adminAddress": {}}'
 axelard query wasm contract-state smart <ITS_CONTRACT_ADDRESS> \
-  '{"governance": {}}'
+  '{"governanceAddress": {}}'
 ```
+
+**Contract Addresses by Environment:**
+
+The following table provides the contract addresses you need for the queries above. Replace the placeholders in the commands with these addresses according to your target environment.
+
+| Contract                             | Devnet Amplifier                                     | Stagenet                                             | Testnet                                              | Mainnet                                              |
+| ------------------------------------ | ---------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| SERVICE_REGISTRY_CONTRACT_ADDRESS    | `axelar1c9fkszt5lq34vvvlat3fxj6yv7ejtqapz04e97vtc9m5z9cwnamq8zjlhz` | `axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd` | `axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m` | `axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m` |
+| ROUTER_CONTRACT_ADDRESS              | `axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y` | `axelar1saq5hcztvd26vvkquv4dzn8e0uu967nuyxtcful3pvv7ajsw4kmq72xft9` | `axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93` | `axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93` |
+| MULTISIG_CONTRACT_ADDRESS            | `axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r` | `axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u` | `axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5` | `axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5` |
+| MULTISIG_PROVER_CONTRACT_ADDRESS (flow example) | `axelar19ukamzyhhaw4algkqch5relyg0h972smhj8zge2usjp8z7yaezrquc475f` | `axelar1u8cmvyq54fepjlt77vqnwyxhf4rqn5j5axgta7py34zlwue3v5fsy2pvhf` | `axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0` | `axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0` |
+| ITS_CONTRACT_ADDRESS                 | `axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4` | `axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk` | `axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr` | `axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr` |
+
+**Note:** MultisigProver addresses are per-chain. The addresses above show the `flow` chain as an example. To query MultisigProver for other chains (sui, stellar, xrpl-evm, plume, hedera, berachain, hyperliquid, monad), replace the contract address with the corresponding chain's MultisigProver address from `axelar-chains-config/info/<environment>.json`.
 
 ### Step 2: Transfer Governance Roles to Axelar Governance Module
 
@@ -271,14 +285,7 @@ axelard query wasm contract-state smart <contract_address> \
 
 The Router admin role should be transferred to an Emergency Operator EOA for rapid response capabilities.
 
-**New Admin**: Emergency Operator EOA
-
-| Network              | Target Address |
-| -------------------- | -------------- |
-| **Devnet Amplifier** | TBD            |
-| **Stagenet**         | TBD            |
-| **Testnet**          | TBD            |
-| **Mainnet**          | TBD            |
+**New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
@@ -300,14 +307,7 @@ axelard query wasm contract-state smart $ROUTER_CONTRACT \
 
 ### Step 4: Transfer Multisig Admin to Emergency Operator EOA
 
-**New Admin**: Emergency Operator EOA
-
-| Network              | Target Address |
-| -------------------- | -------------- |
-| **Devnet Amplifier** | TBD            |
-| **Stagenet**         | TBD            |
-| **Testnet**          | TBD            |
-| **Mainnet**          | TBD            |
+**New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
@@ -331,14 +331,7 @@ axelard query wasm contract-state smart $MULTISIG_CONTRACT \
 
 The MultisigProver admin role (for all supported chains) should be transferred to a Key Rotation EOA for timely verifier set updates.
 
-**New Admin**: Key Rotation EOA
-
-| Network              | Target Address |
-| -------------------- | -------------- |
-| **Devnet Amplifier** | TBD            |
-| **Stagenet**         | TBD            |
-| **Testnet**          | TBD            |
-| **Mainnet**          | TBD            |
+**New Admin**: Key Rotation EOA - refer to the Target Role Addresses Table above
 
 ```bash
 KEY_ROTATION_EOA=<KEY_ROTATION_EOA_ADDRESS>
@@ -363,16 +356,7 @@ axelard query wasm contract-state smart $MULTISIG_PROVER_CONTRACT \
 
 Repeat this step for all chains with MultisigProver deployments.
 
-### Step 6: Transfer InterchainTokenService Admin to Emergency Operator EOA
-
-**New Admin**: Emergency Operator EOA
-
-| Network              | Target Address |
-| -------------------- | -------------- |
-| **Devnet Amplifier** | TBD            |
-| **Stagenet**         | TBD            |
-| **Testnet**          | TBD            |
-| **Mainnet**          | TBD            |
+### Step 6: Transfer InterchainTokenService Admin to Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
@@ -392,16 +376,7 @@ axelard query wasm contract-state smart $ITS_CONTRACT \
   '{"admin": {}}'
 ```
 
-### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA
-
-**New Operator**: Relayer Operators EOA
-
-| Network              | Target Address |
-| -------------------- | -------------- |
-| **Devnet Amplifier** | TBD            |
-| **Stagenet**         | TBD            |
-| **Testnet**          | TBD            |
-| **Mainnet**          | TBD            |
+### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA - refer to the Target Role Addresses Table above
 
 ```bash
 RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
@@ -423,16 +398,8 @@ axelard query wasm contract-state smart $ITS_CONTRACT \
 
 ### Step 8: Transfer XRPL Contract Admin Roles to Emergency Operator EOA
 
-Transfer admin roles for XrplVotingVerifier, XrplGateway, and XrplMultisigProver to Emergency Operator EOA.
+Transfer admin roles for XrplVotingVerifier, XrplGateway, and XrplMultisigProver to Emergency Operator EOA - refer to the Target Role Addresses Table above.
 
-**New Admin**: Emergency Operator EOA
-
-| Network              | Target Address |
-| -------------------- | -------------- |
-| **Devnet Amplifier** | TBD            |
-| **Stagenet**         | TBD            |
-| **Testnet**          | TBD            |
-| **Mainnet**          | TBD            |
 
 ```bash
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
