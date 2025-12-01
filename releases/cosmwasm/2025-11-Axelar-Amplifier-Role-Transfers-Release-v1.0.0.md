@@ -245,7 +245,7 @@ cat > update_governance_proposal.json <<EOF
   "msgs": [
     {
       "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
-      "sender": "<current_governance_address>",
+      "sender": "<governance_module_address>",
       "contract": "<contract_address>",
       "msg": {
         "update_governance": {
@@ -258,6 +258,10 @@ cat > update_governance_proposal.json <<EOF
   "deposit": "10000000uaxl"
 }
 EOF
+
+# Note: The sender must be the governance module address because when a governance 
+# proposal executes, the messages are executed BY the governance module itself, 
+# not by the proposal submitter.
 
 # 2. Submit the governance proposal
 axelard tx gov submit-proposal update_governance_proposal.json \
@@ -278,7 +282,7 @@ axelard tx gov vote <proposal_id> yes \
 
 # 5. Verify the governance transfer
 axelard query wasm contract-state smart <contract_address> \
-  '{"governance_address": {}}'
+  '{"governanceAddress": {}}'
 ```
 
 ### Step 3: Transfer Router Admin to Emergency Operator EOA
@@ -302,7 +306,7 @@ axelard tx wasm execute $ROUTER_CONTRACT \
 
 # Verify transfer
 axelard query wasm contract-state smart $ROUTER_CONTRACT \
-  '{"admin_address": {}}'
+  '{"adminAddress": {}}'
 ```
 
 ### Step 4: Transfer Multisig Admin to Emergency Operator EOA
@@ -324,7 +328,7 @@ axelard tx wasm execute $MULTISIG_CONTRACT \
 
 # Verify transfer
 axelard query wasm contract-state smart $MULTISIG_CONTRACT \
-  '{"admin_address": {}}'
+  '{"adminAddress": {}}'
 ```
 
 ### Step 5: Transfer MultisigProver Admin to Key Rotation EOA
@@ -351,7 +355,7 @@ axelard tx wasm execute $MULTISIG_PROVER_CONTRACT \
 
 # Verify transfer
 axelard query wasm contract-state smart $MULTISIG_PROVER_CONTRACT \
-  '{"admin": {}}'
+  '{"adminAddress": {}}'
 ```
 
 Repeat this step for all chains with MultisigProver deployments.
@@ -373,7 +377,7 @@ axelard tx wasm execute $ITS_CONTRACT \
 
 # Verify transfer
 axelard query wasm contract-state smart $ITS_CONTRACT \
-  '{"admin": {}}'
+  '{"adminAddress": {}}'
 ```
 
 ### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA - refer to the Target Role Addresses Table above
@@ -435,9 +439,9 @@ axelard tx wasm execute $XRPL_MULTISIG_PROVER \
   --fees 5000uaxl
 
 # Verify all transfers
-axelard query wasm contract-state smart $XRPL_VOTING_VERIFIER '{"admin": {}}'
-axelard query wasm contract-state smart $XRPL_GATEWAY '{"admin": {}}'
-axelard query wasm contract-state smart $XRPL_MULTISIG_PROVER '{"admin": {}}'
+axelard query wasm contract-state smart $XRPL_VOTING_VERIFIER '{"adminAddress": {}}'
+axelard query wasm contract-state smart $XRPL_GATEWAY '{"adminAddress": {}}'
+axelard query wasm contract-state smart $XRPL_MULTISIG_PROVER '{"adminAddress": {}}'
 ```
 
 ## Verification Checklist
