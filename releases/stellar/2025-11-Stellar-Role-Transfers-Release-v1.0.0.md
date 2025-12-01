@@ -141,7 +141,7 @@ ts-node stellar/contract.js owner AxelarGateway
 
 | Network      | Target Address                                               |
 | ------------ | ------------------------------------------------------------ |
-| **Stagenet** | `GAXI5GBJW3CZFDA73Z3MEOZWWRJSIB7P7RMONBVDIHD3TU5AMRQCVFKF` |
+| **Stagenet** | TBD                                                          |
 | **Testnet**  | TBD                                                          |
 | **Mainnet**  | TBD                                                          |
 
@@ -161,7 +161,7 @@ ts-node stellar/contract.js operator AxelarGateway
 
 | Network      | Target Address                                               |
 | ------------ | ------------------------------------------------------------ |
-| **Stagenet** | `GCUW5QT4NADN4FVP2E4JZ6263DZLTLN57SURDSRGT3MKQR55KRLZS6TO` |
+| **Stagenet** | TBD                                                          |
 | **Testnet**  | TBD                                                          |
 | **Mainnet**  | TBD                                                          |
 
@@ -250,7 +250,7 @@ ts-node stellar/contract.js owner InterchainTokenService
 
 | Network      | Target Address                                               |
 | ------------ | ------------------------------------------------------------ |
-| **Stagenet** | `GAOP7ADEODM5NVPMMDACAR7BVNHVN4A7OOUYTVIQOTGPZM2LWX3OKG5N` |
+| **Stagenet** | TBD                                                          |
 | **Testnet**  | TBD                                                          |
 | **Mainnet**  | TBD                                                          |
 
