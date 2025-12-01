@@ -432,22 +432,26 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
-        case 'operator': {
-            const operator = await interchainTokenService.operator();
-            printInfo('InterchainTokenService operator', operator);
+        case 'isOperator': {
+            const [address] = args;
+
+            validateParameters({ isValidAddress: { address } });
+
+            const isOp = await interchainTokenService.isOperator(address);
+            printInfo(`Address ${address} is operator`, isOp);
 
             break;
         }
 
         case 'transferOperatorship': {
-            const { newOperator } = options;
+            const [newOperator] = args;
 
             validateParameters({ isValidAddress: { newOperator } });
 
-            const currentOperator = await interchainTokenService.operator();
+            const isCurrentOperator = await interchainTokenService.isOperator(walletAddress);
 
-            if (currentOperator.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`Caller ${walletAddress} is not the operator but ${currentOperator} is.`);
+            if (!isCurrentOperator) {
+                throw new Error(`Caller ${walletAddress} is not the operator.`);
             }
 
             if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
@@ -898,10 +902,11 @@ if (require.main === module) {
         });
 
     program
-        .command('operator')
-        .description('Get InterchainTokenService operator address')
-        .action((options, cmd) => {
-            main(cmd.name(), [], options);
+        .command('isOperator')
+        .description('Check if address is InterchainTokenService operator')
+        .argument('<address>', 'Address to check')
+        .action((address, options, cmd) => {
+            main(cmd.name(), [address], options);
         });
 
     program
@@ -909,8 +914,7 @@ if (require.main === module) {
         .description('Transfer InterchainTokenService operatorship')
         .argument('<new-operator>', 'New operator address')
         .action((newOperator, options, cmd) => {
-            options.newOperator = newOperator;
-            main(cmd.name(), [], options);
+            main(cmd.name(), [newOperator], options);
         });
 
     program
