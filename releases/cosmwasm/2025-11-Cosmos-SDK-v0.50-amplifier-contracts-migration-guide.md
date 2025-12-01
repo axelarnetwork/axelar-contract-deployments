@@ -9,7 +9,7 @@
 | -------------------- | -------------------------------------- | ---------- |
 | **Devnet Amplifier** | Completed                              | 2025-11-21 |
 | **Stagenet**         | Completed                              | 2025-11-24 |
-| **Testnet**          | -                                      | TBD        |
+| **Testnet**          | Completed                              | 2025-12-01 |
 | **Mainnet**          | -                                      | TBD        |
 
 | **Network**          | **Deployment Status** | **Date**   |
@@ -80,8 +80,8 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     | ---------------- | ----------------- | ----------------- |
     | devnet-amplifier | 10                | 50                |
     | stagenet         | 10                | 50                |
-    | testnet          | TBD               | TBD               |
-    | mainnet          | TBD               | TBD               |
+    | testnet          | 10                | 50                |
+    | mainnet          | 10                | 50                |
 
 1. Migrate all VotingVerifier contracts
 
