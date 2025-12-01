@@ -1668,8 +1668,8 @@ fn interchain_transfer(
         destination_address: args.destination_address.into_bytes(),
         amount: raw_amount,
         gas_value: args.gas_value,
-        source_id: None,
-        pda_seeds: None,
+        caller_program_id: None,
+        caller_pda_seeds: None,
         data: None,
     }
     .data();
