@@ -5,11 +5,11 @@
 | **Created By** | @sean329 <sean.xu@interoplabs.io>   |
 | **Deployment** |                                      |
 
-| **Environment**          | **Chain**           | **Deployment Status** |
-| ------------------------ | ------------------- | --------------------- |
-| **Stagenet**             | `stellar-2025-q2`   | Deployed              |
-| **Testnet**              | `stellar-2025-q2-2` | Deployed              |
-| **Mainnet**              | `stellar`           | Deployed              |
+| **Environment**          | **Chain**           | **Deployment Status** | **Date** |
+| ------------------------ | ------------------- | --------------------- | -------- |
+| **Stagenet**             | `stellar-2025-q2`   | -                     | TBD      |
+| **Testnet**              | `stellar-2025-q2-2` | -                     | TBD      |
+| **Mainnet**              | `stellar`           | -                     | TBD      |
 
 ## Background
 
