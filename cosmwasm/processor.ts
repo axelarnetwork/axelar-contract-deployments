@@ -12,6 +12,7 @@ export type Options = {
     runAs?: string;
     deposit?: string;
     instantiateAddresses?: string[];
+    rpc?: string;
 };
 
 type ProcessorFn = (
@@ -50,7 +51,14 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
 }
 
 export async function mainProcessor(processorFn: ProcessorFn, options: Options, args?: string[]) {
+    const { rpc: axelarNode } = options;
     const { configManager, fee } = prepareProcessor(options);
+
+    const axelarNodeFromConfig = configManager.axelar.rpc;
+
+    if (axelarNode) {
+        configManager.axelar.rpc = axelarNode;
+    }
 
     if (!options.mnemonic) {
         throw new Error('Mnemonic is required');
@@ -59,13 +67,24 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
     const client = await prepareClient(options.mnemonic, configManager.axelar.rpc, GasPrice.fromString(configManager.axelar.gasPrice));
 
     await processorFn(client, configManager, options, args, fee);
+
+    configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
 }
 
 export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
+    const { rpc: axelarNode } = options;
     const { configManager, fee } = prepareProcessor(options);
+    const axelarNodeFromConfig = configManager.axelar.rpc;
+
+    if (axelarNode) {
+        configManager.axelar.rpc = axelarNode;
+    }
+
     const client = await CosmWasmClient.connect(configManager.axelar.rpc);
     await processorQueryFn(client, configManager, options, args, fee);
+
+    configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
 }
 
