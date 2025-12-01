@@ -5,12 +5,12 @@
 | **Created By** | @sean329 <sean.xu@interoplabs.io> |
 | **Deployment** |                                    |
 
-| **Environment**      | **Network** | **Deployment Status** |
-| -------------------- | ----------- | --------------------- |
-| **Devnet Amplifier** | `axelar`    | Deployed              |
-| **Stagenet**         | `axelar`    | Deployed              |
-| **Testnet**          | `axelar`    | Deployed              |
-| **Mainnet**          | `axelar`    | Deployed              |
+| **Environment**      | **Network** | **Deployment Status** | **Date** |
+| -------------------- | ----------- | --------------------- | -------- |
+| **Devnet Amplifier** | `axelar`    | -                     | TBD      |
+| **Stagenet**         | `axelar`    | -                     | TBD      |
+| **Testnet**          | `axelar`    | -                     | TBD      |
+| **Mainnet**          | `axelar`    | -                     | TBD      |
 
 ## Background
 
