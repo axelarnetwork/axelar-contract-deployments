@@ -104,7 +104,7 @@ const addAmplifierQueryOptions = (program) => {
 };
 
 const addAxelarNodeOption = (program) => {
-    program.addOption(new Option('-u, --node <axelarNode>', 'axelar node url').env('AXELAR_NODE'));
+    program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
