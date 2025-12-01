@@ -12,7 +12,7 @@ export type Options = {
     runAs?: string;
     deposit?: string;
     instantiateAddresses?: string[];
-    node?: string;
+    rpc?: string;
 };
 
 type ProcessorFn = (
@@ -51,7 +51,7 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
 }
 
 export async function mainProcessor(processorFn: ProcessorFn, options: Options, args?: string[]) {
-    const { node: axelarNode } = options;
+    const { rpc: axelarNode } = options;
     const { configManager, fee } = prepareProcessor(options);
 
     const axelarNodeFromConfig = configManager.axelar.rpc;
@@ -73,7 +73,7 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
 }
 
 export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
-    const { node: axelarNode } = options;
+    const { rpc: axelarNode } = options;
     const { configManager, fee } = prepareProcessor(options);
     const axelarNodeFromConfig = configManager.axelar.rpc;
 
