@@ -132,7 +132,7 @@ const registerItsChain = async (
     }
 
     const operation = options.update ? 'update' : 'register';
-    const msg = `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`;
+    const msg = JSON.stringify({ [`${operation}_chains`]: { chains } });
 
     if (!options.title || !options.description) {
         const chainsList = options.chains.join(', ');
@@ -198,6 +198,16 @@ const createRewardPools = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     const { chainName, epochDuration, participationThreshold, rewardsPerEpoch } = options;
+
+    if (!participationThreshold) {
+        throw new Error('Participation threshold is required');
+    }
+    if (!epochDuration) {
+        throw new Error('Epoch duration is required');
+    }
+    if (!rewardsPerEpoch) {
+        throw new Error('Rewards per epoch is required');
+    }
 
     let parsedThreshold: string[];
     try {
