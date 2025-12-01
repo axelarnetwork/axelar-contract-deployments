@@ -3556,7 +3556,7 @@
   "axelar": {
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
-    "rpc": "https://axelar-archrpc.chainode.tech/",
+    "rpc": "https://rpc-axelar.imperator.co:443",
     "lcd": "https://axelar-archrest.chainode.tech",
     "grpc": "axelar-archgrpc.chainode.tech:443",
     "tokenSymbol": "AXL",
