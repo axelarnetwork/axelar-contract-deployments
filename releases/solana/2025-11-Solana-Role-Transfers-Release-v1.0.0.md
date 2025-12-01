@@ -5,9 +5,9 @@
 | **Created By** | @sean329 <sean.xu@interoplabs.io> |
 | **Deployment** |                                    |
 
-| **Environment**      | **Chain**       | **Deployment Status** |
-| -------------------- | --------------- | --------------------- |
-| **Devnet Amplifier** | `solana-devnet` | Deployed              |
+| **Environment**      | **Chain**       | **Deployment Status** | **Date** |
+| -------------------- | --------------- | --------------------- | -------- |
+| **Devnet Amplifier** | `solana-devnet` | -                     | TBD      |
 
 ## Background
 
