@@ -8,6 +8,7 @@ const { addAmplifierOptions } = require('./cli-utils');
 const { getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { executeTransaction } = require('./utils');
 const { mainProcessor } = require('./processor');
+const { execute } = require('./submit-proposal');
 
 const getNextVerifierSet = async (config, chain, client) => {
     return client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
@@ -66,6 +67,24 @@ const confirmVerifierRotation = async (client, config, _options, [chain, txHash]
     printInfo('Confirm verifier set rotation', transactionHash);
 };
 
+const authorizeVerifier = async (client, config, options, [service_name, verifiers], fee) => {
+    const message = {
+        authorize_verifiers: {
+            service_name,
+            verifiers,
+        },
+    };
+
+    const proposalId = await execute(
+        client,
+        config,
+        { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) },
+        undefined,
+        fee,
+    );
+    return proposalId;
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -86,6 +105,16 @@ const programHandler = () => {
             mainProcessor(confirmVerifierRotation, options, [chain, txHash]);
         });
     addAmplifierOptions(confirmVerifiersCmd, {});
+
+    const authorizeVerifiersCmd = program
+        .command('authorize-verifiers <service_name> <verifiers...>')
+        .description('Authorize verifiers')
+        .action((service_name, verifiers, options) => {
+            mainProcessor(authorizeVerifier, options, [service_name, verifiers]);
+        });
+    addAmplifierOptions(authorizeVerifiersCmd, {
+        proposalOptions: true,
+    });
 
     program.parse();
 };
