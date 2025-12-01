@@ -125,17 +125,14 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+    ts-node cosmwasm/contract.ts instantiate-chain-contracts \
         -n $CHAIN \
         -s "$SALT" \
         --fetchCodeId \
-        -t "Instantiate contracts for $CHAIN" \
-        -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" \
-        --admin "$CONTRACT_ADMIN" \
-        --runAs "[governanceAddress]"
+        --admin "$CONTRACT_ADMIN"
     ```
 
-1. Wait for proposal to pass and query deployed contract addresses
+1. Wait for proposal to pass (or transaction to confirm if direct execution) and query deployed contract addresses
 
     ```bash
     ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
@@ -144,11 +141,8 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Register deployment
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js register-deployment \
-        -n $CHAIN \
-        -t "Register deployment for $CHAIN" \
-        -d "Register deployment for $CHAIN in the Coordinator" \
-        --runAs "[governanceAddress]"
+    ts-node cosmwasm/contract.ts register-deployment \
+        -n $CHAIN
     ```
 
 1. Set environment variables
@@ -175,7 +169,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```bash
     PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
     REWARD_AMOUNT=[reward amount]
-    EPOCH_DURATION=[epoch duration according to the environment]
     ```
 
     - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
@@ -184,7 +177,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 #### Rewards
 
-1. Create reward pool for voting verifier
+1. Create reward pools for VotingVerifier and Multisig
 
     | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
     | -------------------- | ---------------- | ------------------------- | ------------------- |
@@ -194,50 +187,16 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Rewards \
-        -t "Create pool for $CHAIN in $CHAIN voting verifier" \
-        -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-        --msg "{
-            \"create_pool\": {
-                \"params\": {
-                    \"epoch_duration\": \"$EPOCH_DURATION\",
-                    \"participation_threshold\": [participation threshold],
-                    \"rewards_per_epoch\": \"[rewards per epoch]\"
-                },
-                \"pool_id\": {
-                    \"chain_name\": \"$CHAIN\",
-                    \"contract\": \"$VOTING_VERIFIER\"
-                }
-            }
-        }"
-    ```
-
-1. Create reward pool for multisig
-
-    ```bash
-        ts-node cosmwasm/submit-proposal.js execute \
-        -c Rewards \
-        -t "Create pool for $CHAIN in axelar multisig" \
-        -d "Create pool for $CHAIN in axelar multisig" \
-        --msg "{
-            \"create_pool\": {
-                \"params\": {
-                    \"epoch_duration\": \"$EPOCH_DURATION\",
-                    \"participation_threshold\": [participation threshold],
-                    \"rewards_per_epoch\": \"[rewards per epoch]\"
-                },
-                \"pool_id\": {
-                    \"chain_name\": \"$CHAIN\",
-                    \"contract\": \"$MULTISIG\"
-                }
-            }
-        }"
+    ts-node cosmwasm/contract.ts create-reward-pools \
+        -n $CHAIN \
+        --epochDuration "[epoch_duration]" \
+        --participationThreshold "[participation threshold]" \
+        --rewardsPerEpoch "[rewards per epoch]"
     ```
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within`ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -255,10 +214,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js \
-        its-hub-register-chains $CHAIN \
-        -t "Register $CHAIN on ITS Hub" \
-        -d "Register $CHAIN on ITS Hub"
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN
     ```
 
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.

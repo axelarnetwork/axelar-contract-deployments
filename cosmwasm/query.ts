@@ -175,7 +175,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     if (!deploymentName) {
         return printWarn(
             `No deployment found for chain ${chainName} in config.`,
-            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}'.`,
+            `Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}'.`,
         );
     }
 
@@ -194,7 +194,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
 
     if (!result.verifier_address || !result.prover_address || !result.gateway_address) {
         throw new Error(
-            `Missing config for ${chainName}. Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
+            `Missing config for ${chainName}. Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
         );
     }
 
