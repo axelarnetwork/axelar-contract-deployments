@@ -85,6 +85,24 @@ const authorizeVerifier = async (client, config, options, [service_name, verifie
     return proposalId;
 };
 
+const unauthorizeVerifier = async (client, config, options, [service_name, verifiers], fee) => {
+    const message = {
+        unauthorize_verifiers: {
+            service_name,
+            verifiers,
+        },
+    };
+
+    const proposalId = await execute(
+        client,
+        config,
+        { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) },
+        undefined,
+        fee,
+    );
+    return proposalId;
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -113,6 +131,16 @@ const programHandler = () => {
             mainProcessor(authorizeVerifier, options, [service_name, verifiers]);
         });
     addAmplifierOptions(authorizeVerifiersCmd, {
+        proposalOptions: true,
+    });
+
+    const unauthorizeVerifiersCmd = program
+        .command('unauthorize-verifiers <service_name> <verifiers...>')
+        .description('Unauthorize verifiers')
+        .action((service_name, verifiers, options) => {
+            mainProcessor(unauthorizeVerifier, options, [service_name, verifiers]);
+        });
+    addAmplifierOptions(unauthorizeVerifiersCmd, {
         proposalOptions: true,
     });
 
