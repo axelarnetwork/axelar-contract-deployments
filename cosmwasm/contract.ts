@@ -104,11 +104,9 @@ const registerItsChain = async (
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
 
-    const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
-
-    if (!itsMsgTranslator) {
-        throw new Error('ItsMsgTranslator address is required for registerItsChain');
-    }
+    const itsMsgTranslator =
+        options.itsMsgTranslator ||
+        config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
 
     const chains = options.chains.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
@@ -152,9 +150,9 @@ const registerProtocol = async (
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
-    const router = config.axelar?.contracts?.Router?.address;
-    const multisig = config.axelar?.contracts?.Multisig?.address;
+    const serviceRegistry = config.validateRequired(config.getContractConfig('ServiceRegistry').address, 'ServiceRegistry.address');
+    const router = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    const multisig = config.validateRequired(config.getContractConfig('Multisig').address, 'Multisig.address');
 
     const msg = JSON.stringify({
         register_protocol: {
@@ -211,11 +209,11 @@ const createRewardPools = async (
         throw new Error(`Invalid participation threshold format: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    const votingVerifierAddress = config.validateRequired(votingVerifierConfig.address, `VotingVerifier[${chainName}].address`);
-
-    const multisigConfig = config.getContractConfig('Multisig');
-    const multisigAddress = config.validateRequired(multisigConfig.address, 'Multisig.address');
+    const votingVerifierAddress = config.validateRequired(
+        config.getVotingVerifierContract(chainName).address,
+        `VotingVerifier[${chainName}].address`,
+    );
+    const multisigAddress = config.validateRequired(config.getContractConfig('Multisig').address, 'Multisig.address');
 
     if (!options.title || !options.description) {
         options.title = options.title || `Create reward pools for ${chainName}`;
