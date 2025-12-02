@@ -37,8 +37,8 @@ const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/
 const ProposalType = {
     ScheduleTimelock: 0,
     CancelTimelock: 1,
-    ApproveMultisig: 2,
-    CancelMultisig: 3,
+    ApproveOperator: 2,
+    CancelOperator: 3,
 };
 
 async function getSetupParams(governance, targetContractName, target, contracts, wallet, options) {
@@ -303,9 +303,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
-        case 'schedule-multisig': {
+        case 'schedule-operator': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: scheduleMultisig`);
+                throw new Error(`Invalid governance action for InterchainGovernance: scheduleOperator`);
             }
 
             const [target, calldata, date] = args;
@@ -320,13 +320,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             });
 
             const eta = dateToEta(date);
-            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
-        case 'cancel-multisig': {
+        case 'cancel-operator': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: cancelMultisig`);
+                throw new Error(`Invalid governance action for InterchainGovernance: cancelOperator`);
             }
 
             const [target, calldata] = args;
@@ -343,7 +343,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 printWarn('Operator proposal is not approved.');
             }
 
-            const gmpPayload = encodeGovernanceProposal(ProposalType.CancelMultisig, target, calldata, nativeValue, 0);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.CancelOperator, target, calldata, nativeValue, 0);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
@@ -377,9 +377,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             return null;
         }
 
-        case 'submit-multisig': {
+        case 'submit-operator': {
             if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: submitMultisig`);
+                throw new Error(`Invalid governance action for InterchainGovernance: submitOperator`);
             }
 
             const [target, calldata, commandId, date] = args;
@@ -395,7 +395,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             });
 
             const eta = dateToEta(date);
-            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
 
             if (prompt('Proceed with submitting this proposal?', options.yes)) {
                 throw new Error('Proposal submission cancelled.');
@@ -672,8 +672,8 @@ if (require.main === module) {
         });
 
     program
-        .command('schedule-multisig')
-        .description('Schedule a multisig proposal (AxelarServiceGovernance only)')
+        .command('schedule-operator')
+        .description('Schedule an operator proposal (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .argument('<date>', 'proposal activation date (YYYY-MM-DDTHH:mm:ss UTC) or relative seconds (numeric)')
@@ -686,8 +686,8 @@ if (require.main === module) {
         });
 
     program
-        .command('cancel-multisig')
-        .description('Cancel a multisig proposal (AxelarServiceGovernance only)')
+        .command('cancel-operator')
+        .description('Cancel an operator proposal (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
@@ -726,8 +726,8 @@ if (require.main === module) {
         });
 
     program
-        .command('submit-multisig')
-        .description('Submit a multisig proposal via cross-chain message (AxelarServiceGovernance only)')
+        .command('submit-operator')
+        .description('Submit an operator proposal via cross-chain message (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .argument('<commandId>', 'command id')

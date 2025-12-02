@@ -271,12 +271,12 @@ ts-node evm/governance.js execute --targetContractName AxelarGateway --target [t
 
 The CLI includes convenience commands for AxelarServiceGovernance operator-style proposals:
 
-- Schedule operator approval (aka multisig):
-  - `ts-node evm/governance.js schedule-multisig <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
+- Schedule operator approval:
+  - `ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
 - Cancel operator approval JSON:
-  - `ts-node evm/governance.js cancel-multisig <target> <calldata> -c AxelarServiceGovernance -n <chain> --file proposal.json`
+  - `ts-node evm/governance.js cancel-operator <target> <calldata> -c AxelarServiceGovernance -n <chain> --file proposal.json`
 - Submit operator approval via GMP:
-  - `ts-node evm/governance.js submit-multisig <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
+  - `ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
 - Execute an approved operator proposal (operator EOA must call):
   - `ts-node evm/governance.js execute-operator-proposal <target> <calldata> -c AxelarServiceGovernance -n <chain>`
 - Check approval status:
