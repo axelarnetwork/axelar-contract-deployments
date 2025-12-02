@@ -3556,9 +3556,9 @@
   "axelar": {
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
-    "rpc": "https://axelar-rpc.polkachu.com:443",
-    "lcd": "https://rest.axelar.lava.build",
-    "grpc": "grpc.axelar.lava.build:443",
+    "rpc": "https://rpc-axelar.imperator.co:443",
+    "lcd": "https://lcd-axelar.imperator.co",
+    "grpc": "grpc-axelar.imperator.co:443",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://api.axelarscan.io",
     "gasPrice": "0.007uaxl",
