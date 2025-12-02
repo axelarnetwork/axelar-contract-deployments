@@ -3631,7 +3631,7 @@
       "Multisig": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "blockExpiry": 10,
+        "blockExpiry": 50,
         "storeCodeProposalId": "394",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
         "codeId": 48,
@@ -3848,7 +3848,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 10000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -3863,7 +3863,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "base58_tx_digest_and_event_index",
           "addressFormat": "sui",
@@ -3879,7 +3879,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stellar",
@@ -3895,7 +3895,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -3911,7 +3911,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -3927,7 +3927,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -3943,7 +3943,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -3959,7 +3959,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -3975,7 +3975,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
@@ -4028,7 +4028,7 @@
             "2",
             "3"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "address": "axelar14rd4uyrqyl0tw75gjn8zqfppmy08t3x3wrsujeqp37l0hghduanscfvkz6",
           "codeId": 34,
