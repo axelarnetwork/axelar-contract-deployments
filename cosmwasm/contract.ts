@@ -8,7 +8,7 @@ import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { execute } from './submit-proposal';
-import { executeTransaction, getChainTruncationParams, getCodeId, toArray, usesGovernanceBypass, validateItsChainChange } from './utils';
+import { executeTransaction, getChainTruncationParams, getCodeId, usesGovernanceBypass, validateItsChainChange } from './utils';
 
 interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
@@ -19,7 +19,7 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     itsMsgTranslator?: string;
     update?: boolean;
     contractName?: string;
-    msg?: string | string[];
+    msg?: string[];
     epochDuration?: string;
     participationThreshold?: string;
     rewardsPerEpoch?: string;
@@ -32,13 +32,12 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     [key: string]: unknown;
 }
 
-const confirmDirectExecution = (options: ContractCommandOptions, messages: string | string[], contractAddress: string): boolean => {
+const confirmDirectExecution = (options: ContractCommandOptions, messages: string[], contractAddress: string): boolean => {
     printInfo('Contract address', contractAddress);
 
-    const msgs = toArray(messages);
-    msgs.forEach((msg, index) => {
+    messages.forEach((msg, index) => {
         const message = typeof msg === 'string' ? JSON.parse(msg) : msg;
-        printInfo(`Message ${index + 1}/${msgs.length}`, JSON.stringify(message, null, 2));
+        printInfo(`Message ${index + 1}/${messages.length}`, JSON.stringify(message, null, 2));
     });
 
     if (prompt('Proceed with direct execution?', options.yes)) {
@@ -47,20 +46,17 @@ const confirmDirectExecution = (options: ContractCommandOptions, messages: strin
     return true;
 };
 
-const executeDirectly = async (
-    client: ClientManager,
-    contractAddress: string,
-    msg: string | string[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    const msgs = toArray(msg);
+const executeDirectly = async (client: ClientManager, contractAddress: string, msg: string[], fee?: string | StdFee): Promise<void> => {
+    if (msg.length === 0) {
+        throw new Error('At least one message is required');
+    }
 
-    for (let i = 0; i < msgs.length; i++) {
-        const msgJson = msgs[i];
+    for (let i = 0; i < msg.length; i++) {
+        const msgJson = msg[i];
         const message = typeof msgJson === 'string' ? JSON.parse(msgJson) : msgJson;
 
         const { transactionHash } = await executeTransaction(client, contractAddress, message, fee);
-        printInfo(`Transaction ${i + 1}/${msgs.length} executed`, transactionHash);
+        printInfo(`Transaction ${i + 1}/${msg.length} executed`, transactionHash);
     }
 };
 
@@ -69,15 +65,17 @@ const executeContractMessage = async (
     config: ConfigManager,
     options: ContractCommandOptions,
     contractName: string,
-    msg: string | string[],
+    msg: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
+    if (msg.length === 0) {
+        throw new Error('At least one message is required');
+    }
+
     const contractAddress = config.validateRequired(config.getContractConfig(contractName).address, `${contractName}.address`);
 
-    const msgArray = toArray(msg);
-
     if (usesGovernanceBypass(config, contractName)) {
-        if (!confirmDirectExecution(options, msgArray, contractAddress)) {
+        if (!confirmDirectExecution(options, msg, contractAddress)) {
             return;
         }
         return executeDirectly(client, contractAddress, msg, fee);
@@ -132,7 +130,7 @@ const registerItsChain = async (
     }
 
     const operation = options.update ? 'update' : 'register';
-    const msg = JSON.stringify({ [`${operation}_chains`]: { chains } });
+    const msg = [JSON.stringify({ [`${operation}_chains`]: { chains } })];
 
     if (!options.title || !options.description) {
         const chainsList = options.chains.join(', ');
@@ -154,13 +152,15 @@ const registerProtocol = async (
     const router = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
     const multisig = config.validateRequired(config.getContractConfig('Multisig').address, 'Multisig.address');
 
-    const msg = JSON.stringify({
-        register_protocol: {
-            service_registry_address: serviceRegistry,
-            router_address: router,
-            multisig_address: multisig,
-        },
-    });
+    const msg = [
+        JSON.stringify({
+            register_protocol: {
+                service_registry_address: serviceRegistry,
+                router_address: router,
+                multisig_address: multisig,
+            },
+        }),
+    ];
 
     if (!options.title || !options.description) {
         options.title = options.title || 'Register Protocol contracts on Coordinator';
@@ -180,7 +180,7 @@ const registerDeployment = async (
     const { chainName } = options;
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructRegisterDeploymentMessage(chainName);
-    const msg = JSON.stringify(message);
+    const msg = [JSON.stringify(message)];
 
     if (!options.title || !options.description) {
         options.title = options.title || `Register ${chainName} deployment on Coordinator`;
@@ -321,7 +321,7 @@ const instantiateChainContracts = async (
 
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructExecuteMessage(chainName, salt, admin);
-    const msg = JSON.stringify(message);
+    const msg = [JSON.stringify(message)];
 
     if (!options.title || !options.description) {
         options.title = options.title || `Instantiate chain contracts for ${chainName}`;
@@ -331,10 +331,8 @@ const instantiateChainContracts = async (
 
     // Need to save deployment info to config, so we can't use executeContractMessage
     // Handle direct execution and proposal submission separately
-    const msgArray = toArray(msg);
-
     if (usesGovernanceBypass(config, 'Coordinator')) {
-        if (!confirmDirectExecution(options, msgArray, coordinatorAddress)) {
+        if (!confirmDirectExecution(options, msg, coordinatorAddress)) {
             return;
         }
         await executeDirectly(client, coordinatorAddress, msg, fee);
