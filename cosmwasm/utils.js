@@ -11,12 +11,19 @@ const {
     ExecuteContractProposal,
     MigrateContractProposal,
     UpdateInstantiateConfigProposal,
-} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal_legacy');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
-const { MsgExecuteContract, MsgStoreCode } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const {
+    MsgExecuteContract,
+    MsgInstantiateContract,
+    MsgInstantiateContract2,
+    MsgMigrateContract,
+    MsgStoreCode,
+    MsgStoreAndInstantiateContract,
+} = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
@@ -1061,13 +1068,42 @@ const encodeStoreCode = (config, options) => {
     }
 };
 
-const encodeStoreInstantiateProposal = (config, options, msg) => {
-    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+const encodeStoreInstantiate = (config, options, msg) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
-        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+            value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { source, builder, instantiateAddresses, admin } = options;
+        const wasm = readContractCode(options);
+
+        const instantiatePermission =
+            instantiateAddresses && instantiateAddresses.length > 0
+                ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+                : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
+
+        const storeAndInstantiateMsg = MsgStoreAndInstantiateContract.fromPartial({
+            authority: GOVERNANCE_MODULE_ADDRESS,
+            wasmByteCode: zlib.gzipSync(wasm),
+            instantiatePermission,
+            admin,
+            label: getLabel(options),
+            msg: Buffer.from(JSON.stringify(msg)),
+            funds: [],
+            source,
+            builder,
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract',
+            value: Uint8Array.from(MsgStoreAndInstantiateContract.encode(storeAndInstantiateMsg).finish()),
+        };
+    }
 };
 
 const decodeProposalAttributes = (proposalJson) => {
@@ -1082,22 +1118,58 @@ const decodeProposalAttributes = (proposalJson) => {
     return proposalJson;
 };
 
-const encodeInstantiateProposal = (config, options, msg) => {
-    const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
+const encodeInstantiate = (config, options, msg) => {
+    const isLegacy = isLegacySDK(config);
+    const { instantiate2 } = options;
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
-        value: Uint8Array.from(InstantiateContractProposal.encode(proposal).finish()),
-    };
-};
+    if (isLegacy) {
+        if (instantiate2) {
+            const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
+                value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
+            };
+        } else {
+            const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
+                value: Uint8Array.from(InstantiateContractProposal.encode(proposal).finish()),
+            };
+        }
+    } else {
+        const { admin, contractName, salt, chainName } = options;
+        const { contractConfig } = getAmplifierContractConfig(config, options);
 
-const encodeInstantiate2Proposal = (config, options, msg) => {
-    const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
-
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
-        value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
-    };
+        if (instantiate2) {
+            const instantiateMsg = MsgInstantiateContract2.fromPartial({
+                sender: GOVERNANCE_MODULE_ADDRESS,
+                admin,
+                codeId: contractConfig.codeId,
+                label: getLabel(options),
+                msg: Buffer.from(JSON.stringify(msg)),
+                funds: [],
+                salt: getSalt(salt, contractName, chainName),
+                fixMsg: false,
+            });
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract2',
+                value: Uint8Array.from(MsgInstantiateContract2.encode(instantiateMsg).finish()),
+            };
+        } else {
+            const instantiateMsg = MsgInstantiateContract.fromPartial({
+                sender: GOVERNANCE_MODULE_ADDRESS,
+                admin,
+                codeId: contractConfig.codeId,
+                label: getLabel(options),
+                msg: Buffer.from(JSON.stringify(msg)),
+                funds: [],
+            });
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+                value: Uint8Array.from(MsgInstantiateContract.encode(instantiateMsg).finish()),
+            };
+        }
+    }
 };
 
 const encodeExecuteContract = (config, options, chainName) => {
@@ -1150,13 +1222,37 @@ const encodeUpdateInstantiateConfigProposal = (options) => {
     };
 };
 
-const encodeMigrateContractProposal = (config, options) => {
-    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
+const encodeMigrate = (config, options) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
-        value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
+            value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { msg, chainName } = options;
+
+        let contractConfig;
+        let chainConfig;
+        if (!options.address || !options.codeId) {
+            contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+            chainConfig = getChainConfig(config.chains, chainName);
+        }
+
+        const migrateMsg = MsgMigrateContract.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+            codeId: options.codeId ?? contractConfig.codeId,
+            msg: Buffer.from(msg),
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgMigrateContract',
+            value: Uint8Array.from(MsgMigrateContract.encode(migrateMsg).finish()),
+        };
+    }
 };
 
 const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer) => {
@@ -1222,7 +1318,9 @@ const submitProposal = async (client, config, options, proposal, fee) => {
         printInfo('Proposer address', account.address);
     }
 
-    const submitProposalMsg = encodeSubmitProposal(proposal, config, options, account.address);
+    const normalizedProposal = isLegacy ? proposal : Array.isArray(proposal) ? proposal : [proposal];
+
+    const submitProposalMsg = encodeSubmitProposal(normalizedProposal, config, options, account.address);
 
     const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
     const { events } = result;
@@ -1416,17 +1514,17 @@ module.exports = {
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
-    encodeStoreInstantiateProposal,
-    encodeInstantiateProposal,
-    encodeInstantiate2Proposal,
+    encodeStoreInstantiate,
+    encodeInstantiate,
     encodeExecuteContract,
     encodeParameterChangeProposal,
     encodeUpdateInstantiateConfigProposal,
-    encodeMigrateContractProposal,
+    encodeMigrate,
     encodeSubmitProposal,
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
     isLegacySDK,
+    GOVERNANCE_MODULE_ADDRESS,
 };

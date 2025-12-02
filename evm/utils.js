@@ -40,7 +40,6 @@ const {
     copyObject,
     printError,
     printWarn,
-    writeJSON,
     httpGet,
     httpPost,
     sleep,
@@ -49,7 +48,6 @@ const {
     getSaltFromKey,
     getCurrentVerifierSet,
     asyncLocalLoggerStorage,
-    printMsg,
 } = require('../common');
 const {
     create3DeployContract,
@@ -757,18 +755,21 @@ const mainProcessor = async (options, processCommand, save = true) => {
         printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
 
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
     printInfo(
         'Succeeded chains',
         chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
-    printInfo(
-        'Failed chains',
-        chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
-    );
-
-    if (save) {
-        saveConfig(config, options.env);
+    if (Object.keys(failedChains).length > 0) {
+        printError(
+            'Failed chains',
+            chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
+        );
+        process.exit(1);
     }
 
     return results;
@@ -806,7 +807,8 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             printInfo('Chain', chain.name, chalk.cyan);
             result = await processCommand(axelar, chain, chains, options);
         } catch (error) {
-            printError(`Error processing chain ${chain.name}: ${error.message}`);
+            printError(`Error processing chain ${chain.name}`, error.message);
+            loggerError = error.message;
         }
 
         if (options.parallel) {
