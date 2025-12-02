@@ -9,7 +9,7 @@
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-11-25 |
 | **Stagenet**         | Deployed              | 2025-11-26 |
-| **Testnet**          | -                     | TBD        |
+| **Testnet**          | Deployed              | 2025-11-26 |
 | **Mainnet**          | -                     | TBD        |
 
 [Release](https://github.com/commonprefix/axelar-amplifier/releases/tag/xrpl-voting-verifier-v2.0.0)
