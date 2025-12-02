@@ -1777,8 +1777,8 @@
       },
       "SolanaMultisigProver": {
         "lastUploadedCodeId": 1594,
-        "storeCodeProposalId": "1425",
-        "storeCodeProposalCodeHash": "5b4817a4aa5d7c2eda1a21b33b3135e2c783a758f9b0e1382ec13e096c3fa3dd",
+        "storeCodeProposalId": "1462",
+        "storeCodeProposalCodeHash": "35363bb96cfd4fcca665edb8f844f9dc279057d4e119835c21def99f52f3bff5",
         "solana-12": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
