@@ -1145,7 +1145,9 @@ fn deploy_remote_canonical_interchain_token(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1316,7 +1318,9 @@ fn deploy_remote_interchain_token(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1381,7 +1385,9 @@ fn register_token_metadata(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1523,7 +1529,9 @@ fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instr
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1622,7 +1630,9 @@ fn interchain_transfer(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or_else(solana_axelar_gas_service::id);
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
