@@ -7,7 +7,7 @@
 
 | **Environment**      | **Chain** | **Deployment Status** | **Date** |
 | -------------------- | --------- | --------------------- | -------- |
-| **Devnet Amplifier** | `sui`     | -                     | TBD      |
+| **Devnet Amplifier** | `sui-2`   | -                     | TBD      |
 | **Stagenet**         | `sui`     | -                     | TBD      |
 | **Testnet**          | `sui`     | -                     | TBD      |
 | **Mainnet**          | `sui`     | -                     | TBD      |
