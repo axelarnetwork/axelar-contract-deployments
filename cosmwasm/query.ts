@@ -271,6 +271,33 @@ async function queryAllContractVersions(
     );
 }
 
+export async function multisigProof(client: CosmWasmClient, config: ConfigManager, options: Options, args: string[]): Promise<void> {
+    try {
+        const chain = args[0]
+        const session_id = args[1];
+        const address: string = (config.axelar.contracts.MultisigProver[chain] as any)?.address;
+
+        console.log(`Address: ${address}`);
+        console.log(`Message: ${JSON.stringify( {
+            proof: {
+                multisig_session_id: session_id,
+            },
+        })}`);
+
+        const result = await client.queryContractSmart(address, {
+            proof: {
+                multisig_session_id: session_id,
+            },
+        });
+
+        console.log(result);
+
+        return result;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 const programHandler = () => {
     const program = new Command();
 

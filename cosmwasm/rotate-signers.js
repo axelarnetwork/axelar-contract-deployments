@@ -2,13 +2,20 @@
 
 require('../common/cli-utils');
 
-const { Command } = require('commander');
+const { Command, Option} = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const { getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { executeTransaction } = require('./utils');
-const { mainProcessor } = require('./processor');
+const { mainProcessor, mainQueryProcessor } = require('./processor');
 const { execute } = require('./submit-proposal');
+const { multisigProof } = require('./query');
+const { getDefaultProvider } = require('ethers');
+const { getWallet } = require('../evm/sign-utils');
+const { getGasOptions } = require('../evm/utils');
+const { ethers } = require('hardhat');
+
+const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
 
 const getNextVerifierSet = async (config, chain, client) => {
     return client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
@@ -103,6 +110,46 @@ const unauthorizeVerifier = async (client, config, options, [service_name, verif
     return proposalId;
 };
 
+const rotateSigners = async (_client, config, options, [chain, session_id], _fee) => {
+    const { privateKey } = options;
+
+    const rpc = config.chains[chain]?.rpc;
+    const chainConfig = config.chains[chain];
+    const gatewayAddress = chainConfig?.contracts?.AxelarGateway?.address;
+    const gasOptions = getGasOptions(chainConfig, options, null);
+    const provider = getDefaultProvider(rpc);
+
+    const wallet = await getWallet(privateKey, provider, options);
+
+    console.log(JSON.stringify(config.chains[chain]));
+    console.log(`Gateway: ${gatewayAddress}`);
+
+    // Get the execute message
+    const message = await mainQueryProcessor(multisigProof, {...options, contractName: 'Multisig'}, [chain, session_id]);
+    const execute_data = message?.status?.completed?.execute_data;
+
+    if (!execute_data) {
+        printError("could not retrieve execute data for rotating signers");
+        return;
+    }
+
+    console.log(`Message: ${execute_data}`);
+
+    // Execute rotation on evm chain
+    const tx = await wallet
+        .sendTransaction({
+            to: gatewayAddress,
+            data: `0x${execute_data}`,
+            gasLimit: (await gasOptions)?.gasLimit ?? 'auto',
+        });
+    
+    const result = await tx.wait();
+
+    console.log(`Final Result ${JSON.stringify(result)}`);
+
+    // Confirm verifier set on amplifier
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -143,6 +190,15 @@ const programHandler = () => {
     addAmplifierOptions(unauthorizeVerifiersCmd, {
         proposalOptions: true,
     });
+
+    const rotateSignersCmd = program
+        .command('rotate-signers <chain> <session_id>')
+        .description('Rotate signers on edge contract')
+        .addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'))
+        .action((chain, session_id, options) => {
+            mainProcessor(rotateSigners, options, [chain, session_id]);
+        });
+    addAmplifierOptions(rotateSignersCmd, {});
 
     program.parse();
 };

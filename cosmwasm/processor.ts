@@ -72,7 +72,7 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
     configManager.saveConfig();
 }
 
-export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
+export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]): Promise<void> {
     const { rpc: axelarNode } = options;
     const { configManager, fee } = prepareProcessor(options);
     const axelarNodeFromConfig = configManager.axelar.rpc;
@@ -82,10 +82,12 @@ export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, opt
     }
 
     const client = await CosmWasmClient.connect(configManager.axelar.rpc);
-    await processorQueryFn(client, configManager, options, args, fee);
+    let res = await processorQueryFn(client, configManager, options, args, fee);
 
     configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
+
+    return res;
 }
 
 async function prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
