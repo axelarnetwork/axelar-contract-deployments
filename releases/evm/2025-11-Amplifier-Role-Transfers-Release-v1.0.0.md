@@ -1,9 +1,9 @@
 # Amplifier Chains Role Transfers & AxelarServiceGovernance Alignment v1.0.0
 
-|                | **Owner**                             |
-| -------------- | ------------------------------------- |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
-| **Deployment** |                                       |
+| **Deployment** |                                        |
 
 | **Environment**      | **Chain**          | **Deployment Status** | **Date** |
 | -------------------- | ------------------ | --------------------- | -------- |
@@ -75,12 +75,12 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 #### Configuration
 
-| Network              | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   | `deploymentMethod` | `salt`                    | `operatorAddress`                            |
-| -------------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- | ------------------ | ------------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `create2`          | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `create2`          | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`          | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`          | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `governanceAddress`                              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `operatorAddress`                            |
+| -------------------- | ------------------------------------------------ | ------------------ | -------------------------------------------- | ------------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`  | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -92,14 +92,12 @@ For each amplifier chain, add the following configuration:
     "governanceChain": "Axelarnet",
     "governanceAddress": "[governanceAddress]",
     "minimumTimeDelay": [minimumTimeDelay],
-    "multisig": "[operator-address]",
-    "deploymentMethod": "[deploymentMethod]",
+    "operator": "[operatorAddress]",
+    "deploymentMethod": "create2",
     "salt": "[salt]"
   }
 }
 ```
-
-**Note**: The `multisig` field in the config is a legacy field name used by the deployment script. It actually represents the `operator` address required by the AxelarServiceGovernance constructor (5th parameter). The field name will be updated to `operator` in a future release as part of the multisig deprecation.
 
 #### Deploy AxelarServiceGovernance
 
@@ -159,7 +157,7 @@ ts-node evm/ownership.js -c AxelarGateway --action owner --parallel
 
 | Network              | Current Operator                                 | Target Address                               |
 | -------------------- | ------------------------------------------------ | -------------------------------------------- |
-| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`     | TBD                                          |
+| **Devnet Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`     | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`     | `0x5cb17b091c0d9ed922862ff7843fb1f865f925c9` |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`     | TBD                                          |
 | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`     | TBD                                          |
@@ -206,7 +204,7 @@ ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
 
 | Network              | Current Owner                                                                              | Target Address                               |
 | -------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | TBD                                          |
+| **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | `0xd86fb81139f3bc86559ab495094fe2aa24b0a8af` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | TBD                                          |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`                                               | TBD                                          |
@@ -256,7 +254,7 @@ ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
 
 | Network              | Current Operator  | Target Address                               |
 | -------------------- | ----------------- | -------------------------------------------- |                        
-| **Devnet Amplifier** | Not set in config | TBD                                          |
+| **Devnet Amplifier** | Not set in config | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | Not set in config | `0xc81184546e7432b98e33a7184ea2423710344e7c` |
 | **Testnet**          | Not set in config | TBD                                          |
 | **Mainnet**          | Not set in config | TBD                                          |
