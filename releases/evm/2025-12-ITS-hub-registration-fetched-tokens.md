@@ -3,14 +3,15 @@
 |                      | **Owner**                             |
 | -------------------- | ------------------------------------- |
 | **Created By**       | @kulikthebird <tomasz@interoplabs.io> |
+| **Deployment**       | @kulikthebird <tomasz@interoplabs.io> |
 
 
-| **Network**          | **Other Tokens Registration**        | **Date**   |
-| -------------------- | ----------------------------------- | ---------- |
-| **Devnet amplifier** | TBD                                 | 20xx-xx-xx |
-| **Stagenet**         | TBD                                 | 20xx-xx-xx |
-| **Testnet**          | TBD                                 | 20xx-xx-xx |
-| **Mainnet**          | TBD                                 | 20xx-xx-xx |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet amplifier** | TBD                   | 20xx-xx-xx |
+| **Stagenet**         | TBD                   | 20xx-xx-xx |
+| **Testnet**          | TBD                   | 20xx-xx-xx |
+| **Mainnet**          | TBD                   | 20xx-xx-xx |
 
 
 ### Background

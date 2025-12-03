@@ -3,12 +3,13 @@
 |                      | **Owner**                             |
 | -------------------- | ------------------------------------- |
 | **Created By**       | @kulikthebird <tomasz@interoplabs.io> |
+| **Deployment**       | @kulikthebird <tomasz@interoplabs.io> |
 
 
-| **Network**          | **Squid Tokens Registration**       | **Date**   |
-| -------------------- | ----------------------------------- | ---------- |
-| **Testnet**          | TBD                                 | 20xx-xx-xx |
-| **Mainnet**          | TBD                                 | 20xx-xx-xx |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Testnet**          | TBD                   | 20xx-xx-xx |
+| **Mainnet**          | TBD                   | 20xx-xx-xx |
 
 
 ### Background
