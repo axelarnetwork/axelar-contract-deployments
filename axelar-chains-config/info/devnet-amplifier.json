@@ -1776,9 +1776,9 @@
         "version": "2.0.0"
       },
       "SolanaMultisigProver": {
-        "lastUploadedCodeId": 1579,
-        "storeCodeProposalId": "1341",
-        "storeCodeProposalCodeHash": "171b94cb1f5514dc8537dcf2325ff8ca66d429f0892807bbcf8644c580cfea68",
+        "lastUploadedCodeId": 1597,
+        "storeCodeProposalId": "1466",
+        "storeCodeProposalCodeHash": "91c966af902562ffd91809ab8663ca205d9cb2ec24e68c92edbc2daa93563a75",
         "solana-12": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1790,7 +1790,7 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "solana",
           "keyType": "ecdsa",
-          "codeId": 1579,
+          "codeId": 1597,
           "domainSeparator": "0xe5e3e24abb2001ec8cbea06c0ae1959186763ce0a16a4290073e448f51f402a1",
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar19ya79dpwl3nfmq44r5hh7t7nm37z0r3egkfxraltr696e3wtgegqnssprn",
