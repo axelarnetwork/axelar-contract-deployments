@@ -12,7 +12,7 @@ export interface FullConfig {
 }
 
 export interface AxelarConfig {
-    governanceAddress?: string;
+    governanceAddress: string;
     adminAddress?: string;
     contracts: Record<string, AxelarContractConfig>;
     rpc: string;
