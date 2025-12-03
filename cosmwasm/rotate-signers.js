@@ -118,7 +118,6 @@ const rotateSigners = async (_client, config, options, [chain, sessionId], _fee)
 
     const wallet = await getWallet(privateKey, provider, options);
 
-    // Get the execute message
     const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chain, sessionId]);
     const executeData = message?.status?.completed?.execute_data;
 
