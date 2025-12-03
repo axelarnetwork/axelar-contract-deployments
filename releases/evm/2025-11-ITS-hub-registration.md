@@ -95,22 +95,17 @@ Run the command and check the output. Skipped tokens are the one that were succe
 ts-node cosmwasm/register-p2p-tokens.ts register-tokens --dryRun
 ```
 
-1. Set trusted chains to `Axelar` on each consensus chain.
-
-**TODO**
-
-Before proceeding set the following variables in the `.env` file:
-```bash
-PRIVATE_KEY_STELLAR=""
-PRIVATE_KEY_SUI=""
-PRIVATE_KEY_EVM=""
-```
+1. Set `axelar` as a trusted chain on each EVM chain that has ITS deployed.
 
 ```bash
-ts-node common/its.ts set-trusted-chains-all
+ts-node evm/its.js set-trusted-chains axelar -n all
 ```
 
 
-1. Align token supply per chain
+1. Align tokens supply registered on ITS hub.
 
-The command `align-supply` from the `register-p2p-tokens.ts` script should be run to align the tokens supply per chain. This step is needed, since between the token registration and the ITS contract migration some of the tokens potentially could be transfered between the chains. The command will update the values to be as close to the real ones as possible.
+Run the following command to align token supply per each environment:
+
+```bash
+ts-node cosmwasm/register-p2p-tokens.ts modify-token-supply
+```
