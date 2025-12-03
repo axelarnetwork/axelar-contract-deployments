@@ -1311,9 +1311,9 @@
         "version": "1.4.0"
       },
       "Multisig": {
-        "blockExpiry": 10,
-        "codeId": 1581,
-        "lastUploadedCodeId": 1581,
+        "blockExpiry": 50,
+        "codeId": 1586,
+        "lastUploadedCodeId": 1586,
         "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
         "executeProposalId": "55",
         "storeCodeProposalId": "1357",
