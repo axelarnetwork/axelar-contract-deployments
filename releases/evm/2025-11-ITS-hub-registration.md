@@ -11,7 +11,7 @@
 | **Mainnet**          | TBD                                 | 20xx-xx-xx |
 
 
-| **Network**          | **Other Tokens Rgistration**        | **Date**   |
+| **Network**          | **Other Tokens Registration**        | **Date**   |
 | -------------------- | ----------------------------------- | ---------- |
 | **Devnet amplifier** | TBD                                 | 20xx-xx-xx |
 | **Stagenet**         | TBD                                 | 20xx-xx-xx |
@@ -32,33 +32,33 @@
 
 1. Prepare Mnemonics
 
-The prerequisit step before migration is to store the mnemonic of the **InterchainTokenService operator** account (env: MNEMONIC) in the `.env` file. This should be changed per environment before running scripts.
+The prerequisite step before migration is to store the mnemonic of the **InterchainTokenService operator** account in the `.env` file. This should be changed per environment before running scripts.
 ```bash
 MNEMONIC="[ITS operator mnemonic]"
-ENV="[environment]"
+ENV="[mainnet | testnet | stagenet | devnet-amplifier]"
 ```
 
 1. Squid tokens migration
 
 All the Squid-enabled tokens can be found in the squid config files. The purpose of this step is to read the configs to find the p2p tokens and run the migration scripts on them.
 
-Before runninge the scripts, copy and paste the squid token config files (two `squid.tokenlist.json` files) into:
+Before running the scripts, copy and paste the squid token config files (two `squid.tokenlist.json` files) into:
 
 ```bash
  % axelar-chains-config/info/tokens-p2p/tokens-testnet.json
  % axelar-chains-config/info/tokens-p2p/tokens-mainnet.json
 ```
 
-Then run the following script in order to register the tokens on testnet ITS Hub (for `testnet` and `mainnet` separatelly):
+Then run the following script in order to register the tokens on testnet ITS Hub (for `testnet` and `mainnet` separately):
 
 ```bash
 ts-node cosmwasm/register-p2p-tokens.ts register-tokens
 ```
 
 
-1. Check the tokens were migrated properly
+1. Check that the tokens were migrated properly
 
-Run the command and check the output. Skipped tokens are the one that were successfully registered on the ITS hub. Tokens that are not skipped are the one that should be migrated once again.
+Run the command and check the output. Skipped tokens are the ones that were successfully registered on the ITS hub. Tokens that are not skipped are the ones that should be migrated once again.
 
 ```bash
 ts-node cosmwasm/register-p2p-tokens.ts register-tokens --dryRun
@@ -66,7 +66,7 @@ ts-node cosmwasm/register-p2p-tokens.ts register-tokens --dryRun
 
 1. Fetch tokens that are not listed in Squid configs
 
-One can find a pre-fetched tokens stored on the branch [chore(its,evm): p2p tokens found](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1169). These should be placed in:
+One can find pre-fetched tokens stored on the branch [chore(its,evm): p2p tokens found](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1169). These should be placed in:
 
 ```bash
  % axelar-chains-config/info/tokens-p2p/tokens-devnet-amplifier.json
@@ -87,9 +87,9 @@ One should run the following script for each environment to make sure the config
 **Note:** The scripts can be run in parallel.
 
 
-1. Check the tokens were migrated properly
+1. Check that the tokens were migrated properly
 
-Run the command and check the output. Skipped tokens are the one that were successfully registered on the ITS hub. Tokens that are not skipped are the one that should be migrated once again.
+Run the command and check the output. Skipped tokens are the ones that were successfully registered on the ITS hub. Tokens that are not skipped are the ones that should be migrated once again.
 
 ```bash
 ts-node cosmwasm/register-p2p-tokens.ts register-tokens --dryRun
@@ -102,7 +102,7 @@ ts-node evm/its.js set-trusted-chains axelar -n all
 ```
 
 
-1. Align tokens supply registered on ITS hub.
+1. Align token supply registered on ITS hub.
 
 Run the following command to align token supply per each environment:
 
