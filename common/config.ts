@@ -65,10 +65,15 @@ export interface ContractConfig {
     lastUploadedCodeId?: number;
 }
 
+export interface ContractsChainInfo {
+    address: string;
+    codeId: number;
+}
+
 export interface AxelarContractConfig extends ContractConfig {
     governanceAddress?: string;
     governanceAccount?: string;
-    [chainName: string]: unknown;
+    [chainName: string]: ContractsChainInfo | unknown;
 }
 
 export interface VotingVerifierChainConfig {

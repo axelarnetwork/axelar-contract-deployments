@@ -2,7 +2,7 @@
 
 require('../common/cli-utils');
 
-const { Command, Option} = require('commander');
+const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const { getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
@@ -42,7 +42,7 @@ const updateVerifierSet = async (client, config, _options, [chain], fee) => {
     printInfo('Mutisig session ID', multisigSessionId);
 };
 
-const confirmVerifierRotation = async (client, config, _options, [chain, txHash], fee) => {
+const confirmVerifierRotation = async (client, config, _options, [chain, txHash, logIndex], fee) => {
     const nextVerifierSet = (await getNextVerifierSet(config, chain, client)).verifier_set;
     printInfo('Next verifier set', nextVerifierSet);
 
@@ -121,33 +121,28 @@ const rotateSigners = async (_client, config, options, [chain, session_id], _fee
 
     const wallet = await getWallet(privateKey, provider, options);
 
-    console.log(JSON.stringify(config.chains[chain]));
-    console.log(`Gateway: ${gatewayAddress}`);
-
     // Get the execute message
-    const message = await mainQueryProcessor(multisigProof, {...options, contractName: 'Multisig'}, [chain, session_id]);
+    const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chain, session_id]);
     const execute_data = message?.status?.completed?.execute_data;
 
+    printInfo(`Message:`, message);
+
     if (!execute_data) {
-        printError("could not retrieve execute data for rotating signers");
+        printError('could not retrieve execute data for rotating signers');
         return;
     }
 
-    console.log(`Message: ${execute_data}`);
-
     // Execute rotation on evm chain
-    const tx = await wallet
-        .sendTransaction({
-            to: gatewayAddress,
-            data: `0x${execute_data}`,
-            gasLimit: (await gasOptions)?.gasLimit ?? 'auto',
-        });
-    
+    const tx = await wallet.sendTransaction({
+        to: gatewayAddress,
+        data: `0x${execute_data}`,
+        gasLimit: (await gasOptions)?.gasLimit ?? 'auto',
+    });
+
     const result = await tx.wait();
 
-    console.log(`Final Result ${JSON.stringify(result)}`);
-
     // Confirm verifier set on amplifier
+    printInfo(`Tx: `, result.transactionHash);
 };
 
 const programHandler = () => {

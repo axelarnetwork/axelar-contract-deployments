@@ -82,7 +82,7 @@ export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, opt
     }
 
     const client = await CosmWasmClient.connect(configManager.axelar.rpc);
-    let res = await processorQueryFn(client, configManager, options, args, fee);
+    const res = await processorQueryFn(client, configManager, options, args, fee);
 
     configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();

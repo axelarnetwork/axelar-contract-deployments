@@ -4,7 +4,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command } from 'commander';
 
 import { addEnvOption, getChainConfig, itsHubContractAddress, printError, printInfo, printWarn } from '../common';
-import { ConfigManager, ContractConfig } from '../common/config';
+import { ConfigManager, ContractConfig, ContractsChainInfo } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
 
@@ -273,24 +273,15 @@ async function queryAllContractVersions(
 
 export async function multisigProof(client: CosmWasmClient, config: ConfigManager, options: Options, args: string[]): Promise<void> {
     try {
-        const chain = args[0]
+        const chain = args[0];
         const session_id = args[1];
-        const address: string = (config.axelar.contracts.MultisigProver[chain] as any)?.address;
-
-        console.log(`Address: ${address}`);
-        console.log(`Message: ${JSON.stringify( {
-            proof: {
-                multisig_session_id: session_id,
-            },
-        })}`);
+        const address: string = (config.axelar.contracts.MultisigProver[chain] as ContractsChainInfo)?.address;
 
         const result = await client.queryContractSmart(address, {
             proof: {
                 multisig_session_id: session_id,
             },
         });
-
-        console.log(result);
 
         return result;
     } catch (error) {
