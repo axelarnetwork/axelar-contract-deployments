@@ -117,6 +117,9 @@ Contract wasm binary can be passed by specifiying the path to the directory cont
 
 - `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
+**Common options:**
+- `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
+
 Available subcommands:
 
 - `upload`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
@@ -160,6 +163,9 @@ On networks where only governance is allowed to upload bytecode or instantiate, 
 ```
 ts-node submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal title> -d <proposal description> --deposit <deposit> [options]
 ```
+
+**Common options:**
+- `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
 
 ### Uploading bytecode through governance
 
@@ -396,6 +402,9 @@ ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotat
 ### Querying Contract State
 
 The `query.js` script provides commands to query various contract states and configurations. Use these commands to inspect contract information and verify deployments.
+
+**Common options:**
+- `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
 
 #### Available Commands
 

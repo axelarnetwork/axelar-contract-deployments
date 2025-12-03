@@ -412,7 +412,7 @@ mod tests {
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
         assert_eq!(
             parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(),
-            11234567890123456789
+            11_234_567_890_123_456_789
         );
     }
 
