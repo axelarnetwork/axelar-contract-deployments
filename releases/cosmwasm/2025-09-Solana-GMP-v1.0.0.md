@@ -42,7 +42,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
     docker run --rm -v "$(pwd)":/code \
         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-        cosmwasm/optimizer:0.16.1
+        cosmwasm/optimizer:0.17.0
     ```
 
 1. Update the above Contract Checksums per `artifacts/checksums.txt`

@@ -1145,7 +1145,9 @@ fn deploy_remote_canonical_interchain_token(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1316,7 +1318,9 @@ fn deploy_remote_interchain_token(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1381,7 +1385,9 @@ fn register_token_metadata(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1523,7 +1529,9 @@ fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instr
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1622,7 +1630,9 @@ fn interchain_transfer(
     let (gateway_event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &gateway_program);
 
-    let gas_service_program = args.gas_service.unwrap_or(solana_axelar_gas_service::id());
+    let gas_service_program = args
+        .gas_service
+        .unwrap_or_else(solana_axelar_gas_service::id);
     let (gas_treasury, _) = Pubkey::find_program_address(&[b"gas-service"], &gas_service_program);
 
     let (gas_event_authority, _) =
@@ -1668,8 +1678,8 @@ fn interchain_transfer(
         destination_address: args.destination_address.into_bytes(),
         amount: raw_amount,
         gas_value: args.gas_value,
-        source_id: None,
-        pda_seeds: None,
+        caller_program_id: None,
+        caller_pda_seeds: None,
         data: None,
     }
     .data();
@@ -1681,8 +1691,8 @@ fn interchain_transfer(
     }])
 }
 
-fn set_flow_limit(_fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
-    let operator = args.operator.unwrap_or(*_fee_payer);
+fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
+    let operator = args.operator.unwrap_or(*fee_payer);
     let (its_root_pda, _) = find_its_root_pda();
     let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, &args.token_id);
 
@@ -1703,7 +1713,7 @@ fn set_flow_limit(_fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<V
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
     let accounts = vec![
-        AccountMeta::new(*_fee_payer, true),
+        AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(operator, true),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(its_roles_pda, false),
