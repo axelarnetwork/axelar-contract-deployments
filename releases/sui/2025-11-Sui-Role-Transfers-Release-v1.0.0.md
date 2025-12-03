@@ -69,7 +69,6 @@ Notes:
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | Multisig       |
 
 ```bash
-cd /Users/socrates/Axelar/axelar-contract-deployments
 MULTISIG=$(jq -r '.chains["sui"].roles.multisig' ./axelar-chains-config/info/$ENV.json)
 GATEWAY_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.AxelarGateway.ownerCapId' ./axelar-chains-config/info/$ENV.json)
 
