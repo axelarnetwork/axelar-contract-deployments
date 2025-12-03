@@ -27,8 +27,12 @@
 | **Mainnet**          | TBD                                 | 20xx-xx-xx |
 
 
+### Background
 
-### Migration steps
+Without the [Axelar ITS Hub](https://github.com/axelarnetwork/axelar-amplifier/tree/main/contracts/interchain-token-service) solution, the ITS contracts deployed on EVM-compatible chains communicate with each other in a peer-to-peer manner using the Axelar GMP protocol. This migration makes it mandatory for edge ITS contracts to use the ITS hub stored on the Axelar network in order to send interchain transfers.
+
+
+### Deployment & checks
 
 1. Prepare Mnemonics
 
