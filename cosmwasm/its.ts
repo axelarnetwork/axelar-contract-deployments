@@ -92,9 +92,9 @@ async function registerP2pToken(client: ClientManager, config: ConfigManager, op
     try {
         const tokenData = {
             tokenId: tokenId,
-            originChain: originChain,
+            originChain: originChain.toLowerCase(),
             decimals: decimals,
-            chainName: chain,
+            chainName: chain.toLowerCase(),
         };
         const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
         validateParameters({

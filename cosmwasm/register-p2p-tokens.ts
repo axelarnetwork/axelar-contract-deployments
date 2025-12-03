@@ -36,7 +36,7 @@ async function forEachTokenInFile(
 ) {
     const { env, tokenIds, chains } = options;
     const tokenIdsToProcess = new Set(tokenIds);
-    const chainsToProcess = new Set(chains);
+    const chainsToProcess = new Set(chains?.map((chain: string) => chain.toLowerCase()) || []);
     const tokenInfoString = fs.readFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
 
