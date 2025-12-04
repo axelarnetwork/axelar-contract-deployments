@@ -422,6 +422,12 @@ export class ConfigManager implements FullConfig {
             );
         }
 
+        if (numNumerator <= 0 || numDenominator <= 0) {
+            throw new Error(
+                `Invalid threshold configuration for the chain. Numerator and denominator must be greater than 0, got: [${numNumerator}, ${numDenominator}]`,
+            );
+        }
+
         if (numNumerator > numDenominator) {
             throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
         }

@@ -197,9 +197,14 @@ const createRewardPools = async (
 ): Promise<void> => {
     const { chainName, epochDuration, participationThreshold, rewardsPerEpoch } = options;
 
-    validateParameters({ isValidThreshold: { participationThreshold } });
+    let parsedThreshold;
+    try {
+        parsedThreshold = JSON.parse(participationThreshold);
+    } catch {
+        throw new Error(`Invalid participationThreshold format. Expected JSON array, got: ${participationThreshold}`);
+    }
 
-    const threshold: string[] = JSON.parse(participationThreshold);
+    const threshold: string[] = config.validateThreshold(parsedThreshold, '--participationThreshold');
 
     const votingVerifierAddress = config.validateRequired(
         config.getVotingVerifierContract(chainName).address,

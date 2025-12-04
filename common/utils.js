@@ -184,39 +184,6 @@ const isNumberArray = (arr) => {
     return true;
 };
 
-const isValidThreshold = (thresholdString) => {
-    if (typeof thresholdString !== 'string') {
-        return false;
-    }
-
-    let parsed;
-    try {
-        parsed = JSON.parse(thresholdString);
-    } catch {
-        return false;
-    }
-
-    if (!Array.isArray(parsed) || parsed.length !== 2) {
-        return false;
-    }
-
-    const numNumerator = Number(parsed[0]);
-    const numDenominator = Number(parsed[1]);
-
-    if (Number.isNaN(numNumerator) || !isFinite(numNumerator)) {
-        return false;
-    }
-    if (Number.isNaN(numDenominator) || !isFinite(numDenominator)) {
-        return false;
-    }
-
-    if (numNumerator > numDenominator) {
-        return false;
-    }
-
-    return true;
-};
-
 const isNonEmptyStringArray = (arr) => {
     if (!Array.isArray(arr)) {
         return false;
@@ -505,7 +472,6 @@ const validationFunctions = {
     isValidStellarContract,
     isValidSvmAddressFormat,
     isHexString,
-    isValidThreshold,
 };
 
 function validateParameters(parameters) {
