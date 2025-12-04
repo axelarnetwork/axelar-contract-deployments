@@ -14,7 +14,6 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
     title?: string;
     description?: string;
-    chains?: string[];
     itsEdgeContract?: string;
     itsMsgTranslator?: string;
     update?: boolean;
@@ -89,14 +88,14 @@ const registerItsChain = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    _args?: string[],
+    args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    if (!options.chains || options.chains.length === 0) {
+    if (!args || args.length === 0) {
         throw new Error('At least one chain is required');
     }
 
-    if (options.itsEdgeContract && options.chains.length > 1) {
+    if (options.itsEdgeContract && args.length > 1) {
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
 
@@ -104,7 +103,7 @@ const registerItsChain = async (
         options.itsMsgTranslator ||
         config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
 
-    const chains = options.chains.map((chain) => {
+    const chains = args.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
         const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
@@ -121,8 +120,8 @@ const registerItsChain = async (
     });
 
     if (options.update) {
-        for (let i = 0; i < options.chains.length; i++) {
-            const chain = options.chains[i];
+        for (let i = 0; i < args.length; i++) {
+            const chain = args[i];
             await validateItsChainChange(client, config, chain, chains[i]);
         }
     }
@@ -131,7 +130,7 @@ const registerItsChain = async (
     const msg = [JSON.stringify({ [`${operation}_chains`]: { chains } })];
 
     if (!options.title || !options.description) {
-        const chainsList = options.chains.join(', ');
+        const chainsList = args.join(', ');
         options.title = options.title || `${operation} ${chainsList} on ITS Hub`;
         options.description = options.description || `${operation} ${chainsList} on ITS Hub`;
     }
@@ -172,10 +171,13 @@ const registerDeployment = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    _args?: string[],
+    args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const { chainName } = options;
+    if (!args || args.length === 0) {
+        throw new Error('chainName is required');
+    }
+    const [chainName] = args;
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructRegisterDeploymentMessage(chainName);
     const msg = [JSON.stringify(message)];
@@ -192,10 +194,14 @@ const createRewardPools = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    _args?: string[],
+    args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const { chainName, epochDuration, participationThreshold, rewardsPerEpoch } = options;
+    if (!args || args.length === 0) {
+        throw new Error('chainName is required');
+    }
+    const [chainName] = args;
+    const { epochDuration, participationThreshold, rewardsPerEpoch } = options;
 
     let parsedThreshold;
     try {
@@ -363,8 +369,7 @@ const programHandler = () => {
         )
         .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
         .action((chains, options) => {
-            options.chains = chains;
-            return mainProcessor(registerItsChain, options);
+            return mainProcessor(registerItsChain, options, chains);
         });
     addAmplifierOptions(registerItsChainCmd);
 
@@ -377,8 +382,10 @@ const programHandler = () => {
     const registerDeploymentCmd = program
         .command('register-deployment')
         .description('Register a deployment')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .action((options) => mainProcessor(registerDeployment, options));
+        .argument('<chainName>', 'chain name')
+        .action((chainName, options) => {
+            return mainProcessor(registerDeployment, options, [chainName]);
+        });
     addAmplifierOptions(registerDeploymentCmd);
 
     const createRewardPoolsCmd = program
@@ -389,8 +396,7 @@ const programHandler = () => {
         .requiredOption('--participationThreshold <participationThreshold>', 'participation threshold as JSON array (e.g., ["7", "10"])')
         .requiredOption('--rewardsPerEpoch <rewardsPerEpoch>', 'rewards per epoch (e.g., 1000000)')
         .action((chainName, options) => {
-            options.chainName = chainName;
-            return mainProcessor(createRewardPools, options);
+            return mainProcessor(createRewardPools, options, [chainName]);
         });
     addAmplifierOptions(createRewardPoolsCmd);
 
