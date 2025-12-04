@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use axelar_solana_encoding::types::pubkey::PublicKey;
-use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use clap::ArgEnum;
 use eyre::eyre;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::{Deserialize, Serialize};
+use solana_axelar_std::pubkey::PublicKey;
+use solana_axelar_std::verifier_set::VerifierSet;
 use solana_sdk::instruction::Instruction as SolanaInstruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
@@ -230,7 +230,7 @@ impl From<SerializeableVerifierSet> for VerifierSet {
                     .expect("Failed to decode public key")
                     .try_into()
                     .expect("Invalid public key length");
-                (PublicKey::Secp256k1(pk_bytes), *weight)
+                (PublicKey(pk_bytes), *weight)
             })
             .collect();
 
@@ -290,7 +290,7 @@ impl SigningVerifierSet {
             .map(|x| {
                 let pubkey = x.secret.public_key();
                 (
-                    PublicKey::Secp256k1(
+                    PublicKey(
                         pubkey
                             .to_encoded_point(true)
                             .as_bytes()
