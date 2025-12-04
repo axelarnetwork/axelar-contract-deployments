@@ -24,9 +24,6 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     rewardsPerEpoch?: string;
     salt?: string;
     admin?: string;
-    gatewayCodeId?: number;
-    verifierCodeId?: number;
-    proverCodeId?: number;
     fetchCodeId?: boolean;
     [key: string]: unknown;
 }
@@ -262,7 +259,7 @@ const instantiateChainContracts = async (
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
+    const { chainName, salt, admin } = options;
 
     const coordinatorAddress = config.validateRequired(config.getContractConfig('Coordinator').address, 'Coordinator.address');
 
@@ -276,34 +273,25 @@ const instantiateChainContracts = async (
     const multisigProverConfig = config.getMultisigProverContract(chainName);
 
     if (options.fetchCodeId) {
-        const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
-        const votingVerifierCode =
-            verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        const multisigProverCode =
-            proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
-        gatewayConfig.codeId = gatewayCode;
-        votingVerifierConfig.codeId = votingVerifierCode;
-        multisigProverConfig.codeId = multisigProverCode;
+        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME });
+        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME });
+        multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
     } else {
-        if (!gatewayConfig.codeId && !gatewayCodeId) {
+        if (!gatewayConfig.codeId) {
             throw new Error(
-                'Gateway code ID is required when --fetchCodeId is not used. Please provide it with --gatewayCodeId or in the config',
+                'Gateway code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
             );
         }
-        if (!votingVerifierConfig.codeId && !verifierCodeId) {
+        if (!votingVerifierConfig.codeId) {
             throw new Error(
-                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it with --verifierCodeId or in the config',
+                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
             );
         }
-        if (!multisigProverConfig.codeId && !proverCodeId) {
+        if (!multisigProverConfig.codeId) {
             throw new Error(
-                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it with --proverCodeId or in the config',
+                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
             );
         }
-
-        gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
-        votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
-        multisigProverConfig.codeId = proverCodeId || multisigProverConfig.codeId;
     }
 
     const coordinator = new CoordinatorManager(config);
@@ -349,7 +337,7 @@ const instantiateChainContracts = async (
 const programHandler = () => {
     const program = new Command();
 
-    program.name('contract').description('Execute contract operations');
+    program.name('contract').description('Execute cosmwasm contract operations');
 
     const registerItsChainCmd = program
         .command('its-hub-register-chains')
@@ -406,9 +394,6 @@ const programHandler = () => {
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
         .requiredOption('--admin <admin>', 'admin address for the instantiated contracts')
-        .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
-        .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
-        .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
         .action((options) => mainProcessor(instantiateChainContracts, options));
     addAmplifierOptions(instantiateChainContractsCmd, {
         fetchCodeId: true,
