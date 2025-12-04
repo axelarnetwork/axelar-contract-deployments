@@ -363,10 +363,6 @@ export class ConfigManager implements FullConfig {
         return this.axelar.govProposalDepositAmount;
     }
 
-    public getGov(): string | undefined {
-        return this.axelar.governanceAddress;
-    }
-
     public getAdmin(): string | undefined {
         return this.axelar.adminAddress;
     }
