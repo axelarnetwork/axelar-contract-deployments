@@ -56,7 +56,7 @@ One should run the following script for each environment to make sure the config
 1. Register fetched legacy tokens
 
 ```bash
-ts-node cosmwasm/register-p2p-tokens.ts register-tokens
+ts-node cosmwasm/migrate/register-p2p-tokens.ts register-tokens
 ```
 
 ### Checklist
@@ -64,5 +64,5 @@ ts-node cosmwasm/register-p2p-tokens.ts register-tokens
 Run the command and check the output. Skipped tokens are the ones that were successfully registered on the ITS hub. Tokens that are not skipped are the ones that should be migrated once again.
 
 ```bash
-ts-node cosmwasm/register-p2p-tokens.ts register-tokens --dryRun
+ts-node cosmwasm/migrate/register-p2p-tokens.ts register-tokens --dryRun
 ```

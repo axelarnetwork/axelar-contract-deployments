@@ -41,7 +41,7 @@ Before running the scripts, copy and paste the squid token config files (two `sq
 1. Run the following script in order to register the tokens on testnet ITS Hub (for `testnet` and `mainnet` separately):
 
 ```bash
-ts-node cosmwasm/register-p2p-tokens.ts register-tokens
+ts-node cosmwasm/migrate/register-p2p-tokens.ts register-tokens
 ```
 
 
@@ -50,5 +50,5 @@ ts-node cosmwasm/register-p2p-tokens.ts register-tokens
 Run the command and check the output. Skipped tokens are the ones that were successfully registered on the ITS hub. Tokens that are not skipped are the ones that should be migrated once again.
 
 ```bash
-ts-node cosmwasm/register-p2p-tokens.ts register-tokens --dryRun
+ts-node cosmwasm/migrate/register-p2p-tokens.ts register-tokens --dryRun
 ```
