@@ -395,10 +395,6 @@ export class ConfigManager implements FullConfig {
         return expeditedAmount;
     }
 
-    public getGov(): string | undefined {
-        return this.axelar.governanceAddress;
-    }
-
     public getAdmin(): string | undefined {
         return this.axelar.adminAddress;
     }
