@@ -79,23 +79,17 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         isNonEmptyString: { interchainTokenServiceAddress },
     });
 
-    let error = false;
     const tokens: SquidToken[] = await filteredTokens(env, tokenIds);
 
     const validateTokens = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
-        try {
-            validateParameters({
-                isNonEmptyString: {
-                    tokenId: token.tokenId,
-                    originAxelarChainId: token.originAxelarChainId,
-                    axelarChainId: chain.axelarChainId,
-                },
-                isNumber: { decimals: token.decimals },
-            });
-        } catch (e) {
-            error = true;
-            printError(`Error validating token ${token.tokenId} on ${chain.axelarChainId}: ${e}`);
-        }
+        validateParameters({
+            isNonEmptyString: {
+                tokenId: token.tokenId,
+                originAxelarChainId: token.originAxelarChainId,
+                axelarChainId: chain.axelarChainId,
+            },
+            isNumber: { decimals: token.decimals },
+        });
     });
 
     const registerTokens = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
