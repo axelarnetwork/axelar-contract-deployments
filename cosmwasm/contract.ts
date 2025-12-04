@@ -276,22 +276,20 @@ const instantiateChainContracts = async (
         gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME });
         votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME });
         multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
-    } else {
-        if (!gatewayConfig.codeId) {
-            throw new Error(
-                'Gateway code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
-            );
-        }
-        if (!votingVerifierConfig.codeId) {
-            throw new Error(
-                'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
-            );
-        }
-        if (!multisigProverConfig.codeId) {
-            throw new Error(
-                'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
-            );
-        }
+    }
+
+    if (!gatewayConfig.codeId) {
+        throw new Error('Gateway code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId');
+    }
+    if (!votingVerifierConfig.codeId) {
+        throw new Error(
+            'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
+        );
+    }
+    if (!multisigProverConfig.codeId) {
+        throw new Error(
+            'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
+        );
     }
 
     const coordinator = new CoordinatorManager(config);
