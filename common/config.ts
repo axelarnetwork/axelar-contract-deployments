@@ -363,10 +363,6 @@ export class ConfigManager implements FullConfig {
         return this.axelar.govProposalDepositAmount;
     }
 
-    public getAdmin(): string | undefined {
-        return this.axelar.adminAddress;
-    }
-
     public getChainConfig(chainName: string): ChainConfig {
         const chainConfig = this.chains[chainName];
         if (!chainConfig) {
