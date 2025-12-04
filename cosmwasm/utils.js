@@ -232,7 +232,7 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
     } = contracts;
     const { blockExpiry } = contractConfig;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(adminAddress)) {
@@ -287,7 +287,7 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         AxelarnetGateway: { address: axelarnetGateway },
         Coordinator: { address: coordinator },
     } = contracts;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(adminAddress)) {
@@ -331,7 +331,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
         Rewards: { address: rewardsAddress },
     } = contracts;
     const { serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -392,7 +392,7 @@ const makeEventVerifierInstantiateMsg = (config, _options, contractConfig) => {
         ServiceRegistry: { address: serviceRegistryAddress },
     } = contracts;
     const { serviceName, votingThreshold, blockExpiry } = contractConfig;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -533,7 +533,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
             axelarId: itsHubChainName,
         },
     } = config;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAddress)) {
@@ -625,7 +625,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
         },
     } = contracts;
     const { signingThreshold, serviceName, verifierSetDiffThreshold, xrplTransactionFee, ticketCountThreshold } = contractConfig;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
@@ -735,7 +735,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         },
     } = contracts;
     const { domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } = contractConfig;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
@@ -845,7 +845,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, _options, contractConfig) =>
 
 const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConfig) => {
     const { operatorAddress } = contractConfig;
-    const adminAddress = config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
     const {
         axelar: { contracts },
