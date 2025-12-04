@@ -395,10 +395,6 @@ export class ConfigManager implements FullConfig {
         return expeditedAmount;
     }
 
-    public getAdmin(): string | undefined {
-        return this.axelar.adminAddress;
-    }
-
     public getChainConfig(chainName: string): ChainConfig {
         const chainConfig = this.chains[chainName];
         if (!chainConfig) {
