@@ -160,7 +160,7 @@ export class CoordinatorManager {
                                 label: `${proverContractName}-${chainName}`,
                                 msg: {
                                     governance_address: this.configManager.axelar.governanceAddress,
-                                    admin_address: multisigProverConfig.adminAddress,
+                                    admin_address: this.configManager.axelar.adminAddress,
                                     multisig_address: multisigAddress,
                                     signing_threshold: [
                                         String(multisigProverConfig.signingThreshold[0]),

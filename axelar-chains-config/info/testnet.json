@@ -3278,6 +3278,7 @@
   },
   "axelar": {
     "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+    "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3292,7 +3293,6 @@
         "version": "1.2.1"
       },
       "Router": {
-        "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "storeCodeProposalId": "372",
         "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "codeId": 64,
@@ -3333,12 +3333,12 @@
         "version": "2.1.3"
       },
       "Multisig": {
-        "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "blockExpiry": 50,
         "storeCodeProposalId": "386",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
         "codeId": 69,
         "lastUploadedCodeId": 69,
+>>>>>>> 027f7330 (chore: update admin address)
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "115",
         "flow": {
@@ -3734,7 +3734,6 @@
       "InterchainTokenService": {
         "storeCodeProposalId": "341",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "lastUploadedCodeId": 59,
         "codeId": 59,
         "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",

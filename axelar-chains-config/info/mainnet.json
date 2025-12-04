@@ -3536,6 +3536,7 @@
   },
   "axelar": {
     "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+    "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
     "rpc": "https://rpc-axelar.imperator.co:443",
@@ -3564,7 +3565,6 @@
         "version": "1.2.1"
       },
       "Router": {
-        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "storeCodeProposalId": "382",
         "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "codeId": 43,
@@ -3609,7 +3609,6 @@
         "version": "2.1.3"
       },
       "Multisig": {
-        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "blockExpiry": 50,
         "storeCodeProposalId": "394",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
@@ -3943,7 +3942,6 @@
       "InterchainTokenService": {
         "storeCodeProposalId": "364",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "lastUploadedCodeId": 38,
         "codeId": 38,
         "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",

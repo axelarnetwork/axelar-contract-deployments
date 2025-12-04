@@ -495,7 +495,6 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`, 'string');
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
             `${multisigProverContractName}[${chainName}].verifierSetDiffThreshold`,
