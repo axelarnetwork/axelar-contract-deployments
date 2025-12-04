@@ -424,15 +424,8 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const chainConfig = config.getChainConfig(chainName);
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
 
-    const {
-        serviceName,
-        sourceGatewayAddress,
-        votingThreshold,
-        blockExpiry,
-        confirmationHeight,
-        msgIdFormat,
-        addressFormat,
-    } = contractConfig;
+    const { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat, addressFormat } =
+        contractConfig;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -614,14 +607,8 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const {
-        adminAddress,
-        signingThreshold,
-        serviceName,
-        verifierSetDiffThreshold,
-        xrplTransactionFee,
-        ticketCountThreshold,
-    } = contractConfig;
+    const { signingThreshold, serviceName, verifierSetDiffThreshold, xrplTransactionFee, ticketCountThreshold } = contractConfig;
+    const adminAddress = config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
@@ -735,8 +722,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const chainConfig = config.getChainConfig(chainName);
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
 
-    const { domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
-        contractConfig;
+    const { domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } = contractConfig;
     const adminAddress = config.axelar.adminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 

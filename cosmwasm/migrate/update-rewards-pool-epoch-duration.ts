@@ -140,10 +140,7 @@ function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string,
 }
 
 function isGovernanceRequired(configManager: ConfigManager): boolean {
-    const rewardsGovernanceAddress = configManager.validateRequired(
-        configManager.axelar.governanceAddress,
-        'axelar.governanceAddress',
-    );
+    const rewardsGovernanceAddress = configManager.validateRequired(configManager.axelar.governanceAddress, 'axelar.governanceAddress');
 
     return rewardsGovernanceAddress === GOVERNANCE_MODULE_ADDRESS;
 }
