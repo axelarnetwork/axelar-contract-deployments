@@ -139,7 +139,7 @@ export class CoordinatorManager {
                                 code_id: verifierCodeId,
                                 label: `${verifierContractName}-${chainName}`,
                                 msg: {
-                                    governance_address: votingVerifierConfig.governanceAddress,
+                                    governance_address: this.configManager.axelar.governanceAddress,
                                     service_name: votingVerifierConfig.serviceName,
                                     source_gateway_address: votingVerifierConfig.sourceGatewayAddress,
                                     voting_threshold: [
@@ -159,7 +159,7 @@ export class CoordinatorManager {
                                 code_id: proverCodeId,
                                 label: `${proverContractName}-${chainName}`,
                                 msg: {
-                                    governance_address: multisigProverConfig.governanceAddress,
+                                    governance_address: this.configManager.axelar.governanceAddress,
                                     admin_address: multisigProverConfig.adminAddress,
                                     multisig_address: multisigAddress,
                                     signing_threshold: [
