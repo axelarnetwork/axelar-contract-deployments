@@ -80,7 +80,7 @@ const executeContractMessage = async (
         return executeDirectly(client, contractAddress, msg, fee);
     } else {
         validateParameters({ isNonEmptyString: { title: options.title, description: options.description } });
-        return execute(client, config, { ...options, contractName, msg }, undefined, fee);
+        return execute(client, config, { ...options, contractName, msg }, [], fee);
     }
 };
 
@@ -332,7 +332,7 @@ const instantiateChainContracts = async (
                 contractName: 'Coordinator',
                 msg,
             },
-            undefined,
+            [],
             fee,
         );
     }
