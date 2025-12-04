@@ -1023,12 +1023,24 @@ fn gateway_config(config: &Config) -> eyre::Result<()> {
     let gateway_config = GatewayConfig::try_deserialize(&mut account_data.as_slice())?;
 
     println!("Gateway Config PDA: {gateway_config_pda}");
-    println!("Domain Separator: 0x{}", hex::encode(gateway_config.domain_separator));
+    println!(
+        "Domain Separator: 0x{}",
+        hex::encode(gateway_config.domain_separator)
+    );
     println!("Operator: {}", gateway_config.operator);
     println!("Current Epoch: {}", gateway_config.current_epoch);
-    println!("Minimum Rotation Delay: {} seconds", gateway_config.minimum_rotation_delay);
-    println!("Previous Verifier Set Retention: {}", gateway_config.previous_verifier_set_retention);
-    println!("Last Rotation Timestamp: {}", gateway_config.last_rotation_timestamp);
+    println!(
+        "Minimum Rotation Delay: {} seconds",
+        gateway_config.minimum_rotation_delay
+    );
+    println!(
+        "Previous Verifier Set Retention: {}",
+        gateway_config.previous_verifier_set_retention
+    );
+    println!(
+        "Last Rotation Timestamp: {}",
+        gateway_config.last_rotation_timestamp
+    );
 
     Ok(())
 }
@@ -1054,7 +1066,10 @@ fn verifier_set_tracker(args: VerifierSetTrackerArgs, config: &Config) -> eyre::
             let tracker = VerifierSetTracker::try_deserialize(&mut account_data.as_slice())?;
             println!("\nTracker exists on-chain:");
             println!("  Epoch: {}", tracker.epoch);
-            println!("  Verifier Set Hash: 0x{}", hex::encode(tracker.verifier_set_hash));
+            println!(
+                "  Verifier Set Hash: 0x{}",
+                hex::encode(tracker.verifier_set_hash)
+            );
         }
         Err(e) => {
             println!("\nTracker does NOT exist on-chain: {e}");
@@ -1073,23 +1088,26 @@ async fn compute_merkle_root(config: &Config) -> eyre::Result<()> {
 
     let multisig_prover_address = {
         let address = <String as serde::Deserialize>::deserialize(
-            &chains_info[crate::utils::AXELAR_KEY][crate::utils::CONTRACTS_KEY][crate::utils::MULTISIG_PROVER_KEY][&config.chain][crate::utils::ADDRESS_KEY],
+            &chains_info[crate::utils::AXELAR_KEY][crate::utils::CONTRACTS_KEY]
+                [crate::utils::MULTISIG_PROVER_KEY][&config.chain][crate::utils::ADDRESS_KEY],
         )?;
         cosmrs::AccountId::from_str(&address)?
     };
 
-    let axelar_grpc_endpoint =
-        <String as serde::Deserialize>::deserialize(&chains_info[crate::utils::AXELAR_KEY][crate::utils::GRPC_KEY])?;
+    let axelar_grpc_endpoint = <String as serde::Deserialize>::deserialize(
+        &chains_info[crate::utils::AXELAR_KEY][crate::utils::GRPC_KEY],
+    )?;
 
     println!("Querying MultisigProver: {multisig_prover_address}");
     println!("GRPC Endpoint: {axelar_grpc_endpoint}");
 
-    let multisig_prover_response = query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
-        axelar_grpc_endpoint,
-        multisig_prover_address,
-        serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
-    )
-    .await?;
+    let multisig_prover_response =
+        query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
+            axelar_grpc_endpoint,
+            multisig_prover_address,
+            serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
+        )
+        .await?;
 
     let mut signers = BTreeMap::new();
     for signer in multisig_prover_response.verifier_set.signers.values() {
@@ -1109,10 +1127,15 @@ async fn compute_merkle_root(config: &Config) -> eyre::Result<()> {
     println!("  Quorum (threshold): {}", verifier_set.quorum);
     println!("  Signers: {} total", verifier_set.signers.len());
     for (pubkey, weight) in &verifier_set.signers {
-        println!("    - pubkey: 0x{}, weight: {}", hex::encode(pubkey.0), weight);
+        println!(
+            "    - pubkey: 0x{}, weight: {}",
+            hex::encode(pubkey.0),
+            weight
+        );
     }
 
-    let domain_sep = crate::utils::domain_separator(&chains_info, config.network_type, &config.chain)?;
+    let domain_sep =
+        crate::utils::domain_separator(&chains_info, config.network_type, &config.chain)?;
     println!("\nDomain Separator: 0x{}", hex::encode(domain_sep));
 
     let merkle_root = verifier_set_hash::<Hasher>(&verifier_set, &domain_sep)?;
