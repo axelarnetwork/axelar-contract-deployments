@@ -2660,6 +2660,7 @@
   },
   "axelar": {
     "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+    "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
     "contracts": {
       "ServiceRegistry": {
         "storeCodeProposalId": "261",
@@ -2671,7 +2672,6 @@
         "version": "1.2.0"
       },
       "Router": {
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "storeCodeProposalId": "276",
         "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "codeId": 68,
@@ -2728,7 +2728,6 @@
         "version": "2.1.3"
       },
       "Multisig": {
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "blockExpiry": 50,
         "storeCodeProposalId": "296",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
@@ -3103,7 +3102,6 @@
       "InterchainTokenService": {
         "storeCodeProposalId": "239",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "codeId": 61,
         "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
         "sui": {
