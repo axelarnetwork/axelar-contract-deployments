@@ -1,7 +1,7 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
-import { getChainConfig, itsEdgeContract, printInfo, prompt } from '../common';
+import { getChainConfig, itsEdgeContract, printInfo, prompt, validateParameters } from '../common';
 import { ConfigManager, GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from '../common/config';
 import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
@@ -80,9 +80,7 @@ const executeContractMessage = async (
         }
         return executeDirectly(client, contractAddress, msg, fee);
     } else {
-        if (!options.title || !options.description) {
-            throw new Error('Title and description are required for proposal submission');
-        }
+        validateParameters({ isNonEmptyString: { title: options.title, description: options.description } });
         return execute(client, config, { ...options, contractName, msg }, undefined, fee);
     }
 };
@@ -199,25 +197,9 @@ const createRewardPools = async (
 ): Promise<void> => {
     const { chainName, epochDuration, participationThreshold, rewardsPerEpoch } = options;
 
-    if (!participationThreshold) {
-        throw new Error('Participation threshold is required');
-    }
-    if (!epochDuration) {
-        throw new Error('Epoch duration is required');
-    }
-    if (!rewardsPerEpoch) {
-        throw new Error('Rewards per epoch is required');
-    }
+    validateParameters({ isValidThreshold: { participationThreshold } });
 
-    let parsedThreshold: string[];
-    try {
-        parsedThreshold = JSON.parse(participationThreshold);
-        if (!Array.isArray(parsedThreshold)) {
-            throw new Error('Participation threshold must be a JSON array');
-        }
-    } catch (error) {
-        throw new Error(`Invalid participation threshold format: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    const threshold: string[] = JSON.parse(participationThreshold);
 
     const votingVerifierAddress = config.validateRequired(
         config.getVotingVerifierContract(chainName).address,
@@ -235,7 +217,7 @@ const createRewardPools = async (
             create_pool: {
                 params: {
                     epoch_duration: epochDuration,
-                    participation_threshold: parsedThreshold,
+                    participation_threshold: threshold,
                     rewards_per_epoch: rewardsPerEpoch,
                 },
                 pool_id: {
@@ -248,7 +230,7 @@ const createRewardPools = async (
             create_pool: {
                 params: {
                     epoch_duration: epochDuration,
-                    participation_threshold: parsedThreshold,
+                    participation_threshold: threshold,
                     rewards_per_epoch: rewardsPerEpoch,
                 },
                 pool_id: {
@@ -273,13 +255,7 @@ const instantiateChainContracts = async (
 
     const coordinatorAddress = config.validateRequired(config.getContractConfig('Coordinator').address, 'Coordinator.address');
 
-    if (!admin) {
-        throw new Error('Admin address is required when instantiating chain contracts');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required when instantiating chain contracts');
-    }
+    validateParameters({ isNonEmptyString: { admin, salt } });
 
     const chainConfig = config.getChainConfig(chainName);
     const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
@@ -403,11 +379,14 @@ const programHandler = () => {
     const createRewardPoolsCmd = program
         .command('create-reward-pools')
         .description('Create reward pools for VotingVerifier and Multisig contracts for a chain')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
+        .argument('<chainName>', 'chain name')
         .requiredOption('--epochDuration <epochDuration>', 'epoch duration (e.g., 3000)')
         .requiredOption('--participationThreshold <participationThreshold>', 'participation threshold as JSON array (e.g., ["7", "10"])')
         .requiredOption('--rewardsPerEpoch <rewardsPerEpoch>', 'rewards per epoch (e.g., 1000000)')
-        .action((options) => mainProcessor(createRewardPools, options));
+        .action((chainName, options) => {
+            options.chainName = chainName;
+            return mainProcessor(createRewardPools, options);
+        });
     addAmplifierOptions(createRewardPoolsCmd, { optionalProposalOptions: true });
 
     const instantiateChainContractsCmd = program
@@ -415,6 +394,7 @@ const programHandler = () => {
         .description('Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
+        .requiredOption('--admin <admin>', 'admin address for the instantiated contracts')
         .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
         .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
         .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
@@ -422,7 +402,6 @@ const programHandler = () => {
     addAmplifierOptions(instantiateChainContractsCmd, {
         optionalProposalOptions: true,
         fetchCodeId: true,
-        instantiateOptions: true,
     });
 
     program.parse();
