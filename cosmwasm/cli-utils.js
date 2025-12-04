@@ -70,10 +70,6 @@ const addAmplifierOptions = (program, options) => {
         addProposalOptions(program);
     }
 
-    if (options.optionalProposalOptions) {
-        addOptionalProposalOptions(program);
-    }
-
     if (options.codeId) {
         program.addOption(
             new Option('--codeId <codeId>', 'the code id of the contract previously uploaded').argParser((value) => {
@@ -202,13 +198,6 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
-};
-
-const addOptionalProposalOptions = (program) => {
-    program.addOption(new Option('-t, --title <title>', 'title of proposal (required for proposals)'));
-    program.addOption(new Option('-d, --description <description>', 'description of proposal (required for proposals)'));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
 };
 
 module.exports = {
@@ -216,5 +205,4 @@ module.exports = {
     addAmplifierQueryOptions,
     addAmplifierQueryContractOptions,
     addChainNameOption,
-    addOptionalProposalOptions,
 };

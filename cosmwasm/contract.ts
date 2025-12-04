@@ -361,20 +361,20 @@ const programHandler = () => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { optionalProposalOptions: true });
+    addAmplifierOptions(registerItsChainCmd);
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
         .description('Register the main protocol contracts (e.g. Router)')
         .action((options) => mainProcessor(registerProtocol, options));
-    addAmplifierOptions(registerProtocolCmd, { optionalProposalOptions: true });
+    addAmplifierOptions(registerProtocolCmd);
 
     const registerDeploymentCmd = program
         .command('register-deployment')
         .description('Register a deployment')
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .action((options) => mainProcessor(registerDeployment, options));
-    addAmplifierOptions(registerDeploymentCmd, { optionalProposalOptions: true });
+    addAmplifierOptions(registerDeploymentCmd);
 
     const createRewardPoolsCmd = program
         .command('create-reward-pools')
@@ -387,7 +387,7 @@ const programHandler = () => {
             options.chainName = chainName;
             return mainProcessor(createRewardPools, options);
         });
-    addAmplifierOptions(createRewardPoolsCmd, { optionalProposalOptions: true });
+    addAmplifierOptions(createRewardPoolsCmd);
 
     const instantiateChainContractsCmd = program
         .command('instantiate-chain-contracts')
@@ -400,7 +400,6 @@ const programHandler = () => {
         .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
         .action((options) => mainProcessor(instantiateChainContracts, options));
     addAmplifierOptions(instantiateChainContractsCmd, {
-        optionalProposalOptions: true,
         fetchCodeId: true,
     });
 
