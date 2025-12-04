@@ -1,12 +1,12 @@
 import { Command, Option } from 'commander';
 import fs from 'fs';
 
-import { addEnvOption, printError } from '../common';
-import { ConfigManager } from '../common/config';
-import { validateParameters } from '../common/utils';
-import { isConsensusChain } from '../evm/utils';
-import { TokenData, registerToken } from './its';
-import { ClientManager, mainProcessor } from './processor';
+import { addEnvOption, printError } from '../../common';
+import { ConfigManager } from '../../common/config';
+import { validateParameters } from '../../common/utils';
+import { isConsensusChain } from '../../evm/utils';
+import { TokenData, registerToken } from '../its';
+import { ClientManager, mainProcessor } from '../processor';
 
 export type SquidTokenData = {
     axelarChainId: string;
