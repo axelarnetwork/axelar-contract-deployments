@@ -77,11 +77,15 @@ Each handler binary requires two configuration files:
 1. **Base config** (`config.toml`) - shared settings required by all handlers
 2. **Chain-specific config** - custom parameters for the specific blockchain
 
-Both configuration files must be placed in the same directory as the handler binary.
+By default, the handler binaries look for these configuration files in the current working directory. You can specify a custom configuration directory using the `--config-dir` (or `-c`) argument when starting the handler:
+
+```bash
+./evm-handler --config-dir /path/to/config
+```
 
 ### Base Config
 
-Create a file named `config.toml` in the same directory as your handler binary with the following content. Replace the placeholder values with your actual verifier and network details. Optional parameters with default values are omitted for simplicity.
+Create a file named `config.toml` in your configuration directory with the following content. Replace the placeholder values with your actual verifier and network details. Optional parameters with default values are omitted for simplicity.
 
 ```toml
 ampd_url = "[YOUR_AMPD_GRPC_URL]"
@@ -92,11 +96,11 @@ chain_name = "[YOUR_CHAIN_NAME]"
 
 ### Chain-Specific Config
 
-Create the appropriate configuration file for your chain handler. The parameter values should match those used in your legacy `ampd` handler configuration. Optional parameters with default values are omitted for simplicity.
+Create the appropriate configuration file for your chain handler in your configuration directory. The parameter values should match those used in your legacy `ampd` handler configuration. Optional parameters with default values are omitted for simplicity.
 
 #### EVM Handler Config
 
-Create a file named `evm-handler-config.toml` in the same directory as the EVM handler binary:
+Create a file named `evm-handler-config.toml` in your configuration directory:
 
 ```toml
 rpc_url = "[YOUR_EVM_CHAIN_RPC_URL]"
@@ -105,7 +109,7 @@ finalization = "RPCFinalizedBlock"
 
 #### Sui Handler Config
 
-Create a file named `sui-handler-config.toml` in the same directory as the Sui handler binary:
+Create a file named `sui-handler-config.toml` in your configuration directory:
 
 ```toml
 rpc_url = "[YOUR_SUI_CHAIN_RPC_URL]"
@@ -113,7 +117,7 @@ rpc_url = "[YOUR_SUI_CHAIN_RPC_URL]"
 
 #### Stellar Handler Config
 
-Create a file named `stellar-handler-config.toml` in the same directory as the Stellar handler binary:
+Create a file named `stellar-handler-config.toml` in your configuration directory:
 
 ```toml
 rpc_url = "[YOUR_STELLAR_CHAIN_RPC_URL]"
