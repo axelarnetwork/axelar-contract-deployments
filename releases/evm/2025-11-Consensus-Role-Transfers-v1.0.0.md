@@ -5,29 +5,61 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** |                                        |
 
-| **Environment**      | **Chain**        | **Deployment Status** | **Date** |
-| -------------------- | ---------------- | --------------------- | -------- |
-| **Devnet Amplifier** | `core-ethereum`  | -                     | TBD      |
-|                      | `core-avalanche` | -                     | TBD      |
-|                      | `core-fantom`    | -                     | TBD      |
-|                      | `core-moonbeam`  | -                     | TBD      |
-|                      | `binance`        | -                     | TBD      |
-|                      | `kava`           | -                     | TBD      |
-| **Stagenet**         | `avalanche`      | -                     | TBD      |
-|                      | `fantom`         | -                     | TBD      |
-|                      | `moonbeam`       | -                     | TBD      |
-|                      | `celo`           | -                     | TBD      |
-|                      | `ethereum`       | -                     | TBD      |
-| **Testnet**          | `avalanche`      | -                     | TBD      |
-|                      | `fantom`         | -                     | TBD      |
-|                      | `moonbeam`       | -                     | TBD      |
-|                      | `celo`           | -                     | TBD      |
-|                      | `ethereum`       | -                     | TBD      |
-| **Mainnet**          | `avalanche`      | -                     | TBD      |
-|                      | `fantom`         | -                     | TBD      |
-|                      | `moonbeam`       | -                     | TBD      |
-|                      | `celo`           | -                     | TBD      |
-|                      | `ethereum`       | -                     | TBD      |
+| **Environment**      | **Chain**           | **Deployment Status** | **Date** |
+| -------------------- | ------------------- | --------------------- | -------- |
+| **Devnet Amplifier** | `core-avalanche`    | -                     | TBD      |
+|                      | `core-ethereum`     | -                     | TBD      |
+|                      | `core-optimism`     | -                     | TBD      |
+| **Stagenet**         | `avalanche`         | -                     | TBD      |
+|                      | `fantom`            | -                     | TBD      |
+|                      | `moonbeam`          | -                     | TBD      |
+|                      | `kava`              | -                     | TBD      |
+|                      | `ethereum-sepolia`  | -                     | TBD      |
+|                      | `arbitrum-sepolia`  | -                     | TBD      |
+|                      | `linea-sepolia`     | -                     | TBD      |
+|                      | `polygon-sepolia`   | -                     | TBD      |
+|                      | `base-sepolia`      | -                     | TBD      |
+|                      | `blast-sepolia`     | -                     | TBD      |
+|                      | `fraxtal`           | -                     | TBD      |
+|                      | `mantle-sepolia`    | -                     | TBD      |
+|                      | `optimism-sepolia`  | -                     | TBD      |
+| **Testnet**          | `ethereum-sepolia`  | -                     | TBD      |
+|                      | `avalanche`         | -                     | TBD      |
+|                      | `fantom`            | -                     | TBD      |
+|                      | `moonbeam`          | -                     | TBD      |
+|                      | `binance`           | -                     | TBD      |
+|                      | `kava`              | -                     | TBD      |
+|                      | `filecoin-2`        | -                     | TBD      |
+|                      | `scroll`            | -                     | TBD      |
+|                      | `immutable`         | -                     | TBD      |
+|                      | `arbitrum-sepolia`  | -                     | TBD      |
+|                      | `centrifuge-2`      | -                     | TBD      |
+|                      | `fraxtal`           | -                     | TBD      |
+|                      | `optimism-sepolia`  | -                     | TBD      |
+|                      | `base-sepolia`      | -                     | TBD      |
+|                      | `blast-sepolia`     | -                     | TBD      |
+|                      | `mantle-sepolia`    | -                     | TBD      |
+|                      | `polygon-sepolia`   | -                     | TBD      |
+|                      | `linea-sepolia`     | -                     | TBD      |
+| **Mainnet**          | `celo`              | -                     | TBD      |
+|                      | `ethereum`          | -                     | TBD      |
+|                      | `avalanche`         | -                     | TBD      |
+|                      | `fantom`            | -                     | TBD      |
+|                      | `polygon`           | -                     | TBD      |
+|                      | `moonbeam`          | -                     | TBD      |
+|                      | `binance`           | -                     | TBD      |
+|                      | `arbitrum`          | -                     | TBD      |
+|                      | `kava`              | -                     | TBD      |
+|                      | `filecoin`          | -                     | TBD      |
+|                      | `optimism`          | -                     | TBD      |
+|                      | `linea`             | -                     | TBD      |
+|                      | `base`              | -                     | TBD      |
+|                      | `mantle`            | -                     | TBD      |
+|                      | `scroll`            | -                     | TBD      |
+|                      | `centrifuge`        | -                     | TBD      |
+|                      | `immutable`         | -                     | TBD      |
+|                      | `fraxtal`           | -                     | TBD      |
+|                      | `blast`             | -                     | TBD      |
 
 ## Background
 
@@ -50,6 +82,13 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 | InterchainTokenService  | operator    | EOA                            | `setFlowLimits`, `transferOperatorship`, `proposeOperatorship`                                     | Rate Limiter EOA         | Operational flow limit management for cross-chain token flows                            |
 
 ## Pre-requisites
+
+| Network              | Chains                                                                                                                                                                                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Devnet Amplifier** | `core-avalanche,core-ethereum,core-optimism`                                                                                                                                                                                                                     |
+| **Stagenet**         | `avalanche,fantom,moonbeam,kava,ethereum-sepolia,arbitrum-sepolia,linea-sepolia,polygon-sepolia,base-sepolia,blast-sepolia,fraxtal,mantle-sepolia,optimism-sepolia`                                                                                              |
+| **Testnet**          | `ethereum-sepolia,avalanche,fantom,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,centrifuge-2,fraxtal,optimism-sepolia,base-sepolia,blast-sepolia,mantle-sepolia,polygon-sepolia,linea-sepolia`                                             |
+| **Mainnet**          | `celo,ethereum,avalanche,fantom,polygon,moonbeam,binance,arbitrum,kava,filecoin,optimism,linea,base,mantle,scroll,centrifuge,immutable,fraxtal,blast`                                                                                                            |
 
 1. Update npm dependencies
 
