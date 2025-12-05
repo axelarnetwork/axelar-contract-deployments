@@ -1,4 +1,4 @@
-# Ampd Handlers v1.0.0
+# Ampd Handlers v0.1.0
 
 |                | **Owner**                         |
 | -------------- | --------------------------------- |
@@ -14,9 +14,9 @@
 
 ## Releases
 
-- [EVM handlers](TBD)
-- [Sui handlers](TBD)
-- [Stellar handlers](TBD)
+- [EVM handlers](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/evm-handler-v0.1.0)
+- [Sui handlers](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/sui-handler-v0.1.0)
+- [Stellar handlers](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/stellar-handler-v0.1.0)
 - [XRPL handlers](TBD)
 - [Solana handlers](TBD)
 
