@@ -529,7 +529,6 @@ async function submitProposalToAxelar(proposal, options) {
         mnemonic: options.mnemonic,
         contractName: 'Coordinator',
         chainName: 'axelar',
-        deposit: options.deposit,
         title: proposal.title,
         description: proposal.description,
         yes: options.yes,
