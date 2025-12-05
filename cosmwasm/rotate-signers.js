@@ -2,12 +2,17 @@
 
 require('../common/cli-utils');
 
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const { getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { executeTransaction } = require('./utils');
-const { mainProcessor } = require('./processor');
+const { mainProcessor, mainQueryProcessor } = require('./processor');
+const { execute } = require('./submit-proposal');
+const { multisigProof } = require('./query');
+const { getDefaultProvider } = require('ethers');
+const { getWallet } = require('../evm/sign-utils');
+const { getGasOptions } = require('../evm/utils');
 
 const getNextVerifierSet = async (config, chain, client) => {
     return client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
@@ -34,7 +39,7 @@ const updateVerifierSet = async (client, config, _options, [chain], fee) => {
     printInfo('Mutisig session ID', multisigSessionId);
 };
 
-const confirmVerifierRotation = async (client, config, _options, [chain, txHash], fee) => {
+const confirmVerifierRotation = async (client, config, _options, [chain, txHash, logIndex], fee) => {
     const nextVerifierSet = (await getNextVerifierSet(config, chain, client)).verifier_set;
     printInfo('Next verifier set', nextVerifierSet);
 
@@ -66,6 +71,74 @@ const confirmVerifierRotation = async (client, config, _options, [chain, txHash]
     printInfo('Confirm verifier set rotation', transactionHash);
 };
 
+const authorizeVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
+    const message = {
+        authorize_verifiers: {
+            serviceName,
+            verifiers,
+        },
+    };
+
+    const proposalId = await execute(
+        client,
+        config,
+        { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) },
+        undefined,
+        fee,
+    );
+    return proposalId;
+};
+
+const unauthorizeVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
+    const message = {
+        unauthorize_verifiers: {
+            serviceName,
+            verifiers,
+        },
+    };
+
+    const proposalId = await execute(
+        client,
+        config,
+        { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) },
+        undefined,
+        fee,
+    );
+    return proposalId;
+};
+
+const rotateSigners = async (_client, config, options, [chain, sessionId], _fee) => {
+    const { privateKey } = options;
+
+    const rpc = config.chains[chain]?.rpc;
+    const chainConfig = config.chains[chain];
+    const gatewayAddress = chainConfig?.contracts?.AxelarGateway?.address;
+    const gasOptions = getGasOptions(chainConfig, options, null);
+    const provider = getDefaultProvider(rpc);
+
+    const wallet = await getWallet(privateKey, provider, options);
+
+    const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chain, sessionId]);
+    const executeData = message?.status?.completed?.execute_data;
+
+    printInfo(`Message:`, message);
+
+    if (!executeData) {
+        printError('could not retrieve execute data for rotating signers');
+        return;
+    }
+
+    const tx = await wallet.sendTransaction({
+        to: gatewayAddress,
+        data: `0x${executeData}`,
+        gasLimit: (await gasOptions)?.gasLimit ?? 'auto',
+    });
+
+    const result = await tx.wait();
+
+    printInfo(`Transaction Hash: `, result.transactionHash);
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -86,6 +159,35 @@ const programHandler = () => {
             mainProcessor(confirmVerifierRotation, options, [chain, txHash]);
         });
     addAmplifierOptions(confirmVerifiersCmd, {});
+
+    const authorizeVerifiersCmd = program
+        .command('authorize-verifiers <serviceName> <verifiers...>')
+        .description('Authorize verifiers')
+        .action((serviceName, verifiers, options) => {
+            mainProcessor(authorizeVerifier, options, [serviceName, verifiers]);
+        });
+    addAmplifierOptions(authorizeVerifiersCmd, {
+        proposalOptions: true,
+    });
+
+    const unauthorizeVerifiersCmd = program
+        .command('unauthorize-verifiers <serviceName> <verifiers...>')
+        .description('Unauthorize verifiers')
+        .action((serviceName, verifiers, options) => {
+            mainProcessor(unauthorizeVerifier, options, [serviceName, verifiers]);
+        });
+    addAmplifierOptions(unauthorizeVerifiersCmd, {
+        proposalOptions: true,
+    });
+
+    const rotateSignersCmd = program
+        .command('rotate-signers <chain> <sessionId>')
+        .description('Rotate signers on edge contract')
+        .addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'))
+        .action((chain, sessionId, options) => {
+            mainProcessor(rotateSigners, options, [chain, sessionId]);
+        });
+    addAmplifierOptions(rotateSignersCmd, {});
 
     program.parse();
 };
