@@ -782,6 +782,10 @@ const mainProcessor = async (options, processCommand, save = true) => {
         printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
 
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
     printInfo(
         'Succeeded chains',
         chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
@@ -792,10 +796,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
             'Failed chains',
             chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
         );
-    }
-
-    if (save) {
-        saveConfig(config, options.env);
+        process.exit(1);
     }
 
     return results;
