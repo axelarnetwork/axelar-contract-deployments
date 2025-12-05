@@ -122,8 +122,8 @@ const programHandler = () => {
     const registerTokensCmd = program
         .command('register-tokens')
         .description('Register tokens to the ITS Hub.')
-        .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains').env('CHAINS'))
-        .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens').env('TOKEN_IDS'))
+        .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains'))
+        .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens'))
         .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')

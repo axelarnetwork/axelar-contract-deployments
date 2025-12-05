@@ -146,12 +146,10 @@ const programHandler = () => {
     const registerP2pTokenCmd = program
         .command('register-p2p-token')
         .description('Register a single P2P consensus token to the ITS Hub.')
-        .addOption(new Option('--chain <chain>', 'axelar chain id to run the script for').env('CHAIN').makeOptionMandatory(true))
-        .addOption(new Option('--tokenId <tokenId>', 'Token ID to register').env('TOKEN_ID').makeOptionMandatory(true))
-        .addOption(new Option('--originChain <originChain>', 'Origin chain of the token').env('ORIGIN_CHAIN').makeOptionMandatory(true))
-        .addOption(
-            new Option('--decimals <decimals>', 'Decimals of the token').env('DECIMALS').makeOptionMandatory(true).argParser(parseInt),
-        )
+        .addOption(new Option('--chain <chain>', 'axelar chain id to run the script for').makeOptionMandatory(true))
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to register').makeOptionMandatory(true))
+        .addOption(new Option('--originChain <originChain>', 'Origin chain of the token').makeOptionMandatory(true))
+        .addOption(new Option('--decimals <decimals>', 'Decimals of the token').makeOptionMandatory(true).argParser(parseInt))
         .addOption(
             new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
                 .makeOptionMandatory(true)
