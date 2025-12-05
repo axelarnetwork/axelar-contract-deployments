@@ -9,7 +9,7 @@
 | -------------------- | -------------------------------------- | ---------- |
 | **Devnet Amplifier** | Completed                              | 2025-11-21 |
 | **Stagenet**         | Completed                              | 2025-11-24 |
-| **Testnet**          | -                                      | TBD        |
+| **Testnet**          | Completed                              | 2025-12-01 |
 | **Mainnet**          | -                                      | TBD        |
 
 | **Network**          | **Deployment Status** | **Date**   |
@@ -52,16 +52,8 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
       --version 2.0.0
     ```
 
-1. Store XRPL Voting Verifier code
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-      -c XrplVotingVerifier \
-      -t "Store XrplVotingVerifier contract v2.0.0" \
-      -d "Store XrplVotingVerifier contract v2.0.0" \
-      --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.0.0
-    ```
+1. Store and migrate XRPL Voting Verifier code
+    Please follow the [XRPL Voting Verifier v2.0.0 release doc](./2025-11-XRPLVotingVerifier-v2.0.0.md)
 
 1. Store Multisig code
 
@@ -80,8 +72,8 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     | ---------------- | ----------------- | ----------------- |
     | devnet-amplifier | 10                | 50                |
     | stagenet         | 10                | 50                |
-    | testnet          | TBD               | TBD               |
-    | mainnet          | TBD               | TBD               |
+    | testnet          | 10                | 50                |
+    | mainnet          | 10                | 50                |
 
 1. Migrate all VotingVerifier contracts
 
