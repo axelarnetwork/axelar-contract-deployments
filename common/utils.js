@@ -500,11 +500,11 @@ function validateParameters(parameters) {
 }
 
 const dateToEta = (input) => {
-    if (input === '0') {
+    const trimmedInput = String(input).trim();
+
+    if (trimmedInput === '0') {
         return 0;
     }
-
-    const trimmedInput = String(input).trim();
 
     if (/^\d+$/.test(trimmedInput)) {
         const seconds = parseInt(trimmedInput, 10);
