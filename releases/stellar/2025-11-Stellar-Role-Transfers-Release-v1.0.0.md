@@ -120,12 +120,6 @@ ts-node stellar/contract.js operator InterchainTokenService
 
 **New Owner**: AxelarServiceGovernance
 
-| Network      | Target Address |
-| ------------ | -------------- |
-| **Stagenet** | TBD            |
-| **Testnet**  | TBD            |
-| **Mainnet**  | TBD            |
-
 ```bash
 AXELAR_SERVICE_GOVERNANCE=<AXELAR_SERVICE_GOVERNANCE_ADDRESS>
 
@@ -139,12 +133,6 @@ ts-node stellar/contract.js owner AxelarGateway
 ### Step 3: Transfer AxelarGateway Operator to Emergency Operator EOA
 
 **New Operator**: Emergency Operator EOA
-
-| Network      | Target Address                                               |
-| ------------ | ------------------------------------------------------------ |
-| **Stagenet** | TBD                                                          |
-| **Testnet**  | TBD                                                          |
-| **Mainnet**  | TBD                                                          |
 
 ```bash
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
@@ -160,12 +148,6 @@ ts-node stellar/contract.js operator AxelarGateway
 
 **New Owner**: Relayer Operators EOA
 
-| Network      | Target Address                                               |
-| ------------ | ------------------------------------------------------------ |
-| **Stagenet** | TBD                                                          |
-| **Testnet**  | TBD                                                          |
-| **Mainnet**  | TBD                                                          |
-
 ```bash
 RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
 
@@ -179,12 +161,6 @@ ts-node stellar/contract.js owner AxelarOperators
 ### Step 5: Transfer AxelarGasService Owner to AxelarServiceGovernance
 
 **New Owner**: AxelarServiceGovernance
-
-| Network      | Target Address |
-| ------------ | -------------- |
-| **Stagenet** | TBD            |
-| **Testnet**  | TBD            |
-| **Mainnet**  | TBD            |
 
 ```bash
 AXELAR_SERVICE_GOVERNANCE=<AXELAR_SERVICE_GOVERNANCE_ADDRESS>
@@ -229,12 +205,6 @@ ts-node stellar/contract.js operator AxelarGasService
 
 **New Owner**: AxelarServiceGovernance
 
-| Network      | Target Address |
-| ------------ | -------------- |
-| **Stagenet** | TBD            |
-| **Testnet**  | TBD            |
-| **Mainnet**  | TBD            |
-
 ```bash
 AXELAR_SERVICE_GOVERNANCE=<AXELAR_SERVICE_GOVERNANCE_ADDRESS>
 
@@ -248,12 +218,6 @@ ts-node stellar/contract.js owner InterchainTokenService
 ### Step 8: Transfer InterchainTokenService Operator to Rate Limiter EOA
 
 **New Operator**: Rate Limiter EOA
-
-| Network      | Target Address                                               |
-| ------------ | ------------------------------------------------------------ |
-| **Stagenet** | TBD                                                          |
-| **Testnet**  | TBD                                                          |
-| **Mainnet**  | TBD                                                          |
 
 ```bash
 RATE_LIMITER_EOA=<RATE_LIMITER_EOA_ADDRESS>
