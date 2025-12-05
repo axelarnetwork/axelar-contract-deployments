@@ -133,26 +133,26 @@ ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-
 
 ### Step 2: Transfer AxelarGateway Governance Role
 
-| Network              | Current Governance                                                                         | Target Address |
-| -------------------- | ------------------------------------------------------------------------------------------ | -------------- |
-| **Devnet-Amplifier** | `0xfB71a4d90c37C9BCE7cD4Cb692cE26EA3AC0A319`, `0x677c130e0f17F91F7361AcC15b8d7e6A3D6ECeeb` | TBD            |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | TBD            |
-| **Testnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD            |
-| **Mainnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD            |
+| Network              | Current Governance                                                                         | Axelar Service Governance |
+| -------------------- | ------------------------------------------------------------------------------------------ | ------------------------- |
+| **Devnet-Amplifier** | `0xfB71a4d90c37C9BCE7cD4Cb692cE26EA3AC0A319`, `0x677c130e0f17F91F7361AcC15b8d7e6A3D6ECeeb` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | TBD                       |
+| **Testnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD                       |
+| **Mainnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD                       |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
 AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
-- Note: Specify all the chain names on -n flag where we want proposal to run 
+- Note: Specify all the chain names on -n flag where we want proposal to run
 
 # Transfer governance to AxelarServiceGovernance
-ts-node evm/governance.js schedule transferGovernance $ETA \
+ts-node evm/governance.js schedule transferGovernance $minimumTimeDelay \
   --contractName InterchainGovernance \
   --targetContractName AxelarGateway \
-  --newGovernance "$AXELAR_SERVICE_GOVERNANCE" 
+  --newGovernance "$AXELAR_SERVICE_GOVERNANCE"
 
-# After ETA/minimumTimeDelay has passed, execute the proposal
+# After minimumTimeDelay has passed, execute the proposal
 ts-node evm/governance.js execute transferGovernance \
   --contractName InterchainGovernance \
   --targetContractName AxelarGateway \
@@ -169,7 +169,7 @@ ts-node evm/governance.js --contractName AxelarGateway --action governance --par
 
 New mintLimiter: Rate Limiter EOA
 
-| Network              | Current MintLimiter                                                                        | Target Address                               |
+| Network              | Current MintLimiter                                                                        | Rate Limiter EOA                             |
 | -------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
 | **Devnet-Amplifier** | `0x3EE3DeA54E32B234Fd681509A19155978d1a3D18`, `0xD684531104B38326f41f144b7e710C1707E240F2` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | `0xc81184546e7432b98e33a7184ea2423710344e7c` |
@@ -178,7 +178,7 @@ New mintLimiter: Rate Limiter EOA
 
 ```bash
 # Get Rate Limiter EOA for current environment
-MINT_LIMITER="<RATE_LIMITER_EOA_OR_MULTISIG>"
+MINT_LIMITER="<RATE_LIMITER_EOA>"
 
 # Verify current mintLimiter
 ts-node evm/governance.js -n $CHAIN --contractName AxelarGateway --action mintLimiter
@@ -194,12 +194,12 @@ ts-node evm/governance.js --contractName AxelarGateway --action mintLimiter --pa
 
 New owner: AxelarServiceGovernance.
 
-| **Network**          | Current Owner                                | Target Address |
-| -------------------- | -------------------------------------------- | -------------- |
-| **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD            |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD            |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD            |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD            |
+| **Network**          | Current Owner                                | Axelar Service Governance |
+| -------------------- | -------------------------------------------- | ------------------------- |
+| **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD                       |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
@@ -219,7 +219,7 @@ ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
 
 New owner: Operators Owner EOA
 
-| **Network**          | Current Owner                                | Target Address                               |
+| **Network**          | Current Owner                                | Operators Owner EOA                          |
 | -------------------- | -------------------------------------------- | -------------------------------------------- |
 | **Devnet-Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` | `0xd86fb81139f3bc86559ab495094fe2aa24b0a8af` |
@@ -244,12 +244,12 @@ ts-node evm/ownership.js -c Operators --action owner --parallel
 
 New owner: AxelarServiceGovernance.
 
-| Network              | Current Owner                                | Target Address |
-| -------------------- | -------------------------------------------- | -------------- |
-| **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD            |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD            |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD            |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD            |
+| Network              | Current Owner                                | Axelar Service Governance |
+| -------------------- | -------------------------------------------- | ------------------------- |
+| **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD                       |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 
 ```bash
 # Get the AxelarServiceGovernance contract address for this environment
@@ -269,7 +269,7 @@ ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
 
 New operator: Rate Limiter EOA.
 
-| Network              | Current Operator                             | Target Address                               |
+| Network              | Current Operator                             | Rate Limiter EOA                             |
 | -------------------- | -------------------------------------------- | -------------------------------------------- |
 | **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `0xc81184546e7432b98e33a7184ea2423710344e7c` |
