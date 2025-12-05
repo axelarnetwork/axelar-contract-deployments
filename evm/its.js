@@ -449,9 +449,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidAddress: { newOperator } });
 
             const isCurrentOperator = await interchainTokenService.isOperator(walletAddress);
+            const owner = await interchainTokenService.owner();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-            if (!isCurrentOperator) {
-                throw new Error(`Caller ${walletAddress} is not the operator.`);
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(
+                    `Caller ${walletAddress} is neither an operator nor the owner (owner: ${owner}).`,
+                );
             }
 
             if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
