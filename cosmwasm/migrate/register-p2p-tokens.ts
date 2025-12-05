@@ -5,7 +5,7 @@ import { addEnvOption, printError } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { validateParameters } from '../../common/utils';
 import { isConsensusChain } from '../../evm/utils';
-import { TokenData, modifyTokenSupply, registerToken } from '../its';
+import { TokenData, alignTokenSupplyOnHub, registerToken } from '../its';
 import { ClientManager, mainProcessor } from '../processor';
 
 export type SquidTokenData = {
@@ -116,19 +116,24 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
 
     const tokens: SquidToken[] = await filteredTokens(env, tokenIds);
 
-    const validateTokenSupplyResult = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
-        validateParameters({
-            isNonEmptyString: {
-                tokenId: token.tokenId,
-                axelarChainId: chain.axelarChainId,
-                tokenAddress: chain.tokenAddress,
-            },
-        });
-    });
+    const validateTokenSupplyResult = await forEachTokenAndChain(
+        config,
+        tokens,
+        chains,
+        async (token: SquidToken, chain: SquidTokenData) => {
+            validateParameters({
+                isNonEmptyString: {
+                    tokenId: token.tokenId,
+                    axelarChainId: chain.axelarChainId,
+                    tokenAddress: chain.tokenAddress,
+                },
+            });
+        },
+    );
 
     const modifyTokenSupplyResult = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
         const chainName = chain.axelarChainId.toLowerCase();
-        await modifyTokenSupply(
+        await alignTokenSupplyOnHub(
             client,
             config,
             interchainTokenServiceAddress,
@@ -173,9 +178,9 @@ const programHandler = () => {
 
     addEnvOption(registerTokensCmd);
 
-    const modifyTokenSupplyCmd = program
-        .command('modify-token-supply')
-        .description('Modify the supply of a token on a chain.')
+    const alignTokenSupplyCmd = program
+        .command('align-token-supply')
+        .description('Align the supply of a token on a chain with the supply on the chain.')
         .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains'))
         .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens'))
         .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
@@ -188,7 +193,7 @@ const programHandler = () => {
             mainProcessor(modifyTokenSupplyInFile, options, []);
         });
 
-    addEnvOption(modifyTokenSupplyCmd);
+    addEnvOption(alignTokenSupplyCmd);
 
     program.parse();
 };

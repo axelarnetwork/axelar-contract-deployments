@@ -10,6 +10,11 @@ import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
 
 const IInterchainToken = getContractJSON('IInterchainToken');
 
+export type TokenInstance = {
+    supply: 'untracked' | { tracked: string };
+    decimals: number;
+};
+
 export type TokenData = {
     tokenId: string;
     originChain: string;
@@ -24,7 +29,7 @@ export async function registerToken(
     tokenData: TokenData,
     dryRun: boolean,
 ) {
-    const alreadyRegistered = await checkTokenRegistrationByChain(
+    const alreadyRegistered = await tokenInstanceByChain(
         config,
         client,
         interchainTokenServiceAddress,
@@ -54,20 +59,20 @@ export async function registerToken(
     }
 }
 
-export async function checkTokenRegistrationByChain(
+export async function tokenInstanceByChain(
     config: ConfigManager,
     client: CosmWasmClient,
     interchainTokenServiceAddress: string,
     tokenId: string,
     chainName: string,
-): Promise<boolean> {
+): Promise<TokenInstance> {
     const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
         token_instance: { chain: config.getChainConfig(chainName).axelarId, token_id: formatTokenId(tokenId) },
     });
     return registered;
 }
 
-export async function modifyTokenSupply(
+export async function alignTokenSupplyOnHub(
     client: ClientManager,
     config: ConfigManager,
     interchainTokenServiceAddress: string,
@@ -76,8 +81,8 @@ export async function modifyTokenSupply(
     chain: string,
     dryRun: boolean,
 ) {
-    const tokenRegistered = await checkTokenRegistrationByChain(config, client, interchainTokenServiceAddress, tokenId, chain);
-    if (!tokenRegistered) {
+    const tokenInstance = await tokenInstanceByChain(config, client, interchainTokenServiceAddress, tokenId, chain);
+    if (!tokenInstance) {
         printInfo(`Token ${tokenId} on ${chain} is not registered`);
         return;
     }
@@ -91,22 +96,18 @@ export async function modifyTokenSupply(
         return;
     }
 
-    const { supply, isTokenSupplyTracked } = await getTokenInstanceInfo(tokenAddress, config.getChainConfig(chain).rpc);
+    const { supply, isTokenSupplyTracked } = await tokenSupplyByChain(tokenAddress, config.getChainConfig(chain).rpc);
 
     if (!isTokenSupplyTracked) {
         printInfo(`Token ${tokenId} on ${chain} supply should not be tracked`);
         return;
     }
 
-    const tokenInstanceOnHub = await client.queryContractSmart(interchainTokenServiceAddress, {
-        token_instance: { chain: config.getChainConfig(chain).axelarId, token_id: formatTokenId(tokenId) },
-    });
-
     let supplyOnHub: bigint;
-    if (tokenInstanceOnHub.supply === 'untracked') {
+    if (tokenInstance.supply === 'untracked') {
         supplyOnHub = BigInt(0);
     } else {
-        supplyOnHub = BigInt(tokenInstanceOnHub.supply.tracked);
+        supplyOnHub = BigInt(tokenInstance.supply.tracked);
     }
 
     if (supply === supplyOnHub) {
@@ -138,7 +139,7 @@ export async function isTokenSupplyTracked(tokenManagerType: number, token: Cont
     return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
 }
 
-export async function getTokenInstanceInfo(tokenAddress: string, rpc: string): Promise<{ supply: bigint; isTokenSupplyTracked: boolean }> {
+export async function tokenSupplyByChain(tokenAddress: string, rpc: string): Promise<{ supply: bigint; isTokenSupplyTracked: boolean }> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const supply = await token.totalSupply();
@@ -183,13 +184,7 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
     const registeredChains = (
         await Promise.all(
             Object.keys(config.chains).map(async (axelarChainId: string) => {
-                const registered = await checkTokenRegistrationByChain(
-                    config,
-                    client,
-                    interchainTokenServiceAddress,
-                    tokenId,
-                    axelarChainId,
-                );
+                const registered = await tokenInstanceByChain(config, client, interchainTokenServiceAddress, tokenId, axelarChainId);
                 if (registered) {
                     return axelarChainId;
                 }
@@ -205,14 +200,14 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
     printInfo(`Token ${tokenId} is registered on: ${registeredChains.join(', ')}`);
 }
 
-async function modifyTokenSupplyCommand(client: ClientManager, config: ConfigManager, options) {
+async function alignTokenSupply(client: ClientManager, config: ConfigManager, options) {
     const { tokenId, tokenAddress, chain, dryRun } = options;
     const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
     validateParameters({
         isNonEmptyString: { interchainTokenServiceAddress },
     });
 
-    await modifyTokenSupply(client, config, interchainTokenServiceAddress, tokenId, tokenAddress, chain, dryRun);
+    await alignTokenSupplyOnHub(client, config, interchainTokenServiceAddress, tokenId, tokenAddress, chain, dryRun);
 }
 
 const programHandler = () => {
@@ -251,7 +246,7 @@ const programHandler = () => {
         });
     addEnvOption(registeredChainsByTokenCmd);
 
-    const modifyTokenSupplyCmd = program
+    const alignTokenSupplyCmd = program
         .command('align-token-supply')
         .description('Align the supply of a token on a chain with the supply on the chain.')
         .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
@@ -264,10 +259,10 @@ const programHandler = () => {
                 .env('MNEMONIC'),
         )
         .action((options) => {
-            mainProcessor(modifyTokenSupplyCommand, options, []);
+            mainProcessor(alignTokenSupply, options, []);
         });
 
-    addEnvOption(modifyTokenSupplyCmd);
+    addEnvOption(alignTokenSupplyCmd);
 
     program.parse();
 };
