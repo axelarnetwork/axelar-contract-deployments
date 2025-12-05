@@ -14,22 +14,8 @@
 
 ## Background
 
-Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to EOA. This enforces correct permissions, separation of duties, and stronger security.
+Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to EOA (ultimatly will be tranferred to Multisig). This enforces correct permissions, separation of duties, and stronger security. 
 
-### Role Transfer Summary
-
-| Contract               | Role        | Current Role Owner | Operations                                    | Assign To             | Reasoning                            |
-| ---------------------- | ----------- | ------------------ | --------------------------------------------- | --------------------- | ------------------------------------ |
-| AxelarGateway          | OwnerCap    | EOA                | `transfer_owner_cap`, `upgrade`               | EOA                   | CRITICAL PROTOCOL CONTROL            |
-| AxelarGateway          | UpgradeCap  | EOA                | `upgrade`                                     | EOA                   | CRITICAL PROTOCOL UPGRADE            |
-| GasService             | OwnerCap    | EOA                | `transfer_owner_cap`, `upgrade`               | EOA                   | CRITICAL PROTOCOL UPGRADE            |
-| GasService             | UpgradeCap  | EOA                | `upgrade`                                     | EOA                   | CRITICAL PROTOCOL UPGRADE            |
-| GasService             | OperatorCap | Operators contract | `collect_gas`, `refund`                       | Operators             | TREASURY AND OPERATIONAL MANAGEMENT  |
-| Operators              | OwnerCap    | EOA                | `add_operator`, `remove_operator`             | Relayer Operators EOA | OPERATIONAL REGISTRY MANAGEMENT      |
-| Operators              | UpgradeCap  | EOA                | `upgrade`                                     | Relayer Operators EOA | OPERATIONAL REGISTRY MANAGEMENT      |
-| InterchainTokenService | OwnerCap    | EOA                | `add_trusted_chains`, `remove_trusted_chains` | EOA                   | OPERATIONAL TOKEN SERVICE MANAGEMENT |
-| InterchainTokenService | UpgradeCap  | EOA                | `upgrade`                                     | EOA                   | OPERATIONAL TOKEN SERVICE MANAGEMENT |
-| InterchainTokenService | OperatorCap | EOA                | `set_flow_limit`                              | Rate Limiter EOA      | OPERATIONAL FLOW LIMIT MANAGEMENT    |
 
 ## Pre-requisites
 
@@ -49,7 +35,6 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
     - `chains["sui"].contracts.GasService.{packageId, ownerCapId, upgradeCapId, operatorCapId}`
     - `chains["sui"].contracts.Operators.{packageId, ownerCapId, upgradeCapId, address}`
     - `chains["sui"].contracts.InterchainTokenService.{packageId, ownerCapId, upgradeCapId, operatorCapId}`
-    - `chains["sui"].roles.{multisig, relayerOperatorsEOA, rateLimiterEOA}`
 
 ## Deployment Steps
 
