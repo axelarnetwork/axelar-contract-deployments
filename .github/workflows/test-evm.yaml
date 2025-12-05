@@ -217,3 +217,9 @@ jobs:
 
       - name: InterchainTokenService remove trusted chain
         run: ts-node evm/its.js remove-trusted-chains all -y
+
+      - name: InterchainTokenService check if address is operator after redeployment
+        run: ts-node evm/its.js isOperator 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+
+      - name: InterchainTokenService transfer operatorship
+        run: ts-node evm/its.js transferOperatorship 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC -y
