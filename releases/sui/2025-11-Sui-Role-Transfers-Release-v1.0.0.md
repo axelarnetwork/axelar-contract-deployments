@@ -154,7 +154,7 @@ ts-node sui/transfer-object.js --objectId "$OPERATORS_OWNERCAP_ID" --recipient "
 sui client object "$OPERATORS_OWNERCAP_ID"
 ```
 
-### Step 6: Transfer Operators UpgradeCap to Relayer Operators EOA
+### Step 6(Optional): Transfer Operators UpgradeCap to Relayer Operators EOA
 
 **New Owner**: Relayer Operators EOA
 
