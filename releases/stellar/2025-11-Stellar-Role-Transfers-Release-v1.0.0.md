@@ -40,7 +40,7 @@ Create an `.env` config. `CHAIN` should be set to `stellar` for mainnet, and the
 ```yaml
 PRIVATE_KEY=<stellar_deployer_key>
 ENV=<stagenet|testnet|mainnet>
-CHAIN=<stellar-2025-q2|stellar-2025-q2-2|stellar>
+CHAIN=<stellar-2025-q3|stellar>
 ```
 
 Ensure you have the necessary permissions and have verified the current role owners before proceeding.
