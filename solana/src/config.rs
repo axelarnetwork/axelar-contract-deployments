@@ -7,7 +7,7 @@ use crate::AxelarNetwork;
 use crate::types::ChainsInfoFile;
 use crate::types::NetworkType;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Config {
     pub(crate) url: String,
     pub(crate) output_dir: PathBuf,
