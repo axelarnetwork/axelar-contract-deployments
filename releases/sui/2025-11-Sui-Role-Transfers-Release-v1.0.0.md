@@ -130,7 +130,7 @@ ts-node sui/transfer-object.js --objectId "$GS_UPG_CAP_ID" --recipient "$EOA"
 sui client object "$GS_UPG_CAP_ID"
 ```
 
-### Step 5: Transfer Operators OwnerCap to Relayer Operators EOA
+### Step 5(Optional): Transfer Operators OwnerCap to Relayer Operators EOA 
 
 **New Owner**: Relayer Operators EOA
 
