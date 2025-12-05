@@ -8,7 +8,7 @@
 | **Environment**          | **Chain**           | **Deployment Status** | **Date** |
 | ------------------------ | ------------------- | --------------------- | -------- |
 | **Stagenet**             | `stellar-2025-q3`   | -                     | TBD      |
-| **Testnet**              | `stellar-2025-q3` | -                     | TBD      |
+| **Testnet**              | `stellar-2025-q3`   | -                     | TBD      |
 | **Mainnet**              | `stellar`           | -                     | TBD      |
 
 ## Background
@@ -21,18 +21,18 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 
 | Contract                  | Role     | Current Role Owner | Operations                                                                          | Assign To                | Reasoning                                                                                                                                                                         |
 |---------------------------|----------|--------------------|-------------------------------------------------------------------------------------|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AxelarGateway             | owner    | EOA                | `transfer_ownership`, `pause/unpause`, `upgrade`                                    | AxelarServiceGovernance  | CRITICAL PROTOCOL CONTROL - Owner has pause/unpause duties which need rapid responses; operator cannot do pause/unpause. This is where Stellar differs from EVM                  |
+| AxelarGateway             | owner    | EOA                | `transfer_ownership`, `pause/unpause`, `upgrade`                                    | Contract Owner EOA (interim)  | CRITICAL PROTOCOL CONTROL - Owner has pause/unpause duties which need rapid responses; operator cannot do pause/unpause. This is where Stellar differs from EVM                  |
 | AxelarGateway             | operator | EOA                | `rotate_signers`, `transfer_operatorship`                                           | Emergency Operator EOA   | EMERGENCY RESPONSE - Compromised signers need to be rotated out in rapid response                                                                                                 |
 | AxelarOperators           | owner    | EOA                | `add_operator`, `remove_operator`, `transfer_ownership`, `upgrade`                  | Relayer Operators EOA    | OPERATIONAL REGISTRY MANAGEMENT - Common owner duties, aligned with EVM settings                                                                                                  |
-| AxelarGasService          | owner    | EOA                | `transfer_ownership`, `upgrade`                                                     | AxelarServiceGovernance  | CRITICAL PROTOCOL CONTROL - Common owner duties, aligned with EVM settings                                                                                                        |
+| AxelarGasService          | owner    | EOA                | `transfer_ownership`, `upgrade`                                                     | Contract Owner EOA (interim)  | CRITICAL PROTOCOL CONTROL - Common owner duties, aligned with EVM settings                                                                                                        |
 | AxelarGasService          | operator | Operators contract | `collect_fees`, `refund`, `transfer_operatorship`                                   | Operators                | TREASURY AND OPERATIONAL MANAGEMENT - GasService owner cannot add operators, so the only operator role needs to be the Operators contract where more EOA operators can be added |
-| InterchainTokenService    | owner    | EOA                | `transfer_token_admin`, `transfer_ownership`, `pause/unpause`, `upgrade`            | AxelarServiceGovernance  | CRITICAL PROTOCOL CONTROL - Owner has pause/unpause duties which need rapid responses; operator cannot do pause/unpause                                                           |
+| InterchainTokenService    | owner    | EOA                | `transfer_token_admin`, `transfer_ownership`, `pause/unpause`, `upgrade`            | Contract Owner EOA (interim)  | CRITICAL PROTOCOL CONTROL - Owner has pause/unpause duties which need rapid responses; operator cannot do pause/unpause                                                           |
 | InterchainTokenService    | operator | EOA                | `set_trusted_chain`, `remove_trusted_chain`, `set_flow_limit`, `transfer_operatorship` | Rate Limiter EOA      | OPERATIONAL MANAGEMENT - Update rate limits and trusted chains                                                                                                                    |
 
 **Notes:** 
 - Contracts like `Upgrader`, `Multicall`, and `TokenUtils` do not have transferable roles. The deployer field is informational only and requires no action.
 - AxelarOperators contract does not have operator role.
-- **Important:** The governance contract on Stellar is not yet ready, so if the role transfer is performed before the contract readiness, we will use EOA to replace the `AxelarServiceGovernance`; but eventually it's will going to be transferred to the governance after the contract is ready.
+- **Important:** The AxelarServiceGovernance contract on Stellar is not yet ready. As an interim solution, we will use a dedicated **Contract Owner EOA** for the owner roles that are intended for AxelarServiceGovernance. Once the governance contract is deployed and operational, the ownership will be transferred from the Contract Owner EOA to AxelarServiceGovernance.
 - **Important:** The `pause/unpause` functions in `AxelarGateway` and `InterchainTokenService` are currently owner-only operations. These functions will be migrated to operator-accessible operations in a future contract upgrade. This role transfer document reflects the current state where owners retain pause/unpause capabilities.
 
 ## Prerequisites
@@ -81,9 +81,9 @@ Before executing the role transfers, confirm the target addresses for each envir
 
 | Role Target               | Network          | Address    |
 | ------------------------- | ---------------- | ---------- |
-| AxelarServiceGovernance   | Stagenet         | TBD        |
-| AxelarServiceGovernance   | Testnet          | TBD        |
-| AxelarServiceGovernance   | Mainnet          | TBD        |
+| Contract Owner EOA (interim) | Stagenet         | TBD        |
+| Contract Owner EOA (interim) | Testnet          | TBD        |
+| Contract Owner EOA (interim) | Mainnet          | TBD        |
 | Emergency Operator EOA    | Stagenet         | TBD        |
 | Emergency Operator EOA    | Testnet          | TBD        |
 | Emergency Operator EOA    | Mainnet          | TBD        |
@@ -117,15 +117,15 @@ ts-node stellar/contract.js owner InterchainTokenService
 ts-node stellar/contract.js operator InterchainTokenService
 ```
 
-### Step 2: Transfer AxelarGateway Owner to AxelarServiceGovernance
+### Step 2: Transfer AxelarGateway Owner to Contract Owner EOA (interim)
 
-**New Owner**: AxelarServiceGovernance
+**New Owner**: Contract Owner EOA (interim, until AxelarServiceGovernance is ready)
 
 ```bash
-AXELAR_SERVICE_GOVERNANCE=<AXELAR_SERVICE_GOVERNANCE_ADDRESS>
+CONTRACT_OWNER_EOA=<CONTRACT_OWNER_EOA_ADDRESS>
 
 # Transfer ownership
-ts-node stellar/contract.js transfer-ownership AxelarGateway $AXELAR_SERVICE_GOVERNANCE
+ts-node stellar/contract.js transfer-ownership AxelarGateway $CONTRACT_OWNER_EOA
 
 # Verify transfer
 ts-node stellar/contract.js owner AxelarGateway
@@ -159,15 +159,15 @@ ts-node stellar/contract.js transfer-ownership AxelarOperators $RELAYER_OPERATOR
 ts-node stellar/contract.js owner AxelarOperators
 ```
 
-### Step 5: Transfer AxelarGasService Owner to AxelarServiceGovernance
+### Step 5: Transfer AxelarGasService Owner to Contract Owner EOA (interim)
 
-**New Owner**: AxelarServiceGovernance
+**New Owner**: Contract Owner EOA (interim, until AxelarServiceGovernance is ready)
 
 ```bash
-AXELAR_SERVICE_GOVERNANCE=<AXELAR_SERVICE_GOVERNANCE_ADDRESS>
+CONTRACT_OWNER_EOA=<CONTRACT_OWNER_EOA_ADDRESS>
 
 # Transfer ownership
-ts-node stellar/contract.js transfer-ownership AxelarGasService $AXELAR_SERVICE_GOVERNANCE
+ts-node stellar/contract.js transfer-ownership AxelarGasService $CONTRACT_OWNER_EOA
 
 # Verify transfer
 ts-node stellar/contract.js owner AxelarGasService
@@ -202,15 +202,15 @@ ts-node stellar/contract.js transfer-operatorship AxelarGasService $OPERATORS_CO
 ts-node stellar/contract.js operator AxelarGasService
 ```
 
-### Step 7: Transfer InterchainTokenService Owner to AxelarServiceGovernance
+### Step 7: Transfer InterchainTokenService Owner to Contract Owner EOA (interim)
 
-**New Owner**: AxelarServiceGovernance
+**New Owner**: Contract Owner EOA (interim, until AxelarServiceGovernance is ready)
 
 ```bash
-AXELAR_SERVICE_GOVERNANCE=<AXELAR_SERVICE_GOVERNANCE_ADDRESS>
+CONTRACT_OWNER_EOA=<CONTRACT_OWNER_EOA_ADDRESS>
 
 # Transfer ownership
-ts-node stellar/contract.js transfer-ownership InterchainTokenService $AXELAR_SERVICE_GOVERNANCE
+ts-node stellar/contract.js transfer-ownership InterchainTokenService $CONTRACT_OWNER_EOA
 
 # Verify transfer
 ts-node stellar/contract.js owner InterchainTokenService
@@ -234,12 +234,12 @@ ts-node stellar/contract.js operator InterchainTokenService
 
 After completing role transfers, verify all changes:
 
-- [ ] AxelarGateway `owner` is held by AxelarServiceGovernance
+- [ ] AxelarGateway `owner` is held by Contract Owner EOA (interim)
 - [ ] AxelarGateway `operator` is held by Emergency Operator EOA
 - [ ] AxelarOperators `owner` is held by Relayer Operators EOA
-- [ ] AxelarGasService `owner` is held by AxelarServiceGovernance
+- [ ] AxelarGasService `owner` is held by Contract Owner EOA (interim)
 - [ ] AxelarGasService `operator` is held by Operators contract
-- [ ] InterchainTokenService `owner` is held by AxelarServiceGovernance
+- [ ] InterchainTokenService `owner` is held by Contract Owner EOA (interim)
 - [ ] InterchainTokenService `operator` is held by Rate Limiter EOA
 - [ ] All transfers verified via `ts-node stellar/contract.js owner/operator <contractName>`
 - [ ] Contract addresses updated in `${ENV}.json` if necessary
@@ -257,7 +257,7 @@ After completing role transfers, verify all changes:
 
 5. **No Action Required**: Contracts like `Upgrader`, `Multicall`, and `TokenUtils` are utility contracts without transferable ownership roles. The `deployer` field in these contracts is informational only.
 
-6. **Governance Contracts**: Ensure that the AxelarServiceGovernance contract addresses are deployed and operational in each environment before transferring ownership to them.
+6. **Governance Contracts**: The AxelarServiceGovernance contract is not yet ready on Stellar. The Contract Owner EOA is used as an interim solution. Once AxelarServiceGovernance is deployed and operational, ownership should be transferred from the Contract Owner EOA to AxelarServiceGovernance.
 
 7. **Multi-Signature Requirements**: Depending on the governance contract implementation, some operations may require multi-signature approval. Coordinate with the appropriate signers before executing transfers.
 
