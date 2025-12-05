@@ -7,8 +7,8 @@
 
 | **Environment**          | **Chain**           | **Deployment Status** | **Date** |
 | ------------------------ | ------------------- | --------------------- | -------- |
-| **Stagenet**             | `stellar-2025-q2`   | -                     | TBD      |
-| **Testnet**              | `stellar-2025-q2-2` | -                     | TBD      |
+| **Stagenet**             | `stellar-2025-q3`   | -                     | TBD      |
+| **Testnet**              | `stellar-2025-q3` | -                     | TBD      |
 | **Mainnet**              | `stellar`           | -                     | TBD      |
 
 ## Background
