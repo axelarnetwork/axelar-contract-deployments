@@ -14,8 +14,6 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
     title?: string;
     description?: string;
-    itsEdgeContract?: string;
-    itsMsgTranslator?: string;
     update?: boolean;
     contractName?: string;
     msg?: string[];
@@ -92,18 +90,12 @@ const registerItsChain = async (
         throw new Error('At least one chain is required');
     }
 
-    if (options.itsEdgeContract && args.length > 1) {
-        throw new Error('Cannot use --its-edge-contract option with multiple chains.');
-    }
-
-    const itsMsgTranslator =
-        options.itsMsgTranslator ||
-        config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
+    const itsMsgTranslator = config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
 
     const chains = args.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
+        const itsEdgeContractAddress = itsEdgeContract(chainConfig);
 
         return {
             chain: chainConfig.axelarId,
@@ -341,18 +333,6 @@ const programHandler = () => {
         .command('its-hub-register-chains')
         .description('Register or update an InterchainTokenService chain')
         .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
-        .addOption(
-            new Option(
-                '--its-msg-translator <itsMsgTranslator>',
-                'address for the message translation contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(
-            new Option(
-                '--its-edge-contract <itsEdgeContract>',
-                'address for the ITS edge contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
         .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
         .action((chains, options) => {
             return mainProcessor(registerItsChain, options, chains);
