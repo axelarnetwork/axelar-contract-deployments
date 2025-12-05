@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Interchain Governance system enables cross-chain governance actions for contracts like `AxelarGateway`, `InterchainTokenService`, and `InterchainTokenFactory`. Governance is controlled by the native PoS-based governance mechanism on the Axelar network.
+The Interchain Governance system enables cross-chain governance actions for contracts like `AxelarGateway`, `InterchainTokenService`, and `AxelarGasService`. Governance is controlled by the native governance mechanism on the Axelar network.
 
 
 ## Governance Flow
@@ -23,7 +23,7 @@ The Interchain Governance system enables cross-chain governance actions for cont
 
 **Key Points:**
 - Proposals are created on Axelar and executed on EVM chains via GMP
-- Timelock ensures minimum delay between scheduling and execution
+- Timelock ensures minimum delay between scheduling and execution(Can be skipped using ServiceGovernance operators approval)
 - Each proposal is uniquely identified by `keccak256(target, calldata, nativeValue)`
 
 ## Proposal Structure
@@ -105,12 +105,16 @@ Schedule a new timelock proposal. Generates a proposal JSON for submission to Ax
 ts-node evm/governance.js schedule <action> <date> [options]
 ```
 
-**Actions:** `raw`, `upgrade`, `transferGovernance`, `withdraw`
+**Actions:** `raw`, `upgrade`, `transferGovernance`, `withdraw`, `setTrustedChain`, `removeTrustedChain`, `setPauseStatus`, `migrateInterchainToken`
 
 - `raw`: Schedule a custom governance action by providing the target address and calldata directly. Use this for arbitrary function calls that aren't covered by other actions.
 - `upgrade`: Upgrade a contract to a new implementation (requires `--targetContractName`)
 - `transferGovernance`: Transfer governance of a contract (requires `--targetContractName`)
 - `withdraw`: Withdraw native tokens from the governance contract (requires `--target` and `--amount`)
+- `setTrustedChain`: Set a trusted chain on InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--chain`)
+- `removeTrustedChain`: Remove a trusted chain from InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--chain`)
+- `setPauseStatus`: Pause or unpause InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--pauseStatus true/false`)
+- `migrateInterchainToken`: Migrate an interchain token on InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--tokenId`)
 
 **Date Format:** `YYYY-MM-DDTHH:mm:ss` (UTC format, e.g., `2025-12-31T12:00:00`)
 
@@ -181,7 +185,7 @@ ts-node evm/governance.js execute --proposal <encoded>
 
 ## AxelarServiceGovernance Commands
 
-`AxelarServiceGovernance` adds operator approval functionality (bypasses timelock). Only available for `AxelarServiceGovernance`:
+`AxelarServiceGovernance` adds operator approval functionality (bypasses timelock):
 
 ### Schedule Operator Proposal
 
@@ -571,6 +575,121 @@ ts-node evm/governance.js schedule transferGovernance 2025-12-31T12:00:00 \
 ts-node evm/governance.js schedule withdraw 2025-12-31T12:00:00 \
   --target 0xRecipient --amount 1.0
 ```
+
+---
+
+### InterchainTokenService Governance Actions
+
+These actions allow you to manage InterchainTokenService through governance proposals.
+
+#### Set Trusted Chain
+
+Set a trusted chain on InterchainTokenService. This allows the specified chain to interact with ITS.
+
+```bash
+ts-node evm/governance.js schedule setTrustedChain 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --chain ethereum \
+  --file proposal.json
+```
+
+**Parameters:**
+- `--targetContractName InterchainTokenService`: Required - specifies the target contract
+- `--chain <chain>`: Required - the chain name to set as trusted (e.g., `ethereum`, `avalanche`)
+- `--file <file>`: Optional - write proposal JSON to file
+
+**Note:** The `--address` parameter is ignored for this action. It uses `setTrustedChain` function which only requires the chain name.
+
+#### Remove Trusted Chain
+
+Remove a trusted chain from InterchainTokenService.
+
+```bash
+ts-node evm/governance.js schedule removeTrustedChain 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --chain ethereum \
+  --file proposal.json
+```
+
+**Parameters:**
+- `--targetContractName InterchainTokenService`: Required - specifies the target contract
+- `--chain <chain>`: Required - the chain name to remove from trusted chains
+- `--file <file>`: Optional - write proposal JSON to file
+
+#### Set Pause Status
+
+Pause or unpause InterchainTokenService. When paused, ITS operations are halted.
+
+```bash
+# Pause ITS
+ts-node evm/governance.js schedule setPauseStatus 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --pauseStatus true \
+  --file proposal.json
+
+# Unpause ITS
+ts-node evm/governance.js schedule setPauseStatus 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --pauseStatus false \
+  --file proposal.json
+```
+
+**Parameters:**
+- `--targetContractName InterchainTokenService`: Required - specifies the target contract
+- `--pauseStatus true/false`: Required - set to `true` to pause, `false` to unpause
+- `--file <file>`: Optional - write proposal JSON to file
+
+#### Migrate Interchain Token
+
+Migrate an interchain token's mintership to its TokenManager.
+
+```bash
+ts-node evm/governance.js schedule migrateInterchainToken 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --tokenId 0x0000000000000000000000000000000000000000000000000000000000000000 \
+  --file proposal.json
+```
+
+**Parameters:**
+- `--targetContractName InterchainTokenService`: Required - specifies the target contract
+- `--tokenId <tokenId>`: Required - the 32-byte token ID (keccak256 hash) in hex format
+- `--file <file>`: Optional - write proposal JSON to file
+
+**Complete Workflow Example for InterchainTokenService Actions:**
+
+```bash
+# Step 1: Schedule the proposal
+ts-node evm/governance.js schedule setTrustedChain 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --chain ethereum \
+  --file proposal.json
+
+# Step 2: Submit to Axelar (automatic if MNEMONIC is set, or via Cosmos CLI)
+# If using file, submit via:
+# axelard tx gov submit-proposal call-contracts proposal.json \
+#   --deposit <min-deposit>uaxl --from <wallet> --chain-id <chain-id> \
+#   --gas auto --gas-adjustment 1.4 --node <rpc>
+
+# Step 3: Wait for voting period and proposal to pass
+
+# Step 4: Check if GMP call was executed (check Axelarscan)
+# If relayers failed, manually submit:
+ts-node evm/governance.js submit setTrustedChain <commandId> 2025-12-31T12:00:00 \
+  --targetContractName InterchainTokenService \
+  --chain ethereum
+
+# Step 5: Check ETA
+ts-node evm/governance.js eta \
+  --target 0xInterchainTokenServiceAddress \
+  --calldata 0xGeneratedCalldata
+
+# Step 6: Execute after ETA passes
+ts-node evm/governance.js execute \
+  --target 0xInterchainTokenServiceAddress \
+  --calldata 0xGeneratedCalldata
+```
+
+**Note:** For `eta` and `execute` commands, you need to provide the exact `--target` and `--calldata` that were used when scheduling the proposal. The calldata can be obtained by running the schedule command with `--file` option and examining the generated proposal, or by using the `raw` action with pre-generated calldata.
 
 
 ## Troubleshooting
