@@ -51,7 +51,7 @@ Set up your environment for Solana operations:
 export CHAIN=solana-devnet
 export CLUSTER=devnet  # or use full RPC URL
 
-# Ensure you have the solana-axelar-cli built
+# Ensure you have the solana/cli built
 cd solana
 cargo build --release
 ```
