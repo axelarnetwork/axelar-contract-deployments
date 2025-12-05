@@ -32,6 +32,7 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 **Notes:** 
 - Contracts like `Upgrader`, `Multicall`, and `TokenUtils` do not have transferable roles. The deployer field is informational only and requires no action.
 - AxelarOperators contract does not have operator role.
+- **Important:** The governance contract on Stellar is not yet ready, so if the role transfer is performed before the contract readiness, we will use EOA to replace the `AxelarServiceGovernance`; but eventually it's will going to be transferred to the governance after the contract is ready.
 - **Important:** The `pause/unpause` functions in `AxelarGateway` and `InterchainTokenService` are currently owner-only operations. These functions will be migrated to operator-accessible operations in a future contract upgrade. This role transfer document reflects the current state where owners retain pause/unpause capabilities.
 
 ## Prerequisites
