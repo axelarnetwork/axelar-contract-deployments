@@ -3,8 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
-    BigNumber,
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits },
     Contract,
 } = ethers;
 const { Command, Option, Argument } = require('commander');
@@ -18,7 +17,6 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
-    isValidTokenId,
     getGasOptions,
     isNonEmptyString,
     encodeITSDestination,
@@ -27,14 +25,7 @@ const {
     isTrustedChain,
     loadConfig,
 } = require('./utils');
-const {
-    getChainConfigByAxelarId,
-    validateDestinationChain,
-    validateChain,
-    tokenManagerTypes,
-    validateLinkType,
-    estimateITSFee,
-} = require('../common/utils');
+const { getChainConfigByAxelarId, validateChain, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -257,7 +248,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowLimit = await interchainTokenService.flowLimit(tokenId);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowLimit = await tokenManager.flowLimit();
             printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
 
             break;
@@ -267,7 +261,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowOutAmount = await interchainTokenService.flowOutAmount(tokenId);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowOutAmount = await tokenManager.flowOutAmount();
             printInfo(`Flow out amount for tokenId ${tokenId}`, flowOutAmount);
 
             break;
@@ -277,7 +274,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowInAmount = await interchainTokenService.flowInAmount(tokenId);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowInAmount = await tokenManager.flowInAmount();
             printInfo(`Flow in amount for tokenId ${tokenId}`, flowInAmount);
 
             break;

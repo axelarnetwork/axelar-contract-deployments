@@ -500,11 +500,11 @@ function validateParameters(parameters) {
 }
 
 const dateToEta = (input) => {
-    if (input === '0') {
+    const trimmedInput = String(input).trim();
+
+    if (trimmedInput === '0') {
         return 0;
     }
-
-    const trimmedInput = String(input).trim();
 
     if (/^\d+$/.test(trimmedInput)) {
         const seconds = parseInt(trimmedInput, 10);
@@ -805,7 +805,8 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
             }
             // For Sui token addresses (X -> Sui), encode as ASCII string
             return asciiToBytes(destinationTokenAddress.replace('0x', ''));
-
+        case 'xrpl':
+            return destinationTokenAddress;
         default:
             // For all other chains, use the same encoding as destination addresses
             return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
@@ -876,8 +877,8 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
-    if (env === 'devnet-amplifier') {
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, axelar) {
+    if (env.startsWith('devnet-') || env === 'local') {
         return { gasValue: 0, gasFeeValue: 0 };
     }
 
@@ -890,7 +891,11 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         return { gasValue, gasFeeValue };
     }
 
-    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+    if (!axelar?.axelarscanApi) {
+        throw new Error(`axelarscanApi is not configured for environment: ${env}. Please check the environment config and try again.`);
+    }
+
+    const url = `${axelar.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
