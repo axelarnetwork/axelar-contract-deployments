@@ -14,7 +14,7 @@
 
 ## Background
 
-Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to EOA (ultimatly will be tranferred to Multisig). This enforces correct permissions, separation of duties, and stronger security. 
+Rotate non‑critical roles to appropriate operational addresses, and assign critical roles to EOA (ultimatly will be tranferred to Multisig/ServiceGovernance). This enforces correct permissions, separation of duties, and stronger security. 
 
 
 ## Pre-requisites
