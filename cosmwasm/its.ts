@@ -2,7 +2,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Argument, Command, Option } from 'commander';
 import { Contract, constants, getDefaultProvider } from 'ethers';
 
-import { addEnvOption, validateParameters } from '../common';
+import { addEnvOption, printError, validateParameters } from '../common';
 import { printInfo } from '../common';
 import { ConfigManager } from '../common/config';
 import { getContractJSON } from '../evm/utils';
@@ -81,6 +81,11 @@ export async function alignTokenSupplyOnHub(
     chain: string,
     dryRun: boolean,
 ) {
+    const chainConfig = config.getChainConfig(chain);
+    if (chainConfig.chainType !== 'evm') {
+        throw new Error(`This method supports only EVM-compatible chains`);
+    }
+
     const tokenInstance = await tokenInstanceByChain(config, client, interchainTokenServiceAddress, tokenId, chain);
     if (!tokenInstance) {
         printInfo(`Token ${tokenId} on ${chain} is not registered`);
@@ -91,7 +96,7 @@ export async function alignTokenSupplyOnHub(
         token_config: { token_id: formatTokenId(tokenId) },
     });
 
-    if (origin_chain === config.getChainConfig(chain).axelarId) {
+    if (origin_chain === chainConfig.axelarId) {
         printInfo(`Token ${tokenId} origin chain is ${chain}, it should be set to untracked.`);
         return;
     }
