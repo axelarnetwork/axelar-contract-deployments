@@ -453,9 +453,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
             if (!isCurrentOperator && !isOwner) {
-                throw new Error(
-                    `Caller ${walletAddress} is neither an operator nor the owner (owner: ${owner}).`,
-                );
+                throw new Error(`Caller ${walletAddress} is neither an operator nor the owner (owner: ${owner}).`);
             }
 
             if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
