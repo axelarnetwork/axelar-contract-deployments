@@ -19,7 +19,6 @@
 |                      | `flow`             | -                     | TBD      |
 |                      | `hedera`           | -                     | TBD      |
 |                      | `hyperliquid`      | -                     | TBD      |
-|                      | `monad`            | -                     | TBD      |
 |                      | `plume`            | -                     | TBD      |
 |                      | `xrpl-evm`         | -                     | TBD      |
 | **Testnet**          | `berachain`        | -                     | TBD      |
@@ -27,8 +26,6 @@
 |                      | `flow`             | -                     | TBD      |
 |                      | `hedera`           | -                     | TBD      |
 |                      | `hyperliquid`      | -                     | TBD      |
-|                      | `memento-demo`     | -                     | TBD      |
-|                      | `monad`            | -                     | TBD      |
 |                      | `plume`            | -                     | TBD      |
 |                      | `xrpl-evm`         | -                     | TBD      |
 | **Mainnet**          | `berachain`        | -                     | TBD      |
@@ -56,6 +53,13 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 ## Pre-requisites
 
+| Network              | Chains                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| **Devnet Amplifier** | `avalanche-fuji,eth-sepolia,optimism-sepolia,flow,xrpl-evm-devnet,plume-2,berachain` |
+| **Stagenet**         | `flow,hedera,xrpl-evm,plume,hyperliquid,berachain,celo-sepolia`                      |
+| **Testnet**          | `flow,hedera,xrpl-evm,plume,berachain,hyperliquid,celo-sepolia`                      |
+| **Mainnet**          | `flow,xrpl-evm,plume,hedera,berachain,hyperliquid,monad`                             |
+
 1. Update npm dependencies
     ```bash
     npm ci && npm run build
@@ -64,7 +68,7 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
     ```yaml
     PRIVATE_KEY=<deployer private key>
     ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-    CHAIN=<chain name>
+    CHAINS=<chain name>
     ```
 
 ## Deployment Steps
@@ -101,24 +105,17 @@ For each amplifier chain, add the following configuration:
 
 #### Deploy AxelarServiceGovernance
 
-**Note**: The `deploy-contract.js` script supports parallel deployment using the `--parallel` flag. To deploy on all amplifier chains, first get the amplifier chain names from the Axelar chains config.
-
-```bash
-# Replace '$ENV' with the desired env (e.g. 'mainnet', 'stagenet')
-node -e 'const { loadConfig } = require("./common/utils"); const { chains } = loadConfig("$ENV"); console.log(Object.entries(chains).filter(([, config]) => config.contracts?.AxelarGateway?.connectionType === "amplifier" && !["sui","solana","xrpl","stellar"].includes(config.chainType)).map(([name]) => name).join(" "));'
-```
-
-**For a single chain:**
-
-```bash
-ts-node evm/deploy-contract.js -c AxelarServiceGovernance
-```
-
 **For all amplifier chains in parallel:**
 
 ```bash
 # Deploy to all amplifier chains in parallel
 ts-node evm/deploy-contract.js -c AxelarServiceGovernance --parallel
+```
+
+**For a single chain:** (In case parallel deployment fails)
+
+```bash
+ts-node evm/deploy-contract.js -c AxelarServiceGovernance
 ```
 
 #### Verify Deployment
@@ -209,7 +206,7 @@ ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
 
 **New Owner**: Operators Owner EOA
 
-| Network              | Current Owner                                                                              | Operators Owner EOA                    |
+| Network              | Current Owner                                                                              | Operators Owner EOA                          |
 | -------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
 | **Devnet Amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df`                                               | `0xd86fb81139f3bc86559ab495094fe2aa24b0a8af` |
