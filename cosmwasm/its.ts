@@ -2,7 +2,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Argument, Command, Option } from 'commander';
 import { Contract, constants, getDefaultProvider } from 'ethers';
 
-import { addEnvOption, tokenManagerTypes, validateParameters } from '../common';
+import { addEnvOption, validateParameters } from '../common';
 import { printInfo } from '../common';
 import { ConfigManager } from '../common/config';
 import { getContractJSON } from '../evm/utils';
@@ -129,24 +129,24 @@ export async function alignTokenSupplyOnHub(
     };
 
     const [account] = client.accounts;
+    printInfo('Aligning token supply ', JSON.stringify(msg.modify_supply));
 
     if (!dryRun) {
         await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
     }
 }
 
-export async function isTokenSupplyTracked(tokenManagerType: number, token: Contract): Promise<boolean> {
-    return tokenManagerType === tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN && (await token.isMinter(constants.AddressZero));
+export async function isTokenSupplyTracked(token: Contract): Promise<boolean> {
+    return await token.isMinter(constants.AddressZero);
 }
 
 export async function tokenSupplyByChain(tokenAddress: string, rpc: string): Promise<{ supply: bigint; isTokenSupplyTracked: boolean }> {
     const provider = getDefaultProvider(rpc);
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
     const supply = await token.totalSupply();
-    const tokenManagerType = await token.tokenManagerType();
     return {
         supply: BigInt(supply.toString()),
-        isTokenSupplyTracked: await isTokenSupplyTracked(tokenManagerType, token),
+        isTokenSupplyTracked: await isTokenSupplyTracked(token),
     };
 }
 
