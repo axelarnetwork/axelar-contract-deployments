@@ -101,7 +101,12 @@ For each amplifier chain, add the following configuration:
 
 #### Deploy AxelarServiceGovernance
 
-**Note**: The `deploy-contract.js` script supports parallel deployment using the `--parallel` flag. To deploy on all amplifier chains, first get the amplifier chain names using the `getAmplifierChains` helper function.
+**Note**: The `deploy-contract.js` script supports parallel deployment using the `--parallel` flag. To deploy on all amplifier chains, first get the amplifier chain names from the Axelar chains config.
+
+```bash
+# Replace '$ENV' with the desired env (e.g. 'mainnet', 'stagenet')
+node -e 'const { loadConfig } = require("./common/utils"); const { chains } = loadConfig("$ENV"); console.log(Object.entries(chains).filter(([, config]) => config.contracts?.AxelarGateway?.connectionType === "amplifier" && !["sui","solana","xrpl","stellar"].includes(config.chainType)).map(([name]) => name).join(" "));'
+```
 
 **For a single chain:**
 
