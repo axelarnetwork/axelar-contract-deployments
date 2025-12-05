@@ -109,13 +109,16 @@ export async function alignTokenSupplyOnHub(
     }
 
     let supplyOnHub: bigint;
-    if (tokenInstance.supply === 'untracked') {
+    const isUntracked = tokenInstance.supply === 'untracked';
+    if (isUntracked) {
         supplyOnHub = BigInt(0);
-    } else {
+    } else if (typeof tokenInstance.supply === 'object' && 'tracked' in tokenInstance.supply) {
         supplyOnHub = BigInt(tokenInstance.supply.tracked);
+    } else {
+        throw new Error(`Unexpected supply state: ${JSON.stringify(tokenInstance.supply)}`);
     }
 
-    if (supply === supplyOnHub) {
+    if (!isUntracked && supply === supplyOnHub) {
         printInfo(`Token ${tokenId} on ${chain} supply is up-to-date`);
         return;
     }
