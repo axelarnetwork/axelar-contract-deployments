@@ -144,11 +144,22 @@ ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-
 # Get the AxelarServiceGovernance contract address for this environment
 AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
-# Verify current governance
-ts-node evm/governance.js --contractName AxelarGateway --action governance --parallel
+- Note: Specify all the chain names on -n flag where we want proposal to run 
 
 # Transfer governance to AxelarServiceGovernance
-ts-node evm/governance.js --contractName AxelarGateway --action transferGovernance --newGovernance $AXELAR_SERVICE_GOVERNANCE --parallel
+ts-node evm/governance.js schedule transferGovernance $ETA \
+  --contractName InterchainGovernance \
+  --targetContractName AxelarGateway \
+  --newGovernance "$AXELAR_SERVICE_GOVERNANCE" 
+
+# After ETA/minimumTimeDelay has passed, execute the proposal
+ts-node evm/governance.js execute transferGovernance \
+  --contractName InterchainGovernance \
+  --targetContractName AxelarGateway \
+  --newGovernance "$AXELAR_SERVICE_GOVERNANCE" --parallel
+
+# Verify governance is now AxelarServiceGovernance
+ts-node evm/gateway.js -e $ENV -n $CHAIN --action governance
 
 # Verify transfer completed successfully
 ts-node evm/governance.js --contractName AxelarGateway --action governance --parallel
