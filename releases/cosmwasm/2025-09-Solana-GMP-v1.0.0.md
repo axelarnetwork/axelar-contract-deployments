@@ -5,16 +5,16 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | Pending               | TBD      |
-| **Stagenet**         | Pending               | TBD      |
-| **Testnet**          | Pending               | TBD      |
-| **Mainnet**          | Pending               | TBD      |
+| **Axelar Env**       | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-12-04 |
+| **Stagenet**         | Pending               | TBD        |
+| **Testnet**          | Pending               | TBD        |
+| **Mainnet**          | Pending               | TBD        |
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-  - SolanaMultisigProver: `cd0c28f81d0bb735ae9ac442f1d51688582be6d380b8756b6a12aeab8ceb8d92`
+  - SolanaMultisigProver: `8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068`
 
 ## Background
 
@@ -33,7 +33,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
     ```bash
     git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
     cd axelar-amplifier-eiger
-    git checkout solana-cosmwasm
+    git checkout main
     ```
 
 1. Build the contracts and copy artifacts:
@@ -92,7 +92,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -v "1.2.0" \
+        -v "2.0.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -194,12 +194,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```bash
     ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
         -n $CHAIN \
-        -s "$SALT" \
+        -s $SALT \
         --fetchCodeId \
         -t "Instantiate contracts for $CHAIN" \
         -d "Instantiate Gateway, VotingVerifier and SolanaMultisigProver contracts for $CHAIN via Coordinator" \
-        --admin "$CONTRACT_ADMIN" \
-        --runAs "[governanceAddress]" \
+        --admin $CONTRACT_ADMIN \
+        --runAs $RUN_AS_ACCOUNT \
         -m $MNEMONIC
     ```
 
