@@ -254,24 +254,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
 
-1. Register Gateway at the Router
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Router \
-        -t "Register Gateway for Solana" \
-        -d "Register Gateway address for Solana at Router contract" \
-        -m $MNEMONIC \
-        --msg "{
-                \"register_chain\": {
-                    \"chain\": \"$CHAIN\",
-                    \"gateway_address\": \"$GATEWAY\",
-                    \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
-                }
-            }"
-    ```
-
-    - Verify Gateway Registration:
+1. Verify Gateway Registration:
 
     ```bash
     axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node $NODE | jq .
