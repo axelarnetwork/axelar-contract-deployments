@@ -37,6 +37,7 @@ const {
     calculateDomainSeparator,
     validateParameters,
     tryItsEdgeContract,
+    itsEdgeContract,
 } = require('../common');
 const {
     pascalToSnake,
@@ -73,6 +74,10 @@ const isValidCosmosAddress = (str) => {
 };
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
+
+const toArray = (value) => {
+    return Array.isArray(value) ? value : [value];
+};
 
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
@@ -112,6 +117,17 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     }
 
     return { contractBaseConfig, contractConfig };
+};
+
+const usesGovernanceBypass = (config, contractName, chainName) => {
+    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
+    const governanceAddress = contractConfig.governanceAddress;
+
+    if (!governanceAddress) {
+        return false;
+    }
+
+    return governanceAddress !== GOVERNANCE_MODULE_ADDRESS;
 };
 
 const getCodeId = async (client, config, options) => {
@@ -905,6 +921,24 @@ const getChainTruncationParams = (config, chainConfig) => {
     return { maxUintBits, maxDecimalsWhenTruncating };
 };
 
+const itsHubChainParams = (config, chainConfig) => {
+    const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
+    const itsEdgeContractAddress = itsEdgeContract(chainConfig);
+
+    const key = chainConfig.axelarId.toLowerCase();
+    const chainParams = config.axelar.contracts.InterchainTokenService[key];
+    const itsMsgTranslator =
+        chainParams?.msgTranslator ||
+        config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
+
+    return {
+        itsEdgeContractAddress,
+        itsMsgTranslator,
+        maxUintBits,
+        maxDecimalsWhenTruncating,
+    };
+};
+
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
@@ -1318,7 +1352,7 @@ const submitProposal = async (client, config, options, proposal, fee) => {
         printInfo('Proposer address', account.address);
     }
 
-    const normalizedProposal = isLegacy ? proposal : Array.isArray(proposal) ? proposal : [proposal];
+    const normalizedProposal = isLegacy ? proposal : toArray(proposal);
 
     const submitProposalMsg = encodeSubmitProposal(normalizedProposal, config, options, account.address);
 
@@ -1500,6 +1534,7 @@ module.exports = {
     CONTRACTS,
     AXELAR_GATEWAY_CONTRACT_NAME,
     fromHex,
+    toArray,
     getSalt,
     calculateDomainSeparator,
     getAmplifierContractConfig,
@@ -1512,6 +1547,7 @@ module.exports = {
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
     getChainTruncationParams,
+    itsHubChainParams,
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiate,
@@ -1526,5 +1562,6 @@ module.exports = {
     getContractCodePath,
     validateItsChainChange,
     isLegacySDK,
+    usesGovernanceBypass,
     GOVERNANCE_MODULE_ADDRESS,
 };

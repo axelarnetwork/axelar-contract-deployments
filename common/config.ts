@@ -50,7 +50,6 @@ export interface ExplorerConfig {
 export interface DeploymentConfig {
     deploymentName: string;
     salt: string;
-    proposalId: string;
 }
 
 export interface ContractConfig {
@@ -420,6 +419,12 @@ export class ConfigManager implements FullConfig {
         if (Number.isNaN(numDenominator) || !isFinite(numDenominator)) {
             throw new Error(
                 `Invalid threshold configuration for the chain. Denominator must be a valid number, got: ${JSON.stringify(value[1])}`,
+            );
+        }
+
+        if (numNumerator <= 0 || numDenominator <= 0) {
+            throw new Error(
+                `Invalid threshold configuration for the chain. Numerator and denominator must be greater than 0, got: [${numNumerator}, ${numDenominator}]`,
             );
         }
 
