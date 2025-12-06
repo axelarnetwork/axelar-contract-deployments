@@ -1,14 +1,14 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
-import { getChainConfig, itsEdgeContract, printInfo, prompt, validateParameters } from '../common';
+import { getChainConfig, printInfo, prompt, validateParameters } from '../common';
 import { ConfigManager, GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from '../common/config';
 import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { execute } from './submit-proposal';
-import { executeTransaction, getChainTruncationParams, getCodeId, usesGovernanceBypass, validateItsChainChange } from './utils';
+import { executeTransaction, getCodeId, itsHubChainParams, usesGovernanceBypass, validateItsChainChange } from './utils';
 
 interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
@@ -90,12 +90,9 @@ const registerItsChain = async (
         throw new Error('At least one chain is required');
     }
 
-    const itsMsgTranslator = config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
-
     const chains = args.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
-        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-        const itsEdgeContractAddress = itsEdgeContract(chainConfig);
+        const { itsEdgeContractAddress, itsMsgTranslator, maxUintBits, maxDecimalsWhenTruncating } = itsHubChainParams(config, chainConfig);
 
         return {
             chain: chainConfig.axelarId,

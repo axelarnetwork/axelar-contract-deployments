@@ -213,6 +213,24 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     }
     ```
 
+    Additionally, configure the ITS hub parameters in `axelar.contracts.InterchainTokenService[$CHAIN]` within `ENV.json`. For EVM chains, `maxUintBits` and `maxDecimalsWhenTruncating` default to `256` and `255` respectively if not specified. The `msgTranslator` address defaults to the global `ItsAbiTranslator.address` if not provided per-chain.
+
+    ```json
+    {
+        "axelar": {
+            "contracts": {
+                "InterchainTokenService": {
+                    "$CHAIN": {
+                        "maxUintBits": 256,
+                        "maxDecimalsWhenTruncating": 255,
+                        "msgTranslator": "axelar1..." // Optional: per-chain override
+                    }
+                }
+            }
+        }
+    }
+    ```
+
     ```bash
     ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN
     ```

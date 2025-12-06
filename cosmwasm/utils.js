@@ -37,6 +37,7 @@ const {
     calculateDomainSeparator,
     validateParameters,
     tryItsEdgeContract,
+    itsEdgeContract,
 } = require('../common');
 const {
     pascalToSnake,
@@ -920,6 +921,24 @@ const getChainTruncationParams = (config, chainConfig) => {
     return { maxUintBits, maxDecimalsWhenTruncating };
 };
 
+const itsHubChainParams = (config, chainConfig) => {
+    const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
+    const itsEdgeContractAddress = itsEdgeContract(chainConfig);
+
+    const key = chainConfig.axelarId.toLowerCase();
+    const chainParams = config.axelar.contracts.InterchainTokenService[key];
+    const itsMsgTranslator =
+        chainParams?.msgTranslator ||
+        config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
+
+    return {
+        itsEdgeContractAddress,
+        itsMsgTranslator,
+        maxUintBits,
+        maxDecimalsWhenTruncating,
+    };
+};
+
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
@@ -1528,6 +1547,7 @@ module.exports = {
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
     getChainTruncationParams,
+    itsHubChainParams,
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiate,
