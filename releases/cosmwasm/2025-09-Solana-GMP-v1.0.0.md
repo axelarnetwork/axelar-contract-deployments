@@ -118,7 +118,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c SolanaMultisigProver \
         -t "Upload SolanaMultisigProver contract for Solana" \
         -d "Upload SolanaMultisigProver contract for Solana integration" \
-        -a "$EIGER_ARTIFACT_PATH" \
+        -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -425,7 +425,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "[service_name]", "chain_name": "$CHAIN"}}' --node $NODE
+    axelard query wasm contract-state smart $SERVICE_REGISTRY "{ \"active_verifiers\": { \"service_name\": \"[service_name]\", \"chain_name\": \"$CHAIN\"} }" --node $NODE
     ```
 
 1. Create genesis verifier set
