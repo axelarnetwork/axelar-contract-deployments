@@ -8,14 +8,14 @@ require('./cli-utils');
 async function processCommand(chain, options) {
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
-    // For local network, fund via friendbot by default and ignore if already funded
+    // For local network, ensure account always exists by funding via friendbot
     if (chain.networkType === 'local') {
         const address = Keypair.fromSecret(options.privateKey).publicKey();
         try {
             await horizonServer.friendbot(address).call();
             printInfo('Funds requested', address);
         } catch (error) {
-            printInfo('Account already funded', address);
+            // Ignore errors - account already exists
         }
         return;
     }
