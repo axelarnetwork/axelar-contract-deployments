@@ -89,32 +89,30 @@ async function getTokensFromBlock(
 
     const events = await runWithRetries(async () => await its.queryFilter(filter, startBlockNumber, end));
     const tokens: SquidTokenDataWithTokenId[] = await Promise.all(
-        events
-            .map((event) => event.args)
-            .map(async (event): Promise<SquidTokenDataWithTokenId | null> => {
-                const tokenId = event[0];
-                const tokenManagerAddress = event[1];
+        events.map(async (event): Promise<SquidTokenDataWithTokenId | null> => {
+            const tokenId = event.args[0];
+            const tokenManagerAddress = event.args[1];
 
-                let tokenInfo = { tokenAddress: null, decimals: null };
-                try {
-                    tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, provider));
-                } catch (e) {
-                    return null;
-                }
+            let tokenInfo = { tokenAddress: null, decimals: null };
+            try {
+                tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, provider));
+            } catch (e) {
+                return null;
+            }
 
-                let registrationTimestamp: number = 0;
-                try {
-                    const block = await runWithRetries(async () => await provider.getBlock(event.blockNumber));
-                    registrationTimestamp = block?.timestamp || 0;
-                } catch (e) {}
+            let registrationTimestamp: number = 0;
+            try {
+                const block = await runWithRetries(async () => await provider.getBlock(event.blockNumber));
+                registrationTimestamp = block?.timestamp || 0;
+            } catch (e) {}
 
-                return {
-                    axelarChainId,
-                    tokenId,
-                    ...tokenInfo,
-                    registrationTimestamp,
-                } as SquidTokenDataWithTokenId;
-            }),
+            return {
+                axelarChainId,
+                tokenId,
+                ...tokenInfo,
+                registrationTimestamp,
+            } as SquidTokenDataWithTokenId;
+        }),
     );
     return tokens.filter((token) => token !== null);
 }
