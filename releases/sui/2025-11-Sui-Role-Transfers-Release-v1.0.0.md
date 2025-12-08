@@ -31,16 +31,16 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
     CHAIN=sui
     ```
 3. Ensure the following are present in `axelar-chains-config/info/${ENV}.json`
-    - `chains["sui"].contracts.AxelarGateway.{packageId, ownerCapId, upgradeCapId}`
-    - `chains["sui"].contracts.GasService.{packageId, ownerCapId, upgradeCapId, operatorCapId}`
-    - `chains["sui"].contracts.Operators.{packageId, ownerCapId, upgradeCapId, address}`
-    - `chains["sui"].contracts.InterchainTokenService.{packageId, ownerCapId, upgradeCapId, operatorCapId}`
+    - `chains["sui"].contracts.AxelarGateway.{address, objects: {OwnerCap, UpgradeCap}}`
+    - `chains["sui"].contracts.GasService.{address,  objects: {OwnerCap, UpgradeCap, OperatorCap}}`
+    - `chains["sui"].contracts.Operators.{address,  objects: {OwnerCap, UpgradeCap}}`
+    - `chains["sui"].contracts.InterchainTokenService.{address,  objects: {OwnerCap, UpgradeCap, OperatorCap}}`
 
 ## Deployment Steps
 
 Notes:
 
-- Some modules expose explicit `transfer_owner_cap` functions; others allow direct Sui object transfer of the `OwnerCap`/`UpgradeCap` objects. Use the approach your deployed package supports.
+- Some modules expose explicit `transfer_owner_cap` functions; others will require directly transferring the `OwnerCap`/`UpgradeCap` objects to the recipient. Use the exposed transfer function if your deployed package supports it.
 - Replace env var lookups with the correct keys if your JSON layout differs.
 
 ### Step 1: Transfer AxelarGateway OwnerCap to new EOA
@@ -55,7 +55,7 @@ Notes:
 ```bash
 # Set EOA address from the table above
 TARGET_ADDRESS=
-GATEWAY_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.AxelarGateway.ownerCapId' ./axelar-chains-config/info/$ENV.json)
+GATEWAY_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.AxelarGateway.objects.OwnerCap' ./axelar-chains-config/info/$ENV.json)
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName AxelarGateway --objectName OwnerCap --recipient "$TARGET_ADDRESS"
@@ -64,7 +64,7 @@ ts-node sui/transfer-object.js --contractName AxelarGateway --objectName OwnerCa
 ts-node sui/transfer-object.js --objectId "$GATEWAY_OWNERCAP_ID" --recipient "$TARGET_ADDRESS"
 
 # Verify
-sui client object "$GATEWAY_OWNERCAP_ID"
+sui client object "$"
 ```
 
 ### Step 2: Transfer AxelarGateway UpgradeCap to new EOA
@@ -77,7 +77,7 @@ sui client object "$GATEWAY_OWNERCAP_ID"
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
 ```bash
-UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.AxelarGateway.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
+UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.AxelarGateway.objects.UpgradeCap' ./axelar-chains-config/info/$ENV.json)
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName AxelarGateway --objectName UpgradeCap --recipient "$TARGET_ADDRESS"
@@ -98,7 +98,7 @@ sui client object "$UPG_CAP_ID"
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
 ```bash
-GS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.GasService.ownerCapId' ./axelar-chains-config/info/$ENV.json)
+GS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.GasService.objects.OwnerCap' ./axelar-chains-config/info/$ENV.json)
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName GasService --objectName OwnerCap --recipient "$TARGET_ADDRESS"
@@ -119,7 +119,7 @@ sui client object "$GS_OWNERCAP_ID"
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
 ```bash
-GS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.GasService.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
+GS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.GasService.objects.UpgradeCap' ./axelar-chains-config/info/$ENV.json)
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName GasService --objectName UpgradeCap --recipient "$TARGET_ADDRESS"
@@ -142,7 +142,7 @@ sui client object "$GS_UPG_CAP_ID"
 | **Mainnet**          | `0xd7b392db51562a72e50f310e78c827b4e917254cf15c5cec6c97964299a6be2a` | TBD            |
 
 ```bash
-OPERATORS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.Operators.ownerCapId' ./axelar-chains-config/info/$ENV.json)
+OPERATORS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.Operators.objects.OwnerCap' ./axelar-chains-config/info/$ENV.json)
 RELAYER_OPERATORS_EOA=<TARGET_ADDRESS>
 
 # Using helper script by contract/object names
@@ -154,31 +154,7 @@ ts-node sui/transfer-object.js --objectId "$OPERATORS_OWNERCAP_ID" --recipient "
 sui client object "$OPERATORS_OWNERCAP_ID"
 ```
 
-### Step 6(Optional): Transfer Operators UpgradeCap to Relayer Operators EOA
-
-**New Owner**: Relayer Operators EOA
-
-| Network              | Current Owner                                                        | Target Address |
-| -------------------- | -------------------------------------------------------------------- | -------------- |
-| **Devnet Amplifier** | `0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df` | TBD            |
-| **Stagenet**         | Not set in config                                                    | TBD            |
-| **Testnet**          | Not set in config                                                    | TBD            |
-| **Mainnet**          | Not set in config                                                    | TBD            |
-
-```bash
-OPERATORS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.Operators.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
-RELAYER_OPERATORS_EOA=<TARGET_ADDRESS>
-
-# Using helper script by contract/object names
-ts-node sui/transfer-object.js --contractName Operators --objectName UpgradeCap --recipient "$RELAYER_OPERATORS_EOA"
-
-# Or using direct object id
-ts-node sui/transfer-object.js --objectId "$OPERATORS_UPG_CAP_ID" --recipient "$RELAYER_OPERATORS_EOA"
-
-sui client object "$OPERATORS_UPG_CAP_ID"
-```
-
-### Step 7: Transfer InterchainTokenService OwnerCap to new EOA
+### Step 6: Transfer InterchainTokenService OwnerCap to new EOA
 
 | Network              | Current OwnerCap Holder                                              | Target Address                                                       |
 | -------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -188,7 +164,7 @@ sui client object "$OPERATORS_UPG_CAP_ID"
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
 ```bash
-ITS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.ownerCapId' ./axelar-chains-config/info/$ENV.json)
+ITS_OWNERCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.objects.OwnerCap' ./axelar-chains-config/info/$ENV.json)
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName InterchainTokenService --objectName OwnerCap --recipient "$TARGET_ADDRESS"
@@ -199,7 +175,7 @@ ts-node sui/transfer-object.js --objectId "$ITS_OWNERCAP_ID" --recipient "$TARGE
 sui client object "$ITS_OWNERCAP_ID"
 ```
 
-### Step 8: Transfer InterchainTokenService UpgradeCap to new EOA
+### Step 7: Transfer InterchainTokenService UpgradeCap to new EOA
 
 | Network             | Current OwnerCap Holder                                              | Target Address                                                       |
 | ------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -209,7 +185,7 @@ sui client object "$ITS_OWNERCAP_ID"
 | **Mainnet**         | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
 ```bash
-ITS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.upgradeCapId' ./axelar-chains-config/info/$ENV.json)
+ITS_UPG_CAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.objects.UpgradeCap' ./axelar-chains-config/info/$ENV.json)
 
 # Using helper script by contract/object names
 ts-node sui/transfer-object.js --contractName InterchainTokenService --objectName UpgradeCap --recipient "$TARGET_ADDRESS"
@@ -220,7 +196,7 @@ ts-node sui/transfer-object.js --objectId "$ITS_UPG_CAP_ID" --recipient "$TARGET
 sui client object "$ITS_UPG_CAP_ID"
 ```
 
-### Step 9: Transfer InterchainTokenService OperatorCap to Rate Limiter EOA
+### Step 8: Transfer InterchainTokenService OperatorCap to Rate Limiter EOA
 
 **New Operator**: Rate Limiter EOA
 
@@ -232,7 +208,7 @@ sui client object "$ITS_UPG_CAP_ID"
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
 ```bash
-ITS_OPERATORCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.operatorCapId' ./axelar-chains-config/info/$ENV.json)
+ITS_OPERATORCAP_ID=$(jq -r '.chains["sui"].contracts.InterchainTokenService.objects.OperatorCap' ./axelar-chains-config/info/$ENV.json)
 RATE_LIMITER_EOA=<TARGET_ADDRESS>
 
 # Using helper script by contract/object names
@@ -254,7 +230,6 @@ After completing cap transfers:
 - [ ] GasService `OwnerCap` is held by EOA
 - [ ] GasService `UpgradeCap` is held by EOA
 - [ ] Operators `OwnerCap` is held by Relayer Operators EOA
-- [ ] Operators `UpgradeCap` is held by Relayer Operators EOA
 - [ ] InterchainTokenService `OwnerCap` is held by EOA
 - [ ] InterchainTokenService `UpgradeCap` is held by EOA
 - [ ] InterchainTokenService `OperatorCap` is held by Rate Limiter EOA
