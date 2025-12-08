@@ -257,11 +257,12 @@ The following checks should be performed after the rollout
 
     1. Transfer Operators ownership
 
-        | Network              | `OPERATORS_OWNER_ADDRESS`                    |
-        | -------------------- | -------------------------------------------- |
-        | **Devnet-amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
-        | **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
-        | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+        | Network              | `OPERATORS_OWNER_ADDRESS`        |
+        | -------------------- | -------------------------------- |
+        | **Devnet-amplifier** | `<OPERATORS_OWNER_EOA_ADDRESS>`  |
+        | **Stagenet**         | `<OPERATORS_OWNER_EOA_ADDRESS>`  |
+        | **Testnet**          | `<OPERATORS_OWNER_EOA_ADDRESS>`  |
+        | **Mainnet**          | `<OPERATORS_OWNER_EOA_ADDRESS>`  |
 
         ```bash
         ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
