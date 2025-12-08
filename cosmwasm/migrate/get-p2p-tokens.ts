@@ -100,11 +100,15 @@ async function getTokensFromBlock(
                 return null;
             }
 
-            let registrationTimestamp: number = 0;
+            const TIMESTAMP_MAX_VALUE = 9999999999;
+
+            let registrationTimestamp: number = TIMESTAMP_MAX_VALUE;
             try {
                 const block = await runWithRetries(async () => await provider.getBlock(event.blockNumber));
-                registrationTimestamp = block?.timestamp || 0;
-            } catch (e) {}
+                registrationTimestamp = block?.timestamp || TIMESTAMP_MAX_VALUE;
+            } catch (e) {
+                printWarn(`Error getting block timestamp for token ${tokenId}: ${e}`);
+            }
 
             return {
                 axelarChainId,
