@@ -93,10 +93,8 @@ fn init(fee_payer: &Pubkey, _config: &Config) -> eyre::Result<Vec<Instruction>> 
 }
 
 fn send_memo(args: SendMemoArgs) -> eyre::Result<Vec<Instruction>> {
-    let (signing_pda, _) = Pubkey::find_program_address(
-        &[b"gtw-call-contract"],
-        &solana_axelar_memo::id(),
-    );
+    let (signing_pda, _) =
+        Pubkey::find_program_address(&[b"gtw-call-contract"], &solana_axelar_memo::id());
 
     let (gateway_root_pda, _) = solana_axelar_gateway::GatewayConfig::find_pda();
 
