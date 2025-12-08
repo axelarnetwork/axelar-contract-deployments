@@ -61,6 +61,8 @@ const executeContractMessage = async (
     contractName: string,
     msg: string[],
     fee?: string | StdFee,
+    defaultTitle?: string,
+    defaultDescription?: string,
 ): Promise<void> => {
     if (msg.length === 0) {
         throw new Error('At least one message is required');
@@ -74,8 +76,10 @@ const executeContractMessage = async (
         }
         return executeDirectly(client, contractAddress, msg, fee);
     } else {
-        validateParameters({ isNonEmptyString: { title: options.title, description: options.description } });
-        return execute(client, config, { ...options, contractName, msg }, [], fee);
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+        validateParameters({ isNonEmptyString: { title, description } });
+        return execute(client, config, { ...options, contractName, msg, title, description }, [], fee);
     }
 };
 
@@ -115,13 +119,11 @@ const registerItsChain = async (
     const operation = options.update ? 'update' : 'register';
     const msg = [JSON.stringify({ [`${operation}_chains`]: { chains } })];
 
-    if (!options.title || !options.description) {
-        const chainsList = args.join(', ');
-        options.title = options.title || `${operation} ${chainsList} on ITS Hub`;
-        options.description = options.description || `${operation} ${chainsList} on ITS Hub`;
-    }
+    const chainsList = args.join(', ');
+    const defaultTitle = `${operation} ${chainsList} on ITS Hub`;
+    const defaultDescription = `${operation} ${chainsList} on ITS Hub`;
 
-    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee);
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle, defaultDescription);
 };
 
 const registerProtocol = async (
@@ -145,12 +147,10 @@ const registerProtocol = async (
         }),
     ];
 
-    if (!options.title || !options.description) {
-        options.title = options.title || 'Register Protocol contracts on Coordinator';
-        options.description = options.description || 'Register Protocol contracts on Coordinator';
-    }
+    const defaultTitle = 'Register Protocol contracts on Coordinator';
+    const defaultDescription = 'Register Protocol contracts on Coordinator';
 
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee);
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
 };
 
 const registerDeployment = async (
@@ -168,12 +168,10 @@ const registerDeployment = async (
     const message = coordinator.constructRegisterDeploymentMessage(chainName);
     const msg = [JSON.stringify(message)];
 
-    if (!options.title || !options.description) {
-        options.title = options.title || `Register ${chainName} deployment on Coordinator`;
-        options.description = options.description || `Register ${chainName} deployment on Coordinator`;
-    }
+    const defaultTitle = `Register ${chainName} deployment on Coordinator`;
+    const defaultDescription = `Register ${chainName} deployment on Coordinator`;
 
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee);
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
 };
 
 const createRewardPools = async (
@@ -204,11 +202,6 @@ const createRewardPools = async (
     );
     const multisigAddress = config.validateRequired(config.getContractConfig('Multisig').address, 'Multisig.address');
 
-    if (!options.title || !options.description) {
-        options.title = options.title || `Create reward pools for ${chainName}`;
-        options.description = options.description || `Create reward pools for ${chainName} voting verifier and multisig`;
-    }
-
     const messages = [
         JSON.stringify({
             create_pool: {
@@ -238,7 +231,10 @@ const createRewardPools = async (
         }),
     ];
 
-    return executeContractMessage(client, config, options, 'Rewards', messages, fee);
+    const defaultTitle = `Create reward pools for ${chainName}`;
+    const defaultDescription = `Create reward pools for ${chainName} voting verifier and multisig`;
+
+    return executeContractMessage(client, config, options, 'Rewards', messages, fee, defaultTitle, defaultDescription);
 };
 
 const instantiateChainContracts = async (
@@ -285,11 +281,10 @@ const instantiateChainContracts = async (
     const message = coordinator.constructExecuteMessage(chainName, salt, admin);
     const msg = [JSON.stringify(message)];
 
-    if (!options.title || !options.description) {
-        options.title = options.title || `Instantiate chain contracts for ${chainName}`;
-        options.description =
-            options.description || `Instantiate Gateway, VotingVerifier and MultisigProver contracts for ${chainName} via Coordinator`;
-    }
+    const defaultTitle = `Instantiate chain contracts for ${chainName}`;
+    const defaultDescription = `Instantiate Gateway, VotingVerifier and MultisigProver contracts for ${chainName} via Coordinator`;
+    const title = options.title || defaultTitle;
+    const description = options.description || defaultDescription;
 
     // Need to save deployment info to config, so we can't use executeContractMessage
     // Handle direct execution and proposal submission separately
@@ -299,6 +294,7 @@ const instantiateChainContracts = async (
         }
         await executeDirectly(client, coordinatorAddress, msg, fee);
     } else {
+        validateParameters({ isNonEmptyString: { title, description } });
         await execute(
             client,
             config,
@@ -306,6 +302,8 @@ const instantiateChainContracts = async (
                 ...options,
                 contractName: 'Coordinator',
                 msg,
+                title,
+                description,
             },
             [],
             fee,
