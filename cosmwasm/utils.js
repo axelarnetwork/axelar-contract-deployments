@@ -119,15 +119,38 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const usesGovernanceBypass = (config, contractName, chainName) => {
+const validateGovernanceMode = (config, contractName, useGovernance, chainName) => {
+    if (!useGovernance) {
+        return;
+    }
+
     const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
     const governanceAddress = contractConfig.governanceAddress;
 
     if (!governanceAddress) {
-        return false;
+        throw new Error(
+            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} does not have a governanceAddress configured. Cannot use --governance flag.`,
+        );
     }
 
-    return governanceAddress !== GOVERNANCE_MODULE_ADDRESS;
+    if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
+        throw new Error(
+            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} uses governance key (${governanceAddress}), not governance module. ` +
+                `Cannot use --governance flag. Use direct execution instead.`,
+        );
+    }
+};
+
+const validateDirectExecution = (config, contractName, chainName) => {
+    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
+    const governanceAddress = contractConfig.governanceAddress;
+
+    if (governanceAddress === GOVERNANCE_MODULE_ADDRESS) {
+        throw new Error(
+            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} uses governance module address, not a governance key. ` +
+                `Direct execution will fail. Use --governance flag to submit a proposal instead.`,
+        );
+    }
 };
 
 const getCodeId = async (client, config, options) => {
@@ -1562,6 +1585,7 @@ module.exports = {
     getContractCodePath,
     validateItsChainChange,
     isLegacySDK,
-    usesGovernanceBypass,
+    validateGovernanceMode,
+    validateDirectExecution,
     GOVERNANCE_MODULE_ADDRESS,
 };

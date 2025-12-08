@@ -14,6 +14,7 @@ const addAmplifierOptions = (program, options) => {
 
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(new Option('--governance', 'submit a governance proposal instead of executing directly'));
 
     if (options.contractOptions) {
         addContractOptions(program);
