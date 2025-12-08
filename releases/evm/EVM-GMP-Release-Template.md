@@ -267,7 +267,7 @@ The following checks should be performed after the rollout
         ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
         ```
 
-    1. Transfer AxelarGateway owner role to AxelarServiceGovernance
+    2. Transfer AxelarGateway owner role to AxelarServiceGovernance
 
         | Network              | New Owner (AxelarServiceGovernance) |
         | -------------------- | ----------------------------------- |
@@ -283,7 +283,14 @@ The following checks should be performed after the rollout
         ts-node evm/ownership.js -c AxelarGateway --action owner 
         ```
 
-    1. Transfer AxelarGateway operator role to Emergency Operator EOA
+    3. Transfer AxelarGateway operator role to Emergency Operator EOA
+    
+        | Network              | `EMERGENCY_OPERATOR_EOA_ADDRESS`    |
+        | -------------------- | ----------------------------------- |
+        | **Devnet-amplifier** | `<EMERGENCY_OPERATOR_EOA_ADDRESS>`  |
+        | **Stagenet**         | `<EMERGENCY_OPERATOR_EOA_ADDRESS>`  |
+        | **Testnet**          | `<EMERGENCY_OPERATOR_EOA_ADDRESS>`  |
+        | **Mainnet**          | `<EMERGENCY_OPERATOR_EOA_ADDRESS>`  |
 
         ```bash
         EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
@@ -292,30 +299,12 @@ The following checks should be performed after the rollout
         ts-node evm/gateway.js -n $CHAIN --action operator 
         ```
 
-    1. Transfer AxelarGasService owner role to AxelarServiceGovernance
+    4. Transfer AxelarGasService owner role to AxelarServiceGovernance
 
         ```bash
         AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
         ts-node evm/ownership.js -c AxelarGasService --action owner 
         ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
         ts-node evm/ownership.js -c AxelarGasService --action owner 
-        ```
-
-    1. Transfer InterchainTokenService owner role to AxelarServiceGovernance (only if `contracts.InterchainTokenService` exists for the chain)
-
-        ```bash
-        AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-        ts-node evm/ownership.js -c InterchainTokenService --action owner 
-        ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
-        ts-node evm/ownership.js -c InterchainTokenService --action owner 
-        ```
-
-    1. Transfer InterchainTokenService operator role to Rate Limiter EOA (only if ITS exists; set operator first if zero address)
-
-        ```bash
-        RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
-        ts-node evm/its.js operator 
-        ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA 
-        ts-node evm/its.js operator
         ```
         
