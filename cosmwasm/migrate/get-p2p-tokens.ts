@@ -9,7 +9,6 @@ import { addEnvOption } from '../../common/cli-utils';
 import { ChainConfig, ConfigManager } from '../../common/config';
 import { printError, printInfo, printWarn } from '../../common/utils';
 import { getContractJSON, isConsensusChain } from '../../evm/utils';
-import { isTokenSupplyTracked } from '../its';
 import { ClientManager, mainQueryProcessor } from '../processor';
 import { SquidToken, SquidTokenData, SquidTokenInfoFile } from './register-p2p-tokens';
 
@@ -17,7 +16,7 @@ const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
 const IInterchainToken = getContractJSON('IInterchainToken');
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 4;
 const BATCH_SIZE = 2;
 
 // Async mutex per tokenId to prevent race conditions
@@ -29,9 +28,8 @@ function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
 
 type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
-    decimals: number | null;
-    trackSupply: boolean | null;
-    registrationTimestamp: number | null;
+    decimals: number;
+    registrationTimestamp: number;
 };
 
 type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
@@ -51,20 +49,13 @@ type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
     };
 };
 
-async function getTokenInfo(tokenManagerAddress, tokenManagerType, provider) {
+async function getTokenInfo(tokenManagerAddress, provider) {
     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
     const tokenAddress = await tokenManager.tokenAddress();
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    let decimals: number | null = null;
-    try {
-        decimals = await runWithRetries(async () => await token.decimals());
-    } catch (e) {}
+    const decimals: number = await runWithRetries(async () => await token.decimals());
 
-    let trackSupply = null;
-    try {
-        trackSupply = await runWithRetries(async () => await isTokenSupplyTracked(tokenManagerType, token));
-    } catch (e) {}
-    return { tokenAddress, decimals, trackSupply };
+    return { tokenAddress, decimals };
 }
 
 async function runWithRetries<T>(fn: () => Promise<T>): Promise<T> {
@@ -103,17 +94,16 @@ async function getTokensFromBlock(
             .map(async (event): Promise<SquidTokenDataWithTokenId> => {
                 const tokenId = event[0];
                 const tokenManagerAddress = event[1];
-                const tokenManagerType = event[2];
 
-                let tokenInfo = { tokenAddress: null, decimals: null, trackSupply: null };
+                let tokenInfo = { tokenAddress: null, decimals: null };
                 try {
-                    tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, tokenManagerType, provider));
+                    tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, provider));
                 } catch (e) {}
 
-                let registrationTimestamp: number | null = null;
+                let registrationTimestamp: number = 0;
                 try {
                     const block = await runWithRetries(async () => await provider.getBlock(event.blockNumber));
-                    registrationTimestamp = block?.timestamp || null;
+                    registrationTimestamp = block?.timestamp || 0;
                 } catch (e) {}
 
                 return {
@@ -229,7 +219,9 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
 }
 
 function writeTokensInfoToFile(tokensInfo, filePath) {
-    fs.writeFileSync(filePath, JSON.stringify(tokensInfo, null, 2));
+    tokenWriteMutex.runExclusive(async () => {
+        fs.writeFileSync(filePath, JSON.stringify(tokensInfo, null, 2));
+    });
 }
 
 async function tokenIndexer(_client: ClientManager, config: ConfigManager, options) {
