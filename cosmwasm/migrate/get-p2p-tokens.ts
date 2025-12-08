@@ -53,7 +53,7 @@ async function getTokenInfo(tokenManagerAddress, provider) {
     const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, provider);
     const tokenAddress = await tokenManager.tokenAddress();
     const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
-    const decimals: number = await runWithRetries(async () => await token.decimals());
+    const decimals: number = await token.decimals();
 
     return { tokenAddress, decimals };
 }
@@ -251,11 +251,12 @@ async function tokenIndexer(_client: ClientManager, config: ConfigManager, optio
         .map((chain) => getTokensFromChain(chain, tokensInfo));
 
     // Write to the output file every second
-    setInterval(async () => {
+    const writeInterval = setInterval(async () => {
         await writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
     }, 1000);
 
     await Promise.all(promises).then(async () => {
+        clearInterval(writeInterval);
         await writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
         process.exit(0);
     });
