@@ -64,7 +64,7 @@ ts-node sui/transfer-object.js --contractName AxelarGateway --objectName OwnerCa
 ts-node sui/transfer-object.js --objectId "$GATEWAY_OWNERCAP_ID" --recipient "$TARGET_ADDRESS"
 
 # Verify
-sui client object "$"
+sui client object "$GATEWAY_OWNERCAP_ID"
 ```
 
 ### Step 2: Transfer AxelarGateway UpgradeCap to new EOA
