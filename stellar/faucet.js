@@ -1,14 +1,27 @@
 const { Command, Option } = require('commander');
 const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances, getRpcOptions } = require('./utils');
 const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
-const { Horizon } = require('@stellar/stellar-sdk');
+const { Horizon, Keypair } = require('@stellar/stellar-sdk');
 
 require('./cli-utils');
 
 async function processCommand(chain, options) {
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+
+    // For local network, fund via friendbot by default and ignore if already funded
+    if (chain.networkType === 'local') {
+        const address = Keypair.fromSecret(options.privateKey).publicKey();
+        try {
+            await horizonServer.friendbot(address).call();
+            printInfo('Funds requested', address);
+        } catch (error) {
+            printInfo('Account already funded', address);
+        }
+        return;
+    }
+
     const keyPair = await getWallet(chain, options);
     const recipient = options.recipient || keyPair.publicKey();
-    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
     const balance = await getBalances(horizonServer, recipient).then((balances) =>
         balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
     );
@@ -23,7 +36,6 @@ async function processCommand(chain, options) {
     }
 
     await horizonServer.friendbot(recipient).call();
-
     printInfo('Funds requested', recipient);
 }
 
