@@ -58,6 +58,7 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
             printInfo(`Successfully ${action === 'set_trusted_chain' ? 'added' : 'removed'} trusted chain`, trustedChain);
         } catch (error) {
             printError(`Failed to process ${action}`, trustedChain, error);
+            throw new Error(error);
         }
     }
 }
@@ -90,6 +91,7 @@ async function isTrustedChain(wallet, _config, chain, contract, args, options) {
         }
     } catch (error) {
         printError(`Failed to check trusted chain`, trustedChain, error);
+        throw new Error(error);
     }
 }
 

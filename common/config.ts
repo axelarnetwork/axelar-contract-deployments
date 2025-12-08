@@ -228,7 +228,7 @@ export class ConfigManager implements FullConfig {
             }
         });
 
-        if (chainConfig.axelarId?.toLowerCase() !== chainName) {
+        if (chainConfig.axelarId?.toLowerCase() !== chainName.toLowerCase()) {
             errors.push(`Chain '${chainName}': axelarId '${chainConfig.axelarId}' does not match chain name '${chainName}'`);
         }
 

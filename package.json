@@ -88,6 +88,7 @@
     "node": ">=18"
   },
   "overrides": {
+    "@scure/base": "^1.2.0",
     "strip-ansi": "6.0.1",
     "color-convert": "2.0.1",
     "color-name": "1.1.4",
