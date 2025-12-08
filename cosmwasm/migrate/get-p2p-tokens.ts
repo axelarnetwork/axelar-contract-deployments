@@ -218,8 +218,8 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
     }
 }
 
-function writeTokensInfoToFile(tokensInfo, filePath) {
-    tokenWriteMutex.runExclusive(async () => {
+async function writeTokensInfoToFile(tokensInfo, filePath) {
+    await tokenWriteMutex.runExclusive(() => {
         fs.writeFileSync(filePath, JSON.stringify(tokensInfo, null, 2));
     });
 }
@@ -247,12 +247,12 @@ async function tokenIndexer(_client: ClientManager, config: ConfigManager, optio
         .map((chain) => getTokensFromChain(chain, tokensInfo));
 
     // Write to the output file every second
-    setInterval(() => {
-        writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
+    setInterval(async () => {
+        await writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
     }, 1000);
 
-    await Promise.all(promises).then(() => {
-        writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
+    await Promise.all(promises).then(async () => {
+        await writeTokensInfoToFile(tokensInfo, tokensInfoFileAbsolutePath);
         process.exit(0);
     });
 }
