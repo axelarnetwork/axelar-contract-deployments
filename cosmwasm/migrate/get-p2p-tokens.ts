@@ -11,7 +11,7 @@ import { printError, printInfo, printWarn } from '../../common/utils';
 import { getContractJSON, isConsensusChain } from '../../evm/utils';
 import { isTokenSupplyTracked } from '../its';
 import { ClientManager, mainQueryProcessor } from '../processor';
-import { SquidToken, SquidTokenData, SquidTokenInfoFile } from '../register-p2p-tokens';
+import { SquidToken, SquidTokenData, SquidTokenInfoFile } from './register-p2p-tokens';
 
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const ITokenManager = getContractJSON('ITokenManager');
@@ -43,8 +43,8 @@ function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
 
 type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
-    decimals: number;
-    trackSupply: boolean;
+    decimals: number | null;
+    trackSupply: boolean | null;
 };
 
 type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {

@@ -228,6 +228,7 @@ async fn main() {
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
+        #[allow(clippy::exit)]
         exit(1);
     }
 }
