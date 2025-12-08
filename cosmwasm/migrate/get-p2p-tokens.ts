@@ -24,27 +24,14 @@ const BATCH_SIZE = 2;
 const tokenWriteMutex = new Mutex();
 
 function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
-    // If only a single chain is untracked, use that chain
-    const untracked = tokenData.filter((chain) => !chain.trackSupply);
-    if (untracked.length === 1) {
-        return untracked[0].axelarChainId;
-    }
-
-    // Use ethereum as the origin chain if the token is deployed on any of the Ethereum chains.
-    const ethereumChains = ['ethereum', 'core-ethereum', 'ethereum-sepolia', 'core-ethereum-sepolia', 'eth-sepolia'];
-    const ethereumChain = tokenData.find((chain) => ethereumChains.includes(chain.axelarChainId.toLowerCase()));
-    if (ethereumChain) {
-        return ethereumChain.axelarChainId;
-    }
-
-    // Use the first chain that shows up.
-    return tokenData[0].axelarChainId;
+    return tokenData.sort((a, b) => a.registrationTimestamp - b.registrationTimestamp)[0].axelarChainId;
 }
 
 type SquidTokenDataWithTokenId = SquidTokenData & {
     tokenId: string;
     decimals: number | null;
     trackSupply: boolean | null;
+    registrationTimestamp: number | null;
 };
 
 type SquidTokenInfoFileWithChains = SquidTokenInfoFile & {
@@ -123,10 +110,17 @@ async function getTokensFromBlock(
                     tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, tokenManagerType, provider));
                 } catch (e) {}
 
+                let registrationTimestamp: number | null = null;
+                try {
+                    const block = await runWithRetries(async () => await provider.getBlock(event.blockNumber));
+                    registrationTimestamp = block?.timestamp || null;
+                } catch (e) {}
+
                 return {
                     axelarChainId,
                     tokenId,
                     ...tokenInfo,
+                    registrationTimestamp,
                 } as SquidTokenDataWithTokenId;
             }),
     );
