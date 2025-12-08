@@ -31,7 +31,6 @@ const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
 const { submitCallContracts } = require('../cosmwasm/utils');
 const { mainProcessor: cosmwasmMainProcessor } = require('../cosmwasm/processor');
-const { addAmplifierOptions } = require('../cosmwasm/cli-utils');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
@@ -165,87 +164,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             const amount = parseEther(options.amount);
             calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
             target = governance.address;
-
-            break;
-        }
-
-        case 'setTrustedChain': {
-            validateParameters({
-                isNonEmptyString: { chain: options.chain },
-            });
-
-            if (!targetContractName || targetContractName !== 'InterchainTokenService') {
-                throw new Error('setTrustedChain requires --targetContractName InterchainTokenService');
-            }
-
-            const interchainTokenService = new Contract(target, getContractJSON('IInterchainTokenService').abi, wallet);
-            calldata = interchainTokenService.interface.encodeFunctionData('setTrustedChain', [options.chain]);
-
-            if (options.address) {
-                printWarn('setTrustedChain: ignoring --address; using setTrustedChain only.');
-            }
-
-            title = `Chain ${chain.name} setTrustedChain proposal`;
-            description = `This proposal sets trusted chain ${options.chain} on InterchainTokenService ${target} on chain ${chain.name}`;
-
-            break;
-        }
-
-        case 'removeTrustedChain': {
-            validateParameters({
-                isNonEmptyString: { chain: options.chain },
-            });
-
-            if (!targetContractName || targetContractName !== 'InterchainTokenService') {
-                throw new Error('removeTrustedAddress requires --targetContractName InterchainTokenService');
-            }
-
-            const interchainTokenService = new Contract(target, getContractJSON('IInterchainTokenService').abi, wallet);
-            calldata = interchainTokenService.interface.encodeFunctionData('removeTrustedChain', [options.chain]);
-
-            title = `Chain ${chain.name} removeTrustedChain proposal`;
-            description = `This proposal removes trusted chain ${options.chain} on InterchainTokenService ${target} on chain ${chain.name}`;
-
-            if (options.address) {
-                printWarn('removeTrustedAddress: ignoring --address; using removeTrustedChain only.');
-            }
-
-            break;
-        }
-
-        case 'setPauseStatus': {
-            if (!options.pauseStatus || (options.pauseStatus !== 'true' && options.pauseStatus !== 'false')) {
-                throw new Error('setPauseStatus requires --pauseStatus true or false');
-            }
-
-            if (!targetContractName || targetContractName !== 'InterchainTokenService') {
-                throw new Error('setPauseStatus requires --targetContractName InterchainTokenService');
-            }
-
-            const pauseStatusBool = options.pauseStatus === 'true';
-            const interchainTokenService = new Contract(target, getContractJSON('IInterchainTokenService').abi, wallet);
-            calldata = interchainTokenService.interface.encodeFunctionData('setPauseStatus', [pauseStatusBool]);
-
-            title = `Chain ${chain.name} setPauseStatus proposal`;
-            description = `This proposal ${pauseStatusBool ? 'pauses' : 'unpauses'} InterchainTokenService ${target} on chain ${chain.name}`;
-
-            break;
-        }
-
-        case 'migrateInterchainToken': {
-            validateParameters({
-                isKeccak256Hash: { tokenId: options.tokenId },
-            });
-
-            if (!targetContractName || targetContractName !== 'InterchainTokenService') {
-                throw new Error('migrateInterchainToken requires --targetContractName InterchainTokenService');
-            }
-
-            const interchainTokenService = new Contract(target, getContractJSON('IInterchainTokenService').abi, wallet);
-            calldata = interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [options.tokenId]);
-
-            title = `Chain ${chain.name} migrateInterchainToken proposal`;
-            description = `This proposal migrates interchain token ${options.tokenId} on InterchainTokenService ${target} on chain ${chain.name}`;
 
             break;
         }
@@ -624,10 +542,7 @@ if (require.main === module) {
     program
         .command('schedule')
         .description('Schedule a new timelock proposal')
-        .argument(
-            '<action>',
-            'governance action (raw, upgrade, transferGovernance, withdraw, setTrustedChain, removeTrustedAddress, setPauseStatus, migrateInterchainToken)',
-        )
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
@@ -635,7 +550,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--targetContractName <targetContractName>',
-                'target contract name (required for upgrade, transferGovernance, setTrustedChain, removeTrustedAddress, setPauseStatus, migrateInterchainToken)',
+                'target contract name (required for upgrade, transferGovernance)',
             ),
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
@@ -650,10 +565,6 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
-        .addOption(new Option('--chain <chain>', 'chain name (required for setTrustedChain, removeTrustedAddress)'))
-        .addOption(new Option('--address <address>', 'trusted address (required for setTrustedChain)'))
-        .addOption(new Option('--pauseStatus <pauseStatus>', 'pause status true/false (required for setPauseStatus)'))
-        .addOption(new Option('--tokenId <tokenId>', 'token ID (required for migrateInterchainToken)'))
         .action((governanceAction, activationTime, options, cmd) => {
             main(cmd.name(), [governanceAction, activationTime], options);
         });
@@ -661,14 +572,11 @@ if (require.main === module) {
     program
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
-        .argument(
-            '<action>',
-            'governance action (raw, upgrade, transferGovernance, withdraw, setTrustedChain, removeTrustedAddress, setPauseStatus, migrateInterchainToken)',
-        )
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .addOption(
             new Option(
                 '--targetContractName <targetContractName>',
-                'target contract name (required for upgrade, transferGovernance, setTrustedChain, removeTrustedAddress, setPauseStatus, migrateInterchainToken)',
+                'target contract name (required for upgrade, transferGovernance)',
             ),
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
@@ -683,10 +591,6 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
-        .addOption(new Option('--chain <chain>', 'chain name (required for setTrustedChain, removeTrustedAddress)'))
-        .addOption(new Option('--address <address>', 'trusted address (required for setTrustedChain)'))
-        .addOption(new Option('--pauseStatus <pauseStatus>', 'pause status true/false (required for setPauseStatus)'))
-        .addOption(new Option('--tokenId <tokenId>', 'token ID (required for migrateInterchainToken)'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((governanceAction, options, cmd) => {
             main(cmd.name(), [governanceAction], options);
@@ -740,10 +644,7 @@ if (require.main === module) {
     program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .argument(
-            '<action>',
-            'governance action (raw, upgrade, transferGovernance, withdraw, setTrustedChain, removeTrustedAddress, setPauseStatus, migrateInterchainToken)',
-        )
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .argument('<commandId>', 'command id')
         .argument(
             '<activationTime>',
@@ -752,7 +653,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--targetContractName <targetContractName>',
-                'target contract name (required for upgrade, transferGovernance, setTrustedChain, removeTrustedAddress, setPauseStatus, migrateInterchainToken)',
+                'target contract name (required for upgrade, transferGovernance)',
             ),
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
@@ -766,10 +667,6 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
-        .addOption(new Option('--chain <chain>', 'chain name (required for setTrustedChain, removeTrustedAddress)'))
-        .addOption(new Option('--address <address>', 'trusted address (required for setTrustedChain)'))
-        .addOption(new Option('--pauseStatus <pauseStatus>', 'pause status true/false (required for setPauseStatus)'))
-        .addOption(new Option('--tokenId <tokenId>', 'token ID (required for migrateInterchainToken)'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((governanceAction, commandId, activationTime, options, cmd) => {
             main(cmd.name(), [governanceAction, commandId, activationTime], options);
@@ -802,4 +699,6 @@ module.exports = {
     encodeGovernanceProposal,
     getProposalHash,
     getSetupParams,
+    ProposalType,
+    submitProposalToAxelar,
 };

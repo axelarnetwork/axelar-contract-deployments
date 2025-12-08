@@ -102,21 +102,19 @@ axelard tx gov submit-proposal call-contracts proposal.json \
 Schedule a new timelock proposal. Generates a proposal JSON for submission to Axelar.
 
 ```bash
-ts-node evm/governance.js schedule <action> <date> [options]
+ts-node evm/governance.js schedule <action> <activationTime> [options]
 ```
 
-**Actions:** `raw`, `upgrade`, `transferGovernance`, `withdraw`, `setTrustedChain`, `removeTrustedChain`, `setPauseStatus`, `migrateInterchainToken`
+**Actions:** `raw`, `upgrade`, `transferGovernance`, `withdraw`
 
-- `raw`: Schedule a custom governance action by providing the target address and calldata directly. Use this for arbitrary function calls that aren't covered by other actions.
+- `raw`: Schedule a custom governance action by providing the target address and calldata directly. Use this for arbitrary function calls that aren't covered by other actions (including advanced InterchainTokenService operations).
 - `upgrade`: Upgrade a contract to a new implementation (requires `--targetContractName`)
 - `transferGovernance`: Transfer governance of a contract (requires `--targetContractName`)
 - `withdraw`: Withdraw native tokens from the governance contract (requires `--target` and `--amount`)
-- `setTrustedChain`: Set a trusted chain on InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--chain`)
-- `removeTrustedChain`: Remove a trusted chain from InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--chain`)
-- `setPauseStatus`: Pause or unpause InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--pauseStatus true/false`)
-- `migrateInterchainToken`: Migrate an interchain token on InterchainTokenService (requires `--targetContractName InterchainTokenService` and `--tokenId`)
 
-**Date Format:** `YYYY-MM-DDTHH:mm:ss` (UTC format, e.g., `2025-12-31T12:00:00`)
+**Activation Time Format:**  
+- Absolute: `YYYY-MM-DDTHH:mm:ss` (UTC format, e.g., `2025-12-31T12:00:00`)  
+- Relative: numeric seconds (e.g., `3600` for “1 hour from now”)
 
 **Examples:**
 ```bash
@@ -582,114 +580,160 @@ ts-node evm/governance.js schedule withdraw 2025-12-31T12:00:00 \
 
 These actions allow you to manage InterchainTokenService through governance proposals.
 
-#### Set Trusted Chain
+To manage ITS through governance, use `evm/its.js` with the `--governance` flag. The ITS script will:
 
-Set a trusted chain on InterchainTokenService. This allows the specified chain to interact with ITS.
+- Build the correct calldata using the ITS contract ABI.
+- Wrap it into an Axelar governance proposal.
+- Either write a proposal JSON file (`--file`) or submit it directly to Axelar (when `MNEMONIC` is configured).
 
-```bash
-ts-node evm/governance.js schedule setTrustedChain 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --chain ethereum \
-  --file proposal.json
-```
-
-**Parameters:**
-- `--targetContractName InterchainTokenService`: Required - specifies the target contract
-- `--chain <chain>`: Required - the chain name to set as trusted (e.g., `ethereum`, `avalanche`)
-- `--file <file>`: Optional - write proposal JSON to file
-
-**Note:** The `--address` parameter is ignored for this action. It uses `setTrustedChain` function which only requires the chain name.
-
-#### Remove Trusted Chain
-
-Remove a trusted chain from InterchainTokenService.
+#### Set Trusted Chains via ITS
 
 ```bash
-ts-node evm/governance.js schedule removeTrustedChain 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --chain ethereum \
-  --file proposal.json
+ts-node evm/its.js set-trusted-chains ethereum avalanche \
+  -e mainnet -n <chain> \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
 ```
 
-**Parameters:**
-- `--targetContractName InterchainTokenService`: Required - specifies the target contract
-- `--chain <chain>`: Required - the chain name to remove from trusted chains
-- `--file <file>`: Optional - write proposal JSON to file
+#### Remove Trusted Chains via ITS
 
-#### Set Pause Status
+```bash
+ts-node evm/its.js remove-trusted-chains ethereum avalanche \
+  -e mainnet -n <chain> \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
+```
 
-Pause or unpause InterchainTokenService. When paused, ITS operations are halted.
+#### Pause / Unpause ITS
 
 ```bash
 # Pause ITS
-ts-node evm/governance.js schedule setPauseStatus 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --pauseStatus true \
-  --file proposal.json
+ts-node evm/its.js set-pause-status true \
+  -e mainnet -n <chain> \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
 
 # Unpause ITS
-ts-node evm/governance.js schedule setPauseStatus 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --pauseStatus false \
-  --file proposal.json
+ts-node evm/its.js set-pause-status false \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
 ```
 
-**Parameters:**
-- `--targetContractName InterchainTokenService`: Required - specifies the target contract
-- `--pauseStatus true/false`: Required - set to `true` to pause, `false` to unpause
-- `--file <file>`: Optional - write proposal JSON to file
-
-#### Migrate Interchain Token
-
-Migrate an interchain token's mintership to its TokenManager.
+#### Migrate Interchain Token via ITS
 
 ```bash
-ts-node evm/governance.js schedule migrateInterchainToken 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --tokenId 0x0000000000000000000000000000000000000000000000000000000000000000 \
-  --file proposal.json
+ts-node evm/its.js migrate-interchain-token 0x0000...0000 \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
 ```
 
-**Parameters:**
-- `--targetContractName InterchainTokenService`: Required - specifies the target contract
-- `--tokenId <tokenId>`: Required - the 32-byte token ID (keccak256 hash) in hex format
-- `--file <file>`: Optional - write proposal JSON to file
+Once an ITS proposal has been scheduled on the destination chain, you typically follow these steps:
 
-**Complete Workflow Example for InterchainTokenService Actions:**
+1. **Wait for Axelar proposal to pass and GMP to be relayed**
+   - Monitor the Axelar governance proposal on-chain or via Axelarscan until it reaches `Passed`.
+   - Check Axelarscan GMP view (`Source Chain: axelar`, `Method: Call Contract`) to confirm that the GMP call to the destination chain was executed.
+
+2. **If relayers failed, manually submit the GMP call (optional)**
+   - Use the `submit` command from `evm/governance.js` as described in the earlier sections, providing:
+     - The `commandId` from Axelarscan.
+     - The same action parameters (e.g. `setTrustedChain`, `setPauseStatus`, etc. when using ITS).
+
+3. **Inspect ETA on the destination chain**
+   - Once the GMP has executed and the timelock is created on the destination chain, compute ETA with:
+
+   ```bash
+   ts-node evm/governance.js eta \
+     --target <target> \
+     --calldata <calldata>
+   ```
+
+   - **How to get `target` and `calldata`:**
+     - If you used `--file proposal.json` when scheduling, open that file to see:
+       - `contract_calls[0].contract_address` → this is the `target`.
+       - `contract_calls[0].payload` is base64-encoded; decode it (or refer back to the script that generated it) to recover the inner governance `calldata`.
+     - If you used the ITS or gateway scripts with `--governance` but without `--file`, re-run the same command with `--file proposal.json` (without broadcasting), to regenerate the exact payload and inspect it.
+     - Alternatively, use the **Raw Commands** section to regenerate the same `calldata` from the contract ABI and parameters.
+
+4. **Execute after ETA has passed**
+
+   ```bash
+   ts-node evm/governance.js execute \
+     --target <target> \
+     --calldata <calldata>
+   ```
+
+   - Use the same `target` and `calldata` that were used when scheduling (from the proposal file or regenerated as above).
+
+---
+
+### Gateway Governance Actions
+
+These examples show how to drive critical `AxelarGateway` maintenance via governance using the `evm/gateway.js` script with the `--governance` flag.
+
+#### Transfer Gateway Governance via Governance
 
 ```bash
-# Step 1: Schedule the proposal
-ts-node evm/governance.js schedule setTrustedChain 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --chain ethereum \
-  --file proposal.json
-
-# Step 2: Submit to Axelar (automatic if MNEMONIC is set, or via Cosmos CLI)
-# If using file, submit via:
-# axelard tx gov submit-proposal call-contracts proposal.json \
-#   --deposit <min-deposit>uaxl --from <wallet> --chain-id <chain-id> \
-#   --gas auto --gas-adjustment 1.4 --node <rpc>
-
-# Step 3: Wait for voting period and proposal to pass
-
-# Step 4: Check if GMP call was executed (check Axelarscan)
-# If relayers failed, manually submit:
-ts-node evm/governance.js submit setTrustedChain <commandId> 2025-12-31T12:00:00 \
-  --targetContractName InterchainTokenService \
-  --chain ethereum
-
-# Step 5: Check ETA
-ts-node evm/governance.js eta \
-  --target 0xInterchainTokenServiceAddress \
-  --calldata 0xGeneratedCalldata
-
-# Step 6: Execute after ETA passes
-ts-node evm/governance.js execute \
-  --target 0xInterchainTokenServiceAddress \
-  --calldata 0xGeneratedCalldata
+ts-node evm/gateway.js \
+  -e mainnet -n <chain> \
+  --action transferGovernance \
+  --destination 0xNewGovernorAddress \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
 ```
 
-**Note:** For `eta` and `execute` commands, you need to provide the exact `--target` and `--calldata` that were used when scheduling the proposal. The calldata can be obtained by running the schedule command with `--file` option and examining the generated proposal, or by using the `raw` action with pre-generated calldata.
+- **destination**: new governor address on the destination chain.
+- **governanceEta**: activation time as UTC timestamp or relative seconds (see earlier section).
+
+#### Transfer Gateway Operatorship via Governance (Amplifier)
+
+```bash
+ts-node evm/gateway.js \
+  -e mainnet -n <amplifier-chain> \
+  --action transferOperatorship \
+  --newOperator 0xNewOperatorAddress \
+  --governance \
+  --governanceEta 2025-12-31T12:00:00
+```
+
+- Only supported when `AxelarGateway` is configured with `connectionType: "amplifier"`.
+- Caller must be either the current operator or the owner on the destination chain.
+
+Once an Gateway proposal has been scheduled on the destination chain, you typically follow these steps:
+
+1. **Wait for Axelar proposal to pass and GMP to be relayed**
+   - Monitor the Axelar governance proposal on-chain or via Axelarscan until it reaches `Passed`.
+   - Check Axelarscan GMP view (`Source Chain: axelar`, `Method: Call Contract`) to confirm that the GMP call to the destination chain was executed.
+
+2. **If relayers failed, manually submit the GMP call (optional)**
+   - Use the `submit` command from `evm/governance.js` as described in the earlier sections, providing:
+     - The `commandId` from Axelarscan.
+     - The same action parameters (e.g. `setTrustedChain`, `setPauseStatus`, etc. when using ITS).
+
+3. **Inspect ETA on the destination chain**
+   - Once the GMP has executed and the timelock is created on the destination chain, compute ETA with:
+
+   ```bash
+   ts-node evm/governance.js eta \
+     --target <target> \
+     --calldata <calldata>
+   ```
+
+   - **How to get `target` and `calldata`:**
+     - If you used `--file proposal.json` when scheduling, open that file to see:
+       - `contract_calls[0].contract_address` → this is the `target`.
+       - `contract_calls[0].payload` is base64-encoded; decode it (or refer back to the script that generated it) to recover the inner governance `calldata`.
+     - If you used the ITS or gateway scripts with `--governance` but without `--file`, re-run the same command with `--file proposal.json` (without broadcasting), to regenerate the exact payload and inspect it.
+     - Alternatively, use the **Raw Commands** section to regenerate the same `calldata` from the contract ABI and parameters.
+
+4. **Execute after ETA has passed**
+
+   ```bash
+   ts-node evm/governance.js execute \
+     --target <target> \
+     --calldata <calldata>
+   ```
+
+   - Use the same `target` and `calldata` that were used when scheduling (from the proposal file or regenerated as above).
 
 
 ## Troubleshooting
