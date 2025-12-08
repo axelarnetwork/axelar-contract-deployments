@@ -88,6 +88,7 @@ async function getSetupParams(governance, targetContractName, target, contracts,
 }
 
 async function getProposalCalldata(governance, chain, wallet, action, options) {
+    const contractName = options.contractName || 'InterchainGovernance';
     const targetContractName = options.targetContractName;
     let target = options.target || chain.contracts[targetContractName]?.address;
 
@@ -136,6 +137,10 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
         }
 
         case 'transferOperatorship': {
+            if (contractName === 'InterchainGovernance') {
+                throw new Error(`Invalid governance action for InterchainGovernance: transferOperatorship`);
+            }
+
             const newOperator = options.newOperator;
 
             validateParameters({
@@ -480,6 +485,11 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 isValidAddress: { target },
                 isValidCalldata: { calldata },
             });
+
+            const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
+            if (!isApproved) {
+                throw new Error('Operator proposal is not approved. Submit (or wait for) approval before executing.');
+            }
 
             if (prompt('Proceed with executing this operator proposal?', options.yes)) {
                 throw new Error('Operator proposal execution cancelled.');
