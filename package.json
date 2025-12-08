@@ -103,7 +103,6 @@
     "is-arrayish": "0.2.1",
     "ansi-regex": "5.0.1",
     "elliptic": "^6.6.1",
-    "@scure/base": "1.0.0",
     "@scure/bip32": "1.2.0"
   }
 }
