@@ -1305,6 +1305,27 @@
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": 15,
           "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "AxelarOperators": {
+          "address": "oprgv1Fc3i2tRLGpKtbMB8oKnQHtWyossGYUfpfPzN6",
+          "configAccount": "DsUL7RpxPp4qzkh64j24aYTFjfY2gxLCqLTtZ5MQ3MK2",
+          "owner": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "AxelarGasService": {
+          "address": "gas5H48imY2w1j6e6x3EvVxKFtyTuWFhw6pgS5VAPLu",
+          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "configAccount": "8qgtVpTinsLDyBEYqesLkpRrbMbJN8yYqcR1zrzeFJa1",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "InterchainGovernance": {
+          "address": "govxuD1tYtyiGjXiNJBFtRYmuhA68VwJGpGXKADSJxA",
+          "configAccount": "Hzmn7UYuh13kSweqbDgcrzH8yYWKd722CG3ucYCLXvqp",
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "governanceChain": "Axelarnet",
+          "minimumTimeDelay": 3600,
+          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
         }
       }
     }
