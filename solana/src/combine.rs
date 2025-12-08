@@ -62,10 +62,12 @@ fn load_and_validate_signatures(
                 "Warning: Signature provided by {signer_pubkey} who is not listed as a required signer. Including it anyway."
             );
         }
-        if let Some(existing_sig) = signatures_map.insert(signer_pubkey, signature)
-            && existing_sig != signature
-        {
-            eyre::bail!("Conflicting signatures provided for the same signer: {signer_pubkey}.");
+        if let Some(existing_sig) = signatures_map.insert(signer_pubkey, signature) {
+            if existing_sig != signature {
+                eyre::bail!(
+                    "Conflicting signatures provided for the same signer: {signer_pubkey}."
+                );
+            }
         }
     }
 

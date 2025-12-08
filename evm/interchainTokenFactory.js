@@ -18,10 +18,9 @@ const {
     printWalletInfo,
     printTokenInfo,
     isTrustedChain,
-    encodeITSDestination,
 } = require('./utils');
 const { addOptionsToCommands } = require('../common');
-const { validateChain, estimateITSFee } = require('../common/utils');
+const { validateChain, estimateITSFee, encodeITSDestinationToken } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
@@ -298,7 +297,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
-            const itsDestinationTokenAddress = encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+            const itsDestinationTokenAddress = encodeITSDestinationToken(chains, destinationChain, destinationTokenAddress);
             printInfo('Human-readable destination token address', destinationTokenAddress);
 
             validateParameters({
