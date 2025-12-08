@@ -91,14 +91,16 @@ async function getTokensFromBlock(
     const tokens: SquidTokenDataWithTokenId[] = await Promise.all(
         events
             .map((event) => event.args)
-            .map(async (event): Promise<SquidTokenDataWithTokenId> => {
+            .map(async (event): Promise<SquidTokenDataWithTokenId | null> => {
                 const tokenId = event[0];
                 const tokenManagerAddress = event[1];
 
                 let tokenInfo = { tokenAddress: null, decimals: null };
                 try {
                     tokenInfo = await runWithRetries(async () => await getTokenInfo(tokenManagerAddress, provider));
-                } catch (e) {}
+                } catch (e) {
+                    return null;
+                }
 
                 let registrationTimestamp: number = 0;
                 try {
@@ -114,7 +116,7 @@ async function getTokensFromBlock(
                 } as SquidTokenDataWithTokenId;
             }),
     );
-    return tokens;
+    return tokens.filter((token) => token !== null);
 }
 
 async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfoFileWithChains) {
