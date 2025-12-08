@@ -269,7 +269,7 @@ ts-node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Pr
 
 To register an ITS chain, use the `contract` script with the `its-hub-register-chains <chains...>` command. The `chains` argument is used to pass a list of chains to register on ITS hub.
 
-To update an existing chain registration (e.g., to change the translator contract), add the `--update` flag to the same command.
+To update an existing chain registration (e.g., to change the translator contract), use the `its-hub-update-chains <chains...>` command.
 
 **Prerequisites**: ITS hub contract configuration in json file must include the following attributes per chain:
 
@@ -319,7 +319,7 @@ Example usage:
 ts-node cosmwasm/contract.ts its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000
 
 # Update existing chain registration (e.g., to change translator contract)
-ts-node cosmwasm/contract.ts its-hub-register-chains aleo-2 --update -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000
+ts-node cosmwasm/contract.ts its-hub-update-chains aleo-2 -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000
 ```
 
 ### Submit a proposal to change a parameter

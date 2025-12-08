@@ -14,7 +14,6 @@ interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
     title?: string;
     description?: string;
-    update?: boolean;
     contractName?: string;
     msg?: string[];
     epochDuration?: string;
@@ -83,18 +82,8 @@ const executeContractMessage = async (
     }
 };
 
-const registerItsChain = async (
-    client: ClientManager,
-    config: ConfigManager,
-    options: ContractCommandOptions,
-    args?: string[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    if (!args || args.length === 0) {
-        throw new Error('At least one chain is required');
-    }
-
-    const chains = args.map((chain) => {
+const buildItsHubChains = (config: ConfigManager, chainNames: string[]) => {
+    return chainNames.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { itsEdgeContractAddress, itsMsgTranslator, maxUintBits, maxDecimalsWhenTruncating } = itsHubChainParams(config, chainConfig);
 
@@ -108,20 +97,53 @@ const registerItsChain = async (
             },
         };
     });
+};
 
-    if (options.update) {
-        for (let i = 0; i < args.length; i++) {
-            const chain = args[i];
-            await validateItsChainChange(client, config, chain, chains[i]);
-        }
+const registerItsChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    if (!args || args.length === 0) {
+        throw new Error('At least one chain is required');
     }
 
-    const operation = options.update ? 'update' : 'register';
-    const msg = [JSON.stringify({ [`${operation}_chains`]: { chains } })];
+    const chains = buildItsHubChains(config, args);
+
+    const msg = [JSON.stringify({ register_chains: { chains } })];
 
     const chainsList = args.join(', ');
-    const defaultTitle = `${operation} ${chainsList} on ITS Hub`;
-    const defaultDescription = `${operation} ${chainsList} on ITS Hub`;
+    const defaultTitle = `Register ${chainsList} on ITS Hub`;
+    const defaultDescription = `Register ${chainsList} on ITS Hub`;
+
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle, defaultDescription);
+};
+
+const updateItsChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    if (!args || args.length === 0) {
+        throw new Error('At least one chain is required');
+    }
+
+    const chains = buildItsHubChains(config, args);
+
+    for (let i = 0; i < args.length; i++) {
+        const chain = args[i];
+        await validateItsChainChange(client, config, chain, chains[i]);
+    }
+
+    const msg = [JSON.stringify({ update_chains: { chains } })];
+
+    const chainsList = args.join(', ');
+    const defaultTitle = `Update ${chainsList} on ITS Hub`;
+    const defaultDescription = `Update ${chainsList} on ITS Hub`;
 
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle, defaultDescription);
 };
@@ -326,13 +348,21 @@ const programHandler = () => {
 
     const registerItsChainCmd = program
         .command('its-hub-register-chains')
-        .description('Register or update an InterchainTokenService chain')
-        .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
-        .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
+        .description('Register an InterchainTokenService chain')
+        .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
         .action((chains, options) => {
             return mainProcessor(registerItsChain, options, chains);
         });
     addAmplifierOptions(registerItsChainCmd);
+
+    const updateItsChainCmd = program
+        .command('its-hub-update-chains')
+        .description('Update an InterchainTokenService chain registration')
+        .argument('<chains...>', 'list of chains to update on InterchainTokenService hub')
+        .action((chains, options) => {
+            return mainProcessor(updateItsChain, options, chains);
+        });
+    addAmplifierOptions(updateItsChainCmd);
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
