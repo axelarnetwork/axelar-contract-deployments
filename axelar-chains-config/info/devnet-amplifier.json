@@ -1326,6 +1326,12 @@
           "minimumTimeDelay": 3600,
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+        },
+        "InterchainTokenService": {
+          "address": "itspcPS5zL941gd6jJfEAk8NjfzbanDFKtNQCNppVtJ",
+          "configAccount": "EoZJGT4PfKMB7jxzrwtEcbcCZ4dD59p8mPfPewPW9Rv1",
+          "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
         }
       }
     }
@@ -1432,6 +1438,10 @@
         "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
         "instantiateProposalId": "61",
         "sui-2": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
+        },
+        "solana-14": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
