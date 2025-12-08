@@ -10,10 +10,10 @@ async function processCommand(chain, options) {
 
     // For local network, ensure account always exists by funding via friendbot
     if (chain.networkType === 'local') {
-        const address = Keypair.fromSecret(options.privateKey).publicKey();
+        const recipient = options.recipient || Keypair.fromSecret(options.privateKey).publicKey();
         try {
-            await horizonServer.friendbot(address).call();
-            printInfo('Funds requested', address);
+            await horizonServer.friendbot(recipient).call();
+            printInfo('Funds requested', recipient);
         } catch (error) {
             // Ignore errors - account already exists
         }
