@@ -23,7 +23,7 @@ const BATCH_SIZE = 2;
 const tokenWriteMutex = new Mutex();
 
 function getOriginChain(tokenData: SquidTokenDataWithTokenId[]): string {
-    return tokenData.sort((a, b) => a.registrationTimestamp - b.registrationTimestamp)[0].axelarChainId;
+    return [...tokenData].sort((a, b) => a.registrationTimestamp - b.registrationTimestamp)[0].axelarChainId;
 }
 
 type SquidTokenDataWithTokenId = SquidTokenData & {
