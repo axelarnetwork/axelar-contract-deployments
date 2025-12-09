@@ -233,6 +233,11 @@ ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
   --file proposal.json
 ```
 
+The date can be specified in two formats:
+- **Absolute UTC timestamp**: `YYYY-MM-DDTHH:mm:ss` (e.g., `2023-11-10T03:00:00`)
+- **Relative seconds**: Numeric value representing seconds from current UTC time (e.g., `3600` for 1 hour from now)
+
+2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
 - Submit the proposal via Cosmos CLI instead  
    A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
 

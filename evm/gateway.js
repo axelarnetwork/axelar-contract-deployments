@@ -25,9 +25,13 @@ const {
     httpGet,
     getContractJSON,
     getMultisigProof,
+    getGovernanceAddress,
+    writeJSON,
 } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
 const { getWallet, signTransaction } = require('./sign-utils');
+const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar } = require('./governance');
+const { createGMPProposalJSON, dateToEta } = require('../common/utils');
 
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IAxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarAmplifierGateway.json');
@@ -371,6 +375,26 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error('Wallet address is not the governor');
             }
 
+            if (options.governance) {
+                const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
+
+                const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
+                const eta = dateToEta(options.governanceEta || '0');
+                const nativeValue = '0';
+
+                const gmpPayload = encodeGovernanceProposal(
+                    ProposalType.ScheduleTimelock,
+                    gatewayAddress,
+                    calldata,
+                    nativeValue,
+                    eta,
+                );
+
+                printInfo('Prepared governance payload for transferGovernance', gmpPayload);
+
+                return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
             if (prompt(`Proceed with governance transfer to ${chalk.cyan(newGovernance)}`, yes)) {
                 return;
             }
@@ -445,6 +469,69 @@ async function processCommand(axelar, chain, _chains, options) {
             break;
         }
 
+        case 'transferOperatorship': {
+            if (contracts.AxelarGateway?.connectionType !== 'amplifier') {
+                throw new Error('Transfer operatorship is only available for Amplifier Gateway');
+            }
+
+            const newOperator = options.newOperator;
+
+            if (!isValidAddress(newOperator)) {
+                throw new Error(`Invalid new operator address: ${newOperator}`);
+            }
+
+            const currOperator = await gateway.operator();
+            printInfo('Current operator', currOperator);
+
+            const owner = await gateway.owner();
+            const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
+            }
+
+            if (options.governance) {
+                const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
+
+                const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
+                const eta = dateToEta(options.governanceEta || '0');
+                const nativeValue = '0';
+
+                const gmpPayload = encodeGovernanceProposal(
+                    ProposalType.ScheduleTimelock,
+                    gatewayAddress,
+                    calldata,
+                    nativeValue,
+                    eta,
+                );
+
+                printInfo('Prepared governance payload for transferOperatorship', gmpPayload);
+
+                return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
+            if (prompt(`Proceed with operatorship transfer to ${chalk.cyan(newOperator)}`, yes)) {
+                return;
+            }
+
+            const tx = await gateway.transferOperatorship(newOperator, gasOptions);
+            printInfo('Transfer operatorship tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'OperatorshipTransferred');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            const updatedOperator = await gateway.operator();
+            printInfo('New operator', updatedOperator);
+
+            break;
+        }
+
         case 'rotateSigners': {
             // TODO: use args for new signers
             const gateway = new Contract(gatewayAddress, getContractJSON('AxelarAmplifierGateway').abi, wallet);
@@ -511,7 +598,41 @@ async function processCommand(axelar, chain, _chains, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    if (!options.governance) {
+        await mainProcessor(options, processCommand);
+        return;
+    }
+
+    const proposals = [];
+
+    await mainProcessor(options, (axelar, chain, chains, opts) =>
+        processCommand(axelar, chain, chains, opts).then((proposal) => {
+            if (proposal) {
+                proposals.push(proposal);
+            }
+        }),
+    );
+
+    if (proposals.length > 0) {
+        const proposal = {
+            title: 'Gateway Governance Proposal',
+            description: 'Gateway Governance Proposal',
+            contract_calls: proposals,
+        };
+
+        const proposalJSON = JSON.stringify(proposal, null, 2);
+
+        printInfo('Proposal', proposalJSON);
+
+        if (options.file) {
+            writeJSON(proposal, options.file);
+            printInfo('Proposal written to file', options.file);
+        } else {
+            if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
+                await submitProposalToAxelar(proposal, options);
+            }
+        }
+    }
 }
 
 if (require.main === module) {
@@ -520,6 +641,7 @@ if (require.main === module) {
     program.name('gateway').description('Script to perform gateway commands');
 
     addBaseOptions(program, { address: true });
+    addGovernanceOptions(program);
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
     program.addOption(
@@ -543,6 +665,7 @@ if (require.main === module) {
                 'approveWithBatch',
                 'rotateSigners',
                 'submitProof',
+                'transferOperatorship',
             ])
             .makeOptionMandatory(true),
     );
@@ -558,6 +681,7 @@ if (require.main === module) {
     program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
     program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
     program.addOption(new Option('--multisigSessionId <multisigSessionId>', 'Amplifier multisig proof session ID'));
+    program.addOption(new Option('--newOperator <newOperator>', 'new operator address for transferOperatorship action'));
 
     program.action((options) => {
         main(options);

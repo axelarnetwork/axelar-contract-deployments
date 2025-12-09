@@ -2,23 +2,24 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use anchor_lang::InstructionData;
-use axelar_solana_encoding::hash_payload;
-use axelar_solana_encoding::hasher::NativeHasher;
-use axelar_solana_encoding::types::execute_data::{ExecuteData, MerklizedPayload};
-use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
-use axelar_solana_encoding::types::payload::Payload;
-use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
-use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use base64::Engine as _;
+use borsh::BorshDeserialize;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
-use serde::Deserialize;
 use serde_json::json;
 use solana_axelar_gateway::state::config::RotationDelaySecs;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
+use solana_axelar_std::U256;
+use solana_axelar_std::execute_data::{
+    ExecuteData, MerklizedPayload, Payload, encode, hash_payload,
+};
+use solana_axelar_std::hasher::Hasher;
+use solana_axelar_std::message::{CrossChainId, MerklizedMessage, Message, MessageLeaf, Messages};
+use solana_axelar_std::pubkey::{PublicKey, Signature};
+use solana_axelar_std::verifier_set::{VerifierSet, verifier_set_hash};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::message::Message as SolanaMessage;
@@ -92,6 +93,21 @@ pub(crate) enum QueryCommands {
 
     /// Query message status on Gateway
     MessageStatus(MessageStatusArgs),
+
+    /// Query gateway config (domain separator, operator, etc.)
+    Config,
+
+    /// Query verifier set tracker by merkle root hash
+    VerifierSetTracker(VerifierSetTrackerArgs),
+
+    /// Compute verifier set merkle root from MultisigProver's current verifier set
+    ComputeMerkleRoot,
+}
+
+#[derive(Args, Debug)]
+pub(crate) struct VerifierSetTrackerArgs {
+    /// The verifier set merkle root hash (hex, with or without 0x prefix)
+    merkle_root: String,
 }
 
 #[derive(Args, Debug)]
@@ -285,7 +301,7 @@ pub(crate) async fn build_transaction(
         Commands::SubmitProof(submit_proof_args) => {
             submit_proof(fee_payer, submit_proof_args, config).await?
         }
-        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config).await?,
+        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config)?,
     };
 
     let blockhash = fetch_latest_blockhash(&config.url)?;
@@ -348,7 +364,7 @@ async fn get_verifier_set(
             .map_err(|_| eyre!("Invalid key length"))?;
 
         let pk = k256::PublicKey::from_sec1_bytes(&key_bytes)?;
-        let pubkey = PublicKey::Secp256k1(
+        let pubkey = PublicKey(
             pk.to_encoded_point(true)
                 .as_bytes()
                 .try_into()
@@ -368,14 +384,15 @@ async fn get_verifier_set(
         Ok(signer_set.into())
     } else {
         let multisig_prover_address = {
-            let address = String::deserialize(
+            let address = <String as serde::Deserialize>::deserialize(
                 &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain]
                     [ADDRESS_KEY],
             )?;
 
             cosmrs::AccountId::from_str(&address).unwrap()
         };
-        let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
+        let axelar_grpc_endpoint =
+            <String as serde::Deserialize>::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
         let multisig_prover_response =
             query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
                 axelar_grpc_endpoint,
@@ -404,7 +421,7 @@ fn construct_execute_data(
     payload: Payload,
     domain_separator: [u8; 32],
 ) -> eyre::Result<ExecuteData> {
-    let message_hash = hash_payload(&domain_separator, payload.clone())?;
+    let message_hash = hash_payload::<Hasher>(&domain_separator, payload.clone())?;
     let signatures = signer_set
         .signers
         .iter()
@@ -415,7 +432,7 @@ fn construct_execute_data(
             signature_bytes.push(recovery_id.to_byte());
 
             Ok((
-                PublicKey::Secp256k1(
+                PublicKey(
                     signer
                         .secret
                         .public_key()
@@ -424,7 +441,7 @@ fn construct_execute_data(
                         .try_into()
                         .map_err(|_| eyre!("Invalid signature"))?,
                 ),
-                Signature::EcdsaRecoverable(
+                Signature(
                     signature_bytes
                         .try_into()
                         .map_err(|_e| eyre!("Invalid signature"))?,
@@ -432,13 +449,13 @@ fn construct_execute_data(
             ))
         })
         .collect::<eyre::Result<BTreeMap<_, _>>>()?;
-    let execute_data_bytes = axelar_solana_encoding::encode(
+    let execute_data_bytes = encode(
         &signer_set.verifier_set(),
         &signatures,
         domain_separator,
         payload,
     )?;
-    let execute_data: ExecuteData = borsh::from_slice(&execute_data_bytes)?;
+    let execute_data: ExecuteData = ExecuteData::try_from_slice(&execute_data_bytes)?;
 
     Ok(execute_data)
 }
@@ -487,39 +504,7 @@ fn append_verification_flow_instructions(
     });
 
     for signature_leaf in &execute_data.signing_verifier_set_leaves {
-        use axelar_solana_encoding::types::pubkey::Signature as EncodingSignature;
-
-        let signature_bytes = match &signature_leaf.signature {
-            EncodingSignature::EcdsaRecoverable(bytes) => *bytes,
-            EncodingSignature::Ed25519(bytes) => {
-                let mut sig_bytes = [0u8; 65];
-                sig_bytes[..64].copy_from_slice(&bytes[..]);
-                sig_bytes
-            }
-        };
-
-        let v2_leaf = solana_axelar_gateway::VerifierSetLeaf {
-            nonce: signature_leaf.leaf.nonce,
-            quorum: signature_leaf.leaf.quorum,
-            signer_pubkey: match &signature_leaf.leaf.signer_pubkey {
-                axelar_solana_encoding::types::pubkey::PublicKey::Secp256k1(pk) => {
-                    solana_axelar_gateway::PublicKey::Secp256k1(*pk)
-                }
-                axelar_solana_encoding::types::pubkey::PublicKey::Ed25519(pk) => {
-                    solana_axelar_gateway::PublicKey::Ed25519(*pk)
-                }
-            },
-            signer_weight: signature_leaf.leaf.signer_weight,
-            position: signature_leaf.leaf.position,
-            set_size: signature_leaf.leaf.set_size,
-            domain_separator: signature_leaf.leaf.domain_separator,
-        };
-
-        let verifier_info = solana_axelar_gateway::SigningVerifierSetInfo {
-            signature: signature_bytes,
-            leaf: v2_leaf,
-            merkle_proof: signature_leaf.merkle_proof.clone(),
-        };
+        let verifier_info = signature_leaf.clone();
 
         let verify_sig_ix_data = solana_axelar_gateway::instruction::VerifySignature {
             payload_merkle_root: execute_data.payload_merkle_root,
@@ -558,9 +543,7 @@ async fn init(
     )
     .await?;
     let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
-    let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
-        NativeHasher,
-    >(&verifier_set, &domain_separator)?;
+    let verifier_set_hash = verifier_set_hash::<Hasher>(&verifier_set, &domain_separator)?;
     let (verifier_set_tracker_pda, _bump) =
         solana_axelar_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
     let payer = *fee_payer;
@@ -589,7 +572,7 @@ async fn init(
         },
         minimum_rotation_delay: init_args.minimum_rotation_delay,
         operator: init_args.operator,
-        previous_verifier_retention: solana_axelar_gateway::U256::from(
+        previous_verifier_retention: U256::from(
             u64::try_from(init_args.previous_signers_retention)
                 .map_err(|_| eyre!("previous_signers_retention value too large for u64"))?,
         ),
@@ -731,10 +714,10 @@ fn approve(
     let (event_authority_pda, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
-    let v2_merklized_message = solana_axelar_gateway::MerklizedMessage {
-        leaf: solana_axelar_gateway::MessageLeaf {
-            message: solana_axelar_gateway::Message {
-                cc_id: solana_axelar_gateway::CrossChainId {
+    let v2_merklized_message = MerklizedMessage {
+        leaf: MessageLeaf {
+            message: Message {
+                cc_id: CrossChainId {
                     chain: merklized_message.leaf.message.cc_id.chain.clone(),
                     id: merklized_message.leaf.message.cc_id.id.clone(),
                 },
@@ -790,14 +773,11 @@ async fn rotate(
     )
     .await?;
     let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain)?;
-    let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
-        NativeHasher,
-    >(&signer_set.verifier_set(), &domain_separator)?;
-    let new_verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
-        NativeHasher,
-    >(&new_verifier_set, &domain_separator)?;
+    let current_verifier_set_hash =
+        verifier_set_hash::<Hasher>(&signer_set.verifier_set(), &domain_separator)?;
+    let new_verifier_set_hash = verifier_set_hash::<Hasher>(&new_verifier_set, &domain_separator)?;
     let (verifier_set_tracker_pda, _bump) =
-        solana_axelar_gateway::VerifierSetTracker::find_pda(&verifier_set_hash);
+        solana_axelar_gateway::VerifierSetTracker::find_pda(&current_verifier_set_hash);
     let (new_verifier_set_tracker_pda, _bump) =
         solana_axelar_gateway::VerifierSetTracker::find_pda(&new_verifier_set_hash);
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
@@ -844,14 +824,15 @@ async fn submit_proof(
 ) -> eyre::Result<Vec<Instruction>> {
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let multisig_prover_address = {
-        let address = String::deserialize(
+        let address = <String as serde::Deserialize>::deserialize(
             &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain]
                 [ADDRESS_KEY],
         )?;
 
         cosmrs::AccountId::from_str(&address).unwrap()
     };
-    let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
+    let axelar_grpc_endpoint =
+        <String as serde::Deserialize>::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
     let multisig_prover_response = query_axelar::<crate::multisig_prover_types::ProofResponse>(
         axelar_grpc_endpoint,
         multisig_prover_address,
@@ -864,7 +845,9 @@ async fn submit_proof(
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let execute_data: ExecuteData = match multisig_prover_response.status {
         ProofStatus::Pending => eyre::bail!("Proof is not completed yet"),
-        ProofStatus::Completed { execute_data } => borsh::from_slice(&execute_data)?,
+        ProofStatus::Completed { execute_data } => {
+            ExecuteData::try_from_slice(execute_data.as_slice())?
+        }
     };
 
     let mut instructions = Vec::new();
@@ -927,10 +910,10 @@ async fn submit_proof(
                     &solana_axelar_gateway::id(),
                 );
 
-                let v2_merklized_message = solana_axelar_gateway::MerklizedMessage {
-                    leaf: solana_axelar_gateway::MessageLeaf {
-                        message: solana_axelar_gateway::Message {
-                            cc_id: solana_axelar_gateway::CrossChainId {
+                let v2_merklized_message = MerklizedMessage {
+                    leaf: MessageLeaf {
+                        message: Message {
+                            cc_id: CrossChainId {
                                 chain: message.leaf.message.cc_id.chain.clone(),
                                 id: message.leaf.message.cc_id.id.clone(),
                             },
@@ -972,7 +955,7 @@ async fn submit_proof(
     Ok(instructions)
 }
 
-async fn execute(
+fn execute(
     _fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
@@ -1019,11 +1002,149 @@ async fn execute(
     }
 }
 
-pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
+pub(crate) async fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
     match command {
         QueryCommands::Events(args) => events(args, config),
         QueryCommands::MessageStatus(args) => message_status(args, config),
+        QueryCommands::Config => gateway_config(config),
+        QueryCommands::VerifierSetTracker(args) => verifier_set_tracker(args, config),
+        QueryCommands::ComputeMerkleRoot => compute_merkle_root(config).await,
     }
+}
+
+fn gateway_config(config: &Config) -> eyre::Result<()> {
+    use anchor_lang::AccountDeserialize;
+    use solana_axelar_gateway::state::config::GatewayConfig;
+
+    let rpc_client = RpcClient::new(config.url.clone());
+    let (gateway_config_pda, _bump) = solana_axelar_gateway::GatewayConfig::find_pda();
+
+    let account_data = rpc_client.get_account_data(&gateway_config_pda)?;
+    let gateway_config = GatewayConfig::try_deserialize(&mut account_data.as_slice())?;
+
+    println!("Gateway Config PDA: {gateway_config_pda}");
+    println!(
+        "Domain Separator: 0x{}",
+        hex::encode(gateway_config.domain_separator)
+    );
+    println!("Operator: {}", gateway_config.operator);
+    println!("Current Epoch: {}", gateway_config.current_epoch);
+    println!(
+        "Minimum Rotation Delay: {} seconds",
+        gateway_config.minimum_rotation_delay
+    );
+    println!(
+        "Previous Verifier Set Retention: {}",
+        gateway_config.previous_verifier_set_retention
+    );
+    println!(
+        "Last Rotation Timestamp: {}",
+        gateway_config.last_rotation_timestamp
+    );
+
+    Ok(())
+}
+
+fn verifier_set_tracker(args: VerifierSetTrackerArgs, config: &Config) -> eyre::Result<()> {
+    use anchor_lang::AccountDeserialize;
+    use solana_axelar_gateway::state::verifier_set_tracker::VerifierSetTracker;
+
+    let merkle_root_hex = args.merkle_root.trim_start_matches("0x");
+    let merkle_root: [u8; 32] = hex::decode(merkle_root_hex)?
+        .try_into()
+        .map_err(|_| eyre!("Invalid merkle root length, expected 32 bytes"))?;
+
+    let (tracker_pda, bump) = solana_axelar_gateway::VerifierSetTracker::find_pda(&merkle_root);
+
+    println!("Verifier Set Merkle Root: 0x{}", hex::encode(merkle_root));
+    println!("Tracker PDA: {tracker_pda}");
+    println!("PDA Bump: {bump}");
+
+    let rpc_client = RpcClient::new(config.url.clone());
+    match rpc_client.get_account_data(&tracker_pda) {
+        Ok(account_data) => {
+            let tracker = VerifierSetTracker::try_deserialize(&mut account_data.as_slice())?;
+            println!("\nTracker exists on-chain:");
+            println!("  Epoch: {}", tracker.epoch);
+            println!(
+                "  Verifier Set Hash: 0x{}",
+                hex::encode(tracker.verifier_set_hash)
+            );
+        }
+        Err(e) => {
+            println!("\nTracker does NOT exist on-chain: {e}");
+            println!("This verifier set has not been registered with the gateway.");
+        }
+    }
+
+    Ok(())
+}
+
+async fn compute_merkle_root(config: &Config) -> eyre::Result<()> {
+    use std::collections::BTreeMap;
+
+    let chains_info: serde_json::Value =
+        crate::utils::read_json_file_from_path(&config.chains_info_file)?;
+
+    let multisig_prover_address = {
+        let address = <String as serde::Deserialize>::deserialize(
+            &chains_info[crate::utils::AXELAR_KEY][crate::utils::CONTRACTS_KEY]
+                [crate::utils::MULTISIG_PROVER_KEY][&config.chain][crate::utils::ADDRESS_KEY],
+        )?;
+        cosmrs::AccountId::from_str(&address)?
+    };
+
+    let axelar_grpc_endpoint = <String as serde::Deserialize>::deserialize(
+        &chains_info[crate::utils::AXELAR_KEY][crate::utils::GRPC_KEY],
+    )?;
+
+    println!("Querying MultisigProver: {multisig_prover_address}");
+    println!("GRPC Endpoint: {axelar_grpc_endpoint}");
+
+    let multisig_prover_response =
+        query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
+            axelar_grpc_endpoint,
+            multisig_prover_address,
+            serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
+        )
+        .await?;
+
+    let mut signers = BTreeMap::new();
+    for signer in multisig_prover_response.verifier_set.signers.values() {
+        let pubkey: PublicKey = signer.pub_key.clone().try_into()?;
+        let weight = signer.weight.u128();
+        signers.insert(pubkey, weight);
+    }
+
+    let verifier_set = VerifierSet {
+        nonce: multisig_prover_response.verifier_set.created_at,
+        signers,
+        quorum: multisig_prover_response.verifier_set.threshold.u128(),
+    };
+
+    println!("\nVerifier Set from Prover:");
+    println!("  Nonce (created_at): {}", verifier_set.nonce);
+    println!("  Quorum (threshold): {}", verifier_set.quorum);
+    println!("  Signers: {} total", verifier_set.signers.len());
+    for (pubkey, weight) in &verifier_set.signers {
+        println!(
+            "    - pubkey: 0x{}, weight: {}",
+            hex::encode(pubkey.0),
+            weight
+        );
+    }
+
+    let domain_sep =
+        crate::utils::domain_separator(&chains_info, config.network_type, &config.chain)?;
+    println!("\nDomain Separator: 0x{}", hex::encode(domain_sep));
+
+    let merkle_root = verifier_set_hash::<Hasher>(&verifier_set, &domain_sep)?;
+    println!("\nComputed Merkle Root: 0x{}", hex::encode(merkle_root));
+
+    let (tracker_pda, _) = solana_axelar_gateway::VerifierSetTracker::find_pda(&merkle_root);
+    println!("Corresponding Tracker PDA: {tracker_pda}");
+
+    Ok(())
 }
 
 fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
