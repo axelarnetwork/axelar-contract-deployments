@@ -60,7 +60,7 @@ When a contract vulnerability is discovered, immediately upgrade to a patched ve
 
 ### Pause Contracts
 
-- **InterchainTokenService Pause**: See [Set pause status (pause/unpause)](./README.md#set-pause-status-pauseunpause)
+- **InterchainTokenService Pause**: See [Set pause status (pause/unpause)](./docs/pause-unpause.md)
   - Use `--pauseStatus true` to pause, `false` to unpause after fix
 
 ---
@@ -71,11 +71,11 @@ When a token is compromised or being exploited, immediately freeze transfers by 
 
 ### Freeze Token Transfers
 
-- **Freeze Tokens (Flow Limit = 1)**: See [Freeze tokens (flow limit = 1)](./README.md#freeze-tokens-flow-limit--1)
+- **Freeze Tokens (Flow Limit = 1)**: See [Freeze tokens (flow limit = 1)](./docs/rate-limits.md#4.freeze-tokens-on-a-chain)
   - Sets flow limit to 1, effectively freezing transfers
-- **Set Flow Limit (Custom)**: See [Set flow limit (single)](./README.md#set-flow-limit-single)
+- **Set Flow Limit (Custom)**: See [Set flow limit (single)](./docs/rate-limits.md#3.set-low-limit-(single-token))
   - Set specific flow limit value for a token
-- **Unfreeze Tokens (Flow Limit = 0)**: See [Unfreeze tokens (flow limit = 0)](./README.md#unfreeze-tokens-flow-limit--0)
+- **Unfreeze Tokens (Flow Limit = 0)**: See [Unfreeze tokens (flow limit = 0)](./docs/rate-limits.md#4.unfreeze-tokens-on-a-chain)
   - Restore normal operations after incident resolution
 
 ### Isolate Affected Chains
@@ -87,7 +87,7 @@ When a token is compromised or being exploited, immediately freeze transfers by 
 
 ## 3. Key Compromise: Transfer Roles and Ownership
 
-When a key is compromised, immediately transfer ownership/operatorship to secure addresses and rotate signers.
+When a key is compromised, immediately transfer ownership/operatorship to secure addresses.
 
 ### Transfer Ownership
 

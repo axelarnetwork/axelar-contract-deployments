@@ -255,9 +255,6 @@ ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action
 #### Remove trusted chains
 `ts-node evm/its.js remove-trusted-chains <chain1> <chain2> ... --yes`
 
-#### Set pause status (pause/unpause)
-`ts-node evm/its.js set-pause-status <true|false> --yes`
-
 #### Migrate interchain token
 `ts-node evm/its.js migrate-interchain-token <tokenId> --yes`
 
@@ -302,15 +299,6 @@ Note: For upgrades, continue to use governance flows; operational actions run vi
 
 ### InterchainTokenService operator commands (evm/its.js)
 Note: For upgrades, continue to use governance flows; operational actions run via this script.
-
-#### Set flow limit (single)
-`ts-node evm/its.js set-flow-limit <tokenId> <flowLimitWei> --yes`
-
-#### Freeze tokens (flow limit = 1)
-`ts-node evm/its.js freeze-tokens <tokenId1> <tokenId2> --yes`
-
-#### Unfreeze tokens (flow limit = 0)
-`ts-node evm/its.js unfreeze-tokens <tokenId1> <tokenId2> --yes`
 
 #### Transfer operatorship
 `ts-node evm/its.js transfer-operatorship <operator> --yes`
