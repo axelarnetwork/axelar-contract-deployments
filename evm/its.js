@@ -495,7 +495,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to set trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to set trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
                     return;
                 }
 
@@ -557,7 +562,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
                     return;
                 }
 
@@ -619,7 +629,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [pauseStatus] = args;
 
             if (options.governance) {
-
                 const pauseStatusBool = pauseStatus === 'true';
                 if (prompt(`Proceed with creating governance proposal to set pause status to ${pauseStatus}?`, yes)) {
                     return;
@@ -1117,7 +1126,8 @@ if (require.main === module) {
     const setPauseStatusCommand = program
         .command('set-pause-status')
         .description('Set pause status')
-        .argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false'])
+        .argument('<pause-status>', 'Pause status (true/false)')
+        .choices(['true', 'false'])
         .action((pauseStatus, options, cmd) => {
             main(cmd.name(), [pauseStatus], options);
         });

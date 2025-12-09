@@ -550,10 +550,7 @@ if (require.main === module) {
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
         .addOption(
-            new Option(
-                '--targetContractName <targetContractName>',
-                'target contract name (required for upgrade, transferGovernance)',
-            ),
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
@@ -576,10 +573,7 @@ if (require.main === module) {
         .description('Cancel a scheduled timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
         .addOption(
-            new Option(
-                '--targetContractName <targetContractName>',
-                'target contract name (required for upgrade, transferGovernance)',
-            ),
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
@@ -652,10 +646,7 @@ if (require.main === module) {
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
         .addOption(
-            new Option(
-                '--targetContractName <targetContractName>',
-                'target contract name (required for upgrade, transferGovernance)',
-            ),
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))

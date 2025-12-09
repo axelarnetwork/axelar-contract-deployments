@@ -382,13 +382,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const gmpPayload = encodeGovernanceProposal(
-                    ProposalType.ScheduleTimelock,
-                    gatewayAddress,
-                    calldata,
-                    nativeValue,
-                    eta,
-                );
+                const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
                 printInfo('Governance calldata', calldata);
@@ -499,13 +493,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const gmpPayload = encodeGovernanceProposal(
-                    ProposalType.ScheduleTimelock,
-                    gatewayAddress,
-                    calldata,
-                    nativeValue,
-                    eta,
-                );
+                const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
                 printInfo('Governance calldata', calldata);
