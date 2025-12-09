@@ -340,7 +340,7 @@ async function prepareAccount(provider, horizonServer, address, chain) {
             if (isFriendbotSupported(chain.networkType)) {
                 await fundAccountWithFriendbot(horizonServer, address);
             } else {
-                printInfo(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
+                throw new Error(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
             }
         } else {
             printError(`Failed to check account ${address}: status=${error?.response?.status}, message=${error?.message || error}`);
