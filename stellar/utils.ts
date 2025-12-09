@@ -329,23 +329,33 @@ async function fundAccountWithFriendbot(horizonServer, address) {
     }
 }
 
+async function prepareAccount(provider, horizonServer, address, chain) {
+    try {
+        await provider.getAccount(address);
+    } catch (error) {
+        // Check explicitly if the account doesn't exist (404 status)
+        if (error?.response?.status === 404) {
+            printWarn(`Account ${address} not found`);
+            // If account doesn't exist and friendbot is supported, fund it via friendbot
+            if (isFriendbotSupported(chain.networkType)) {
+                await fundAccountWithFriendbot(horizonServer, address);
+            } else {
+                printInfo(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
+            }
+        } else {
+            printError(`Failed to check account ${address}: status=${error?.response?.status}, message=${error?.message || error}`);
+            throw error;
+        }
+    }
+}
+
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
     const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
-    try {
-        await provider.getAccount(address);
-    } catch (error) {
-        printWarn(`Account ${address} not found`);
-        // If account doesn't exist and friendbot is supported, fund it via friendbot
-        if (isFriendbotSupported(chain.networkType)) {
-            await fundAccountWithFriendbot(horizonServer, address);
-        } else {
-            printInfo(`Friendbot is not supported on ${chain.networkType} network`);
-        }
-    }
+    await prepareAccount(provider, horizonServer, address, chain);
 
     const balances = await getBalances(horizonServer, address);
 
