@@ -591,7 +591,6 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
-        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((governanceAction, options, cmd) => {
             main(cmd.name(), [governanceAction], options);
         });
@@ -667,7 +666,6 @@ if (require.main === module) {
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
-        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((governanceAction, commandId, activationTime, options, cmd) => {
             main(cmd.name(), [governanceAction, commandId, activationTime], options);
         });
