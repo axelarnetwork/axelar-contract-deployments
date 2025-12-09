@@ -195,13 +195,6 @@ pub(crate) enum Commands {
     /// Transfer the Interchain Token Service operatorship to another account
     TransferOperatorship(TransferOperatorshipArgs),
 
-    /// Propose transfer of operatorship of the Interchain Token Service to another account
-    ProposeOperatorship(ProposeOperatorshipArgs),
-
-    /// Accept an existing proposal for the transfer of operatorship of the Interchain Token
-    /// Service from another account
-    AcceptOperatorship(AcceptOperatorshipArgs),
-
     /// TokenManager specific commands
     #[clap(subcommand)]
     TokenManager(TokenManagerCommand),
@@ -237,12 +230,6 @@ pub(crate) enum TokenManagerCommand {
 
     /// Transfer operatorship of a TokenManager to another account
     TransferOperatorship(TokenManagerTransferOperatorshipArgs),
-
-    /// Porpose transfer of operatorship of a TokenManager to another account
-    ProposeOperatorship(TokenManagerProposeOperatorshipArgs),
-
-    /// Accept an existing proposal for the transfer of operatorship of a TokenManager from another account
-    AcceptOperatorship(TokenManagerAcceptOperatorshipArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -303,36 +290,6 @@ pub(crate) struct TokenManagerTransferOperatorshipArgs {
     /// The account to transfer operatorship to
     #[clap(long)]
     to: Pubkey,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct TokenManagerProposeOperatorshipArgs {
-    /// The account that proposes the operatorship transfer
-    #[clap(long)]
-    proposer: Pubkey,
-
-    /// The token id of the Interchain Token
-    #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
-
-    /// The account to propose operatorship transfer to
-    #[clap(long)]
-    to: Pubkey,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct TokenManagerAcceptOperatorshipArgs {
-    /// The account that accepts the operatorship transfer
-    #[clap(long)]
-    accepter: Pubkey,
-
-    /// The token id of the Interchain Token
-    #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
-
-    /// The account to accept operatorship transfer from
-    #[clap(long)]
-    from: Pubkey,
 }
 
 #[derive(Subcommand, Debug)]
@@ -633,28 +590,6 @@ pub(crate) struct TransferOperatorshipArgs {
     to: Pubkey,
 }
 
-#[derive(Parser, Debug)]
-pub(crate) struct ProposeOperatorshipArgs {
-    /// The account that proposes the operatorship transfer
-    #[clap(long)]
-    proposer: Pubkey,
-
-    /// The account to propose operatorship transfer to
-    #[clap(long)]
-    to: Pubkey,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct AcceptOperatorshipArgs {
-    /// The account to which the operatorship will be accepted
-    #[clap(long)]
-    role_receiver: Pubkey,
-
-    /// The account from which the operatorship will be accepted
-    #[clap(long)]
-    from: Pubkey,
-}
-
 fn hash_salt(s: &str) -> eyre::Result<[u8; 32]> {
     Ok(solana_sdk::keccak::hash(s.as_bytes()).0)
 }
@@ -750,8 +685,6 @@ pub(crate) fn build_instruction(
         Commands::InterchainTransfer(args) => interchain_transfer(fee_payer, args, config),
         Commands::SetFlowLimit(args) => set_flow_limit(fee_payer, args),
         Commands::TransferOperatorship(args) => transfer_operatorship(fee_payer, args),
-        Commands::ProposeOperatorship(args) => propose_operatorship(fee_payer, args),
-        Commands::AcceptOperatorship(args) => accept_operatorship(fee_payer, args),
         Commands::TokenManager(command) => match command {
             TokenManagerCommand::SetFlowLimit(args) => {
                 token_manager_set_flow_limit(fee_payer, args)
@@ -764,12 +697,6 @@ pub(crate) fn build_instruction(
             }
             TokenManagerCommand::TransferOperatorship(args) => {
                 token_manager_transfer_operatorship(fee_payer, args)
-            }
-            TokenManagerCommand::ProposeOperatorship(args) => {
-                token_manager_propose_operatorship(fee_payer, args)
-            }
-            TokenManagerCommand::AcceptOperatorship(args) => {
-                token_manager_accept_operatorship(fee_payer, args)
             }
         },
         Commands::InterchainToken(command) => match command {
@@ -1777,111 +1704,6 @@ fn transfer_operatorship(
     }])
 }
 
-fn propose_operatorship(
-    fee_payer: &Pubkey,
-    args: ProposeOperatorshipArgs,
-) -> eyre::Result<Vec<Instruction>> {
-    let (its_root_pda, _) = find_its_root_pda();
-
-    let (origin_roles_pda, _) = Pubkey::find_program_address(
-        &[b"user-roles", its_root_pda.as_ref(), args.proposer.as_ref()],
-        &solana_axelar_its::id(),
-    );
-
-    let (proposal_pda, _) = Pubkey::find_program_address(
-        &[
-            b"role-proposal",
-            its_root_pda.as_ref(),
-            args.proposer.as_ref(),
-            args.to.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    println!("------------------------------------------");
-    println!("\u{1FA99} Propose Operatorship (ITS):");
-    println!();
-    println!("- Proposer: {}", args.proposer);
-    println!("- To: {}", args.to);
-    println!("- Proposal PDA: {proposal_pda}");
-    println!("------------------------------------------");
-
-    let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-        AccountMeta::new(*fee_payer, true),
-        AccountMeta::new_readonly(args.proposer, true),
-        AccountMeta::new(origin_roles_pda, false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(args.to, false),
-        AccountMeta::new(proposal_pda, false),
-    ];
-
-    let ix_data = solana_axelar_its::instruction::ProposeOperatorship {}.data();
-
-    Ok(vec![Instruction {
-        program_id: solana_axelar_its::id(),
-        accounts,
-        data: ix_data,
-    }])
-}
-
-fn accept_operatorship(
-    fee_payer: &Pubkey,
-    args: AcceptOperatorshipArgs,
-) -> eyre::Result<Vec<Instruction>> {
-    let (its_root_pda, _) = find_its_root_pda();
-
-    let (destination_roles_pda, _) = Pubkey::find_program_address(
-        &[
-            b"user-roles",
-            its_root_pda.as_ref(),
-            args.role_receiver.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    let (origin_roles_pda, _) = Pubkey::find_program_address(
-        &[b"user-roles", its_root_pda.as_ref(), args.from.as_ref()],
-        &solana_axelar_its::id(),
-    );
-
-    let (proposal_pda, _) = Pubkey::find_program_address(
-        &[
-            b"role-proposal",
-            its_root_pda.as_ref(),
-            args.from.as_ref(),
-            args.role_receiver.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    println!("------------------------------------------");
-    println!("\u{1FA99} Accept Operatorship (ITS):");
-    println!();
-    println!("- Role Receiver: {}", args.role_receiver);
-    println!("- From: {}", args.from);
-    println!("------------------------------------------");
-
-    let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-        AccountMeta::new(*fee_payer, true),
-        AccountMeta::new_readonly(args.role_receiver, true),
-        AccountMeta::new(destination_roles_pda, false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new(args.from, false),
-        AccountMeta::new(origin_roles_pda, false),
-        AccountMeta::new(proposal_pda, false),
-    ];
-
-    let ix_data = solana_axelar_its::instruction::AcceptOperatorship {}.data();
-
-    Ok(vec![Instruction {
-        program_id: solana_axelar_its::id(),
-        accounts,
-        data: ix_data,
-    }])
-}
-
 fn token_manager_set_flow_limit(
     fee_payer: &Pubkey,
     args: TokenManagerSetFlowLimitArgs,
@@ -2080,124 +1902,6 @@ fn token_manager_transfer_operatorship(
     ];
 
     let ix_data = solana_axelar_its::instruction::TransferTokenManagerOperatorship {}.data();
-
-    Ok(vec![Instruction {
-        program_id: solana_axelar_its::id(),
-        accounts,
-        data: ix_data,
-    }])
-}
-
-fn token_manager_propose_operatorship(
-    fee_payer: &Pubkey,
-    args: TokenManagerProposeOperatorshipArgs,
-) -> eyre::Result<Vec<Instruction>> {
-    let (its_root_pda, _) = find_its_root_pda();
-    let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, &args.token_id);
-
-    let (origin_roles_pda, _) = Pubkey::find_program_address(
-        &[
-            b"user-roles",
-            token_manager_pda.as_ref(),
-            args.proposer.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    let (proposal_pda, _) = Pubkey::find_program_address(
-        &[
-            b"role-proposal",
-            token_manager_pda.as_ref(),
-            args.proposer.as_ref(),
-            args.to.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    println!("------------------------------------------");
-    println!("\u{1FA99} Propose Token Manager Operatorship:");
-    println!();
-    println!("- Token ID: {}", hex::encode(args.token_id));
-    println!("- Proposer: {}", args.proposer);
-    println!("- To: {}", args.to);
-    println!("------------------------------------------");
-
-    let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-        AccountMeta::new(*fee_payer, true),
-        AccountMeta::new_readonly(args.proposer, true),
-        AccountMeta::new(origin_roles_pda, false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
-        AccountMeta::new_readonly(args.to, false),
-        AccountMeta::new(proposal_pda, false),
-    ];
-
-    let ix_data = solana_axelar_its::instruction::ProposeTokenManagerOperatorship {}.data();
-
-    Ok(vec![Instruction {
-        program_id: solana_axelar_its::id(),
-        accounts,
-        data: ix_data,
-    }])
-}
-
-fn token_manager_accept_operatorship(
-    fee_payer: &Pubkey,
-    args: TokenManagerAcceptOperatorshipArgs,
-) -> eyre::Result<Vec<Instruction>> {
-    let (its_root_pda, _) = find_its_root_pda();
-    let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, &args.token_id);
-
-    let (destination_roles_pda, _) = Pubkey::find_program_address(
-        &[
-            b"user-roles",
-            token_manager_pda.as_ref(),
-            args.accepter.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    let (origin_roles_pda, _) = Pubkey::find_program_address(
-        &[
-            b"user-roles",
-            token_manager_pda.as_ref(),
-            args.from.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    let (proposal_pda, _) = Pubkey::find_program_address(
-        &[
-            b"role-proposal",
-            token_manager_pda.as_ref(),
-            args.from.as_ref(),
-            args.accepter.as_ref(),
-        ],
-        &solana_axelar_its::id(),
-    );
-
-    println!("------------------------------------------");
-    println!("\u{1FA99} Accept Token Manager Operatorship:");
-    println!();
-    println!("- Token ID: {}", hex::encode(args.token_id));
-    println!("- Accepter: {}", args.accepter);
-    println!("- From: {}", args.from);
-    println!("------------------------------------------");
-
-    let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-        AccountMeta::new(*fee_payer, true),
-        AccountMeta::new_readonly(args.accepter, true),
-        AccountMeta::new(destination_roles_pda, false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
-        AccountMeta::new(args.from, false),
-        AccountMeta::new(origin_roles_pda, false),
-        AccountMeta::new(proposal_pda, false),
-    ];
-
-    let ix_data = solana_axelar_its::instruction::AcceptTokenManagerOperatorship {}.data();
 
     Ok(vec![Instruction {
         program_id: solana_axelar_its::id(),

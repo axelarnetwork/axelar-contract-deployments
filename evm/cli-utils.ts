@@ -72,6 +72,19 @@ const addTopUpOptions = (program: Command): void => {
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 };
 
+const addGovernanceOptions = (program: Command): Command => {
+    program.addOption(new Option('--governance', 'Submit this change via interchain governance'));
+    program.addOption(
+        new Option(
+            '--activationTime <activationTime>',
+            'Governance Activation Time (YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
+        ).default('0'),
+    );
+    program.addOption(new Option('--file <file>', 'File to write Axelar proposal JSON to'));
+
+    return program;
+};
+
 module.exports = {
     addEnvOption,
     addBaseOptions,
@@ -79,6 +92,7 @@ module.exports = {
     addStoreOptions,
     addEvmOptions,
     addTopUpOptions,
+    addGovernanceOptions,
 };
 
 export type { BaseOptions, EvmOptions };
