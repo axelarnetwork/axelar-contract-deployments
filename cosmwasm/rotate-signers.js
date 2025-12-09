@@ -39,7 +39,7 @@ const updateVerifierSet = async (client, config, _options, [chain], fee) => {
     printInfo('Mutisig session ID', multisigSessionId);
 };
 
-const confirmVerifierRotation = async (client, config, _options, [chain, txHash, logIndex], fee) => {
+const confirmVerifierRotation = async (client, config, _options, [chain, txHash], fee) => {
     const nextVerifierSet = (await getNextVerifierSet(config, chain, client)).verifier_set;
     printInfo('Next verifier set', nextVerifierSet);
 
@@ -74,7 +74,7 @@ const confirmVerifierRotation = async (client, config, _options, [chain, txHash,
 const authorizeVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
     const message = {
         authorize_verifiers: {
-            serviceName,
+            service_name: serviceName,
             verifiers,
         },
     };
@@ -92,7 +92,7 @@ const authorizeVerifier = async (client, config, options, [serviceName, verifier
 const unauthorizeVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
     const message = {
         unauthorize_verifiers: {
-            serviceName,
+            service_name: serviceName,
             verifiers,
         },
     };
@@ -121,7 +121,7 @@ const rotateSigners = async (_client, config, options, [chain, sessionId], _fee)
     const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chain, sessionId]);
     const executeData = message?.status?.completed?.execute_data;
 
-    printInfo(`Message:`, message);
+    printInfo(`Multisig Proof`, message);
 
     if (!executeData) {
         printError('could not retrieve execute data for rotating signers');
@@ -131,12 +131,12 @@ const rotateSigners = async (_client, config, options, [chain, sessionId], _fee)
     const tx = await wallet.sendTransaction({
         to: gatewayAddress,
         data: `0x${executeData}`,
-        gasLimit: (await gasOptions)?.gasLimit ?? 'auto',
+        gasLimit: (await gasOptions)?.gasLimit ?? 8000000,
     });
 
     const result = await tx.wait();
 
-    printInfo(`Transaction Hash: `, result.transactionHash);
+    printInfo(`Transaction Hash`, result.transactionHash);
 };
 
 const programHandler = () => {
@@ -182,7 +182,7 @@ const programHandler = () => {
 
     const rotateSignersCmd = program
         .command('rotate-signers <chain> <sessionId>')
-        .description('Rotate signers on edge contract')
+        .description('Rotate signers on Solidity edge contract')
         .addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'))
         .action((chain, sessionId, options) => {
             mainProcessor(rotateSigners, options, [chain, sessionId]);

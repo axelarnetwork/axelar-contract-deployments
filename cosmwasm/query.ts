@@ -222,9 +222,9 @@ async function contractInfo(client: CosmWasmClient, config: ConfigManager, optio
         }
 
         const contract_info: ContractInfo = await getContractInfo(client, address);
-        console.log(contract_info);
+        printInfo(contract_info);
     } catch (error) {
-        console.error(error);
+        printError(error);
     }
 }
 
@@ -285,7 +285,7 @@ export async function multisigProof(client: CosmWasmClient, config: ConfigManage
 
         return result;
     } catch (error) {
-        console.error(error);
+        printError(error);
     }
 }
 
