@@ -50,7 +50,8 @@
     "msgpack-lite": "^0.1.26",
     "path": "^0.12.7",
     "toml": "^3.0.0",
-    "xrpl": "4.2.5"
+    "xrpl": "4.2.5",
+    "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@aikidosec/safe-chain": "1.0.18",

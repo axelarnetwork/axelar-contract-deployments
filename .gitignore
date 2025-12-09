@@ -125,6 +125,8 @@ sui/move
 .idea
 
 .stellar/
+
+rpcs/
 *.clar
 
 target/
