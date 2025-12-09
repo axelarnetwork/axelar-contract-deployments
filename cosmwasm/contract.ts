@@ -316,7 +316,7 @@ const instantiateChainContracts = async (
         salt: salt,
     };
 
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription, chainName);
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
 };
 
 const programHandler = () => {
