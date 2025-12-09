@@ -37,14 +37,14 @@ jobs:
         run: |
           git clone https://github.com/axelarnetwork/axelar-amplifier-solana.git
           cd axelar-amplifier-solana
-          git checkout 8687fb90a8563f91d26cc2b40a60345b3c619a48
+          git checkout 9f33615e51f0076f74597165a7049c1a0bb4a598
         working-directory: solana
 
-      - name: Install Rust nightly toolchain
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly
-          components: rustfmt
+          toolchain: 1.86.0
+          components: rustfmt, clippy
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
@@ -55,8 +55,10 @@ jobs:
           shared-key: 'cache-lint'
           workspaces: 'solana'
 
-      - name: Add cargo clippy
-        run: rustup component add clippy
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libusb-1.0-0-dev
 
       - name: Run cargo clippy (devnet-amplifier)
         run: cargo clippy --workspace --allow-dirty --fix -- -D warnings

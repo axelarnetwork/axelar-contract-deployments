@@ -3,8 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
-    BigNumber,
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits },
     Contract,
 } = ethers;
 const { Command, Option, Argument } = require('commander');
@@ -18,7 +17,6 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
-    isValidTokenId,
     getGasOptions,
     isNonEmptyString,
     encodeITSDestination,
@@ -27,14 +25,7 @@ const {
     isTrustedChain,
     loadConfig,
 } = require('./utils');
-const {
-    getChainConfigByAxelarId,
-    validateDestinationChain,
-    validateChain,
-    tokenManagerTypes,
-    validateLinkType,
-    estimateITSFee,
-} = require('../common/utils');
+const { getChainConfigByAxelarId, validateChain, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -128,6 +119,18 @@ function compareToConfig(contractConfig, contractName, toCheck) {
             compare(value, configValue, key);
         } else {
             printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
+        }
+    }
+}
+
+async function validateTokenIds(interchainTokenService, tokenIds) {
+    for (const tokenId of tokenIds) {
+        validateParameters({ isValidTokenId: { tokenId } });
+
+        try {
+            await interchainTokenService.deployedTokenManager(tokenId);
+        } catch (error) {
+            throw new Error(`TokenManager for tokenId ${tokenId} does not yet exist.`);
         }
     }
 }
@@ -242,48 +245,40 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'flow-limit': {
             const [tokenId] = args;
-            validateParameters({ isValidTokenId: { tokenId } });
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
-
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowLimit = await tokenManager.flowLimit();
-            printInfo(`Flow limit for TokenManager with tokenId ${tokenId}`, flowLimit);
+            printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
 
             break;
         }
 
         case 'flow-out-amount': {
             const [tokenId] = args;
-            validateParameters({ isValidTokenId: { tokenId } });
+            validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
-
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowOutAmount = await tokenManager.flowOutAmount();
-            printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowOutAmount);
+            printInfo(`Flow out amount for tokenId ${tokenId}`, flowOutAmount);
 
             break;
         }
 
         case 'flow-in-amount': {
             const [tokenId] = args;
-            validateParameters({ isValidTokenId: { tokenId } });
+            validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
-
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowInAmount = await tokenManager.flowInAmount();
-            printInfo(`Flow in amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
+            printInfo(`Flow in amount for tokenId ${tokenId}`, flowInAmount);
 
             break;
         }
@@ -404,40 +399,69 @@ async function processCommand(_axelar, chain, chains, action, options) {
             await handleTx(tx, chain, interchainTokenService, action);
             break;
 
-        case 'set-flow-limits': {
-            const [tokenIdsArg, flowLimitsArg] = args;
-            const flowLimitsStrings = flowLimitsArg.split(' ');
-            const tokenIds = tokenIdsArg.split(' ');
-            const flowLimits = [];
+        case 'set-flow-limit': {
+            const [tokenId, flowLimit] = args;
 
-            for (const flowLimit of flowLimitsStrings) {
-                flowLimits.push(Number(flowLimit));
+            validateTokenIds(interchainTokenService, [tokenId]);
+            validateParameters({ isValidNumber: { flowLimit } });
+
+            const tx = await interchainTokenService.setFlowLimits([tokenId], [flowLimit], gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action);
+            break;
+        }
+
+        case 'freeze-tokens': {
+            const [tokenIds] = args;
+            validateTokenIds(interchainTokenService, tokenIds);
+
+            const flowLimits = tokenIds.map((_tokenId) => 1);
+
+            const tx = await interchainTokenService.setFlowLimits(tokenIds, flowLimits, gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action);
+            break;
+        }
+
+        case 'unfreeze-tokens': {
+            const [tokenIds] = args;
+            validateTokenIds(interchainTokenService, tokenIds);
+
+            const flowLimits = tokenIds.map(() => 0);
+
+            const tx = await interchainTokenService.setFlowLimits(tokenIds, flowLimits, gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action);
+            break;
+        }
+
+        case 'isOperator': {
+            const [address] = args;
+
+            validateParameters({ isValidAddress: { address } });
+
+            const isOp = await interchainTokenService.isOperator(address);
+            printInfo(`Address ${address} is operator`, isOp);
+
+            break;
+        }
+
+        case 'transferOperatorship': {
+            const [newOperator] = args;
+
+            validateParameters({ isValidAddress: { newOperator } });
+
+            const isCurrentOperator = await interchainTokenService.isOperator(walletAddress);
+            const owner = await interchainTokenService.owner();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither an operator nor the owner (owner: ${owner}).`);
             }
 
-            const tokenIdsBytes32 = [];
-            const tokenManagers = [];
-
-            for (const tokenId of tokenIds) {
-                if (!isValidTokenId(tokenId)) {
-                    throw new Error(`Invalid tokenId value: ${tokenId}`);
-                }
-
-                const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-                tokenIdsBytes32.push(tokenIdBytes32);
-
-                const tokenManager = new Contract(
-                    await interchainTokenService.deployedTokenManager(tokenIdBytes32),
-                    getContractJSON('ITokenManager').abi,
-                    wallet,
-                );
-                tokenManagers.push(tokenManager);
+            if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
+                return;
             }
 
-            validateParameters({ isNumberArray: { flowLimits } });
-
-            const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits, gasOptions);
-
-            await handleTx(tx, chain, tokenManagers[0], action, 'FlowLimitSet');
+            const tx = await interchainTokenService.transferOperatorship(newOperator, gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action, 'RolesRemoved', 'RolesAdded');
 
             break;
         }
@@ -855,12 +879,44 @@ if (require.main === module) {
         });
 
     program
-        .command('set-flow-limits')
-        .description('Set flow limits for multiple tokens')
-        .argument('<token-ids>', 'Comma-separated token IDs')
-        .argument('<flow-limits>', 'Comma-separated flow limits')
-        .action((tokenIds, flowLimits, options, cmd) => {
-            main(cmd.name(), [tokenIds, flowLimits], options);
+        .command('set-flow-limit')
+        .description('Set flow limit for a token')
+        .argument('<token-id>', 'Token ID')
+        .argument('<flow-limit>', 'Flow limit')
+        .action((tokenId, flowLimit, options, cmd) => {
+            main(cmd.name(), [tokenId, flowLimit], options);
+        });
+
+    program
+        .command('freeze-tokens')
+        .description('Freeze transfers for ITS tokens on the current chain (i.e. set flow limit to 1)')
+        .argument('<token-ids...>', 'Token IDs')
+        .action((tokenIds, options, cmd) => {
+            main(cmd.name(), [tokenIds], options);
+        });
+
+    program
+        .command('unfreeze-tokens')
+        .description('Unfreeze transfers for ITS tokens on the current chain (i.e. set flow limit to 0)')
+        .argument('<token-ids...>', 'Token IDs')
+        .action((tokenIds, options, cmd) => {
+            main(cmd.name(), [tokenIds], options);
+        });
+
+    program
+        .command('isOperator')
+        .description('Check if address is InterchainTokenService operator')
+        .argument('<address>', 'Address to check')
+        .action((address, options, cmd) => {
+            main(cmd.name(), [address], options);
+        });
+
+    program
+        .command('transferOperatorship')
+        .description('Transfer InterchainTokenService operatorship')
+        .argument('<new-operator>', 'New operator address')
+        .action((newOperator, options, cmd) => {
+            main(cmd.name(), [newOperator], options);
         });
 
     program

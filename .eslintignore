@@ -1,4 +1,4 @@
 dist/
 node_modules/
-solana/axelar-amplifier-solana/
-solana/axelar-amplifier/
+solana/axelar-amplifier*
+solana/target

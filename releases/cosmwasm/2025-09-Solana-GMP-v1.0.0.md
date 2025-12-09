@@ -5,16 +5,16 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | Pending               | TBD      |
-| **Stagenet**         | Pending               | TBD      |
-| **Testnet**          | Pending               | TBD      |
-| **Mainnet**          | Pending               | TBD      |
+| **Axelar Env**       | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-12-04 |
+| **Stagenet**         | Pending               | TBD        |
+| **Testnet**          | Pending               | TBD        |
+| **Mainnet**          | Pending               | TBD        |
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-  - SolanaMultisigProver: `09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6`
+  - SolanaMultisigProver: `8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068`
 
 ## Background
 
@@ -31,9 +31,9 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git
-    cd axelar-amplifier
-    git checkout solana-cosmwasm
+    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
+    cd axelar-amplifier-eiger
+    git checkout main
     ```
 
 1. Build the contracts and copy artifacts:
@@ -42,7 +42,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
     docker run --rm -v "$(pwd)":/code \
         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-        cosmwasm/optimizer:0.16.1
+        cosmwasm/optimizer:0.17.0
     ```
 
 1. Update the above Contract Checksums per `artifacts/checksums.txt`
@@ -53,11 +53,12 @@ That would create the `artifacts` folder with all the compiled contracts, plus t
 
 Create an .env config:
 
-```yaml
+```sh
 MNEMONIC=xyz
 ENV=xyz
 CHAIN=<solana-custom|solana>
-ARTIFACT_PATH=../solana/axelar-amplifier/artifacts/
+EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
+NODE=[Axelar RPC URL]
 ```
 
 | Axelar Env           | `DEPOSIT_VALUE` |
@@ -91,7 +92,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
+        -v "2.0.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -104,7 +105,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c Gateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
+        -v "1.1.1" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -115,9 +116,9 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
         -c SolanaMultisigProver \
-        -t "Upload MultisigProver contract for Solana" \
-        -d "Upload MultisigProver contract for Solana integration" \
-        -a "$ARTIFACT_PATH" \
+        -t "Upload SolanaMultisigProver contract for Solana" \
+        -d "Upload SolanaMultisigProver contract for Solana integration" \
+        -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -151,7 +152,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
   "blockExpiry": 10,
   "confirmationHeight": 1000000,
   "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-  "addressFormat": "base58"
+  "addressFormat": "solana"
 }
 ```
 
@@ -167,8 +168,6 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
   "keyType": "ecdsa"
 }
 ```
-
-- Return to 'Initialization Steps' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
 
 ### Instantiate Amplifier Contracts
 
@@ -195,19 +194,21 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```bash
     ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
         -n $CHAIN \
-        -s "$SALT" \
+        -s $SALT \
         --fetchCodeId \
         -t "Instantiate contracts for $CHAIN" \
         -d "Instantiate Gateway, VotingVerifier and SolanaMultisigProver contracts for $CHAIN via Coordinator" \
-        --admin "$CONTRACT_ADMIN" \
-        --runAs "[governanceAddress]" \
+        --admin $CONTRACT_ADMIN \
+        --runAs $RUN_AS_ACCOUNT \
         -m $MNEMONIC
     ```
+
+1. Update the domainSeparator under `config.chains.$CHAIN.AxelarGateway`
 
 1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
+    ts-node cosmwasm/query.ts save-deployed-contracts $CHAIN
     ```
 
 1. Register deployment
@@ -217,7 +218,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -n $CHAIN \
         -t "Register deployment for $CHAIN" \
         -d "Register deployment for $CHAIN in the Coordinator" \
-        --runAs "[governanceAddress]" \
+        --runAs $RUN_AS_ACCOUNT \
         -m $MNEMONIC
     ```
 
@@ -253,27 +254,10 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
 
-1. Register Gateway at the Router
+1. Verify Gateway Registration:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Router \
-    -t "Register Gateway for solana" \
-    -d "Register Gateway address for solana at Router contract" \
-    -m $MNEMONIC \
-    --msg "{
-            \"register_chain\": {
-                \"chain\": \"$CHAIN\",
-                \"gateway_address\": \"$GATEWAY\",
-                \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
-            }
-        }"
-    ```
-
-    - Verify Gateway Registration:
-
-    ```bash
-    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node [axelar rpc url] | jq .
+    axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node $NODE | jq .
     ```
 
     ```bash
@@ -290,29 +274,13 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     }
     ```
 
-1. Register prover contract on coordinator
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Coordinator \
-        -t "Register Multisig Prover for solana" \
-        -d "Register Multisig Prover address for solana at Coordinator contract" \
-        -m $MNEMONIC \
-        --msg "{
-            \"register_prover_contract\": {
-                \"chain_name\": \"$CHAIN\",
-                \"new_prover_addr\": \"$MULTISIG_PROVER\"
-            }
-        }"
-    ```
-
-1. Authorize Multisig prover on Multisig
+1. Authorize SolanaMultisigProver on Multisig
 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Multisig \
-        -t "Authorize Multisig Prover for solana" \
-        -d "Authorize Multisig Prover address for solana at Multisig contract" \
+        -t "Authorize SolanaMultisigProver" \
+        -d "Authorize SolanaMultisigProver address at Multisig contract" \
         -m $MNEMONIC \
         --msg "{
             \"authorize_callers\": {
@@ -324,7 +292,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```
 
     ```bash
-    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node [axelar rpc url] | jq .
+    axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node $NODE | jq .
 
     # Result should look like:
     {
@@ -346,8 +314,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Rewards \
-        -t "Create pool for solana in solana voting verifier" \
-        -d "Create pool for solana in solana voting verifier" \
+        -t "Create pool for Solana in VotingVerifier" \
+        -d "Create pool for Solana in VotingVerifier" \
         --deposit $DEPOSIT_VALUE \
         -m $MNEMONIC \
         --msg "{
@@ -370,8 +338,8 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     ```bash
     ts-node cosmwasm/submit-proposal.js execute \
         -c Rewards \
-        -t "Create pool for solana in axelar multisig" \
-        -d "Create pool for solana in axelar multisig" \
+        -t "Create pool for Solana in Axelar Multisig" \
+        -d "Create pool for Solana in Axelar Multisig" \
         -m $MNEMONIC \
         --msg "{
             \"create_pool\": {
@@ -414,17 +382,24 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
 1. Update ampd with the Solana chain configuration.
 
+    | Axelar Env           | `service_name` |
+    | -------------------- | -------------- |
+    | **Devnet-amplifier** | `validators`   |
+    | **Stagenet**         | `amplifier`    |
+    | **Testnet**          | `amplifier`    |
+    | **Mainnet**          | `amplifier`    |
+
     ```bash
     ampd register-public-key ed25519
 
-    ampd register-chain-support validator $CHAIN
+    ampd register-chain-support [service_name] $CHAIN
     ```
 
 1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
     ```bash
-    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node [axelar rpc url]
-    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node [axelar rpc url]
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node $NODE
+    axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET --node $NODE
 
     # Check reward pool to confirm funding worked
     ts-node cosmwasm/query.ts rewards $CHAIN
@@ -433,7 +408,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY_ADDRESS '{"active_verifiers": {"service_name": "validators", "chain_name": "$CHAIN"}}' --node [axelar rpc url]
+    axelard query wasm contract-state smart $SERVICE_REGISTRY "{ \"active_verifiers\": { \"service_name\": \"[service_name]\", \"chain_name\": \"$CHAIN\"} }" --node $NODE
     ```
 
 1. Create genesis verifier set
@@ -441,11 +416,13 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     Note that this step can only be run once a sufficient number of verifiers have registered.
 
     ```bash
-    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2 --node [axelar rpc url]
+    axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2 --node $NODE
 
     # Query the multisig prover for active verifier set
-    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node [axelar rpc url]
+    axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' --node $NODE
     ```
+
+- Return to 'Initialization Steps:Initialize Gateway' in the [Solana GMP](../solana/2025-09-GMP-v1.0.0.md)
 
 ## Checklist
 

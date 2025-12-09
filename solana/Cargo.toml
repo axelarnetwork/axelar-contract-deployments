@@ -4,37 +4,39 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axelar-solana-encoding = { path = "./axelar-amplifier-solana/crates/axelar-solana-encoding" }
-axelar-solana-gas-service = { path = "./axelar-amplifier-solana/programs/axelar-solana-gas-service", features = [
+solana-axelar-gas-service = { path = "./axelar-amplifier-solana/programs/solana-axelar-gas-service", features = [
     "no-entrypoint",
 ], default-features = false }
-axelar-solana-gateway = { path = "./axelar-amplifier-solana/programs/axelar-solana-gateway", features = [
+solana-axelar-gateway = { path = "./axelar-amplifier-solana/programs/solana-axelar-gateway", features = [
     "no-entrypoint",
 ], default-features = false }
-axelar-solana-governance = { path = "./axelar-amplifier-solana/programs/axelar-solana-governance", features = [
+solana-axelar-governance = { path = "./axelar-amplifier-solana/programs/solana-axelar-governance", features = [
     "no-entrypoint",
 ], default-features = false }
-axelar-solana-its = { path = "./axelar-amplifier-solana/programs/axelar-solana-its", features = [
+solana-axelar-its = { path = "./axelar-amplifier-solana/programs/solana-axelar-its", features = [
     "no-entrypoint"
 ], default-features = false }
-axelar-solana-memo-program = { path = "./axelar-amplifier-solana/programs/axelar-solana-memo-program", features = [
+solana-axelar-memo = { path = "./axelar-amplifier-solana/programs/solana-axelar-memo", features = [
     "no-entrypoint",
 ], default-features = false }
+solana-axelar-operators = { path = "./axelar-amplifier-solana/programs/solana-axelar-operators", features = [
+    "no-entrypoint",
+], default-features = false }
+solana-axelar-std = { path = "./axelar-amplifier-solana/crates/solana-axelar-std" }
 
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
+anchor-lang = { version = "0.31.1", features = ["event-cpi"] }
 
 base64 = "0.22.1"
 bincode = { version = "2.0.1", features = ["serde"] }
-borsh = "1.5.1"
+borsh = "0.10.4"
 clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 eyre = "0.6.11"
-gateway-event-stack = { path = "./axelar-amplifier-solana/crates/gateway-event-stack", default-features = false }
 hex = { version = "0.4.3", features = ["serde"] }
-its-instruction-builder = { path = "./axelar-amplifier-solana/helpers/its-instruction-builder", default-features = false }
-k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
+k256     = { version = "0.13.1", features = ["pkcs8", "pem", "ecdsa"] }
 lazy_static = "1.4"
 regex = "1.10"
 serde = { version = "1.0.219", features = ["derive"] }
@@ -144,39 +146,31 @@ unused_must_use = { level = "deny", priority = -1 }
 
 [features]
 devnet-amplifier = [
-    "axelar-solana-gas-service/devnet-amplifier",
-    "axelar-solana-gateway/devnet-amplifier",
-    "axelar-solana-governance/devnet-amplifier",
-    "axelar-solana-its/devnet-amplifier",
-    "axelar-solana-memo-program/devnet-amplifier",
-    "gateway-event-stack/devnet-amplifier",
-    "its-instruction-builder/devnet-amplifier",
+    "solana-axelar-gas-service/devnet-amplifier",
+    "solana-axelar-gateway/devnet-amplifier",
+    "solana-axelar-governance/devnet-amplifier",
+    "solana-axelar-its/devnet-amplifier",
+    "solana-axelar-memo/devnet-amplifier",
 ]
 stagenet = [
-    "axelar-solana-gas-service/stagenet",
-    "axelar-solana-gateway/stagenet",
-    "axelar-solana-governance/stagenet",
-    "axelar-solana-its/stagenet",
-    "axelar-solana-memo-program/stagenet",
-    "gateway-event-stack/stagenet",
-    "its-instruction-builder/stagenet",
+    "solana-axelar-gas-service/stagenet",
+    "solana-axelar-gateway/stagenet",
+    "solana-axelar-governance/stagenet",
+    "solana-axelar-its/stagenet",
+    "solana-axelar-memo/stagenet",
 ]
 testnet = [
-    "axelar-solana-gas-service/testnet",
-    "axelar-solana-gateway/testnet",
-    "axelar-solana-governance/testnet",
-    "axelar-solana-its/testnet",
-    "axelar-solana-memo-program/testnet",
-    "gateway-event-stack/testnet",
-    "its-instruction-builder/testnet",
+    "solana-axelar-gas-service/testnet",
+    "solana-axelar-gateway/testnet",
+    "solana-axelar-governance/testnet",
+    "solana-axelar-its/testnet",
+    "solana-axelar-memo/testnet",
 ]
 mainnet = [
-    "axelar-solana-gas-service/mainnet",
-    "axelar-solana-gateway/mainnet",
-    "axelar-solana-governance/mainnet",
-    "axelar-solana-its/mainnet",
-    "axelar-solana-memo-program/mainnet",
-    "gateway-event-stack/mainnet",
-    "its-instruction-builder/mainnet",
+    "solana-axelar-gas-service/mainnet",
+    "solana-axelar-gateway/mainnet",
+    "solana-axelar-governance/mainnet",
+    "solana-axelar-its/mainnet",
+    "solana-axelar-memo/mainnet",
 ]
 default = ["devnet-amplifier"]

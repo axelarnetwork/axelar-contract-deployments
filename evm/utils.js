@@ -40,7 +40,6 @@ const {
     copyObject,
     printError,
     printWarn,
-    writeJSON,
     httpGet,
     httpPost,
     sleep,
@@ -49,7 +48,6 @@ const {
     getSaltFromKey,
     getCurrentVerifierSet,
     asyncLocalLoggerStorage,
-    printMsg,
 } = require('../common');
 const {
     create3DeployContract,
@@ -233,6 +231,19 @@ function isValidAddress(address, allowZeroAddress) {
     return isAddress(address);
 }
 
+function getGovernanceAddress(chain, contractName, address) {
+    if (isValidAddress(address)) {
+        return address;
+    }
+
+    const contractConfig = chain.contracts[contractName];
+    if (!contractConfig?.address) {
+        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+    }
+
+    return contractConfig.address;
+}
+
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
@@ -258,11 +269,11 @@ function isValidTokenId(input) {
         return false;
     }
 
-    const minValue = BigInt('0x00');
-    const maxValue = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
-    const numericValue = BigInt(input);
+    if (input.length !== 66) {
+        return false;
+    }
 
-    return numericValue >= minValue && numericValue <= maxValue;
+    return true;
 }
 
 const validationFunctions = {
@@ -637,6 +648,20 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+async function handleTransactionWithEvent(tx, chain, contract, action, eventName) {
+    printInfo(`${action} transaction`, tx.hash);
+    const receipt = await tx.wait(chain.confirmations);
+
+    if (eventName) {
+        const eventEmitted = wasEventEmitted(receipt, contract, eventName);
+        if (!eventEmitted) {
+            printWarn(`Event ${eventName} not emitted in receipt.`);
+        }
+    }
+
+    return receipt;
+}
+
 const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 /**
@@ -757,18 +782,21 @@ const mainProcessor = async (options, processCommand, save = true) => {
         printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
 
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
     printInfo(
         'Succeeded chains',
         chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
-    printInfo(
-        'Failed chains',
-        chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
-    );
-
-    if (save) {
-        saveConfig(config, options.env);
+    if (Object.keys(failedChains).length > 0) {
+        printError(
+            'Failed chains',
+            chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
+        );
+        process.exit(1);
     }
 
     return results;
@@ -806,7 +834,8 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             printInfo('Chain', chain.name, chalk.cyan);
             result = await processCommand(axelar, chain, chains, options);
         } catch (error) {
-            printError(`Error processing chain ${chain.name}: ${error.message}`);
+            printError(`Error processing chain ${chain.name}`, error.message);
+            loggerError = error.message;
         }
 
         if (options.parallel) {
@@ -1132,8 +1161,10 @@ module.exports = {
     getConfigByChainId,
     printWalletInfo,
     wasEventEmitted,
+    handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceAddress,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,

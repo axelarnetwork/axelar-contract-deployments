@@ -4,9 +4,8 @@ use std::str::FromStr;
 
 use clap::ArgMatches;
 use eyre::eyre;
-use k256::elliptic_curve::FieldBytes;
+use k256::SecretKey;
 use k256::pkcs8::DecodePrivateKey;
-use k256::{Secp256k1, SecretKey};
 use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -46,6 +45,7 @@ static POSITIVE_DECIMAL_REGEX: std::sync::LazyLock<Regex> =
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
 pub(crate) const CHAINS_KEY: &str = "chains";
+#[allow(dead_code)]
 pub(crate) const CHAIN_TYPE_KEY: &str = "chainType";
 pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
 pub(crate) const CONNECTION_TYPE_KEY: &str = "connectionType";
@@ -63,6 +63,8 @@ pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
 pub(crate) const MULTISIG_PROVER_KEY: &str = "SolanaMultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
+pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
+pub(crate) const OWNER_KEY: &str = "owner";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -134,6 +136,7 @@ pub(crate) fn save_signed_solana_transaction(
     write_json_to_file_path(tx, path)
 }
 
+#[allow(dead_code)]
 pub(crate) fn decode_its_destination(
     chains_info: &serde_json::Value,
     destination_chain: &str,
@@ -192,8 +195,7 @@ pub(crate) fn print_transaction_result(
             let cluster_param = match config.network_type {
                 NetworkType::Local => "?cluster=custom",
                 NetworkType::Devnet => "?cluster=devnet",
-                NetworkType::Testnet => "?cluster=testnet",
-                NetworkType::Mainnet => "",
+                NetworkType::Mainnet => "?cluster=mainnet-beta",
             };
             println!("   Explorer Link: {explorer_base_url}{tx_signature}{cluster_param}");
             println!("------------------------------------------");
@@ -309,7 +311,8 @@ fn secret_from_str(s: &str) -> Option<SecretKey> {
     // raw hex
     if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) {
         let bytes = hex::decode(s).ok()?;
-        return SecretKey::from_bytes(FieldBytes::<Secp256k1>::from_slice(&bytes)).ok();
+        let byte_array: [u8; 32] = bytes.try_into().ok()?;
+        return SecretKey::from_bytes(&byte_array.into()).ok();
     }
 
     None
@@ -409,7 +412,7 @@ mod tests {
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
         assert_eq!(
             parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(),
-            11234567890123456789
+            11_234_567_890_123_456_789
         );
     }
 
