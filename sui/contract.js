@@ -66,7 +66,9 @@ function getVariablesForPackage(chain, packageName) {
 }
 
 async function allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames, options) {
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
+    if (versions.length !== functionNames.length) {
+        throw new Error('Versions and Function Names must have a matching length');
+    }
 
     const builder = new TxBuilder(client);
 
@@ -81,7 +83,9 @@ async function allowFunctions(keypair, client, packageId, moduleName, singletonI
 }
 
 async function disallowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames, options) {
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
+    if (versions.length !== functionNames.length) {
+        throw new Error('Versions and Function Names must have a matching length');
+    }
 
     const builder = new TxBuilder(client);
 
