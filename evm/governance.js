@@ -141,27 +141,28 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
                 throw new Error(`Invalid governance action for InterchainGovernance: transferOperatorship`);
             }
 
-            const newOperator = options.newOperator;
+            if (options.newOperator) {
+                const newOperator = options.newOperator;
 
-            validateParameters({
-                isValidAddress: { newOperator },
-            });
+                validateParameters({
+                    isValidAddress: { newOperator },
+                });
 
+                calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
+
+                title = `Chain ${chain.name} transfer operatorship`;
+                description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
+            } else {
+                calldata = options.calldata;
+            }
             target = governance.address;
-            calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
 
-            title = `Chain ${chain.name} transfer operatorship`;
-            description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
-
-            break;
+            break;  
         }
 
         case 'transferGovernance': {
             const newGovernance = options.newGovernance || chain.contracts.InterchainGovernance?.address;
 
-            validateParameters({
-                isValidAddress: { newGovernance },
-            });
             validateParameters({
                 isValidAddress: { newGovernance },
             });
@@ -197,7 +198,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
 
         default: {
             throw new Error(`Unknown governance action: ${action}`);
-            throw new Error(`Unknown governance action: ${action}`);
         }
     }
 
@@ -205,10 +205,9 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
         isValidAddress: { target },
         isValidCalldata: { calldata },
     });
-    validateParameters({
-        isValidAddress: { target },
-        isValidCalldata: { calldata },
-    });
+
+    printInfo('Governance target', target);
+    printInfo('Governance calldata', calldata);
 
     return { target, calldata, title, description };
 }
@@ -667,7 +666,6 @@ if (require.main === module) {
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
-        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .action((governanceAction, options, cmd) => {
@@ -740,7 +738,6 @@ if (require.main === module) {
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
-        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .action((governanceAction, commandId, activationTime, options, cmd) => {

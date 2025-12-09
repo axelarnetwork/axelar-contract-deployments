@@ -287,15 +287,15 @@ Transfers of operatorship can be scheduled/cancelled/submitted like any other ac
 ```bash
 # schedule
 ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  -c AxelarServiceGovernance -n <chain> --newOperator 0xNewOperator
+  -c AxelarServiceGovernance --newOperator 0xNewOperator
 
 # cancel
 ts-node evm/governance.js cancel transferOperatorship \
-  -c AxelarServiceGovernance -n <chain> --newOperator 0xNewOperator
+  -c AxelarServiceGovernance -n <chain> --calldata <calldata> 
 
 # submit after vote
 ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  -c AxelarServiceGovernance -n <chain> --newOperator 0xNewOperator
+  -c AxelarServiceGovernance -n <chain> --calldata <calldata>
 ```
 
 ## Utilities
