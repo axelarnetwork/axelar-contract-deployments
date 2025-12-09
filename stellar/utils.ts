@@ -319,33 +319,25 @@ async function fundAccountWithFriendbot(horizonServer, address) {
         await horizonServer.friendbot(address).call();
         printInfo('Account funded via friendbot', address);
     } catch (error) {
-        // Friendbot typically returns 400 status when account is already funded
-        if (error?.response?.status === 400) {
-            printWarn('Account already funded', address);
-        } else {
-            printError(`Friendbot request failed for ${address}: status=${error?.response?.status}, message=${error?.message || error}`);
-            throw error;
-        }
+        if (error?.response?.detail !== 'account already funded to starting balance') throw error;
+
+        printWarn('Account already funded', address);
     }
 }
 
 async function prepareAccount(provider, horizonServer, address, chain) {
-    // Use Horizon API to check account existence
     try {
         await horizonServer.accounts().accountId(address).call();
     } catch (error) {
-        // If the account doesn't exist (404 status) and friendbot is supported, fund it via friendbot.
-        if (error?.response?.status === 404) {
-            printWarn(`Account ${address} not found`);
-            if (isFriendbotSupported(chain.networkType)) {
-                await fundAccountWithFriendbot(horizonServer, address);
-            } else {
-                throw new Error(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
-            }
-        } else {
-            printError(`Failed to check account ${address}: status=${error?.response?.status}, message=${error?.message || error}`);
-            throw error;
-        }
+        // 404 status means the account exists. otherwise throw error immediately
+        if (error?.response?.status !== 404) throw error;
+
+        printWarn(`Account ${address} not found`);
+
+        if (!isFriendbotSupported(chain.networkType))
+            throw new Error(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
+
+        await fundAccountWithFriendbot(horizonServer, address);
     }
 }
 
@@ -361,7 +353,6 @@ async function getWallet(chain, options) {
 
     printInfo('Wallet address', address);
     printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
-    // getAccount needs to be called again to get the latest sequence number
     printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
 
     return keypair;

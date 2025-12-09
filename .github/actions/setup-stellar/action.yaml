@@ -29,7 +29,7 @@ runs:
     - name: Wait for Stellar network
       shell: bash
       run: |
-        MAX_WAIT=600
+        MAX_WAIT=240
         ELAPSED=0
 
         echo "Waiting for Stellar network to become ready..."
@@ -40,8 +40,8 @@ runs:
               exit 0
           fi
 
-          sleep 5
-          ELAPSED=$((ELAPSED + 5))
+          sleep 2
+          ELAPSED=$((ELAPSED + 2))
 
           if [ "$ELAPSED" -ge "$MAX_WAIT" ]; then
             echo "Timed out after $MAX_WAIT seconds waiting for Stellar network."
