@@ -1,42 +1,50 @@
 const { Command, Option } = require('commander');
 const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances, getRpcOptions } = require('./utils');
-const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
+const { loadConfig, printInfo, printWarn, printError, getChainConfig } = require('../common');
 const { Horizon, Keypair } = require('@stellar/stellar-sdk');
 
 require('./cli-utils');
 
 async function processCommand(chain, options) {
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+    const isLocalNetwork = chain.networkType === 'local';
+    const recipient =
+        options.recipient ||
+        (isLocalNetwork ? Keypair.fromSecret(options.privateKey).publicKey() : await getWallet(chain, options).publicKey());
 
-    // For local network, ensure account always exists by funding via friendbot
-    if (chain.networkType === 'local') {
-        const recipient = options.recipient || Keypair.fromSecret(options.privateKey).publicKey();
-        try {
-            await horizonServer.friendbot(recipient).call();
-            printInfo('Funds requested', recipient);
-        } catch (error) {
-            // Ignore errors - account already exists
+    // For non-local networks, check balance before requesting funds
+    if (!isLocalNetwork) {
+        const balance = await getBalances(horizonServer, recipient).then((balances) =>
+            balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
+        );
+
+        if (options.recipient) {
+            printInfo(`Requesting funds for`, recipient);
         }
-        return;
+
+        if (Number(balance?.balance || '0') >= Number(options.minBalance)) {
+            printWarn('Wallet balance above minimum, skipping faucet request');
+            process.exit(0);
+        }
     }
 
-    const keyPair = await getWallet(chain, options);
-    const recipient = options.recipient || keyPair.publicKey();
-    const balance = await getBalances(horizonServer, recipient).then((balances) =>
-        balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE),
-    );
-
-    if (options.recipient) {
-        printInfo(`Requesting funds for`, recipient);
+    try {
+        await horizonServer.friendbot(recipient).call();
+        printInfo('Funds requested', recipient);
+    } catch (error) {
+        // Friendbot typically returns 400 status when account is already funded
+        if (error?.response?.status === 400) {
+            printWarn('Account already funded', recipient);
+            if (!isLocalNetwork) throw error; // Only swallow on local network
+        } else {
+            printError('Friendbot request failed', {
+                recipient,
+                status: error?.response?.status,
+                message: error?.message || error,
+            });
+            throw error;
+        }
     }
-
-    if (Number(balance?.balance || '0') >= Number(options.minBalance)) {
-        printWarn('Wallet balance above minimum, skipping faucet request');
-        process.exit(0);
-    }
-
-    await horizonServer.friendbot(recipient).call();
-    printInfo('Funds requested', recipient);
 }
 
 async function mainProcessor(options, processor) {
