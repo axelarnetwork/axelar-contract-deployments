@@ -859,44 +859,8 @@ cat axelar-chains-config/info/<env>.json | jq '.axelar.contracts'
 
 ---
 
-## Comments / Open Items
-
-**General comment**: Each step needs to have its SLA marked; also if some steps are
-determined can go parallel rather than sequential, it should be labeled.
-✅ **Addressed**: Added SLA and parallelization tables for each playbook.
-
-**General comment**: Missing escalation path for each action, for example, the
-decision of pausing ITS should obtain whose approval? How about changing flow
-limit, freeze token…etc., can the decision be made by any engineer holding the
-Rate Limiter EOA role alone, or must also obtain X's approval?
-✅ **Addressed**: Added Role Reference & Escalation Path section with approval requirements.
-
-**General comment**: Need to add verification instructions after each action step,
-for example, after pausing the ITS, how to verify the status has become paused?
-✅ **Addressed**: Added verification commands after each action step.
-
-**General comment**: Each action A ideally needs a backup action B in case for some
-reason A cannot be executed successfully. For example, if wanting to limit the
-flow or freeze some token but unsuccessful, then pausing the ITS can be its back
-up action; and if need to pause the ITS but unsuccessful, then contacting
-validators to pause the chain is its backup action?
-✅ **Addressed**: Added backup actions for each critical step and a summary table.
-
-**Need to define a rule of thumb trigger value** - what's the abnormal volume?
-Something like a spike 3x of the average volume of the past 5 hours?
-✅ **Addressed**: Added trigger threshold definition (3x average of past 5 hours).
-
-**For Axelar Amplifier**: Unlike EVM ITS which moved pause/unpause to operators, 
-most Axelar Amplifier contracts still require governance for critical operations.
-Consider moving emergency operations (freeze/unfreeze, disable/enable) to admin
-roles for faster response time.
-⚠️ **TODO**: Create PR to enable admin-based rapid response for emergency operations.
-
 **Open Questions / Action Items**:
 1. ⚠️ **HIGH PRIORITY**: Implement dedicated CLI commands for admin emergency operations in `contract.ts`
    - Current gap: Admin operations (freeze, disable_signing, etc.) cannot use `submit-proposal.js`
    - Need: Add `--admin` flag or separate commands that execute directly with admin EOA
 2. What is the exact threshold for "abnormal volume" per chain/token type?
-3. Should we create a dedicated `emergency.ts` script for rapid response operations?
-4. Should admin keys be stored in HSM/secure enclave for emergency access?
-5. Document the exact admin EOA addresses for each environment in a secure location.
