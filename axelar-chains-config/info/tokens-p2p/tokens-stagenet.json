@@ -2,8 +2,8 @@
   "chains": {
     "avalanche": {
       "start": 0,
-      "end": 48765234,
-      "max": 48765234,
+      "end": 48770711,
+      "max": 48770711,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax-test.network/ext/bc/C/rpc"
@@ -11,8 +11,8 @@
     },
     "fantom": {
       "start": 0,
-      "end": 72001430,
-      "max": 72001430,
+      "end": 72001572,
+      "max": 72001572,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.fantom.network"
@@ -20,9 +20,9 @@
     },
     "moonbeam": {
       "start": 0,
-      "end": 13573956,
-      "max": 14462540,
-      "alreadyProcessedPercentage": "93.86",
+      "end": 14463309,
+      "max": 14463309,
+      "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.api.moonbase.moonbeam.network"
       ]
@@ -38,8 +38,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 21095329,
-      "max": 21095329,
+      "end": 21096849,
+      "max": 21096849,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.testnet.kava.io"
@@ -47,8 +47,8 @@
     },
     "ethereum-sepolia": {
       "start": 0,
-      "end": 9803907,
-      "max": 9803907,
+      "end": 9804506,
+      "max": 9804506,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
@@ -56,8 +56,8 @@
     },
     "arbitrum-sepolia": {
       "start": 0,
-      "end": 223161113,
-      "max": 223161113,
+      "end": 223186569,
+      "max": 223186569,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rollup.arbitrum.io/rpc"
@@ -65,8 +65,8 @@
     },
     "linea-sepolia": {
       "start": 0,
-      "end": 21805791,
-      "max": 21805791,
+      "end": 21809603,
+      "max": 21809603,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.linea.build"
@@ -74,8 +74,8 @@
     },
     "polygon-sepolia": {
       "start": 0,
-      "end": 30230538,
-      "max": 30230538,
+      "end": 30235620,
+      "max": 30235620,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc-amoy.polygon.technology/"
@@ -83,8 +83,8 @@
     },
     "base-sepolia": {
       "start": 0,
-      "end": 34763834,
-      "max": 34763834,
+      "end": 34767645,
+      "max": 34767645,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.base.org"
@@ -92,8 +92,8 @@
     },
     "blast-sepolia": {
       "start": 0,
-      "end": 30304634,
-      "max": 30304634,
+      "end": 30308445,
+      "max": 30308445,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.blast.io/"
@@ -101,8 +101,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 2417708,
-      "max": 2417708,
+      "end": 2421519,
+      "max": 2421519,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.frax.com"
@@ -110,8 +110,8 @@
     },
     "mantle-sepolia": {
       "start": 0,
-      "end": 31875641,
-      "max": 31875641,
+      "end": 31879452,
+      "max": 31879452,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.mantle.xyz"
@@ -119,8 +119,8 @@
     },
     "optimism-sepolia": {
       "start": 0,
-      "end": 36746708,
-      "max": 36746708,
+      "end": 36750519,
+      "max": 36750519,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"
