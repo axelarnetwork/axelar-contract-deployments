@@ -3420,7 +3420,7 @@
         "flow": {
           "executeProposalId": "149"
         },
-        "version": "1.2.0"
+        "version": "1.2.1"
       },
       "Router": {
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",

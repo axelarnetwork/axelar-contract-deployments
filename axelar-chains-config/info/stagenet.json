@@ -2681,7 +2681,7 @@
         "lastUploadedCodeId": 66,
         "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
         "executeProposalId": "14",
-        "version": "1.2.0"
+        "version": "1.2.1"
       },
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",

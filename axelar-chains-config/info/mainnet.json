@@ -3578,7 +3578,7 @@
         "codeId": 51,
         "lastUploadedCodeId": 51,
         "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
-        "version": "1.2.0"
+        "version": "1.2.1"
       },
       "Router": {
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
