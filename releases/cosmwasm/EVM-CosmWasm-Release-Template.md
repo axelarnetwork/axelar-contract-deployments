@@ -288,7 +288,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     - Check reward pool to confirm funding worked:
 
     ```bash
-    ts-node cosmwasm/query.js rewards $CHAIN
+    ts-node cosmwasm/query.ts rewards $CHAIN
     ```
 
 1. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
