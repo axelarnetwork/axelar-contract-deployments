@@ -122,6 +122,8 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `v1.0.0` |
 | **Mainnet**          | `v1.0.0` |
 
+**Note:** On `devnet-amplifier`, omit the `--governance` flag to execute directly (it uses a governance key for direct execution).
+
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
@@ -129,20 +131,22 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         -n $CHAIN \
         -s "$SALT" \
         --fetchCodeId \
-        --admin "$CONTRACT_ADMIN"
+        --admin "$CONTRACT_ADMIN" \
+        --governance
     ```
 
 1. Wait for proposal to pass (or transaction to confirm if direct execution) and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
+    ts-node cosmwasm/query.ts save-deployed-contracts $CHAIN
     ```
 
 1. Register deployment
 
     ```bash
     ts-node cosmwasm/contract.ts register-deployment \
-        -n $CHAIN
+        $CHAIN \
+        --governance
     ```
 
 1. Set environment variables
@@ -188,10 +192,11 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
     ```bash
     ts-node cosmwasm/contract.ts create-reward-pools \
-        -n $CHAIN \
+        $CHAIN \
         --epochDuration "[epoch_duration]" \
         --participationThreshold "[participation threshold]" \
-        --rewardsPerEpoch "[rewards per epoch]"
+        --rewardsPerEpoch "[rewards per epoch]" \
+        --governance
     ```
 
 1. Register ITS edge contract on ITS Hub
@@ -232,7 +237,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
     ```bash
-    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN --governance
     ```
 
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
