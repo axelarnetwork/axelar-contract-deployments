@@ -211,6 +211,7 @@ ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
+Use `evm/governance.js` for proposal submission/timelock flows (schedule/submit/eta/execute) and upgrades. For non-upgrade operational commands, use the contract-specific scripts (`gateway.js`, `operators.js`, `its.js`, etc.).
 
 1. Generate the governance proposal for Axelar
 
@@ -246,6 +247,78 @@ ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action
 
 8. Verify the governance command went through correctly.
 
+### InterchainTokenService owner commands (evm/its.js)
+
+#### Set trusted chains
+`ts-node evm/its.js set-trusted-chains <chain1> <chain2> ...`
+
+#### Remove trusted chains
+`ts-node evm/its.js remove-trusted-chains <chain1> <chain2> ... --yes`
+
+#### Set pause status (pause/unpause)
+`ts-node evm/its.js set-pause-status <true|false> --yes`
+
+#### Migrate interchain token
+`ts-node evm/its.js migrate-interchain-token <tokenId> --yes`
+
+*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+
+### Gateway operator commands (evm/gateway.js)
+
+#### Rotate signers (emergency)
+`ts-node evm/gateway.js --action rotateSigners --payload <payload> --proof <proof> --yes`
+
+#### Transfer operatorship
+`ts-node evm/gateway.js --action transferOperatorship --destination <gatewayAddress> --payload <calldata> --yes`
+
+Other gateway actions remain in `evm/gateway.js`; use `--action` accordingly.
+
+### Operators script (evm/operators.js)
+
+#### Add operator
+`ts-node evm/operators.js --action addOperator --operator <addr> --yes`
+
+#### Remove operator
+`ts-node evm/operators.js --action removeOperator --operator <addr> --yes`
+
+#### Transfer ownership
+`ts-node evm/operators.js --action transferOwnership --newOwner <addr> --yes`
+
+#### Propose ownership
+`ts-node evm/operators.js --action proposeOwnership --newOwner <addr> --yes`
+
+#### Execute contract (operators role)
+`ts-node evm/operators.js --action executeContract --target <addr> --calldata <0x...> --nativeValue <wei> --yes`
+
+### AxelarGasService commands (evm/gas-service.js)
+
+#### Estimate gas fee
+`ts-node evm/gas-service.js --action estimateGasFee --destinationChain <chain> --destinationAddress <addr> --payload <0x...> --executionGasLimit <gas> [--isExpress]`
+
+#### Update gas info across chains
+`ts-node evm/gas-service.js --action updateGasInfo --chains <chain1> <chain2> ...`
+
+Note: For upgrades, continue to use governance flows; operational actions run via this script.
+
+### InterchainTokenService operator commands (evm/its.js)
+Note: For upgrades, continue to use governance flows; operational actions run via this script.
+
+#### Set flow limit (single)
+`ts-node evm/its.js set-flow-limit <tokenId> <flowLimitWei> --yes`
+
+#### Freeze tokens (flow limit = 1)
+`ts-node evm/its.js freeze-tokens <tokenId1> <tokenId2> --yes`
+
+#### Unfreeze tokens (flow limit = 0)
+`ts-node evm/its.js unfreeze-tokens <tokenId1> <tokenId2> --yes`
+
+#### Transfer operatorship
+`ts-node evm/its.js transfer-operatorship <operator> --yes`
+
+#### Propose operatorship
+`ts-node evm/its.js propose-operatorship <operator> --yes`
+
+*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
 ## Utilities
 
 ### Decode Function Calldata
