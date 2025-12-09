@@ -636,7 +636,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
                 const calldata = interchainTokenService.interface.encodeFunctionData('setPauseStatus', [pauseStatusBool]);
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -757,7 +757,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
                 const calldata = interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [tokenId]);
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -1126,8 +1126,7 @@ if (require.main === module) {
     const setPauseStatusCommand = program
         .command('set-pause-status')
         .description('Set pause status')
-        .argument('<pause-status>', 'Pause status (true/false)')
-        .choices(['true', 'false'])
+        .argument(new Argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false']))
         .action((pauseStatus, options, cmd) => {
             main(cmd.name(), [pauseStatus], options);
         });

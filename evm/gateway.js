@@ -371,10 +371,6 @@ async function processCommand(axelar, chain, _chains, options) {
             const currGovernance = await gateway.governance();
             printInfo('Current governance', currGovernance);
 
-            if (!(currGovernance === walletAddress)) {
-                throw new Error('Wallet address is not the governor');
-            }
-
             if (options.governance) {
                 const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
 
@@ -388,6 +384,10 @@ async function processCommand(axelar, chain, _chains, options) {
                 printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
+            if (!(currGovernance === walletAddress)) {
+                throw new Error('Wallet address is not the governor');
             }
 
             if (prompt(`Proceed with governance transfer to ${chalk.cyan(newGovernance)}`, yes)) {
@@ -482,10 +482,6 @@ async function processCommand(axelar, chain, _chains, options) {
             const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
             const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-            if (!isCurrentOperator && !isOwner) {
-                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
-            }
-
             if (options.governance) {
                 const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
 
@@ -499,6 +495,12 @@ async function processCommand(axelar, chain, _chains, options) {
                 printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(
+                    `Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`,
+                );
             }
 
             if (prompt(`Proceed with operatorship transfer to ${chalk.cyan(newOperator)}`, yes)) {
