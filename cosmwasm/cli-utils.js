@@ -8,7 +8,7 @@ const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddres
 
 const { Option, InvalidArgumentError } = require('commander');
 
-const addAmplifierOptions = (program, options) => {
+const addAmplifierOptions = (program, options = {}) => {
     addEnvOption(program);
     addAxelarNodeOption(program);
 
