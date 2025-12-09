@@ -162,6 +162,9 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidAddress: { newGovernance },
             });
+            validateParameters({
+                isValidAddress: { newGovernance },
+            });
 
             const gateway = new Contract(target, AxelarGateway.abi, wallet);
             const currGovernance = await gateway.governance();
@@ -181,6 +184,9 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidDecimal: { amount: options.amount },
             });
+            validateParameters({
+                isValidDecimal: { amount: options.amount },
+            });
 
             const amount = parseEther(options.amount);
             calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
@@ -191,9 +197,14 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
 
         default: {
             throw new Error(`Unknown governance action: ${action}`);
+            throw new Error(`Unknown governance action: ${action}`);
         }
     }
 
+    validateParameters({
+        isValidAddress: { target },
+        isValidCalldata: { calldata },
+    });
     validateParameters({
         isValidAddress: { target },
         isValidCalldata: { calldata },
@@ -332,7 +343,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             });
 
             const eta = dateToEta(activationTime);
-            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
@@ -407,7 +418,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             });
 
             const eta = dateToEta(activationTime);
-            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveMultisig, target, calldata, nativeValue, eta);
+            const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
 
             if (prompt('Proceed with submitting this proposal?', options.yes)) {
                 throw new Error('Proposal submission cancelled.');
