@@ -276,7 +276,7 @@ const instantiate = async (client, config, options, _args, fee) => {
     }
 };
 
-const execute = async (client, config, options, _args, fee) => {
+const executeByGovernance = async (client, config, options, _args, fee) => {
     const { chainName } = options;
     let contractName = options.contractName;
 
@@ -531,6 +531,6 @@ if (require.main === module) {
 
 module.exports = {
     confirmProposalSubmission,
-    execute,
+    executeByGovernance,
     migrate,
 };

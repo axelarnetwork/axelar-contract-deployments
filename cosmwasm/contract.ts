@@ -7,7 +7,7 @@ import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { execute } from './submit-proposal';
+import { executeByGovernance } from './submit-proposal';
 import {
     executeTransaction,
     getCodeId,
@@ -77,7 +77,7 @@ const executeContractMessage = async (
         const description = options.description || defaultDescription;
         validateParameters({ isNonEmptyString: { title, description } });
         const stringifiedMsg = msg.map((m) => JSON.stringify(m));
-        return execute(client, config, { ...options, contractName, msg: stringifiedMsg, title, description }, [], fee);
+        return executeByGovernance(client, config, { ...options, contractName, msg: stringifiedMsg, title, description }, [], fee);
     }
 
     validateDirectExecution(config, contractName, chainName);
