@@ -80,8 +80,35 @@ Each handler binary requires two configuration files:
 By default, the handler binaries look for these configuration files in the current working directory. You can specify a custom configuration directory using the `--config-dir` (or `-c`) argument when starting the handler:
 
 ```bash
-./evm-handler --config-dir /path/to/config
+./evm-handler --config-dir ~/.ampd/evm/
+./sui-handler --config-dir ~/.ampd/sui/
+./stellar-handler --config-dir ~/.ampd/stellar/
 ```
+
+#### Example Directory Structure
+
+When using separate directories for each chain handler, organize your configuration as follows:
+
+```
+~/.ampd/
+├── evm/
+│   ├── config.toml                # Base config for EVM handler
+│   └── evm-handler-config.toml    # EVM-specific config
+├── sui/
+│   ├── config.toml                # Base config for Sui handler
+│   └── sui-handler-config.toml    # Sui-specific config
+├── stellar/
+│   ├── config.toml                # Base config for Stellar handler
+│   └── stellar-handler-config.toml # Stellar-specific config
+├── xrpl/
+│   ├── config.toml                # Base config for XRPL handler (when available)
+│   └── xrpl-handler-config.toml   # XRPL-specific config (when available)
+└── solana/
+    ├── config.toml                # Base config for Solana handler (when available)
+    └── solana-handler-config.toml # Solana-specific config (when available)
+```
+
+Each handler directory contains both the base `config.toml` and its corresponding chain-specific configuration file.
 
 ### Base Config
 
