@@ -371,28 +371,23 @@ async function processCommand(axelar, chain, _chains, options) {
             const currGovernance = await gateway.governance();
             printInfo('Current governance', currGovernance);
 
-            if (!(currGovernance === walletAddress)) {
-                throw new Error('Wallet address is not the governor');
-            }
-
             if (options.governance) {
                 const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const gmpPayload = encodeGovernanceProposal(
-                    ProposalType.ScheduleTimelock,
-                    gatewayAddress,
-                    calldata,
-                    nativeValue,
-                    eta,
-                );
+                const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, gatewayAddress, calldata, nativeValue, eta);
 
-                printInfo('Prepared governance payload for transferGovernance', gmpPayload);
+                printInfo('Governance target', gatewayAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
+            if (!(currGovernance === walletAddress)) {
+                throw new Error('Wallet address is not the governor');
             }
 
             if (prompt(`Proceed with governance transfer to ${chalk.cyan(newGovernance)}`, yes)) {
@@ -487,28 +482,23 @@ async function processCommand(axelar, chain, _chains, options) {
             const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
             const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-            if (!isCurrentOperator && !isOwner) {
-                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
-            }
-
             if (options.governance) {
                 const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const gmpPayload = encodeGovernanceProposal(
-                    ProposalType.ScheduleTimelock,
-                    gatewayAddress,
-                    calldata,
-                    nativeValue,
-                    eta,
-                );
+                const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, gatewayAddress, calldata, nativeValue, eta);
 
-                printInfo('Prepared governance payload for transferOperatorship', gmpPayload);
+                printInfo('Governance target', gatewayAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
             }
 
             if (prompt(`Proceed with operatorship transfer to ${chalk.cyan(newOperator)}`, yes)) {

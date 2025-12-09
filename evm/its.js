@@ -495,7 +495,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to set trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to set trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
                     return;
                 }
 
@@ -513,7 +518,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -524,7 +529,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for set-trusted-chains', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', multicallCalldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -556,7 +562,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
                     return;
                 }
 
@@ -574,7 +585,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -585,7 +596,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for remove-trusted-chains', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', multicallCalldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -617,7 +629,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [pauseStatus] = args;
 
             if (options.governance) {
-
                 const pauseStatusBool = pauseStatus === 'true';
                 if (prompt(`Proceed with creating governance proposal to set pause status to ${pauseStatus}?`, yes)) {
                     return;
@@ -625,7 +636,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
                 const calldata = interchainTokenService.interface.encodeFunctionData('setPauseStatus', [pauseStatusBool]);
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -636,7 +647,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for set-pause-status', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -745,7 +757,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
                 const calldata = interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [tokenId]);
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -756,7 +768,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for migrate-interchain-token', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -1113,7 +1126,7 @@ if (require.main === module) {
     const setPauseStatusCommand = program
         .command('set-pause-status')
         .description('Set pause status')
-        .argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false'])
+        .argument(new Argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false']))
         .action((pauseStatus, options, cmd) => {
             main(cmd.name(), [pauseStatus], options);
         });
