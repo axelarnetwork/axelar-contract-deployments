@@ -268,6 +268,8 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
+            printInfo('Governance target (for eta/execute)', target);
+            printInfo('Governance calldata (for eta/execute)', calldata);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 

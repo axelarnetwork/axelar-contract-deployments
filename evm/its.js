@@ -513,7 +513,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -524,7 +524,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for set-trusted-chains', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', multicallCalldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -574,7 +575,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -585,7 +586,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for remove-trusted-chains', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', multicallCalldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -636,7 +638,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for set-pause-status', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -756,7 +759,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for migrate-interchain-token', gmpPayload);
+                printInfo('Governance target', interchainTokenServiceAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }

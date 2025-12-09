@@ -379,7 +379,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -390,7 +390,8 @@ async function processCommand(axelar, chain, _chains, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for transferGovernance', gmpPayload);
+                printInfo('Governance target', gatewayAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
@@ -495,7 +496,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
 
                 const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
-                const eta = dateToEta(options.governanceEta || '0');
+                const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
                 const gmpPayload = encodeGovernanceProposal(
@@ -506,7 +507,8 @@ async function processCommand(axelar, chain, _chains, options) {
                     eta,
                 );
 
-                printInfo('Prepared governance payload for transferOperatorship', gmpPayload);
+                printInfo('Governance target', gatewayAddress);
+                printInfo('Governance calldata', calldata);
 
                 return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
             }
