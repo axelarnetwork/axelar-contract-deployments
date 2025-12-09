@@ -10,7 +10,7 @@ async function processCommand(chain, options) {
     const isLocalNetwork = chain.networkType === 'local';
     const recipient =
         options.recipient ||
-        (isLocalNetwork ? Keypair.fromSecret(options.privateKey).publicKey() : await getWallet(chain, options).publicKey());
+        (isLocalNetwork ? Keypair.fromSecret(options.privateKey).publicKey() : (await getWallet(chain, options)).publicKey());
 
     // For non-local networks, check balance before requesting funds
     if (!isLocalNetwork) {
