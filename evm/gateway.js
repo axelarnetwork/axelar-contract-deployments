@@ -498,9 +498,7 @@ async function processCommand(axelar, chain, _chains, options) {
             }
 
             if (!isCurrentOperator && !isOwner) {
-                throw new Error(
-                    `Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`,
-                );
+                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
             }
 
             if (prompt(`Proceed with operatorship transfer to ${chalk.cyan(newOperator)}`, yes)) {
