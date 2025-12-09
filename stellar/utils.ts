@@ -158,7 +158,9 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         while (retries > 0) {
             sendResponse = await server.sendTransaction(tx);
 
-            if (sendResponse.status === 'PENDING') break;
+            if (sendResponse.status === 'PENDING') {
+                break;
+            }
 
             await sleep(RETRY_WAIT);
             retries--;
@@ -179,7 +181,9 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         while (retries > 0) {
             getResponse = await server.getTransaction(sendResponse.hash);
 
-            if (getResponse.status === 'SUCCESS') break;
+            if (getResponse.status === 'SUCCESS') {
+                break;
+            }
 
             await sleep(RETRY_WAIT);
             retries--;
@@ -194,7 +198,9 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         }
 
         // Native payment — sorobanMeta is not present, so skip parsing.
-        if (options && options.nativePayment) return;
+        if (options && options.nativePayment) {
+            return;
+        }
 
         // Make sure the transaction's resultMetaXDR is not empty
         // TODO: might be empty if the operation doesn't have a return value
@@ -320,7 +326,9 @@ async function fundAccountWithFriendbot(horizonServer, address) {
         printInfo('Account funded via friendbot', address);
     } catch (error) {
         // 400 status means the account is already funded. otherwise throw error immediately
-        if (error?.response?.status !== 400) throw error;
+        if (error?.response?.status !== 400) {
+            throw error;
+        }
 
         printWarn('Account already funded', address);
     }
@@ -331,12 +339,15 @@ async function prepareAccount(provider, horizonServer, address, chain) {
         await horizonServer.accounts().accountId(address).call();
     } catch (error) {
         // 404 status means the account exists. otherwise throw error immediately
-        if (error?.response?.status !== 404) throw error;
+        if (error?.response?.status !== 404) {
+            throw error;
+        }
 
         printWarn(`Account ${address} not found`);
 
-        if (!isFriendbotSupported(chain.networkType))
+        if (!isFriendbotSupported(chain.networkType)) {
             throw new Error(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
+        }
 
         await fundAccountWithFriendbot(horizonServer, address);
     }
@@ -393,7 +404,9 @@ async function estimateCost(tx, server) {
     const events = response.events.map((event) => {
         const e = xdr.DiagnosticEvent.fromXDR(event, 'base64');
 
-        if (e.event().type().name === 'diagnostic') return 0;
+        if (e.event().type().name === 'diagnostic') {
+            return 0;
+        }
 
         return e.toXDR().length;
     });
@@ -618,7 +631,9 @@ function pascalToKebab(str) {
 }
 
 function sanitizeMigrationData(migrationData, version, contractName) {
-    if (migrationData === null || migrationData === '()') return null;
+    if (migrationData === null || migrationData === '()') {
+        return null;
+    }
 
     try {
         return Address.fromString(migrationData);
