@@ -269,33 +269,42 @@ ts-node evm/governance.js execute --targetContractName AxelarGateway --target [t
 
 ### AxelarServiceGovernance (operator) extensions
 
-The CLI includes convenience commands for AxelarServiceGovernance operator-style proposals:
+`AxelarServiceGovernance` extends `InterchainGovernance` with operator approval functionality that bypasses timelock. The CLI includes convenience commands for operator-style proposals:
 
-- Schedule operator approval:
-  - `ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
-- Cancel operator approval JSON:
-  - `ts-node evm/governance.js cancel-operator <target> <calldata> -c AxelarServiceGovernance -n <chain> --file proposal.json`
-- Submit operator approval via GMP:
-  - `ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
-- Execute an approved operator proposal (operator EOA must call):
-  - `ts-node evm/governance.js execute-operator-proposal <target> <calldata> -c AxelarServiceGovernance -n <chain>`
-- Check approval status:
-  - `ts-node evm/governance.js is-operator-approved <target> <calldata> -c AxelarServiceGovernance -n <chain>`
-
-Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+1. Schedule operator approval proposal
 
 ```bash
-# schedule
-ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  -c AxelarServiceGovernance --newOperator 0xNewOperator
+ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
 
-# cancel
-ts-node evm/governance.js cancel transferOperatorship \
-  -c AxelarServiceGovernance -n <chain> --calldata <calldata> 
+Note: Defaults to `AxelarServiceGovernance` .
 
-# submit after vote
-ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  -c AxelarServiceGovernance -n <chain> --calldata <calldata>
+2. Cancel operator approval proposal
+
+```bash
+# Generate proposal JSON only
+ts-node evm/governance.js cancel-operator <target> <calldata> --file proposal.json
+```
+
+If `--file` is not supplied, the script will prompt for confirmation and then submit the proposal to the Axelar network using `MNEMONIC`.
+
+3. Submit operator approval via GMP (if relayers failed)
+
+```bash
+ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+4. Execute an approved operator proposal
+
+```bash
+# Note: Operator EOA must call this after approval
+ts-node evm/governance.js execute-operator-proposal <target> <calldata>
+```
+
+5. Check operator proposal approval status
+
+```bash
+ts-node evm/governance.js is-operator-approved <target> <calldata>
 ```
 
 ## Utilities
