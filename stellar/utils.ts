@@ -15,7 +15,7 @@ import {
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 
-import { addEnvOption, getCurrentVerifierSet, printInfo, sleep } from '../common';
+import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
 import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
 import { itsCustomMigrationDataToScValV112 } from './type-utils';
 
@@ -314,16 +314,45 @@ function getRpcOptions(chain) {
     };
 }
 
+async function fundAccountWithFriendbot(horizonServer, address) {
+    try {
+        await horizonServer.friendbot(address).call();
+        printInfo('Account funded via friendbot', address);
+    } catch (error) {
+        // Friendbot typically returns 400 status when account is already funded
+        if (error?.response?.status === 400) {
+            printWarn('Account already funded', address);
+        } else {
+            printError(`Friendbot request failed for ${address}: status=${error?.response?.status}, message=${error?.message || error}`);
+            throw error;
+        }
+    }
+}
+
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
     const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+
+    try {
+        await provider.getAccount(address);
+    } catch (error) {
+        printWarn(`Account ${address} not found`);
+        // If account doesn't exist and friendbot is supported, fund it via friendbot
+        if (isFriendbotSupported(chain.networkType)) {
+            await fundAccountWithFriendbot(horizonServer, address);
+        } else {
+            printInfo(`Friendbot is not supported on ${chain.networkType} network`);
+        }
+    }
+
     const balances = await getBalances(horizonServer, address);
 
     printInfo('Wallet address', address);
     printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
-    printInfo('Wallet sequence', await provider.getAccount(address).then((account) => account.sequenceNumber()));
+    // getAccount needs to be called again to get the latest sequence number
+    printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
 
     return keypair;
 }
@@ -676,6 +705,7 @@ module.exports = {
     broadcastHorizon,
     getWallet,
     getRpcOptions,
+    fundAccountWithFriendbot,
     estimateCost,
     getNetworkPassphrase,
     getAuthValidUntilLedger,
