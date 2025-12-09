@@ -475,11 +475,11 @@ const programHandler = () => {
         runAs: true,
     });
 
-    const executeCmd = program
-        .command('execute')
+    const executeByGovernanceCmd = program
+        .command('executeByGovernance')
         .description('Submit an execute wasm contract proposal')
-        .action((options) => mainProcessor(execute, options));
-    addAmplifierOptions(executeCmd, {
+        .action((options) => mainProcessor(executeByGovernance, options));
+    addAmplifierOptions(executeByGovernanceCmd, {
         contractOptions: true,
         executeProposalOptions: true,
         proposalOptions: true,
