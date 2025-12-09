@@ -157,7 +157,7 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             }
             target = governance.address;
 
-            break;  
+            break;
         }
 
         case 'transferGovernance': {
