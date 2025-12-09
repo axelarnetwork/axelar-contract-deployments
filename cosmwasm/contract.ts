@@ -331,9 +331,7 @@ const programHandler = () => {
         .action((chains, options) => {
             return mainProcessor(registerItsChain, options, chains);
         });
-    addAmplifierOptions(registerItsChainCmd, {
-        proposalOptions: true,
-    });
+    addAmplifierOptions(registerItsChainCmd);
 
     const updateItsChainCmd = program
         .command('its-hub-update-chains')
@@ -342,17 +340,13 @@ const programHandler = () => {
         .action((chains, options) => {
             return mainProcessor(updateItsChain, options, chains);
         });
-    addAmplifierOptions(updateItsChainCmd, {
-        proposalOptions: true,
-    });
+    addAmplifierOptions(updateItsChainCmd);
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
         .description('Register the main protocol contracts (e.g. Router)')
         .action((options) => mainProcessor(registerProtocol, options));
-    addAmplifierOptions(registerProtocolCmd, {
-        proposalOptions: true,
-    });
+    addAmplifierOptions(registerProtocolCmd);
 
     const registerDeploymentCmd = program
         .command('register-deployment')
@@ -361,9 +355,7 @@ const programHandler = () => {
         .action((chainName, options) => {
             return mainProcessor(registerDeployment, options, [chainName]);
         });
-    addAmplifierOptions(registerDeploymentCmd, {
-        proposalOptions: true,
-    });
+    addAmplifierOptions(registerDeploymentCmd);
 
     const createRewardPoolsCmd = program
         .command('create-reward-pools')
@@ -375,9 +367,7 @@ const programHandler = () => {
         .action((chainName, options) => {
             return mainProcessor(createRewardPools, options, [chainName]);
         });
-    addAmplifierOptions(createRewardPoolsCmd, {
-        proposalOptions: true,
-    });
+    addAmplifierOptions(createRewardPoolsCmd);
 
     const instantiateChainContractsCmd = program
         .command('instantiate-chain-contracts')
@@ -388,7 +378,6 @@ const programHandler = () => {
         .action((options) => mainProcessor(instantiateChainContracts, options));
     addAmplifierOptions(instantiateChainContractsCmd, {
         fetchCodeId: true,
-        proposalOptions: true,
     });
 
     program.parse();
