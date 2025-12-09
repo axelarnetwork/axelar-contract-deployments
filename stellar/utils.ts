@@ -319,7 +319,8 @@ async function fundAccountWithFriendbot(horizonServer, address) {
         await horizonServer.friendbot(address).call();
         printInfo('Account funded via friendbot', address);
     } catch (error) {
-        if (error?.response?.detail !== 'account already funded to starting balance') throw error;
+        // 400 status means the account is already funded. otherwise throw error immediately
+        if (error?.response?.status !== 400) throw error;
 
         printWarn('Account already funded', address);
     }
