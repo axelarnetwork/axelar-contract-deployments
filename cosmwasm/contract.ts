@@ -276,14 +276,18 @@ const instantiateChainContracts = async (
 
     const chainConfig = config.getChainConfig(chainName);
     const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
+    const gatewayContractName = config.getGatewayContractForChainType(chainConfig.chainType);
+    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+
+    config.initContractConfig(gatewayContractName, chainName);
 
     const gatewayConfig = config.getGatewayContract(chainName);
     const votingVerifierConfig = config.getVotingVerifierContract(chainName);
     const multisigProverConfig = config.getMultisigProverContract(chainName);
 
     if (options.fetchCodeId) {
-        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME });
-        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME });
+        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: gatewayContractName });
+        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: verifierContractName });
         multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
     }
 
