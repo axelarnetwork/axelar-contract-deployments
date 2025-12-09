@@ -432,6 +432,40 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        case 'isOperator': {
+            const [address] = args;
+
+            validateParameters({ isValidAddress: { address } });
+
+            const isOp = await interchainTokenService.isOperator(address);
+            printInfo(`Address ${address} is operator`, isOp);
+
+            break;
+        }
+
+        case 'transferOperatorship': {
+            const [newOperator] = args;
+
+            validateParameters({ isValidAddress: { newOperator } });
+
+            const isCurrentOperator = await interchainTokenService.isOperator(walletAddress);
+            const owner = await interchainTokenService.owner();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither an operator nor the owner (owner: ${owner}).`);
+            }
+
+            if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
+                return;
+            }
+
+            const tx = await interchainTokenService.transferOperatorship(newOperator, gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action, 'RolesRemoved', 'RolesAdded');
+
+            break;
+        }
+
         case 'is-trusted-chain': {
             const [itsChain] = args;
 
@@ -867,6 +901,22 @@ if (require.main === module) {
         .argument('<token-ids...>', 'Token IDs')
         .action((tokenIds, options, cmd) => {
             main(cmd.name(), [tokenIds], options);
+        });
+
+    program
+        .command('isOperator')
+        .description('Check if address is InterchainTokenService operator')
+        .argument('<address>', 'Address to check')
+        .action((address, options, cmd) => {
+            main(cmd.name(), [address], options);
+        });
+
+    program
+        .command('transferOperatorship')
+        .description('Transfer InterchainTokenService operatorship')
+        .argument('<new-operator>', 'New operator address')
+        .action((newOperator, options, cmd) => {
+            main(cmd.name(), [newOperator], options);
         });
 
     program
