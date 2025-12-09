@@ -118,7 +118,6 @@ The following steps should be performed for role transfers after deploying contr
 
     ```bash
     AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-    ts-node evm/ownership.js -c InterchainTokenService --action owner 
     ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
     ts-node evm/ownership.js -c InterchainTokenService --action owner 
     ```
@@ -135,7 +134,6 @@ The following steps should be performed for role transfers after deploying contr
 
     ```bash
     RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
-    ts-node evm/its.js operator 
     ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA 
     ts-node evm/its.js operator
     ```

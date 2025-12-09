@@ -295,7 +295,6 @@ The following checks should be performed after the rollout
 
         ```bash
         EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
-        ts-node evm/gateway.js -n $CHAIN --action operator 
         ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA 
         ts-node evm/gateway.js -n $CHAIN --action operator 
         ```
@@ -304,7 +303,6 @@ The following checks should be performed after the rollout
 
         ```bash
         AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-        ts-node evm/ownership.js -c AxelarGasService --action owner 
         ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
         ts-node evm/ownership.js -c AxelarGasService --action owner 
         ```
