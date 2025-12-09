@@ -2675,13 +2675,13 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "261",
-        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
-        "codeId": 66,
-        "lastUploadedCodeId": 66,
+        "storeCodeProposalId": "362",
+        "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
+        "codeId": 80,
+        "lastUploadedCodeId": 80,
         "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
         "executeProposalId": "14",
-        "version": "1.2.0"
+        "version": "1.2.1"
       },
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
@@ -3198,15 +3198,15 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
-          "codeId": 50,
+          "codeId": 78,
           "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6",
-          "version": "1.3.0"
+          "version": "2.0.0"
         },
-        "storeCodeProposalId": "184",
-        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
-        "lastUploadedCodeId": 50
+        "storeCodeProposalId": "332",
+        "storeCodeProposalCodeHash": "2abe2cbdcf0b3f983ea9121521aede7269b0b2e08787e104a7f249c217eac083",
+        "lastUploadedCodeId": 78
       },
       "XrplMultisigProver": {
         "xrpl": {

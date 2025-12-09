@@ -233,6 +233,7 @@ async fn main() {
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
+        #[allow(clippy::exit)]
         exit(1);
     }
 }
@@ -334,7 +335,7 @@ async fn run() -> eyre::Result<()> {
         }
         Command::Query(args) => match args.instruction {
             QueryInstructionSubcommand::Gateway(command) => {
-                gateway::query(command, &config)?;
+                gateway::query(command, &config).await?;
             }
             QueryInstructionSubcommand::Its(command) => {
                 its::query(command, &config)?;
