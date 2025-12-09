@@ -248,6 +248,7 @@ async function processCommand(axelar, chain, _chains, options) {
             const payloadHash = keccak256(arrayify(payload));
 
             const commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            printInfo('Command ID', commandID);
 
             if (await gateway.isCommandExecuted(commandID)) {
                 printWarn('Command already executed');
@@ -444,6 +445,49 @@ async function processCommand(axelar, chain, _chains, options) {
             break;
         }
 
+        case 'transferOperatorship': {
+            if (contracts.AxelarGateway?.connectionType !== 'amplifier') {
+                throw new Error('Transfer operatorship is only available for Amplifier Gateway');
+            }
+
+            const newOperator = options.newOperator;
+
+            if (!isValidAddress(newOperator)) {
+                throw new Error(`Invalid new operator address: ${newOperator}`);
+            }
+
+            const currOperator = await gateway.operator();
+            printInfo('Current operator', currOperator);
+
+            const owner = await gateway.owner();
+            const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
+            }
+
+            if (prompt(`Proceed with operatorship transfer to ${chalk.cyan(newOperator)}`, yes)) {
+                return;
+            }
+
+            const tx = await gateway.transferOperatorship(newOperator, gasOptions);
+            printInfo('Transfer operatorship tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'OperatorshipTransferred');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            const updatedOperator = await gateway.operator();
+            printInfo('New operator', updatedOperator);
+
+            break;
+        }
+
         case 'rotateSigners': {
             // TODO: use args for new signers
             const gateway = new Contract(gatewayAddress, getContractJSON('AxelarAmplifierGateway').abi, wallet);
@@ -542,6 +586,7 @@ if (require.main === module) {
                 'approveWithBatch',
                 'rotateSigners',
                 'submitProof',
+                'transferOperatorship',
             ])
             .makeOptionMandatory(true),
     );
@@ -557,6 +602,7 @@ if (require.main === module) {
     program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
     program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
     program.addOption(new Option('--multisigSessionId <multisigSessionId>', 'Amplifier multisig proof session ID'));
+    program.addOption(new Option('--newOperator <newOperator>', 'new operator address for transferOperatorship action'));
 
     program.action((options) => {
         main(options);

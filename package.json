@@ -31,21 +31,20 @@
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
-    "@axelar-network/axelar-cgp-sui": "1.1.3",
+    "@axelar-network/axelar-cgp-sui": "1.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
     "@axelar-network/interchain-token-service": "2.2.0",
     "@axelar-network/interchain-token-service-v2.1.1": "npm:@axelar-network/interchain-token-service@2.1.1",
-    "@cosmjs/cosmwasm-stargate": "^0.32.1",
+    "@cosmjs/cosmwasm-stargate": "0.37.0",
+    "@cosmjs/stargate": "0.37.0",
     "@hashgraph/sdk": "^2.67.0",
     "@ledgerhq/hw-app-eth": "6.32.2",
     "@mysten/ledgerjs-hw-app-sui": "^0.4.1",
     "@mysten/sui": "^1.3.0",
-    "@stacks/common": "^7.0.2",
-    "@stacks/transactions": "^7.0.6",
-    "@stacks/wallet-sdk": "^7.0.6",
     "@stellar/stellar-sdk": "v14.2.0",
     "abort-controller": "^3.0.0",
     "axios": "^1.7.2",
+    "bech32": "2.0.0",
     "bs58": "^6.0.0",
     "csv-parser": "^3.0.0",
     "msgpack-lite": "^0.1.26",
@@ -82,12 +81,14 @@
     "readline-sync": "^1.4.10",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "protobufjs": "7.5.4"
   },
   "engines": {
     "node": ">=18"
   },
   "overrides": {
+    "@scure/base": "^1.2.0",
     "strip-ansi": "6.0.1",
     "color-convert": "2.0.1",
     "color-name": "1.1.4",
@@ -100,6 +101,8 @@
     "wrap-ansi": "7.0.0",
     "slice-ansi": "4.0.0",
     "is-arrayish": "0.2.1",
-    "ansi-regex": "5.0.1"
+    "ansi-regex": "5.0.1",
+    "elliptic": "^6.6.1",
+    "@scure/bip32": "1.2.0"
   }
 }

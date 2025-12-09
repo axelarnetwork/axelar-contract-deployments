@@ -10,6 +10,7 @@ const { Option, InvalidArgumentError } = require('commander');
 
 const addAmplifierOptions = (program, options) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
@@ -20,11 +21,20 @@ const addAmplifierOptions = (program, options) => {
 
     if (options.storeOptions) {
         addStoreOptions(program);
-
         program.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
-            const contractCodePath = await getContractCodePath(opts, opts.contractName);
-            Object.assign(opts, { contractCodePath });
+            const contractName = opts.contractName;
+            const contractNames = contractName;
+
+            const contractCodePaths = {};
+            for (const name of contractNames) {
+                contractCodePaths[name] = await getContractCodePath(opts, name);
+            }
+
+            Object.assign(opts, {
+                contractCodePath: contractNames.length === 1 ? contractCodePaths[contractNames[0]] : undefined,
+                contractCodePaths,
+            });
         });
     }
 
@@ -89,44 +99,47 @@ const addChainNameOption = (program) => {
 
 const addAmplifierQueryOptions = (program) => {
     addEnvOption(program);
-
+    addAxelarNodeOption(program);
     addChainNameOption(program);
+};
+
+const addAxelarNodeOption = (program) => {
+    program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     addContractOptions(program);
 };
 
 const addContractOptions = (program) => {
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    program.addOption(new Option('-c, --contractName <contractName...>', 'contract name(s)').makeOptionMandatory(true));
     addChainNameOption(program);
     program.hook('preAction', (command) => {
         const chainName = command.opts().chainName;
         const contractName = command.opts().contractName;
+        const contractNames = contractName;
 
-        if (!CONTRACTS[contractName]) {
-            throw new Error(`contract ${contractName} is not supported`);
-        }
-
-        if (!CONTRACTS[contractName].makeInstantiateMsg) {
-            throw new Error(`makeInstantiateMsg function for contract ${contractName} is not defined`);
-        }
-
-        const scope = CONTRACTS[contractName].scope;
-
-        if (!scope) {
-            throw new Error(`scope of contract ${contractName} is not defined`);
-        }
-
-        if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
-            throw new Error(`${contractName} requires chainName option`);
-        }
-
-        if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
-            throw new Error(`${contractName} does not support chainName option`);
-        }
+        contractNames.forEach((name) => {
+            if (!CONTRACTS[name]) {
+                throw new Error(`contract ${name} is not supported`);
+            }
+            if (!CONTRACTS[name].makeInstantiateMsg) {
+                throw new Error(`makeInstantiateMsg function for contract ${name} is not defined`);
+            }
+            const scope = CONTRACTS[name].scope;
+            if (!scope) {
+                throw new Error(`scope of contract ${name} is not defined`);
+            }
+            if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
+                throw new Error(`${name} requires chainName option`);
+            }
+            if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
+                throw new Error(`${name} does not support chainName option`);
+            }
+        });
     });
 };
 
@@ -162,7 +175,12 @@ const addInstantiateProposalOptions = (program) => {
 };
 
 const addExecuteProposalOptions = (program) => {
-    program.addOption(new Option('--msg <msg>', 'json encoded execute message').makeOptionMandatory(true));
+    program.addOption(
+        new Option(
+            '--msg <msg...>',
+            'json encoded execute message(s). Can be specified multiple times for multiple messages in one proposal',
+        ).makeOptionMandatory(true),
+    );
 };
 
 const addParamChangeProposalOptions = (program) => {

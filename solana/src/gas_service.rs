@@ -1,5 +1,6 @@
+use anchor_lang::ToAccountMetas;
 use clap::{Parser, Subcommand};
-use solana_sdk::instruction::Instruction;
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
@@ -15,6 +16,9 @@ use crate::utils::{
 pub(crate) enum Commands {
     /// Initialize the AxelarGasService program on Solana
     Init(InitArgs),
+
+    /// Add more native SOL gas to an existing transaction.
+    AddGas(AddGasArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -23,10 +27,19 @@ pub(crate) struct InitArgs {
     /// to withdraw funds from the AxelarGasService program and update the configuration.
     #[clap(short, long)]
     operator: Pubkey,
+}
 
-    /// The salt used to derive the config PDA. This should be a unique value for each deployment.
+#[derive(Parser, Debug)]
+pub(crate) struct AddGasArgs {
+    /// The message ID of the contract call
     #[clap(short, long)]
-    salt: String,
+    message_id: String,
+    /// The amount of gas to add
+    #[clap(short, long)]
+    amount: u64,
+    /// The address to refund the gas to
+    #[clap(short, long)]
+    refund_address: Pubkey,
 }
 
 pub(crate) fn build_transaction(
@@ -36,6 +49,7 @@ pub(crate) fn build_transaction(
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
     let instructions = match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config)?,
+        Commands::AddGas(add_gas_args) => add_gas(fee_payer, add_gas_args)?,
     };
 
     // Get blockhash
@@ -77,26 +91,74 @@ fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let program_id = axelar_solana_gas_service::id();
-    let salt_hash = solana_sdk::keccak::hashv(&[init_args.salt.as_bytes()]).0;
-    let (config_pda, _bump) =
-        axelar_solana_gas_service::get_config_pda(&program_id, &salt_hash, &init_args.operator);
+    let (treasury_pda, _) =
+        Pubkey::find_program_address(&[b"gas-service"], &solana_axelar_gas_service::id());
+
+    let (operator_pda, _) = Pubkey::find_program_address(
+        &[b"operator", init_args.operator.as_ref()],
+        &solana_axelar_operators::ID,
+    );
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
-        ADDRESS_KEY: axelar_solana_gas_service::id().to_string(),
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
+        ADDRESS_KEY: solana_axelar_gas_service::id().to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
-        CONFIG_ACCOUNT_KEY: config_pda.to_string(),
+        CONFIG_ACCOUNT_KEY: treasury_pda.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![axelar_solana_gas_service::instructions::init_config(
-        &program_id,
-        fee_payer,
-        &init_args.operator,
-        &config_pda,
-        salt_hash,
-    )?])
+    let ix_data = {
+        use anchor_lang::InstructionData;
+        solana_axelar_gas_service::instruction::Initialize {}.data()
+    };
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_gas_service::id(),
+        accounts: vec![
+            AccountMeta::new(*fee_payer, true),
+            AccountMeta::new_readonly(init_args.operator, true),
+            AccountMeta::new_readonly(operator_pda, false),
+            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new(treasury_pda, false),
+        ],
+        data: ix_data,
+    }])
+}
+
+fn add_gas(fee_payer: &Pubkey, add_gas_args: AddGasArgs) -> eyre::Result<Vec<Instruction>> {
+    let treasury_pda = Pubkey::find_program_address(
+        &[solana_axelar_gas_service::state::Treasury::SEED_PREFIX],
+        &solana_axelar_gas_service::id(),
+    )
+    .0;
+
+    let (event_authority_pda, _) =
+        Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gas_service::id());
+
+    let accounts = solana_axelar_gas_service::accounts::AddGas {
+        sender: *fee_payer,
+        treasury: treasury_pda,
+        system_program: solana_sdk::system_program::id(),
+        program: solana_axelar_gas_service::id(),
+        event_authority: event_authority_pda,
+    }
+    .to_account_metas(None);
+
+    let ix_data = {
+        use anchor_lang::InstructionData;
+        solana_axelar_gas_service::instruction::AddGas {
+            message_id: add_gas_args.message_id,
+            amount: add_gas_args.amount,
+            refund_address: add_gas_args.refund_address,
+        }
+        .data()
+    };
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_gas_service::id(),
+        accounts,
+        data: ix_data,
+    }])
 }

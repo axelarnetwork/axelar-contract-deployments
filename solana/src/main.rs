@@ -10,6 +10,7 @@ mod its;
 mod memo;
 mod misc;
 mod multisig_prover_types;
+mod operators;
 mod send;
 mod sign;
 mod types;
@@ -19,7 +20,7 @@ use std::path::PathBuf;
 use std::process::exit;
 
 use broadcast::BroadcastArgs;
-use clap::{FromArgMatches, IntoApp, Parser, Subcommand};
+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use combine::CombineArgs;
 use dotenvy::dotenv;
 use eyre::eyre;
@@ -47,9 +48,9 @@ struct Cli {
     #[clap(subcommand)]
     command: Command,
 
-    /// Axelar chainId to be used in chain config files.
-    #[clap(long, env = "CHAIN_ID")]
-    chain_id: String,
+    /// Axelar chain to be used in chain config files.
+    #[clap(long, env = "CHAIN")]
+    chain: String,
 
     /// URL for Solana's JSON RPC or moniker (or their first letter):  [mainnet-beta, testnet,
     /// devnet, localhost]". Defaults to the value set in the Solana CLI config.
@@ -62,17 +63,12 @@ struct Cli {
     url: Option<String>,
 
     /// Directory to store output files (unsigned tx, signatures, bundles)
-    #[clap(
-        short = 'o',
-        long = "output-dir",
-        default_value = "./output",
-        parse(from_os_str)
-    )]
+    #[clap(short = 'o', long = "output-dir", default_value = "./output")]
     output_dir: PathBuf,
 
     /// Directory containing the JSON files for Axelar chains configuration info
     /// (devnet-amplifier.json, mainnet.json, testnet.json, etc)
-    #[clap(short, long, default_value = ".", parse(from_os_str), hide(true))]
+    #[clap(short, long, default_value = ".", hide(true))]
     chains_info_dir: PathBuf,
 }
 
@@ -134,7 +130,7 @@ struct GenerateCommandArgs {
     nonce_authority: Pubkey,
 
     /// Directory to store unsigned transaction files
-    #[clap(long = "output-dir", parse(from_os_str))]
+    #[clap(long = "output-dir")]
     output_dir: Option<PathBuf>,
 
     #[clap(subcommand)]
@@ -159,6 +155,10 @@ enum InstructionSubcommand {
     #[clap(subcommand)]
     Governance(governance::Commands),
 
+    /// Commands to interface with the AxelarOperators program on Solana
+    #[clap(subcommand)]
+    Operators(operators::Commands),
+
     /// Commands to interface with the AxelarMemo program on Solana
     #[clap(subcommand)]
     Memo(memo::Commands),
@@ -170,12 +170,11 @@ struct SignCommandArgs {
     signer_key: String,
 
     /// Path to the unsigned Solana transaction JSON file (*.unsigned.json)
-    #[clap(parse(from_os_str))]
     unsigned_tx_path: PathBuf,
 
     /// Output directory for signature files
     /// If not specified, signatures will be placed in the same directory as the unsigned transaction
-    #[clap(long = "output-dir", parse(from_os_str))]
+    #[clap(long = "output-dir")]
     output_dir: Option<PathBuf>,
 }
 
@@ -183,27 +182,20 @@ struct SignCommandArgs {
 struct CombineCommandArgs {
     /// Output directory for the combined signed transaction JSON
     /// If not specified, will use the same directory as the unsigned transaction
-    #[clap(long = "output-dir", parse(from_os_str))]
+    #[clap(long = "output-dir")]
     output_dir: Option<PathBuf>,
 
     /// Paths to the partial signature JSON files (*.partial.sig) to combine (provide at least one)
-    #[clap(
-        required = true,
-        multiple_values = true,
-        min_values = 1,
-        parse(from_os_str)
-    )]
+    #[clap(required = true, multiple_values = true, min_values = 1)]
     signature_paths: Vec<PathBuf>,
 
     /// Path to the original unsigned Solana transaction JSON file (*.unsigned.json)
-    #[clap(parse(from_os_str))]
     unsigned_tx_path: PathBuf,
 }
 
 #[derive(Parser, Debug)]
 struct BroadcastCommandArgs {
     /// Path to the combined signed Solana transaction JSON file (*.signed.json)
-    #[clap(parse(from_os_str))]
     signed_tx_path: PathBuf,
 }
 
@@ -236,6 +228,7 @@ async fn main() {
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
+        #[allow(clippy::exit)]
         exit(1);
     }
 }
@@ -266,10 +259,10 @@ async fn run() -> eyre::Result<()> {
 
     let config = Config::new(
         url,
-        cli.output_dir,
-        cli.chains_info_dir,
+        cli.output_dir.clone(),
+        cli.chains_info_dir.clone(),
         axelar_env,
-        cli.chain_id,
+        cli.chain.clone(),
     )?;
 
     match cli.command {
@@ -337,7 +330,7 @@ async fn run() -> eyre::Result<()> {
         }
         Command::Query(args) => match args.instruction {
             QueryInstructionSubcommand::Gateway(command) => {
-                gateway::query(command, &config)?;
+                gateway::query(command, &config).await?;
             }
             QueryInstructionSubcommand::Its(command) => {
                 its::query(command, &config)?;
@@ -362,6 +355,9 @@ async fn build_transaction(
         InstructionSubcommand::Its(command) => its::build_transaction(fee_payer, command, config),
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
+        }
+        InstructionSubcommand::Operators(command) => {
+            operators::build_transaction(fee_payer, command, config)
         }
         InstructionSubcommand::Memo(command) => memo::build_transaction(fee_payer, command, config),
     }

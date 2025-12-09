@@ -90,7 +90,7 @@ function getNetworkPassphrase(networkType: NetworkType) {
  * @returns {Promise<number>} - The ledger sequence number until which the authorization is valid
  */
 async function getAuthValidUntilLedger(chain) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const server = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const latestLedger = await server.getLatestLedger();
     return latestLedger.sequence + LEDGER_EXTENSION_FOR_AUTH;
 }
@@ -244,7 +244,7 @@ async function simulate(tx, server, options: Options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options: Options) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const server = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
 
     if (options && options.nativePayment) {
@@ -524,7 +524,7 @@ const getContractR2Url = (contractName, version) => {
         return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
     }
 
-    throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (omit prefix v) or a commit hash`);
 };
 
 const getContractArtifactPath = (artifactDir, contractName) => {
@@ -675,6 +675,7 @@ module.exports = {
     broadcast,
     broadcastHorizon,
     getWallet,
+    getRpcOptions,
     estimateCost,
     getNetworkPassphrase,
     getAuthValidUntilLedger,

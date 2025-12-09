@@ -7,18 +7,17 @@ const chalk = require('chalk');
 const https = require('https');
 const http = require('http');
 const readlineSync = require('readline-sync');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
     BigNumber,
 } = ethers;
-const { normalizeBech32 } = require('@cosmjs/encoding');
+const { bech32 } = require('bech32');
 const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
-const { cvToHex, principalCV } = require('@stacks/transactions');
+const { isValidNamedType } = require('@mysten/sui/utils');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -66,39 +65,47 @@ const printErrorMsg = (msg) => {
     }
 };
 
-const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (typeof info === 'boolean') {
-        info = String(info);
-    } else if (Array.isArray(info) || typeof info === 'object') {
-        info = JSON.stringify(info, null, 2);
+const stringifyObject = (obj) => {
+    let stringifiedObj;
+
+    if (typeof obj === 'boolean') {
+        stringifiedObj = String(obj);
+    } else if (Array.isArray(obj) || typeof obj === 'object') {
+        stringifiedObj = JSON.stringify(obj, null, 2);
+    } else {
+        stringifiedObj = `${obj}`;
     }
 
-    if (info) {
-        printMsg(`${msg}: ${colour(info)}`);
+    return stringifiedObj;
+};
+
+const printInfo = (msg, dataObj = '', colour = chalk.green) => {
+    if (dataObj) {
+        printMsg(`${msg}: ${colour(stringifyObject(dataObj))}`);
     } else {
         printMsg(`${msg}`);
     }
 };
 
-const printWarn = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${info}`;
+const printWarn = (msg, dataObj = '') => {
+    if (dataObj) {
+        msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
     printMsg(`${chalk.italic.yellow(msg)}`);
 };
 
-const printError = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${info}`;
+const printError = (msg, dataObj = '') => {
+    if (dataObj) {
+        msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
     printErrorMsg(`${chalk.bold.red(msg)}`);
 };
 
-const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
-    if (info) {
-        msg = `${msg}: ${info}`;
+const printHighlight = (msg, dataObj = '', colour = chalk.bgBlue) => {
+    if (dataObj) {
+        msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
     printMsg(`${colour(msg)}`);
@@ -136,11 +143,31 @@ const isNumber = (arg) => {
 };
 
 const isValidNumber = (arg) => {
-    return !isNaN(parseInt(arg)) && isFinite(arg);
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = Number(arg);
+
+    return !isNaN(num) && isFinite(num);
 };
 
 const isValidDecimal = (arg) => {
-    return !isNaN(parseFloat(arg)) && isFinite(arg);
+    if (arg === '' || arg === null || arg === undefined) {
+        return false;
+    }
+
+    if (typeof arg === 'string' && arg.trim() === '') {
+        return false;
+    }
+
+    const num = parseFloat(arg);
+
+    return !isNaN(num) && isFinite(num) && num === parseFloat(String(arg).trim());
 };
 
 const isNumberArray = (arr) => {
@@ -182,7 +209,7 @@ const httpGet = (url) => {
             const contentType = res.headers['content-type'];
             let error;
 
-            if (statusCode !== 200 && statusCode !== 301) {
+            if (statusCode !== 200) {
                 error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
             } else if (!/^application\/json/.test(contentType)) {
                 error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
@@ -305,13 +332,19 @@ function isKeccak256Hash(input) {
  * @return {boolean} - Returns true if the format matches, false otherwise.
  */
 function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
     if (timeString === '0') {
         return true;
     }
 
-    return regex.test(timeString);
+    const trimmedInput = String(timeString).trim();
+
+    if (/^\d+$/.test(trimmedInput)) {
+        const seconds = parseInt(trimmedInput, 10);
+        return !isNaN(seconds) && seconds >= 0;
+    }
+
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+    return regex.test(trimmedInput);
 }
 
 /**
@@ -452,7 +485,7 @@ function validateParameters(parameters) {
         const validatorFunction = validationFunctions[validatorFunctionString];
 
         if (typeof validatorFunction !== 'function') {
-            throw new Error(`Validator function ${validatorFunction} is not defined`);
+            throw new Error(`Validator function ${validatorFunctionString} is not defined`);
         }
 
         for (const paramKey of Object.keys(paramsObj)) {
@@ -466,15 +499,28 @@ function validateParameters(parameters) {
     }
 }
 
-const dateToEta = (utcTimeString) => {
-    if (utcTimeString === '0') {
+const dateToEta = (input) => {
+    const trimmedInput = String(input).trim();
+
+    if (trimmedInput === '0') {
         return 0;
     }
 
-    const date = new Date(utcTimeString + 'Z');
+    if (/^\d+$/.test(trimmedInput)) {
+        const seconds = parseInt(trimmedInput, 10);
+        if (isNaN(seconds) || seconds < 0) {
+            throw new Error(`Invalid relative time in seconds: ${input}`);
+        }
+        const currentTime = getCurrentTimeInSeconds();
+        return currentTime + seconds;
+    }
+
+    const date = new Date(trimmedInput + 'Z');
 
     if (isNaN(date.getTime())) {
-        throw new Error(`Invalid date format provided: ${utcTimeString}`);
+        throw new Error(
+            `Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss) or relative seconds (numeric)`,
+        );
     }
 
     return Math.floor(date.getTime() / 1000);
@@ -494,6 +540,15 @@ const getCurrentTimeInSeconds = () => {
     const now = new Date();
     const currentTimeInSecs = Math.floor(now.getTime() / 1000);
     return currentTimeInSecs;
+};
+
+const createGMPProposalJSON = (chain, contractAddress, payload) => {
+    const payloadBase64 = Buffer.from(payload.slice(2), 'hex').toString('base64');
+    return {
+        chain: chain.axelarId,
+        contract_address: contractAddress,
+        payload: payloadBase64,
+    };
 };
 
 /**
@@ -536,8 +591,8 @@ function toBigNumberString(number) {
 
 const isValidCosmosAddress = (str) => {
     try {
-        normalizeBech32(str);
-
+        if (typeof str !== 'string') return false;
+        bech32.decode(str);
         return true;
     } catch (error) {
         return false;
@@ -548,9 +603,14 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
+const getCosmWasmClient = async (rpc) => {
+    const { CosmWasmClient } = await import('@cosmjs/cosmwasm-stargate');
+    return await CosmWasmClient.connect(rpc);
+};
+
 const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
     const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(axelar.rpc);
+    const client = await getCosmWasmClient(axelar.rpc);
     const value = await client.queryContractRaw(axelar.contracts[contract][chain].address, key);
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
@@ -635,13 +695,13 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
 
 const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(axelar.rpc);
+    const client = await getCosmWasmClient(axelar.rpc);
     const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
 const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
-    const client = await CosmWasmClient.connect(axelar.rpc);
+    const client = await getCosmWasmClient(axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
         axelar.contracts[contract][chain].address,
         'current_verifier_set',
@@ -700,6 +760,15 @@ const itsEdgeChains = (chains) =>
         .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
+const getAmplifierChains = (chains) => {
+    if (!chains) {
+        return [];
+    }
+    return Object.entries(chains)
+        .filter(([, chainConfig]) => chainConfig.contracts?.AxelarGateway?.connectionType === 'amplifier')
+        .map(([chainName, chainConfig]) => ({ name: chainName, config: chainConfig }));
+};
+
 const parseTrustedChains = (chains, trustedChains) => {
     return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(chains) : trustedChains;
 };
@@ -718,6 +787,31 @@ function solanaAddressBytesFromBase58(string) {
         throw new Error(`Invalid Solana address: ${string}`);
     }
     return hexlify(decoded);
+}
+
+/**
+ * Encodes the destination token address for Interchain Token Service (ITS) link token operations.
+ * This function handles token address encoding differently from recipient addresses.
+ * Note:
+ * - Token addresses are encoded as ASCII strings for X -> Sui transfers
+ * - Destination addresses (recipients) are encoded as bytes (already hex strings)
+ */
+function encodeITSDestinationToken(chains, destinationChain, destinationTokenAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'sui':
+            if (!isValidNamedType(destinationTokenAddress)) {
+                throw new Error(`Destination token address invalid, got ${destinationTokenAddress}`);
+            }
+            // For Sui token addresses (X -> Sui), encode as ASCII string
+            return asciiToBytes(destinationTokenAddress.replace('0x', ''));
+        case 'xrpl':
+            return destinationTokenAddress;
+        default:
+            // For all other chains, use the same encoding as destination addresses
+            return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+    }
 }
 
 /**
@@ -748,12 +842,9 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
             // TODO: validate XRPL address format
             return asciiToBytes(destinationAddress);
 
-        case 'stacks':
-            return cvToHex(principalCV(destinationAddress));
-
         case 'evm':
         case 'sui':
-        default: // EVM, Sui, and other chains (return as-is)
+        default: // EVM, Sui (non-token addresses), and other chains return as-is
             return destinationAddress;
     }
 }
@@ -787,12 +878,12 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
-    if (env === 'devnet-amplifier') {
-        return 0;
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, axelar) {
+    if (env.startsWith('devnet-') || env === 'local') {
+        return { gasValue: 0, gasFeeValue: 0 };
     }
 
-    if (gasValue != 'auto' && !isValidNumber(gasValue)) {
+    if (gasValue !== 'auto' && !isValidNumber(gasValue)) {
         throw new Error(`Invalid gas value: ${gasValue}`);
     }
 
@@ -801,11 +892,15 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         return { gasValue, gasFeeValue };
     }
 
-    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+    if (!axelar?.axelarscanApi) {
+        throw new Error(`axelarscanApi is not configured for environment: ${env}. Please check the environment config and try again.`);
+    }
+
+    const url = `${axelar.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
-        destinationChain: destinationChain,
+        destinationChain,
         event: eventType,
     };
 
@@ -865,6 +960,7 @@ module.exports = {
     dateToEta,
     etaToDate,
     getCurrentTimeInSeconds,
+    createGMPProposalJSON,
     prompt,
     findProjectRoot,
     toBigNumberString,
@@ -886,6 +982,7 @@ module.exports = {
     SHORT_COMMIT_HASH_REGEX,
     itsEdgeContract,
     tryItsEdgeContract,
+    getAmplifierChains,
     parseTrustedChains,
     isValidStellarAddress,
     isValidStellarAccount,
@@ -894,6 +991,7 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
+    encodeITSDestinationToken,
     tokenManagerTypes,
     validateLinkType,
     validateChain,

@@ -121,7 +121,7 @@
           "deploymentMethod": "create",
           "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
-          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x3d6CB9D16FD5ff33511d630FC1E98a8F5f93dD85"
         }
       },
@@ -2301,16 +2301,16 @@
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
+          "salt": "ITS v2.1.1",
           "proxySalt": "ITS v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "version": "2.1.0",
-          "tokenManagerDeployer": "0x478b2BC902B73D06ff541b411FC6124cA50C6A3C",
-          "interchainTokenDeployer": "0x747EdBde75b1d48dBA2149C40edD51E37285B679",
-          "tokenManager": "0x62C0f0939DdFF94A4d21fAF041609b2E7498B4A8",
-          "tokenHandler": "0x88Ccd3040Eb4D73B155A3552EA49bdA3063AB13B",
-          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "tokenManagerDeployer": "0x88af2704bAb572dc7339d5F8275e089677956055",
+          "interchainTokenDeployer": "0x97E812C52E5dc43e789CBfCF28823e2d6BC519E3",
+          "tokenManager": "0xF0C255159c56DADC2559295e2427240484172Aba",
+          "tokenHandler": "0x563ee90271512e7a83D0cF31c46395F27a3f489f",
+          "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
         },
         "InterchainTokenFactory": {
@@ -2318,7 +2318,7 @@
           "salt": "ITS Factory v1.0.0",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.0",
-          "implementation": "0x8B0485bf274fF8bF3cd0E7231fC807cb236E50c6"
+          "implementation": "0x18e160AA6740bfa78091a6Aee08270d48CAf9944"
         }
       }
     },
@@ -2476,9 +2476,10 @@
           }
         },
         "InterchainTokenService": {
-          "address": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce",
+          "address": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0",
           "versions": {
-            "0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce"
+            "0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce",
+            "1": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0"
           },
           "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
           "structs": {
@@ -2487,7 +2488,9 @@
             "CoinInfo": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_info::CoinInfo",
             "CoinData": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_data::CoinData",
             "CreatorCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::creator_cap::CreatorCap",
+            "TokenManagerType": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::token_manager_type::TokenManagerType",
             "TokenId": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::token_id::TokenId",
+            "UnlinkedTokenId": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::token_id::UnlinkedTokenId",
             "UnregisteredTokenId": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::token_id::UnregisteredTokenId",
             "UnregisteredCoinData": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::unregistered_coin_data::UnregisteredCoinData",
             "CoinRegistered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::CoinRegistered",
@@ -2495,13 +2498,20 @@
             "InterchainTokenDeploymentStarted": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTokenDeploymentStarted",
             "InterchainTransferReceived": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTransferReceived",
             "UnregisteredCoinReceived": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::UnregisteredCoinReceived",
+            "UnlinkedCoinReceived": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::UnlinkedCoinReceived",
+            "UnlinkedCoinRemoved": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::UnlinkedCoinRemoved",
             "TrustedChainAdded": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::TrustedChainAdded",
             "TrustedChainRemoved": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::TrustedChainRemoved",
             "FlowLimitSet": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::FlowLimitSet",
             "DistributorshipTransfered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::DistributorshipTransfered",
             "OperatorshipTransfered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::OperatorshipTransfered",
+            "InterchainTokenIdClaimed": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::InterchainTokenIdClaimed",
+            "LinkTokenStarted": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::LinkTokenStarted",
+            "LinkTokenReceived": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::LinkTokenReceived",
+            "CoinMetadataRegistered": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::events::CoinMetadataRegistered",
             "TrustedChain": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::trusted_chains::TrustedChain",
             "TrustedChains": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::trusted_chains::TrustedChains",
+            "TreasuryCapReclaimer": "0x0f9fb8246525699ac7e0a9742094f3491e20b0f3b2a5faf503f139df383390f0::treasury_cap_reclaimer::TreasuryCapReclaimer",
             "InterchainTransferTicket": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_transfer_ticket::InterchainTransferTicket",
             "InterchainTokenService_v0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_token_service_v0::InterchainTokenService_v0",
             "OwnerCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::owner_cap::OwnerCap",
@@ -2515,28 +2525,66 @@
             "OwnerCap": "0x0878df5c58f0d14a54ad5363cb81803e7075914821f2954f6141b40e878d35be",
             "OperatorCap": "0xff1e6be4d0904970c0fbec31e8390a7fb227a3d2b9b5bd2d1fa9ce24f9994982",
             "UpgradeCap": "0x5c7ce319e54e55442fe915b487db458bcfe00f2521e23eeb8fe05d46920b6b40"
+          },
+          "disallowedFunctions": {
+            "versions": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "functionNames": [
+              "deploy_remote_interchain_token",
+              "send_interchain_transfer",
+              "receive_interchain_transfer",
+              "receive_interchain_transfer_with_data",
+              "receive_deploy_interchain_token",
+              "give_unregistered_coin",
+              "mint_as_distributor",
+              "mint_to_as_distributor",
+              "burn_as_distributor",
+              "add_trusted_chains",
+              "remove_trusted_chains",
+              "set_flow_limit",
+              "set_flow_limit_as_token_operator",
+              "transfer_distributorship",
+              "transfer_operatorship"
+            ]
           }
         },
         "Example": {
-          "address": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64",
+          "address": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34",
           "versions": {
-            "0": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64"
+            "0": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34"
           },
-          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "deployer": "0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88",
           "structs": {
-            "Singleton": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::Singleton",
-            "Executed": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::gmp::Executed",
-            "ExecutedWithToken": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::ExecutedWithToken",
-            "TOKEN": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token::TOKEN",
-            "TOKEN_A": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_a::TOKEN_A",
-            "TOKEN_B": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_b::TOKEN_B",
-            "TOKEN_C": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_c::TOKEN_C"
+            "Singleton": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::its::Singleton",
+            "Executed": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::gmp::Executed",
+            "ExecutedWithToken": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::its::ExecutedWithToken",
+            "MultiMinter": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::operators::MultiMinter",
+            "OwnerCap": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::operators::OwnerCap",
+            "TOKEN": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token::TOKEN",
+            "TOKEN_A": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_a::TOKEN_A",
+            "TOKEN_B": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_b::TOKEN_B",
+            "TOKEN_C": "0x96b4aac36f2e08f71e93ce160d33ea60852d1653d86c1ccb9c06ae5506e4fc34::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0xf1803cd8ea30c1fa7ac4a8d7062483dfe0ff266d0f11d232d7cd9387a6de8dcf",
-            "GmpChannelId": "0xe1903707becbbe8ee6e96e6f4f179c7fd1a30f9147a111c50e32afec6dc65f18",
-            "ItsSingleton": "0xb05ef95bcc7f51f32af0647de0736f4d0e267b95ea464617cbd4e7ce39519023",
-            "ItsChannelId": "0xf4d96b9d30326a213df4f51aee73f9f44fc612a88498646b5cf78e84d478ef56"
+            "GmpSingleton": "0xd2fabdbdfd05dfdd618405e9a60e8cd57f2b6d43ffd0429edcc1f7ca7836e8f7",
+            "GmpChannelId": "0x746f555d09f9e89e1d25be596d2e756a65bd48377524a109b955ba2f5bcb53eb",
+            "ItsSingleton": "0x9926aca1bc1fcaf38db6b5570dd16e7ad265c1d7f621dbb0efdc49d61b6471dd",
+            "ItsChannelId": "0xeadff6a48792bdb8ca1216bab78c502244152fc3632abac5f67e150da5e09315"
           }
         }
       }
@@ -2941,8 +2989,29 @@
           "deploymentMethod": "create",
           "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
-          "pauser": "0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe",
+          "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0xD54096E46E8438d753A749639d11397EF3BA28f5"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.2.0",
+          "proxySalt": "ITS v1.0.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.2.0",
+          "tokenManagerDeployer": "0x148feB2C0eFE43A1eD5C061e1AbbB609CD730c22",
+          "interchainToken": "0x7DECda0beb52deee4159d20b7bDFdded890649f3",
+          "interchainTokenDeployer": "0xfc50b14F6a1CcAf1D6A4E84441cED1094ACC1780",
+          "tokenManager": "0x2be6F57fb0E69D26F8c8FbbebD8403d88fbAc09c",
+          "tokenHandler": "0x79aE65Ea16E88D3a7303A7FF019353140B06F39B",
+          "implementation": "0x4Aca663c242D31F85b77bf27d5D7dA4cF69fa7bd",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.2.0",
+          "implementation": "0x6977477Bd4C053E1BfD0B6F287060c2A4E5E1aA1"
         }
       }
     },
@@ -2959,7 +3028,7 @@
       "chainType": "evm",
       "explorer": {
         "name": "Hyperliquid Explorer",
-        "url": "https://app.hyperliquid-testnet.xyz/explorer"
+        "url": "https://testnet.purrsec.com/"
       },
       "hypercore": {
         "domain": {
@@ -3350,20 +3419,22 @@
         "executeProposalId": "112",
         "flow": {
           "executeProposalId": "149"
-        }
+        },
+        "version": "1.2.0"
       },
       "Router": {
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "179",
-        "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
-        "codeId": 22,
-        "lastUploadedCodeId": 22,
+        "storeCodeProposalId": "372",
+        "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
+        "codeId": 64,
+        "lastUploadedCodeId": 64,
         "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93",
         "executeProposalId": "114",
         "flow": {
           "executeProposalId": "145"
-        }
+        },
+        "version": "1.4.0"
       },
       "Rewards": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3380,32 +3451,35 @@
         },
         "codeId": 23,
         "lastUploadedCodeId": 23,
-        "address": "axelar1harq5xe68lzl2kx4e5ch4k8840cgqnry567g0fgw7vt2atcuugrqfa7j5z"
+        "address": "axelar1harq5xe68lzl2kx4e5ch4k8840cgqnry567g0fgw7vt2atcuugrqfa7j5z",
+        "version": "1.2.0"
       },
       "Coordinator": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "176",
-        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
-        "codeId": 19,
-        "lastUploadedCodeId": 19,
+        "storeCodeProposalId": "382",
+        "storeCodeProposalCodeHash": "1cdf4d35ce0f2356741ab13d8d3ba115c1aa7ec7c0db1007fede7eb13eb45373",
+        "codeId": 67,
+        "lastUploadedCodeId": 67,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "flow": {
           "executeProposalId": "147"
-        }
+        },
+        "version": "2.1.3"
       },
       "Multisig": {
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "blockExpiry": 10,
-        "storeCodeProposalId": "308",
-        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
-        "codeId": 54,
-        "lastUploadedCodeId": 54,
+        "blockExpiry": 50,
+        "storeCodeProposalId": "386",
+        "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
+        "codeId": 69,
+        "lastUploadedCodeId": 69,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "115",
         "flow": {
           "executeProposalId": "146"
-        }
+        },
+        "version": "2.4.0"
       },
       "MultisigProver": {
         "flow": {
@@ -3421,7 +3495,8 @@
           "keyType": "ecdsa",
           "domainSeparator": "0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259",
           "codeId": 18,
-          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0"
+          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0",
+          "version": "1.1.1"
         },
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3436,7 +3511,8 @@
           "keyType": "ecdsa",
           "domainSeparator": "0xc66bfbc93dab13dda342d32a5b3f8025e07a8d0ee0b900cdc1d5e634e88ffb6a",
           "codeId": 18,
-          "address": "axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj"
+          "address": "axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj",
+          "version": "1.1.1"
         },
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3451,7 +3527,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xf221c54a1a478f48c840a24cf2b96f77c9bc369a40570744b8fedd91df001624",
-          "address": "axelar1v8jrupu2rqpskwgtr69max0ajul92q8z5mdxd505m2hu3xc5jzcqm8zyc6"
+          "address": "axelar1v8jrupu2rqpskwgtr69max0ajul92q8z5mdxd505m2hu3xc5jzcqm8zyc6",
+          "version": "1.1.1"
         },
         "xrpl-evm": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3466,7 +3543,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xeb44c1eb3bd40a2edf0460706f78432da381d227c5d4e480234d19c864c8e00c",
-          "address": "axelar198xehj5htckk75s8wcamxerxtdc45669zdqjmr69guveqntj9f6s5rqq55"
+          "address": "axelar198xehj5htckk75s8wcamxerxtdc45669zdqjmr69guveqntj9f6s5rqq55",
+          "version": "1.1.1"
         },
         "plume": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3481,7 +3559,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xecb35aaefd4f374fa1ea62bc6280f4150361977ad6ecad5f2ef878a89feb214e",
-          "address": "axelar1ll4yhqtldlgqwqthyffqln3cyr2f8ydzhv0djpjyp6sk4v5k4kqqrs60s7"
+          "address": "axelar1ll4yhqtldlgqwqthyffqln3cyr2f8ydzhv0djpjyp6sk4v5k4kqqrs60s7",
+          "version": "1.1.1"
         },
         "berachain": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3496,7 +3575,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xa0179f51986dc9adc4f4b5ca9aadc5125cbdb84449bf68509e09da0306c951f8",
-          "address": "axelar1k483q898t5w0acqzxhdjlsmnpgcxxa49ye8m46757n8mtk70ugtsu927xw"
+          "address": "axelar1k483q898t5w0acqzxhdjlsmnpgcxxa49ye8m46757n8mtk70ugtsu927xw",
+          "version": "1.1.1"
         },
         "monad": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3511,7 +3591,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xacbbb6b1e3bd382ab5f2da2aa9bca626d70a66ec7a6c301c612c01061f4c9278",
-          "address": "axelar1dt6apz0m2lkuls3ah2h7zw277r0v50668fxytqtdxv83yzs4n69qlutnpk"
+          "address": "axelar1dt6apz0m2lkuls3ah2h7zw277r0v50668fxytqtdxv83yzs4n69qlutnpk",
+          "version": "1.1.1"
         },
         "hyperliquid": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3526,7 +3607,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0x1183f643911317021c7eaf7bb31bcdff020529e8a79c4ba1d7a1912f98fd2196",
-          "address": "axelar1fxd8rq5j6wluyc07vl9vqr4xmdxxm25l2gd6m2an20mn5fdnzy6qll2nxx"
+          "address": "axelar1fxd8rq5j6wluyc07vl9vqr4xmdxxm25l2gd6m2an20mn5fdnzy6qll2nxx",
+          "version": "1.1.1"
         },
         "stellar-2025-q3": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3541,7 +3623,8 @@
           "keyType": "ed25519",
           "codeId": 18,
           "domainSeparator": "0x288240c68eef8080264cc1fa403ae8f9a1886c91cbe70021aad91ef43a4027e1",
-          "address": "axelar1aux2l6er84m6gtayqdwqhz4rl0txqdlj3v7szr72j7etve3jmpks7x4euy"
+          "address": "axelar1aux2l6er84m6gtayqdwqhz4rl0txqdlj3v7szr72j7etve3jmpks7x4euy",
+          "version": "1.1.1"
         },
         "celo-sepolia": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3556,7 +3639,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xfffc99926a65c90dd2ae07ee8d6c008579702cd662a3efd975c70c8202389506",
-          "address": "axelar1huplwem2amlects7n06llvl46m5tfm33vtty6p82d7lmka5kmmhsrdywf4"
+          "address": "axelar1huplwem2amlects7n06llvl46m5tfm33vtty6p82d7lmka5kmmhsrdywf4",
+          "version": "1.1.1"
         },
         "memento-demo": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3571,7 +3655,8 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0x7d4aabfbcb28564aa557999784f5ccd9879bdf8cf76aff493be058d64764c4f3",
-          "address": "axelar13s3xyvcjpetwdfyc9q2hh9nc3hdvf7cvtkh33qk0g8adjjjgrk6qeacv67"
+          "address": "axelar13s3xyvcjpetwdfyc9q2hh9nc3hdvf7cvtkh33qk0g8adjjjgrk6qeacv67",
+          "version": "1.1.1"
         },
         "storeCodeProposalId": "175",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
@@ -3580,50 +3665,61 @@
       "Gateway": {
         "flow": {
           "codeId": 24,
-          "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
+          "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u",
+          "version": "1.1.1"
         },
         "hedera": {
           "codeId": 24,
-          "address": "axelar1xgr3j2wuc9ut7yjz4nr677scmzd4z6lh3srnpmdh0nyqzcfka3rqe2nsmq"
+          "address": "axelar1xgr3j2wuc9ut7yjz4nr677scmzd4z6lh3srnpmdh0nyqzcfka3rqe2nsmq",
+          "version": "1.1.1"
         },
         "sui": {
           "codeId": 24,
-          "address": "axelar1svl69e32m240xgjluezrvpudjn92usrn3dqzfm2tzn3zqkn76d6qfse593"
+          "address": "axelar1svl69e32m240xgjluezrvpudjn92usrn3dqzfm2tzn3zqkn76d6qfse593",
+          "version": "1.1.1"
         },
         "xrpl-evm": {
           "codeId": 24,
-          "address": "axelar1vvdukrmxdylvnn8e59s3gnn49lutv3n9tg4vnsttn33a8zulgfssl62q69"
+          "address": "axelar1vvdukrmxdylvnn8e59s3gnn49lutv3n9tg4vnsttn33a8zulgfssl62q69",
+          "version": "1.1.1"
         },
         "storeCodeProposalId": "181",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
         "lastUploadedCodeId": 24,
         "plume": {
           "codeId": 24,
-          "address": "axelar163ee8p7xne8een7v3hwz6zxh339v6s8js3v5c9520mlnzd7nxneq5eq86v"
+          "address": "axelar163ee8p7xne8een7v3hwz6zxh339v6s8js3v5c9520mlnzd7nxneq5eq86v",
+          "version": "1.1.1"
         },
         "hyperliquid": {
           "codeId": 24,
-          "address": "axelar1qezshrvqspy84w3ermmrny5w6wp347c9nzu3ktq37mwv3hmn42pqdtgzty"
+          "address": "axelar1qezshrvqspy84w3ermmrny5w6wp347c9nzu3ktq37mwv3hmn42pqdtgzty",
+          "version": "1.1.1"
         },
         "berachain": {
           "codeId": 24,
-          "address": "axelar1yedkcrlaf479vcu3xk47emzryc89kwm2m06zmecrd7ruqu4wguuqk0z0vg"
+          "address": "axelar1yedkcrlaf479vcu3xk47emzryc89kwm2m06zmecrd7ruqu4wguuqk0z0vg",
+          "version": "1.1.1"
         },
         "monad": {
           "codeId": 24,
-          "address": "axelar1pwjjvn9cqtk8f5furw26szn7pl2x547cyc8qrsjk542c9gpyfs0spuetwl"
+          "address": "axelar1pwjjvn9cqtk8f5furw26szn7pl2x547cyc8qrsjk542c9gpyfs0spuetwl",
+          "version": "1.1.1"
         },
         "stellar-2025-q3": {
           "codeId": 24,
-          "address": "axelar187kq80afqr94lvs2w7ek6pjczv3789qjx7hpg6dpkfg08n8ll3ssyg9dl8"
+          "address": "axelar187kq80afqr94lvs2w7ek6pjczv3789qjx7hpg6dpkfg08n8ll3ssyg9dl8",
+          "version": "1.1.1"
         },
         "celo-sepolia": {
           "codeId": 24,
-          "address": "axelar14yx3v0dfhkpkffk9q2yqhppena9w22ue76ylv6eneefmjpc6q05s5xy6td"
+          "address": "axelar14yx3v0dfhkpkffk9q2yqhppena9w22ue76ylv6eneefmjpc6q05s5xy6td",
+          "version": "1.1.1"
         },
         "memento-demo": {
           "codeId": 24,
-          "address": "axelar126qyawsymtngnt4squm9l5j6myjy84ckyw93mgllughzckp22tcsc37cep"
+          "address": "axelar126qyawsymtngnt4squm9l5j6myjy84ckyw93mgllughzckp22tcsc37cep",
+          "version": "1.1.1"
         }
       },
       "VotingVerifier": {
@@ -3635,12 +3731,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04"
+          "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04",
+          "version": "2.0.0"
         },
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3650,12 +3747,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 100000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1ce9rcvw8htpwukc048z9kqmyk5zz52d5a7zqn9xlq2pg0mxul9mqxlx2cq"
+          "address": "axelar1ce9rcvw8htpwukc048z9kqmyk5zz52d5a7zqn9xlq2pg0mxul9mqxlx2cq",
+          "version": "2.0.0"
         },
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3665,12 +3763,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 100000,
           "msgIdFormat": "base58_tx_digest_and_event_index",
           "addressFormat": "sui",
           "codeId": 26,
-          "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh"
+          "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh",
+          "version": "2.0.0"
         },
         "xrpl-evm": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3680,12 +3779,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1q8kn9t39ddpce42atk0d6wpdudr6djqxmz689m3nxy92ck0nnftqxfsuyk"
+          "address": "axelar1q8kn9t39ddpce42atk0d6wpdudr6djqxmz689m3nxy92ck0nnftqxfsuyk",
+          "version": "2.0.0"
         },
         "plume": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3695,12 +3795,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1nrdqke6tcxjuymg5gyd9x3yg35n3wrgarnj3sqskp98z2xnvlx9q82f63t"
+          "address": "axelar1nrdqke6tcxjuymg5gyd9x3yg35n3wrgarnj3sqskp98z2xnvlx9q82f63t",
+          "version": "2.0.0"
         },
         "berachain": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3710,12 +3811,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal"
+          "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal",
+          "version": "2.0.0"
         },
         "monad": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3725,12 +3827,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1u080xgqqu9zhl4e9hf2ktdny4pq6kc2pmh6u6mlv8nw5zjvcetvqqjzeu0"
+          "address": "axelar1u080xgqqu9zhl4e9hf2ktdny4pq6kc2pmh6u6mlv8nw5zjvcetvqqjzeu0",
+          "version": "2.0.0"
         },
         "hyperliquid": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3740,12 +3843,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1n64vk7l3zagh2eadkuhl7602lxluu86dn9smfxyp7c2e4v8pqj5sv4ypjr"
+          "address": "axelar1n64vk7l3zagh2eadkuhl7602lxluu86dn9smfxyp7c2e4v8pqj5sv4ypjr",
+          "version": "2.0.0"
         },
         "stellar-2025-q3": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3755,12 +3859,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stellar",
           "codeId": 26,
-          "address": "axelar18y8p7dxesmxttvdzp5sqjksqrnh9xg32gtfqnkkucvv9de38f69qfn6ph3"
+          "address": "axelar18y8p7dxesmxttvdzp5sqjksqrnh9xg32gtfqnkkucvv9de38f69qfn6ph3",
+          "version": "2.0.0"
         },
         "celo-sepolia": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3770,12 +3875,13 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1ccyfamfvzvheec5c4knvq0l5g42knemfrnaq6t6znuwskt963k5smr9aam"
+          "address": "axelar1ccyfamfvzvheec5c4knvq0l5g42knemfrnaq6t6znuwskt963k5smr9aam",
+          "version": "2.0.0"
         },
         "memento-demo": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3785,16 +3891,18 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 26,
-          "address": "axelar1uekdelqqxxuq5e6jxttlaxrhq3aq2ksn45h9lvtljc6hayeqe95qss5s6v"
+          "address": "axelar1uekdelqqxxuq5e6jxttlaxrhq3aq2ksn45h9lvtljc6hayeqe95qss5s6v",
+          "version": "2.0.0"
         },
-        "storeCodeProposalId": "183",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
-        "lastUploadedCodeId": 26
+        "storeCodeProposalId": "388",
+        "storeCodeProposalCodeHash": "d8a38e71c635c28bec1106f0cc5274d6d130c23e0b7ded88364d41aee17328e1",
+        "lastUploadedCodeId": 70,
+        "codeId": 70
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "341",
@@ -3819,7 +3927,8 @@
         "hedera": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
-        }
+        },
+        "version": "1.3.0"
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
@@ -3829,9 +3938,11 @@
         "address": "axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl",
         "axelar": {
           "codeId": 17,
-          "address": "axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl"
+          "address": "axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl",
+          "version": "1.0.0"
         },
-        "lastUploadedCodeId": 17
+        "lastUploadedCodeId": 17,
+        "version": "1.0.0"
       },
       "XrplMultisigProver": {
         "xrpl": {
@@ -3846,7 +3957,8 @@
           "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
           "codeId": 58,
-          "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470"
+          "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470",
+          "version": "1.4.2"
         },
         "storeCodeProposalId": "328",
         "storeCodeProposalCodeHash": "94d8bbf002b97cc586b584f7cfc12caa812bc5ee47581df209dbd8298b6b9ec5",
@@ -3860,21 +3972,24 @@
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
           "codeId": 56,
-          "address": "axelar1pnynr6wnmchutkv6490mdqqxkz54fnrtmq8krqhvglhsqhmu7wzsnc86sy"
+          "address": "axelar1pnynr6wnmchutkv6490mdqqxkz54fnrtmq8krqhvglhsqhmu7wzsnc86sy",
+          "version": "2.0.0"
         },
-        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
-        "lastUploadedCodeId": 56,
-        "storeCodeProposalId": "311"
+        "storeCodeProposalCodeHash": "2abe2cbdcf0b3f983ea9121521aede7269b0b2e08787e104a7f249c217eac083",
+        "lastUploadedCodeId": 71,
+        "storeCodeProposalId": "391",
+        "codeId": 71
       },
       "XrplGateway": {
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
           "codeId": 62,
-          "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh"
+          "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh",
+          "version": "1.3.2"
         },
         "storeCodeProposalId": "363",
         "storeCodeProposalCodeHash": "c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a",
@@ -3886,14 +4001,15 @@
         "lastUploadedCodeId": 60,
         "codeId": 60,
         "instantiateProposalId": "343",
-        "address": "axelar1mla7j6dwvenszzajk64ee7hwlccl09p356mdc2akjwfus2fxdazs0wdmq8"
+        "address": "axelar1mla7j6dwvenszzajk64ee7hwlccl09p356mdc2akjwfus2fxdazs0wdmq8",
+        "version": "2.0.0"
       }
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "https://tm.axelar-testnet.lava.build:443",
-    "lcd": "https://rest.axelar-testnet.lava.build",
-    "grpc": "grpc.axelar-testnet.lava.build:443",
+    "rpc": "https://axelar-testnet-rpc.qubelabs.io:443",
+    "lcd": "https://axelar-testnet-lcd.qubelabs.io",
+    "grpc": "axelar-testnet-grpc.qubelabs.io:9090",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
@@ -3903,6 +4019,7 @@
       "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7"
-    ]
+    ],
+    "cosmosSDK": "0.50.14"
   }
 }

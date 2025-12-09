@@ -4,9 +4,9 @@ use std::str::FromStr;
 
 use clap::ArgMatches;
 use eyre::eyre;
-use k256::elliptic_curve::FieldBytes;
+use k256::SecretKey;
 use k256::pkcs8::DecodePrivateKey;
-use k256::{Secp256k1, SecretKey};
+use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -27,6 +27,7 @@ pub(crate) use solana_sdk::instruction::AccountMeta;
 
 pub(crate) const DEFAULT_COMPUTE_UNITS: u32 = 1_400_000; // Maximum allowed is 1.4M compute units
 pub(crate) const DEFAULT_PRIORITY_FEE: u64 = 10_000; // 10,000 micro-lamports per compute unit
+pub(crate) const MAX_DECIMALS: u8 = 19; // Maximum number of decimal places allowed
 
 pub(crate) fn create_compute_budget_instructions(
     compute_units: u32,
@@ -38,9 +39,13 @@ pub(crate) fn create_compute_budget_instructions(
     ]
 }
 
+static POSITIVE_DECIMAL_REGEX: std::sync::LazyLock<Regex> =
+    std::sync::LazyLock::new(|| Regex::new(r"^\d*\.?\d+$").unwrap());
+
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
 pub(crate) const CHAINS_KEY: &str = "chains";
+#[allow(dead_code)]
 pub(crate) const CHAIN_TYPE_KEY: &str = "chainType";
 pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
 pub(crate) const CONNECTION_TYPE_KEY: &str = "connectionType";
@@ -56,10 +61,14 @@ pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
-pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "SolanaMultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
+pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
+pub(crate) const OWNER_KEY: &str = "owner";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
+pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+pub(crate) const SPL_TOKEN_PROGRAM_ID: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
     let reader = std::io::BufReader::new(file);
@@ -127,6 +136,7 @@ pub(crate) fn save_signed_solana_transaction(
     write_json_to_file_path(tx, path)
 }
 
+#[allow(dead_code)]
 pub(crate) fn decode_its_destination(
     chains_info: &serde_json::Value,
     destination_chain: &str,
@@ -185,8 +195,7 @@ pub(crate) fn print_transaction_result(
             let cluster_param = match config.network_type {
                 NetworkType::Local => "?cluster=custom",
                 NetworkType::Devnet => "?cluster=devnet",
-                NetworkType::Testnet => "?cluster=testnet",
-                NetworkType::Mainnet => "",
+                NetworkType::Mainnet => "?cluster=mainnet-beta",
             };
             println!("   Explorer Link: {explorer_base_url}{tx_signature}{cluster_param}");
             println!("------------------------------------------");
@@ -206,15 +215,14 @@ pub(crate) fn print_transaction_result(
 pub(crate) fn domain_separator(
     chains_info: &serde_json::Value,
     network_type: NetworkType,
-    chain_id: &str,
+    chain: &str,
 ) -> eyre::Result<[u8; 32]> {
     if network_type == NetworkType::Local {
         return Ok([0; 32]);
     }
 
     let from_multisig_prover = String::deserialize(
-        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain_id]
-            [DOMAIN_SEPARATOR_KEY],
+        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain][DOMAIN_SEPARATOR_KEY],
     )?;
 
     let domain_separator: [u8; 32] = hex::decode(from_multisig_prover.trim_start_matches("0x"))?
@@ -303,7 +311,8 @@ fn secret_from_str(s: &str) -> Option<SecretKey> {
     // raw hex
     if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) {
         let bytes = hex::decode(s).ok()?;
-        return SecretKey::from_bytes(FieldBytes::<Secp256k1>::from_slice(&bytes)).ok();
+        let byte_array: [u8; 32] = bytes.try_into().ok()?;
+        return SecretKey::from_bytes(&byte_array.into()).ok();
     }
 
     None
@@ -322,11 +331,11 @@ pub(crate) fn serialized_transactions_filename_from_arg_matches(matches: &ArgMat
 
 pub(crate) fn try_infer_program_id_from_env(
     env: &Value,
-    chain_id: &str,
+    chain: &str,
     program_key: &str,
 ) -> eyre::Result<Pubkey> {
     let id = Pubkey::from_str(&String::deserialize(
-        &env[CHAINS_KEY][chain_id][CONTRACTS_KEY][program_key][ADDRESS_KEY],
+        &env[CHAINS_KEY][chain][CONTRACTS_KEY][program_key][ADDRESS_KEY],
     )?)
     .map_err(|_| {
         eyre!(
@@ -335,4 +344,95 @@ pub(crate) fn try_infer_program_id_from_env(
     })?;
 
     Ok(id)
+}
+
+pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
+    if !POSITIVE_DECIMAL_REGEX.is_match(s) {
+        return Err(eyre::eyre!(
+            "Invalid decimal format: {} (must be a positive number)",
+            s
+        ));
+    }
+
+    if decimals > MAX_DECIMALS {
+        return Err(eyre::eyre!(
+            "Too many decimals: {} (maximum {})",
+            decimals,
+            MAX_DECIMALS
+        ));
+    }
+
+    let decimals = decimals as usize;
+    let decimal_pos = s.find('.').unwrap_or(s.len());
+    let str_without_decimals = s.replace('.', "");
+    let actual_decimals = str_without_decimals.len() - decimal_pos;
+    if decimals < actual_decimals {
+        return Err(eyre::eyre!(
+            "Actual decimals: {} is greater than decimals: {}",
+            actual_decimals,
+            decimals
+        ));
+    }
+    let decimals_to_pad = decimals.saturating_sub(actual_decimals);
+    let decimals_to_trim = actual_decimals.saturating_sub(decimals);
+    let padded_str = format!(
+        "{:0<1$}",
+        str_without_decimals,
+        decimals_to_pad + str_without_decimals.len()
+    );
+    let trimmed_str = padded_str
+        .get(..padded_str.len().saturating_sub(decimals_to_trim))
+        .unwrap_or(&padded_str);
+    trimmed_str.parse::<u64>().map_err(|_| {
+        eyre::eyre!(
+            "Failed to parse '{}' as u64 (possible overflow)",
+            trimmed_str
+        )
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_basic() {
+        assert_eq!(parse_decimal_string_to_raw_units("123", 0).unwrap(), 123);
+        assert_eq!(parse_decimal_string_to_raw_units("1.5", 1).unwrap(), 15);
+        assert_eq!(
+            parse_decimal_string_to_raw_units("123.45", 2).unwrap(),
+            12345
+        );
+        assert_eq!(parse_decimal_string_to_raw_units(".5", 1).unwrap(), 5);
+        assert_eq!(parse_decimal_string_to_raw_units("123", 2).unwrap(), 12300);
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_edge_cases() {
+        assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
+        assert_eq!(
+            parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(),
+            11_234_567_890_123_456_789
+        );
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_errors() {
+        assert!(parse_decimal_string_to_raw_units("", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("abc", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("-1.5", 2).is_err());
+        assert!(parse_decimal_string_to_raw_units("1.5", 20).is_err());
+        assert!(parse_decimal_string_to_raw_units("1.5", 0).is_err());
+    }
+
+    #[test]
+    fn test_parse_decimal_string_to_raw_units_overflow() {
+        let max_u64 = u64::MAX;
+        let max_str = max_u64.to_string();
+        assert_eq!(
+            parse_decimal_string_to_raw_units(&max_str, 0).unwrap(),
+            max_u64
+        );
+        assert!(parse_decimal_string_to_raw_units(&max_str, 1).is_err());
+    }
 }

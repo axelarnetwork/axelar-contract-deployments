@@ -3,8 +3,8 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { Command } from 'commander';
 
-import { getChainConfig, itsHubContractAddress, printInfo, printWarn } from '../common';
-import { FullConfig } from '../common/config';
+import { addEnvOption, getChainConfig, itsHubContractAddress, printError, printInfo, printWarn } from '../common';
+import { ConfigManager, ContractConfig } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
 import { getChainCodecContractNameByChainType } from './utils';
@@ -14,25 +14,46 @@ export interface ContractInfo {
     version: string;
 }
 
+export interface RewardsPoolResponse {
+    balance: string;
+    epoch_duration: string;
+    participation_threshold: [string, string];
+    rewards_per_epoch: string;
+    current_epoch_num: string;
+    last_distribution_epoch: string | null;
+}
+
+export async function queryRewardsPool(
+    client: CosmWasmClient,
+    rewardsAddress: string,
+    chainName: string,
+    contractAddress: string,
+): Promise<RewardsPoolResponse> {
+    return await client.queryContractSmart(rewardsAddress, {
+        rewards_pool: {
+            pool_id: {
+                chain_name: chainName,
+                contract: contractAddress,
+            },
+        },
+    });
+}
+
 async function rewards(client, config, _options, args, _fee) {
     const [chainName] = args;
+    const rewardsAddress = config.getContractConfig('Rewards').address;
+
+    const votingVerifier = config.getVotingVerifierContract(chainName);
+    const votingVerifierAddress = config.validateRequired(votingVerifier.address, `VotingVerifier.${chainName}.address`);
 
     const rewardsContractAddresses = {
-        multisig: config.axelar.contracts.Multisig.address,
-        voting_verifier: config.axelar.contracts.VotingVerifier?.[chainName]?.address,
+        multisig: config.getContractConfig('Multisig').address,
+        voting_verifier: votingVerifierAddress,
     };
 
     for (const [key, address] of Object.entries(rewardsContractAddresses)) {
         try {
-            const result = await client.queryContractSmart(config.axelar.contracts.Rewards.address, {
-                rewards_pool: {
-                    pool_id: {
-                        chain_name: chainName,
-                        contract: address,
-                    },
-                },
-            });
-
+            const result = await queryRewardsPool(client, rewardsAddress, chainName, address);
             printInfo(`Rewards pool for ${key} on ${chainName}`, JSON.stringify(result, null, 2));
         } catch (error) {
             printWarn(`Failed to fetch rewards pool for ${key} on ${chainName}`, `${error.message}`);
@@ -146,12 +167,12 @@ async function itsChainConfig(client, config, _options, args, _fee) {
 async function saveDeployedContracts(client, config, _options, args, _fee) {
     const [chainName] = args;
 
-    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
+    const coordinatorAddress = config.getContractConfig('Coordinator').address;
     if (!coordinatorAddress) {
         return printWarn(`Coordinator contract address not found in config for ${chainName}`);
     }
 
-    const deploymentName = config.axelar?.contracts?.Coordinator?.deployments?.[chainName]?.deploymentName;
+    const deploymentName = config.getContractConfig('Coordinator').deployments?.[chainName]?.deploymentName;
     if (!deploymentName) {
         return printWarn(
             `No deployment found for chain ${chainName} in config.`,
@@ -162,7 +183,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     let result;
     try {
         result = await client.queryContractSmart(coordinatorAddress, {
-            deployed_contracts: {
+            deployment: {
                 deployment_name: deploymentName,
             },
         });
@@ -172,42 +193,19 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
         return printWarn(`Failed to fetch deployed contracts for ${chainName}`, error?.message || String(error));
     }
 
-    if (
-        !result.verifier ||
-        !config.axelar.contracts.VotingVerifier?.[chainName] ||
-        !result.prover ||
-        !config.axelar.contracts.MultisigProver?.[chainName] ||
-        !result.gateway
-    ) {
-        return printWarn(
-            `Missing config for ${chainName}.`,
-            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}'.`,
+    if (!result.verifier_address || !result.prover_address || !result.gateway_address) {
+        throw new Error(
+            `Missing config for ${chainName}. Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
         );
     }
 
-    config.axelar.contracts.VotingVerifier[chainName] = {
-        ...config.axelar.contracts.VotingVerifier[chainName],
-        address: result.verifier,
-    };
-    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
+    config.getVotingVerifierContract(chainName).address = result.verifier_address;
+    config.getMultisigProverContract(chainName).address = result.prover_address;
+    config.getGatewayContract(chainName).address = result.gateway_address;
 
-    if (!config.axelar.contracts.Gateway) {
-        config.axelar.contracts.Gateway = {};
-    }
-    if (!config.axelar.contracts.Gateway[chainName]) {
-        config.axelar.contracts.Gateway[chainName] = {};
-    }
-    config.axelar.contracts.Gateway[chainName] = {
-        ...config.axelar.contracts.Gateway[chainName],
-        address: result.gateway,
-    };
-    printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
-
-    config.axelar.contracts.MultisigProver[chainName] = {
-        ...config.axelar.contracts.MultisigProver[chainName],
-        address: result.prover,
-    };
-    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
+    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier_address);
+    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover_address);
+    printInfo(`Updated Gateway[${chainName}].address`, result.gateway_address);
     printInfo(`Config updated successfully for ${chainName}`);
 }
 
@@ -217,9 +215,9 @@ export async function getContractInfo(client: CosmWasmClient, contract_address: 
     return contract_info;
 }
 
-async function contractInfo(client: CosmWasmClient, config: FullConfig, options: Options): Promise<void> {
+async function contractInfo(client: CosmWasmClient, config: ConfigManager, options: Options): Promise<void> {
     try {
-        const address = config.axelar.contracts[options.contractName]?.address;
+        const address = config.getContractConfig(options.contractName).address;
         if (!address) {
             throw new Error(`No address configured for contract '${options.contractName}'`);
         }
@@ -229,6 +227,49 @@ async function contractInfo(client: CosmWasmClient, config: FullConfig, options:
     } catch (error) {
         console.error(error);
     }
+}
+
+async function queryAllContractVersions(
+    client: CosmWasmClient,
+    config: ConfigManager,
+    _options: Options,
+    _args?: string[],
+    _fee?: unknown,
+): Promise<void> {
+    const axelarContracts = config.axelar.contracts;
+
+    await Promise.all(
+        Object.entries(axelarContracts).map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
+            if (contractConfig.address) {
+                try {
+                    const contractInfo = await getContractInfo(client, contractConfig.address);
+                    contractConfig.version = contractInfo.version;
+                } catch (error) {
+                    printError(`Failed to get contract info for ${contractName}`, error);
+                }
+            }
+
+            const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
+            const versions = {} as Record<string, string[]>;
+            await Promise.all(
+                chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
+                    try {
+                        const contractInfo = await getContractInfo(client, chainContractConfig.address);
+                        chainContractConfig.version = contractInfo.version;
+                        if (!versions[contractInfo.version]) {
+                            versions[contractInfo.version] = [];
+                        }
+                        versions[contractInfo.version].push(chainName);
+                    } catch (error) {
+                        printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                    }
+                }),
+            );
+            if (Object.keys(versions).length > 1) {
+                printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
+            }
+        }),
+    );
 }
 
 const programHandler = () => {
@@ -284,6 +325,15 @@ const programHandler = () => {
         .action((options: Options) => {
             mainQueryProcessor(contractInfo, options, []);
         });
+
+    const contractsVersions = program
+        .command('contract-versions')
+        .description('Query all cosmwasm axelar contract versions per environment')
+        .action((options) => {
+            mainQueryProcessor(queryAllContractVersions, options, []);
+        });
+
+    addEnvOption(contractsVersions);
 
     addAmplifierQueryOptions(rewardsCmd);
     addAmplifierQueryOptions(tokenConfigCmd);

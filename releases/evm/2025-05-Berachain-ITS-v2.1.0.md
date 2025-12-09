@@ -96,10 +96,12 @@ ts-node evm/its.js checks -n $CHAIN -y
 
 ```bash
 # Create a token on Berachain
-ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial_supply] --minter [wallet]  --chainNames $CHAIN --salt [some salt]
+
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
+
 
 # Transfer token to remote chain
 ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
@@ -128,7 +130,8 @@ ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId 
 
 ```bash
 # Deploy token to a stellar from `<ChainName>`
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain stellar --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain stellar --chainNames $CHAIN   --salt [same salt as above] -y
+
 
 # Transfer token to stellar
 ts-node evm/its.js interchain-transfer stellar [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN

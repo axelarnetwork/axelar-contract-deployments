@@ -33,9 +33,8 @@ const CONTRACT_INFO = {
         singletonName: 'InterchainTokenService',
         moduleName: 'interchain_token_service',
         defaultFunctions: {
-            versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            versions: [0, 0, 0, 0, 0, 0, 0, 0],
             functionNames: [
-                'register_coin',
                 'deploy_remote_interchain_token',
                 'send_interchain_transfer',
                 'receive_interchain_transfer',
@@ -52,7 +51,7 @@ const CONTRACT_INFO = {
 function getVariablesForPackage(chain, packageName) {
     const contractConfig = chain.contracts[packageName];
     const info = CONTRACT_INFO[packageName];
-    const defaultFunctions = info.defaultFunctions;
+    const defaultFunctions = { ...info.defaultFunctions, versions: [...info.defaultFunctions.versions] };
     const version = Math.max(...Object.keys(contractConfig.versions).map((version) => Number(version)));
     defaultFunctions.versions.fill(version);
     return {
@@ -61,7 +60,7 @@ function getVariablesForPackage(chain, packageName) {
         versionedId: contractConfig.objects[info.singletonName + 'v0'],
         ownerCapId: contractConfig.objects.OwnerCap,
         moduleName: info.moduleName,
-        defaultFunctions: info.defaultFunctions,
+        defaultFunctions,
         contract: contractConfig,
     };
 }
@@ -71,7 +70,7 @@ async function allowFunctions(keypair, client, packageId, moduleName, singletonI
 
     const builder = new TxBuilder(client);
 
-    for (const i in versions) {
+    for (let i = 0; i < versions.length; i++) {
         await builder.moveCall({
             target: `${packageId}::${moduleName}::allow_function`,
             arguments: [singletonId, ownerCapId, versions[i], functionNames[i]],
@@ -86,7 +85,7 @@ async function disallowFunctions(keypair, client, packageId, moduleName, singlet
 
     const builder = new TxBuilder(client);
 
-    for (const i in versions) {
+    for (let i = 0; i < versions.length; i++) {
         await builder.moveCall({
             target: `${packageId}::${moduleName}::disallow_function`,
             arguments: [singletonId, ownerCapId, versions[i], functionNames[i]],
@@ -111,8 +110,8 @@ async function pause(keypair, client, chain, args, options) {
     if (functions === SPECIAL_PAUSE_FUNCTION_TAGS.ALL) {
         const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
 
-        for (const version in allowedFunctionsArray) {
-            if (options.version !== 'all' && options.version !== version) {
+        for (let version = 0; version < allowedFunctionsArray.length; version++) {
+            if (options.version !== 'all' && options.version !== String(version)) {
                 continue;
             }
 
@@ -216,7 +215,7 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--functions <functions>',
-                'The functions to allow. Use use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
+                'The functions to allow. Use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
             ).default('default'),
         )
         .addOption(new Option('--version, <version>', 'The version to pause. Use all to pause all versions').default('all'))

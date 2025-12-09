@@ -1,0 +1,70 @@
+name: Rust Linting
+
+on: pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: blacksmith-4vcpu-ubuntu-2204
+    outputs:
+      solana: ${{ steps.filter.outputs.solana }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            solana:
+              - 'solana/**'
+            workflow:
+              - '.github/workflows/rust-lint.yaml'
+
+  rust-lints:
+    runs-on: blacksmith-4vcpu-ubuntu-2204
+    needs: changes
+    if: needs.changes.outputs.solana == 'true' || needs.changes.outputs.workflow == 'true'
+    defaults:
+      run:
+        working-directory: solana
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: Remove pin once axelar-amplifier-solana is stable
+      - name: Clone axelar-amplifier-solana
+        run: |
+          git clone https://github.com/axelarnetwork/axelar-amplifier-solana.git
+          cd axelar-amplifier-solana
+          git checkout 9f33615e51f0076f74597165a7049c1a0bb4a598
+        working-directory: solana
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.86.0
+          components: rustfmt, clippy
+
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: Rust Cache
+        uses: useblacksmith/rust-cache@v3.0.1
+        with:
+          shared-key: 'cache-lint'
+          workspaces: 'solana'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libusb-1.0-0-dev
+
+      - name: Run cargo clippy (devnet-amplifier)
+        run: cargo clippy --workspace --allow-dirty --fix -- -D warnings
+
+      - name: Run cargo doc
+        run: cargo doc --no-deps --workspace
+
+      - name: Check for uncommitted changes
+        run: git diff --exit-code

@@ -14,6 +14,7 @@ const {
     validateParameters,
     validateDestinationChain,
     validateChain,
+    encodeITSDestinationToken,
 } = require('../common');
 const {
     addBaseOptions,
@@ -57,6 +58,7 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
             printInfo(`Successfully ${action === 'set_trusted_chain' ? 'added' : 'removed'} trusted chain`, trustedChain);
         } catch (error) {
             printError(`Failed to process ${action}`, trustedChain, error);
+            throw new Error(error);
         }
     }
 }
@@ -89,6 +91,7 @@ async function isTrustedChain(wallet, _config, chain, contract, args, options) {
         }
     } catch (error) {
         printError(`Failed to check trusted chain`, trustedChain, error);
+        throw new Error(error);
     }
 }
 
@@ -407,7 +410,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
-    const itsDestinationTokenAddress = encodeITSDestination(config.chains, destinationChain, destinationTokenAddress);
+    const itsDestinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationTokenAddress);
     printInfo('Human-readable destination token address', destinationTokenAddress);
 
     let operatorBytes = nativeToScVal(null, { type: 'void' });
@@ -635,3 +638,4 @@ if (require.main === module) {
 
     program.parse();
 }
+module.exports = { addTrustedChains, removeTrustedChains, manageTrustedChains };

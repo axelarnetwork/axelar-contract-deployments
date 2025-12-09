@@ -1,12 +1,5 @@
-## why?
+### why
+- <!-- Explain the reason for this change -->
 
-- ...
-- _Task_: ?
-
-## how?
-
-- ...
-
-### testing
-
-- ...
+### how
+<!-- An agent will fill this out -->

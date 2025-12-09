@@ -1,4 +1,4 @@
-use axelar_solana_governance::instructions::builder::IxBuilder;
+use anchor_lang::InstructionData;
 use base64::Engine;
 use clap::{Args, Subcommand};
 use solana_sdk::instruction::AccountMeta;
@@ -100,14 +100,12 @@ pub(crate) fn build_instruction(
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (config_pda, _) = axelar_solana_governance::state::GovernanceConfig::pda();
+    let (config_pda, _) = solana_axelar_governance::GovernanceConfig::find_pda();
 
     match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config, &config_pda),
         Commands::ExecuteProposal(args) => execute_proposal(fee_payer, args, &config_pda),
-        Commands::ExecuteOperatorProposal(args) => {
-            execute_operator_proposal(fee_payer, args, &config_pda)
-        }
+        Commands::ExecuteOperatorProposal(args) => execute_operator_proposal(args, &config_pda),
     }
 }
 
@@ -161,16 +159,16 @@ fn init(
     let chain_hash = solana_sdk::keccak::hashv(&[init_args.governance_chain.as_bytes()]).0;
     let address_hash = solana_sdk::keccak::hashv(&[init_args.governance_address.as_bytes()]).0;
 
-    let governance_config = axelar_solana_governance::state::GovernanceConfig::new(
+    let params = solana_axelar_governance::GovernanceConfigInit {
         chain_hash,
         address_hash,
-        init_args.minimum_proposal_eta_delay,
-        init_args.operator.to_bytes(),
-    );
+        minimum_proposal_eta_delay: init_args.minimum_proposal_eta_delay,
+        operator: init_args.operator.to_bytes(),
+    };
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
-        ADDRESS_KEY: axelar_solana_governance::id().to_string(),
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
+        ADDRESS_KEY: solana_axelar_governance::id().to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
         GOVERNANCE_ADDRESS_KEY: init_args.governance_address,
         GOVERNANCE_CHAIN_KEY: init_args.governance_chain,
@@ -181,11 +179,23 @@ fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![
-        IxBuilder::new()
-            .initialize_config(fee_payer, config_pda, governance_config)
-            .build(),
-    ])
+    let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(
+        &solana_axelar_governance::id(),
+    );
+
+    let ix_data = solana_axelar_governance::instruction::InitializeConfig { params }.data();
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_governance::id(),
+        accounts: vec![
+            AccountMeta::new(*fee_payer, true),
+            AccountMeta::new_readonly(*fee_payer, true),
+            AccountMeta::new_readonly(program_data, false),
+            AccountMeta::new(*config_pda, false),
+            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        ],
+        data: ix_data,
+    }])
 }
 
 fn execute_proposal(
@@ -194,51 +204,161 @@ fn execute_proposal(
     config_pda: &Pubkey,
 ) -> eyre::Result<Vec<Instruction>> {
     let calldata_bytes = base64::engine::general_purpose::STANDARD.decode(args.base.calldata)?;
-    let native_value_receiver_account = args
+
+    let solana_accounts: Vec<solana_axelar_governance::SolanaAccountMetadata> = args
         .base
-        .native_value_receiver
-        .map(|pk| AccountMeta::new(pk, false));
+        .target_accounts
+        .iter()
+        .map(|meta| solana_axelar_governance::SolanaAccountMetadata {
+            pubkey: meta.pubkey.to_bytes(),
+            is_signer: meta.is_signer,
+            is_writable: meta.is_writable,
+        })
+        .collect();
 
-    // Note: ETA is part of the proposal data stored on-chain, not provided here.
-    // The builder calculates the proposal hash based on target, calldata, native_value.
-    // The ETA value used in `with_proposal_data` is only relevant for *scheduling*,
-    // not execution, but the builder requires some value. We use 0 here.
-    let builder = IxBuilder::new().with_proposal_data(
-        args.base.target,
-        args.base.native_value,
-        0,
-        native_value_receiver_account,
-        &args.base.target_accounts,
-        calldata_bytes,
-    );
+    let native_value_receiver =
+        args.base
+            .native_value_receiver
+            .map(|pk| solana_axelar_governance::SolanaAccountMetadata {
+                pubkey: pk.to_bytes(),
+                is_signer: false,
+                is_writable: true,
+            });
 
-    Ok(vec![builder.execute_proposal(config_pda).build()])
+    let call_data = solana_axelar_governance::ExecuteProposalCallData {
+        solana_accounts,
+        solana_native_value_receiver_account: native_value_receiver,
+        call_data: calldata_bytes,
+    };
+
+    let mut native_value = [0u8; 32];
+    #[allow(clippy::little_endian_bytes)]
+    native_value[..8].copy_from_slice(&args.base.native_value.to_le_bytes());
+
+    let execute_data = solana_axelar_governance::ExecuteProposalData {
+        target_address: args.base.target.to_bytes(),
+        call_data,
+        native_value,
+    };
+
+    let proposal_hash = solana_axelar_governance::ExecutableProposal::hash_from_data(&execute_data);
+    let (proposal_pda, _) = solana_axelar_governance::ExecutableProposal::find_pda(&proposal_hash);
+
+    let ix_data = solana_axelar_governance::instruction::ExecuteTimelockProposal {
+        execute_proposal_data: execute_data.clone(),
+    }
+    .data();
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new(*config_pda, false),
+        AccountMeta::new(proposal_pda, false),
+    ];
+
+    for meta in &execute_data.call_data.solana_accounts {
+        accounts.push(AccountMeta {
+            pubkey: Pubkey::new_from_array(meta.pubkey),
+            is_signer: meta.is_signer,
+            is_writable: meta.is_writable,
+        });
+    }
+
+    if let Some(receiver) = &execute_data.call_data.solana_native_value_receiver_account {
+        accounts.push(AccountMeta::new(
+            Pubkey::new_from_array(receiver.pubkey),
+            false,
+        ));
+    }
+
+    accounts.push(AccountMeta::new_readonly(args.base.target, false));
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_governance::id(),
+        accounts,
+        data: ix_data,
+    }])
 }
 
 fn execute_operator_proposal(
-    fee_payer: &Pubkey,
     args: ExecuteOperatorProposalArgs,
     config_pda: &Pubkey,
 ) -> eyre::Result<Vec<Instruction>> {
     let calldata_bytes = base64::engine::general_purpose::STANDARD.decode(args.base.calldata)?;
-    let native_value_receiver_account = args
+
+    let solana_accounts: Vec<solana_axelar_governance::SolanaAccountMetadata> = args
         .base
-        .native_value_receiver
-        .map(|pk| AccountMeta::new(pk, false));
+        .target_accounts
+        .iter()
+        .map(|meta| solana_axelar_governance::SolanaAccountMetadata {
+            pubkey: meta.pubkey.to_bytes(),
+            is_signer: meta.is_signer,
+            is_writable: meta.is_writable,
+        })
+        .collect();
 
-    // ETA is irrelevant for operator execution. Use 0.
-    let builder = IxBuilder::new().with_proposal_data(
-        args.base.target,
-        args.base.native_value,
-        0,
-        native_value_receiver_account,
-        &args.base.target_accounts,
-        calldata_bytes,
-    );
+    let native_value_receiver =
+        args.base
+            .native_value_receiver
+            .map(|pk| solana_axelar_governance::SolanaAccountMetadata {
+                pubkey: pk.to_bytes(),
+                is_signer: false,
+                is_writable: true,
+            });
 
-    Ok(vec![
-        builder
-            .execute_operator_proposal(fee_payer, config_pda, &args.operator)
-            .build(),
-    ])
+    let call_data = solana_axelar_governance::ExecuteProposalCallData {
+        solana_accounts,
+        solana_native_value_receiver_account: native_value_receiver,
+        call_data: calldata_bytes,
+    };
+
+    let mut native_value = [0u8; 32];
+    #[allow(clippy::little_endian_bytes)]
+    native_value[..8].copy_from_slice(&args.base.native_value.to_le_bytes());
+
+    let execute_data = solana_axelar_governance::ExecuteProposalData {
+        target_address: args.base.target.to_bytes(),
+        call_data,
+        native_value,
+    };
+
+    let proposal_hash = solana_axelar_governance::ExecutableProposal::hash_from_data(&execute_data);
+    let (proposal_pda, _) = solana_axelar_governance::ExecutableProposal::find_pda(&proposal_hash);
+    let (operator_proposal_pda, _) =
+        solana_axelar_governance::OperatorProposal::find_pda(&proposal_hash);
+
+    let ix_data = solana_axelar_governance::instruction::ExecuteOperatorProposal {
+        execute_proposal_data: execute_data.clone(),
+    }
+    .data();
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new(*config_pda, false),
+        AccountMeta::new(proposal_pda, false),
+        AccountMeta::new_readonly(args.operator, true),
+        AccountMeta::new(operator_proposal_pda, false),
+    ];
+
+    for meta in &execute_data.call_data.solana_accounts {
+        accounts.push(AccountMeta {
+            pubkey: Pubkey::new_from_array(meta.pubkey),
+            is_signer: meta.is_signer,
+            is_writable: meta.is_writable,
+        });
+    }
+
+    if let Some(receiver) = &execute_data.call_data.solana_native_value_receiver_account {
+        accounts.push(AccountMeta::new(
+            Pubkey::new_from_array(receiver.pubkey),
+            false,
+        ));
+    }
+
+    accounts.push(AccountMeta::new_readonly(args.base.target, false));
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_governance::id(),
+        accounts,
+        data: ix_data,
+    }])
 }

@@ -2,9 +2,9 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-const { calculateFee, GasPrice } = require('@cosmjs/stargate');
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
+const path = require('path');
+const fs = require('fs');
+const protobuf = require('protobufjs');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
@@ -13,9 +13,21 @@ const {
     InstantiateContract2Proposal,
     ExecuteContractProposal,
     MigrateContractProposal,
-} = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
+    UpdateInstantiateConfigProposal,
+} = require('cosmjs-types/cosmwasm/wasm/v1/proposal_legacy');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
+const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
+const {
+    MsgExecuteContract,
+    MsgInstantiateContract,
+    MsgInstantiateContract2,
+    MsgMigrateContract,
+    MsgStoreCode,
+    MsgStoreAndInstantiateContract,
+} = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
     printInfo,
     isString,
@@ -39,6 +51,7 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
+const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -48,6 +61,9 @@ const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
+const GOVERNANCE_MODULE_ADDRESS = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+const COSMOS_SDK_LEGACY_THRESHOLD = '0.50.0';
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -65,18 +81,28 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const getAmplifierBaseContractConfig = (config, contractName) => {
-    const contractBaseConfig = config.axelar.contracts[contractName];
+const isLegacySDK = (config) => {
+    const version = config.axelar.cosmosSDK;
 
-    if (!contractBaseConfig) {
-        throw new Error(`Contract ${contractName} not found in config`);
+    if (!version) {
+        throw new Error('SDK version must be configured in axelar config');
     }
 
-    return contractBaseConfig;
+    const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
+    const cleanThreshold = COSMOS_SDK_LEGACY_THRESHOLD.startsWith('v') ? COSMOS_SDK_LEGACY_THRESHOLD.slice(1) : COSMOS_SDK_LEGACY_THRESHOLD;
+
+    const [vMajor, vMinor] = cleanVersion.split('.').map(Number);
+    const [tMajor, tMinor] = cleanThreshold.split('.').map(Number);
+
+    if (isNaN(vMajor) || isNaN(vMinor) || isNaN(tMajor) || isNaN(tMinor)) {
+        throw new Error(`Invalid SDK version format: ${version} or threshold: ${COSMOS_SDK_LEGACY_THRESHOLD}`);
+    }
+
+    return vMajor < tMajor || (vMajor === tMajor && vMinor < tMinor);
 };
 
 const getAmplifierContractConfig = (config, { contractName, chainName }) => {
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (!chainName) {
         return { contractBaseConfig, contractConfig: contractBaseConfig }; // contractConfig is the same for non-chain specific contracts
@@ -94,7 +120,7 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
 const getCodeId = async (client, config, options) => {
     const { fetchCodeId, codeId, contractName } = options;
 
-    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    const contractBaseConfig = config.getContractConfig(contractName);
 
     if (codeId) {
         return codeId;
@@ -111,7 +137,8 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const executeTransaction = async (client, account, contractAddress, message, fee) => {
+const executeTransaction = async (client, contractAddress, message, fee) => {
+    const [account] = client.accounts;
     const tx = await client.execute(account.address, contractAddress, message, fee, '');
     return tx;
 };
@@ -334,15 +361,57 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     };
 };
 
+const makeEventVerifierInstantiateMsg = (config, _options, contractConfig) => {
+    const {
+        axelar: { contracts },
+    } = config;
+    const {
+        ServiceRegistry: { address: serviceRegistryAddress },
+    } = contracts;
+    const { governanceAddress, adminAddress, serviceName, votingThreshold, blockExpiry } = contractConfig;
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error('Missing or invalid EventVerifier.governanceAddress in axelar info');
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error('Missing or invalid EventVerifier.adminAddress in axelar info');
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error('Missing or invalid EventVerifier.serviceName in axelar info');
+    }
+
+    if (!isStringArray(votingThreshold)) {
+        throw new Error('Missing or invalid EventVerifier.votingThreshold in axelar info');
+    }
+
+    if (!isNumber(blockExpiry)) {
+        throw new Error('Missing or invalid EventVerifier.blockExpiry in axelar info');
+    }
+
+    return {
+        governance_address: governanceAddress,
+        service_registry_address: serviceRegistryAddress,
+        service_name: serviceName,
+        admin_address: adminAddress,
+        voting_threshold: votingThreshold,
+        block_expiry: toBigNumberString(blockExpiry),
+    };
+};
+
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = getAxelarGatewayContractForChain(chainName);
     const {
         axelar: { contracts },
         chains: {
             [chainName]: {
                 contracts: {
-                    [axelarGatewayContract]: { address: gatewayAddress },
+                    [AXELAR_GATEWAY_CONTRACT_NAME]: { address: gatewayAddress },
                 },
             },
         },
@@ -488,30 +557,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const getVerifierContractForChain = (chainName) => {
-    const chainVerifierMapping = {
-        stacks: 'StacksVotingVerifier',
-        solana: 'SolanaVotingVerifier',
-    };
-
-    return chainVerifierMapping[chainName] || 'VotingVerifier';
-};
-
-const getGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        solana: 'SolanaGateway',
-    };
-
-    return chainGatewayMapping[chainName] || 'Gateway';
-};
-
-const getAxelarGatewayContractForChain = (chainName) => {
-    const chainGatewayMapping = {
-        stacks: 'GatewayStorage',
-    };
-
-    return chainGatewayMapping[chainName] || 'AxelarGateway';
-};
+const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
 
 // Helpers to resolve ChainCodecXyz entries from the new split config
 /** Get the ChainCodec config object for the chain type (single instance, not per-chain) */
@@ -542,13 +588,12 @@ const getChainCodecAddressForChain = (config, chainName) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
 
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                [verifierContract]: {
+                [VERIFIER_CONTRACT_NAME]: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -560,7 +605,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid ${verifierContract}[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${VERIFIER_CONTRACT_NAME}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -691,8 +736,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContractName = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -702,11 +745,10 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        // ChainCodec address will be resolved dynamically from the split ChainCodec contracts
-        [verifierContract]: {
+        [VERIFIER_CONTRACT_NAME]: {
             [chainName]: { address: verifierAddress },
         },
-        [gatewayContractName]: {
+        [GATEWAY_CONTRACT_NAME]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -942,7 +984,7 @@ const getStoreCodeParams = (options) => {
     };
 };
 
-const getStoreInstantiateParams = (config, options, msg) => {
+const getStoreInstantiateParams = (_config, options, msg) => {
     const { admin } = options;
 
     return {
@@ -1001,6 +1043,15 @@ const getParameterChangeParams = ({ title, description, changes }) => ({
     })),
 });
 
+const getUpdateInstantiateParams = (options) => {
+    const { msg } = options;
+
+    return {
+        ...getSubmitProposalParams(options),
+        accessConfigUpdates: JSON.parse(msg),
+    };
+};
+
 const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
@@ -1019,22 +1070,75 @@ const getMigrateContractParams = (config, options) => {
     };
 };
 
-const encodeStoreCodeProposal = (options) => {
-    const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
+const encodeStoreCode = (config, options) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
-        value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
+            value: Uint8Array.from(StoreCodeProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { source, builder, instantiateAddresses } = options;
+        const wasm = readContractCode(options);
+
+        const instantiatePermission =
+            instantiateAddresses && instantiateAddresses.length > 0
+                ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+                : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
+
+        const storeMsg = MsgStoreCode.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            wasmByteCode: zlib.gzipSync(wasm),
+            instantiatePermission,
+            source,
+            builder,
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgStoreCode',
+            value: Uint8Array.from(MsgStoreCode.encode(storeMsg).finish()),
+        };
+    }
 };
 
-const encodeStoreInstantiateProposal = (config, options, msg) => {
-    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+const encodeStoreInstantiate = (config, options, msg) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
-        value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
+            value: Uint8Array.from(StoreAndInstantiateContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { source, builder, instantiateAddresses, admin } = options;
+        const wasm = readContractCode(options);
+
+        const instantiatePermission =
+            instantiateAddresses && instantiateAddresses.length > 0
+                ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+                : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
+
+        const storeAndInstantiateMsg = MsgStoreAndInstantiateContract.fromPartial({
+            authority: GOVERNANCE_MODULE_ADDRESS,
+            wasmByteCode: zlib.gzipSync(wasm),
+            instantiatePermission,
+            admin,
+            label: getLabel(options),
+            msg: Buffer.from(JSON.stringify(msg)),
+            funds: [],
+            source,
+            builder,
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract',
+            value: Uint8Array.from(MsgStoreAndInstantiateContract.encode(storeAndInstantiateMsg).finish()),
+        };
+    }
 };
 
 const decodeProposalAttributes = (proposalJson) => {
@@ -1042,34 +1146,97 @@ const decodeProposalAttributes = (proposalJson) => {
         proposalJson.msg = JSON.parse(atob(proposalJson.msg));
     }
 
+    if (proposalJson.wasmByteCode) {
+        proposalJson.wasmByteCode = `<${proposalJson.wasmByteCode.length} bytes>`;
+    }
+
     return proposalJson;
 };
 
-const encodeInstantiateProposal = (config, options, msg) => {
-    const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
+const encodeInstantiate = (config, options, msg) => {
+    const isLegacy = isLegacySDK(config);
+    const { instantiate2 } = options;
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
-        value: Uint8Array.from(InstantiateContractProposal.encode(proposal).finish()),
-    };
+    if (isLegacy) {
+        if (instantiate2) {
+            const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
+                value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
+            };
+        } else {
+            const proposal = InstantiateContractProposal.fromPartial(getInstantiateContractParams(config, options, msg));
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.InstantiateContractProposal',
+                value: Uint8Array.from(InstantiateContractProposal.encode(proposal).finish()),
+            };
+        }
+    } else {
+        const { admin, contractName, salt, chainName } = options;
+        const { contractConfig } = getAmplifierContractConfig(config, options);
+
+        if (instantiate2) {
+            const instantiateMsg = MsgInstantiateContract2.fromPartial({
+                sender: GOVERNANCE_MODULE_ADDRESS,
+                admin,
+                codeId: contractConfig.codeId,
+                label: getLabel(options),
+                msg: Buffer.from(JSON.stringify(msg)),
+                funds: [],
+                salt: getSalt(salt, contractName, chainName),
+                fixMsg: false,
+            });
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract2',
+                value: Uint8Array.from(MsgInstantiateContract2.encode(instantiateMsg).finish()),
+            };
+        } else {
+            const instantiateMsg = MsgInstantiateContract.fromPartial({
+                sender: GOVERNANCE_MODULE_ADDRESS,
+                admin,
+                codeId: contractConfig.codeId,
+                label: getLabel(options),
+                msg: Buffer.from(JSON.stringify(msg)),
+                funds: [],
+            });
+            return {
+                typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+                value: Uint8Array.from(MsgInstantiateContract.encode(instantiateMsg).finish()),
+            };
+        }
+    }
 };
 
-const encodeInstantiate2Proposal = (config, options, msg) => {
-    const proposal = InstantiateContract2Proposal.fromPartial(getInstantiateContract2Params(config, options, msg));
+const encodeExecuteContract = (config, options, chainName) => {
+    const isLegacy = isLegacySDK(config);
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.InstantiateContract2Proposal',
-        value: Uint8Array.from(InstantiateContract2Proposal.encode(proposal).finish()),
-    };
-};
+    if (isLegacy) {
+        const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
+            value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { contractName, msg } = options;
+        const {
+            axelar: {
+                contracts: { [contractName]: contractConfig },
+            },
+        } = config;
+        const chainConfig = getChainConfig(config.chains, chainName);
 
-const encodeExecuteContractProposal = (config, options, chainName) => {
-    const proposal = ExecuteContractProposal.fromPartial(getExecuteContractParams(config, options, chainName));
+        const executeMsg = MsgExecuteContract.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: contractConfig[chainConfig?.axelarId]?.address || contractConfig.address,
+            msg: Buffer.from(msg),
+            funds: [],
+        });
 
-    return {
-        typeUrl: '/cosmwasm.wasm.v1.ExecuteContractProposal',
-        value: Uint8Array.from(ExecuteContractProposal.encode(proposal).finish()),
-    };
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+            value: Uint8Array.from(MsgExecuteContract.encode(executeMsg).finish()),
+        };
+    }
 };
 
 const encodeParameterChangeProposal = (options) => {
@@ -1081,29 +1248,154 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
-const encodeMigrateContractProposal = (config, options) => {
-    const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
+const encodeUpdateInstantiateConfigProposal = (options) => {
+    const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
 
     return {
-        typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
-        value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
+        typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
+        value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
     };
 };
 
-const encodeSubmitProposal = (content, config, options, proposer) => {
+const encodeMigrate = (config, options) => {
+    const isLegacy = isLegacySDK(config);
+
+    if (isLegacy) {
+        const proposal = MigrateContractProposal.fromPartial(getMigrateContractParams(config, options));
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MigrateContractProposal',
+            value: Uint8Array.from(MigrateContractProposal.encode(proposal).finish()),
+        };
+    } else {
+        const { msg, chainName } = options;
+
+        let contractConfig;
+        let chainConfig;
+        if (!options.address || !options.codeId) {
+            contractConfig = getAmplifierContractConfig(config, options).contractConfig;
+            chainConfig = getChainConfig(config.chains, chainName);
+        }
+
+        const migrateMsg = MsgMigrateContract.fromPartial({
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: options.address ?? (contractConfig[chainConfig?.axelarId]?.address || contractConfig.address),
+            codeId: options.codeId ?? contractConfig.codeId,
+            msg: Buffer.from(msg),
+        });
+
+        return {
+            typeUrl: '/cosmwasm.wasm.v1.MsgMigrateContract',
+            value: Uint8Array.from(MsgMigrateContract.encode(migrateMsg).finish()),
+        };
+    }
+};
+
+const loadProtoDefinition = (protoName) => {
+    const fullPath = path.join(__dirname, 'proto', protoName);
+    try {
+        return fs.readFileSync(fullPath, 'utf8');
+    } catch (error) {
+        throw new Error(`Failed to load proto: ${fullPath}. ${error.message}`);
+    }
+};
+
+const encodeCallContracts = (proposalData) => {
+    const { title, description, contract_calls: contractCallsInput } = proposalData;
+
+    if (!title || !description || !Array.isArray(contractCallsInput)) {
+        throw new Error('Invalid proposal data: must have title, description, and contract_calls array');
+    }
+
+    const protoDefinition = loadProtoDefinition('axelarnet_call_contracts.proto');
+
+    let root;
+    try {
+        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+        root = parsed.root;
+    } catch (error) {
+        throw new Error(`Failed to parse proto definition: ${error.message}`);
+    }
+
+    const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
+    const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
+
+    if (!CallContractsProposal || !ContractCall) {
+        throw new Error('Failed to lookup proto types');
+    }
+
+    const contractCalls = contractCallsInput.map((call, index) => {
+        const { chain, contract_address: contractAddress, payload } = call || {};
+
+        if (!chain || !contractAddress || !payload) {
+            throw new Error(`Invalid contract_call at index ${index}: must have chain, contract_address, and payload`);
+        }
+
+        const payloadBytes = Buffer.from(payload, 'base64');
+
+        const contractCall = ContractCall.create({
+            chain,
+            contract_address: contractAddress,
+            payload: payloadBytes,
+        });
+
+        const errMsg = ContractCall.verify(contractCall);
+        if (errMsg) {
+            throw new Error(`Invalid ContractCall at index ${index}: ${errMsg}`);
+        }
+
+        return contractCall;
+    });
+
+    const proposal = CallContractsProposal.create({
+        title,
+        description,
+        contract_calls: contractCalls,
+    });
+
+    const errMsg = CallContractsProposal.verify(proposal);
+    if (errMsg) {
+        throw new Error(`Invalid CallContractsProposal: ${errMsg}`);
+    }
+
+    const message = CallContractsProposal.encode(proposal).finish();
+
+    return {
+        typeUrl: '/axelar.axelarnet.v1beta1.CallContractsProposal',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
     } = config;
-    const { deposit } = options;
+    const { deposit, title, description } = options;
 
-    return {
-        typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
-        value: MsgSubmitProposal.fromPartial({
-            content,
-            initialDeposit: [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }],
-            proposer,
-        }),
-    };
+    const initialDeposit = [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }];
+    const isLegacy = isLegacySDK(config);
+
+    if (isLegacy) {
+        return {
+            typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
+            value: MsgSubmitProposal.fromPartial({
+                content: proposalDataOrMessages,
+                initialDeposit,
+                proposer,
+            }),
+        };
+    } else {
+        return {
+            typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
+            value: MsgSubmitProposalV1.fromPartial({
+                messages: proposalDataOrMessages,
+                initialDeposit,
+                proposer,
+                metadata: '',
+                title,
+                summary: description,
+            }),
+        };
+    }
 };
 
 // Retries sign-and-broadcast on transient RPC socket closures
@@ -1128,14 +1420,41 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
-const submitProposal = async (client, config, options, content, fee) => {
-    const [account] = client.accounts;
+const submitProposal = async (client, config, options, proposal, fee) => {
+    const isLegacy = isLegacySDK(config);
+    const [account] = isLegacy ? client.accounts : await client.signer.getAccounts();
 
-    const submitProposalMsg = encodeSubmitProposal(content, config, options, account.address);
+    if (!isLegacy) {
+        printInfo('Proposer address', account.address);
+    }
 
-    const { events } = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
+    const normalizedProposal = isLegacy ? proposal : Array.isArray(proposal) ? proposal : [proposal];
 
-    return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
+    const submitProposalMsg = encodeSubmitProposal(normalizedProposal, config, options, account.address);
+
+    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
+    const { events } = result;
+
+    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
+    if (!proposalEvent) {
+        throw new Error('Proposal submission event not found');
+    }
+
+    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
+    if (!proposalId) {
+        throw new Error('Proposal ID not found in events');
+    }
+
+    return proposalId;
+};
+
+const submitCallContracts = async (client, config, options, proposalData, fee) => {
+    if (!proposalData.title || !proposalData.description || !proposalData.contract_calls) {
+        throw new Error('Invalid proposal data: must have title, description, and contract_calls');
+    }
+
+    const proposal = encodeCallContracts(proposalData);
+    return submitProposal(client, config, options, proposal, fee);
 };
 
 const getContractR2Url = (contractName, contractVersion) => {
@@ -1185,216 +1504,6 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
-const generateDeploymentName = (chainName, codeId) => {
-    return `${chainName}-${codeId}`;
-};
-
-const getVerifierInstantiateMsg = (config, chainName) => {
-    const {
-        axelar: {
-            contracts: {
-                ServiceRegistry: { address: serviceRegistryAddress },
-                Rewards: { address: rewardsAddress },
-                VotingVerifier: { [chainName]: verifierConfig },
-            },
-        },
-    } = config;
-
-    if (!verifierConfig) {
-        throw new Error(`VotingVerifier config not found for chain ${chainName}`);
-    }
-
-    const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
-        verifierConfig;
-    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
-
-    if (!validateAddress(serviceRegistryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    if (!validateAddress(rewardsAddress)) {
-        throw new Error('Missing or invalid Rewards.address in axelar info');
-    }
-
-    if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
-    }
-
-    if (!validateAddress(chainCodecAddress)) {
-        throw new Error(`Missing or invalid ChainCodec address for chain ${chainName} in axelar info`);
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
-    }
-
-    if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
-    }
-
-    if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
-    }
-
-    if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
-    }
-
-    if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
-    }
-
-    if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
-    }
-
-    return {
-        service_registry_address: serviceRegistryAddress,
-        governance_address: governanceAddress,
-        service_name: serviceName,
-        source_gateway_address: sourceGatewayAddress,
-        voting_threshold: votingThreshold,
-        block_expiry: toBigNumberString(blockExpiry),
-        confirmation_height: confirmationHeight,
-        source_chain: chainName,
-        rewards_address: rewardsAddress,
-        msg_id_format: msgIdFormat,
-        chain_codec_address: chainCodecAddress,
-    };
-};
-
-const getProverInstantiateMsg = (config, chainName) => {
-    const {
-        axelar: {
-            contracts: {
-                MultisigProver: { [chainName]: proverConfig },
-                Router: { address: routerAddress },
-            },
-            chainId: axelarChainId,
-        },
-    } = config;
-
-    if (!proverConfig) {
-        throw new Error(`MultisigProver config not found for chain ${chainName}`);
-    }
-
-    const {
-        governanceAddress,
-        adminAddress,
-        signingThreshold,
-        serviceName,
-        verifierSetDiffThreshold,
-        keyType,
-        domainSeparator,
-        sigVerifierAddress,
-    } = proverConfig;
-    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
-
-    if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
-    }
-
-    if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
-    }
-
-    if (!validateAddress(chainCodecAddress)) {
-        throw new Error(`Missing or invalid ChainCodec address for chain ${chainName} in axelar info`);
-    }
-
-    if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
-    }
-
-    if (!isNumber(verifierSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
-    }
-
-    if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
-    }
-
-    if (!validateAddress(routerAddress)) {
-        throw new Error('Missing or invalid Router.address in axelar info');
-    }
-
-    if (!isString(axelarChainId)) {
-        throw new Error(`Missing or invalid chain ID`);
-    }
-
-    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
-
-    if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
-    }
-
-    return {
-        governance_address: governanceAddress,
-        admin_address: adminAddress,
-        signing_threshold: signingThreshold,
-        service_name: serviceName,
-        chain_name: chainName,
-        verifier_set_diff_threshold: verifierSetDiffThreshold,
-        key_type: keyType,
-        sig_verifier_address: sigVerifierAddress || null,
-        domain_separator: separator.replace('0x', ''),
-        expect_full_message_payloads: Boolean(proverConfig.expectFullMessagePayloads) || false,
-        notify_signing_session: Boolean(proverConfig.notifySigningSession) || false,
-        chain_codec_address: chainCodecAddress,
-    };
-};
-
-const getInstantiateChainContractsMessage = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    if (!chainName) {
-        throw new Error('Chain name is required');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required');
-    }
-
-    const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
-
-    const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
-    const proverCode = proverCodeId || (await getCodeId(client, config, { ...options, contractName: 'MultisigProver' }));
-
-    const verifierMsg = getVerifierInstantiateMsg(config, chainName);
-    const proverMsg = getProverInstantiateMsg(config, chainName);
-
-    return {
-        instantiate_chain_contracts: {
-            chain: chainName,
-            deployment_name: generateDeploymentName(chainName, `${gatewayCode}-${verifierCode}-${proverCode}`),
-            salt: salt,
-            params: {
-                gateway: {
-                    code_id: Number(gatewayCode),
-                    label: `Gateway ${chainName}`,
-                    contract_admin: admin,
-                },
-                verifier: {
-                    code_id: Number(verifierCode),
-                    label: `VotingVerifier ${chainName}`,
-                    msg: verifierMsg,
-                    contract_admin: admin,
-                },
-                prover: {
-                    code_id: Number(proverCode),
-                    label: `MultisigProver ${chainName}`,
-                    msg: proverMsg,
-                    contract_admin: admin,
-                },
-            },
-        },
-    };
-};
-
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
     const chainConfig = getChainConfig(config.chains, chainName);
 
@@ -1421,6 +1530,31 @@ const validateItsChainChange = async (client, config, chainName, proposedConfig)
     }
 };
 
+const getCodeDetails = async (config, codeId) => {
+    const tendermintClient = await Tendermint34Client.connect(config?.axelar?.rpc);
+    let codeInfo;
+
+    try {
+        const data = QueryCodeRequest.encode({
+            codeId: BigInt(codeId),
+        }).finish();
+
+        const { value } = await tendermintClient.abciQuery({
+            path: '/cosmwasm.wasm.v1.Query/Code',
+            data: data,
+        });
+
+        codeInfo = QueryCodeResponse.decode(value)?.codeInfo;
+        if (!codeInfo) {
+            throw new Error(`Info not found for code id ${codeId}`);
+        }
+    } finally {
+        tendermintClient.disconnect();
+    }
+
+    return codeInfo;
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1442,6 +1576,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeRouterInstantiateMsg,
     },
+    EventVerifier: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeEventVerifierInstantiateMsg,
+    },
     VotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
@@ -1462,14 +1600,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
-    StacksVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
-    SolanaVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1478,10 +1608,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
     },
-    SolanaGateway: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeGatewayInstantiateMsg,
-    },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
@@ -1489,10 +1615,6 @@ const CONTRACTS = {
     XrplMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
-    },
-    StacksMultisigProver: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
     },
     SolanaMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
@@ -1510,22 +1632,19 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
     },
-    ItsStacksTranslator: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: () => ({}),
-    },
 };
 
 module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
     CONTRACTS,
+    AXELAR_GATEWAY_CONTRACT_NAME,
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    getCodeDetails,
     executeTransaction,
     uploadContract,
     instantiateContract,
@@ -1534,22 +1653,24 @@ module.exports = {
     fetchCodeIdFromContract,
     getChainTruncationParams,
     decodeProposalAttributes,
-    encodeStoreCodeProposal,
-    encodeStoreInstantiateProposal,
-    encodeInstantiateProposal,
-    encodeInstantiate2Proposal,
-    encodeExecuteContractProposal,
+    encodeStoreCode,
+    encodeStoreInstantiate,
+    encodeInstantiate,
+    encodeExecuteContract,
     encodeParameterChangeProposal,
-    encodeMigrateContractProposal,
+    encodeUpdateInstantiateConfigProposal,
+    encodeMigrate,
+    encodeCallContracts,
+    encodeSubmitProposal,
     submitProposal,
+    submitCallContracts,
+    loadProtoDefinition,
     isValidCosmosAddress,
     getContractCodePath,
-    generateDeploymentName,
-    getVerifierInstantiateMsg,
-    getProverInstantiateMsg,
-    getInstantiateChainContractsMessage,
     validateItsChainChange,
     getChainCodecAddressForChain,
     getChainCodecConfigForChain,
     getChainCodecContractNameByChainType,
+    isLegacySDK,
+    GOVERNANCE_MODULE_ADDRESS,
 };
