@@ -15,29 +15,29 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 
 **Deployment Note:** Solana contracts are currently only deployed on **Devnet Amplifier**. This release document covers role transfers for the devnet-amplifier environment only. Future deployments to testnet and mainnet will follow a similar process.
 
-**Governance Stability Note:** The Governance contract on Solana is not yet stable. Therefore, many UpgradeAuthority roles are temporarily assigned to **Relayer Operators EOA** instead of the Governance contract. Once the Governance contract is stable, these roles should be transferred to the Governance program.
+**Governance Stability Note:** The Governance contract on Solana is not yet stable. Therefore, all UpgradeAuthority roles are temporarily assigned to **Contract Owner EOA** instead of the Governance contract. Once the Governance contract is stable, these roles should be transferred to the Governance program.
 
 ### Role Transfer Summary
 
 | Program                | Role                        | Current Role Owner                    | Operations                                                                                                                       | Assign To                     | Reasoning                                                                                    |
 | ---------------------- | --------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
-| Operators              | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program                                                                                                                  | Relayer Operators EOA         | TEMPORARY - Governance contract not yet stable                                                |
+| Operators              | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program                                                                                                                  | Contract Owner EOA (interim)  | TEMPORARY - Governance contract not yet stable                                                |
 | Operators              | Owner                       | Master Operator (configured at init)  | Add/remove operators, transfer ownership                                                                                         | Relayer Operators EOA         | OPERATIONAL REGISTRY MANAGEMENT                                                              |
-| Governance             | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program, configure contract                                                                                              | Relayer Operators EOA         | TEMPORARY - Governance contract not yet stable                                                |
+| Governance             | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program, configure contract                                                                                              | Contract Owner EOA (interim)  | TEMPORARY - Governance contract not yet stable                                                |
 | Governance             | Operator                    | Operators Wallet                      | Execute operator proposals, transfer operatorship, withdraw from contract, change configs                                        | Relayer Operators EOA         | OPERATIONAL GOVERNANCE MANAGEMENT                                                            |
-| Memo                   | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program                                                                                                                  | Relayer Operators EOA         | TEMPORARY - Governance contract not yet stable                                                |
-| Gateway                | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program, transfer operatorship                                                                                           | Relayer Operators EOA         | TEMPORARY - Governance contract not yet stable                                                |
+| Memo                   | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program                                                                                                                  | Contract Owner EOA (interim)  | TEMPORARY - Governance contract not yet stable                                                |
+| Gateway                | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program, transfer operatorship                                                                                           | Contract Owner EOA (interim)  | TEMPORARY - Governance contract not yet stable                                                |
 | Gateway                | Operator                    | Operators Wallet                      | `rotate_signers` - disable rotation delay                                                                                        | Emergency Operator EOA        | EMERGENCY RESPONSE - Compromised signers need to be rotated quickly                          |
-| ITS                    | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program, initialize contract                                                                                             | Relayer Operators EOA         | TEMPORARY - Governance contract not yet stable                                                |
+| ITS                    | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program, initialize contract                                                                                             | Contract Owner EOA (interim)  | TEMPORARY - Governance contract not yet stable                                                |
 | ITS                    | Operator                    | Operators Wallet                      | `set_trusted_chain`, `remove_trusted_chain`, `set_flow_limit`, `set_pause_status`, `propose_operatorship`, `transfer_operatorship` | Rate Limiter EOA           | OPERATIONAL MANAGEMENT - set_pause_status needs rapid response                               |
 | ITS (TokenManager)     | TokenManager Operator       | N/A (Token Project)                   | `set_token_manager_flow_limit`, `add_token_manager_flow_limiter`, `remove_token_manager_flow_limiter`, `propose_token_manager_operatorship`, `transfer_token_manager_operatorship` | Token Project Owner | TOKEN-SPECIFIC MANAGEMENT - Each token project manages their own token manager              |
 | ITS (TokenManager)     | Minter                      | N/A (Token Project)                   | Mint tokens                                                                                                                      | Token Project Owner           | TOKEN-SPECIFIC MINTING                                                                       |
 | ITS (TokenManager)     | Flow Limiter                | N/A (Token Project)                   | Manage flow limits for token                                                                                                     | Token Project Owner           | TOKEN-SPECIFIC FLOW CONTROL                                                                  |
-| Gas Service            | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program                                                                                                                  | Relayer Operators EOA         | TEMPORARY - Governance contract not yet stable                                                |
+| Gas Service            | UpgradeAuthority            | `upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx` | Upgrade program                                                                                                                  | Contract Owner EOA (interim)  | TEMPORARY - Governance contract not yet stable                                                |
 | Gas Service            | Operator (PDA)              | Operators Program                     | Create gas service treasury, collect fees, refund fees                                                                           | Operators Program             | TREASURY AND OPERATIONAL MANAGEMENT - Operator is a PDA controlled by Operators Program      |
 
 **Notes:**
-- **UpgradeAuthority Roles**: All UpgradeAuthority roles are temporarily assigned to **Relayer Operators EOA** because the Governance contract is not yet stable. Once Governance is production-ready, these roles should be transferred to the Governance program.
+- **UpgradeAuthority Roles**: All UpgradeAuthority roles are temporarily assigned to **Contract Owner EOA** because the Governance contract is not yet stable. Once Governance is production-ready, these roles should be transferred to the Governance program.
 - **Token Project Roles**: TokenManager Operator, Minter, and Flow Limiter roles are not managed by Axelar. These are owned and managed by individual token projects.
 - **Gas Service Operator PDA**: The Gas Service Operator is a Program Derived Address (PDA) controlled by the Operators Program, not a regular account.
 - **Funder and Upgrade Authority Wallets**: These are utility wallets used for funding operations and do not have transferable roles.
@@ -82,6 +82,7 @@ Before executing the role transfers, confirm the target addresses for devnet-amp
 
 | Role Target            | Network              | Address |
 | ---------------------- | -------------------- | ------- |
+| Contract Owner EOA (interim) | **Devnet Amplifier** | TBD     |
 | Relayer Operators EOA  | **Devnet Amplifier** | TBD     |
 | Emergency Operator EOA | **Devnet Amplifier** | TBD     |
 | Rate Limiter EOA       | **Devnet Amplifier** | TBD     |
@@ -188,18 +189,18 @@ cargo run --release --bin solana-axelar-cli -- \
   query governance config
 ```
 
-### Step 5: Update UpgradeAuthority for All Programs to Relayer Operators EOA
+### Step 5: Update UpgradeAuthority for All Programs to Contract Owner EOA (interim)
 
 **Important**: This step requires using the Solana CLI to transfer program upgrade authority. All programs currently have the same upgrade authority.
 
-**New UpgradeAuthority**: Relayer Operators EOA
+**New UpgradeAuthority**: Contract Owner EOA (interim, until Governance contract is stable)
 
 | Network              | Target Address |
 | -------------------- | -------------- |
 | **Devnet Amplifier** | TBD            |
 
 ```bash
-RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
+CONTRACT_OWNER_EOA=<CONTRACT_OWNER_EOA_ADDRESS>
 CURRENT_UPGRADE_AUTHORITY=<CURRENT_UPGRADE_AUTHORITY_ADDRESS>
 
 # Gateway
@@ -207,42 +208,42 @@ GATEWAY_PROGRAM_ID=$(jq -r '.chains["solana-devnet"].contracts.Gateway.address' 
 solana program set-upgrade-authority \
   $GATEWAY_PROGRAM_ID \
   --upgrade-authority $CURRENT_UPGRADE_AUTHORITY \
-  --new-upgrade-authority $RELAYER_OPERATORS_EOA
+  --new-upgrade-authority $CONTRACT_OWNER_EOA
 
 # ITS (Interchain Token Service)
 ITS_PROGRAM_ID=$(jq -r '.chains["solana-devnet"].contracts.InterchainTokenService.address' ./axelar-chains-config/info/devnet-amplifier.json)
 solana program set-upgrade-authority \
   $ITS_PROGRAM_ID \
   --upgrade-authority $CURRENT_UPGRADE_AUTHORITY \
-  --new-upgrade-authority $RELAYER_OPERATORS_EOA
+  --new-upgrade-authority $CONTRACT_OWNER_EOA
 
 # Governance
 GOVERNANCE_PROGRAM_ID=$(jq -r '.chains["solana-devnet"].contracts.Governance.address' ./axelar-chains-config/info/devnet-amplifier.json)
 solana program set-upgrade-authority \
   $GOVERNANCE_PROGRAM_ID \
   --upgrade-authority $CURRENT_UPGRADE_AUTHORITY \
-  --new-upgrade-authority $RELAYER_OPERATORS_EOA
+  --new-upgrade-authority $CONTRACT_OWNER_EOA
 
 # Operators
 OPERATORS_PROGRAM_ID=$(jq -r '.chains["solana-devnet"].contracts.Operators.address' ./axelar-chains-config/info/devnet-amplifier.json)
 solana program set-upgrade-authority \
   $OPERATORS_PROGRAM_ID \
   --upgrade-authority $CURRENT_UPGRADE_AUTHORITY \
-  --new-upgrade-authority $RELAYER_OPERATORS_EOA
+  --new-upgrade-authority $CONTRACT_OWNER_EOA
 
 # Gas Service
 GAS_SERVICE_PROGRAM_ID=$(jq -r '.chains["solana-devnet"].contracts.GasService.address' ./axelar-chains-config/info/devnet-amplifier.json)
 solana program set-upgrade-authority \
   $GAS_SERVICE_PROGRAM_ID \
   --upgrade-authority $CURRENT_UPGRADE_AUTHORITY \
-  --new-upgrade-authority $RELAYER_OPERATORS_EOA
+  --new-upgrade-authority $CONTRACT_OWNER_EOA
 
 # Memo
 MEMO_PROGRAM_ID=$(jq -r '.chains["solana-devnet"].contracts.Memo.address' ./axelar-chains-config/info/devnet-amplifier.json)
 solana program set-upgrade-authority \
   $MEMO_PROGRAM_ID \
   --upgrade-authority $CURRENT_UPGRADE_AUTHORITY \
-  --new-upgrade-authority $RELAYER_OPERATORS_EOA
+  --new-upgrade-authority $CONTRACT_OWNER_EOA
 
 # Verify all upgrade authorities
 echo "Verifying Gateway upgrade authority:"
@@ -282,15 +283,15 @@ The operator should be a PDA derived from the Operators Program.
 After completing role transfers, verify all changes:
 
 - [ ] Gateway `operator` is held by Emergency Operator EOA
-- [ ] Gateway `UpgradeAuthority` is held by Relayer Operators EOA
+- [ ] Gateway `UpgradeAuthority` is held by Contract Owner EOA (interim)
 - [ ] ITS `operator` is held by Rate Limiter EOA
-- [ ] ITS `UpgradeAuthority` is held by Relayer Operators EOA
+- [ ] ITS `UpgradeAuthority` is held by Contract Owner EOA (interim)
 - [ ] Governance `operator` is held by Relayer Operators EOA
-- [ ] Governance `UpgradeAuthority` is held by Relayer Operators EOA
-- [ ] Operators `UpgradeAuthority` is held by Relayer Operators EOA
-- [ ] Gas Service `UpgradeAuthority` is held by Relayer Operators EOA
+- [ ] Governance `UpgradeAuthority` is held by Contract Owner EOA (interim)
+- [ ] Operators `UpgradeAuthority` is held by Contract Owner EOA (interim)
+- [ ] Gas Service `UpgradeAuthority` is held by Contract Owner EOA (interim)
 - [ ] Gas Service `operator` (PDA) is controlled by Operators Program
-- [ ] Memo `UpgradeAuthority` is held by Relayer Operators EOA
+- [ ] Memo `UpgradeAuthority` is held by Contract Owner EOA (interim)
 - [ ] All program upgrade authorities verified via `solana program show <PROGRAM_ID>`
 - [ ] All operator configs verified via query commands
 - [ ] Configuration updated in `devnet-amplifier.json` if necessary
@@ -300,7 +301,7 @@ After completing role transfers, verify all changes:
 
 1. **Solana Program Model**: Solana uses a different permission model compared to EVM chains. Programs have an `UpgradeAuthority` that can upgrade the program code, while contracts within programs have `operator` or `owner` roles for operational tasks.
 
-2. **Temporary UpgradeAuthority Assignment**: All UpgradeAuthority roles are **temporarily** assigned to Relayer Operators EOA because the Governance contract is not yet production-stable. **Once the Governance contract is stabilized**, these UpgradeAuthority roles should be transferred to the Governance program for proper decentralized governance.
+2. **Temporary UpgradeAuthority Assignment**: All UpgradeAuthority roles are **temporarily** assigned to Contract Owner EOA because the Governance contract is not yet production-stable. **Once the Governance contract is stabilized**, these UpgradeAuthority roles should be transferred to the Governance program for proper decentralized governance.
 
 3. **Program Derived Addresses (PDAs)**: The Gas Service operator is a PDA controlled by the Operators Program. PDAs are deterministic addresses derived from program IDs and seeds, and they cannot be transferred in the traditional sense.
 
@@ -312,7 +313,7 @@ After completing role transfers, verify all changes:
 
 7. **Operators Owner**: The Operators program owner is configured at initialization and should be set to the Relayer Operators EOA for operational registry management (adding/removing operators).
 
-8. **Future Governance Migration**: When the Governance contract becomes stable, a follow-up release document should be created to transfer all UpgradeAuthority roles from Relayer Operators EOA to the Governance program.
+8. **Future Governance Migration**: When the Governance contract becomes stable, a follow-up release document should be created to transfer all UpgradeAuthority roles from Contract Owner EOA to the Governance program.
 
 9. **Solana CLI Requirements**: Ensure you have the Solana CLI installed and configured with the appropriate RPC endpoint and fee payer for executing these operations.
 
