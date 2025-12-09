@@ -160,7 +160,7 @@ TBD
 
 ## Deployment
 
-Ensure that `ampd` is updated to the latest version that supports the gRPC interface. After updating the configuration as described above, restart `ampd` to reload the config. Once `ampd` is up and running with the gRPC server enabled, deploy the new handler binary for each chain you support.
+Ensure that `ampd` is updated to the latest version that supports the gRPC interface. After updating the configuration as described above, restart `ampd` to reload the config. Once `ampd` is up and running with the gRPC server enabled, utilize the new handler binary to start a service for each chain you support.
 
 ### Checklist
 
