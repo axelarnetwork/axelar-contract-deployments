@@ -76,8 +76,8 @@ const addGovernanceOptions = (program: Command): Command => {
     program.addOption(new Option('--governance', 'Submit this change via interchain governance'));
     program.addOption(
         new Option(
-            '--governanceEta <eta>',
-            'Governance ETA (YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
+            '--activationTime <activationTime>',
+            'Governance Activation Time (YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
         ).default('0'),
     );
     program.addOption(new Option('--file <file>', 'File to write Axelar proposal JSON to'));
