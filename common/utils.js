@@ -332,13 +332,19 @@ function isKeccak256Hash(input) {
  * @return {boolean} - Returns true if the format matches, false otherwise.
  */
 function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
     if (timeString === '0') {
         return true;
     }
 
-    return regex.test(timeString);
+    const trimmedInput = String(timeString).trim();
+
+    if (/^\d+$/.test(trimmedInput)) {
+        const seconds = parseInt(trimmedInput, 10);
+        return !isNaN(seconds) && seconds >= 0;
+    }
+
+    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+    return regex.test(trimmedInput);
 }
 
 /**
@@ -493,15 +499,28 @@ function validateParameters(parameters) {
     }
 }
 
-const dateToEta = (utcTimeString) => {
-    if (utcTimeString === '0') {
+const dateToEta = (input) => {
+    const trimmedInput = String(input).trim();
+
+    if (trimmedInput === '0') {
         return 0;
     }
 
-    const date = new Date(utcTimeString + 'Z');
+    if (/^\d+$/.test(trimmedInput)) {
+        const seconds = parseInt(trimmedInput, 10);
+        if (isNaN(seconds) || seconds < 0) {
+            throw new Error(`Invalid relative time in seconds: ${input}`);
+        }
+        const currentTime = getCurrentTimeInSeconds();
+        return currentTime + seconds;
+    }
+
+    const date = new Date(trimmedInput + 'Z');
 
     if (isNaN(date.getTime())) {
-        throw new Error(`Invalid date format provided: ${utcTimeString}`);
+        throw new Error(
+            `Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss) or relative seconds (numeric)`,
+        );
     }
 
     return Math.floor(date.getTime() / 1000);
@@ -786,7 +805,8 @@ function encodeITSDestinationToken(chains, destinationChain, destinationTokenAdd
             }
             // For Sui token addresses (X -> Sui), encode as ASCII string
             return asciiToBytes(destinationTokenAddress.replace('0x', ''));
-
+        case 'xrpl':
+            return destinationTokenAddress;
         default:
             // For all other chains, use the same encoding as destination addresses
             return encodeITSDestination(chains, destinationChain, destinationTokenAddress);
@@ -857,8 +877,8 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, _axelar) {
-    if (env === 'devnet-amplifier') {
+async function estimateITSFee(chain, destinationChain, env, eventType, gasValue, axelar) {
+    if (env.startsWith('devnet-') || env === 'local') {
         return { gasValue: 0, gasFeeValue: 0 };
     }
 
@@ -871,7 +891,11 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
         return { gasValue, gasFeeValue };
     }
 
-    const url = `${_axelar?.axelarscanApi}/gmp/estimateITSFee`;
+    if (!axelar?.axelarscanApi) {
+        throw new Error(`axelarscanApi is not configured for environment: ${env}. Please check the environment config and try again.`);
+    }
+
+    const url = `${axelar.axelarscanApi}/gmp/estimateITSFee`;
 
     const payload = {
         sourceChain: chain.axelarId,
