@@ -330,13 +330,13 @@ async function fundAccountWithFriendbot(horizonServer, address) {
 }
 
 async function prepareAccount(provider, horizonServer, address, chain) {
+    // Use Horizon API to check account existence
     try {
-        await provider.getAccount(address);
+        await horizonServer.accounts().accountId(address).call();
     } catch (error) {
-        // Check explicitly if the account doesn't exist (404 status)
+        // If the account doesn't exist (404 status) and friendbot is supported, fund it via friendbot.
         if (error?.response?.status === 404) {
             printWarn(`Account ${address} not found`);
-            // If account doesn't exist and friendbot is supported, fund it via friendbot
             if (isFriendbotSupported(chain.networkType)) {
                 await fundAccountWithFriendbot(horizonServer, address);
             } else {
