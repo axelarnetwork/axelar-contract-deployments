@@ -907,7 +907,7 @@ const fetchCodeIdFromContract = async (client, contractConfig) => {
     return codeId;
 };
 
-const getChainTruncationParams = (config, chainConfig) => {
+const itsHubDecimalsTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
 
@@ -926,7 +926,7 @@ const getChainTruncationParams = (config, chainConfig) => {
 };
 
 const itsHubChainParams = (config, chainConfig) => {
-    const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
+    const { maxUintBits, maxDecimalsWhenTruncating } = itsHubDecimalsTruncationParams(config, chainConfig);
     const itsEdgeContractAddress = itsEdgeContract(chainConfig);
 
     const key = chainConfig.axelarId.toLowerCase();
@@ -1634,7 +1634,7 @@ module.exports = {
     migrateContract,
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
-    getChainTruncationParams,
+    itsHubDecimalsTruncationParams,
     itsHubChainParams,
     decodeProposalAttributes,
     encodeStoreCode,
