@@ -67,7 +67,9 @@ async function registerCustomCoinUtil(
         typeArguments: [treasuryCapReclaimerType],
     });
 
-    if (!config.options.channel) txBuilder.tx.transferObjects([channel], config.walletAddress);
+    if (!config.options.channel) {
+        txBuilder.tx.transferObjects([channel], config.walletAddress);
+    }
 
     const result = await broadcastFromTxBuilder(
         txBuilder,
@@ -87,8 +89,12 @@ async function registerCustomCoinUtil(
         return evt.transactionModule == 'channel' ? true : false;
     })[0];
 
-    if (!tokenEvent) tokenEvent = { parsedJson: {} };
-    if (!channelEvent) channelEvent = { parsedJson: {} };
+    if (!tokenEvent) {
+        tokenEvent = { parsedJson: {} };
+    }
+    if (!channelEvent) {
+        channelEvent = { parsedJson: {} };
+    }
 
     const tokenId = tokenEvent.parsedJson.hasOwnProperty('token_id') ? tokenEvent.parsedJson.token_id.id : null;
     const channelId = channelEvent.parsedJson.hasOwnProperty('id') ? channelEvent.parsedJson.id : null;

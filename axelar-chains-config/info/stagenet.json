@@ -2213,6 +2213,16 @@
         "name": "Hyperliquid Explorer",
         "url": "https://testnet.purrsec.com/"
       },
+      "hypercore": {
+        "domain": {
+          "chainId": 1337,
+          "name": "Exchange",
+          "verifyingContract": "0x0000000000000000000000000000000000000000",
+          "version": "1"
+        },
+        "url": "https://api.hyperliquid-testnet.xyz",
+        "source": "b"
+      },
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2265,26 +2275,26 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.1",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS v2.2.0 hyperliquid",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0xDFef5B38C1c080A4a82431b687989759cB207d24",
-          "interchainToken": "0xE6575486955D887BcFcFaDfaacF891C462cfab6B",
-          "interchainTokenDeployer": "0x22fBE0E41Cb59056CcAD0cdf2087385161042a1C",
-          "tokenManager": "0x79b3E736Fb5C21bD94862824602f856bfA4fa5a3",
-          "tokenHandler": "0x383dF8E8f96b3dF53F9bdc607811c7e96239e7da",
+          "tokenManagerDeployer": "0x5ea96D20076bF37829C15F73d097c8950fb3F5A4",
+          "interchainToken": "0x84a395Be03F103Ce823f70FE870D6d49f59581DC",
+          "interchainTokenDeployer": "0x294ba717891f67C2F4C0fcCF7C645c29997EcB9C",
+          "tokenManager": "0x37cDB543ab960121DB119a4Ff69C613c522cAdCb",
+          "tokenHandler": "0x7b5d9536651E469a14b805a5a9BEF25a2fe672Ed",
           "gatewayCaller": "0x75f121a0bfcc76D82d5BA84c156AB79F31dC3f98",
-          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
+          "implementation": "0xa3A765B546951c68C3De823660c84d786C9eee95",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5",
-          "version": "2.1.1"
+          "version": "2.2.0"
         },
         "InterchainTokenFactory": {
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
-          "implementation": "0x27Dae89620Ed5f3111d85D44ceFc6EdB7fe74551",
+          "implementation": "0x5D8d6DbDfE22DD43E3D9Be7A29b0e950fDBD7aD4",
           "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
-          "version": "2.1.1"
+          "version": "2.2.0"
         }
       }
     },
@@ -2675,13 +2685,13 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "261",
-        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
-        "codeId": 66,
-        "lastUploadedCodeId": 66,
+        "storeCodeProposalId": "362",
+        "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
+        "codeId": 80,
+        "lastUploadedCodeId": 80,
         "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
         "executeProposalId": "14",
-        "version": "1.2.0"
+        "version": "1.2.1"
       },
       "Router": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",

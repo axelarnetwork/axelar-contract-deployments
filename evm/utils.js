@@ -151,7 +151,9 @@ const deployCreate3 = async (
 };
 
 const isAddressArray = (arr) => {
-    if (!Array.isArray(arr)) return false;
+    if (!Array.isArray(arr)) {
+        return false;
+    }
 
     for (const item of arr) {
         if (!isAddress(item)) {
@@ -242,6 +244,18 @@ function getGovernanceAddress(chain, contractName, address) {
     }
 
     return contractConfig.address;
+}
+
+function getGovernanceContract(chain, options = {}) {
+    const governanceContract = options.governanceContract;
+
+    if (options.operatorProposal && governanceContract !== 'AxelarServiceGovernance') {
+        throw new Error('Operator proposals require --governanceContract AxelarServiceGovernance or unset --operatorProposal.');
+    }
+
+    const governanceAddress = getGovernanceAddress(chain, governanceContract);
+
+    return { governanceContract, governanceAddress };
 }
 
 // Validate if the input privateKey is correct
@@ -1164,6 +1178,7 @@ module.exports = {
     handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceContract,
     getGovernanceAddress,
     isValidPrivateKey,
     isValidTokenId,

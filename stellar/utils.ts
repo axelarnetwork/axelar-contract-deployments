@@ -15,7 +15,7 @@ import {
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 
-import { addEnvOption, getCurrentVerifierSet, printInfo, sleep } from '../common';
+import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
 import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
 import { itsCustomMigrationDataToScValV112 } from './type-utils';
 
@@ -158,7 +158,9 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         while (retries > 0) {
             sendResponse = await server.sendTransaction(tx);
 
-            if (sendResponse.status === 'PENDING') break;
+            if (sendResponse.status === 'PENDING') {
+                break;
+            }
 
             await sleep(RETRY_WAIT);
             retries--;
@@ -179,7 +181,9 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         while (retries > 0) {
             getResponse = await server.getTransaction(sendResponse.hash);
 
-            if (getResponse.status === 'SUCCESS') break;
+            if (getResponse.status === 'SUCCESS') {
+                break;
+            }
 
             await sleep(RETRY_WAIT);
             retries--;
@@ -194,7 +198,9 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         }
 
         // Native payment — sorobanMeta is not present, so skip parsing.
-        if (options && options.nativePayment) return;
+        if (options && options.nativePayment) {
+            return;
+        }
 
         // Make sure the transaction's resultMetaXDR is not empty
         // TODO: might be empty if the operation doesn't have a return value
@@ -314,16 +320,52 @@ function getRpcOptions(chain) {
     };
 }
 
+async function fundAccountWithFriendbot(horizonServer, address) {
+    try {
+        await horizonServer.friendbot(address).call();
+        printInfo('Account funded via friendbot', address);
+    } catch (error) {
+        // 400 status means the account is already funded. otherwise throw error immediately
+        if (error?.response?.status !== 400) {
+            throw error;
+        }
+
+        printWarn('Account already funded', address);
+    }
+}
+
+async function prepareAccount(provider, horizonServer, address, chain) {
+    try {
+        await horizonServer.accounts().accountId(address).call();
+    } catch (error) {
+        // 404 status means the account exists. otherwise throw error immediately
+        if (error?.response?.status !== 404) {
+            throw error;
+        }
+
+        printWarn(`Account ${address} not found`);
+
+        if (!isFriendbotSupported(chain.networkType)) {
+            throw new Error(`Account ${address} does not exist and cannot be auto-funded on ${chain.networkType}`);
+        }
+
+        await fundAccountWithFriendbot(horizonServer, address);
+    }
+}
+
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
     const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+
+    await prepareAccount(provider, horizonServer, address, chain);
+
     const balances = await getBalances(horizonServer, address);
 
     printInfo('Wallet address', address);
     printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
-    printInfo('Wallet sequence', await provider.getAccount(address).then((account) => account.sequenceNumber()));
+    printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
 
     return keypair;
 }
@@ -362,7 +404,9 @@ async function estimateCost(tx, server) {
     const events = response.events.map((event) => {
         const e = xdr.DiagnosticEvent.fromXDR(event, 'base64');
 
-        if (e.event().type().name === 'diagnostic') return 0;
+        if (e.event().type().name === 'diagnostic') {
+            return 0;
+        }
 
         return e.toXDR().length;
     });
@@ -587,7 +631,9 @@ function pascalToKebab(str) {
 }
 
 function sanitizeMigrationData(migrationData, version, contractName) {
-    if (migrationData === null || migrationData === '()') return null;
+    if (migrationData === null || migrationData === '()') {
+        return null;
+    }
 
     try {
         return Address.fromString(migrationData);
@@ -676,6 +722,7 @@ module.exports = {
     broadcastHorizon,
     getWallet,
     getRpcOptions,
+    fundAccountWithFriendbot,
     estimateCost,
     getNetworkPassphrase,
     getAuthValidUntilLedger,

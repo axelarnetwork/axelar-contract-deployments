@@ -265,6 +265,64 @@ ts-node evm/governance.js submit upgrade [commandId] 2023-12-11T08:45:00 --targe
 ts-node evm/governance.js execute --targetContractName AxelarGateway --target [target-address] --calldata [calldata] -n [chain]
 ```
 
+8. Verify the governance command went through correctly.
+
+### AxelarServiceGovernance (operator) extensions
+
+`AxelarServiceGovernance` extends `InterchainGovernance` with operator approval functionality that bypasses timelock. The CLI includes convenience commands for operator-style proposals:
+
+1. Schedule operator approval proposal
+
+```bash
+ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+Note: Defaults to `AxelarServiceGovernance` .
+
+2. Cancel operator approval proposal
+
+```bash
+# Generate proposal JSON only
+ts-node evm/governance.js cancel-operator <target> <calldata> --file proposal.json
+```
+
+If `--file` is not supplied, the script will prompt for confirmation and then submit the proposal to the Axelar network using `MNEMONIC`.
+
+3. Submit operator approval via GMP (if relayers failed)
+
+```bash
+ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+4. Execute an approved operator proposal
+
+```bash
+# Note: Operator EOA must call this after approval
+ts-node evm/governance.js execute-operator-proposal <target> <calldata>
+```
+
+5. Check operator proposal approval status
+
+```bash
+ts-node evm/governance.js is-operator-approved <target> <calldata>
+```
+
+Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --calldata <calldata>
+```
+
 ## Utilities
 
 ### Decode Function Calldata
@@ -496,6 +554,48 @@ ts-node evm/verify-contract.js --help
 
 ## Interchain Token Service
 
+### Flow Limits
+
+Flow Limit is a rate-limiting mechanism in ITS that restricts the **net flow** of tokens in and out of a chain within a 6-hour epoch window.
+
+#### Key Concepts
+
+- **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
+- **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
+- **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
+- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
+- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
+- Flow limits protect against exploits by capping potential losses per epoch
+
+#### Example Flow Tracking
+
+```
+Epoch starts, flowLimit = 10,000 tokens
+
+T+1h: Send 8,000 OUT    → netFlow = 8,000   ✅
+T+2h: Receive 5,000 IN  → netFlow = 3,000   ✅
+T+3h: Send 8,000 OUT    → netFlow = 11,000  ❌ REVERTS (FlowLimitExceeded)
+T+6h: New epoch         → netFlow = 0       (counters reset)
+```
+
+#### Roles
+
+| Role | Permissions |
+|------|-------------|
+| **OPERATOR** (on TokenManager) | `addFlowLimiter()`, `removeFlowLimiter()` |
+| **OPERATOR** (on ITS) | `setFlowLimits()` - batch set limits for multiple tokens |
+| **FLOW_LIMITER** | `setFlowLimit()` - set limit for specific TokenManager |
+
+#### Setting Flow Limits
+
+```bash
+# Set flow limit for a token (requires ITS OPERATOR role)
+ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
+
+# Query current flow limit
+ts-node evm/its.js flow-limit <token-id>
+```
+
 ### Link Token
 
 #### Legacy custom ITS tokens
@@ -512,3 +612,172 @@ The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of has
 
 The Interchain Token Factory is responsible for deploying new interchain tokens and managing their token managers. It has the following functionality:
 
+### Contract-Id
+
+Getter for the contract id.
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames <chain_name> --env <env> 
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames avalanche --env testnet  
+```
+
+
+### Interchain Token Deploy Salt
+
+Computes the deploy salt for an interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer <deployer>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
+```
+
+### Canonical Interchain Token Deploy Salt
+
+Computes the deploy salt for a canonical interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --tokenAddress <token_address> --chainNames <chain_name>  --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --tokenAddress 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+### Canonical Interchain Token Id
+
+Computes the ID for a canonical interchain token based on its address.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddress <token_address> --chainNames <chain_name>  --env <env>
+
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddress 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+### Interchain Token Id
+
+Computes the ID for an interchain token based on the deployer and a salt.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id --deployer <deployer> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id --deployer 0x312dba807EAE77f01EF3dd21E885052f8F617c5B --chainNames avalanche --env testnet --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+```
+
+### Deploy Interchain Token
+
+Creates a new token and optionally mints an initial amount to a specified minter
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name <name> --symbol <symbol> --decimals <decimals> --initialSupply <initialSupply> --minter <minter>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name Test_Token --symbol TT --decimals 18 --initialSupply 12345 --minter 0x312dba807EAE77f01EF3dd21E885052f8F617c5B  --chainNames ethereum-sepolia --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Deploy Remote Interchain Token
+
+Deploys a remote interchain token on a specified destination chain. No additional minter is set on the deployed token.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain <destination_chain> --chainNames <chain_name>  --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain Avalanche  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Register Canonical Interchain Token
+
+Registers a canonical token as an interchain token and deploys its token manager.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress <token_address> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress 0xff0021D9201B51C681d26799A338f98741fBBB6a --chainNames ethereum-sepolia --env testnet
+```
+
+### Deploy Remote Canonical Interchain Token
+
+Deploys a canonical interchain token on a remote chain.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress <token_address> --destinationChain <destination_chain> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress 0x4a895FB659aAD3082535Aa193886D7501650685b --destinationChain Avalanche --chainNames ethereum-sepolia --env testnet
+```
+
+### Register Custom Token
+
+Register an existing ERC20 token under a `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token  --tokenAddress <token_address> --tokenManagerType <token_manager_type> --operator <operator> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token --tokenAddress 0x0F6814301C0DA51bFddA9D2A6Dd877950aa0F912 --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb50
+```
+
+Note:
+Custom tokens that wish to utlize Mint/Burn token managers must implement the mint and burn interfaces to match:
+
+```bash
+mint(address to, uint256 amount);
+```
+```bash
+burn(address from, uint256 amount);
+```
+
+### Link Token
+
+Links a remote token on `destinationChain` to a local token corresponding to the `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token --destinationChain <destination_chain> --destinationTokenAddress <destination_token_address> --tokenManagerType <token_manager_type> --linkParams <link_params>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token --destinationChain Avalanche --destinationTokenAddress 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C --tokenManagerType 4 --linkParams 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+```
