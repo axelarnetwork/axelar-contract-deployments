@@ -36,6 +36,7 @@ cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 eyre = "0.6.11"
+futures = "0.3"
 hex = { version = "0.4.3", features = ["serde"] }
 hmac = "0.12"
 k256     = { version = "0.13.1", features = ["pkcs8", "pem", "ecdsa"] }

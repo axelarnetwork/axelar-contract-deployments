@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -7,12 +6,12 @@ use std::time::{Duration, Instant};
 
 use clap::{Parser, Subcommand};
 use eyre::eyre;
+use futures::future::join_all;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signature;
 use solana_sdk::signer::Signer;
 use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
 
 use crate::config::Config;
 use crate::its;
@@ -23,7 +22,7 @@ pub(crate) enum Commands {
     Verify(VerifyArgs),
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub(crate) struct TestArgs {
     #[clap(long)]
     pub destination_chain: String,
@@ -126,11 +125,9 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
     let delay_duration = Duration::from_millis(args.delay);
 
     let tx_count = Arc::new(Mutex::new(0u64));
-    let pending_tasks: Arc<Mutex<HashMap<usize, JoinHandle<()>>>> =
-        Arc::new(Mutex::new(HashMap::new()));
+    let mut pending_tasks = Vec::new();
 
     let mut keypair_index = 0;
-    let mut task_id = 0;
 
     loop {
         if start_time.elapsed() >= duration {
@@ -147,21 +144,20 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
         keypair_index += 1;
 
         let config_clone = config.clone();
-        let args_clone = (
-            args.destination_chain.clone(),
-            args.token_id,
-            args.destination_address.clone(),
-            args.transfer_amount.clone(),
-            args.gas_value,
-        );
+        let args_clone = args.clone();
         let output_file_clone = Arc::clone(&output_file);
         let tx_count_clone = Arc::clone(&tx_count);
-        let pending_tasks_clone = Arc::clone(&pending_tasks);
-        let current_task_id = task_id;
-        task_id += 1;
 
         let handle = tokio::spawn(async move {
-            match execute_transfer(keypair, args_clone, config_clone) {
+            let transfer_args = (
+                args_clone.destination_chain,
+                args_clone.token_id,
+                args_clone.destination_address,
+                args_clone.transfer_amount,
+                args_clone.gas_value,
+            );
+
+            match execute_transfer(keypair, transfer_args, config_clone) {
                 Ok(signature) => {
                     let count = {
                         let mut guard = tx_count_clone.lock().await;
@@ -182,33 +178,19 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
                     eprintln!("Transaction failed: {e}");
                 }
             }
-
-            let mut tasks = pending_tasks_clone.lock().await;
-            tasks.remove(&current_task_id);
         });
 
-        #[allow(clippy::semicolon_outside_block)]
-        {
-            let mut tasks = pending_tasks.lock().await;
-            tasks.insert(current_task_id, handle);
-        }
+        pending_tasks.push(handle);
 
         tokio::time::sleep(delay_duration).await;
     }
 
-    println!("Waiting for pending transactions to complete...");
-    loop {
-        let tasks_count = {
-            let tasks = pending_tasks.lock().await;
-            tasks.len()
-        };
+    println!(
+        "Waiting for {} pending transactions to complete...",
+        pending_tasks.len()
+    );
 
-        if tasks_count == 0 {
-            break;
-        }
-
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
+    join_all(pending_tasks).await;
 
     let final_count = *tx_count.lock().await;
     let elapsed = start_time.elapsed().as_secs_f64();
@@ -284,10 +266,21 @@ fn execute_transfer(
 }
 
 #[derive(borsh::BorshDeserialize, Debug)]
+struct FlowSlot {
+    _flow_limit: Option<u64>,
+    _flow_in: u64,
+    _flow_out: u64,
+    _epoch: u64,
+}
+
+#[derive(borsh::BorshDeserialize, Debug)]
 struct TokenManager {
     _ty: u8,
     _token_id: [u8; 32],
     token_address: solana_sdk::pubkey::Pubkey,
+    _associated_token_account: solana_sdk::pubkey::Pubkey,
+    _flow_slot: FlowSlot,
+    _bump: u8,
 }
 
 fn get_mint_from_token_manager(
@@ -554,7 +547,7 @@ fn derive_keypairs_from_mnemonic(
     mnemonic: &str,
     count: usize,
 ) -> eyre::Result<Vec<Arc<dyn Signer + Send + Sync>>> {
-    use solana_sdk::signature::Keypair;
+    use solana_sdk::signature::keypair_from_seed;
 
     let seed = bip39::Mnemonic::parse(mnemonic)
         .map_err(|e| eyre!("Invalid mnemonic: {}", e))?
@@ -565,7 +558,7 @@ fn derive_keypairs_from_mnemonic(
     for i in 0..count {
         let derivation_path = format!("m/44'/501'/{i}'");
         let derived_key = derive_key_from_seed(&seed, &derivation_path)?;
-        let keypair = Keypair::try_from(derived_key.as_ref())
+        let keypair = keypair_from_seed(&derived_key[..32])
             .map_err(|e| eyre!("Failed to create keypair: {}", e))?;
         keypairs.push(Arc::new(keypair));
     }
