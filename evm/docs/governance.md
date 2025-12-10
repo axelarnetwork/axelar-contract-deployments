@@ -184,6 +184,18 @@ ts-node evm/governance.js execute --target <address> --calldata <hex>
 ts-node evm/governance.js execute --proposal <encoded>
 ```
 
+## Parallel Execution (`--parallel`) and Multi-Chain Proposals
+
+Most EVM scripts accept a **`--parallel`** flag (via shared CLI utilities) when running over multiple chains
+(`--chainNames` or `CHAINS`). When combined with `--governance`, this affects how proposals are built:
+
+- The script runs against all selected chains concurrently.
+- For each successful chain, a separate `contract_calls` entry is appended to the **same** proposal JSON.
+- The final proposal therefore contains **one Axelar governance proposal** with **multiple EVM contract calls**.
+
+Use `--parallel` when you want to schedule the **same logical change** (for example, updating trusted chains or transferring operatorship) on many chains in one governance proposal, while still benefiting from concurrent execution of the EVM helper script itself.
+
+
 ## AxelarServiceGovernance Commands
 
 `AxelarServiceGovernance` adds operator approval functionality (bypasses timelock):

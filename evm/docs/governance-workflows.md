@@ -164,6 +164,53 @@ The `raw` action allows you to execute any function on any contract through gove
 
 ## Contract-Specific Workflows
 
+### EVM Helper Script Governance Flags
+
+When using EVM helper scripts such as `evm/gateway.js` or `evm/its.js`, you can ask the script to generate
+governance proposals directly by passing `--governance`. These scripts share a common set of governance flags:
+
+- **`--governance`**: Generate a governance proposal JSON (and optionally submit it to Axelar).
+- **`--governanceContract <governanceContract>`**:
+  - Selects which governance contract on the destination EVM chain will receive the proposal.
+  - **Choices**: `InterchainGovernance`, `AxelarServiceGovernance`.
+  - **Default**: `AxelarServiceGovernance`.
+- **`--operatorProposal`**:
+  - Treats the generated proposal as an **operator-based proposal** (uses `ApproveOperator` under the hood).
+  - Only valid when `--governanceContract AxelarServiceGovernance` is used.
+  - If omitted, a standard timelock proposal (`ScheduleTimelock`) is generated instead.
+
+**Example (gateway – timelock style via InterchainGovernance):**
+
+```bash
+ts-node evm/gateway.js \
+  --action transferGovernance \
+  --destination 0xNewGovernorAddress \
+  --governance \
+  --governanceContract InterchainGovernance \
+  --activationTime <activationTime>
+```
+
+**Example (gateway – timelock proposal via AxelarServiceGovernance):**
+
+```bash
+ts-node evm/gateway.js \
+  --action transferOperatorship \
+  --newOperator 0xNewOperatorAddress \
+  --governance \
+  --activationTime <activationTime>
+```
+
+**Example (gateway – operator-based proposal via AxelarServiceGovernance):**
+
+```bash
+ts-node evm/gateway.js \
+  --action transferOperatorship \
+  --newOperator 0xNewOperatorAddress \
+  --governance \
+  --operatorProposal \
+  --activationTime <activationTime>
+```
+
 ### InterchainTokenService Governance Actions
 
 #### Set Trusted Chains via ITS
