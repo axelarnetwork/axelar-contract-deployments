@@ -10,13 +10,13 @@
 | **Devnet Amplifier** | Completed                              | 2025-11-21 |
 | **Stagenet**         | Completed                              | 2025-11-24 |
 | **Testnet**          | Completed                              | 2025-12-01 |
-| **Mainnet**          | -                                      | TBD        |
+| **Mainnet**          | Completed                              | 2025-12-05 |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-11-24 |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
+| **Stagenet**         | -                     | 2025-12-03 |
+| **Testnet**          | -                     | 2025-12-03 |
 | **Mainnet**          | -                     | TBD        |
 
 ## Background

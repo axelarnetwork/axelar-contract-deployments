@@ -88,7 +88,7 @@ async function getSetupParams(governance, targetContractName, target, contracts,
 }
 
 async function getProposalCalldata(governance, chain, wallet, action, options) {
-    const contractName = options.contractName || 'InterchainGovernance';
+    const contractName = options.contractName || 'AxelarServiceGovernance';
     const targetContractName = options.targetContractName;
     let target = options.target || chain.contracts[targetContractName]?.address;
 
@@ -613,7 +613,7 @@ if (require.main === module) {
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+                .default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .action((options, cmd) => {
@@ -640,7 +640,7 @@ if (require.main === module) {
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+                .default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
@@ -664,7 +664,7 @@ if (require.main === module) {
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+                .default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
@@ -683,7 +683,7 @@ if (require.main === module) {
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+                .default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--targetContractName <targetContractName>', 'target contract name'))
         .action((options, cmd) => {
@@ -736,7 +736,7 @@ if (require.main === module) {
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
-                .default('InterchainGovernance'),
+                .default('AxelarServiceGovernance'),
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
