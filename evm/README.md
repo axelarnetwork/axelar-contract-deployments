@@ -505,6 +505,9 @@ Flow Limit is a rate-limiting mechanism in ITS that restricts the **net flow** o
 - **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
 - **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
 - **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
+- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
+- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
+- Flow limits protect against exploits by capping potential losses per epoch
 
 #### Example Flow Tracking
 
@@ -534,12 +537,6 @@ ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
 # Query current flow limit
 ts-node evm/its.js flow-limit <token-id>
 ```
-
-#### Important Notes
-
-- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
-- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
-- Flow limits protect against exploits by capping potential losses per epoch
 
 ### Link Token
 
