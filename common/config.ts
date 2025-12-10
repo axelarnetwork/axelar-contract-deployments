@@ -434,6 +434,16 @@ export class ConfigManager implements FullConfig {
         return [String(value[0]), String(value[1])];
     }
 
+    public parseThreshold(value: string, configPath: string): [string, string] {
+        let parsedValue;
+        try {
+            parsedValue = JSON.parse(value);
+        } catch {
+            throw new Error(`Invalid threshold format. Expected JSON array, got: ${value}`);
+        }
+        return this.validateThreshold(parsedValue, configPath);
+    }
+
     public getMultisigProverContractForChainType(chainType: string): string {
         const chainProverMapping: Record<string, string> = {
             svm: 'SolanaMultisigProver',
