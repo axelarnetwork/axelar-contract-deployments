@@ -11,6 +11,7 @@ import { ClientManager, mainProcessor } from '../processor';
 export type SquidTokenData = {
     axelarChainId: string;
     tokenAddress: string;
+    decimals?: number;
 };
 
 export type SquidToken = {
@@ -88,7 +89,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 originAxelarChainId: token.originAxelarChainId,
                 axelarChainId: chain.axelarChainId,
             },
-            isNumber: { decimals: token.decimals },
+            isNumber: { decimals: chain.decimals ?? token.decimals },
         });
     });
 
@@ -96,7 +97,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         const tokenData: TokenData = {
             tokenId: token.tokenId,
             originChain: token.originAxelarChainId.toLowerCase(),
-            decimals: token.decimals,
+            decimals: chain.decimals ?? token.decimals,
             chainName: chain.axelarChainId.toLowerCase(),
         } as TokenData;
         await registerToken(config, interchainTokenServiceAddress, client, tokenData, options.dryRun);
