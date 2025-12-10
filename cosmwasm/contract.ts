@@ -98,13 +98,9 @@ const registerItsChain = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    args?: string[],
+    args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    if (!args || args.length === 0) {
-        throw new Error('At least one chain is required');
-    }
-
     const chains = buildItsHubChains(config, args);
 
     const msg = [{ register_chains: { chains } }];
@@ -118,13 +114,9 @@ const updateItsChain = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    args?: string[],
+    args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    if (!args || args.length === 0) {
-        throw new Error('At least one chain is required');
-    }
-
     const chains = buildItsHubChains(config, args);
 
     for (let i = 0; i < args.length; i++) {
@@ -169,12 +161,9 @@ const registerDeployment = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    args?: string[],
+    args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    if (!args || args.length === 0) {
-        throw new Error('chainName is required');
-    }
     const [chainName] = args;
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructRegisterDeploymentMessage(chainName);
@@ -189,12 +178,9 @@ const createRewardPools = async (
     client: ClientManager,
     config: ConfigManager,
     options: ContractCommandOptions,
-    args?: string[],
+    args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    if (!args || args.length === 0) {
-        throw new Error('chainName is required');
-    }
     const [chainName] = args;
     const { epochDuration, participationThreshold, rewardsPerEpoch } = options;
 
