@@ -338,7 +338,7 @@ const programHandler = () => {
     addAmplifierOptions(updateItsChainCmd);
 
     const registerProtocolCmd = program
-        .command('register-protocol-contracts')
+        .command('register-protocol')
         .description('Register the main protocol contracts (e.g. Router)')
         .action((options) => mainProcessor(registerProtocol, options));
     addAmplifierOptions(registerProtocolCmd);
