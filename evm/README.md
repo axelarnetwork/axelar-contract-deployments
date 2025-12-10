@@ -329,6 +329,37 @@ Note: For upgrades, continue to use governance flows; operational actions run vi
 
 *Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
 
+### AxelarServiceGovernance (operator) extensions
+
+The CLI includes convenience commands for AxelarServiceGovernance operator-style proposals:
+
+- Schedule operator approval:
+  - `ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
+- Cancel operator approval JSON:
+  - `ts-node evm/governance.js cancel-operator <target> <calldata> -c AxelarServiceGovernance -n <chain> --file proposal.json`
+- Submit operator approval via GMP:
+  - `ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> -c AxelarServiceGovernance -n <chain>`
+- Execute an approved operator proposal (operator EOA must call):
+  - `ts-node evm/governance.js execute-operator-proposal <target> <calldata> -c AxelarServiceGovernance -n <chain>`
+- Check approval status:
+  - `ts-node evm/governance.js is-operator-approved <target> <calldata> -c AxelarServiceGovernance -n <chain>`
+
+Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  -c AxelarServiceGovernance --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  -c AxelarServiceGovernance -n <chain> --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  -c AxelarServiceGovernance -n <chain> --calldata <calldata>
+```
+
 ## Utilities
 
 ### Decode Function Calldata
