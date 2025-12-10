@@ -280,40 +280,67 @@ ts-node evm/gateway.js \
 
 ### Steps After Scheduling a Proposal
 
-Once a proposal has been scheduled on the destination chain, follow these steps:
+After you have created and submitted a proposal on Axelar (either via `evm/governance.js` directly or via an
+EVM helper script with `--governance`), the follow‑up steps depend on **what type of proposal** you created.
+
+#### A. Timelock-based proposals (default)
+
+These are proposals created **without** `--operatorProposal`. They use the `ScheduleTimelock` command type and
+are executed via the governance contract’s timelock.
 
 1. **Wait for Axelar proposal to pass and GMP to be relayed**
    - Monitor the Axelar governance proposal on-chain or via Axelarscan until it reaches `Passed`.
-   - Check Axelarscan GMP view (`Source Chain: axelar`, `Method: Call Contract`) to confirm that the GMP call to the destination chain was executed.
+   - Check the Axelarscan GMP view (`Source Chain: axelar`, `Method: Call Contract`) to confirm that the GMP call to the destination chain was executed.
 
 2. **If relayers failed, manually submit the GMP call (optional)**
    - Use the `submit` command from `evm/governance.js`:
-
-   ```bash
-   ts-node evm/governance.js submit raw <commandId> <activationTime> [options]
-   ```
-
+     ```bash
+     ts-node evm/governance.js submit raw <commandId> <activationTime> [options]
+     ```
    - **Where:**
-     - `<commandId>` is the GMP `commandId` from Axelarscan (see the Submit Proposal section in `governance.md` for how to find it).
+     - `<commandId>` is the GMP `commandId` from Axelarscan (see the "Submit Proposal" section in `governance.md` for how to find it).
      - `<activationTime>` is the same activation time you used when scheduling (UTC timestamp or relative seconds).
 
 3. **Inspect ETA on the destination chain**
-   - Once the GMP has executed and the timelock is created on the destination chain, compute ETA with:
-
-   ```bash
-   ts-node evm/governance.js eta \
-     --target <target> \
-     --calldata <calldata>
-   ```
-
+   - Once the GMP has executed and the timelock is created on the destination chain, compute the ETA with:
+     ```bash
+     ts-node evm/governance.js eta \
+       --target <target> \
+       --calldata <calldata>
+     ```
    - Use the same `target` and `calldata` that were used when scheduling.
 
 4. **Execute after ETA has passed**
+   - Once the ETA has passed, execute the proposal:
+     ```bash
+     ts-node evm/governance.js execute \
+       --target <target> \
+       --calldata <calldata>
+     ```
+   - Again, use the same `target` and `calldata` that were used when scheduling.
 
-   ```bash
-   ts-node evm/governance.js execute \
-     --target <target> \
-     --calldata <calldata>
-   ```
+#### B. Operator-based proposals (`--operatorProposal` with `AxelarServiceGovernance`)
 
-   - Use the same `target` and `calldata` that were used when scheduling.
+For operator‑gated proposals (those created with `--governanceContract AxelarServiceGovernance --operatorProposal`), Axelar schedules an `ApproveOperator` command on the `AxelarServiceGovernance` contract. An
+EVM‑side operator must then approve and execute the proposal.
+
+1. **Wait for Axelar proposal to pass and GMP to be relayed**
+   - As above, monitor the Axelar proposal and confirm that the GMP call to `AxelarServiceGovernance` on the destination chain was executed.
+
+2. **(Optional) Manually submit the operator proposal if relayers fail**
+   - Use the `submit-operator` command:
+     ```bash
+     ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <activationTime> [options]
+     ```
+
+3. **Check whether the operator proposal has been approved**
+   - Use the `is-operator-approved` command:
+     ```bash
+     ts-node evm/governance.js is-operator-approved <target> <calldata> [options]
+     ```
+
+4. **Execute the approved operator proposal**
+   - Once the operator has approved the proposal, execute it on the destination chain:
+     ```bash
+     ts-node evm/governance.js execute-operator-proposal <target> <calldata> [options]
+     ```
