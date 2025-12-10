@@ -122,36 +122,14 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const validateGovernanceMode = (config, contractName, useGovernance, chainName) => {
-    if (!useGovernance) {
-        return;
-    }
-
+const validateGovernanceMode = (config, contractName, chainName) => {
     const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
     const governanceAddress = contractConfig.governanceAddress;
-
-    if (!governanceAddress) {
-        throw new Error(
-            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} does not have a governanceAddress configured. Cannot use --governance flag.`,
-        );
-    }
 
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
-            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} uses governance key (${governanceAddress}), not governance module. ` +
-                `Cannot use --governance flag. Use direct execution instead.`,
-        );
-    }
-};
-
-const validateDirectExecution = (config, contractName, chainName) => {
-    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
-    const governanceAddress = contractConfig.governanceAddress;
-
-    if (governanceAddress === GOVERNANCE_MODULE_ADDRESS) {
-        throw new Error(
-            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} uses governance module address, not a governance key. ` +
-                `Direct execution will fail. Use --governance flag to submit a proposal instead.`,
+            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} governanceAddress is not set to governance module address. ` +
+                `Cannot use --governance flag. The proposal will fail at execution.`,
         );
     }
 };
@@ -1676,6 +1654,5 @@ module.exports = {
     validateItsChainChange,
     isLegacySDK,
     validateGovernanceMode,
-    validateDirectExecution,
     GOVERNANCE_MODULE_ADDRESS,
 };

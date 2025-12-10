@@ -8,14 +8,7 @@ import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { executeByGovernance } from './submit-proposal';
-import {
-    executeTransaction,
-    getCodeId,
-    itsHubChainParams,
-    validateDirectExecution,
-    validateGovernanceMode,
-    validateItsChainChange,
-} from './utils';
+import { executeTransaction, getCodeId, itsHubChainParams, validateGovernanceMode, validateItsChainChange } from './utils';
 
 interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
@@ -72,15 +65,13 @@ const executeContractMessage = async (
     const contractAddress = config.validateRequired(config.getContractConfig(contractName).address, `${contractName}.address`);
 
     if (options.governance) {
-        validateGovernanceMode(config, contractName, true, chainName);
+        validateGovernanceMode(config, contractName, chainName);
         const title = options.title || defaultTitle;
         const description = options.description || defaultDescription;
         validateParameters({ isNonEmptyString: { title, description } });
         const stringifiedMsg = msg.map((m) => JSON.stringify(m));
         return executeByGovernance(client, config, { ...options, contractName, msg: stringifiedMsg, title, description }, [], fee);
     }
-
-    validateDirectExecution(config, contractName, chainName);
 
     printDirectExecutionInfo(msg, contractAddress);
     return executeDirectly(client, contractAddress, msg, fee);
