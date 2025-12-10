@@ -67,7 +67,7 @@ const executeContractMessage = async (
     if (options.governance) {
         validateGovernanceMode(config, contractName, chainName);
         const title = options.title || defaultTitle;
-        const description = options.description || defaultDescription;
+        const description = options.description || defaultDescription || defaultTitle;
         validateParameters({ isNonEmptyString: { title, description } });
         const stringifiedMsg = msg.map((m) => JSON.stringify(m));
         return executeByGovernance(client, config, { ...options, contractName, msg: stringifiedMsg, title, description }, [], fee);
@@ -109,11 +109,9 @@ const registerItsChain = async (
 
     const msg = [{ register_chains: { chains } }];
 
-    const chainsList = args.join(', ');
-    const defaultTitle = `Register ${chainsList} on ITS Hub`;
-    const defaultDescription = `Register ${chainsList} on ITS Hub`;
+    const defaultTitle = `Register ${args.join(', ')} on ITS Hub`;
 
-    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle, defaultDescription);
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };
 
 const updateItsChain = async (
@@ -136,11 +134,9 @@ const updateItsChain = async (
 
     const msg = [{ update_chains: { chains } }];
 
-    const chainsList = args.join(', ');
-    const defaultTitle = `Update ${chainsList} on ITS Hub`;
-    const defaultDescription = `Update ${chainsList} on ITS Hub`;
+    const defaultTitle = `Update ${args.join(', ')} on ITS Hub`;
 
-    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle, defaultDescription);
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };
 
 const registerProtocol = async (
@@ -165,9 +161,8 @@ const registerProtocol = async (
     ];
 
     const defaultTitle = 'Register Protocol contracts on Coordinator';
-    const defaultDescription = 'Register Protocol contracts on Coordinator';
 
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle);
 };
 
 const registerDeployment = async (
@@ -186,9 +181,8 @@ const registerDeployment = async (
     const msg = [message];
 
     const defaultTitle = `Register ${chainName} deployment on Coordinator`;
-    const defaultDescription = `Register ${chainName} deployment on Coordinator`;
 
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle);
 };
 
 const createRewardPools = async (
