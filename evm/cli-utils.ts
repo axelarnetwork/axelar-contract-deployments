@@ -76,6 +76,17 @@ const addGovernanceOptions = (program: Command): Command => {
     program.addOption(new Option('--governance', 'Submit this change via interchain governance'));
     program.addOption(
         new Option(
+            '--governanceContract <governanceContract>',
+            'Governance contract to target (InterchainGovernance or AxelarServiceGovernance)',
+        )
+            .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+            .default('AxelarServiceGovernance'),
+    );
+    program.addOption(
+        new Option('--operatorProposal', 'Generate an operator-style proposal (ApproveOperator)').default(false),
+    );
+    program.addOption(
+        new Option(
             '--activationTime <activationTime>',
             'Governance Activation Time (YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
         ).default('0'),

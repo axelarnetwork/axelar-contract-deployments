@@ -25,7 +25,7 @@ const {
     httpGet,
     getContractJSON,
     getMultisigProof,
-    getGovernanceAddress,
+    getGovernanceContract,
     writeJSON,
 } = require('./utils');
 const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
@@ -374,11 +374,16 @@ async function processCommand(axelar, chain, _chains, options) {
             if (options.governance) {
                 const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
 
-                const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
+                const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+                printInfo('Governance contract', governanceContract);
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, gatewayAddress, calldata, nativeValue, eta);
+                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+                if (options.operatorProposal) {
+                    printInfo('Using operator-based proposal', 'ApproveOperator');
+                }
+                const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
                 printInfo('Governance calldata', calldata);
@@ -485,11 +490,16 @@ async function processCommand(axelar, chain, _chains, options) {
             if (options.governance) {
                 const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
 
-                const governanceAddress = getGovernanceAddress(chain, 'InterchainGovernance');
+                const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+                printInfo('Governance contract', governanceContract);
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, gatewayAddress, calldata, nativeValue, eta);
+                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+                if (options.operatorProposal) {
+                    printInfo('Using operator-based proposal', 'ApproveOperator');
+                }
+                const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
                 printInfo('Governance calldata', calldata);
