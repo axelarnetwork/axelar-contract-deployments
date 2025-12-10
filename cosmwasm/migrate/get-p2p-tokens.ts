@@ -17,7 +17,7 @@ const ITokenManager = getContractJSON('ITokenManager');
 const IInterchainToken = getContractJSON('IInterchainToken');
 
 const MAX_RETRIES = 4;
-const BATCH_SIZE = 2;
+const BATCH_SIZE = 4;
 
 // Async mutex per tokenId to prevent race conditions
 const tokenWriteMutex = new Mutex();
@@ -208,8 +208,11 @@ async function getTokensFromChain(chain: ChainConfig, tokensInfo: SquidTokenInfo
                             printWarn(`Decimals mismatch for ${tokenId}: ${decimals} !== ${tokensInfo.tokens[tokenId].decimals}`);
                         }
 
-                        tokensInfo.tokens[tokenId].chains.push(token);
-                        tokensInfo.tokens[tokenId].originAxelarChainId = getOriginChain(tokensInfo.tokens[tokenId].chains);
+                        const existingChain = tokensInfo.tokens[tokenId].chains.find((c) => c.axelarChainId === token.axelarChainId);
+                        if (!existingChain) {
+                            tokensInfo.tokens[tokenId].chains.push(token);
+                            tokensInfo.tokens[tokenId].originAxelarChainId = getOriginChain(tokensInfo.tokens[tokenId].chains);
+                        }
                     });
                 }),
             );

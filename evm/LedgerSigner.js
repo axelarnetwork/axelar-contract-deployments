@@ -29,13 +29,17 @@ class LedgerSigner extends Signer {
     }
 
     async getAddress() {
-        if (!this.eth) await this.connect();
+        if (!this.eth) {
+            await this.connect();
+        }
         const result = await this.eth.getAddress(this.path);
         return result.address;
     }
 
     async signMessage(message) {
-        if (!this.eth) await this.connect();
+        if (!this.eth) {
+            await this.connect();
+        }
 
         if (typeof message === 'string') {
             message = ethers.utils.toUtf8Bytes(message);
@@ -49,7 +53,9 @@ class LedgerSigner extends Signer {
     }
 
     async signTransaction(tx) {
-        if (!this.eth) await this.connect();
+        if (!this.eth) {
+            await this.connect();
+        }
 
         delete tx.from;
 
@@ -69,7 +75,9 @@ class LedgerSigner extends Signer {
     }
 
     async populateTransaction(tx) {
-        if (!this.eth) await this.connect();
+        if (!this.eth) {
+            await this.connect();
+        }
 
         return new VoidSigner(await this.getAddress(), this.provider).populateTransaction(tx);
     }

@@ -11,6 +11,7 @@ import { ClientManager, mainProcessor } from '../processor';
 export type SquidTokenData = {
     axelarChainId: string;
     tokenAddress: string;
+    decimals?: number;
 };
 
 export type SquidToken = {
@@ -88,22 +89,26 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
                 originAxelarChainId: token.originAxelarChainId,
                 axelarChainId: chain.axelarChainId,
             },
-            isNumber: { decimals: token.decimals },
+            isNumber: { decimals: chain.decimals ?? token.decimals },
         });
     });
+
+    if (!validateTokens) {
+        throw new Error('Error validating tokens');
+    }
 
     const registerTokens = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
         const tokenData: TokenData = {
             tokenId: token.tokenId,
             originChain: token.originAxelarChainId.toLowerCase(),
-            decimals: token.decimals,
+            decimals: chain.decimals ?? token.decimals,
             chainName: chain.axelarChainId.toLowerCase(),
         } as TokenData;
         await registerToken(config, interchainTokenServiceAddress, client, tokenData, options.dryRun);
     });
 
-    if (!validateTokens || !registerTokens) {
-        throw new Error('Error validating or registering tokens');
+    if (!registerTokens) {
+        throw new Error('Error registering tokens');
     }
 }
 
