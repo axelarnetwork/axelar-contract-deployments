@@ -538,7 +538,7 @@ ts-node evm/its.js flow-limit <token-id>
 #### Important Notes
 
 - **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
-- **NOT per-chain-pair**: All destinations share the same flow counters
+- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
 - Flow limits protect against exploits by capping potential losses per epoch
 
 ### Link Token
