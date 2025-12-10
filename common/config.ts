@@ -139,11 +139,14 @@ export class ConfigManager implements FullConfig {
         const errors: string[] = [];
         const { axelar, chains } = this;
 
-        if (!axelar) errors.push(`Missing 'axelar' section in ${this.environment} config`);
-        if (!chains)
+        if (!axelar) {
+            errors.push(`Missing 'axelar' section in ${this.environment} config`);
+        }
+        if (!chains) {
             errors.push(`Missing 'chains' section in ${this.environment} config. Please ensure the config file has a 'chains' property.`);
-        else if (typeof chains !== 'object' || chains === null)
+        } else if (typeof chains !== 'object' || chains === null) {
             errors.push(`'chains' section in ${this.environment} config must be an object`);
+        }
 
         return errors;
     }
@@ -151,7 +154,9 @@ export class ConfigManager implements FullConfig {
     private validateAxelarConfig(): string[] {
         const errors: string[] = [];
         const { axelar } = this;
-        if (!axelar) return errors;
+        if (!axelar) {
+            return errors;
+        }
 
         const requiredFields = [
             'contracts',
@@ -197,7 +202,9 @@ export class ConfigManager implements FullConfig {
 
     private validateChainConfigs(): string[] {
         const errors: string[] = [];
-        if (!this.chains) return errors;
+        if (!this.chains) {
+            return errors;
+        }
 
         Object.entries(this.chains).forEach(([chainName, chainConfig]) => {
             errors.push(...this.validateSingleChain(chainName, chainConfig));

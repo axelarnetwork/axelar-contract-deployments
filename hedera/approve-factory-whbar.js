@@ -147,7 +147,9 @@ if (require.main === module) {
         )
         .addOption(
             new Option('--amount <amount>', 'Amount to approve (use "max" for maximum uint256)').default('max').argParser((value) => {
-                if (value === 'max') return 'max';
+                if (value === 'max') {
+                    return 'max';
+                }
                 const parsed = parseFloat(value);
                 if (isNaN(parsed) || parsed < 0) {
                     throw new Error('Amount must be a positive number or "max"');
