@@ -649,13 +649,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 if (options.operatorProposal) {
                     printInfo('Using operator-based proposal', 'ApproveOperator');
                 }
-                const gmpPayload = encodeGovernanceProposal(
-                    proposalType,
-                    interchainTokenServiceAddress,
-                    calldata,
-                    nativeValue,
-                    eta,
-                );
+                const gmpPayload = encodeGovernanceProposal(proposalType, interchainTokenServiceAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', interchainTokenServiceAddress);
                 printInfo('Governance calldata', calldata);
@@ -775,13 +769,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 if (options.operatorProposal) {
                     printInfo('Using operator-based proposal', 'ApproveOperator');
                 }
-                const gmpPayload = encodeGovernanceProposal(
-                    proposalType,
-                    interchainTokenServiceAddress,
-                    calldata,
-                    nativeValue,
-                    eta,
-                );
+                const gmpPayload = encodeGovernanceProposal(proposalType, interchainTokenServiceAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', interchainTokenServiceAddress);
                 printInfo('Governance calldata', calldata);

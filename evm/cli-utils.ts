@@ -82,9 +82,7 @@ const addGovernanceOptions = (program: Command): Command => {
             .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
             .default('AxelarServiceGovernance'),
     );
-    program.addOption(
-        new Option('--operatorProposal', 'Generate an operator-style proposal (ApproveOperator)').default(false),
-    );
+    program.addOption(new Option('--operatorProposal', 'Generate an operator-style proposal (ApproveOperator)').default(false));
     program.addOption(
         new Option(
             '--activationTime <activationTime>',
