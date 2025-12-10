@@ -10,6 +10,7 @@ mod its;
 mod memo;
 mod misc;
 mod multisig_prover_types;
+mod operators;
 mod send;
 mod sign;
 mod types;
@@ -154,6 +155,10 @@ enum InstructionSubcommand {
     #[clap(subcommand)]
     Governance(governance::Commands),
 
+    /// Commands to interface with the AxelarOperators program on Solana
+    #[clap(subcommand)]
+    Operators(operators::Commands),
+
     /// Commands to interface with the AxelarMemo program on Solana
     #[clap(subcommand)]
     Memo(memo::Commands),
@@ -223,6 +228,7 @@ async fn main() {
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
+        #[allow(clippy::exit)]
         exit(1);
     }
 }
@@ -324,7 +330,7 @@ async fn run() -> eyre::Result<()> {
         }
         Command::Query(args) => match args.instruction {
             QueryInstructionSubcommand::Gateway(command) => {
-                gateway::query(command, &config)?;
+                gateway::query(command, &config).await?;
             }
             QueryInstructionSubcommand::Its(command) => {
                 its::query(command, &config)?;
@@ -349,6 +355,9 @@ async fn build_transaction(
         InstructionSubcommand::Its(command) => its::build_transaction(fee_payer, command, config),
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
+        }
+        InstructionSubcommand::Operators(command) => {
+            operators::build_transaction(fee_payer, command, config)
         }
         InstructionSubcommand::Memo(command) => memo::build_transaction(fee_payer, command, config),
     }

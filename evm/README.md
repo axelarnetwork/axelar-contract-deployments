@@ -212,39 +212,58 @@ ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
 
-1. Generate the governance proposal for Axelar
+1. Generate and submit the proposal on Axelar 
+ 
+- Note: `MNEMONIC` must be set in your .env
 
-```bash
-ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction schedule --date 2023-11-10T03:00:00 --file proposal.json
+```
+ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
+  --targetContractName AxelarGateway 
 ```
 
+If `--file` is not supplied, the script will prompt for confirmation and then submit a `call-contracts` type proposal to the Axelar network using `MNEMONIC`.
+
+OR follow these steps:
+
+- Generate the governance proposal for Axelar (JSON only)
+
+```bash
+ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
+  --targetContractName AxelarGateway \
+  --file proposal.json
+```
+
+The date can be specified in two formats:
+- **Absolute UTC timestamp**: `YYYY-MM-DDTHH:mm:ss` (e.g., `2023-11-10T03:00:00`)
+- **Relative seconds**: Numeric value representing seconds from current UTC time (e.g., `3600` for 1 hour from now)
+
 2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
+- Submit the proposal via Cosmos CLI instead  
+   A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
 
 ```bash
 axelard tx gov submit-proposal call-contracts proposal.json --deposit [min-deposit]uaxl --from [wallet] --chain-id [chain-id] --gas auto --gas-adjustment 1.4 --node [rpc]
 ```
 
-3. Ask validators and community to vote on the proposal
+2. Ask validators and community to vote on the proposal
 
 ```bash
 axelard tx gov vote [proposal-id] [vote-option] --from [wallet] --chain-id [chain-id] --node [rpc]
 ```
 
-4. Once the proposal passes after the voting period, a GMP call is initiated from Axelar to the EVM Governance contract.
-5. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
+3. Once the proposal passes after the voting period, a GMP call is initiated from Axelar to the EVM Governance contract.
+4. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
 
 ```bash
-ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction submit --date 2023-12-11T08:45:00 --commandId [commandId]
+ts-node evm/governance.js submit upgrade [commandId] 2023-12-11T08:45:00 --targetContractName AxelarGateway -n [chain] 
 ```
 
-6. Wait for timelock to pass on the proposal
-7. Execute the proposal
+5. Wait for timelock to pass on the proposal
+6. Execute the proposal
 
 ```bash
-ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action upgrade --proposalAction execute
+ts-node evm/governance.js execute --targetContractName AxelarGateway --target [target-address] --calldata [calldata] -n [chain]
 ```
-
-8. Verify the governance command went through correctly.
 
 ## Utilities
 
@@ -477,6 +496,48 @@ ts-node evm/verify-contract.js --help
 
 ## Interchain Token Service
 
+### Flow Limits
+
+Flow Limit is a rate-limiting mechanism in ITS that restricts the **net flow** of tokens in and out of a chain within a 6-hour epoch window.
+
+#### Key Concepts
+
+- **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
+- **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
+- **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
+- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
+- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
+- Flow limits protect against exploits by capping potential losses per epoch
+
+#### Example Flow Tracking
+
+```
+Epoch starts, flowLimit = 10,000 tokens
+
+T+1h: Send 8,000 OUT    → netFlow = 8,000   ✅
+T+2h: Receive 5,000 IN  → netFlow = 3,000   ✅
+T+3h: Send 8,000 OUT    → netFlow = 11,000  ❌ REVERTS (FlowLimitExceeded)
+T+6h: New epoch         → netFlow = 0       (counters reset)
+```
+
+#### Roles
+
+| Role | Permissions |
+|------|-------------|
+| **OPERATOR** (on TokenManager) | `addFlowLimiter()`, `removeFlowLimiter()` |
+| **OPERATOR** (on ITS) | `setFlowLimits()` - batch set limits for multiple tokens |
+| **FLOW_LIMITER** | `setFlowLimit()` - set limit for specific TokenManager |
+
+#### Setting Flow Limits
+
+```bash
+# Set flow limit for a token (requires ITS OPERATOR role)
+ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
+
+# Query current flow limit
+ts-node evm/its.js flow-limit <token-id>
+```
+
 ### Link Token
 
 #### Legacy custom ITS tokens
@@ -637,6 +698,16 @@ Example:
 
 ```bash
 ts-node evm/interchainTokenFactory.js register-custom-token --tokenAddress 0x0F6814301C0DA51bFddA9D2A6Dd877950aa0F912 --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb50
+```
+
+Note:
+Custom tokens that wish to utlize Mint/Burn token managers must implement the mint and burn interfaces to match:
+
+```bash
+mint(address to, uint256 amount);
+```
+```bash
+burn(address from, uint256 amount);
 ```
 
 ### Link Token

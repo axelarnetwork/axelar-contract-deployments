@@ -3,13 +3,14 @@
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
 | **Created By** | @sdavidson1177 <solomon@interoplabs.io> |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>                 |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | -          |
-| **Stagenet**         | -                     | -          |
-| **Testnet**          | -                     | -          |
-| **Mainnet**          | -                     | -          |
+| **Devnet Amplifier** | Complete              | 2025-11-17 |
+| **Stagenet**         | Complete              | 2025-11-17 |
+| **Testnet**          | Complete              | 2025-11-17 |
+| **Mainnet**          | Complete              | 2025-11-21 |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v2.3.2)

@@ -63,6 +63,8 @@ pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
 pub(crate) const MULTISIG_PROVER_KEY: &str = "SolanaMultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
+pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
+pub(crate) const OWNER_KEY: &str = "owner";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -410,7 +412,7 @@ mod tests {
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
         assert_eq!(
             parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(),
-            11234567890123456789
+            11_234_567_890_123_456_789
         );
     }
 
