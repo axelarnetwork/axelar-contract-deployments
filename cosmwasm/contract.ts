@@ -227,6 +227,161 @@ const createRewardPools = async (
     return executeContractMessage(client, config, options, 'Rewards', messages, fee, defaultTitle, defaultDescription);
 };
 
+// ==================== Emergency Operations ====================
+
+// Router operations (Admin EOA only - cannot use governance)
+const routerFreezeChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chainName] = args;
+    const msg = [{ freeze_chain: { chain: chainName } }];
+
+    if (options.governance) {
+        throw new Error('Router freeze_chain can only be executed by Admin EOA, not via governance');
+    }
+
+    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    printDirectExecutionInfo(msg, contractAddress);
+    return executeDirectly(client, contractAddress, msg, fee);
+};
+
+const routerUnfreezeChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chainName] = args;
+    const msg = [{ unfreeze_chain: { chain: chainName } }];
+
+    if (options.governance) {
+        throw new Error('Router unfreeze_chain can only be executed by Admin EOA, not via governance');
+    }
+
+    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    printDirectExecutionInfo(msg, contractAddress);
+    return executeDirectly(client, contractAddress, msg, fee);
+};
+
+const routerDisableRouting = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msg = [{ disable_routing: {} }];
+
+    if (options.governance) {
+        throw new Error('Router disable_routing can only be executed by Admin EOA, not via governance');
+    }
+
+    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    printDirectExecutionInfo(msg, contractAddress);
+    return executeDirectly(client, contractAddress, msg, fee);
+};
+
+const routerEnableRouting = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msg = [{ enable_routing: {} }];
+
+    if (options.governance) {
+        throw new Error('Router enable_routing can only be executed by Admin EOA, not via governance');
+    }
+
+    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    printDirectExecutionInfo(msg, contractAddress);
+    return executeDirectly(client, contractAddress, msg, fee);
+};
+
+// Multisig operations (Admin EOA or Governance)
+const multisigDisableSigning = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msg = [{ disable_signing: {} }];
+    const defaultTitle = 'Disable signing on Multisig';
+    return executeContractMessage(client, config, options, 'Multisig', msg, fee, defaultTitle);
+};
+
+const multisigEnableSigning = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msg = [{ enable_signing: {} }];
+    const defaultTitle = 'Enable signing on Multisig';
+    return executeContractMessage(client, config, options, 'Multisig', msg, fee, defaultTitle);
+};
+
+// ITS Hub operations (Admin EOA or Governance)
+const itsDisableExecution = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msg = [{ disable_execution: {} }];
+    const defaultTitle = 'Disable execution on ITS Hub';
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
+};
+
+const itsEnableExecution = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const msg = [{ enable_execution: {} }];
+    const defaultTitle = 'Enable execution on ITS Hub';
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
+};
+
+const itsFreezeChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chainName] = args;
+    const msg = [{ freeze_chain: { chain: chainName } }];
+    const defaultTitle = `Freeze chain ${chainName} on ITS Hub`;
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
+};
+
+const itsUnfreezeChain = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chainName] = args;
+    const msg = [{ unfreeze_chain: { chain: chainName } }];
+    const defaultTitle = `Unfreeze chain ${chainName} on ITS Hub`;
+    return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
+};
+
+// ==================== End Emergency Operations ====================
+
 const instantiateChainContracts = async (
     client: ClientManager,
     config: ConfigManager,
@@ -341,6 +496,77 @@ const programHandler = () => {
     addAmplifierOptions(instantiateChainContractsCmd, {
         fetchCodeId: true,
     });
+
+    // ==================== Emergency Operations Commands ====================
+
+    // Router commands (Admin EOA only)
+    const routerFreezeChainCmd = program
+        .command('router-freeze-chain')
+        .description('[EMERGENCY] Freeze a chain on Router (Admin EOA only, cannot use governance)')
+        .argument('<chainName>', 'chain name to freeze')
+        .action((chainName, options) => mainProcessor(routerFreezeChain, options, [chainName]));
+    addAmplifierOptions(routerFreezeChainCmd);
+
+    const routerUnfreezeChainCmd = program
+        .command('router-unfreeze-chain')
+        .description('[EMERGENCY] Unfreeze a chain on Router (Admin EOA only, cannot use governance)')
+        .argument('<chainName>', 'chain name to unfreeze')
+        .action((chainName, options) => mainProcessor(routerUnfreezeChain, options, [chainName]));
+    addAmplifierOptions(routerUnfreezeChainCmd);
+
+    const routerDisableRoutingCmd = program
+        .command('router-disable-routing')
+        .description('[EMERGENCY] Disable routing on Router - affects ALL chains (Admin EOA only, cannot use governance)')
+        .action((options) => mainProcessor(routerDisableRouting, options));
+    addAmplifierOptions(routerDisableRoutingCmd);
+
+    const routerEnableRoutingCmd = program
+        .command('router-enable-routing')
+        .description('[EMERGENCY] Enable routing on Router (Admin EOA only, cannot use governance)')
+        .action((options) => mainProcessor(routerEnableRouting, options));
+    addAmplifierOptions(routerEnableRoutingCmd);
+
+    // Multisig commands (Admin EOA or Governance)
+    const multisigDisableSigningCmd = program
+        .command('multisig-disable-signing')
+        .description('[EMERGENCY] Disable signing on Multisig (Admin EOA or --governance)')
+        .action((options) => mainProcessor(multisigDisableSigning, options));
+    addAmplifierOptions(multisigDisableSigningCmd);
+
+    const multisigEnableSigningCmd = program
+        .command('multisig-enable-signing')
+        .description('[EMERGENCY] Enable signing on Multisig (Admin EOA or --governance)')
+        .action((options) => mainProcessor(multisigEnableSigning, options));
+    addAmplifierOptions(multisigEnableSigningCmd);
+
+    // ITS Hub commands (Admin EOA or Governance)
+    const itsDisableExecutionCmd = program
+        .command('its-disable-execution')
+        .description('[EMERGENCY] Disable execution on ITS Hub (Admin EOA or --governance)')
+        .action((options) => mainProcessor(itsDisableExecution, options));
+    addAmplifierOptions(itsDisableExecutionCmd);
+
+    const itsEnableExecutionCmd = program
+        .command('its-enable-execution')
+        .description('[EMERGENCY] Enable execution on ITS Hub (Admin EOA or --governance)')
+        .action((options) => mainProcessor(itsEnableExecution, options));
+    addAmplifierOptions(itsEnableExecutionCmd);
+
+    const itsFreezeChainCmd = program
+        .command('its-freeze-chain')
+        .description('[EMERGENCY] Freeze a chain on ITS Hub (Admin EOA or --governance)')
+        .argument('<chainName>', 'chain name to freeze')
+        .action((chainName, options) => mainProcessor(itsFreezeChain, options, [chainName]));
+    addAmplifierOptions(itsFreezeChainCmd);
+
+    const itsUnfreezeChainCmd = program
+        .command('its-unfreeze-chain')
+        .description('[EMERGENCY] Unfreeze a chain on ITS Hub (Admin EOA or --governance)')
+        .argument('<chainName>', 'chain name to unfreeze')
+        .action((chainName, options) => mainProcessor(itsUnfreezeChain, options, [chainName]));
+    addAmplifierOptions(itsUnfreezeChainCmd);
+
+    // ==================== End Emergency Operations Commands ====================
 
     program.parse();
 };
