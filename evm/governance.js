@@ -624,7 +624,7 @@ if (require.main === module) {
     program
         .command('schedule')
         .description('Schedule a new timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
@@ -666,6 +666,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .action((governanceAction, options, cmd) => {
@@ -738,6 +739,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
         .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
         .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .action((governanceAction, commandId, activationTime, options, cmd) => {
