@@ -18,7 +18,7 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const host = options.faucet ?? getFaucetHost(chain.networkType);
+    const host = options.faucet || getFaucetHost(chain.networkType);
     await requestSuiFromFaucetV2({ host, recipient });
 
     printInfo('Funds requested', recipient);
