@@ -52,7 +52,9 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
     tokenIds = tokenIds.split(',');
     flowLimits = flowLimits.split(',');
 
-    if (tokenIds.length !== flowLimits.length) throw new Error('<token-ids> and <flow-limits> have to have the same length.');
+    if (tokenIds.length !== flowLimits.length) {
+        throw new Error('<token-ids> and <flow-limits> have to have the same length.');
+    }
 
     for (let i = 0; i < tokenIds.length; i++) {
         const coinTypeTxBuilder = new TxBuilder(client);
@@ -146,7 +148,9 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 async function removeTrustedChains(keypair, client, config, contracts, args, options) {
     const trustedChains = args;
 
-    if (trustedChains.length === 0) throw new Error('No chains names provided');
+    if (trustedChains.length === 0) {
+        throw new Error('No chains names provided');
+    }
 
     const txBuilder = new TxBuilder(client);
 
@@ -279,7 +283,9 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         options.treasuryCap ? treasuryCap : null,
         options.salt ? options.salt : null,
     );
-    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
+    if (!tokenId) {
+        throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
+    }
 
     // Save the deployed token
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata, [], saltAddress);
@@ -330,16 +336,22 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
 
     // Show or disable logging output (0 = logging disabled)
     let logSize = options.logging ? parseInt(options.logging) : 0;
-    if (isNaN(logSize)) logSize = 0;
+    if (isNaN(logSize)) {
+        logSize = 0;
+    }
 
     // Batch or process txs 1-by-1 (0 = batching disabled)
     let batchSize = options.batch ? parseInt(options.batch) : 0;
-    if (isNaN(batchSize)) batchSize = 0;
+    if (isNaN(batchSize)) {
+        batchSize = 0;
+    }
 
     // Migrate all the coins. This might take a while.
     const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
 
-    if (!legacyCoins.length) printInfo('Warning: no migratable tokens were found in chain config for env', options.env, chalk.yellow);
+    if (!legacyCoins.length) {
+        printInfo('Warning: no migratable tokens were found in chain config for env', options.env, chalk.yellow);
+    }
 
     let migratedCoins = [],
         failedMigrations = [],
@@ -349,7 +361,9 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     for (let i = 0; i < legacyCoins.length; i++) {
         const coin = legacyCoins[i];
 
-        if (batchSize) currentBatch.push(coin);
+        if (batchSize) {
+            currentBatch.push(coin);
+        }
 
         try {
             const splitCoinType = coin.TokenType.split('<');
@@ -365,8 +379,9 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
                 const txType = !batchSize ? coin.symbol : 'batched';
                 await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${txType})`, options);
                 txBuilder = new TxBuilder(client);
-                if (!batchSize) migratedCoins.push(coin);
-                else {
+                if (!batchSize) {
+                    migratedCoins.push(coin);
+                } else {
                     migratedCoins = [...migratedCoins, ...currentBatch];
                     ++processedBatches;
                     currentBatch = [];
@@ -386,21 +401,27 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         }
 
         // Intermediate status debugging report (e.g. if options.logging enabled)
-        if (logSize > 0 && (i + 1) % logSize === 0 && !batchSize)
+        if (logSize > 0 && (i + 1) % logSize === 0 && !batchSize) {
             printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Last migrated token`, coin.symbol);
-        else if (logSize > 0 && (i + 1) % logSize === 0 && batchSize)
+        } else if (logSize > 0 && (i + 1) % logSize === 0 && batchSize) {
             printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Processed batches`, processedBatches);
+        }
     }
 
     // Final status report
-    if (migratedCoins.length) printInfo('Total coins migrated', migratedCoins.length);
-    else printInfo('No coins were migrated');
+    if (migratedCoins.length) {
+        printInfo('Total coins migrated', migratedCoins.length);
+    } else {
+        printInfo('No coins were migrated');
+    }
 
     // Clean up chain config
     if (failedMigrations.length) {
         contracts.InterchainTokenService.legacyCoins = failedMigrations;
         printInfo('Number of failed migrations', failedMigrations.length, chalk.yellow);
-    } else delete contracts.InterchainTokenService.legacyCoins;
+    } else {
+        delete contracts.InterchainTokenService.legacyCoins;
+    }
 }
 
 async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
@@ -524,8 +545,11 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
 
     const coin = contracts[symbol.toUpperCase()];
     const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
-    if (!coin.objects) throw new Error(tcrErrorMsg);
-    else if (!coin.objects.TreasuryCapReclaimer) throw new Error(tcrErrorMsg);
+    if (!coin.objects) {
+        throw new Error(tcrErrorMsg);
+    } else if (!coin.objects.TreasuryCapReclaimer) {
+        throw new Error(tcrErrorMsg);
+    }
 
     // Receive TreasuryCap
     const treasuryCap = await txBuilder.moveCall({
@@ -849,8 +873,11 @@ async function removeTreasuryCap(keypair, client, config, contracts, args, optio
 
     const coin = contracts[symbol.toUpperCase()];
     const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
-    if (!coin.objects) throw new Error(tcrErrorMsg);
-    else if (!coin.objects.TreasuryCapReclaimer) throw new Error(tcrErrorMsg);
+    if (!coin.objects) {
+        throw new Error(tcrErrorMsg);
+    } else if (!coin.objects.TreasuryCapReclaimer) {
+        throw new Error(tcrErrorMsg);
+    }
 
     // Receive TreasuryCap
     const treasuryCap = await txBuilder.moveCall({
@@ -883,8 +910,11 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 
     const coin = contracts[symbol.toUpperCase()];
     const tcErrorMsg = `no TreasuryCap was found for token with symbol ${symbol}`;
-    if (!coin.objects) throw new Error(tcErrorMsg);
-    else if (!coin.objects.TreasuryCap) throw new Error(tcErrorMsg);
+    if (!coin.objects) {
+        throw new Error(tcErrorMsg);
+    } else if (!coin.objects.TreasuryCap) {
+        throw new Error(tcErrorMsg);
+    }
 
     // TokenId
     const tokenId = await txBuilder.moveCall({
@@ -1032,20 +1062,26 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     });
 
     const supportedFunctions = itsFunctions[version];
-    if (!Array.isArray(supportedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
+    if (!Array.isArray(supportedFunctions)) {
+        throw new Error(`No deployable versions found with id ${version}`);
+    }
 
     const versionedId = itsConfig.objects.InterchainTokenServicev0;
     const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
     const allowedFunctions = allowedFunctionsArray[parseInt(version)];
     const equality = JSON.stringify(allowedFunctions) === JSON.stringify(supportedFunctions);
 
-    if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
-    else {
+    if (equality) {
+        printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
+    } else {
         const disabledFunctions = [];
         const enabledFunctions = [];
         supportedFunctions.forEach((fnName) => {
-            if (allowedFunctions.indexOf(fnName) > -1) enabledFunctions.push(fnName);
-            else disabledFunctions.push(fnName);
+            if (allowedFunctions.indexOf(fnName) > -1) {
+                enabledFunctions.push(fnName);
+            } else {
+                disabledFunctions.push(fnName);
+            }
         });
 
         printInfo(`${enabledFunctions.length} functions are allowed in version`, version);
