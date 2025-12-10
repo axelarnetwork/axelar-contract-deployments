@@ -554,48 +554,6 @@ ts-node evm/verify-contract.js --help
 
 ## Interchain Token Service
 
-### Flow Limits
-
-Flow Limit is a rate-limiting mechanism in ITS that restricts the **net flow** of tokens in and out of a chain within a 6-hour epoch window.
-
-#### Key Concepts
-
-- **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
-- **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
-- **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
-- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
-- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
-- Flow limits protect against exploits by capping potential losses per epoch
-
-#### Example Flow Tracking
-
-```
-Epoch starts, flowLimit = 10,000 tokens
-
-T+1h: Send 8,000 OUT    → netFlow = 8,000   ✅
-T+2h: Receive 5,000 IN  → netFlow = 3,000   ✅
-T+3h: Send 8,000 OUT    → netFlow = 11,000  ❌ REVERTS (FlowLimitExceeded)
-T+6h: New epoch         → netFlow = 0       (counters reset)
-```
-
-#### Roles
-
-| Role | Permissions |
-|------|-------------|
-| **OPERATOR** (on TokenManager) | `addFlowLimiter()`, `removeFlowLimiter()` |
-| **OPERATOR** (on ITS) | `setFlowLimits()` - batch set limits for multiple tokens |
-| **FLOW_LIMITER** | `setFlowLimit()` - set limit for specific TokenManager |
-
-#### Setting Flow Limits
-
-```bash
-# Set flow limit for a token (requires ITS OPERATOR role)
-ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
-
-# Query current flow limit
-ts-node evm/its.js flow-limit <token-id>
-```
-
 ### Link Token
 
 #### Legacy custom ITS tokens

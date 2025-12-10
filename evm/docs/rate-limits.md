@@ -3,7 +3,7 @@
 ### Overview
 
 The Interchain Token Service (ITS) supports **per-token flow limits** to rate-limit how much value can move in or out of a chain over a period of time.  
-These limits are managed by the ITS owner on each chain via the `evm/its.js` script.
+These limits are managed by the ITS operator on each chain via the `evm/its.js` script.
 
 **Key points:**
 - **Flow limit** is tracked per ITS `tokenId` on each chain.
@@ -27,7 +27,7 @@ where:
 - ITS must be deployed and configured for the target chain.
 - You have a funded EVM wallet with:
   - Access to the private key via `.env` (see main `README.md`).
-  - **Owner** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`).
+  - **Operator** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`).
 
 You can use the standard EVM options for `its.js`, for example:
 
@@ -81,7 +81,7 @@ ts-node evm/its.js set-flow-limit <token-id> <flow-limit> -e <env> -n <chain>
 - **`flow-limit`**: New flow limit for this token on the current chain.
 
 Notes:
-- Requires **ITS owner** privileges.
+- Requires **ITS operator** privileges.
 - `flow-limit = 0` effectively **removes** the limit (no rate limiting for that token on this chain).
 
 ---
@@ -151,6 +151,6 @@ Behavior:
 |-----------------|-------------|---------------|
 | `TokenManager for tokenId ... does not yet exist.` | Token not yet deployed/linked on this chain. | Verify ITS configuration and that the token was deployed/linked on this chain. |
 | `flow-limit` / `flow-in-amount` / `flow-out-amount` return 0 unexpectedly | Token has not yet been used or limits were never set. | Send a small transfer or set a non‑zero limit where appropriate. |
-| `set-flow-limit` / `freeze-tokens` / `unfreeze-tokens` revert | Caller is not the ITS owner. | Ensure you are using the ITS owner wallet for the target chain. |
+| `set-flow-limit` / `freeze-tokens` / `unfreeze-tokens` revert | Caller is not the ITS operator. | Ensure you are using the ITS operator wallet for the target chain. |
 
 
