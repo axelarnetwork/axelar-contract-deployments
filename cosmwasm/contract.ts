@@ -255,19 +255,13 @@ const instantiateChainContracts = async (
         multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
     }
 
-    if (!gatewayConfig.codeId) {
-        throw new Error('Gateway code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId');
-    }
-    if (!votingVerifierConfig.codeId) {
-        throw new Error(
-            'VotingVerifier code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
-        );
-    }
-    if (!multisigProverConfig.codeId) {
-        throw new Error(
-            'MultisigProver code ID is required when --fetchCodeId is not used. Please provide it in the config or use --fetchCodeId',
-        );
-    }
+    validateParameters({
+        isNumber: {
+            gatewayCodeId: gatewayConfig.codeId,
+            votingVerifierCodeId: votingVerifierConfig.codeId,
+            multisigProverCodeId: multisigProverConfig.codeId,
+        },
+    });
 
     const coordinator = new CoordinatorManager(config);
     const message = coordinator.constructExecuteMessage(chainName, salt, admin);
