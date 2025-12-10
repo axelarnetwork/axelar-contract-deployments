@@ -502,7 +502,7 @@ Flow Limit is a rate-limiting mechanism in ITS that restricts the **net flow** o
 
 #### Key Concepts
 
-- **Epoch**: 6 hours (hardcoded). Flow counters reset at each epoch start.
+- **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
 - **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
 - **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
 
