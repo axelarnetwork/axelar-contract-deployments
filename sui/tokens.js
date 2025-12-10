@@ -342,7 +342,9 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
         // Save the deployed token
         saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 
-        if (options.createOnly) return;
+        if (options.createOnly) {
+            return;
+        }
     }
 
     printInfo('Action', 'Generate Legacy Coins List');
@@ -354,7 +356,9 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
 
     const registeredCoinsId = itsObject.data ? itsObject.data.content.fields.value.fields.registered_coins.fields.id.id : null;
 
-    if (!registeredCoinsId) throw new Error(`Unable to query ITS object at id ${InterchainTokenServicev0}`);
+    if (!registeredCoinsId) {
+        throw new Error(`Unable to query ITS object at id ${InterchainTokenServicev0}`);
+    }
 
     let hasNextPage = true,
         cursor,
@@ -363,7 +367,9 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
         try {
             // Paging (batches of 50)
             const params = { parentId: registeredCoinsId };
-            if (cursor) params.cursor = cursor;
+            if (cursor) {
+                params.cursor = cursor;
+            }
 
             // Fetch token data
             const fields = await client.getDynamicFields(params);
@@ -396,7 +402,9 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
             throw new Error(e);
         }
     }
-    if (legacyCoins.length) contracts.InterchainTokenService.legacyCoins = legacyCoins;
+    if (legacyCoins.length) {
+        contracts.InterchainTokenService.legacyCoins = legacyCoins;
+    }
 }
 
 async function mainProcessor(options, processor, args = {}) {
