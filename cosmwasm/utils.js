@@ -420,7 +420,11 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
     } = contracts;
-    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
+
+    // Get chain codec address
+    const chainConfig = config.getChainConfig(chainName);
+    const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
+
     const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
         contractConfig;
 
@@ -558,33 +562,6 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 };
 
 const AXELAR_GATEWAY_CONTRACT_NAME = 'AxelarGateway';
-
-// Helpers to resolve ChainCodecXyz entries from the new split config
-/** Get the ChainCodec config object for the chain type (single instance, not per-chain) */
-const getChainCodecConfigForChain = (config, chainName) => {
-    const codecContract = getChainCodecContractNameByChainType(config, chainName);
-    return config.axelar.contracts[codecContract];
-};
-
-const getChainCodecContractNameByChainType = (config, chainName) => {
-    const chainType = config.chains?.[chainName]?.chainType;
-    const mapping = {
-        evm: 'ChainCodecEvm',
-        sui: 'ChainCodecSui',
-        stellar: 'ChainCodecStellar',
-    };
-
-    const result = mapping[chainType];
-    if (!result) {
-        throw new Error(`Unsupported or unknown chain type '${chainType}' for chain ${chainName} when resolving ChainCodec`);
-    }
-    return result;
-};
-
-const getChainCodecAddressForChain = (config, chainName) => {
-    const codecConfig = getChainCodecConfigForChain(config, chainName);
-    return codecConfig?.address;
-};
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
@@ -752,7 +729,11 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const chainCodecAddress = getChainCodecAddressForChain(config, chainName);
+    
+    // Get chain codec address
+    const chainConfig = config.getChainConfig(chainName);
+    const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
+
     const { adminAddress, governanceAddress, signingThreshold, serviceName, verifierSetDiffThreshold, keyType } = contractConfig;
 
     if (!validateAddress(routerAddress)) {
@@ -1668,9 +1649,6 @@ module.exports = {
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
-    getChainCodecAddressForChain,
-    getChainCodecConfigForChain,
-    getChainCodecContractNameByChainType,
     isLegacySDK,
     GOVERNANCE_MODULE_ADDRESS,
 };

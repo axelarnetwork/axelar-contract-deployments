@@ -7,7 +7,6 @@ import { addEnvOption, getChainConfig, itsHubContractAddress, printError, printI
 import { ConfigManager, ContractConfig } from '../common/config';
 import { addAmplifierQueryContractOptions, addAmplifierQueryOptions } from './cli-utils';
 import { Options, mainQueryProcessor } from './processor';
-import { getChainCodecContractNameByChainType } from './utils';
 
 export interface ContractInfo {
     contract: string;

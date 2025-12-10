@@ -96,6 +96,20 @@ export interface MultisigProverChainConfig {
     contractAdmin?: string;
     address?: string;
     domainSeparator?: string;
+    /** Whether the MultisigProver notifies the ChainCodec about the signing session. Defaults to false. */
+    notifySigningSession?: boolean;
+    /** 
+     * Whether the MultisigProver expects full message payloads.
+     * This changes the message the relayer needs to send.
+     * Defaults to false.
+     */
+    expectFullMessagePayloads?: boolean;
+    /** The address of the SigVerifier contract. Defaults to null. */
+    sigVerifierAddress?: string | null;
+}
+
+export interface ChainCodecConfig {
+    address?: string;
 }
 
 export interface GatewayChainConfig {
@@ -463,6 +477,26 @@ export class ConfigManager implements FullConfig {
             xrpl: 'XrplVotingVerifier',
         };
         return chainVerifierMapping[chainType] || VERIFIER_CONTRACT_NAME;
+    }
+
+    public getChainCodecContractForChainType(chainType: string): string {
+        const mapping: Record<string, string> = {
+            evm: 'ChainCodecEvm',
+            sui: 'ChainCodecSui',
+            stellar: 'ChainCodecStellar',
+        };
+        
+        const result = mapping[chainType];
+        if (!result) {
+            throw new Error(`Unsupported or unknown chain type '${chainType}' when resolving ChainCodec`);
+        }
+        return result;
+    }
+
+    public getChainCodecAddress(chainType: string): string {
+        const chainCodec = this.getChainCodecContractForChainType(chainType);
+        const chainCodecConfig = this.getContractConfig(chainCodec);
+        return this.validateRequired(chainCodecConfig.address, `${chainCodec}.address`);
     }
 
     public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
