@@ -307,6 +307,22 @@ ts-node evm/governance.js execute-operator-proposal <target> <calldata>
 ts-node evm/governance.js is-operator-approved <target> <calldata>
 ```
 
+Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --calldata <calldata>
+```
+
 ## Utilities
 
 ### Decode Function Calldata
