@@ -93,6 +93,10 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         });
     });
 
+    if (!validateTokens) {
+        throw new Error('Error validating tokens');
+    }
+
     const registerTokens = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
         const tokenData: TokenData = {
             tokenId: token.tokenId,
@@ -103,8 +107,8 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         await registerToken(config, interchainTokenServiceAddress, client, tokenData, options.dryRun);
     });
 
-    if (!validateTokens || !registerTokens) {
-        throw new Error('Error validating or registering tokens');
+    if (!registerTokens) {
+        throw new Error('Error registering tokens');
     }
 }
 
