@@ -267,14 +267,18 @@ const instantiate = async (client, config, options, _args, fee) => {
         }
         const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
         contractConfig.instantiateProposalId = proposalId;
-        if (instantiate2) contractConfig.address = contractAddress;
+        if (instantiate2) {
+            contractConfig.address = contractAddress;
+        }
     } else {
         if (!confirmProposalSubmission(options, [proposal])) {
             return;
         }
         const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
         contractConfig.instantiateProposalId = proposalId;
-        if (instantiate2) contractConfig.address = contractAddress;
+        if (instantiate2) {
+            contractConfig.address = contractAddress;
+        }
     }
 };
 

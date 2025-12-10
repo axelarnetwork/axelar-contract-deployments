@@ -174,12 +174,16 @@ async function getSenderDustTx(dustTx, chains) {
     for (const chainName in chains) {
         const chain = chains[chainName];
 
-        if (chain.id.toLowerCase().includes('axelar')) continue;
+        if (chain.id.toLowerCase().includes('axelar')) {
+            continue;
+        }
 
         try {
             const provider = getDefaultProvider(chain.rpc);
             const tx = await provider.getTransaction(txHash);
-            if (tx) return tx.from.toLowerCase();
+            if (tx) {
+                return tx.from.toLowerCase();
+            }
         } catch {}
     }
 
