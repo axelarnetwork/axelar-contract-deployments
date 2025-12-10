@@ -185,27 +185,29 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
         tokio::time::sleep(delay_duration).await;
     }
 
-    println!(
-        "Waiting for {} pending transactions to complete...",
-        pending_tasks.len()
-    );
+    let completed_during_test = *tx_count.lock().await;
+    let test_duration = start_time.elapsed().as_secs_f64();
+
+    let pending_count = pending_tasks.len();
+    println!("Waiting for {pending_count} pending transactions to complete...");
 
     join_all(pending_tasks).await;
 
     let final_count = *tx_count.lock().await;
-    let elapsed = start_time.elapsed().as_secs_f64();
+    let total_elapsed = start_time.elapsed().as_secs_f64();
 
     println!("\n========================================");
     println!("Load test completed!");
-    println!("Total transactions: {final_count}");
-    println!("Elapsed time: {elapsed:.2} seconds");
+    println!("Transactions completed during test window: {completed_during_test}");
+    println!("Test window duration: {test_duration:.2} seconds");
     #[allow(clippy::cast_precision_loss, clippy::float_arithmetic)]
-    if elapsed > 0.0 {
-        let tps = final_count as f64 / elapsed;
-        println!("Transactions per second: {tps:.2}");
-    } else {
-        println!("Transactions per second: N/A (elapsed time too short to measure)");
+    if test_duration > 0.0 {
+        let tps = completed_during_test as f64 / test_duration;
+        println!("Throughput (during test window): {tps:.2} TPS");
     }
+    println!("----------------------------------------");
+    println!("Total transactions (including cleanup): {final_count}");
+    println!("Total elapsed time: {total_elapsed:.2} seconds");
     println!("Output file: {}", args.output.display());
     println!("========================================\n");
 
