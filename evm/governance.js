@@ -150,7 +150,7 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidAddress: { newOperator },
             });
-                
+
             calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
             title = `Chain ${chain.name} transfer operatorship`;
             description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
