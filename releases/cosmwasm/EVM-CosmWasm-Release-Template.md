@@ -16,7 +16,6 @@
 - [VotingVerifier vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) `add link to Voting Verifier release`
 - [Gateway vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) `add link to Gateway release`
 - [MultisigProver vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1) `add link to Multisig Prover release`
-- [ChainCodec vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/chain-codec-v1.0.0) `add link to ChainCodec release`
 
 ## Background
 
@@ -56,13 +55,13 @@ CHAIN=<chain name>
 | **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 | **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 
-- Confirm `ChainCodec`, `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
+- Confirm `ChainCodecEvm`, `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
 
 ```bash
 VotingVerifier (v1.1.0) -> "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
 Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
 MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
-ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+ChainCodecEvm (v1.0.0) -> "storeCodeProposalCodeHash": "6833d296e59dda53b7eaef8927b0d4b4316294de35eb8a28fa895b308fb46567"
 ```
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
@@ -102,9 +101,6 @@ ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b
     "verifierSetDiffThreshold": 0,
     "keyType": "ecdsa"
 }
-
-# Add under `config.axelar.contracts.ChainCodecXyz` where Xyz is the chain type (i.e. `ChainCodecEvm` for an EVM chain) based on Network
-"$CHAIN": {}
 ```
 
 ### Instantiate Amplifier contracts
@@ -125,7 +121,7 @@ ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b
 | **Testnet**          | `v1.0.0` |
 | **Mainnet**          | `v1.0.0` |
 
-1. Instantiate Gateway, ChainCodec, VotingVerifier and MultisigProver contracts via Coordinator
+1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
     ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
@@ -238,7 +234,7 @@ ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN`config within`ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `$ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -261,6 +257,7 @@ ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b
         -t "Register $CHAIN on ITS Hub" \
         -d "Register $CHAIN on ITS Hub"
     ```
+
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
 1. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
@@ -295,6 +292,7 @@ ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b
         }
     }
     ```
+
     - Check Multisig Prover authorized on Multisig
 
     ```bash
@@ -304,6 +302,7 @@ ChainCodec (v1.0.0) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b
         "data": true
     }
     ```
+
     - Check reward pool to confirm funding worked:
 
     ```bash
