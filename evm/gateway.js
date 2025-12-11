@@ -27,6 +27,7 @@ const {
     getMultisigProof,
     getGovernanceContract,
     writeJSON,
+    getScheduleProposalType,
 } = require('./utils');
 const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
 const { getWallet, signTransaction } = require('./sign-utils');
@@ -379,10 +380,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
-                if (options.operatorProposal) {
-                    printInfo('Using operator-based proposal', 'ApproveOperator');
-                }
+                const proposalType = getScheduleProposalType(options, ProposalType, 'transferGovernance');
                 const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
@@ -495,10 +493,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
-                if (options.operatorProposal) {
-                    printInfo('Using operator-based proposal', 'ApproveOperator');
-                }
+                const proposalType = getScheduleProposalType(options, ProposalType, 'transferOperatorship');
                 const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
