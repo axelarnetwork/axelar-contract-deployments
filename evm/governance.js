@@ -149,13 +149,12 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
                 });
 
                 calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
-
-                title = `Chain ${chain.name} transfer operatorship`;
-                description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
             } else {
                 calldata = options.calldata;
             }
             target = governance.address;
+            title = `Chain ${chain.name} transfer operatorship`;
+            description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
 
             break;
         }
@@ -527,7 +526,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             });
 
             const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
-            printInfo('Operator proposal approved', isApproved ? 'true' : 'false');
+            printInfo('Operator proposal approved', isApproved);
             return null;
         }
 
@@ -768,7 +767,6 @@ if (require.main === module) {
         .argument('<calldata>', 'call data')
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
-        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, options, cmd) => {
             main(cmd.name(), [target, calldata], options);
         });
@@ -780,7 +778,6 @@ if (require.main === module) {
         .argument('<calldata>', 'call data')
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
-        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .action((target, calldata, options, cmd) => {
             main(cmd.name(), [target, calldata], options);
         });
