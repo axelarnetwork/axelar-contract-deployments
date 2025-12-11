@@ -102,6 +102,10 @@ async fn run_load_test(args: TestArgs, config: &Config) -> eyre::Result<()> {
     println!("Delay: {} ms", args.delay);
     println!("Output file: {}", args.output.display());
 
+    if let Some(parent) = args.output.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
     let output_file = Arc::new(Mutex::new(
         File::create(&args.output).map_err(|e| eyre!("Failed to create output file: {}", e))?,
     ));
@@ -374,6 +378,12 @@ async fn verify_transactions(args: VerifyArgs, config: &Config) -> eyre::Result<
     }
 
     let stream_flags = if args.resume_from > 1 { "a" } else { "w" };
+
+    for path in [&args.fail_output, &args.pending_output, &args.success_output] {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
 
     let mut fail_file = std::fs::OpenOptions::new()
         .write(true)
