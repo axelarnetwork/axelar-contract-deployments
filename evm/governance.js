@@ -145,19 +145,15 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
         case 'transferOperatorship': {
             ensureAxelarServiceGovernance(contractName, 'transferOperatorship');
 
-            if (options.newOperator) {
-                const newOperator = options.newOperator;
+            const newOperator = options.newOperator;
 
-                validateParameters({
-                    isValidAddress: { newOperator },
-                });
+            validateParameters({
+                isValidAddress: { newOperator },
+            });
 
-                calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
-                title = `Chain ${chain.name} transfer operatorship`;
-                description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
-            } else {
-                calldata = options.calldata;
-            }
+            calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
+            title = `Chain ${chain.name} transfer operatorship`;
+            description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
             target = governance.address;
 
             break;
@@ -581,9 +577,9 @@ async function main(action, args, options) {
 
         printInfo('Proposal', proposalJSON);
 
-        if (options.file) {
-            writeJSON(proposal, options.file);
-            printInfo('Proposal written to file', options.file);
+        if (options.generateOnly) {
+            writeJSON(proposal, options.generateOnly);
+            printInfo('Proposal written to file', options.generateOnly);
         } else {
             if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
                 await submitProposalToAxelar(proposal, options);
@@ -628,7 +624,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
@@ -652,7 +648,7 @@ if (require.main === module) {
         )
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
         .addOption(
             new Option('-c, --contractName <contractName>', 'contract name')
                 .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
@@ -695,7 +691,7 @@ if (require.main === module) {
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .action((target, calldata, activationTime, options, cmd) => {
             main(cmd.name(), [target, calldata, activationTime], options);
@@ -706,7 +702,7 @@ if (require.main === module) {
         .description('Cancel an operator proposal (AxelarServiceGovernance only)')
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
-        .addOption(new Option('--file <file>', 'file to write Axelar proposal JSON to'))
+        .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
         .action((target, calldata, options, cmd) => {
             main(cmd.name(), [target, calldata], options);

@@ -89,7 +89,7 @@ const addGovernanceOptions = (program: Command): Command => {
             'Governance Activation Time (YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
         ).default('0'),
     );
-    program.addOption(new Option('--file <file>', 'File to write Axelar proposal JSON to'));
+    program.addOption(new Option('--generate-only <file>', 'Generate Axelar proposal JSON to the given file instead of submitting'));
 
     return program;
 };

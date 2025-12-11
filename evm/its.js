@@ -927,9 +927,9 @@ async function main(action, args, options) {
 
             printInfo('Proposal', proposalJSON);
 
-            if (options.file) {
-                writeJSON(proposal, options.file);
-                printInfo('Proposal written to file', options.file);
+            if (options.generateOnly) {
+                writeJSON(proposal, options.generateOnly);
+                printInfo('Proposal written to file', options.generateOnly);
             } else {
                 if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
                     await submitProposalToAxelar(proposal, options);

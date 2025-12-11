@@ -90,7 +90,7 @@ ts-node evm/governance.js schedule upgrade <activationTime> \
 ```bash
 # Generate file
 ts-node evm/governance.js schedule upgrade <activationTime> \
-  --targetContractName AxelarGateway --file proposal.json
+  --targetContractName AxelarGateway --generate-only proposal.json
 
 # Submit via CLI
 axelard tx gov submit-proposal call-contracts proposal.json \
@@ -142,7 +142,7 @@ Cancel a scheduled timelock proposal before execution.
 ts-node evm/governance.js cancel <action> [options]
 ```
 
-**Options:** Same as `schedule` command (except `--file` and date argument). All options from `schedule` are available.
+**Options:** Same as `schedule` command (except `--generate-only` and date argument). All options from `schedule` are available.
 
 ### Check Proposal ETA
 
@@ -219,7 +219,7 @@ ts-node evm/governance.js schedule-operator <target> <calldata> <activationTime>
 - **`activationTime`**: Abosolute UTC timestamp ie `YYYY-MM-DDTHH:mm:ss` or relative seconds i.e `3600` (60 mins from now).
 - **Notes:**
   - The command generates an `ApproveOperator` payload.
-  - Use `--file` to write the generated Axelar proposal JSON instead of submitting immediately.
+  - Use `--generate-only <file>` to write the generated Axelar proposal JSON instead of submitting immediately.
 
 ### Cancel Operator Proposal
 
@@ -262,7 +262,9 @@ ts-node evm/governance.js execute-operator-proposal <target> <calldata>  [option
 - Requires the operator proposal to be approved (otherwise it will revert).
 - Forwards `nativeValue` (if non-zero) along with the call to `target`.
 
-### Transfer AxelarServiceGovernance operatorship:
+## Governance Contract Actions
+
+### Transfer operatorship (AxelarServiceGovernance only):
 
 ```bash
 # schedule
@@ -271,14 +273,31 @@ ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|rel
 
 # cancel
 ts-node evm/governance.js cancel transferOperatorship \
-  --calldata <calldata> 
+  --newOperator 0xNewOperator
 
 # submit after vote
 ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --calldata <calldata>
-### Operator Proposal Lifecycle
+  --newOperator 0xNewOperator
 ```
 
+### Transfer governance:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferGovernance <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --targetContractName AxelarGateway \
+  --newGovernance 0xNewGovernor
+
+# cancel
+ts-node evm/governance.js cancel transferGovernance \
+  --targetContractName AxelarGateway \
+  --newGovernance 0xNewGovernor
+
+# submit after vote
+ts-node evm/governance.js submit transferGovernance <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --targetContractName AxelarGateway \
+  --newGovernance 0xNewGovernor
+```
 
 ## Troubleshooting
 
