@@ -251,9 +251,18 @@ async function main(options) {
         if (options.generateOnly) {
             writeJSON(proposal, options.generateOnly);
             printInfo('Proposal written to file', options.generateOnly);
+        } else if (!options.mnemonic) {
+            const defaultFile = 'ownership-proposal.json';
+            writeJSON(proposal, defaultFile);
+            printInfo('Mnemonic not provided. Proposal written to file', defaultFile);
+            printInfo('To submit, set MNEMONIC environment variable or use --mnemonic flag');
         } else {
             if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
-                await submitProposalToAxelar(proposal, options);
+                try {
+                    await submitProposalToAxelar(proposal, options);
+                } catch (error) {
+                    throw new Error(`Failed to submit proposal to Axelar: ${error instanceof Error ? error.message : String(error)}`);
+                }
             }
         }
     }
@@ -266,6 +275,7 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
     addGovernanceOptions(program);
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic for submitting proposals to Axelar').env('MNEMONIC'));
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(
