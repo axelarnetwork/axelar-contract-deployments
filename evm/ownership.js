@@ -9,8 +9,20 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, mainProcessor, prompt, getGasOptions } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const {
+    printInfo,
+    printWalletInfo,
+    mainProcessor,
+    prompt,
+    getGasOptions,
+    dateToEta,
+    createGMPProposalJSON,
+    getGovernanceContract,
+    getScheduleProposalType,
+    writeJSON,
+} = require('./utils');
+const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
+const { encodeGovernanceProposal, ProposalType, submitProposalToAxelar } = require('./governance');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
@@ -38,13 +50,58 @@ async function processCommand(_axelar, chain, _chains, options) {
     printInfo('Contract name', contractName);
 
     const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
+    await printWalletInfo(wallet, options, chain);
 
     const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo('Ownership Action', action);
+
+    const buildGovernanceProposal = async (calldata) => {
+        const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+        printInfo('Governance contract', governanceContract);
+        const eta = dateToEta(options.activationTime || '0');
+        const nativeValue = '0';
+        const proposalType = getScheduleProposalType(options, ProposalType, action);
+        const gmpPayload = encodeGovernanceProposal(proposalType, ownershipAddress, calldata, nativeValue, eta);
+
+        printInfo('Governance target', ownershipAddress);
+        printInfo('Governance calldata', calldata);
+
+        return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+    };
+
+    if (options.governance && (action === 'owner' || action === 'pendingOwner')) {
+        printInfo('Read-only ownership action; no governance proposal generated.');
+        return null;
+    }
+
+    if (options.governance) {
+        switch (action) {
+            case 'transferOwnership': {
+                if (!isAddress(newOwner) || newOwner === AddressZero) {
+                    throw new Error(`Invalid new owner address: ${newOwner}`);
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.transferOwnership(newOwner, gasOptions);
+                return buildGovernanceProposal(calldata);
+            }
+            case 'proposeOwnership': {
+                if (!isAddress(newOwner) || newOwner === AddressZero) {
+                    throw new Error(`Invalid new owner address: ${newOwner}`);
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.proposeOwnership(newOwner, gasOptions);
+                return buildGovernanceProposal(calldata);
+            }
+            case 'acceptOwnership': {
+                const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
+                return buildGovernanceProposal(calldata);
+            }
+            default: {
+                throw new Error(`Unknown ownership action ${action}`);
+            }
+        }
+    }
 
     if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
         return;
@@ -165,7 +222,41 @@ async function processCommand(_axelar, chain, _chains, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    if (!options.governance) {
+        await mainProcessor(options, processCommand);
+        return;
+    }
+
+    const proposals = [];
+
+    await mainProcessor(options, (axelar, chain, chains, opts) =>
+        processCommand(axelar, chain, chains, opts).then((proposal) => {
+            if (proposal) {
+                proposals.push(proposal);
+            }
+        }),
+    );
+
+    if (proposals.length > 0) {
+        const proposal = {
+            title: 'Ownership Governance Proposal',
+            description: 'Ownership Governance Proposal',
+            contract_calls: proposals,
+        };
+
+        const proposalJSON = JSON.stringify(proposal, null, 2);
+
+        printInfo('Proposal', proposalJSON);
+
+        if (options.generateOnly) {
+            writeJSON(proposal, options.generateOnly);
+            printInfo('Proposal written to file', options.generateOnly);
+        } else {
+            if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
+                await submitProposalToAxelar(proposal, options);
+            }
+        }
+    }
 }
 
 if (require.main === module) {
@@ -174,6 +265,7 @@ if (require.main === module) {
     program.name('ownership').description('script to manage contract ownership');
 
     addBaseOptions(program, { address: true });
+    addGovernanceOptions(program);
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(
