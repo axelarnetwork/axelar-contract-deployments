@@ -69,7 +69,9 @@ pub(crate) struct VerifyArgs {
     #[clap(long, default_value = "output/load-test-success.txt")]
     pub success_output: PathBuf,
 
-    #[clap(long, default_value = "0")]
+    /// Resume verification starting from this transaction number (1-based).
+    /// Use 1 to start from the beginning (default).
+    #[clap(long, default_value = "1")]
     pub resume_from: usize,
 
     #[clap(long, default_value = "100")]
@@ -359,16 +361,19 @@ async fn verify_transactions(args: VerifyArgs, config: &Config) -> eyre::Result<
 
     let total_transactions = transactions.len();
 
-    if args.resume_from > 0 {
-        transactions = transactions.into_iter().skip(args.resume_from).collect();
+    if args.resume_from > 1 {
+        transactions = transactions
+            .into_iter()
+            .skip(args.resume_from - 1)
+            .collect();
         println!(
             "Resuming from transaction {} (remaining: {})",
-            args.resume_from + 1,
+            args.resume_from,
             transactions.len()
         );
     }
 
-    let stream_flags = if args.resume_from > 0 { "a" } else { "w" };
+    let stream_flags = if args.resume_from > 1 { "a" } else { "w" };
 
     let mut fail_file = std::fs::OpenOptions::new()
         .write(true)
@@ -398,7 +403,7 @@ async fn verify_transactions(args: VerifyArgs, config: &Config) -> eyre::Result<
     let mut pending = 0;
 
     for (index, tx_str) in transactions.iter().enumerate() {
-        let current_index = index + args.resume_from;
+        let current_index = index + args.resume_from - 1;
         println!(
             "Verifying transaction {} of {}: {}",
             current_index + 1,

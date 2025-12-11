@@ -72,8 +72,7 @@ Verify the results of a load test:
   --fail-output output/load-test-fail.txt \
   --pending-output output/load-test-pending.txt \
   --success-output output/load-test-success.txt \
-  --delay 100 \
-  --resume-from 0
+  --delay 100
 ```
 
 **Parameters:**
