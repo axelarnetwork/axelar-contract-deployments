@@ -468,6 +468,10 @@ async function processCommand(axelar, chain, _chains, options) {
         }
 
         case 'setTokenMintLimits': {
+            if (contracts.AxelarGateway?.connectionType === 'amplifier') {
+                throw new Error('setTokenMintLimits is only available for consensus gateways');
+            }
+
             if (!symbols) {
                 throw new Error('Missing symbols');
             }
