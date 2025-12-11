@@ -40,7 +40,6 @@ where:
 
 ### Prerequisites
 
-- ITS must be deployed and configured for the target chain.
 - You have a funded EVM wallet with:
   - Access to the private key via `.env` (see main `README.md`).
   - **Operator** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`).
@@ -81,7 +80,7 @@ ts-node evm/its.js flow-out-amount <token-id>
 ts-node evm/its.js flow-in-amount <token-id>
 ```
 
-Use these to monitor how close a token is to hitting its rate limit.
+The combined in-flow and out-flow is used when calculating total flows. Use these to monitor how close a token is to hitting its rate limit to prevent transactions from failing that will exceed the set flow-limit.
 
 ---
 
@@ -98,7 +97,7 @@ ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
 
 Notes:
 - Requires **ITS operator** privileges.
-- `flow-limit = 0` effectively **removes** the limit (no rate limiting for that token on this chain).
+- `flow-limit = 0` effectively **removes** the limit (no rate limiting for that token on this chain). Use minimum integer number according to  token decimals to disable flows.
 
 ---
 
@@ -110,11 +109,7 @@ Freeze one or more ITS tokens on the current chain by setting their flow limits 
 ts-node evm/its.js freeze-tokens <token-id-1> <token-id-2> ...
 ```
 
-Behavior:
-- Internally calls `setFlowLimits(tokenIds, flowLimits)` with each `flowLimit` set to `1`.
-- Effectively **halts outbound flows** for those token IDs on the current chain (subject to implementation details).
-
-Use this for emergency response when you need to stop transfers for specific tokens.
+It stop transfers for specific tokens.
 
 ---
 
@@ -126,9 +121,7 @@ Unfreeze one or more ITS tokens on the current chain by setting their flow limit
 ts-node evm/its.js unfreeze-tokens <token-id-1> <token-id-2> ...
 ```
 
-Behavior:
-- Internally calls `setFlowLimits(tokenIds, flowLimits)` with each `flowLimit` set to `0`.
-- **Re-enables transfers** for those tokens on the current chain by removing the per-chain flow limit.
+It resumes transfers for specific tokens.
 
 ---
 
