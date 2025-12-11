@@ -1384,6 +1384,9 @@
     }
   },
   "axelar": {
+    "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+    "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+    "multisigProverAdminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
