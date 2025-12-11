@@ -61,9 +61,24 @@ Deploy the original Axelar gateway contract for legacy consensus-based connectio
 
 ## AxelarGasService and AxelarDepositService
 
-1. Run the following depending on the service,
+1. Run the following depending on the service,  
    `ts-node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
+3. To reuse the existing proxy, you can:
+   - Deploy new implementation contract:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --reuseProxy
+     ```
+   - Perform the upgrade using the stored implementation address:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --upgrade
+     ```
 
 ## InterchainTokenService
 
