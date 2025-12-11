@@ -258,6 +258,17 @@ function getGovernanceContract(chain, options = {}) {
     return { governanceContract, governanceAddress };
 }
 
+function getScheduleProposalType(options, ProposalType, action) {
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+
+    if (options.operatorProposal) {
+        const actionLabel = action ? ` for action ${action}` : '';
+        printInfo(`Using operator-based proposal${actionLabel}`, 'ApproveOperator');
+    }
+
+    return proposalType;
+}
+
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
@@ -1180,6 +1191,7 @@ module.exports = {
     isValidAddress,
     getGovernanceContract,
     getGovernanceAddress,
+    getScheduleProposalType,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,

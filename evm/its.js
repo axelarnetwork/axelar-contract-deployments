@@ -26,6 +26,7 @@ const {
     loadConfig,
     getGovernanceContract,
     writeJSON,
+    getScheduleProposalType,
 } = require('./utils');
 const {
     getChainConfigByAxelarId,
@@ -522,10 +523,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
-                if (options.operatorProposal) {
-                    printInfo('Using operator-based proposal', 'ApproveOperator');
-                }
+                const proposalType = getScheduleProposalType(options, ProposalType, 'set-trusted-chains');
                 const gmpPayload = encodeGovernanceProposal(
                     proposalType,
                     interchainTokenServiceAddress,
@@ -567,7 +565,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to remove trusted chain(s): ${trustedChains}?`, yes)) {
+                if (prompt(`Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                     return;
                 }
 
@@ -589,10 +587,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
-                if (options.operatorProposal) {
-                    printInfo('Using operator-based proposal', 'ApproveOperator');
-                }
+                const proposalType = getScheduleProposalType(options, ProposalType, 'remove-trusted-chains');
                 const gmpPayload = encodeGovernanceProposal(
                     proposalType,
                     interchainTokenServiceAddress,
@@ -645,10 +640,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
-                if (options.operatorProposal) {
-                    printInfo('Using operator-based proposal', 'ApproveOperator');
-                }
+                const proposalType = getScheduleProposalType(options, ProposalType, 'set-pause-status');
                 const gmpPayload = encodeGovernanceProposal(proposalType, interchainTokenServiceAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', interchainTokenServiceAddress);
@@ -765,10 +757,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
-                if (options.operatorProposal) {
-                    printInfo('Using operator-based proposal', 'ApproveOperator');
-                }
+                const proposalType = getScheduleProposalType(options, ProposalType, 'migrate-interchain-token');
                 const gmpPayload = encodeGovernanceProposal(proposalType, interchainTokenServiceAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', interchainTokenServiceAddress);

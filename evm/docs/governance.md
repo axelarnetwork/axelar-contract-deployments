@@ -198,29 +198,13 @@ Use `--parallel` when you want to schedule the **same logical change** (for exam
 
 ## AxelarServiceGovernance (Service Governance)
 
-`AxelarServiceGovernance` is an alternative governance contract used for Axelar-operated services (for example, `AxelarGasService` or other service contracts configured to use it). Instead of enforcing an on-chain timelock, it introduces **operator proposals** that are approved or rejected by a designated EVM-side operator.
+`AxelarServiceGovernance` is an alternative governance contract used for Axelar-operated services (for example, `AxelarGasService` or other service contracts are configured to use it). Instead of enforcing an on-chain timelock, it introduces **operator proposals** that are approved or rejected by a designated EVM-side operator.
 
 **Key characteristics of service governance:**
 
 - **Faster execution:** Once the Axelar governance proposal has been executed and the operator has approved it, the proposal can be executed without waiting for a timelock.
 - **Same Axelar governance source of truth:** Proposals are still created and voted on through the Axelar PoS governance system; `AxelarServiceGovernance` only changes how they are gated on the destination chain.
 - **Contract selection:** All base commands (`schedule`, `cancel`, `submit`, `execute`) accept `-c AxelarServiceGovernance` to target the service governance contract instead of `InterchainGovernance`.
-
-### Transfer AxelarServiceGovernance operatorship:
-
-```bash
-# schedule
-ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --newOperator 0xNewOperator
-
-# cancel
-ts-node evm/governance.js cancel transferOperatorship \
-  --calldata <calldata> 
-
-# submit after vote
-ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --calldata <calldata>
-### Operator Proposal Lifecycle
 
 ### Schedule Operator Proposal
 
@@ -232,7 +216,7 @@ ts-node evm/governance.js schedule-operator <target> <calldata> <activationTime>
 
 - **`target`**: Address of the contract the operator proposal will call.
 - **`calldata`**: Encoded function calldata.
-- **`activationTime`**: Same format as the standard `schedule` command (absolute UTC timestamp or relative seconds).
+- **`activationTime`**: Abosolute UTC timestamp ie `YYYY-MM-DDTHH:mm:ss` or relative seconds i.e `3600` (60 mins from now).
 - **Notes:**
   - The command generates an `ApproveOperator` payload.
   - Use `--file` to write the generated Axelar proposal JSON instead of submitting immediately.
@@ -261,7 +245,7 @@ ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <activ
 
 ### Check Operator Approval Status
 
-Check whether an operator proposal has been approved on the destination chain.
+Check if an operator proposal has been approved on the destination chain.
 
 ```bash
 ts-node evm/governance.js is-operator-approved <target> <calldata> [options]
@@ -277,6 +261,24 @@ ts-node evm/governance.js execute-operator-proposal <target> <calldata>  [option
 
 - Requires the operator proposal to be approved (otherwise it will revert).
 - Forwards `nativeValue` (if non-zero) along with the call to `target`.
+
+### Transfer AxelarServiceGovernance operatorship:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --calldata <calldata>
+### Operator Proposal Lifecycle
+```
+
 
 ## Troubleshooting
 
