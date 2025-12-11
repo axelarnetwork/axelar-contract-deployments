@@ -565,7 +565,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
                     return;
                 }
 
