@@ -149,12 +149,12 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
                 });
 
                 calldata = governance.interface.encodeFunctionData('transferOperatorship', [newOperator]);
+                title = `Chain ${chain.name} transfer operatorship`;
+                description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
             } else {
                 calldata = options.calldata;
             }
             target = governance.address;
-            title = `Chain ${chain.name} transfer operatorship`;
-            description = `Transfers operatorship of AxelarServiceGovernance to ${newOperator} on chain ${chain.name}`;
 
             break;
         }
