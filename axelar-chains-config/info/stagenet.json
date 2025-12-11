@@ -2569,6 +2569,12 @@
     }
   },
   "axelar": {
+<<<<<<< HEAD
+=======
+    "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+    "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
+    "multisigProverAdminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+>>>>>>> 3c7194a9 (chore: added multisigproveradmin address)
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",

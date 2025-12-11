@@ -70,7 +70,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = axelar?.governanceAddress;
+            const governanceAddress = axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
             const multisig = contractConfig.multisig;
@@ -99,7 +99,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = axelar?.governanceAddress;
+            const governanceAddress = axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
@@ -266,7 +266,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
     }
 }
 
-async function processCommand(_axelar, chain, chains, options) {
+async function processCommand(axelar, chain, chains, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade, reuseProxy, transceiverPrefix } = options;
 
     let { deployMethod } = options;
@@ -360,7 +360,7 @@ async function processCommand(_axelar, chain, chains, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName, artifactPath);
-    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options, _axelar);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options, axelar);
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);

@@ -3279,6 +3279,7 @@
   "axelar": {
     "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
     "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
+    "multisigProverAdminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",

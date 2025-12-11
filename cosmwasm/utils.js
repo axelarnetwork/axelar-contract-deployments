@@ -519,7 +519,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
             axelarId: itsHubChainName,
         },
     } = config;
-    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAddress)) {
@@ -611,7 +611,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
         },
     } = contracts;
     const { signingThreshold, serviceName, verifierSetDiffThreshold, xrplTransactionFee, ticketCountThreshold } = contractConfig;
-    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
@@ -726,7 +726,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
 
     const { domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } = contractConfig;
-    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
