@@ -11,6 +11,7 @@ export type Options = {
     mnemonic: string;
     runAs?: string;
     deposit?: string;
+    standardProposal?: boolean;
     instantiateAddresses?: string[];
     rpc?: string;
 };
@@ -34,15 +35,33 @@ export interface ClientManager extends SigningCosmWasmClient {
     accounts: readonly AccountData[];
 }
 
+function prepareQueryProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
+    const { env, contractName, chainName } = options;
+    const configManager = new ConfigManager(env);
+    const fee = configManager.getFee();
+
+    if (contractName) {
+        configManager.initContractConfig(contractName, chainName);
+    }
+
+    return { configManager, fee };
+}
+
 function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
-    const { runAs, deposit, instantiateAddresses, env } = options;
+    const { runAs, deposit, standardProposal, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
     const fee = configManager.getFee();
 
     options.runAs =
         runAs ||
         (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
-    options.deposit = deposit || configManager.getProposalDepositAmount();
+
+    if (!deposit) {
+        options.deposit = standardProposal ? configManager.getProposalDepositAmount() : configManager.getProposalExpeditedDepositAmount();
+    } else {
+        options.deposit = deposit;
+    }
+
     options.instantiateAddresses = instantiateAddresses || configManager.getProposalInstantiateAddresses();
 
     configManager.initContractConfig(options.contractName, options.chainName);
@@ -74,7 +93,7 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
 
 export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
     const { rpc: axelarNode } = options;
-    const { configManager, fee } = prepareProcessor(options);
+    const { configManager, fee } = prepareQueryProcessor(options);
     const axelarNodeFromConfig = configManager.axelar.rpc;
 
     if (axelarNode) {

@@ -18,6 +18,7 @@ export interface AxelarConfig {
     gasLimit: string | number;
     govProposalInstantiateAddresses: string[];
     govProposalDepositAmount: string;
+    govProposalExpeditedDepositAmount?: string;
     chainId: string;
 }
 
@@ -361,6 +362,16 @@ export class ConfigManager implements FullConfig {
 
     public getProposalDepositAmount(): string {
         return this.axelar.govProposalDepositAmount;
+    }
+
+    public getProposalExpeditedDepositAmount(): string {
+        const expeditedAmount = this.axelar.govProposalExpeditedDepositAmount;
+        if (!expeditedAmount) {
+            throw new Error(
+                `Expedited deposit amount not configured for ${this.environment}. Use --standardProposal flag to submit a standard proposal.`,
+            );
+        }
+        return expeditedAmount;
     }
 
     public getChainConfig(chainName: string): ChainConfig {

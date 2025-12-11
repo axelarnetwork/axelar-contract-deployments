@@ -1372,7 +1372,7 @@ const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer)
     const {
         axelar: { tokenSymbol },
     } = config;
-    const { deposit, title, description } = options;
+    const { deposit, title, description, standardProposal } = options;
 
     const initialDeposit = [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }];
     const isLegacy = isLegacySDK(config);
@@ -1387,16 +1387,18 @@ const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer)
             }),
         };
     } else {
+        const proposalData = {
+            messages: proposalDataOrMessages,
+            initialDeposit,
+            proposer,
+            metadata: '',
+            title,
+            summary: description,
+        };
+        proposalData.expedited = !standardProposal;
         return {
             typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
-            value: MsgSubmitProposalV1.fromPartial({
-                messages: proposalDataOrMessages,
-                initialDeposit,
-                proposer,
-                metadata: '',
-                title,
-                summary: description,
-            }),
+            value: MsgSubmitProposalV1.fromPartial(proposalData),
         };
     }
 };
