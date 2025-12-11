@@ -206,6 +206,20 @@ Use `--parallel` when you want to schedule the **same logical change** (for exam
 - **Same Axelar governance source of truth:** Proposals are still created and voted on through the Axelar PoS governance system; `AxelarServiceGovernance` only changes how they are gated on the destination chain.
 - **Contract selection:** All base commands (`schedule`, `cancel`, `submit`, `execute`) accept `-c AxelarServiceGovernance` to target the service governance contract instead of `InterchainGovernance`.
 
+### Transfer AxelarServiceGovernance operatorship:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --calldata <calldata>
 ### Operator Proposal Lifecycle
 
 ### Schedule Operator Proposal
