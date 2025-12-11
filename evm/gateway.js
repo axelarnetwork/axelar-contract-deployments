@@ -493,7 +493,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const eta = dateToEta(options.activationTime || '0');
                 const nativeValue = '0';
 
-                const proposalType = getScheduleProposalType(options, ProposalType, 'transferMintLimiter');
+                const proposalType = getScheduleProposalType(options, ProposalType, 'transferOperatorship');
                 const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
 
                 printInfo('Governance target', gatewayAddress);
