@@ -118,8 +118,6 @@ export class CoordinatorManager {
                 `${verifierContractName}[${chainName}].sourceGatewayAddress`,
             );
             this.configManager.validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
-            this.configManager.validateRequired(votingVerifierConfig.addressFormat, `${verifierContractName}[${chainName}].addressFormat`);
-            this.configManager.validateRequired(multisigProverConfig.encoder, `${proverContractName}[${chainName}].encoder`);
             this.configManager.validateRequired(multisigProverConfig.keyType, `${proverContractName}[${chainName}].keyType`);
 
             // Get chain codec address
