@@ -2,8 +2,8 @@
   "chains": {
     "celo": {
       "start": 0,
-      "end": 53461025,
-      "max": 53461025,
+      "end": 53550185,
+      "max": 53550185,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://celo.gateway.tenderly.co"
@@ -11,8 +11,8 @@
     },
     "Ethereum": {
       "start": 0,
-      "end": 23981652,
-      "max": 23981652,
+      "end": 23989009,
+      "max": 23989009,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://ethereum-rpc.publicnode.com"
@@ -20,8 +20,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 73462287,
-      "max": 73462287,
+      "end": 73527867,
+      "max": 73527867,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax.network/ext/bc/C/rpc"
@@ -29,8 +29,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 118550738,
-      "max": 118550738,
+      "end": 118573836,
+      "max": 118573836,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.fantom.network"
@@ -38,8 +38,8 @@
     },
     "Polygon": {
       "start": 0,
-      "end": 80128314,
-      "max": 80128314,
+      "end": 80172851,
+      "max": 80172851,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://polygon.gateway.tenderly.co"
@@ -47,26 +47,26 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 13651356,
-      "max": 13651356,
-      "alreadyProcessedPercentage": "100.00",
+      "end": 5267552,
+      "max": 13663667,
+      "alreadyProcessedPercentage": "38.55",
       "rpcs": [
         "https://rpc.api.moonbeam.network"
       ]
     },
     "binance": {
       "start": 0,
-      "end": 71146761,
-      "max": 71146761,
-      "alreadyProcessedPercentage": "100.00",
+      "end": 2026944,
+      "max": 71265638,
+      "alreadyProcessedPercentage": "2.84",
       "rpcs": [
         "https://bsc.llamarpc.com"
       ]
     },
     "arbitrum": {
       "start": 0,
-      "end": 409130354,
-      "max": 409130354,
+      "end": 409487816,
+      "max": 409487816,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://arb1.arbitrum.io/rpc"
@@ -74,8 +74,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 18380706,
-      "max": 18380706,
+      "end": 18396187,
+      "max": 18396187,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.kava.io"
@@ -92,8 +92,8 @@
     },
     "optimism": {
       "start": 0,
-      "end": 144881504,
-      "max": 144881504,
+      "end": 144926083,
+      "max": 144926083,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://gateway.tenderly.co/public/optimism",
@@ -102,8 +102,8 @@
     },
     "linea": {
       "start": 0,
-      "end": 26528019,
-      "max": 26528019,
+      "end": 26563674,
+      "max": 26563674,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.linea.build"
@@ -111,17 +111,17 @@
     },
     "base": {
       "start": 0,
-      "end": 39286219,
-      "max": 39286219,
-      "alreadyProcessedPercentage": "100.00",
+      "end": 28804608,
+      "max": 39330799,
+      "alreadyProcessedPercentage": "73.24",
       "rpcs": [
         "https://developer-access-mainnet.base.org"
       ]
     },
     "mantle": {
       "start": 0,
-      "end": 88615738,
-      "max": 88615738,
+      "end": 88660314,
+      "max": 88660314,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.mantle.xyz"
@@ -129,8 +129,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 26302962,
-      "max": 26302962,
+      "end": 26367307,
+      "max": 26367307,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.scroll.io"
@@ -147,8 +147,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 31539821,
-      "max": 31539821,
+      "end": 31584400,
+      "max": 31584400,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.immutable.com/"
@@ -156,8 +156,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 29275537,
-      "max": 29275537,
+      "end": 29320117,
+      "max": 29320117,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.frax.com"
@@ -165,8 +165,8 @@
     },
     "blast": {
       "start": 0,
-      "end": 28275985,
-      "max": 28275985,
+      "end": 28320565,
+      "max": 28320565,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.blast.io"
@@ -80011,6 +80011,958 @@
           "tokenAddress": "0x59442a796F6291E8Ff293A623A8beeDb3c2249c8",
           "decimals": 18,
           "registrationTimestamp": 1764561181
+        }
+      ]
+    },
+    "0x6d6d087abd714f0efd022a68e8698f13c429207b967324e1cc3e4af5c3e7aabe": {
+      "tokenId": "0x6d6d087abd714f0efd022a68e8698f13c429207b967324e1cc3e4af5c3e7aabe",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x6d6d087abd714f0efd022a68e8698f13c429207b967324e1cc3e4af5c3e7aabe",
+          "tokenAddress": "0x030b69280892c888670EDCDCD8B69Fd8026A0BF3",
+          "decimals": 18,
+          "registrationTimestamp": 1751556671
+        }
+      ]
+    },
+    "0x36e31e81c2f6120a565ad0758e938ceccc363ad1e72fde1013dd0316d598f39e": {
+      "tokenId": "0x36e31e81c2f6120a565ad0758e938ceccc363ad1e72fde1013dd0316d598f39e",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x36e31e81c2f6120a565ad0758e938ceccc363ad1e72fde1013dd0316d598f39e",
+          "tokenAddress": "0xbB51E2a15A9158EBE2b0Ceb8678511e063AB7a55",
+          "decimals": 18,
+          "registrationTimestamp": 1751560703
+        }
+      ]
+    },
+    "0xb0f71c5da6df1e6ae6fd6c0cdcc27ac8275f305be260f4f58040164b7eaa4bc9": {
+      "tokenId": "0xb0f71c5da6df1e6ae6fd6c0cdcc27ac8275f305be260f4f58040164b7eaa4bc9",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0xb0f71c5da6df1e6ae6fd6c0cdcc27ac8275f305be260f4f58040164b7eaa4bc9",
+          "tokenAddress": "0x87C9053C819bB28e0D73d33059E1b3DA80AFb0cf",
+          "decimals": 18,
+          "registrationTimestamp": 1751560739
+        }
+      ]
+    },
+    "0x8b03f9317a41cd18f712c35ebeb5dbb47cb32596724d2b6adf097affc1a09589": {
+      "tokenId": "0x8b03f9317a41cd18f712c35ebeb5dbb47cb32596724d2b6adf097affc1a09589",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x8b03f9317a41cd18f712c35ebeb5dbb47cb32596724d2b6adf097affc1a09589",
+          "tokenAddress": "0x2a8c22E3b10036f3AEF5875d04f8441d4188b656",
+          "decimals": 18,
+          "registrationTimestamp": 1751560775
+        }
+      ]
+    },
+    "0xc4b8b690c16d309b3202f5366c99f2a14d997a3a1a894f487a828291c09d0700": {
+      "tokenId": "0xc4b8b690c16d309b3202f5366c99f2a14d997a3a1a894f487a828291c09d0700",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0xc4b8b690c16d309b3202f5366c99f2a14d997a3a1a894f487a828291c09d0700",
+          "tokenAddress": "0xDD629E5241CbC5919847783e6C96B2De4754e438",
+          "decimals": 18,
+          "registrationTimestamp": 1751560823
+        }
+      ]
+    },
+    "0x03a72c69af6fb37471748205367854af68c6c5f2caed35762f370c1e84feddd3": {
+      "tokenId": "0x03a72c69af6fb37471748205367854af68c6c5f2caed35762f370c1e84feddd3",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x03a72c69af6fb37471748205367854af68c6c5f2caed35762f370c1e84feddd3",
+          "tokenAddress": "0x007115416AB6c266329a03B09a8aa39aC2eF7d9d",
+          "decimals": 18,
+          "registrationTimestamp": 1751560859
+        }
+      ]
+    },
+    "0x7acd4d25ac35ef1ba2fe2f12514b23108fc0d54edef32de9b697af3e0e0b25b4": {
+      "tokenId": "0x7acd4d25ac35ef1ba2fe2f12514b23108fc0d54edef32de9b697af3e0e0b25b4",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x7acd4d25ac35ef1ba2fe2f12514b23108fc0d54edef32de9b697af3e0e0b25b4",
+          "tokenAddress": "0x238a700eD6165261Cf8b2e544ba797BC11e466Ba",
+          "decimals": 18,
+          "registrationTimestamp": 1751560907
+        }
+      ]
+    },
+    "0x5e1760162bce4a963e6b17afcc67095489ec864c8e7ad0bbb68b545bdeab31c0": {
+      "tokenId": "0x5e1760162bce4a963e6b17afcc67095489ec864c8e7ad0bbb68b545bdeab31c0",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x5e1760162bce4a963e6b17afcc67095489ec864c8e7ad0bbb68b545bdeab31c0",
+          "tokenAddress": "0xFa2B947eEc368f42195f24F36d2aF29f7c24CeC2",
+          "decimals": 18,
+          "registrationTimestamp": 1751589515
+        }
+      ]
+    },
+    "0x3238479c976f258e46c926182b17066a9c13a2bfe9132e00de80c42ed1e477ce": {
+      "tokenId": "0x3238479c976f258e46c926182b17066a9c13a2bfe9132e00de80c42ed1e477ce",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x3238479c976f258e46c926182b17066a9c13a2bfe9132e00de80c42ed1e477ce",
+          "tokenAddress": "0xc8CF6D7991f15525488b2A83Df53468D682Ba4B0",
+          "decimals": 18,
+          "registrationTimestamp": 1751589563
+        }
+      ]
+    },
+    "0x064e4a3a612c2f5c08a72bbad42e46126deb8e4316f98e0303294b94a2255c30": {
+      "tokenId": "0x064e4a3a612c2f5c08a72bbad42e46126deb8e4316f98e0303294b94a2255c30",
+      "originAxelarChainId": "Ethereum",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "Ethereum",
+          "tokenId": "0x064e4a3a612c2f5c08a72bbad42e46126deb8e4316f98e0303294b94a2255c30",
+          "tokenAddress": "0x755B7C3043c406390FCa917A7e15766eEF96dD9B",
+          "decimals": 18,
+          "registrationTimestamp": 1765362863
+        },
+        {
+          "axelarChainId": "arbitrum",
+          "tokenId": "0x064e4a3a612c2f5c08a72bbad42e46126deb8e4316f98e0303294b94a2255c30",
+          "tokenAddress": "0x755B7C3043c406390FCa917A7e15766eEF96dD9B",
+          "decimals": 18,
+          "registrationTimestamp": 1765363909
+        }
+      ]
+    },
+    "0x191844bf5585ca8c0ef400086c7eaf828a034074560f2bf67e6ca49bba2df5e0": {
+      "tokenId": "0x191844bf5585ca8c0ef400086c7eaf828a034074560f2bf67e6ca49bba2df5e0",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x191844bf5585ca8c0ef400086c7eaf828a034074560f2bf67e6ca49bba2df5e0",
+          "tokenAddress": "0xd518704eE9a08296B482ee40b9CDc1549515dC3D",
+          "decimals": 18,
+          "registrationTimestamp": 1720545747
+        }
+      ]
+    },
+    "0x9fa22a642a880be3569e1d7b6a8d94bfd4aff89a2f3d56c253cd29e88600d871": {
+      "tokenId": "0x9fa22a642a880be3569e1d7b6a8d94bfd4aff89a2f3d56c253cd29e88600d871",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x9fa22a642a880be3569e1d7b6a8d94bfd4aff89a2f3d56c253cd29e88600d871",
+          "tokenAddress": "0xdf276f087743175c60B59c9b59Cf49846282F8B6",
+          "decimals": 18,
+          "registrationTimestamp": 1720546947
+        }
+      ]
+    },
+    "0x6248ea29ba3c542cc088966a6b52b4ab2e0a6e7abc567d73527fde52d4bcc71c": {
+      "tokenId": "0x6248ea29ba3c542cc088966a6b52b4ab2e0a6e7abc567d73527fde52d4bcc71c",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x6248ea29ba3c542cc088966a6b52b4ab2e0a6e7abc567d73527fde52d4bcc71c",
+          "tokenAddress": "0x1e433f87a5F455c97ba5619Ef0B1C7217B3d6bde",
+          "decimals": 18,
+          "registrationTimestamp": 1720547117
+        }
+      ]
+    },
+    "0x69b6648b412399626fd70e553e379476abaf71261590359c2c7a5e00efd98c00": {
+      "tokenId": "0x69b6648b412399626fd70e553e379476abaf71261590359c2c7a5e00efd98c00",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x69b6648b412399626fd70e553e379476abaf71261590359c2c7a5e00efd98c00",
+          "tokenAddress": "0xE3c3Ae6893D5e19efcF806bcD4FB48aEf610dBbc",
+          "decimals": 18,
+          "registrationTimestamp": 1720548445
+        }
+      ]
+    },
+    "0xe5c1769f3027a61dfba07f3db4a4a4759d101dec85b250ab66cac7f7977515f2": {
+      "tokenId": "0xe5c1769f3027a61dfba07f3db4a4a4759d101dec85b250ab66cac7f7977515f2",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xe5c1769f3027a61dfba07f3db4a4a4759d101dec85b250ab66cac7f7977515f2",
+          "tokenAddress": "0x66CfB14Fe16D43B1b44100390dfBC845c604eAdD",
+          "decimals": 18,
+          "registrationTimestamp": 1720550941
+        }
+      ]
+    },
+    "0xba14d609788e9c9f2013238ca154c243ebf69b8910ca93e25f45440b1b2c3639": {
+      "tokenId": "0xba14d609788e9c9f2013238ca154c243ebf69b8910ca93e25f45440b1b2c3639",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xba14d609788e9c9f2013238ca154c243ebf69b8910ca93e25f45440b1b2c3639",
+          "tokenAddress": "0xe43A997A65923dD4B78eF2E3deed10Ed289323b6",
+          "decimals": 18,
+          "registrationTimestamp": 1720550949
+        }
+      ]
+    },
+    "0x0eea8176ff5e76cf30431c87c9b8ae43d9628b939ee0173e18216e3f64233410": {
+      "tokenId": "0x0eea8176ff5e76cf30431c87c9b8ae43d9628b939ee0173e18216e3f64233410",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x0eea8176ff5e76cf30431c87c9b8ae43d9628b939ee0173e18216e3f64233410",
+          "tokenAddress": "0xBa020a658ffd8Aab917Bb74d31706713bFa5D9aF",
+          "decimals": 18,
+          "registrationTimestamp": 1720551123
+        }
+      ]
+    },
+    "0x0f6f13d8e9a6c49202d4d8e50e7a3e41f70bbd43fb4b3bf3f8089bc1a1d11fa1": {
+      "tokenId": "0x0f6f13d8e9a6c49202d4d8e50e7a3e41f70bbd43fb4b3bf3f8089bc1a1d11fa1",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x0f6f13d8e9a6c49202d4d8e50e7a3e41f70bbd43fb4b3bf3f8089bc1a1d11fa1",
+          "tokenAddress": "0xAa9E0eaC6A52f3d70F1882e19a66E1923f1bf736",
+          "decimals": 18,
+          "registrationTimestamp": 1720551879
+        }
+      ]
+    },
+    "0x923f236a2aaf311aea091fcbbb139193dd2642ea57d0a418a4891f59caec70cd": {
+      "tokenId": "0x923f236a2aaf311aea091fcbbb139193dd2642ea57d0a418a4891f59caec70cd",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x923f236a2aaf311aea091fcbbb139193dd2642ea57d0a418a4891f59caec70cd",
+          "tokenAddress": "0x836814f3C7e5bfDD5805399AE74EA82dDe7f424D",
+          "decimals": 18,
+          "registrationTimestamp": 1720552227
+        }
+      ]
+    },
+    "0x332bccad6aafea070b87ba5acf9d83047006c0236f565c6d940bfd5a4c31be6e": {
+      "tokenId": "0x332bccad6aafea070b87ba5acf9d83047006c0236f565c6d940bfd5a4c31be6e",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x332bccad6aafea070b87ba5acf9d83047006c0236f565c6d940bfd5a4c31be6e",
+          "tokenAddress": "0xd4B56465B071Ae65f7C30307b36203CF9a829406",
+          "decimals": 18,
+          "registrationTimestamp": 1720553343
+        }
+      ]
+    },
+    "0x7d3c0268644f0107c8afd831e3941d436444f3ffdf3142d38269fe360dfdf40f": {
+      "tokenId": "0x7d3c0268644f0107c8afd831e3941d436444f3ffdf3142d38269fe360dfdf40f",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x7d3c0268644f0107c8afd831e3941d436444f3ffdf3142d38269fe360dfdf40f",
+          "tokenAddress": "0x03Ef32c9b36237d80a747Bc42A0B423d975e2667",
+          "decimals": 18,
+          "registrationTimestamp": 1720554187
+        }
+      ]
+    },
+    "0x30714d4f96cd8fc339300d097d448424c1fabbe5ff465fa147f5e463e9bf98fc": {
+      "tokenId": "0x30714d4f96cd8fc339300d097d448424c1fabbe5ff465fa147f5e463e9bf98fc",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x30714d4f96cd8fc339300d097d448424c1fabbe5ff465fa147f5e463e9bf98fc",
+          "tokenAddress": "0x263a0B3d1f01420046B4E6c50cf3F2Bb26fB6b3c",
+          "decimals": 18,
+          "registrationTimestamp": 1720557429
+        }
+      ]
+    },
+    "0x845999cdf688bbc11897b6fb06307dc9982d664c7d57e32862c4d85f1e98d26d": {
+      "tokenId": "0x845999cdf688bbc11897b6fb06307dc9982d664c7d57e32862c4d85f1e98d26d",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x845999cdf688bbc11897b6fb06307dc9982d664c7d57e32862c4d85f1e98d26d",
+          "tokenAddress": "0x725097581c83ED11f5c89253C6539A7ABD1F80f9",
+          "decimals": 18,
+          "registrationTimestamp": 1720557581
+        }
+      ]
+    },
+    "0xfb0063a85e6a3fac595db816a7f7a7e7ed14f9a28cfa47e76ba42032896b70e2": {
+      "tokenId": "0xfb0063a85e6a3fac595db816a7f7a7e7ed14f9a28cfa47e76ba42032896b70e2",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xfb0063a85e6a3fac595db816a7f7a7e7ed14f9a28cfa47e76ba42032896b70e2",
+          "tokenAddress": "0x64D2B73f30483d7646E6DFB351827B475257c02E",
+          "decimals": 18,
+          "registrationTimestamp": 1720560115
+        }
+      ]
+    },
+    "0x13c150fdecdfe7ca360224a3256c1d952a00e3c7361806a6a9f4404b6173bd37": {
+      "tokenId": "0x13c150fdecdfe7ca360224a3256c1d952a00e3c7361806a6a9f4404b6173bd37",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x13c150fdecdfe7ca360224a3256c1d952a00e3c7361806a6a9f4404b6173bd37",
+          "tokenAddress": "0x57AC16D87C577C40e80b15f90a772d07eFb24c23",
+          "decimals": 18,
+          "registrationTimestamp": 1720570849
+        }
+      ]
+    },
+    "0xb453d78beb24fccce7ffbd5f8742f6315e7192f45ba898a91e52566df56ae79c": {
+      "tokenId": "0xb453d78beb24fccce7ffbd5f8742f6315e7192f45ba898a91e52566df56ae79c",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xb453d78beb24fccce7ffbd5f8742f6315e7192f45ba898a91e52566df56ae79c",
+          "tokenAddress": "0xf0E3917aFc6f08e0F8426F96f19C129374FA8376",
+          "decimals": 18,
+          "registrationTimestamp": 1720571827
+        }
+      ]
+    },
+    "0x954e3ddb72cf3bb1ae3fce25ee50988c554b5a93c957131734c76e81a5e997dd": {
+      "tokenId": "0x954e3ddb72cf3bb1ae3fce25ee50988c554b5a93c957131734c76e81a5e997dd",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x954e3ddb72cf3bb1ae3fce25ee50988c554b5a93c957131734c76e81a5e997dd",
+          "tokenAddress": "0xC3C6FE894d367C1bD557AfD18d38A2bf0EfB7C30",
+          "decimals": 18,
+          "registrationTimestamp": 1720572189
+        }
+      ]
+    },
+    "0x6bfda4684bd733ec2eaa1f386d40ca9243537966f77c62073eaf514804fa5e10": {
+      "tokenId": "0x6bfda4684bd733ec2eaa1f386d40ca9243537966f77c62073eaf514804fa5e10",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x6bfda4684bd733ec2eaa1f386d40ca9243537966f77c62073eaf514804fa5e10",
+          "tokenAddress": "0xA179E1799f93000231d306B98980fCD569873e5E",
+          "decimals": 18,
+          "registrationTimestamp": 1720573073
+        }
+      ]
+    },
+    "0xb51a366a13c0fdd0d10947d5ef13288fa5af65696e233f16fa5c891ca0d73cae": {
+      "tokenId": "0xb51a366a13c0fdd0d10947d5ef13288fa5af65696e233f16fa5c891ca0d73cae",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xb51a366a13c0fdd0d10947d5ef13288fa5af65696e233f16fa5c891ca0d73cae",
+          "tokenAddress": "0x92Bc2B38C253e1E478c3D6c72a7F61E5539cdFc8",
+          "decimals": 18,
+          "registrationTimestamp": 1720573111
+        }
+      ]
+    },
+    "0xc950119e00aa41a979352fab82b924ab8b3c2c548e44b70f87ca77363cb774a9": {
+      "tokenId": "0xc950119e00aa41a979352fab82b924ab8b3c2c548e44b70f87ca77363cb774a9",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xc950119e00aa41a979352fab82b924ab8b3c2c548e44b70f87ca77363cb774a9",
+          "tokenAddress": "0x2E4B72243abe2806cFf9B4c9A111dAf2Ac6B031B",
+          "decimals": 18,
+          "registrationTimestamp": 1720573417
+        }
+      ]
+    },
+    "0xa694eb6f2509656b625e352ca18eed61875f0d58a168d8e6890f8b5b94f7db74": {
+      "tokenId": "0xa694eb6f2509656b625e352ca18eed61875f0d58a168d8e6890f8b5b94f7db74",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xa694eb6f2509656b625e352ca18eed61875f0d58a168d8e6890f8b5b94f7db74",
+          "tokenAddress": "0xBE5072D9F75fBb9F94dbc57bCe93339a637718c7",
+          "decimals": 18,
+          "registrationTimestamp": 1720573581
+        }
+      ]
+    },
+    "0x9c61232968b2ad7b8b3d14ebf569954025d0ff9b79af83c1a4527d8d40ee3f79": {
+      "tokenId": "0x9c61232968b2ad7b8b3d14ebf569954025d0ff9b79af83c1a4527d8d40ee3f79",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x9c61232968b2ad7b8b3d14ebf569954025d0ff9b79af83c1a4527d8d40ee3f79",
+          "tokenAddress": "0x4E9b2F915F91aDec0a4eabd5E9A39E6C4D6CD86e",
+          "decimals": 18,
+          "registrationTimestamp": 1720573979
+        }
+      ]
+    },
+    "0x0b02260bc4b370fca07c8b81d61f761acea93cbd4ba2ffc8d806170865a11106": {
+      "tokenId": "0x0b02260bc4b370fca07c8b81d61f761acea93cbd4ba2ffc8d806170865a11106",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x0b02260bc4b370fca07c8b81d61f761acea93cbd4ba2ffc8d806170865a11106",
+          "tokenAddress": "0x1aBB1EE60036B5f621B32B55Ea6b1726B96dfEB6",
+          "decimals": 18,
+          "registrationTimestamp": 1720574575
+        }
+      ]
+    },
+    "0x28c04d53ab216c8b1d26ed49d4c6c3e3e21b6de54567b5c7286da2edfd4eab16": {
+      "tokenId": "0x28c04d53ab216c8b1d26ed49d4c6c3e3e21b6de54567b5c7286da2edfd4eab16",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x28c04d53ab216c8b1d26ed49d4c6c3e3e21b6de54567b5c7286da2edfd4eab16",
+          "tokenAddress": "0xD774C75F18C5E398fac07231E24D20e5E5De4f5e",
+          "decimals": 18,
+          "registrationTimestamp": 1720575137
+        }
+      ]
+    },
+    "0xcc70ddd2a478d962f89fed50d6d7446c6cb9b9ae8746e2ff2954736be198944a": {
+      "tokenId": "0xcc70ddd2a478d962f89fed50d6d7446c6cb9b9ae8746e2ff2954736be198944a",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xcc70ddd2a478d962f89fed50d6d7446c6cb9b9ae8746e2ff2954736be198944a",
+          "tokenAddress": "0x26B68f926Ee084e784C190a3743D01AB1e29FFBb",
+          "decimals": 18,
+          "registrationTimestamp": 1720575747
+        }
+      ]
+    },
+    "0x24e3da220dd4ff4dae9b49590621d279c033b44309aa8772e44416ce26384aff": {
+      "tokenId": "0x24e3da220dd4ff4dae9b49590621d279c033b44309aa8772e44416ce26384aff",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x24e3da220dd4ff4dae9b49590621d279c033b44309aa8772e44416ce26384aff",
+          "tokenAddress": "0x3B7c007A7Be9e0535716d7d4f5b944a8b1f6F4B3",
+          "decimals": 18,
+          "registrationTimestamp": 1720576345
+        }
+      ]
+    },
+    "0x62f7c4bf541b2d5b3a872bcd691e30428867d87a7c8a1a58622eb4db6e87ce0a": {
+      "tokenId": "0x62f7c4bf541b2d5b3a872bcd691e30428867d87a7c8a1a58622eb4db6e87ce0a",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x62f7c4bf541b2d5b3a872bcd691e30428867d87a7c8a1a58622eb4db6e87ce0a",
+          "tokenAddress": "0x4D78A6D090271BD4dCc85B366b79AAD4e216F929",
+          "decimals": 18,
+          "registrationTimestamp": 1720576561
+        }
+      ]
+    },
+    "0xafbbba39dd4a2c435bd1015ca5442d545f7160c980a7cc2951ce4ef14fc39e9b": {
+      "tokenId": "0xafbbba39dd4a2c435bd1015ca5442d545f7160c980a7cc2951ce4ef14fc39e9b",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xafbbba39dd4a2c435bd1015ca5442d545f7160c980a7cc2951ce4ef14fc39e9b",
+          "tokenAddress": "0x541931Cb9f28774A32DAD85ea083a0F30832F6b0",
+          "decimals": 18,
+          "registrationTimestamp": 1720576575
+        }
+      ]
+    },
+    "0x01b9dc81e6d32a32201a568b3325eb297a28e52ae2d4109ee4715f5fb18b76ab": {
+      "tokenId": "0x01b9dc81e6d32a32201a568b3325eb297a28e52ae2d4109ee4715f5fb18b76ab",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x01b9dc81e6d32a32201a568b3325eb297a28e52ae2d4109ee4715f5fb18b76ab",
+          "tokenAddress": "0xe7Db4D407796a71371080fDaA09fBb5E026a3273",
+          "decimals": 18,
+          "registrationTimestamp": 1720576833
+        }
+      ]
+    },
+    "0x20e7df95d29b5ff7bc69eb127afe9893d94cd751fe8040177eb6b02b7d7adff2": {
+      "tokenId": "0x20e7df95d29b5ff7bc69eb127afe9893d94cd751fe8040177eb6b02b7d7adff2",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x20e7df95d29b5ff7bc69eb127afe9893d94cd751fe8040177eb6b02b7d7adff2",
+          "tokenAddress": "0xa1Ee9003B9A3334D4EcAE586668E46971B235E2E",
+          "decimals": 18,
+          "registrationTimestamp": 1720576869
+        }
+      ]
+    },
+    "0x634ca4f0bdcb347b092bf3f67821b24f1f79bb67fde21b63f46e08a21e993066": {
+      "tokenId": "0x634ca4f0bdcb347b092bf3f67821b24f1f79bb67fde21b63f46e08a21e993066",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x634ca4f0bdcb347b092bf3f67821b24f1f79bb67fde21b63f46e08a21e993066",
+          "tokenAddress": "0xCD3ca8Bdd9F02c987fcdaFdb9E76B7E122d30C50",
+          "decimals": 18,
+          "registrationTimestamp": 1720576869
+        }
+      ]
+    },
+    "0x1467544f7e260d9703ce5655ae9d94e0db971a3c5bb9662bd90b67ec28a2d3a4": {
+      "tokenId": "0x1467544f7e260d9703ce5655ae9d94e0db971a3c5bb9662bd90b67ec28a2d3a4",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x1467544f7e260d9703ce5655ae9d94e0db971a3c5bb9662bd90b67ec28a2d3a4",
+          "tokenAddress": "0x0D435d62A9Ffb235e8d0dC3b28C88c6Ede461b42",
+          "decimals": 18,
+          "registrationTimestamp": 1720577015
+        }
+      ]
+    },
+    "0x8a654a07894da39f6f12f3d8332fc82a459df695233b8308cdea720196af92c0": {
+      "tokenId": "0x8a654a07894da39f6f12f3d8332fc82a459df695233b8308cdea720196af92c0",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x8a654a07894da39f6f12f3d8332fc82a459df695233b8308cdea720196af92c0",
+          "tokenAddress": "0x11F8FD47da69d1831F458AE03B7703D3F7a88E37",
+          "decimals": 18,
+          "registrationTimestamp": 1720577349
+        }
+      ]
+    },
+    "0x252845e9843867a1cba65095e84cf96600814d09927d02b9824d4c85acb82ef4": {
+      "tokenId": "0x252845e9843867a1cba65095e84cf96600814d09927d02b9824d4c85acb82ef4",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x252845e9843867a1cba65095e84cf96600814d09927d02b9824d4c85acb82ef4",
+          "tokenAddress": "0xABF2824Bffba9F65C281161aA73c03c96b3426B6",
+          "decimals": 18,
+          "registrationTimestamp": 1720577377
+        }
+      ]
+    },
+    "0xae89cbdefb9941681015e5256158ac81a5e994ed03be645393f2f93c549bbf93": {
+      "tokenId": "0xae89cbdefb9941681015e5256158ac81a5e994ed03be645393f2f93c549bbf93",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xae89cbdefb9941681015e5256158ac81a5e994ed03be645393f2f93c549bbf93",
+          "tokenAddress": "0xE42bcf38536057C1362586b0539d452F6C11b68D",
+          "decimals": 18,
+          "registrationTimestamp": 1720577399
+        }
+      ]
+    },
+    "0x2e53251b33143040c78a26109265b16ff62e672f510346e48357a280c0e0efca": {
+      "tokenId": "0x2e53251b33143040c78a26109265b16ff62e672f510346e48357a280c0e0efca",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x2e53251b33143040c78a26109265b16ff62e672f510346e48357a280c0e0efca",
+          "tokenAddress": "0x523F809Fa0d4D15BD04C89dDfDD44b880B5c2335",
+          "decimals": 18,
+          "registrationTimestamp": 1720577399
+        }
+      ]
+    },
+    "0xa33541f1e7ae82d881fe80405af5562a8b510afd22760c7d34f1f9095f9d3e03": {
+      "tokenId": "0xa33541f1e7ae82d881fe80405af5562a8b510afd22760c7d34f1f9095f9d3e03",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xa33541f1e7ae82d881fe80405af5562a8b510afd22760c7d34f1f9095f9d3e03",
+          "tokenAddress": "0x5C597f9f50CFEe2a250d1b6339F92BC6e862C68B",
+          "decimals": 18,
+          "registrationTimestamp": 1720577475
+        }
+      ]
+    },
+    "0x3555f0ae9196a6e36027645f4af8310ba638d68ed7bc1c0b4f6b47e2ac781a70": {
+      "tokenId": "0x3555f0ae9196a6e36027645f4af8310ba638d68ed7bc1c0b4f6b47e2ac781a70",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x3555f0ae9196a6e36027645f4af8310ba638d68ed7bc1c0b4f6b47e2ac781a70",
+          "tokenAddress": "0x3ABf437EA2D6c1ACfA8cfd7330F0a38186114c3C",
+          "decimals": 18,
+          "registrationTimestamp": 1720578229
+        }
+      ]
+    },
+    "0x7333f237fb7694bd16bd0a89c8a6febf95b9db3d1ab4fbb7241fbf3f569bfe67": {
+      "tokenId": "0x7333f237fb7694bd16bd0a89c8a6febf95b9db3d1ab4fbb7241fbf3f569bfe67",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x7333f237fb7694bd16bd0a89c8a6febf95b9db3d1ab4fbb7241fbf3f569bfe67",
+          "tokenAddress": "0xeE03e440261dA47434d009012b97163AEC1fE281",
+          "decimals": 18,
+          "registrationTimestamp": 1720578239
+        }
+      ]
+    },
+    "0x107744132062817a146a442b88c67039d9bea221a182758409105cffc80349ff": {
+      "tokenId": "0x107744132062817a146a442b88c67039d9bea221a182758409105cffc80349ff",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x107744132062817a146a442b88c67039d9bea221a182758409105cffc80349ff",
+          "tokenAddress": "0x8187DCAA34EaA2Ab72a1B8D48e943aA735e92140",
+          "decimals": 18,
+          "registrationTimestamp": 1720578267
+        }
+      ]
+    },
+    "0xaf1c1c28978487c814b5920462baada3b74f3aa708543dbca22d2f2d5f738864": {
+      "tokenId": "0xaf1c1c28978487c814b5920462baada3b74f3aa708543dbca22d2f2d5f738864",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xaf1c1c28978487c814b5920462baada3b74f3aa708543dbca22d2f2d5f738864",
+          "tokenAddress": "0x90b1A828559B861785D879dAbBCf98F9A2aa26F4",
+          "decimals": 18,
+          "registrationTimestamp": 1720578325
+        }
+      ]
+    },
+    "0xe07f146b63669f07f888441f98e218cdb71b1eb5ba694281a04cfa6c50f01335": {
+      "tokenId": "0xe07f146b63669f07f888441f98e218cdb71b1eb5ba694281a04cfa6c50f01335",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xe07f146b63669f07f888441f98e218cdb71b1eb5ba694281a04cfa6c50f01335",
+          "tokenAddress": "0x3dfE9384930c83114af7Ee16254DA096C78e6Fa0",
+          "decimals": 18,
+          "registrationTimestamp": 1720578511
+        }
+      ]
+    },
+    "0xeac8ae2ba3b023104b1d1d88d958e242639ee949e6aad3c253838976af2a7b5e": {
+      "tokenId": "0xeac8ae2ba3b023104b1d1d88d958e242639ee949e6aad3c253838976af2a7b5e",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xeac8ae2ba3b023104b1d1d88d958e242639ee949e6aad3c253838976af2a7b5e",
+          "tokenAddress": "0x7b5D1eC9886356d76497Bd23d145cFfa3A190b46",
+          "decimals": 18,
+          "registrationTimestamp": 1720578511
+        }
+      ]
+    },
+    "0xba566cd573eb78e6390f3816bfdda73dbd0d2872f1c5fe218f2366ec5ea220c0": {
+      "tokenId": "0xba566cd573eb78e6390f3816bfdda73dbd0d2872f1c5fe218f2366ec5ea220c0",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xba566cd573eb78e6390f3816bfdda73dbd0d2872f1c5fe218f2366ec5ea220c0",
+          "tokenAddress": "0x703bDDc692fC40fa620bF35f03c6a4a927A01Ba4",
+          "decimals": 18,
+          "registrationTimestamp": 1720578701
+        }
+      ]
+    },
+    "0x87af93d6841284b17be942380022bb6dae74eaf0f65a885ed4f6974faebba23d": {
+      "tokenId": "0x87af93d6841284b17be942380022bb6dae74eaf0f65a885ed4f6974faebba23d",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x87af93d6841284b17be942380022bb6dae74eaf0f65a885ed4f6974faebba23d",
+          "tokenAddress": "0x8871e838f22cCBA8dD7331Cd21af30DAfBe83043",
+          "decimals": 18,
+          "registrationTimestamp": 1720578703
+        }
+      ]
+    },
+    "0x3f3a22a5537ae746b40bb336822f13d80d69ac6cfaa915f1e0f891bb473201f9": {
+      "tokenId": "0x3f3a22a5537ae746b40bb336822f13d80d69ac6cfaa915f1e0f891bb473201f9",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x3f3a22a5537ae746b40bb336822f13d80d69ac6cfaa915f1e0f891bb473201f9",
+          "tokenAddress": "0x3839fF222B7469e16b1DabC088305B3F8d2e6f0b",
+          "decimals": 18,
+          "registrationTimestamp": 1720578869
+        }
+      ]
+    },
+    "0x40394cdb1bbdcdc85398d5c503ca25d25800aaa88541d5f6f75032d2be8f1421": {
+      "tokenId": "0x40394cdb1bbdcdc85398d5c503ca25d25800aaa88541d5f6f75032d2be8f1421",
+      "originAxelarChainId": "base",
+      "decimals": 17,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x40394cdb1bbdcdc85398d5c503ca25d25800aaa88541d5f6f75032d2be8f1421",
+          "tokenAddress": "0xFA8ff2f5C0ED643aC792A575CE71De799fDe58A3",
+          "decimals": 17,
+          "registrationTimestamp": 1720580145
+        }
+      ]
+    },
+    "0xc30fc95eff0a39b2880c3d27c5fee96d79538362fd6ac6629bfb6781eaa29458": {
+      "tokenId": "0xc30fc95eff0a39b2880c3d27c5fee96d79538362fd6ac6629bfb6781eaa29458",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xc30fc95eff0a39b2880c3d27c5fee96d79538362fd6ac6629bfb6781eaa29458",
+          "tokenAddress": "0x6F1Fa452BE13F882eDd5532c4287Eb2fcfCB08C8",
+          "decimals": 18,
+          "registrationTimestamp": 1720580313
+        }
+      ]
+    },
+    "0x56b86d8d8f88736988d4cb89056b6de7481fbb0226378518f8b8df3dba3cffd8": {
+      "tokenId": "0x56b86d8d8f88736988d4cb89056b6de7481fbb0226378518f8b8df3dba3cffd8",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x56b86d8d8f88736988d4cb89056b6de7481fbb0226378518f8b8df3dba3cffd8",
+          "tokenAddress": "0x301d712221c8269bB007D6c970093472e714E1A7",
+          "decimals": 18,
+          "registrationTimestamp": 1720580377
+        }
+      ]
+    },
+    "0xb343db62c099a2b576a2dfd6c123bd0fa7fb91c87f46c8bb3e6e27da8e764240": {
+      "tokenId": "0xb343db62c099a2b576a2dfd6c123bd0fa7fb91c87f46c8bb3e6e27da8e764240",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0xb343db62c099a2b576a2dfd6c123bd0fa7fb91c87f46c8bb3e6e27da8e764240",
+          "tokenAddress": "0x8843376887F35ee565809127048771eA1C9743a7",
+          "decimals": 18,
+          "registrationTimestamp": 1720580395
+        }
+      ]
+    },
+    "0x23436c5e6be85b425e24308bdfd903c5d58eadc6cb60752ca08d2d238b532179": {
+      "tokenId": "0x23436c5e6be85b425e24308bdfd903c5d58eadc6cb60752ca08d2d238b532179",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x23436c5e6be85b425e24308bdfd903c5d58eadc6cb60752ca08d2d238b532179",
+          "tokenAddress": "0x86ecf78bE5c9b19dC7E6Be2C95829e544C914941",
+          "decimals": 18,
+          "registrationTimestamp": 1720580565
+        }
+      ]
+    },
+    "0x5c3683400d249da323c55d80f93fbb88d90cc69eb56a83fda0f2a8f4ac503c81": {
+      "tokenId": "0x5c3683400d249da323c55d80f93fbb88d90cc69eb56a83fda0f2a8f4ac503c81",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x5c3683400d249da323c55d80f93fbb88d90cc69eb56a83fda0f2a8f4ac503c81",
+          "tokenAddress": "0x2a6a719fe703b9c99E0291a52e5E972832d67C82",
+          "decimals": 18,
+          "registrationTimestamp": 1720581099
+        }
+      ]
+    },
+    "0x35400eb727a2490d312e47c79173af332e1f902901a623d58416500e7713ab79": {
+      "tokenId": "0x35400eb727a2490d312e47c79173af332e1f902901a623d58416500e7713ab79",
+      "originAxelarChainId": "base",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "base",
+          "tokenId": "0x35400eb727a2490d312e47c79173af332e1f902901a623d58416500e7713ab79",
+          "tokenAddress": "0x39033F5C82fb4Dd7d11Ced3AB36986F59eA91AaF",
+          "decimals": 18,
+          "registrationTimestamp": 1720581839
         }
       ]
     }
