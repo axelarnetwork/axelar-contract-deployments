@@ -48,6 +48,12 @@ function addGovernanceOptions(program) {
     return program;
 }
 
+function ensureAxelarServiceGovernance(contractName, action) {
+    if (contractName === 'InterchainGovernance') {
+        throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
+    }
+}
+
 async function getSetupParams(governance, targetContractName, target, contracts, wallet, options) {
     let setupParams = '0x';
 
@@ -137,9 +143,7 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
         }
 
         case 'transferOperatorship': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: transferOperatorship`);
-            }
+            ensureAxelarServiceGovernance(contractName, 'transferOperatorship');
 
             if (options.newOperator) {
                 const newOperator = options.newOperator;
@@ -325,9 +329,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         }
 
         case 'schedule-operator': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: scheduleOperator`);
-            }
+            ensureAxelarServiceGovernance(contractName, 'scheduleOperator');
 
             const [target, calldata, activationTime] = args;
 
@@ -346,10 +348,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         }
 
         case 'cancel-operator': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: cancelOperator`);
-            }
-
+            ensureAxelarServiceGovernance(contractName, 'cancelOperator');
             const [target, calldata] = args;
 
             validateParameters({
@@ -399,9 +398,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         }
 
         case 'submit-operator': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: submitOperator`);
-            }
+            ensureAxelarServiceGovernance(contractName, 'submitOperator');
 
             const [target, calldata, commandId, activationTime] = args;
 
@@ -484,9 +481,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         }
 
         case 'execute-operator-proposal': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: execute-operator-proposal`);
-            }
+            ensureAxelarServiceGovernance(contractName, 'execute-operator-proposal');
 
             const [target, calldata] = args;
 
@@ -514,9 +509,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         }
 
         case 'is-operator-approved': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: is-operator-approved`);
-            }
+            ensureAxelarServiceGovernance(contractName, 'is-operator-approved');
 
             const [target, calldata] = args;
 
