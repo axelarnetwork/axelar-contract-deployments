@@ -123,12 +123,12 @@ function printPoolParams(poolParams: PoolParams[], env: string): void {
     });
 }
 
-function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string): UpdatePoolParamsMessage[] {
+function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string, newRewardsPerEpoch?: string): UpdatePoolParamsMessage[] {
     return poolParams.map((pool) => ({
         update_pool_params: {
             params: {
                 epoch_duration: newEpochDuration,
-                rewards_per_epoch: pool.rewards_per_epoch,
+                rewards_per_epoch: newRewardsPerEpoch || pool.rewards_per_epoch,
                 participation_threshold: pool.participation_threshold,
             },
             pool_id: {
@@ -221,13 +221,26 @@ async function executeDirectly(
 async function updateRewardsPoolEpochDuration(
     client: ClientManager,
     configManager: ConfigManager,
-    options: Options & { epochDuration: string; title?: string; description?: string; yes?: boolean },
+    options: Options & {
+        epochDuration: string;
+        rewardsPerEpoch?: string;
+        title?: string;
+        description?: string;
+        yes?: boolean;
+    },
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
     const epochDurationNum = Number(options.epochDuration);
     if (isNaN(epochDurationNum) || epochDurationNum <= 0 || !Number.isInteger(epochDurationNum)) {
         throw new Error('--epoch-duration must be a positive integer');
+    }
+
+    if (options.rewardsPerEpoch !== undefined) {
+        const rewardsPerEpochNum = Number(options.rewardsPerEpoch);
+        if (isNaN(rewardsPerEpochNum) || rewardsPerEpochNum < 0 || !Number.isInteger(rewardsPerEpochNum)) {
+            throw new Error('--rewards-per-epoch must be a non-negative integer');
+        }
     }
 
     const poolParams = await queryAllRewardsPools(client, configManager);
@@ -243,17 +256,21 @@ async function updateRewardsPoolEpochDuration(
         printWarn(`Expected ${expectedPoolCount} pools but only found ${poolParams.length}. Some pools may be missing.`);
     }
 
-    const messages = buildUpdateMessages(poolParams, options.epochDuration);
+    const messages = buildUpdateMessages(poolParams, options.epochDuration, options.rewardsPerEpoch);
 
     const requiresGovernance = isGovernanceRequired(configManager);
     const executionMethod = requiresGovernance ? 'governance proposal' : 'direct execution (admin bypass)';
     printInfo('Execution method', executionMethod);
 
     if (requiresGovernance) {
-        const title = options.title || `Update rewards pool epoch_duration to ${options.epochDuration}`;
+        const updateParts: string[] = [`epoch_duration to ${options.epochDuration}`];
+        if (options.rewardsPerEpoch !== undefined) {
+            updateParts.push(`rewards_per_epoch to ${options.rewardsPerEpoch}`);
+        }
+        const title = options.title || `Update rewards pool ${updateParts.join(' and ')}`;
         const description =
             options.description ||
-            `Update epoch_duration from current values to ${options.epochDuration} blocks for ${messages.length} rewards pools across ${new Set(poolParams.map((p) => p.chainName)).size} amplifier chains.`;
+            `Update ${updateParts.join(' and ')} for ${messages.length} rewards pools across ${new Set(poolParams.map((p) => p.chainName)).size} amplifier chains.`;
 
         await submitAsGovernanceProposal(
             client,
@@ -299,8 +316,14 @@ addAmplifierOptions(
 addAmplifierOptions(
     program
         .command('update')
-        .description('Update rewards pool epoch_duration for amplifier chains')
+        .description('Update rewards pool parameters for amplifier chains')
         .addOption(new Option('--epoch-duration <epochDuration>', 'new epoch_duration value (in blocks)').makeOptionMandatory(true))
+        .addOption(
+            new Option(
+                '--rewards-per-epoch <rewardsPerEpoch>',
+                'new rewards_per_epoch value (optional, keeps current value if not provided)',
+            ),
+        )
         .addOption(new Option('-t, --title <title>', 'governance proposal title (optional, auto-generated if not provided)'))
         .addOption(
             new Option('-d, --description <description>', 'governance proposal description (optional, auto-generated if not provided)'),
