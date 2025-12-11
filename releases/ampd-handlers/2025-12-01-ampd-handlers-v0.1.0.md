@@ -131,7 +131,7 @@ Create a file named `evm-handler-config.toml` in your configuration directory:
 
 ```toml
 rpc_url = "[YOUR_EVM_CHAIN_RPC_URL]"
-finalization = "RPCFinalizedBlock"
+finalization = "RPCFinalizedBlock" # or "ConfirmationHeight"
 ```
 
 #### Sui Handler Config
