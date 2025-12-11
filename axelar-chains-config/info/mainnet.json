@@ -3537,6 +3537,7 @@
   "axelar": {
     "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
     "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+    "multisigProverAdminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
     "rpc": "https://rpc-axelar.imperator.co:443",

@@ -13,7 +13,8 @@ export interface FullConfig {
 
 export interface AxelarConfig {
     governanceAddress: string;
-    adminAddress?: string;
+    adminAddress: string;
+    multisigProverAdminAddress: string;
     contracts: Record<string, AxelarContractConfig>;
     rpc: string;
     gasPrice: string;
