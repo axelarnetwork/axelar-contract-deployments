@@ -3,7 +3,9 @@ const { findPublishedObject, getObjectIdsByObjectTypes, moveDir, getStructs } = 
 const { broadcastFromTxBuilder } = require('./sign-utils');
 
 async function deployTokenFromInfo(config, symbol, name, decimals) {
-    if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
+    if (!name || !symbol || !decimals) {
+        throw new Error('Token name, symbol and decimals are required');
+    }
 
     // Define the interchain token options
     copyMovePackage('interchain_token', null, moveDir);
@@ -64,9 +66,15 @@ async function saveTokenDeployment(
             Metadata,
         },
     };
-    if (linkedTokens.length) contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
-    if (saltAddress) contracts[symbol.toUpperCase()].saltAddress = saltAddress;
-    if (tokenManagerType) contracts[symbol.toUpperCase()].tokenManagerType = tokenManagerType;
+    if (linkedTokens.length) {
+        contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
+    }
+    if (saltAddress) {
+        contracts[symbol.toUpperCase()].saltAddress = saltAddress;
+    }
+    if (tokenManagerType) {
+        contracts[symbol.toUpperCase()].tokenManagerType = tokenManagerType;
+    }
 }
 
 async function checkIfCoinExists(client, coinPackageId, coinType) {
