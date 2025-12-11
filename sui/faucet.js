@@ -18,7 +18,7 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const host = getFaucetHost(chain.networkType);
+    const host = options.faucet || getFaucetHost(chain.networkType);
     await requestSuiFromFaucetV2({ host, recipient });
 
     printInfo('Funds requested', recipient);
@@ -43,6 +43,7 @@ if (require.main === module) {
                 'tokens will only be requested from the faucet if recipient balance is below the amount provided',
             ).default('1'),
         )
+        .addOption(new Option('--faucet <faucet>', 'custom faucet rpc for Sui'))
         .description('Query the faucet for funds.')
         .action((options) => {
             mainProcessor(options, processCommand);
