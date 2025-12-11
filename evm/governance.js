@@ -210,14 +210,9 @@ function encodeGovernanceProposal(commandType, target, calldata, nativeValue, et
     return defaultAbiCoder.encode(types, values);
 }
 
-<<<<<<< HEAD
 function getProposalHash(target, calldata, nativeValue) {
     return keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
 }
-=======
-async function processCommand(axelar, chain, _chains, options) {
-    const { contractName, address, action, proposalAction, date, privateKey, yes } = options;
->>>>>>> 3c7194a9 (chore: added multisigproveradmin address)
 
 function decodeProposalPayload(proposal) {
     const decoded = defaultAbiCoder.decode(['uint256', 'address', 'bytes', 'uint256', 'uint256'], proposal);
