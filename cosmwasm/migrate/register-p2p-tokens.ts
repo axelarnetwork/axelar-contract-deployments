@@ -5,7 +5,7 @@ import { addEnvOption, printError } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { validateParameters } from '../../common/utils';
 import { isConsensusChain } from '../../evm/utils';
-import { TokenData, registerToken } from '../its';
+import { TokenData, alignTokenSupplyOnHub, registerToken } from '../its';
 import { ClientManager, mainProcessor } from '../processor';
 
 export type SquidTokenData = {
@@ -112,6 +112,48 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
     }
 }
 
+async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigManager, options, _args, _fee) {
+    const { env, tokenIds, chains } = options;
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
+
+    const tokens: SquidToken[] = await filteredTokens(env, tokenIds);
+
+    const validateTokenSupplyResult = await forEachTokenAndChain(
+        config,
+        tokens,
+        chains,
+        async (token: SquidToken, chain: SquidTokenData) => {
+            validateParameters({
+                isNonEmptyString: {
+                    tokenId: token.tokenId,
+                    axelarChainId: chain.axelarChainId,
+                    tokenAddress: chain.tokenAddress,
+                },
+            });
+        },
+    );
+
+    const modifyTokenSupplyResult = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
+        const chainName = chain.axelarChainId.toLowerCase();
+        await alignTokenSupplyOnHub(
+            client,
+            config,
+            interchainTokenServiceAddress,
+            token.tokenId,
+            chain.tokenAddress,
+            chainName,
+            options.dryRun,
+        );
+    });
+
+    if (!validateTokenSupplyResult || !modifyTokenSupplyResult) {
+        throw new Error('Error validating or modifying token supply');
+    }
+}
+
 const programHandler = () => {
     const program = new Command();
 
@@ -140,6 +182,23 @@ const programHandler = () => {
         });
 
     addEnvOption(registerTokensCmd);
+
+    const alignTokenSupplyCmd = program
+        .command('align-token-supply')
+        .description('Align the supply of a token on a chain with the supply on the chain.')
+        .addOption(new Option('-n, --chains <chains...>', 'chains to run the script for. Default: all chains'))
+        .addOption(new Option('--tokenIds <tokenIds...>', 'tokenIds to run the script for. Default: all tokens'))
+        .addOption(new Option('--dryRun', 'provide to just print out what will happen when running the command.'))
+        .addOption(
+            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
+                .makeOptionMandatory(true)
+                .env('MNEMONIC'),
+        )
+        .action((options) => {
+            mainProcessor(modifyTokenSupplyInFile, options, []);
+        });
+
+    addEnvOption(alignTokenSupplyCmd);
 
     program.parse();
 };

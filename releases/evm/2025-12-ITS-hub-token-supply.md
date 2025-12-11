@@ -42,8 +42,10 @@ ts-node evm/its.js set-trusted-chains axelar -n all
 Run the following command to align token supply per each environment:
 
 ```bash
-ts-node cosmwasm/migrate/register-p2p-tokens.ts modify-token-supply
+ts-node cosmwasm/migrate/register-p2p-tokens.ts align-token-supply
 ```
+
+**Note:** This command should be run for both squid & non-squid tokens
 
 ### Checklist
 
