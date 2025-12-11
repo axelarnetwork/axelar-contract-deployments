@@ -235,13 +235,7 @@ async function processCommand(_axelar, chain, _chains, options) {
         printInfo('Deployer contract', deployerContract);
         printInfo(`${contractName} implementation will be deployed to`, predictedImplementationAddress, chalk.cyan);
 
-        if (
-            predictOnly ||
-            prompt(
-                `Does derived implementation address match existing deployments? Proceed with implementation deployment on ${chain.name}?`,
-                yes,
-            )
-        ) {
+        if (predictOnly || prompt(`Proceed with new implementation deployment on ${chain.name}?`, yes)) {
             return;
         }
 
