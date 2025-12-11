@@ -136,7 +136,7 @@ jobs:
         run: ts-node evm/gateway.js --action transferGovernance -y
 
       - name: Generate governance upgrade proposal
-        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGateway --contractName InterchainGovernance  --file ./proposal.json
+        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGateway --contractName InterchainGovernance  --generate-only ./proposal.json
 
       - name: Deploy AxelarServiceGovernance using create3
         run: ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -y
