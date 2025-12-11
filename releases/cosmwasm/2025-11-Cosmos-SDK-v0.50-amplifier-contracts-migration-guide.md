@@ -15,9 +15,9 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-11-24 |
-| **Stagenet**         | -                     | 2025-12-03 |
-| **Testnet**          | -                     | 2025-12-03 |
-| **Mainnet**          | -                     | TBD        |
+| **Stagenet**         | Completed             | 2025-12-03 |
+| **Testnet**          | Completed             | 2025-12-03 |
+| **Mainnet**          | Completed             | 2025-12-08 |
 
 ## Background
 
@@ -53,7 +53,7 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
     ```
 
 1. Store and migrate XRPL Voting Verifier code
-    Please follow the [XRPL Voting Verifier v2.0.0 release doc](./2025-11-XRPLVotingVerifier-v2.0.0.md)
+   Please follow the [XRPL Voting Verifier v2.0.0 release doc](./2025-11-XRPLVotingVerifier-v2.0.0.md)
 
 1. Store Multisig code
 
@@ -135,12 +135,18 @@ Update `epoch_duration` on all reward pools. Note that these parameter changes s
 | **Devnet-amplifier** | `500`            |
 | **Stagenet**         | `3000`           |
 | **Testnet**          | `3000`           |
-| **Mainnet**          | `74225`          |
+| **Mainnet**          | `47250`          |
 
-1. Update epoch duration
+1. Update epoch duration (`devnet-amplifiier`, `stagenet`, `testnet`)
 
     ```bash
     ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch-duration]
+    ```
+
+    For `mainnet`, update epoch duration and rewards per epoch
+
+    ```bash
+    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch-duration] --rewards-per-epoch 3424660000
     ```
 
 1. Verify epoch duration was updated on all pools
