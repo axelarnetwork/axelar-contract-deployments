@@ -33,6 +33,7 @@ const {
     getGasOptions,
     getDeployOptions,
     mainProcessor,
+    deployContract,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
@@ -133,7 +134,7 @@ function getUpgradeArgs(contractName) {
  * This function handles both initial deployment and upgrades of upgradable contracts.
  */
 async function processCommand(_axelar, chain, _chains, options) {
-    const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
+    const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly, reuseProxy } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 
     if (deployMethod === 'create3' && (contractName === 'AxelarGasService' || contractName === 'AxelarDepositService')) {
@@ -210,6 +211,54 @@ async function processCommand(_axelar, chain, _chains, options) {
 
         printInfo(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
         printInfo(`${chain.name} | Upgraded.`);
+    } else if (reuseProxy) {
+        if (!contractConfig.address) {
+            throw new Error(`${chain.name} | Contract ${contractName} is not deployed. Cannot reuse proxy.`);
+        }
+
+        printInfo(`${chain.name} | Reusing existing proxy for ${contractName}`, contractConfig.address);
+
+        const implementationSalt = `${salt} Implementation`;
+        const predictedImplementationAddress = await getDeployedAddress(wallet.address, deployMethod, {
+            salt: implementationSalt,
+            deployerContract,
+            contractJson: implementationJson,
+            constructorArgs: implArgs,
+            provider: wallet.provider,
+        });
+
+        if (deployMethod !== 'create') {
+            printInfo(`${contractName} implementation deployment salt`, implementationSalt);
+        }
+
+        printInfo('Deployment method', deployMethod);
+        printInfo('Deployer contract', deployerContract);
+        printInfo(`${contractName} implementation will be deployed to`, predictedImplementationAddress, chalk.cyan);
+
+        if (predictOnly || prompt(`Does derived implementation address match existing deployments? Proceed with implementation deployment on ${chain.name}?`, yes)) {
+            return;
+        }
+
+        const implementation = await deployContract(
+            deployMethod,
+            wallet,
+            implementationJson,
+            implArgs,
+            {
+                deployerContract,
+                salt: implementationSalt,
+            },
+            gasOptions,
+            verifyOptions,
+            chain,
+        );
+
+        contractConfig.implementation = implementation.address;
+        contractConfig.deployer = wallet.address;
+
+        printInfo(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
+
+        return implementation;
     } else {
         const setupArgs = getInitArgs(contractName);
         printInfo('Proxy setup args', setupArgs);
@@ -326,6 +375,8 @@ if (require.main === module) {
     program.name('deploy-upgradable').description('Deploy upgradable contracts');
 
     addEvmOptions(program, { artifactPath: true, contractName: true, salt: true, skipChains: true, upgrade: true, predictOnly: true });
+
+    program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments)'));
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
