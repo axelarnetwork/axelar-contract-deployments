@@ -89,7 +89,9 @@ jobs:
               }
             },
             "axelar": {
-              "governanceAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+              "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+              "adminAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+              "multisigProverAdminAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
               "contracts": {
                 "InterchainTokenService": {
                   "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
