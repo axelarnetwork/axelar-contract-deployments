@@ -759,7 +759,6 @@ if (require.main === module) {
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .action((target, calldata, options, cmd) => {
             main(cmd.name(), [target, calldata], options);
         });
@@ -770,7 +769,6 @@ if (require.main === module) {
         .argument('<target>', 'target address')
         .argument('<calldata>', 'call data')
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'))
         .action((target, calldata, options, cmd) => {
             main(cmd.name(), [target, calldata], options);
         });
