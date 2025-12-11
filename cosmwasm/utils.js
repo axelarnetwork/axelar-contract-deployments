@@ -815,6 +815,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         domain_separator: contractConfig.domainSeparator.replace('0x', ''),
         expect_full_message_payloads: Boolean(contractConfig.expectFullMessagePayloads) || false,
         notify_signing_session: Boolean(contractConfig.notifySigningSession) || false,
+        sig_verifier_address: contractConfig.sigVerifierAddress || null,
     };
 };
 
