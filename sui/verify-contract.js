@@ -33,7 +33,9 @@ async function getContractAddress(env, contract) {
         const configData = await fs.readFile(configPath, 'utf-8');
         const config = JSON.parse(configData);
         const address = config.chains?.sui?.contracts?.[contract]?.address;
-        if (!address) throw new Error(`Address for contract ${contract} not found`);
+        if (!address) {
+            throw new Error(`Address for contract ${contract} not found`);
+        }
         return address;
     } catch (error) {
         throw new Error(`Failed to read config for ${contract}: ${error.message}`);
@@ -248,7 +250,9 @@ async function uploadSourceCode(network, packageId, srcZipPath) {
 async function verifyPackage(network, packageId, srcFileId, isSrcUploaded) {
     try {
         const payload = { network, packageId };
-        if (!isSrcUploaded && srcFileId) payload.srcFileId = srcFileId;
+        if (!isSrcUploaded && srcFileId) {
+            payload.srcFileId = srcFileId;
+        }
         const response = await axios.post(`${BASE_URL}/verifications`, payload, { headers: { 'Content-Type': 'application/json' } });
         return response.data;
     } catch (error) {
@@ -270,7 +274,9 @@ async function getVerifiedSourceCode(network, packageId) {
 async function processVerification(network, packageId, srcZipPath) {
     printInfo('Checking verification status for package', packageId);
     const status = await checkVerificationStatus(network, packageId);
-    if (!status) return;
+    if (!status) {
+        return;
+    }
     printInfo('Verification status', JSON.stringify(status, null, 2));
 
     let srcFileId = null;

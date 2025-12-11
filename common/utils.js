@@ -124,7 +124,9 @@ const isString = (arg) => {
 };
 
 const isNonArrayObject = (arg) => {
-    if (!arg) return false;
+    if (!arg) {
+        return false;
+    }
     return typeof arg === 'object' && Array.isArray(arg) === false;
 };
 
@@ -591,7 +593,9 @@ function toBigNumberString(number) {
 
 const isValidCosmosAddress = (str) => {
     try {
-        if (typeof str !== 'string') return false;
+        if (typeof str !== 'string') {
+            return false;
+        }
         bech32.decode(str);
         return true;
     } catch (error) {
