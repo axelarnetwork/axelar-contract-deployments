@@ -262,7 +262,9 @@ ts-node evm/governance.js execute-operator-proposal <target> <calldata>  [option
 - Requires the operator proposal to be approved (otherwise it will revert).
 - Forwards `nativeValue` (if non-zero) along with the call to `target`.
 
-### Transfer AxelarServiceGovernance operatorship:
+## Governance Contract Actions
+
+### Transfer operatorship (AxelarServiceGovernance only):
 
 ```bash
 # schedule
@@ -271,14 +273,31 @@ ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|rel
 
 # cancel
 ts-node evm/governance.js cancel transferOperatorship \
-  --calldata <calldata> 
+  --newOperator 0xNewOperator
 
 # submit after vote
 ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --calldata <calldata>
-### Operator Proposal Lifecycle
+  --newOperator 0xNewOperator
 ```
 
+### Transfer governance:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferGovernance <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --targetContractName AxelarGateway \
+  --newGovernance 0xNewGovernor
+
+# cancel
+ts-node evm/governance.js cancel transferGovernance \
+  --targetContractName AxelarGateway \
+  --newGovernance 0xNewGovernor
+
+# submit after vote
+ts-node evm/governance.js submit transferGovernance <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --targetContractName AxelarGateway \
+  --newGovernance 0xNewGovernor
+```
 
 ## Troubleshooting
 
