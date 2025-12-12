@@ -3,7 +3,7 @@
 require('../common/cli-utils');
 
 const { Command, Option } = require('commander');
-const { addAmplifierOptions } = require('./cli-utils');
+const { addAmplifierOptions, addAmplifierQueryOptions } = require('./cli-utils');
 
 const { getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { executeTransaction } = require('./utils');
@@ -93,17 +93,22 @@ const unauthorizeVerifier = async (client, config, options, [serviceName, verifi
     execute(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
 };
 
-const rotateSigners = async (_client, config, options, [chain, sessionId], _fee) => {
-    const { privateKey } = options;
+const rotateSigners = async (_client, config, options, [sessionId], _fee) => {
+    const { privateKey, chainName } = options;
 
-    const chainConfig = config.getChainConfig(chain);
+    if (!chainName) {
+        printError('missing -n --chainName option');
+        return;
+    }
+
+    const chainConfig = config.getChainConfig(chainName);
     const gatewayAddress = chainConfig?.contracts?.AxelarGateway?.address;
     const gasOptions = await getGasOptions(chainConfig, options, null);
     const provider = getDefaultProvider(chainConfig.rpc);
 
     const wallet = await getWallet(privateKey, provider, options);
 
-    const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chain, sessionId]);
+    const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chainName, sessionId]);
     const executeData = message?.status?.completed?.execute_data;
 
     printInfo(`Multisig Proof`, message);
@@ -166,13 +171,13 @@ const programHandler = () => {
     });
 
     const rotateSignersCmd = program
-        .command('rotate-evm-signers <chain> <sessionId>')
+        .command('rotate-evm-signers <sessionId>')
         .description('Rotate signers on Solidity edge contract')
         .addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'))
-        .action((chain, sessionId, options) => {
-            mainQueryProcessor(rotateSigners, options, [chain, sessionId]);
+        .action((sessionId, options) => {
+            mainQueryProcessor(rotateSigners, options, [sessionId]);
         });
-    addAmplifierOptions(rotateSignersCmd, {});
+    addAmplifierQueryOptions(rotateSignersCmd, {});
 
     program.parse();
 };
