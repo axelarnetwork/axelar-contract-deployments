@@ -3463,7 +3463,8 @@
       "chainType": "evm",
       "explorer": {
         "name": "MonVision",
-        "url": "https://monadvision.com/"
+        "url": "https://monadvision.com/",
+        "api": "https://sourcify-api-monad.blockvision.org/"
       },
       "contracts": {
         "ConstAddressDeployer": {
