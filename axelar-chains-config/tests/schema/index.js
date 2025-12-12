@@ -15,7 +15,17 @@ const axelarSchema = {
         adminAddress: { type: 'string', pattern: axelarAddressPattern },
         multisigProverAdminAddress: { type: 'string', pattern: axelarAddressPattern },
     },
-    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol', 'cosmosSDK', 'governanceAddress', 'adminAddress', 'multisigProverAdminAddress'],
+    required: [
+        'axelarId',
+        'rpc',
+        'lcd',
+        'grpc',
+        'tokenSymbol',
+        'cosmosSDK',
+        'governanceAddress',
+        'adminAddress',
+        'multisigProverAdminAddress',
+    ],
 };
 
 export const contractValueSchema = {
