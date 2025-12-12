@@ -356,15 +356,15 @@ export class ConfigManager implements FullConfig {
         saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
-    public getProposalInstantiateAddresses(): string[] {
+    public proposalInstantiateAddresses(): string[] {
         return this.axelar.govProposalInstantiateAddresses;
     }
 
-    public getProposalDepositAmount(): string {
+    public proposalDepositAmount(): string {
         return this.axelar.govProposalDepositAmount;
     }
 
-    public getProposalExpeditedDepositAmount(): string {
+    public proposalExpeditedDepositAmount(): string {
         const expeditedAmount = this.axelar.govProposalExpeditedDepositAmount;
         if (!expeditedAmount) {
             throw new Error(

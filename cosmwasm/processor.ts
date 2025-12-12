@@ -57,12 +57,12 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
         (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
 
     if (!deposit) {
-        options.deposit = standardProposal ? configManager.getProposalDepositAmount() : configManager.getProposalExpeditedDepositAmount();
+        options.deposit = standardProposal ? configManager.proposalDepositAmount() : configManager.proposalExpeditedDepositAmount();
     } else {
         options.deposit = deposit;
     }
 
-    options.instantiateAddresses = instantiateAddresses || configManager.getProposalInstantiateAddresses();
+    options.instantiateAddresses = instantiateAddresses || configManager.proposalInstantiateAddresses();
 
     configManager.initContractConfig(options.contractName, options.chainName);
 
