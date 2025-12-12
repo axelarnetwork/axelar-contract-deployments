@@ -72,8 +72,7 @@ async function processCommand(_axelar, chain, _chains, options) {
 
     printInfo('Ownership Action', action);
 
-    const needsConfirmation =
-        !options.governance && ['transferOwnership', 'proposeOwnership', 'acceptOwnership'].includes(action);
+    const needsConfirmation = !options.governance && ['transferOwnership', 'proposeOwnership', 'acceptOwnership'].includes(action);
     if (needsConfirmation && prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
         return;
     }
