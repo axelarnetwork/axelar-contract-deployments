@@ -100,8 +100,7 @@ const getUnitDenom = (config) => {
 };
 
 const validateGovernanceMode = (config, contractName, chainName) => {
-    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
-    const governanceAddress = contractConfig.governanceAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
@@ -190,11 +189,11 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
     return { governance_address: governanceAddress };
 };
 
-const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
-    const { governanceAccount } = contractConfig;
+const makeServiceRegistryInstantiateMsg = (config, _options, _contractConfig) => {
+    const governanceAccount = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAccount)) {
-        throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
+        throw new Error('Missing or invalid axelar.governanceAddress in axelar info');
     }
 
     return { governance_account: governanceAccount };

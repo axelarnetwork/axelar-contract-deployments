@@ -181,6 +181,8 @@ export class ConfigManager implements FullConfig {
 
         const requiredFields = [
             'governanceAddress',
+            'adminAddress',
+            'multisigProverAdminAddress',
             'contracts',
             'rpc',
             'gasPrice',
