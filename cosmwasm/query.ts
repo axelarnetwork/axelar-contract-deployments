@@ -219,9 +219,15 @@ async function multisigAuthorizedCaller(client, config, _options, args, _fee) {
         return;
     }
 
+    const chainConfig = getChainConfig(config.chains, chainName);
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
     try {
         const result = await client.queryContractSmart(multisigAddress, {
-            authorized_caller: { chain_name: chainName },
+            authorized_caller: { chain_name: chainConfig.axelarId },
         });
         printInfo(`Multisig: Authorized caller for ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
