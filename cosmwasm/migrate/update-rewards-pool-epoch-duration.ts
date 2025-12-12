@@ -128,7 +128,7 @@ function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string,
         update_pool_params: {
             params: {
                 epoch_duration: newEpochDuration,
-                rewards_per_epoch: newRewardsPerEpoch || pool.rewards_per_epoch,
+                rewards_per_epoch: newRewardsPerEpoch ?? pool.rewards_per_epoch,
                 participation_threshold: pool.participation_threshold,
             },
             pool_id: {
@@ -254,14 +254,8 @@ async function updateRewardsPoolEpochDuration(
     printInfo('Execution method', executionMethod);
 
     if (requiresGovernance) {
-        const updateParts: string[] = [`epoch_duration to ${options.epochDuration}`];
-        if (options.rewardsPerEpoch !== undefined) {
-            updateParts.push(`rewards_per_epoch to ${options.rewardsPerEpoch}`);
-        }
-        const title = options.title || `Update rewards pool ${updateParts.join(' and ')}`;
-        const description =
-            options.description ||
-            `Update ${updateParts.join(' and ')} for ${messages.length} rewards pools across ${new Set(poolParams.map((p) => p.chainName)).size} amplifier chains.`;
+        const title = options.title || 'Update rewards pools';
+        const description = options.description || 'Update rewards pool parameters';
 
         await submitAsGovernanceProposal(
             client,
@@ -309,12 +303,7 @@ addAmplifierOptions(
         .command('update')
         .description('Update rewards pool parameters for amplifier chains')
         .addOption(new Option('--epoch-duration <epochDuration>', 'new epoch_duration value (in blocks)').makeOptionMandatory(true))
-        .addOption(
-            new Option(
-                '--rewards-per-epoch <rewardsPerEpoch>',
-                'new rewards_per_epoch value (optional, keeps current value if not provided)',
-            ),
-        )
+        .addOption(new Option('--rewards-per-epoch <rewardsPerEpoch>', 'update the rewards_per_epoch to new value'))
         .addOption(new Option('-t, --title <title>', 'governance proposal title (optional, auto-generated if not provided)'))
         .addOption(
             new Option('-d, --description <description>', 'governance proposal description (optional, auto-generated if not provided)'),
