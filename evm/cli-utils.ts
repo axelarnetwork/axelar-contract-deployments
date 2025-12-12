@@ -90,6 +90,7 @@ const addGovernanceOptions = (program: Command): Command => {
         ).default('0'),
     );
     program.addOption(new Option('--generate-only <file>', 'Generate Axelar proposal JSON to the given file instead of submitting'));
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 
     return program;
 };
