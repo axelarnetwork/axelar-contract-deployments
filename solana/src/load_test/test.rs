@@ -143,8 +143,6 @@ pub(crate) async fn run_load_test_with_metrics(
 
             if keypair_index >= keypairs.len() {
                 keypair_index = 0;
-                tokio::time::sleep(delay_duration).await;
-                continue;
             }
 
             let keypair = Arc::clone(&keypairs[keypair_index]);
