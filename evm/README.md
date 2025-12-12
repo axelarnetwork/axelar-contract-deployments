@@ -213,6 +213,42 @@ ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 Full docs can be found on [here](./docs/governance.md).
 Detailed workflows are mentioned [here](./docs/governance-workflows.md).
 
+## Contract Ownership Management
+
+The `ownership.js` script manages ownership of contracts.
+
+```bash
+# Query current owner
+ts-node evm/ownership.js -n <chain> -c AxelarGateway --action owner
+
+# Query pending owner
+ts-node evm/ownership.js -n <chain> -c AxelarGateway --action pendingOwner
+
+# Transfer ownership directly
+ts-node evm/ownership.js -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress
+
+# Propose ownership
+ts-node evm/ownership.js -n <chain> -c AxelarGateway --action proposeOwnership --newOwner 0xNewOwnerAddress
+
+# Accept ownership
+ts-node evm/ownership.js -n <chain> -c AxelarGateway --action acceptOwnership
+```
+
+To generate governance proposals for ownership changes, use the `--governance` flag:
+
+```bash
+# Generate proposal JSON (no mnemonic required)
+ts-node evm/ownership.js --governance -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress
+
+# Generate proposal to specific file
+ts-node evm/ownership.js --governance --generate-only ownership-proposal.json -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress
+
+# Generate and submit proposal (requires mnemonic)
+ts-node evm/ownership.js --governance -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress
+```
+
+Use `--governanceContract` to specify the governance contract (`InterchainGovernance` or `AxelarServiceGovernance`, default: `AxelarServiceGovernance`). Use `--address <address>` to override the contract address from chain configuration.
+
 ## Utilities
 
 ### Decode Function Calldata
