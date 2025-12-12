@@ -8,11 +8,13 @@ const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddres
 
 const { Option, InvalidArgumentError } = require('commander');
 
-const addAmplifierOptions = (program, options) => {
+const addAmplifierOptions = (program, options = {}) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(new Option('--governance', 'submit a governance proposal instead of executing directly'));
 
     if (options.contractOptions) {
         addContractOptions(program);
@@ -98,12 +100,17 @@ const addChainNameOption = (program) => {
 
 const addAmplifierQueryOptions = (program) => {
     addEnvOption(program);
-
+    addAxelarNodeOption(program);
     addChainNameOption(program);
+};
+
+const addAxelarNodeOption = (program) => {
+    program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     addContractOptions(program);
 };
@@ -192,7 +199,6 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
 };
 
 module.exports = {

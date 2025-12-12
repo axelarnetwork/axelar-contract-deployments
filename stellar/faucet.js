@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances, getRpcOptions } = require('./utils');
+const { ASSET_TYPE_NATIVE, getWallet, addBaseOptions, getBalances, getRpcOptions, fundAccountWithFriendbot } = require('./utils');
 const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
 const { Horizon } = require('@stellar/stellar-sdk');
 
@@ -22,9 +22,7 @@ async function processCommand(chain, options) {
         process.exit(0);
     }
 
-    await horizonServer.friendbot(recipient).call();
-
-    printInfo('Funds requested', recipient);
+    await fundAccountWithFriendbot(horizonServer, recipient);
 }
 
 async function mainProcessor(options, processor) {

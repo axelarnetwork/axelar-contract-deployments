@@ -151,7 +151,9 @@ const deployCreate3 = async (
 };
 
 const isAddressArray = (arr) => {
-    if (!Array.isArray(arr)) return false;
+    if (!Array.isArray(arr)) {
+        return false;
+    }
 
     for (const item of arr) {
         if (!isAddress(item)) {
@@ -229,6 +231,19 @@ function isValidAddress(address, allowZeroAddress) {
     }
 
     return isAddress(address);
+}
+
+function getGovernanceAddress(chain, contractName, address) {
+    if (isValidAddress(address)) {
+        return address;
+    }
+
+    const contractConfig = chain.contracts[contractName];
+    if (!contractConfig?.address) {
+        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+    }
+
+    return contractConfig.address;
 }
 
 // Validate if the input privateKey is correct
@@ -635,6 +650,20 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+async function handleTransactionWithEvent(tx, chain, contract, action, eventName) {
+    printInfo(`${action} transaction`, tx.hash);
+    const receipt = await tx.wait(chain.confirmations);
+
+    if (eventName) {
+        const eventEmitted = wasEventEmitted(receipt, contract, eventName);
+        if (!eventEmitted) {
+            printWarn(`Event ${eventName} not emitted in receipt.`);
+        }
+    }
+
+    return receipt;
+}
+
 const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 /**
@@ -755,6 +784,10 @@ const mainProcessor = async (options, processCommand, save = true) => {
         printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
 
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
     printInfo(
         'Succeeded chains',
         chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
@@ -765,10 +798,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
             'Failed chains',
             chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
         );
-    }
-
-    if (save) {
-        saveConfig(config, options.env);
+        process.exit(1);
     }
 
     return results;
@@ -1133,8 +1163,10 @@ module.exports = {
     getConfigByChainId,
     printWalletInfo,
     wasEventEmitted,
+    handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceAddress,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
