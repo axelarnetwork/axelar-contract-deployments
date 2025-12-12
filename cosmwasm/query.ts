@@ -175,7 +175,7 @@ async function routerIsChainFrozen(client, config, _options, args, _fee) {
         return;
     }
 
-    const chainConfig = getChainConfig(config.chains, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName, { skipCheck: true });
     if (!chainConfig) {
         printWarn(`Chain ${chainName} not found in config`);
         return;
@@ -219,7 +219,7 @@ async function multisigAuthorizedCaller(client, config, _options, args, _fee) {
         return;
     }
 
-    const chainConfig = getChainConfig(config.chains, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName, { skipCheck: true });
     if (!chainConfig) {
         printWarn(`Chain ${chainName} not found in config`);
         return;
@@ -263,7 +263,7 @@ async function itsIsChainFrozen(client, config, _options, args, _fee) {
         return;
     }
 
-    const chainConfig = getChainConfig(config.chains, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName, { skipCheck: true });
     if (!chainConfig) {
         printWarn(`Chain ${chainName} not found in config`);
         return;
@@ -363,7 +363,8 @@ async function multisigProverNextVerifierSet(client, config, _options, args, _fe
 
 // Generic admin query
 async function contractAdmin(client, config, options, _args, _fee) {
-    const contractName = options.contractName;
+    // contractName is an array due to variadic option definition, take the first element
+    const contractName = Array.isArray(options.contractName) ? options.contractName[0] : options.contractName;
     const chainName = options.chainName;
 
     let contractAddress: string | undefined;
