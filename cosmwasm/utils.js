@@ -2,6 +2,9 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
+const path = require('path');
+const fs = require('fs');
+const protobuf = require('protobufjs');
 const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const {
     StoreCodeProposal,
@@ -37,6 +40,7 @@ const {
     calculateDomainSeparator,
     validateParameters,
     tryItsEdgeContract,
+    itsEdgeContract,
 } = require('../common');
 const {
     pascalToSnake,
@@ -73,6 +77,10 @@ const isValidCosmosAddress = (str) => {
 };
 
 const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'));
+
+const toArray = (value) => {
+    return Array.isArray(value) ? value : [value];
+};
 
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
@@ -112,6 +120,18 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     }
 
     return { contractBaseConfig, contractConfig };
+};
+
+const validateGovernanceMode = (config, contractName, chainName) => {
+    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
+    const governanceAddress = contractConfig.governanceAddress;
+
+    if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
+        throw new Error(
+            `Contract ${contractName}${chainName ? ` (${chainName})` : ''} governanceAddress is not set to governance module address. ` +
+                `Cannot use --governance flag. The proposal will fail at execution.`,
+        );
+    }
 };
 
 const getCodeId = async (client, config, options) => {
@@ -887,7 +907,7 @@ const fetchCodeIdFromContract = async (client, contractConfig) => {
     return codeId;
 };
 
-const getChainTruncationParams = (config, chainConfig) => {
+const itsHubDecimalsTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
 
@@ -903,6 +923,24 @@ const getChainTruncationParams = (config, chainConfig) => {
     validateParameters({ isValidNumber: { maxUintBits, maxDecimalsWhenTruncating } });
 
     return { maxUintBits, maxDecimalsWhenTruncating };
+};
+
+const itsHubChainParams = (config, chainConfig) => {
+    const { maxUintBits, maxDecimalsWhenTruncating } = itsHubDecimalsTruncationParams(config, chainConfig);
+    const itsEdgeContractAddress = itsEdgeContract(chainConfig);
+
+    const key = chainConfig.axelarId.toLowerCase();
+    const chainParams = config.axelar.contracts.InterchainTokenService[key];
+    const itsMsgTranslator =
+        chainParams?.msgTranslator ||
+        config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
+
+    return {
+        itsEdgeContractAddress,
+        itsMsgTranslator,
+        maxUintBits,
+        maxDecimalsWhenTruncating,
+    };
 };
 
 const getInstantiatePermission = (accessType, addresses) => {
@@ -1255,6 +1293,81 @@ const encodeMigrate = (config, options) => {
     }
 };
 
+const loadProtoDefinition = (protoName) => {
+    const fullPath = path.join(__dirname, 'proto', protoName);
+    try {
+        return fs.readFileSync(fullPath, 'utf8');
+    } catch (error) {
+        throw new Error(`Failed to load proto: ${fullPath}. ${error.message}`);
+    }
+};
+
+const encodeCallContracts = (proposalData) => {
+    const { title, description, contract_calls: contractCallsInput } = proposalData;
+
+    if (!title || !description || !Array.isArray(contractCallsInput)) {
+        throw new Error('Invalid proposal data: must have title, description, and contract_calls array');
+    }
+
+    const protoDefinition = loadProtoDefinition('axelarnet_call_contracts.proto');
+
+    let root;
+    try {
+        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+        root = parsed.root;
+    } catch (error) {
+        throw new Error(`Failed to parse proto definition: ${error.message}`);
+    }
+
+    const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
+    const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
+
+    if (!CallContractsProposal || !ContractCall) {
+        throw new Error('Failed to lookup proto types');
+    }
+
+    const contractCalls = contractCallsInput.map((call, index) => {
+        const { chain, contract_address: contractAddress, payload } = call || {};
+
+        if (!chain || !contractAddress || !payload) {
+            throw new Error(`Invalid contract_call at index ${index}: must have chain, contract_address, and payload`);
+        }
+
+        const payloadBytes = Buffer.from(payload, 'base64');
+
+        const contractCall = ContractCall.create({
+            chain,
+            contract_address: contractAddress,
+            payload: payloadBytes,
+        });
+
+        const errMsg = ContractCall.verify(contractCall);
+        if (errMsg) {
+            throw new Error(`Invalid ContractCall at index ${index}: ${errMsg}`);
+        }
+
+        return contractCall;
+    });
+
+    const proposal = CallContractsProposal.create({
+        title,
+        description,
+        contract_calls: contractCalls,
+    });
+
+    const errMsg = CallContractsProposal.verify(proposal);
+    if (errMsg) {
+        throw new Error(`Invalid CallContractsProposal: ${errMsg}`);
+    }
+
+    const message = CallContractsProposal.encode(proposal).finish();
+
+    return {
+        typeUrl: '/axelar.axelarnet.v1beta1.CallContractsProposal',
+        value: Uint8Array.from(message),
+    };
+};
+
 const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer) => {
     const {
         axelar: { tokenSymbol },
@@ -1318,7 +1431,7 @@ const submitProposal = async (client, config, options, proposal, fee) => {
         printInfo('Proposer address', account.address);
     }
 
-    const normalizedProposal = isLegacy ? proposal : Array.isArray(proposal) ? proposal : [proposal];
+    const normalizedProposal = isLegacy ? proposal : toArray(proposal);
 
     const submitProposalMsg = encodeSubmitProposal(normalizedProposal, config, options, account.address);
 
@@ -1336,6 +1449,15 @@ const submitProposal = async (client, config, options, proposal, fee) => {
     }
 
     return proposalId;
+};
+
+const submitCallContracts = async (client, config, options, proposalData, fee) => {
+    if (!proposalData.title || !proposalData.description || !proposalData.contract_calls) {
+        throw new Error('Invalid proposal data: must have title, description, and contract_calls');
+    }
+
+    const proposal = encodeCallContracts(proposalData);
+    return submitProposal(client, config, options, proposal, fee);
 };
 
 const getContractR2Url = (contractName, contractVersion) => {
@@ -1500,6 +1622,7 @@ module.exports = {
     CONTRACTS,
     AXELAR_GATEWAY_CONTRACT_NAME,
     fromHex,
+    toArray,
     getSalt,
     calculateDomainSeparator,
     getAmplifierContractConfig,
@@ -1511,7 +1634,8 @@ module.exports = {
     migrateContract,
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
-    getChainTruncationParams,
+    itsHubDecimalsTruncationParams,
+    itsHubChainParams,
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiate,
@@ -1520,11 +1644,15 @@ module.exports = {
     encodeParameterChangeProposal,
     encodeUpdateInstantiateConfigProposal,
     encodeMigrate,
+    encodeCallContracts,
     encodeSubmitProposal,
     submitProposal,
+    submitCallContracts,
+    loadProtoDefinition,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
     isLegacySDK,
+    validateGovernanceMode,
     GOVERNANCE_MODULE_ADDRESS,
 };
