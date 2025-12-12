@@ -466,7 +466,9 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
             const InterchainTokenService = contractConfig.objects.InterchainTokenService;
             const RelayerDiscovery = chain.contracts.RelayerDiscovery.objects.RelayerDiscovery;
 
-            if (typeof InterchainTokenService !== 'string') throw new Error(`Cannot find object of specified contract: ${packageName}`);
+            if (typeof InterchainTokenService !== 'string') {
+                throw new Error(`Cannot find object of specified contract: ${packageName}`);
+            }
 
             await builder.moveCall({
                 target: `${contractConfig.address}::interchain_token_service::migrate`,
@@ -485,7 +487,9 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
         }
     }
 
-    if (packageName !== 'AxelarGateway') await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
+    if (packageName !== 'AxelarGateway') {
+        await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
+    }
 }
 
 async function syncPackages(keypair, client, config, chain, options) {
@@ -537,6 +541,7 @@ const DEPLOY_CMD_OPTIONS = [
     new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
         .choices(['immutable', 'any_upgrade', 'code_upgrade', 'dep_upgrade'])
         .default('any_upgrade'),
+    new Option('--rpc <rpc>', 'Sui rpc endpoint'),
 ];
 
 // Gateway deploy command options

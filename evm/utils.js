@@ -151,7 +151,9 @@ const deployCreate3 = async (
 };
 
 const isAddressArray = (arr) => {
-    if (!Array.isArray(arr)) return false;
+    if (!Array.isArray(arr)) {
+        return false;
+    }
 
     for (const item of arr) {
         if (!isAddress(item)) {

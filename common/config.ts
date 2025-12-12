@@ -50,7 +50,6 @@ export interface ExplorerConfig {
 export interface DeploymentConfig {
     deploymentName: string;
     salt: string;
-    proposalId: string;
 }
 
 export interface ContractConfig {
@@ -153,11 +152,14 @@ export class ConfigManager implements FullConfig {
         const errors: string[] = [];
         const { axelar, chains } = this;
 
-        if (!axelar) errors.push(`Missing 'axelar' section in ${this.environment} config`);
-        if (!chains)
+        if (!axelar) {
+            errors.push(`Missing 'axelar' section in ${this.environment} config`);
+        }
+        if (!chains) {
             errors.push(`Missing 'chains' section in ${this.environment} config. Please ensure the config file has a 'chains' property.`);
-        else if (typeof chains !== 'object' || chains === null)
+        } else if (typeof chains !== 'object' || chains === null) {
             errors.push(`'chains' section in ${this.environment} config must be an object`);
+        }
 
         return errors;
     }
@@ -165,7 +167,9 @@ export class ConfigManager implements FullConfig {
     private validateAxelarConfig(): string[] {
         const errors: string[] = [];
         const { axelar } = this;
-        if (!axelar) return errors;
+        if (!axelar) {
+            return errors;
+        }
 
         const requiredFields = [
             'contracts',
@@ -211,7 +215,9 @@ export class ConfigManager implements FullConfig {
 
     private validateChainConfigs(): string[] {
         const errors: string[] = [];
-        if (!this.chains) return errors;
+        if (!this.chains) {
+            return errors;
+        }
 
         Object.entries(this.chains).forEach(([chainName, chainConfig]) => {
             errors.push(...this.validateSingleChain(chainName, chainConfig));
@@ -437,10 +443,26 @@ export class ConfigManager implements FullConfig {
             );
         }
 
+        if (numNumerator <= 0 || numDenominator <= 0) {
+            throw new Error(
+                `Invalid threshold configuration for the chain. Numerator and denominator must be greater than 0, got: [${numNumerator}, ${numDenominator}]`,
+            );
+        }
+
         if (numNumerator > numDenominator) {
             throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
         }
         return [String(value[0]), String(value[1])];
+    }
+
+    public parseThreshold(value: string, configPath: string): [string, string] {
+        let parsedValue;
+        try {
+            parsedValue = JSON.parse(value);
+        } catch {
+            throw new Error(`Invalid threshold format. Expected JSON array, got: ${value}`);
+        }
+        return this.validateThreshold(parsedValue, configPath);
     }
 
     public getMultisigProverContractForChainType(chainType: string): string {
