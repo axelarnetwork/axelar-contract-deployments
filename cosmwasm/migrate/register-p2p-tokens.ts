@@ -5,7 +5,7 @@ import { addEnvOption, printError } from '../../common';
 import { ConfigManager } from '../../common/config';
 import { validateParameters } from '../../common/utils';
 import { isConsensusChain } from '../../evm/utils';
-import { TokenData, alignTokenSupplyOnHub, registerToken } from '../its';
+import { TokenData, alignTokenSupplyOnHub, formatTokenId, registerToken } from '../its';
 import { ClientManager, mainProcessor } from '../processor';
 
 export type SquidTokenData = {
@@ -98,9 +98,16 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
     }
 
     const registerTokens = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
+        let originChainFromAxelar = undefined;
+        try {
+            const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
+                token_config: { token_id: formatTokenId(token.tokenId) },
+            });
+            originChainFromAxelar = origin_chain;
+        } catch (e) {}
         const tokenData: TokenData = {
             tokenId: token.tokenId,
-            originChain: token.originAxelarChainId.toLowerCase(),
+            originChain: originChainFromAxelar ?? token.originAxelarChainId.toLowerCase(),
             decimals: chain.decimals ?? token.decimals,
             chainName: chain.axelarChainId.toLowerCase(),
         } as TokenData;
