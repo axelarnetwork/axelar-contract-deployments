@@ -5,7 +5,7 @@ import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
 import { AxelarContractConfig, ConfigManager } from '../../common/config';
-import { getAmplifierChains, printError, printHighlight, printInfo, printWarn, prompt } from '../../common/utils';
+import { getAmplifierChains, printError, printHighlight, printInfo, printWarn, prompt, validateParameters } from '../../common/utils';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { RewardsPoolResponse, queryRewardsPool } from '../query';
@@ -231,23 +231,14 @@ async function updateRewardsPoolEpochDuration(
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const epochDurationNum = Number(options.epochDuration);
-    if (isNaN(epochDurationNum) || epochDurationNum <= 0 || !Number.isInteger(epochDurationNum)) {
-        throw new Error('--epoch-duration must be a positive integer');
-    }
+    validateParameters({ isPositiveInteger: { epochDuration: options.epochDuration } });
 
     if (options.rewardsPerEpoch !== undefined) {
-        const rewardsPerEpochNum = Number(options.rewardsPerEpoch);
-        if (isNaN(rewardsPerEpochNum) || rewardsPerEpochNum < 0 || !Number.isInteger(rewardsPerEpochNum)) {
-            throw new Error('--rewards-per-epoch must be a non-negative integer');
-        }
+        validateParameters({ isPositiveInteger: { rewardsPerEpoch: options.rewardsPerEpoch } });
     }
 
     const poolParams = await queryAllRewardsPools(client, configManager);
-
-    if (poolParams.length === 0) {
-        throw new Error('No rewards pools found. Cannot proceed with update.');
-    }
+    validateParameters({ isPositiveInteger: { poolParamsLength: poolParams.length } });
 
     const amplifierChains = getAmplifierChains(configManager.chains);
     const expectedPoolCount = amplifierChains.length * 2;
