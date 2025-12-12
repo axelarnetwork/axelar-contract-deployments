@@ -3286,7 +3286,8 @@
         "storeCodeProposalId": "437",
         "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
         "codeId": 72,
-        "lastUploadedCodeId": 72,        "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
+        "lastUploadedCodeId": 72,
+        "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
         "executeProposalId": "112",
         "flow": {
           "executeProposalId": "149"
