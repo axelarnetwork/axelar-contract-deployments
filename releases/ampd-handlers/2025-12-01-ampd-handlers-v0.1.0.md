@@ -166,6 +166,16 @@ Ensure that `ampd` is updated to the latest version that supports the gRPC inter
 ./<chain>-handler --config-dir ~/.ampd/<chain>/
 ```
 
+## Orchestration
+The daemon can run without any handlers connected, but the handlers cannot run without the daemon, and will crash if unable to connect. To ensure continuous up time, both the daemon and each handler should be set to auto restart by whatever orchestration policy that is being used.
+For example, when using systemd, under the `Service` section, set
+```
+[Service]
+Restart=always
+RestartSec=5s
+```
+The daemon and each running handler should be orchestrated as separate services.
+
 ### Checklist
 
 Check `ampd` and handler logs to ensure they are running correctly. For each chain, monitor voting and signing activity for your verifier on Axelarscan to verify it's operating correctly.
