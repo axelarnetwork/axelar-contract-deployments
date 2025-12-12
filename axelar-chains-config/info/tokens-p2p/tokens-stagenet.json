@@ -160,7 +160,7 @@
     },
     "0x4403f3028fe9ed592f29c782327b1d48cefa2f5cae88cbad84c6cabd2c57208f": {
       "tokenId": "0x4403f3028fe9ed592f29c782327b1d48cefa2f5cae88cbad84c6cabd2c57208f",
-      "originAxelarChainId": "fantom",
+      "originAxelarChainId": "flow",
       "decimals": 6,
       "tokenType": "interchain",
       "chains": [
@@ -2384,7 +2384,7 @@
     },
     "0xf020367e73a7c713a53b7d853c1845e5a1fdab501f66b8d941f6d03a6129bfb7": {
       "tokenId": "0xf020367e73a7c713a53b7d853c1845e5a1fdab501f66b8d941f6d03a6129bfb7",
-      "originAxelarChainId": "avalanche",
+      "originAxelarChainId": "flow",
       "decimals": 6,
       "tokenType": "interchain",
       "chains": [
@@ -2399,7 +2399,7 @@
     },
     "0xba7e7d58735386638a4a165b69423f4ca31af31e20886690a117c615fce19d1e": {
       "tokenId": "0xba7e7d58735386638a4a165b69423f4ca31af31e20886690a117c615fce19d1e",
-      "originAxelarChainId": "avalanche",
+      "originAxelarChainId": "flow",
       "decimals": 6,
       "tokenType": "interchain",
       "chains": [
@@ -2414,7 +2414,7 @@
     },
     "0x6ae91f540fb3a744948807702fe72c66f48f109f8eac132da3e5baa95692b1b6": {
       "tokenId": "0x6ae91f540fb3a744948807702fe72c66f48f109f8eac132da3e5baa95692b1b6",
-      "originAxelarChainId": "avalanche",
+      "originAxelarChainId": "flow",
       "decimals": 6,
       "tokenType": "interchain",
       "chains": [
@@ -2504,7 +2504,7 @@
     },
     "0xe71be7dc3cf6a95d90bbcb7ae33b63aa9a1e1f98f42d5b1816bceb46e02325f3": {
       "tokenId": "0xe71be7dc3cf6a95d90bbcb7ae33b63aa9a1e1f98f42d5b1816bceb46e02325f3",
-      "originAxelarChainId": "avalanche",
+      "originAxelarChainId": "flow",
       "decimals": 6,
       "tokenType": "interchain",
       "chains": [
