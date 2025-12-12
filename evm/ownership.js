@@ -26,6 +26,20 @@ const { encodeGovernanceProposal, ProposalType, submitProposalToAxelar } = requi
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
+async function buildGovernanceProposal(chain, options, ownershipAddress, action, calldata) {
+    const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+    printInfo('Governance contract', governanceContract);
+    const eta = dateToEta(options.activationTime || '0');
+    const nativeValue = '0';
+    const proposalType = getScheduleProposalType(options, ProposalType, action);
+    const gmpPayload = encodeGovernanceProposal(proposalType, ownershipAddress, calldata, nativeValue, eta);
+
+    printInfo('Governance target', ownershipAddress);
+    printInfo('Governance calldata', calldata);
+
+    return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+}
+
 async function processCommand(_axelar, chain, _chains, options) {
     const { contractName, address, action, privateKey, newOwner, yes } = options;
 
@@ -58,19 +72,11 @@ async function processCommand(_axelar, chain, _chains, options) {
 
     printInfo('Ownership Action', action);
 
-    const buildGovernanceProposal = async (calldata) => {
-        const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
-        printInfo('Governance contract', governanceContract);
-        const eta = dateToEta(options.activationTime || '0');
-        const nativeValue = '0';
-        const proposalType = getScheduleProposalType(options, ProposalType, action);
-        const gmpPayload = encodeGovernanceProposal(proposalType, ownershipAddress, calldata, nativeValue, eta);
-
-        printInfo('Governance target', ownershipAddress);
-        printInfo('Governance calldata', calldata);
-
-        return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
-    };
+    const needsConfirmation =
+        !options.governance && ['transferOwnership', 'proposeOwnership', 'acceptOwnership'].includes(action);
+    if (needsConfirmation && prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+        return;
+    }
 
     switch (action) {
         case 'owner': {
@@ -98,11 +104,7 @@ async function processCommand(_axelar, chain, _chains, options) {
                     throw new Error(`Invalid new owner address: ${newOwner}`);
                 }
                 const { data: calldata } = await ownershipContract.populateTransaction.transferOwnership(newOwner, gasOptions);
-                return buildGovernanceProposal(calldata);
-            }
-
-            if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
-                return;
+                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
             }
 
             let owner = await ownershipContract.owner();
@@ -140,11 +142,7 @@ async function processCommand(_axelar, chain, _chains, options) {
                     throw new Error(`Invalid new owner address: ${newOwner}`);
                 }
                 const { data: calldata } = await ownershipContract.populateTransaction.proposeOwnership(newOwner, gasOptions);
-                return buildGovernanceProposal(calldata);
-            }
-
-            if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
-                return;
+                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
             }
 
             const owner = await ownershipContract.owner();
@@ -177,11 +175,7 @@ async function processCommand(_axelar, chain, _chains, options) {
         case 'acceptOwnership': {
             if (options.governance) {
                 const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
-                return buildGovernanceProposal(calldata);
-            }
-
-            if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
-                return;
+                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
             }
 
             const pendingOwner = await ownershipContract.pendingOwner();
