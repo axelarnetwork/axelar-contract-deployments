@@ -118,6 +118,7 @@ Contract wasm binary can be passed by specifiying the path to the directory cont
 - `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
 **Common options:**
+
 - `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
 
 Available subcommands:
@@ -165,6 +166,7 @@ ts-node submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal
 ```
 
 **Common options:**
+
 - `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
 
 ### Uploading bytecode through governance
@@ -225,13 +227,13 @@ Note: For new deployments, use the Coordinator contract to instantiate Gateway, 
 Use the `instantiate-chain-contracts` command:
 
 ```bash
-ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+ts-node cosmwasm/contract.ts instantiate-chain-contracts \
   -n avalanche \
   -s "salt123" \
   --fetchCodeId
 ```
 
-This formats the execute message using the config, generates a deployment name (`<chain>-<codeId>`), and submits a single proposal to deploy all three contracts.
+This formats the execute message using the config, generates a deployment name (`<chain>-<codeId>`), and either executes directly (if using governance key i.e. devnet-amplifier) or submits a proposal to deploy all three contracts.
 
 After the proposal executes, retrieve and write the deployed contract addresses to the config:
 
@@ -265,31 +267,45 @@ ts-node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Pr
 
 ### Register or update chain on ITS Hub through governance proposal
 
-To submit a governance proposal to register an ITS chain, use the `submit-proposal` script with the `its-hub-register-chains <chains...>` command. The `chains` argument is used to pass a list of chains to register on ITS hub.
+To register an ITS chain, use the `contract` script with the `its-hub-register-chains <chains...>` command. The `chains` argument is used to pass a list of chains to register on ITS hub.
 
-To update an existing chain registration (e.g., to change the translator contract), add the `--update` flag to the same command.
+To update an existing chain registration (e.g., to change the translator contract), use the `its-hub-update-chains <chains...>` command.
 
 **Prerequisites**: ITS hub contract configuration in json file must include the following attributes per chain:
 
-| Attribute                   | Description                                                                                | EVM | Sui |
-| --------------------------- | ------------------------------------------------------------------------------------------ | --- | --- |
-| `maxUintBits`               | Number of bits for the chain's maximum uint representation                                 | 256 | 64  |
-| `maxDecimalsWhenTruncating` | Maximum decimal places allowed when truncating ITS token amounts transferred to this chain | 255 | 6   |
+| Attribute                   | Description                                                                                | Required | EVM | Sui |
+| --------------------------- | ------------------------------------------------------------------------------------------ | -------- | --- | --- |
+| `maxUintBits`               | Number of bits for the chain's maximum uint representation                                 | Yes      | 256 | 64  |
+| `maxDecimalsWhenTruncating` | Maximum decimal places allowed when truncating ITS token amounts transferred to this chain | Yes      | 255 | 6   |
+| `msgTranslator`             | Address of the message translator contract (defaults to global `ItsAbiTranslator.address`) | No       | -   | -   |
 
-For EVM chains, the values above are used by default if not specified explicitly.
+For EVM chains, `maxUintBits` and `maxDecimalsWhenTruncating` are used by default if not specified explicitly.
+
+The ITS edge contract address must be configured in the chain's `contracts.InterchainTokenService` section (either `.address` for EVM chains or `.objects.ChannelId` for Sui chains).
+
+The message translator address defaults to the global `ItsAbiTranslator.address` if not specified per-chain. To use a different translator for a specific chain, add `msgTranslator` to the chain's configuration.
 
 Example configuration:
 
-```
+```json
 "axelar": {
   "contracts": {
     ...
     "InterchainTokenService": {
+      "address": "axelar1...",  // ITS Hub address
       ...
       "some-sui-chain": {
         "maxUintBits": 64,
         "maxDecimalsWhenTruncating": 6,
+        "msgTranslator": "axelar1..."  // Optional: per-chain override
+      },
+      "some-evm-chain": {
+        "maxUintBits": 256,  // Optional: defaults to 256 for EVM
+        "maxDecimalsWhenTruncating": 255  // Optional: defaults to 255 for EVM
       }
+    },
+    "ItsAbiTranslator": {
+      "address": "axelar1..."  // Global default for msgTranslator
     }
     ...
   }
@@ -300,10 +316,10 @@ Example usage:
 
 ```
 # Register new chains
-ts-node cosmwasm/submit-proposal.js its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000 -r $RUN_AS_ACCOUNT
+ts-node cosmwasm/contract.ts its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000
 
 # Update existing chain registration (e.g., to change translator contract)
-ts-node cosmwasm/submit-proposal.js its-hub-register-chains aleo-2 --update -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000 --its-edge-contract aleo1ymrcwun5g9z0un8dqgdln7l3q77asqr98p7wh03dwgk4yfltpqgq9efvfz --its-msg-translator axelar1ejvjzx9vh9jxmtedl6xv9d5p4vh34g3vxejpxxx38ev4gjvh4mlsuesuq4
+ts-node cosmwasm/contract.ts its-hub-update-chains aleo-2 -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000
 ```
 
 ### Submit a proposal to change a parameter
@@ -404,6 +420,7 @@ ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotat
 The `query.js` script provides commands to query various contract states and configurations. Use these commands to inspect contract information and verify deployments.
 
 **Common options:**
+
 - `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
 
 #### Available Commands

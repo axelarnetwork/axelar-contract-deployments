@@ -253,7 +253,7 @@ function getGovernanceContract(chain, options = {}) {
         throw new Error('Operator proposals require --governanceContract AxelarServiceGovernance or unset --operatorProposal.');
     }
 
-    const governanceAddress = getGovernanceAddress(chain, governanceContract);
+    const governanceAddress = getGovernanceAddress(chain, governanceContract, options.address);
 
     return { governanceContract, governanceAddress };
 }
