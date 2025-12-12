@@ -32,6 +32,15 @@ Actions that can be executed directly from operator wallet. Immediate execution,
 - **Rotate Signers**: `evm/gateway.js --action rotateSigners` - [Rotate signers (emergency)](../README.md#rotate-signers-emergency)
 - **Transfer Operatorship**: `evm/gateway.js --action transferOperatorship --newOperator <addr>` - [Transfer operatorship](../README.md#transfer-operatorship) in Gateway operator commands
 
+### Mint Limiter Actions
+
+Actions that can be executed directly from mint limiter wallet. Immediate execution, no timelock.
+
+- **Set Token Mint Limits**: `evm/gateway.js --action setTokenMintLimits` - [Mint limit management](./mint-limit.md#1-updating-mint-limits-via-gatewayjs)
+- **Set Token Mint Limits (Multisig)**: `evm/multisig.js --action setTokenMintLimits` - [Mint limit management](./mint-limit.md#2-updating-mint-limits-via-multisigjs)
+
+For complete documentation on mint limit management, see [Mint Limit Management](./mint-limit.md).
+
 ---
 
 ## AxelarGasService
@@ -121,6 +130,28 @@ Actions that can be executed directly from owner wallet. Immediate execution, no
 Actions that can be executed directly from operator wallet. Immediate execution, no timelock.
 
 - **Execute Contract**: `evm/operators.js executeContract <target> <calldata> <value>` - [Execute contract (operators role)](../README.md#execute-contract-operators-role)
+
+---
+
+## Contract Ownership Management
+
+### Owner Actions
+
+Actions that can be executed directly from EOA.
+
+- **Query Owner**: `evm/ownership.js -n <chain> -c <contractName> --action owner` - [Contract Ownership Management](../README.md#contract-ownership-management)
+- **Query Pending Owner**: `evm/ownership.js -n <chain> -c <contractName> --action pendingOwner` - [Contract Ownership Management](../README.md#contract-ownership-management)
+- **Transfer Ownership**: `evm/ownership.js -n <chain> -c <contractName> --action transferOwnership --newOwner <addr>` - [Contract Ownership Management](../README.md#contract-ownership-management)
+- **Propose Ownership**: `evm/ownership.js -n <chain> -c <contractName> --action proposeOwnership --newOwner <addr>` - [Contract Ownership Management](../README.md#contract-ownership-management)
+- **Accept Ownership**: `evm/ownership.js -n <chain> -c <contractName> --action acceptOwnership` - [Contract Ownership Management](../README.md#contract-ownership-management)
+
+### Governance Actions
+
+Ownership changes can also be executed via governance proposals:
+
+- **Transfer Ownership via Governance**: `evm/ownership.js --governance -n <chain> -c <contractName> --action transferOwnership --newOwner <addr>` - [Contract Ownership Management](../README.md#contract-ownership-management)
+- **Propose Ownership via Governance**: `evm/ownership.js --governance -n <chain> -c <contractName> --action proposeOwnership --newOwner <addr>` - [Contract Ownership Management](../README.md#contract-ownership-management)
+- **Accept Ownership via Governance**: `evm/ownership.js --governance -n <chain> -c <contractName> --action acceptOwnership` - [Contract Ownership Management](../README.md#contract-ownership-management)
 
 ---
 
