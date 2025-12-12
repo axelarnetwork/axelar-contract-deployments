@@ -354,6 +354,12 @@ fn find_token_manager_pda(
 }
 
 async fn verify_transactions(args: VerifyArgs, config: &Config) -> eyre::Result<()> {
+    if args.resume_from == 0 {
+        return Err(eyre!(
+            "--resume-from is 1-based and must be at least 1"
+        ));
+    }
+
     println!("Starting transaction verification...");
     println!("Input file: {}", args.input_file.display());
 
