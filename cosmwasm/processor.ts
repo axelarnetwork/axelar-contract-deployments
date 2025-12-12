@@ -41,7 +41,7 @@ function prepareQueryProcessor(options: Options): { configManager: ConfigManager
 }
 
 function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee; deposit: string } {
-    const { runAs, deposit, standardProposal, instantiateAddresses, env } = options;
+    const { runAs, standardProposal, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
     const fee = configManager.getFee();
 
@@ -49,11 +49,8 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
         runAs ||
         (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
 
-    const proposalDeposit = deposit
-        ? deposit
-        : standardProposal
-          ? configManager.proposalDepositAmount()
-          : configManager.proposalExpeditedDepositAmount();
+    const proposalDeposit =
+        options.deposit ?? (standardProposal ? configManager.proposalDepositAmount() : configManager.proposalExpeditedDepositAmount());
 
     options.instantiateAddresses = instantiateAddresses || configManager.proposalInstantiateAddresses();
 
