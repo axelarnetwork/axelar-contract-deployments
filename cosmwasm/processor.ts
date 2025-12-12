@@ -40,7 +40,7 @@ function prepareQueryProcessor(options: Options): { configManager: ConfigManager
     return { configManager };
 }
 
-function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
+function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee; deposit: string } {
     const { runAs, deposit, standardProposal, instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
     const fee = configManager.getFee();
@@ -49,22 +49,22 @@ function prepareProcessor(options: Options): { configManager: ConfigManager; fee
         runAs ||
         (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
 
-    if (!deposit) {
-        options.deposit = standardProposal ? configManager.proposalDepositAmount() : configManager.proposalExpeditedDepositAmount();
-    } else {
-        options.deposit = deposit;
-    }
+    const proposalDeposit = deposit
+        ? deposit
+        : standardProposal
+          ? configManager.proposalDepositAmount()
+          : configManager.proposalExpeditedDepositAmount();
 
     options.instantiateAddresses = instantiateAddresses || configManager.proposalInstantiateAddresses();
 
     configManager.initContractConfig(options.contractName, options.chainName);
 
-    return { configManager, fee };
+    return { configManager, fee, deposit: proposalDeposit };
 }
 
 export async function mainProcessor(processorFn: ProcessorFn, options: Options, args?: string[]) {
     const { rpc: axelarNode } = options;
-    const { configManager, fee } = prepareProcessor(options);
+    const { configManager, fee, deposit } = prepareProcessor(options);
 
     const axelarNodeFromConfig = configManager.axelar.rpc;
 
@@ -78,7 +78,12 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
 
     const client = await prepareClient(options.mnemonic, configManager.axelar.rpc, GasPrice.fromString(configManager.axelar.gasPrice));
 
-    await processorFn(client, configManager, options, args, fee);
+    const processedOptions: Options = {
+        ...options,
+        deposit,
+    };
+
+    await processorFn(client, configManager, processedOptions, args, fee);
 
     configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
