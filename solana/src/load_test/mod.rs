@@ -17,7 +17,11 @@ use crate::config::Config;
 pub(crate) async fn handle_command(command: Commands, config: &Config) -> eyre::Result<()> {
     match command {
         Commands::Test(args) => test::run_load_test(args, config).await,
-        Commands::Verify(args) => verify::verify_transactions(args, config).await,
+        Commands::Verify(args) => {
+            let skip_gmp = args.skip_gmp_verify;
+            verify::verify_transactions_with_report(args, config, skip_gmp).await?;
+            Ok(())
+        }
         Commands::Run(args) => run_full_test(args, config).await,
     }
 }
@@ -68,6 +72,7 @@ async fn run_full_test(args: RunArgs, config: &Config) -> eyre::Result<()> {
         success_output,
         resume_from: 1,
         delay: args.verify_delay,
+        skip_gmp_verify: args.skip_gmp_verify,
     };
 
     let verification =

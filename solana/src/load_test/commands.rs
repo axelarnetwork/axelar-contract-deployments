@@ -101,6 +101,10 @@ pub(crate) struct VerifyArgs {
 
     #[clap(long, default_value = "100")]
     pub delay: u64,
+
+    /// Skip cross-chain verification (only check Solana confirmation)
+    #[clap(long)]
+    pub skip_gmp_verify: bool,
 }
 
 #[derive(Parser, Debug, Clone)]

@@ -12,12 +12,6 @@ use super::commands::VerifyArgs;
 use super::metrics::{FailureCategory, VerificationReport};
 use crate::config::Config;
 
-/// Verify transactions (entry point for Verify command).
-pub(crate) async fn verify_transactions(args: VerifyArgs, config: &Config) -> eyre::Result<()> {
-    let _report = verify_transactions_with_report(args, config, false).await?;
-    Ok(())
-}
-
 /// Verify transactions and return verification report.
 #[allow(clippy::too_many_lines)]
 pub(crate) async fn verify_transactions_with_report(
@@ -198,18 +192,25 @@ async fn verify_single_transaction(
     config: &Config,
     skip_gmp: bool,
 ) -> VerificationResult {
-    match rpc_client.get_signature_status(signature) {
-        Ok(Some(status)) => {
-            if let Err(e) = status {
-                return VerificationResult::Failed(format!("Solana transaction error: {e}"));
+    use solana_transaction_status::UiTransactionEncoding;
+
+    match rpc_client.get_transaction(signature, UiTransactionEncoding::Json) {
+        Ok(tx) => {
+            if let Some(meta) = tx.transaction.meta {
+                if let Some(err) = meta.err {
+                    return VerificationResult::Failed(format!(
+                        "Solana transaction error: {err:?}"
+                    ));
+                }
             }
         }
-        Ok(None) => {
-            return VerificationResult::Pending(
-                "Solana transaction not found or not finalized".to_owned(),
-            );
-        }
         Err(e) => {
+            let err_str = e.to_string();
+            if err_str.contains("not found") || err_str.contains("Transaction version") {
+                return VerificationResult::Pending(
+                    "Solana transaction not found or not finalized".to_owned(),
+                );
+            }
             return VerificationResult::Failed(format!("Solana RPC error: {e}"));
         }
     }
