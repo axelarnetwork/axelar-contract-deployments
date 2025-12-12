@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 use super::commands::{ContentionMode, TestArgs};
 use super::helpers::{
     derive_keypairs_from_mnemonic, get_associated_token_address, get_mint_from_token_manager,
-    get_token_program_from_mint,
+    get_token_program_from_mint, load_default_keypair,
 };
 use super::metrics::{LoadTestReport, TxMetrics};
 use crate::config::Config;
@@ -63,9 +63,8 @@ pub(crate) async fn run_load_test_with_metrics(
         }
         derive_keypairs_from_mnemonic(mnemonic, count)?
     } else {
-        return Err(eyre!(
-            "Currently only mnemonic-based keypair derivation is supported"
-        ));
+        let keypair = load_default_keypair(args.fee_payer.as_deref())?;
+        vec![Arc::new(keypair) as Arc<dyn Signer + Send + Sync>]
     };
 
     let num_keypairs = keypairs.len();

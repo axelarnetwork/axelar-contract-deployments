@@ -28,6 +28,10 @@ pub(crate) enum ContentionMode {
 
 #[derive(Parser, Debug, Clone)]
 pub(crate) struct TestArgs {
+    /// Signing keypair path. Defaults to Solana CLI config keypair.
+    #[clap(long, env = "SOLANA_PRIVATE_KEY")]
+    pub fee_payer: Option<String>,
+
     #[clap(long)]
     pub destination_chain: String,
 
@@ -101,6 +105,10 @@ pub(crate) struct VerifyArgs {
 
 #[derive(Parser, Debug, Clone)]
 pub(crate) struct RunArgs {
+    /// Signing keypair path. Defaults to Solana CLI config keypair.
+    #[clap(long, env = "SOLANA_PRIVATE_KEY")]
+    pub fee_payer: Option<String>,
+
     #[clap(long)]
     pub destination_chain: String,
 

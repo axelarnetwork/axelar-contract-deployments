@@ -5,9 +5,25 @@ use std::sync::Arc;
 use eyre::eyre;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
 use crate::config::Config;
+
+pub(crate) fn load_default_keypair(fee_payer_path: Option<&str>) -> eyre::Result<Keypair> {
+    let key_path = if let Some(path) = fee_payer_path {
+        path.to_string()
+    } else {
+        let config = solana_cli_config::CONFIG_FILE
+            .as_ref()
+            .and_then(|config_file| solana_cli_config::Config::load(config_file).ok())
+            .ok_or_else(|| eyre!("No --fee-payer provided and no Solana CLI config found"))?;
+        config.keypair_path
+    };
+
+    solana_sdk::signature::read_keypair_file(&key_path)
+        .map_err(|e| eyre!("Failed to read keypair from {}: {}", key_path, e))
+}
 
 #[derive(borsh::BorshDeserialize, Debug)]
 struct FlowSlot {

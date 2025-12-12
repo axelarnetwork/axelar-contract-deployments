@@ -38,6 +38,7 @@ async fn run_full_test(args: RunArgs, config: &Config) -> eyre::Result<()> {
     println!("{}\n", "=".repeat(60));
 
     let test_args = TestArgs {
+        fee_payer: args.fee_payer.clone(),
         destination_chain: args.destination_chain.clone(),
         token_id: args.token_id,
         destination_address: args.destination_address.clone(),
