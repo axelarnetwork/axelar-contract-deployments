@@ -3,7 +3,7 @@ import fs from 'fs';
 
 import { addEnvOption, printError } from '../../common';
 import { ConfigManager } from '../../common/config';
-import { validateParameters } from '../../common/utils';
+import { printWarn, validateParameters } from '../../common/utils';
 import { isConsensusChain } from '../../evm/utils';
 import { TokenData, alignTokenSupplyOnHub, formatTokenId, registerToken } from '../its';
 import { ClientManager, mainProcessor } from '../processor';
@@ -105,6 +105,11 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
             });
             originChainFromAxelar = origin_chain;
         } catch (e) {}
+        if (originChainFromAxelar && originChainFromAxelar !== config.getChainConfig(token.originAxelarChainId.toLowerCase()).axelarId) {
+            printWarn(
+                `Token ${token.tokenId} is already registered on ${originChainFromAxelar} but the origin chain is configured as ${token.originAxelarChainId}`,
+            );
+        }
         const tokenData: TokenData = {
             tokenId: token.tokenId,
             originChain: originChainFromAxelar ?? token.originAxelarChainId.toLowerCase(),
