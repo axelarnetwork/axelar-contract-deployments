@@ -3462,9 +3462,8 @@
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
-        "name": "TBD",
-        "url": "TBD",
-        "api": "TBD"
+        "name": "MonVision",
+        "url": "https://monadvision.com/"
       },
       "contracts": {
         "ConstAddressDeployer": {
