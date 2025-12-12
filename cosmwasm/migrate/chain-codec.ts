@@ -8,7 +8,7 @@ import { printError, printInfo, printWarn } from '../../common';
 import { addEnvOption } from '../../common/cli-utils';
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
-import { Options, mainProcessor, mainQueryProcessor } from '../processor';
+import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { confirmProposalSubmission } from '../submit-proposal';
 import { encodeMigrate, isLegacySDK, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
@@ -93,7 +93,7 @@ async function prepare(client: CosmWasmClient, config: ConfigManager, _: Options
 }
 
 async function migrate(
-    client: SigningCosmWasmClient,
+    client: ClientManager,
     config: ConfigManager,
     options: MigrationOptions,
     _args: string[],
@@ -152,10 +152,12 @@ async function migrate(
         }
 
         if (options.direct) {
+            const [account] = client.accounts;
+        
             for (const migration of migrations) {
-                await client.migrate(options.address, migration.proverAddress, migration.proverCodeId, migration.proverMsg, fee);
+                await client.migrate(account.address, migration.proverAddress, migration.proverCodeId, migration.proverMsg, fee);
                 printInfo('Migrated prover contract', migration.proverAddress);
-                await client.migrate(options.address, migration.verifierAddress, migration.verifierCodeId, migration.verifierMsg, fee);
+                await client.migrate(account.address, migration.verifierAddress, migration.verifierCodeId, migration.verifierMsg, fee);
                 printInfo('Migrated verifier contract', migration.verifierAddress);
             }
         } else {
