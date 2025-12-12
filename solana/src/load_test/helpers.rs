@@ -37,6 +37,12 @@ pub(crate) fn get_mint_from_token_manager(
     let (its_root_pda, _) = find_its_root_pda();
     let (token_manager_pda, _) = find_token_manager_pda(&its_root_pda, token_id);
     let account = rpc_client.get_account(&token_manager_pda)?;
+    if account.data.len() < 8 {
+        return Err(eyre!(
+            "TokenManager account data too short: expected at least 8 bytes (discriminator), got {}",
+            account.data.len()
+        ));
+    }
     let mut data = &account.data[8..];
     let token_manager = TokenManager::deserialize(&mut data)?;
     Ok(token_manager.token_address)

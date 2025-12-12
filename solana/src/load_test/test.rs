@@ -76,7 +76,6 @@ pub(crate) async fn run_load_test_with_metrics(
     let delay_duration = Duration::from_millis(args.delay);
 
     let metrics_list: Arc<Mutex<Vec<TxMetrics>>> = Arc::new(Mutex::new(Vec::new()));
-    let submitted_count = Arc::new(Mutex::new(0u64));
     let mut pending_tasks = Vec::new();
 
     let mut keypair_index = 0;
@@ -94,7 +93,6 @@ pub(crate) async fn run_load_test_with_metrics(
                 let args_clone = args.clone();
                 let output_file_clone = Arc::clone(&output_file);
                 let metrics_clone = Arc::clone(&metrics_list);
-                let submitted_clone = Arc::clone(&submitted_count);
 
                 let handle = tokio::spawn(async move {
                     execute_and_record(
@@ -103,12 +101,13 @@ pub(crate) async fn run_load_test_with_metrics(
                         config_clone,
                         output_file_clone,
                         metrics_clone,
-                        submitted_clone,
                     )
                     .await;
                 });
                 pending_tasks.push(handle);
             }
+
+            tokio::time::sleep(delay_duration).await;
         },
         ContentionMode::SingleAccount => {
             let single_keypair = Arc::clone(&keypairs[0]);
@@ -122,7 +121,6 @@ pub(crate) async fn run_load_test_with_metrics(
                 let args_clone = args.clone();
                 let output_file_clone = Arc::clone(&output_file);
                 let metrics_clone = Arc::clone(&metrics_list);
-                let submitted_clone = Arc::clone(&submitted_count);
 
                 let handle = tokio::spawn(async move {
                     execute_and_record(
@@ -131,7 +129,6 @@ pub(crate) async fn run_load_test_with_metrics(
                         config_clone,
                         output_file_clone,
                         metrics_clone,
-                        submitted_clone,
                     )
                     .await;
                 });
@@ -157,7 +154,6 @@ pub(crate) async fn run_load_test_with_metrics(
             let args_clone = args.clone();
             let output_file_clone = Arc::clone(&output_file);
             let metrics_clone = Arc::clone(&metrics_list);
-            let submitted_clone = Arc::clone(&submitted_count);
 
             let handle = tokio::spawn(async move {
                 execute_and_record(
@@ -166,7 +162,6 @@ pub(crate) async fn run_load_test_with_metrics(
                     config_clone,
                     output_file_clone,
                     metrics_clone,
-                    submitted_clone,
                 )
                 .await;
             });
@@ -175,7 +170,7 @@ pub(crate) async fn run_load_test_with_metrics(
         },
     }
 
-    let total_submitted = *submitted_count.lock().await;
+    let total_submitted = pending_tasks.len() as u64;
     let test_duration = test_start.elapsed().as_secs_f64();
 
     println!(
@@ -268,15 +263,8 @@ async fn execute_and_record(
     config: Config,
     output_file: Arc<Mutex<File>>,
     metrics_list: Arc<Mutex<Vec<TxMetrics>>>,
-    submitted_count: Arc<Mutex<u64>>,
 ) {
     let submit_start = Instant::now();
-
-    {
-        let mut count = submitted_count.lock().await;
-        *count += 1;
-    }
-
     let result = execute_transfer_with_metrics(keypair, args, config).await;
 
     match result {
