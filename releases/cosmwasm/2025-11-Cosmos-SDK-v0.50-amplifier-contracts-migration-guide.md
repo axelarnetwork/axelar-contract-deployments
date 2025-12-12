@@ -130,23 +130,23 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 
 Update `epoch_duration` on all reward pools. Note that these parameter changes should be executed _AFTER_ the Axelard v1.3.0 upgrade.
 
-| Network              | `epoch_duration` |
-| -------------------- | ---------------- |
-| **Devnet-amplifier** | `500`            |
-| **Stagenet**         | `3000`           |
-| **Testnet**          | `3000`           |
-| **Mainnet**          | `47250`          |
+| Network              | `epoch_duration` | `rewards_per_epoch` |
+| -------------------- | ---------------- | ------------------- |
+| **Devnet-amplifier** | `500`            | N/A                 |
+| **Stagenet**         | `3000`           | N/A                 |
+| **Testnet**          | `3000`           | N/A                 |
+| **Mainnet**          | `47250`          | `3424660000`        |
 
 1. Update epoch duration (`devnet-amplifiier`, `stagenet`, `testnet`)
 
     ```bash
-    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch-duration]
+    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch_duration]
     ```
 
     For `mainnet`, update epoch duration and rewards per epoch
 
     ```bash
-    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch-duration] --rewards-per-epoch 3424660000
+    ts-node cosmwasm/migrate/update-rewards-pool-epoch-duration.ts update --epoch-duration [epoch_duration] --rewards-per-epoch [rewards_per_epoch]
     ```
 
 1. Verify epoch duration was updated on all pools
