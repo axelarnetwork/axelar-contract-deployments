@@ -93,6 +93,21 @@ pub(crate) enum QueryCommands {
 
     /// Query message status on Gateway
     MessageStatus(MessageStatusArgs),
+
+    /// Query gateway config (domain separator, operator, etc.)
+    Config,
+
+    /// Query verifier set tracker by merkle root hash
+    VerifierSetTracker(VerifierSetTrackerArgs),
+
+    /// Compute verifier set merkle root from MultisigProver's current verifier set
+    ComputeMerkleRoot,
+}
+
+#[derive(Args, Debug)]
+pub(crate) struct VerifierSetTrackerArgs {
+    /// The verifier set merkle root hash (hex, with or without 0x prefix)
+    merkle_root: String,
 }
 
 #[derive(Args, Debug)]
@@ -286,7 +301,7 @@ pub(crate) async fn build_transaction(
         Commands::SubmitProof(submit_proof_args) => {
             submit_proof(fee_payer, submit_proof_args, config).await?
         }
-        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config).await?,
+        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config)?,
     };
 
     let blockhash = fetch_latest_blockhash(&config.url)?;
@@ -605,6 +620,7 @@ fn call_contract(
     .data();
 
     let accounts = vec![
+        AccountMeta::new(*fee_payer, true),
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(gateway_config_pda, false),
         AccountMeta::new_readonly(event_authority_pda, false),
@@ -940,7 +956,7 @@ async fn submit_proof(
     Ok(instructions)
 }
 
-async fn execute(
+fn execute(
     _fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
@@ -987,11 +1003,149 @@ async fn execute(
     }
 }
 
-pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
+pub(crate) async fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
     match command {
         QueryCommands::Events(args) => events(args, config),
         QueryCommands::MessageStatus(args) => message_status(args, config),
+        QueryCommands::Config => gateway_config(config),
+        QueryCommands::VerifierSetTracker(args) => verifier_set_tracker(args, config),
+        QueryCommands::ComputeMerkleRoot => compute_merkle_root(config).await,
     }
+}
+
+fn gateway_config(config: &Config) -> eyre::Result<()> {
+    use anchor_lang::AccountDeserialize;
+    use solana_axelar_gateway::state::config::GatewayConfig;
+
+    let rpc_client = RpcClient::new(config.url.clone());
+    let (gateway_config_pda, _bump) = solana_axelar_gateway::GatewayConfig::find_pda();
+
+    let account_data = rpc_client.get_account_data(&gateway_config_pda)?;
+    let gateway_config = GatewayConfig::try_deserialize(&mut account_data.as_slice())?;
+
+    println!("Gateway Config PDA: {gateway_config_pda}");
+    println!(
+        "Domain Separator: 0x{}",
+        hex::encode(gateway_config.domain_separator)
+    );
+    println!("Operator: {}", gateway_config.operator);
+    println!("Current Epoch: {}", gateway_config.current_epoch);
+    println!(
+        "Minimum Rotation Delay: {} seconds",
+        gateway_config.minimum_rotation_delay
+    );
+    println!(
+        "Previous Verifier Set Retention: {}",
+        gateway_config.previous_verifier_set_retention
+    );
+    println!(
+        "Last Rotation Timestamp: {}",
+        gateway_config.last_rotation_timestamp
+    );
+
+    Ok(())
+}
+
+fn verifier_set_tracker(args: VerifierSetTrackerArgs, config: &Config) -> eyre::Result<()> {
+    use anchor_lang::AccountDeserialize;
+    use solana_axelar_gateway::state::verifier_set_tracker::VerifierSetTracker;
+
+    let merkle_root_hex = args.merkle_root.trim_start_matches("0x");
+    let merkle_root: [u8; 32] = hex::decode(merkle_root_hex)?
+        .try_into()
+        .map_err(|_| eyre!("Invalid merkle root length, expected 32 bytes"))?;
+
+    let (tracker_pda, bump) = solana_axelar_gateway::VerifierSetTracker::find_pda(&merkle_root);
+
+    println!("Verifier Set Merkle Root: 0x{}", hex::encode(merkle_root));
+    println!("Tracker PDA: {tracker_pda}");
+    println!("PDA Bump: {bump}");
+
+    let rpc_client = RpcClient::new(config.url.clone());
+    match rpc_client.get_account_data(&tracker_pda) {
+        Ok(account_data) => {
+            let tracker = VerifierSetTracker::try_deserialize(&mut account_data.as_slice())?;
+            println!("\nTracker exists on-chain:");
+            println!("  Epoch: {}", tracker.epoch);
+            println!(
+                "  Verifier Set Hash: 0x{}",
+                hex::encode(tracker.verifier_set_hash)
+            );
+        }
+        Err(e) => {
+            println!("\nTracker does NOT exist on-chain: {e}");
+            println!("This verifier set has not been registered with the gateway.");
+        }
+    }
+
+    Ok(())
+}
+
+async fn compute_merkle_root(config: &Config) -> eyre::Result<()> {
+    use std::collections::BTreeMap;
+
+    let chains_info: serde_json::Value =
+        crate::utils::read_json_file_from_path(&config.chains_info_file)?;
+
+    let multisig_prover_address = {
+        let address = <String as serde::Deserialize>::deserialize(
+            &chains_info[crate::utils::AXELAR_KEY][crate::utils::CONTRACTS_KEY]
+                [crate::utils::MULTISIG_PROVER_KEY][&config.chain][crate::utils::ADDRESS_KEY],
+        )?;
+        cosmrs::AccountId::from_str(&address)?
+    };
+
+    let axelar_grpc_endpoint = <String as serde::Deserialize>::deserialize(
+        &chains_info[crate::utils::AXELAR_KEY][crate::utils::GRPC_KEY],
+    )?;
+
+    println!("Querying MultisigProver: {multisig_prover_address}");
+    println!("GRPC Endpoint: {axelar_grpc_endpoint}");
+
+    let multisig_prover_response =
+        query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
+            axelar_grpc_endpoint,
+            multisig_prover_address,
+            serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
+        )
+        .await?;
+
+    let mut signers = BTreeMap::new();
+    for signer in multisig_prover_response.verifier_set.signers.values() {
+        let pubkey: PublicKey = signer.pub_key.clone().try_into()?;
+        let weight = signer.weight.u128();
+        signers.insert(pubkey, weight);
+    }
+
+    let verifier_set = VerifierSet {
+        nonce: multisig_prover_response.verifier_set.created_at,
+        signers,
+        quorum: multisig_prover_response.verifier_set.threshold.u128(),
+    };
+
+    println!("\nVerifier Set from Prover:");
+    println!("  Nonce (created_at): {}", verifier_set.nonce);
+    println!("  Quorum (threshold): {}", verifier_set.quorum);
+    println!("  Signers: {} total", verifier_set.signers.len());
+    for (pubkey, weight) in &verifier_set.signers {
+        println!(
+            "    - pubkey: 0x{}, weight: {}",
+            hex::encode(pubkey.0),
+            weight
+        );
+    }
+
+    let domain_sep =
+        crate::utils::domain_separator(&chains_info, config.network_type, &config.chain)?;
+    println!("\nDomain Separator: 0x{}", hex::encode(domain_sep));
+
+    let merkle_root = verifier_set_hash::<Hasher>(&verifier_set, &domain_sep)?;
+    println!("\nComputed Merkle Root: 0x{}", hex::encode(merkle_root));
+
+    let (tracker_pda, _) = solana_axelar_gateway::VerifierSetTracker::find_pda(&merkle_root);
+    println!("Corresponding Tracker PDA: {tracker_pda}");
+
+    Ok(())
 }
 
 fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
