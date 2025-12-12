@@ -153,8 +153,9 @@ jobs:
       - name: Deploy AxelarGasService using create2
         run: ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
 
+      # same implementation address as the one deployed, since it's derivation must always be the same
       - name: Generate AxelarGasService upgrade proposal via AxelarServiceGovernance
-        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGasService --contractName AxelarServiceGovernance --generate-only ./service-governance-axelargasservice-upgrade.json -y
+        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGasService --implementation 0x61678eED43cd62094BcEE9c725260F0b0ECfaE7c --contractName AxelarServiceGovernance --generate-only ./service-governance-axelargasservice-upgrade.json -y
 
       - name: Deploy ITS using create2
         run: ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y
