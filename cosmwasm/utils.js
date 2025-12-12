@@ -1394,8 +1394,8 @@ const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer)
             metadata: '',
             title,
             summary: description,
+            expedited: !standardProposal,
         };
-        proposalData.expedited = !standardProposal;
         return {
             typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
             value: MsgSubmitProposalV1.fromPartial(proposalData),
