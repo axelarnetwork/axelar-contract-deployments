@@ -282,7 +282,7 @@ addAmplifierOptions(
         .description('Query and display current rewards pool parameters')
         .action(async (options) => {
             await mainQueryProcessor(
-                async (client, configManager, options, _args, _fee) => {
+                async (client, configManager, options, _args) => {
                     const poolParams = await queryAllRewardsPools(client, configManager);
                     printPoolParams(poolParams, options.env);
                 },
