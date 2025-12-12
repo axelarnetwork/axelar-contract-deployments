@@ -238,7 +238,8 @@ const routerFreezeChain = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     const [chainName] = args;
-    const msg = [{ freeze_chain: { chain: chainName } }];
+    const chainConfig = getChainConfig(config.chains, chainName);
+    const msg = [{ freeze_chain: { chain: chainConfig.axelarId } }];
 
     if (options.governance) {
         throw new Error('Router freeze_chain can only be executed by Admin EOA, not via governance');
@@ -257,7 +258,8 @@ const routerUnfreezeChain = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     const [chainName] = args;
-    const msg = [{ unfreeze_chain: { chain: chainName } }];
+    const chainConfig = getChainConfig(config.chains, chainName);
+    const msg = [{ unfreeze_chain: { chain: chainConfig.axelarId } }];
 
     if (options.governance) {
         throw new Error('Router unfreeze_chain can only be executed by Admin EOA, not via governance');
@@ -362,7 +364,8 @@ const itsFreezeChain = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     const [chainName] = args;
-    const msg = [{ freeze_chain: { chain: chainName } }];
+    const chainConfig = getChainConfig(config.chains, chainName);
+    const msg = [{ freeze_chain: { chain: chainConfig.axelarId } }];
     const defaultTitle = `Freeze chain ${chainName} on ITS Hub`;
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };
@@ -375,7 +378,8 @@ const itsUnfreezeChain = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     const [chainName] = args;
-    const msg = [{ unfreeze_chain: { chain: chainName } }];
+    const chainConfig = getChainConfig(config.chains, chainName);
+    const msg = [{ unfreeze_chain: { chain: chainConfig.axelarId } }];
     const defaultTitle = `Unfreeze chain ${chainName} on ITS Hub`;
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };

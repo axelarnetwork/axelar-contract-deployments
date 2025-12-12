@@ -175,9 +175,15 @@ async function routerIsChainFrozen(client, config, _options, args, _fee) {
         return;
     }
 
+    const chainConfig = getChainConfig(config.chains, chainName);
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
     try {
         const result = await client.queryContractSmart(routerAddress, {
-            is_chain_frozen: { chain: chainName },
+            is_chain_frozen: { chain: chainConfig.axelarId },
         });
         printInfo(`Router: Is chain ${chainName} frozen?`, JSON.stringify(result, null, 2));
     } catch (error) {
@@ -647,10 +653,10 @@ const programHandler = () => {
     addAmplifierQueryOptions(multisigProverNextVerifierSetCmd);
 
     // Generic admin query
+    // Note: chainName option is provided by addAmplifierQueryContractOptions for chain-specific contracts
     const contractAdminCmd = program
         .command('contract-admin')
         .description('Query admin address for a contract')
-        .option('-n, --chainName <chainName>', 'chain name (for chain-specific contracts like VotingVerifier, MultisigProver)')
         .action((options) => {
             mainQueryProcessor(contractAdmin, options, []);
         });
