@@ -72,41 +72,6 @@ async function processCommand(_axelar, chain, _chains, options) {
         return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
     };
 
-    if (options.governance && (action === 'owner' || action === 'pendingOwner')) {
-        printInfo('Read-only ownership action; no governance proposal generated.');
-        return null;
-    }
-
-    if (options.governance) {
-        switch (action) {
-            case 'transferOwnership': {
-                if (!isAddress(newOwner) || newOwner === AddressZero) {
-                    throw new Error(`Invalid new owner address: ${newOwner}`);
-                }
-                const { data: calldata } = await ownershipContract.populateTransaction.transferOwnership(newOwner, gasOptions);
-                return buildGovernanceProposal(calldata);
-            }
-            case 'proposeOwnership': {
-                if (!isAddress(newOwner) || newOwner === AddressZero) {
-                    throw new Error(`Invalid new owner address: ${newOwner}`);
-                }
-                const { data: calldata } = await ownershipContract.populateTransaction.proposeOwnership(newOwner, gasOptions);
-                return buildGovernanceProposal(calldata);
-            }
-            case 'acceptOwnership': {
-                const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
-                return buildGovernanceProposal(calldata);
-            }
-            default: {
-                throw new Error(`Unknown ownership action ${action}`);
-            }
-        }
-    }
-
-    if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
-        return;
-    }
-
     switch (action) {
         case 'owner': {
             const owner = await ownershipContract.owner();
@@ -128,6 +93,18 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'transferOwnership': {
+            if (options.governance) {
+                if (!isAddress(newOwner) || newOwner === AddressZero) {
+                    throw new Error(`Invalid new owner address: ${newOwner}`);
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.transferOwnership(newOwner, gasOptions);
+                return buildGovernanceProposal(calldata);
+            }
+
+            if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+                return;
+            }
+
             let owner = await ownershipContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
@@ -158,6 +135,18 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'proposeOwnership': {
+            if (options.governance) {
+                if (!isAddress(newOwner) || newOwner === AddressZero) {
+                    throw new Error(`Invalid new owner address: ${newOwner}`);
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.proposeOwnership(newOwner, gasOptions);
+                return buildGovernanceProposal(calldata);
+            }
+
+            if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+                return;
+            }
+
             const owner = await ownershipContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
@@ -186,6 +175,15 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'acceptOwnership': {
+            if (options.governance) {
+                const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
+                return buildGovernanceProposal(calldata);
+            }
+
+            if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+                return;
+            }
+
             const pendingOwner = await ownershipContract.pendingOwner();
 
             if (pendingOwner === AddressZero) {
@@ -252,10 +250,7 @@ async function main(options) {
             writeJSON(proposal, options.generateOnly);
             printInfo('Proposal written to file', options.generateOnly);
         } else if (!options.mnemonic) {
-            const defaultFile = 'ownership-proposal.json';
-            writeJSON(proposal, defaultFile);
-            printInfo('Mnemonic not provided. Proposal written to file', defaultFile);
-            printInfo('To submit, set MNEMONIC environment variable or use --mnemonic flag');
+            printInfo('Proposal created in file, provide mnemonic to submit.');
         } else {
             if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
                 try {
@@ -275,7 +270,6 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
     addGovernanceOptions(program);
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic for submitting proposals to Axelar').env('MNEMONIC'));
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(
