@@ -158,7 +158,7 @@ export async function tokenSupplyByChain(tokenAddress: string, rpc: string): Pro
     };
 }
 
-function formatTokenId(tokenAddress: string): string {
+export function formatTokenId(tokenAddress: string): string {
     if (tokenAddress.startsWith('0x')) {
         return tokenAddress.slice(2);
     }
