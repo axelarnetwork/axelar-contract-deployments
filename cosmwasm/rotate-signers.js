@@ -79,14 +79,13 @@ const authorizeVerifier = async (client, config, options, [serviceName, verifier
         },
     };
 
-    const proposalId = await execute(
+    execute(
         client,
         config,
         { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) },
         undefined,
         fee,
     );
-    return proposalId;
 };
 
 const unauthorizeVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
@@ -97,14 +96,13 @@ const unauthorizeVerifier = async (client, config, options, [serviceName, verifi
         },
     };
 
-    const proposalId = await execute(
+    execute(
         client,
         config,
         { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) },
         undefined,
         fee,
     );
-    return proposalId;
 };
 
 const rotateSigners = async (_client, config, options, [chain, sessionId], _fee) => {
@@ -113,7 +111,7 @@ const rotateSigners = async (_client, config, options, [chain, sessionId], _fee)
     const rpc = config.chains[chain]?.rpc;
     const chainConfig = config.chains[chain];
     const gatewayAddress = chainConfig?.contracts?.AxelarGateway?.address;
-    const gasOptions = getGasOptions(chainConfig, options, null);
+    const gasOptions = await getGasOptions(chainConfig, options, null);
     const provider = getDefaultProvider(rpc);
 
     const wallet = await getWallet(privateKey, provider, options);
@@ -185,7 +183,7 @@ const programHandler = () => {
         .description('Rotate signers on Solidity edge contract')
         .addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'))
         .action((chain, sessionId, options) => {
-            mainProcessor(rotateSigners, options, [chain, sessionId]);
+            mainQueryProcessor(rotateSigners, options, [chain, sessionId]);
         });
     addAmplifierOptions(rotateSignersCmd, {});
 
