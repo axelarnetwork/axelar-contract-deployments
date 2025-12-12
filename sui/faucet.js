@@ -1,6 +1,6 @@
 'use strict';
 
-const { requestSuiFromFaucetV0, requestSuiFromFaucetV2, getFaucetHost } = require('@mysten/sui/faucet');
+const { requestSuiFromFaucetV2, getFaucetHost } = require('@mysten/sui/faucet');
 const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common/utils');
 const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
 const { Command, Option } = require('commander');
@@ -18,18 +18,8 @@ async function processCommand(config, chain, options) {
         return;
     }
 
-    const host = getFaucetHost(chain.networkType);
-
-    switch (chain.networkType) {
-        case 'localnet': {
-            /// @deprecated: requestSuiFromFaucetV0
-            await requestSuiFromFaucetV0({ host, recipient });
-            break;
-        }
-        default: {
-            await requestSuiFromFaucetV2({ host, recipient });
-        }
-    }
+    const host = options.faucet || getFaucetHost(chain.networkType);
+    await requestSuiFromFaucetV2({ host, recipient });
 
     printInfo('Funds requested', recipient);
 }
@@ -53,6 +43,7 @@ if (require.main === module) {
                 'tokens will only be requested from the faucet if recipient balance is below the amount provided',
             ).default('1'),
         )
+        .addOption(new Option('--faucet <faucet>', 'custom faucet rpc for Sui'))
         .description('Query the faucet for funds.')
         .action((options) => {
             mainProcessor(options, processCommand);
