@@ -729,7 +729,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    
+
     // Get chain codec address
     const chainConfig = config.getChainConfig(chainName);
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);

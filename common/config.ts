@@ -98,7 +98,7 @@ export interface MultisigProverChainConfig {
     domainSeparator?: string;
     /** Whether the MultisigProver notifies the ChainCodec about the signing session. Defaults to false. */
     notifySigningSession?: boolean;
-    /** 
+    /**
      * Whether the MultisigProver expects full message payloads.
      * This changes the message the relayer needs to send.
      * Defaults to false.
@@ -485,7 +485,7 @@ export class ConfigManager implements FullConfig {
             sui: 'ChainCodecSui',
             stellar: 'ChainCodecStellar',
         };
-        
+
         const result = mapping[chainType];
         if (!result) {
             throw new Error(`Unsupported or unknown chain type '${chainType}' when resolving ChainCodec`);
