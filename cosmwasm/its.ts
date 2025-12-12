@@ -200,12 +200,16 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
         )
     ).filter(Boolean);
 
+    const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
+        token_config: { token_id: formatTokenId(tokenId) },
+    });
+
     if (registeredChains.length === 0) {
         printInfo(`Token ${tokenId} is not registered on any chain`);
         return;
     }
 
-    printInfo(`Token ${tokenId} is registered on: ${registeredChains.join(', ')}`);
+    printInfo(`Token ${tokenId} origin chain is ${origin_chain}. It is registered on: ${registeredChains.join(', ')}`);
 }
 
 async function alignTokenSupply(client: ClientManager, config: ConfigManager, options) {
