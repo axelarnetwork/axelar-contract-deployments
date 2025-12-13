@@ -95,6 +95,7 @@ export const chainValueSchema = {
         approxFinalityWaitTime: { type: 'number' },
         timeout: { type: 'number' },
         decimals: { type: 'number' },
+        deprecated: { type: 'boolean' },
     },
     required: [
         'name',

@@ -33,6 +33,7 @@ export interface NonEVMChainConfig {
     finality: string;
     approxFinalityWaitTime: number;
     contracts: Record<string, ContractConfig>;
+    deprecated?: boolean;
 }
 
 export type ChainConfig = NonEVMChainConfig | EVMChainConfig;
