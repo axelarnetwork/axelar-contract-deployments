@@ -191,7 +191,7 @@ function getProposalHash(target, calldata, nativeValue) {
     return keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
 }
 
-async function processCommand(_axelar, chain, _chains, action, options) {
+async function processCommand(axelar, chain, _chains, action, options) {
     const { contractName, address, privateKey, args = [] } = options;
 
     const governanceAddress = getGovernanceAddress(chain, contractName, address);
@@ -359,7 +359,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const tx = await governance.execute(
                 commandId,
                 contracts.InterchainGovernance.governanceChain,
-                contracts.InterchainGovernance.governanceAddress,
+                axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
@@ -396,7 +396,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const tx = await governance.execute(
                 commandId,
                 contracts.InterchainGovernance.governanceChain,
-                contracts.InterchainGovernance.governanceAddress,
+                axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
