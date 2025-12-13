@@ -3462,9 +3462,9 @@
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
-        "name": "MonVision",
-        "url": "https://monadvision.com/",
-        "api": "https://sourcify-api-monad.blockvision.org/"
+        "name": "MonadScan",
+        "url": "https://monadscan.com/",
+        "api": "https://api.monadscan.com/api"
       },
       "contracts": {
         "ConstAddressDeployer": {
