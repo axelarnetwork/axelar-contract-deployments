@@ -244,12 +244,12 @@ The following checks should be performed after the rollout
 
 ### Steps (continued)
 
-9. Deploy AxelarServiceGovernance 
+9. Deploy AxelarServiceGovernance
 
     - Ensure `${ENV}.json` has `contracts.AxelarServiceGovernance` filled with `governanceChain`, `governanceAddress`, `minimumTimeDelay`, `multisig` (or operator, as applicable), `deploymentMethod` (create2), `salt`, and that `contracts.AxelarGateway.address` is present.
 
     ```bash
-    ts-node evm/deploy-contract.js -c AxelarServiceGovernance 
+    ts-node evm/deploy-contract.js -c AxelarServiceGovernance
     ts-node evm/ownership.js -c AxelarServiceGovernance --action owner
     ```
 
@@ -279,13 +279,13 @@ The following checks should be performed after the rollout
 
         ```bash
         AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-        ts-node evm/ownership.js -c AxelarGateway --action owner 
-        ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
-        ts-node evm/ownership.js -c AxelarGateway --action owner 
+        ts-node evm/ownership.js -c AxelarGateway --action owner
+        ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+        ts-node evm/ownership.js -c AxelarGateway --action owner
         ```
 
     3. Transfer AxelarGateway operator role to Emergency Operator EOA
-    
+
         | Network              | `EMERGENCY_OPERATOR_EOA_ADDRESS`    |
         | -------------------- | ----------------------------------- |
         | **Devnet-amplifier** | `<EMERGENCY_OPERATOR_EOA_ADDRESS>`  |
@@ -295,15 +295,14 @@ The following checks should be performed after the rollout
 
         ```bash
         EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
-        ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA 
-        ts-node evm/gateway.js -n $CHAIN --action operator 
+        ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA
+        ts-node evm/gateway.js -n $CHAIN --action operator
         ```
 
     4. Transfer AxelarGasService owner role to AxelarServiceGovernance
 
         ```bash
         AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-        ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
-        ts-node evm/ownership.js -c AxelarGasService --action owner 
+        ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+        ts-node evm/ownership.js -c AxelarGasService --action owner
         ```
-        
