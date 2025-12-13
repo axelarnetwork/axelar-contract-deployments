@@ -168,6 +168,17 @@ ts-node submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal
 **Common options:**
 
 - `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
+- `--standardProposal`: Submit as a standard proposal instead of expedited (default is expedited). Use this flag if you want to use the standard proposal deposit amount and voting period.
+
+**Expedited Proposals:**
+
+By default, all governance proposals are submitted as expedited proposals, which have:
+
+- A higher deposit requirement (configured via `govProposalExpeditedDepositAmount` in the config)
+- A shorter voting period
+- Faster execution after passing
+
+The deposit amount is automatically set from the config based on whether the proposal is expedited (default) or standard (when `--standardProposal` flag is used). You can override the deposit amount by explicitly providing the `--deposit` option.
 
 ### Uploading bytecode through governance
 

@@ -1817,6 +1817,7 @@
     "gasPrice": "0.00005uamplifier",
     "gasLimit": "auto",
     "govProposalDepositAmount": "100000000",
+    "govProposalExpeditedDepositAmount": "150000000",
     "govProposalInstantiateAddresses": [
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"

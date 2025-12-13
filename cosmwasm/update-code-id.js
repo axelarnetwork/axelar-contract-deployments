@@ -8,7 +8,7 @@ const { printInfo } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-const processCommand = async (client, config, options, _args, _fee) => {
+const processCommand = async (client, config, options, _args) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     printInfo('Old code id', contractConfig.codeId);

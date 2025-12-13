@@ -38,7 +38,7 @@ export async function queryRewardsPool(
     });
 }
 
-async function rewards(client, config, _options, args, _fee) {
+async function rewards(client, config, _options, args) {
     const [chainName] = args;
     const rewardsAddress = config.getContractConfig('Rewards').address;
 
@@ -74,7 +74,7 @@ export async function getItsChainConfig(client, config, chainName) {
     });
 }
 
-async function tokenConfig(client, config, _options, args, _fee) {
+async function tokenConfig(client, config, _options, args) {
     const [tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -94,7 +94,7 @@ async function tokenConfig(client, config, _options, args, _fee) {
     }
 }
 
-async function customTokenMetadata(client, config, _options, args, _fee) {
+async function customTokenMetadata(client, config, _options, args) {
     const [chainName, tokenAddress] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -123,7 +123,7 @@ async function customTokenMetadata(client, config, _options, args, _fee) {
     }
 }
 
-async function tokenInstance(client, config, _options, args, _fee) {
+async function tokenInstance(client, config, _options, args) {
     const [chainName, tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -152,7 +152,7 @@ async function tokenInstance(client, config, _options, args, _fee) {
     }
 }
 
-async function itsChainConfig(client, config, _options, args, _fee) {
+async function itsChainConfig(client, config, _options, args) {
     const [chainName] = args;
 
     try {
@@ -163,7 +163,7 @@ async function itsChainConfig(client, config, _options, args, _fee) {
     }
 }
 
-async function saveDeployedContracts(client, config, _options, args, _fee) {
+async function saveDeployedContracts(client, config, _options, args) {
     const [chainName] = args;
 
     const coordinatorAddress = config.getContractConfig('Coordinator').address;
@@ -228,13 +228,7 @@ async function contractInfo(client: CosmWasmClient, config: ConfigManager, optio
     }
 }
 
-async function queryAllContractVersions(
-    client: CosmWasmClient,
-    config: ConfigManager,
-    _options: Options,
-    _args?: string[],
-    _fee?: unknown,
-): Promise<void> {
+async function queryAllContractVersions(client: CosmWasmClient, config: ConfigManager, _options: Options, _args?: string[]): Promise<void> {
     const axelarContracts = config.axelar.contracts;
 
     await Promise.all(
