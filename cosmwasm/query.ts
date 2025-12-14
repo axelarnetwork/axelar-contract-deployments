@@ -361,16 +361,13 @@ async function multisigProverNextVerifierSet(client, config, _options, args, _fe
     }
 }
 
-// Generic admin query
 async function contractAdmin(client, config, options, _args, _fee) {
-    // contractName is an array due to variadic option definition, take the first element
     const contractName = Array.isArray(options.contractName) ? options.contractName[0] : options.contractName;
     const chainName = options.chainName;
 
     let contractAddress: string | undefined;
 
     if (chainName) {
-        // Chain-specific contract (VotingVerifier, MultisigProver, Gateway)
         if (contractName === 'VotingVerifier') {
             contractAddress = config.getVotingVerifierContract(chainName)?.address;
         } else if (contractName === 'MultisigProver') {
@@ -659,8 +656,6 @@ const programHandler = () => {
         });
     addAmplifierQueryOptions(multisigProverNextVerifierSetCmd);
 
-    // Generic admin query
-    // Note: chainName option is provided by addAmplifierQueryContractOptions for chain-specific contracts
     const contractAdminCmd = program
         .command('contract-admin')
         .description('Query admin address for a contract')
