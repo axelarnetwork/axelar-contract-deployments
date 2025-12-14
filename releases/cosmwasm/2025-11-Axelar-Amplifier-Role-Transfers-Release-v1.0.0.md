@@ -56,6 +56,22 @@ Set up your environment for Axelar operations:
 # Set environment variables
 export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 
+# Set chain-id based on environment
+case $ENV in
+  mainnet)
+    export CHAIN_ID="axelar-dojo-1"
+    ;;
+  testnet)
+    export CHAIN_ID="axelar-testnet-lisbon-3"
+    ;;
+  stagenet)
+    export CHAIN_ID="axelar-stagenet-1"
+    ;;
+  devnet-amplifier)
+    export CHAIN_ID="devnet-amplifier"
+    ;;
+esac
+
 # Ensure you have axelard CLI installed and configured
 axelard version
 
@@ -63,6 +79,13 @@ axelard version
 axelard keys add <key-name> --recover  # if importing existing key
 # or
 axelard keys add <key-name>  # to create new key
+
+# For scripts that use ts-node (submit-proposal.js, contract.ts, query.ts)
+# Set mnemonic for signing transactions
+export MNEMONIC="<your-mnemonic-phrase>"
+
+# Set Axelar RPC endpoint
+export AXELAR_RPC="https://axelar-rpc.polkachu.com"  # or your preferred RPC endpoint
 ```
 
 Chain config should exist under `${ENV}.json` file.
@@ -220,7 +243,7 @@ The following table provides the contract addresses you need for the queries abo
 
 ### Step 2: Transfer Governance Roles to Axelar Governance Module
 
-All `governanceAddress`/`governanceAccount` roles should be transferred to the Axelar Governance Module through governance proposals. This applies to:
+All `governanceAddress`/`governanceAccount` roles should be transferred to the Axelar Governance Module through governance proposals, UNLESS they are already set to the Governance Module. This applies to:
 
 - ServiceRegistry (governanceAccount)
 - Router (governanceAddress)
@@ -234,56 +257,204 @@ All `governanceAddress`/`governanceAccount` roles should be transferred to the A
 - XrplGateway (governanceAddress)
 - XrplMultisigProver (governanceAddress)
 
-**Process:**
+**Step 2a: Check Current Governance Status**
+
+First, run the following script to identify which contracts need governance transfer:
 
 ```bash
-# 1. Create governance proposal JSON
-cat > update_governance_proposal.json <<EOF
-{
-  "title": "Transfer [Contract Name] Governance to Governance Module",
-  "description": "This proposal transfers the governance role of [Contract Name] to the Axelar Governance Module for proper decentralized governance.",
-  "msgs": [
-    {
-      "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
-      "sender": "<governance_module_address>",
-      "contract": "<contract_address>",
-      "msg": {
-        "update_governance": {
-          "governance": "<governance_module_address>"
-        }
-      },
-      "funds": []
-    }
-  ],
-  "deposit": "10000000uaxl"
+#!/bin/bash
+# check-governance-status.sh
+# Usage: ./check-governance-status.sh <env>
+# Example: ./check-governance-status.sh mainnet
+
+ENV=${1:-mainnet}
+CONFIG_FILE="./axelar-chains-config/info/$ENV.json"
+
+# Governance Module addresses per environment
+case $ENV in
+  devnet-amplifier)
+    # Verify this on axelarscan to ensure it's still the current Axelar Governance address
+    GOVERNANCE_MODULE="axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"
+    ;;
+  *)
+    GOVERNANCE_MODULE="axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+    ;;
+esac
+
+echo "=== Environment: $ENV ==="
+echo "=== Governance Module: $GOVERNANCE_MODULE ==="
+echo ""
+
+# Function to check governance status
+check_governance() {
+  local contract=$1
+  local address=$2
+  local gov_field=$3
+  
+  if [ -z "$address" ] || [ "$address" == "null" ]; then
+    return
+  fi
+  
+  local current_gov=$(jq -r ".axelar.contracts.$contract.$gov_field // empty" $CONFIG_FILE)
+  
+  if [ "$current_gov" == "$GOVERNANCE_MODULE" ]; then
+    echo "✅ $contract: Already set to Governance Module"
+  elif [ -n "$current_gov" ]; then
+    echo "❌ $contract: Needs transfer"
+    echo "   Address: $address"
+    echo "   Current: $current_gov"
+    echo "   Command: ts-node cosmwasm/submit-proposal.js executeByGovernance -e $ENV -c $contract -t \"Transfer $contract governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
+    echo ""
+  fi
 }
-EOF
 
-# Note: The sender must be the governance module address because when a governance 
-# proposal executes, the messages are executed BY the governance module itself, 
-# not by the proposal submitter.
+# Function to check chain-specific contracts
+check_chain_governance() {
+  local contract=$1
+  local chain=$2
+  local gov_field=$3
+  
+  local address=$(jq -r ".axelar.contracts.$contract[\"$chain\"].address // empty" $CONFIG_FILE)
+  local current_gov=$(jq -r ".axelar.contracts.$contract[\"$chain\"].$gov_field // empty" $CONFIG_FILE)
+  
+  if [ -z "$address" ] || [ "$address" == "null" ]; then
+    return
+  fi
+  
+  if [ "$current_gov" == "$GOVERNANCE_MODULE" ]; then
+    echo "✅ $contract[$chain]: Already set to Governance Module"
+  elif [ -n "$current_gov" ]; then
+    echo "❌ $contract[$chain]: Needs transfer"
+    echo "   Address: $address"
+    echo "   Current: $current_gov"
+    echo "   Command: ts-node cosmwasm/submit-proposal.js executeByGovernance -e $ENV -c $contract -n $chain -t \"Transfer $contract[$chain] governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
+    echo ""
+  fi
+}
 
-# 2. Submit the governance proposal
-axelard tx gov submit-proposal update_governance_proposal.json \
+echo "=== Checking Global Contracts ==="
+echo ""
+
+# Global contracts
+for contract in ServiceRegistry Router Rewards Coordinator Multisig InterchainTokenService XrplVotingVerifier XrplGateway XrplMultisigProver; do
+  address=$(jq -r ".axelar.contracts.$contract.address // empty" $CONFIG_FILE)
+  
+  # ServiceRegistry uses governanceAccount, others use governanceAddress
+  if [ "$contract" == "ServiceRegistry" ]; then
+    check_governance "$contract" "$address" "governanceAccount"
+  else
+    check_governance "$contract" "$address" "governanceAddress"
+  fi
+done
+
+echo ""
+echo "=== Checking Per-Chain Contracts ==="
+echo ""
+
+# Get all chain names from MultisigProver
+chains=$(jq -r '.axelar.contracts.MultisigProver | keys[] | select(. != "address" and . != "codeId" and . != "governanceAddress" and . != "adminAddress" and . != "lastCodeId" and . != "codeHash" and . != "storeCodeProposalId" and . != "storeCodeProposalCodeHash")' $CONFIG_FILE 2>/dev/null)
+
+for chain in $chains; do
+  check_chain_governance "MultisigProver" "$chain" "governanceAddress"
+  check_chain_governance "VotingVerifier" "$chain" "governanceAddress"
+done
+
+echo ""
+echo "=== Done ==="
+```
+
+**Step 2b: Submit Governance Proposals**
+
+For each contract that needs governance transfer, use `submit-proposal.js executeByGovernance`:
+
+```bash
+# Set environment
+ENV=mainnet  # or testnet, stagenet, devnet-amplifier
+
+# For global contracts (e.g., Router, Multisig, InterchainTokenService)
+ts-node cosmwasm/submit-proposal.js executeByGovernance \
+  -e $ENV \
+  -c Router \
+  -t "Transfer Router Governance to Governance Module" \
+  -d "This proposal transfers the governance role of Router to the Axelar Governance Module for proper decentralized governance." \
+  --msg '{"update_governance":{"governance":"axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"}}'
+
+# For chain-specific contracts (e.g., MultisigProver, VotingVerifier)
+ts-node cosmwasm/submit-proposal.js executeByGovernance \
+  -e $ENV \
+  -c MultisigProver \
+  -n flow \
+  -t "Transfer MultisigProver[flow] Governance to Governance Module" \
+  -d "This proposal transfers the governance role of MultisigProver for flow chain to the Axelar Governance Module." \
+  --msg '{"update_governance":{"governance":"axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"}}'
+
+# For ServiceRegistry (uses governanceAccount instead of governanceAddress)
+ts-node cosmwasm/submit-proposal.js executeByGovernance \
+  -e $ENV \
+  -c ServiceRegistry \
+  -t "Transfer ServiceRegistry Governance to Governance Module" \
+  -d "This proposal transfers the governance role of ServiceRegistry to the Axelar Governance Module." \
+  --msg '{"update_governance_account":{"governance_account":"axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"}}'
+```
+
+**Note for devnet-amplifier:** Use `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` as the governance module address.
+
+**Step 2b.1: Vote on Proposals (Non-mainnet environments only)**
+
+For testnet, stagenet, and devnet-amplifier, you can vote on your own proposals to make them pass:
+
+```bash
+# Query the proposal ID (get the latest proposal)
+PROPOSAL_ID=$(axelard query gov proposals --status voting_period --output json | jq -r '.proposals[-1].id')
+
+# Vote yes on the proposal
+axelard tx gov vote $PROPOSAL_ID yes \
   --from <your_key> \
   --chain-id <chain_id> \
   --gas auto \
   --gas-adjustment 1.5 \
-  --fees 5000uaxl
+  --gas-prices 0.00005uaxl \
+  -y
 
-# 3. Vote on the proposal (validators and delegators)
-axelard tx gov vote <proposal_id> yes \
-  --from <your_key> \
-  --chain-id <chain_id> \
-  --gas auto \
-  --fees 5000uaxl
-
-# 4. Wait for voting period to end and proposal to pass
-
-# 5. Verify the governance transfer
-axelard query wasm contract-state smart <contract_address> \
-  '{"governanceAddress": {}}'
+# Wait for voting period to end (check proposal status)
+axelard query gov proposal $PROPOSAL_ID
 ```
+
+**Note:** On mainnet, proposals require community voting and will take the full voting period (typically 3-7 days).
+
+**Step 2c: Verify Governance Transfers**
+
+After proposals pass, verify the transfers:
+
+```bash
+# Get contract addresses from config
+CONFIG_FILE="./axelar-chains-config/info/$ENV.json"
+ROUTER=$(jq -r '.axelar.contracts.Router.address' $CONFIG_FILE)
+MULTISIG=$(jq -r '.axelar.contracts.Multisig.address' $CONFIG_FILE)
+ITS=$(jq -r '.axelar.contracts.InterchainTokenService.address' $CONFIG_FILE)
+
+# Query governance address for global contracts
+axelard query wasm contract-state smart $ROUTER '{"governance_address":{}}' --node $AXELAR_RPC
+axelard query wasm contract-state smart $MULTISIG '{"governance_address":{}}' --node $AXELAR_RPC
+axelard query wasm contract-state smart $ITS '{"governance_address":{}}' --node $AXELAR_RPC
+
+# For chain-specific contracts (example: flow)
+CHAIN_NAME=flow
+MULTISIG_PROVER=$(jq -r ".axelar.contracts.MultisigProver[\"$CHAIN_NAME\"].address" $CONFIG_FILE)
+VOTING_VERIFIER=$(jq -r ".axelar.contracts.VotingVerifier[\"$CHAIN_NAME\"].address" $CONFIG_FILE)
+
+axelard query wasm contract-state smart $MULTISIG_PROVER '{"governance_address":{}}' --node $AXELAR_RPC
+axelard query wasm contract-state smart $VOTING_VERIFIER '{"governance_address":{}}' --node $AXELAR_RPC
+```
+
+**Note:** `contract-admin` queries `admin` address, not `governance` address. Use raw axelard queries above to verify governance transfers.
+
+**⚠️ Important:** If the governance address is not set to the Governance Module after the proposal passes, **STOP** and investigate before proceeding to the next steps. Possible causes:
+- Proposal did not pass (check proposal status with `axelard query gov proposal <proposal_id>`)
+- Proposal passed but not yet executed (wait for execution)
+- Wrong contract address or message format in the proposal
+
+Do not proceed with admin transfers until all governance transfers are verified.
 
 ### Step 3: Transfer Router Admin to Emergency Operator EOA
 
@@ -292,44 +463,56 @@ The Router admin role should be transferred to an Emergency Operator EOA for rap
 **New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
+# Set variables
+ENV=mainnet  # or testnet, stagenet, devnet-amplifier
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
+
+# Get contract address from config
 ROUTER_CONTRACT=$(jq -r '.axelar.contracts.Router.address' ./axelar-chains-config/info/$ENV.json)
 
-# Execute admin update
+# Execute admin update (requires current admin key)
 axelard tx wasm execute $ROUTER_CONTRACT \
-  '{"update_admin": {"admin": "'$EMERGENCY_OPERATOR_EOA'"}}' \
+  "{\"update_admin\": {\"admin\": \"$EMERGENCY_OPERATOR_EOA\"}}" \
   --from <current_admin_key> \
-  --chain-id <chain_id> \
+  --chain-id $CHAIN_ID \
   --gas auto \
   --gas-adjustment 1.5 \
-  --fees 5000uaxl
+  --gas-prices 0.00005uaxl \
+  -y
 
-# Verify transfer
-axelard query wasm contract-state smart $ROUTER_CONTRACT \
-  '{"adminAddress": {}}'
+# Verify transfer using query script
+ts-node cosmwasm/query.ts contract-admin -c Router -e $ENV
 ```
+
+**⚠️ Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 4: Transfer Multisig Admin to Emergency Operator EOA
 
 **New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
+# Set variables
+ENV=mainnet
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
+
+# Get contract address from config
 MULTISIG_CONTRACT=$(jq -r '.axelar.contracts.Multisig.address' ./axelar-chains-config/info/$ENV.json)
 
-# Execute admin update
+# Execute admin update (requires current admin key)
 axelard tx wasm execute $MULTISIG_CONTRACT \
-  '{"update_admin": {"admin": "'$EMERGENCY_OPERATOR_EOA'"}}' \
+  "{\"update_admin\": {\"admin\": \"$EMERGENCY_OPERATOR_EOA\"}}" \
   --from <current_admin_key> \
-  --chain-id <chain_id> \
+  --chain-id $CHAIN_ID \
   --gas auto \
   --gas-adjustment 1.5 \
-  --fees 5000uaxl
+  --gas-prices 0.00005uaxl \
+  -y
 
-# Verify transfer
-axelard query wasm contract-state smart $MULTISIG_CONTRACT \
-  '{"adminAddress": {}}'
+# Verify transfer using query script
+ts-node cosmwasm/query.ts contract-admin -c Multisig -e $ENV
 ```
+
+**⚠️ Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 5: Transfer MultisigProver Admin to Key Rotation EOA
 
@@ -338,111 +521,132 @@ The MultisigProver admin role (for all supported chains) should be transferred t
 **New Admin**: Key Rotation EOA - refer to the Target Role Addresses Table above
 
 ```bash
+# Set variables
+ENV=mainnet
 KEY_ROTATION_EOA=<KEY_ROTATION_EOA_ADDRESS>
 
-# For each chain's MultisigProver (flow, sui, stellar, xrpl-evm, plume, hedera, berachain, hyperliquid, monad)
-CHAIN_NAME="<chain_name>"  # e.g., "sui", "stellar", etc.
-MULTISIG_PROVER_CONTRACT=$(jq -r '.axelar.contracts.MultisigProver["'$CHAIN_NAME'"].address' ./axelar-chains-config/info/$ENV.json)
+# Script to update all MultisigProver admins
+for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid monad; do
+  MULTISIG_PROVER_CONTRACT=$(jq -r ".axelar.contracts.MultisigProver[\"$CHAIN_NAME\"].address // empty" ./axelar-chains-config/info/$ENV.json)
+  
+  if [ -n "$MULTISIG_PROVER_CONTRACT" ] && [ "$MULTISIG_PROVER_CONTRACT" != "null" ]; then
+    echo "Updating MultisigProver[$CHAIN_NAME]: $MULTISIG_PROVER_CONTRACT"
+    
+    axelard tx wasm execute $MULTISIG_PROVER_CONTRACT \
+      "{\"update_admin\": {\"admin\": \"$KEY_ROTATION_EOA\"}}" \
+      --from <current_admin_key> \
+      --chain-id $CHAIN_ID \
+      --gas auto \
+      --gas-adjustment 1.5 \
+      --gas-prices 0.00005uaxl \
+      -y
+    
+    # Wait for tx to be included
+    sleep 6
+  fi
+done
 
-# Execute admin update
-axelard tx wasm execute $MULTISIG_PROVER_CONTRACT \
-  '{"update_admin": {"admin": "'$KEY_ROTATION_EOA'"}}' \
-  --from <current_admin_key> \
-  --chain-id <chain_id> \
-  --gas auto \
-  --gas-adjustment 1.5 \
-  --fees 5000uaxl
-
-# Verify transfer
-axelard query wasm contract-state smart $MULTISIG_PROVER_CONTRACT \
-  '{"adminAddress": {}}'
+# Verify all transfers
+for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid monad; do
+  ts-node cosmwasm/query.ts contract-admin -c MultisigProver -n $CHAIN_NAME -e $ENV 2>/dev/null || true
+done
 ```
 
-Repeat this step for all chains with MultisigProver deployments.
+**⚠️ Important:** Verify each chain's MultisigProver shows `$KEY_ROTATION_EOA` as the admin. If any chain fails, investigate that specific transaction before proceeding.
 
-### Step 6: Transfer InterchainTokenService Admin to Emergency Operator EOA - refer to the Target Role Addresses Table above
+### Step 6: Transfer InterchainTokenService Admin to Emergency Operator EOA
+
+**New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
+# Set variables
+ENV=mainnet
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
+
+# Get contract address from config
 ITS_CONTRACT=$(jq -r '.axelar.contracts.InterchainTokenService.address' ./axelar-chains-config/info/$ENV.json)
 
-# Execute admin update
+# Execute admin update (requires current admin key)
 axelard tx wasm execute $ITS_CONTRACT \
-  '{"update_admin": {"admin": "'$EMERGENCY_OPERATOR_EOA'"}}' \
+  "{\"update_admin\": {\"admin\": \"$EMERGENCY_OPERATOR_EOA\"}}" \
   --from <current_admin_key> \
-  --chain-id <chain_id> \
+  --chain-id $CHAIN_ID \
   --gas auto \
   --gas-adjustment 1.5 \
-  --fees 5000uaxl
+  --gas-prices 0.00005uaxl \
+  -y
 
-# Verify transfer
-axelard query wasm contract-state smart $ITS_CONTRACT \
-  '{"adminAddress": {}}'
+# Verify transfer using query script
+ts-node cosmwasm/query.ts contract-admin -c InterchainTokenService -e $ENV
 ```
 
-### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA - refer to the Target Role Addresses Table above
+**⚠️ Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
+
+### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA
+
+**New Operator**: Relayer Operators EOA - refer to the Target Role Addresses Table above
 
 ```bash
+# Set variables
+ENV=mainnet
 RELAYER_OPERATORS_EOA=<RELAYER_OPERATORS_EOA_ADDRESS>
+
+# Get contract address from config
 ITS_CONTRACT=$(jq -r '.axelar.contracts.InterchainTokenService.address' ./axelar-chains-config/info/$ENV.json)
 
-# Set operator (this operation might be named differently based on contract implementation)
+# Set operator (requires current admin or governance key)
 axelard tx wasm execute $ITS_CONTRACT \
-  '{"set_operator": {"operator": "'$RELAYER_OPERATORS_EOA'"}}' \
+  "{\"set_operator\": {\"operator\": \"$RELAYER_OPERATORS_EOA\"}}" \
   --from <current_admin_or_governance_key> \
-  --chain-id <chain_id> \
+  --chain-id $CHAIN_ID \
   --gas auto \
   --gas-adjustment 1.5 \
-  --fees 5000uaxl
+  --gas-prices 0.00005uaxl \
+  -y
 
 # Verify operator
-axelard query wasm contract-state smart $ITS_CONTRACT \
-  '{"operator": {}}'
+axelard query wasm contract-state smart $ITS_CONTRACT '{"operator": {}}'
 ```
 
 ### Step 8: Transfer XRPL Contract Admin Roles to Emergency Operator EOA
 
-Transfer admin roles for XrplVotingVerifier, XrplGateway, and XrplMultisigProver to Emergency Operator EOA - refer to the Target Role Addresses Table above.
+Transfer admin roles for XrplVotingVerifier, XrplGateway, and XrplMultisigProver to Emergency Operator EOA.
 
+**New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
 ```bash
+# Set variables
+ENV=mainnet
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
 
-# XrplVotingVerifier
+# Get contract addresses from config
 XRPL_VOTING_VERIFIER=$(jq -r '.axelar.contracts.XrplVotingVerifier.address' ./axelar-chains-config/info/$ENV.json)
-axelard tx wasm execute $XRPL_VOTING_VERIFIER \
-  '{"update_admin": {"admin": "'$EMERGENCY_OPERATOR_EOA'"}}' \
-  --from <current_admin_key> \
-  --chain-id <chain_id> \
-  --gas auto \
-  --gas-adjustment 1.5 \
-  --fees 5000uaxl
-
-# XrplGateway
 XRPL_GATEWAY=$(jq -r '.axelar.contracts.XrplGateway.address' ./axelar-chains-config/info/$ENV.json)
-axelard tx wasm execute $XRPL_GATEWAY \
-  '{"update_admin": {"admin": "'$EMERGENCY_OPERATOR_EOA'"}}' \
-  --from <current_admin_key> \
-  --chain-id <chain_id> \
-  --gas auto \
-  --gas-adjustment 1.5 \
-  --fees 5000uaxl
-
-# XrplMultisigProver
 XRPL_MULTISIG_PROVER=$(jq -r '.axelar.contracts.XrplMultisigProver.address' ./axelar-chains-config/info/$ENV.json)
-axelard tx wasm execute $XRPL_MULTISIG_PROVER \
-  '{"update_admin": {"admin": "'$EMERGENCY_OPERATOR_EOA'"}}' \
-  --from <current_admin_key> \
-  --chain-id <chain_id> \
-  --gas auto \
-  --gas-adjustment 1.5 \
-  --fees 5000uaxl
+
+# Update all XRPL contract admins
+for CONTRACT_ADDR in $XRPL_VOTING_VERIFIER $XRPL_GATEWAY $XRPL_MULTISIG_PROVER; do
+  if [ -n "$CONTRACT_ADDR" ] && [ "$CONTRACT_ADDR" != "null" ]; then
+    echo "Updating admin for: $CONTRACT_ADDR"
+    axelard tx wasm execute $CONTRACT_ADDR \
+      "{\"update_admin\": {\"admin\": \"$EMERGENCY_OPERATOR_EOA\"}}" \
+      --from <current_admin_key> \
+      --chain-id $CHAIN_ID \
+      --gas auto \
+      --gas-adjustment 1.5 \
+      --gas-prices 0.00005uaxl \
+      -y
+    sleep 6
+  fi
+done
 
 # Verify all transfers
-axelard query wasm contract-state smart $XRPL_VOTING_VERIFIER '{"adminAddress": {}}'
-axelard query wasm contract-state smart $XRPL_GATEWAY '{"adminAddress": {}}'
-axelard query wasm contract-state smart $XRPL_MULTISIG_PROVER '{"adminAddress": {}}'
+ts-node cosmwasm/query.ts contract-admin -c XrplVotingVerifier -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplGateway -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplMultisigProver -e $ENV
 ```
+
+**⚠️ Important:** Verify all three XRPL contracts show `$EMERGENCY_OPERATOR_EOA` as the admin. If any contract fails, investigate that specific transaction before marking this step complete.
 
 ## Verification Checklist
 
