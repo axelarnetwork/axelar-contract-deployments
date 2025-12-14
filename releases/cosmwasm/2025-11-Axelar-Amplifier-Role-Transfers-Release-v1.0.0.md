@@ -380,7 +380,7 @@ PROPOSAL_ID=$(axelard query gov proposals --status voting_period --output json |
 # Vote yes on the proposal
 axelard tx gov vote $PROPOSAL_ID yes \
   --from <your_key> \
-  --chain-id <chain_id> \
+  --chain-id $CHAIN_ID \
   --gas auto \
   --gas-adjustment 1.5 \
   --gas-prices 0.00005uaxl \
