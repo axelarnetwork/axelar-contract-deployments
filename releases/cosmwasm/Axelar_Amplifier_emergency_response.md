@@ -128,31 +128,20 @@
 
 **Option A: Direct execution with Admin EOA (Recommended for emergency):**
 ```bash
-axelard tx wasm execute <ITS_HUB_ADDRESS> \
-  '{"disable_execution":{}}' \
-  --from <its-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts its-disable-execution -e <env> -y
 ```
 
 **Option B: Via Governance proposal (if Admin key unavailable):**
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c InterchainTokenService \
+ts-node cosmwasm/contract.ts its-disable-execution -e <env> --governance \
   -t "Emergency: Disable ITS execution" \
-  -d "Disable execution due to suspected exploit" \
-  --deposit 100000000 \
-  --msg '{"disable_execution":{}}'
+  -d "Disable execution due to suspected exploit"
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_execution_enabled":{}}'
-# Expected output: {"data":false}
+ts-node cosmwasm/query.ts its-is-execution-enabled -e <env>
+# Expected output: false
 ```
 
 **Backup Action:** If governance proposal fails, contact validators to halt the chain.
@@ -165,25 +154,16 @@ axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_execution_enabled":{
 
 **Action (Direct execution with admin EOA):**
 ```bash
-# Using axelard CLI with admin private key
-axelard tx wasm execute <ROUTER_ADDRESS> \
-  '{"freeze_chain":{"chain":"<chain-name>"}}' \
-  --from <router-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts router-freeze-chain <chain-name> -e <env> -y
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <ROUTER_ADDRESS> '{"is_chain_frozen":{"chain":"<chain-name>"}}'
-# Expected output: {"data":true}
+ts-node cosmwasm/query.ts router-is-chain-frozen <chain-name> -e <env>
+# Expected output: true
 ```
 
-**Backup Action:** If freeze fails, disable routing entirely via `disable_routing`.
+**Backup Action:** If freeze fails, disable routing entirely via `router-disable-routing`.
 
 ---
 
@@ -193,31 +173,20 @@ axelard q wasm contract-state smart <ROUTER_ADDRESS> '{"is_chain_frozen":{"chain
 
 **Option A: Direct execution with Admin EOA (Recommended for emergency):**
 ```bash
-axelard tx wasm execute <MULTISIG_ADDRESS> \
-  '{"disable_signing":{}}' \
-  --from <multisig-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> -y
 ```
 
 **Option B: Via Governance proposal:**
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Multisig \
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> --governance \
   -t "Emergency: Disable signing" \
-  -d "Disable signing due to suspected exploit" \
-  --deposit 100000000 \
-  --msg '{"disable_signing":{}}'
+  -d "Disable signing due to suspected exploit"
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <MULTISIG_ADDRESS> '{"is_signing_enabled":{}}'
-# Expected output: {"data":false}
+ts-node cosmwasm/query.ts multisig-is-signing-enabled -e <env>
+# Expected output: false
 ```
 
 **Backup Action:** If disable fails, contact validators to halt the chain.
@@ -262,31 +231,20 @@ ts-node cosmwasm/query.ts contract-info -c <ContractName>
 
 **Option A: Direct execution with Admin EOA:**
 ```bash
-axelard tx wasm execute <ITS_HUB_ADDRESS> \
-  '{"enable_execution":{}}' \
-  --from <its-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts its-enable-execution -e <env> -y
 ```
 
 **Option B: Via Governance proposal:**
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c InterchainTokenService \
+ts-node cosmwasm/contract.ts its-enable-execution -e <env> --governance \
   -t "Re-enable ITS execution" \
-  -d "Re-enable execution after fix deployed" \
-  --deposit 100000000 \
-  --msg '{"enable_execution":{}}'
+  -d "Re-enable execution after fix deployed"
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_execution_enabled":{}}'
-# Expected output: {"data":true}
+ts-node cosmwasm/query.ts its-is-execution-enabled -e <env>
+# Expected output: true
 ```
 
 ---
@@ -324,28 +282,17 @@ If the compromised admin can still cause damage, use governance to disable signi
 
 ```bash
 # Option A: Via Governance proposal (if admin is compromised)
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Multisig \
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> --governance \
   -t "Emergency: Disable signing" \
-  -d "Contain compromised admin" \
-  --deposit 100000000 \
-  --msg '{"disable_signing":{}}'
+  -d "Contain compromised admin"
 
 # Option B: If using a different trusted admin EOA
-axelard tx wasm execute <MULTISIG_ADDRESS> \
-  '{"disable_signing":{}}' \
-  --from <trusted-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> -y
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <MULTISIG_ADDRESS> '{"is_signing_enabled":{}}'
+ts-node cosmwasm/query.ts multisig-is-signing-enabled -e <env>
 ```
 
 **Step 2: Update admin address via governance** (SLA: 24h+)
@@ -360,7 +307,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <CONTRACT_ADDRESS> '{"admin":{}}'
+ts-node cosmwasm/query.ts contract-admin -c <ContractName> -e <env>
 # Confirm new admin address
 ```
 
@@ -375,23 +322,12 @@ axelard q wasm contract-state smart <CONTRACT_ADDRESS> '{"admin":{}}'
 **✅ Both Admin EOA and Governance can do this** - Use Admin for faster response
 ```bash
 # Option A: Direct execution with Admin EOA (faster)
-axelard tx wasm execute <MULTISIG_ADDRESS> \
-  '{"disable_signing":{}}' \
-  --from <multisig-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> -y
 
 # Option B: Via Governance proposal
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Multisig \
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> --governance \
   -t "Emergency: Disable signing" \
-  -d "Disable signing due to compromised key rotation EOA" \
-  --deposit 100000000 \
-  --msg '{"disable_signing":{}}'
+  -d "Disable signing due to compromised key rotation EOA"
 ```
 
 **Step 2: Update MultisigProver admin via Governance** (SLA: 24h+)
@@ -409,7 +345,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"admin":{}}'
+ts-node cosmwasm/query.ts contract-admin -c MultisigProver -n <chain-name> -e <env>
 ```
 
 **Step 3: Re-enable signing** (SLA: 30 min after Step 2)
@@ -417,23 +353,12 @@ axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"admin":{}}'
 **✅ Both Admin EOA and Governance can do this**
 ```bash
 # Option A: Direct execution with Admin EOA
-axelard tx wasm execute <MULTISIG_ADDRESS> \
-  '{"enable_signing":{}}' \
-  --from <multisig-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts multisig-enable-signing -e <env> -y
 
 # Option B: Via Governance proposal
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Multisig \
+ts-node cosmwasm/contract.ts multisig-enable-signing -e <env> --governance \
   -t "Re-enable signing" \
-  -d "Re-enable signing after admin rotation" \
-  --deposit 100000000 \
-  --msg '{"enable_signing":{}}'
+  -d "Re-enable signing after admin rotation"
 ```
 
 ---
@@ -458,12 +383,12 @@ ampd deregister-chain-support <service-name> <chain-name>
 
 **Step 2: Update verifier set** (SLA: 1h)
 ```bash
-ts-node cosmwasm/rotate-signers.js update-verifier-set <chain-name>
+ts-node cosmwasm/rotate-signers.js update-verifier-set <chain-name> -e <env>
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"next_verifier_set":{}}'
+ts-node cosmwasm/query.ts multisig-prover-next-verifier-set <chain-name> -e <env>
 ```
 
 **Step 3: Submit proof on destination chain** (SLA: 30 min)
@@ -472,12 +397,12 @@ axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"next_verifier_s
 
 **Step 4: Confirm verifier rotation** (SLA: 30 min)
 ```bash
-ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
+ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx> -e <env>
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"current_verifier_set":{}}'
+ts-node cosmwasm/query.ts multisig-prover-current-verifier-set <chain-name> -e <env>
 ```
 
 ---
@@ -497,7 +422,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <VOTING_VERIFIER_ADDRESS> '{"voting_threshold":{}}'
+ts-node cosmwasm/query.ts voting-verifier-threshold <chain-name> -e <env>
 ```
 
 ---
@@ -517,7 +442,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"signing_threshold":{}}'
+ts-node cosmwasm/query.ts multisig-prover-signing-threshold <chain-name> -e <env>
 ```
 
 ---
@@ -538,34 +463,23 @@ axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"signing_thresho
 
 **Option A: Direct execution with Admin EOA (Recommended for emergency):**
 ```bash
-axelard tx wasm execute <ITS_HUB_ADDRESS> \
-  '{"freeze_chain":{"chain":"<chain-name>"}}' \
-  --from <its-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts its-freeze-chain <chain-name> -e <env> -y
 ```
 
 **Option B: Via Governance proposal:**
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c InterchainTokenService \
+ts-node cosmwasm/contract.ts its-freeze-chain <chain-name> -e <env> --governance \
   -t "Freeze <chain-name> on ITS Hub" \
-  -d "Freeze chain due to abnormal flows" \
-  --deposit 100000000 \
-  --msg '{"freeze_chain":{"chain":"<chain-name>"}}'
+  -d "Freeze chain due to abnormal flows"
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_chain_frozen":{"chain":"<chain-name>"}}'
-# Expected output: {"data":true}
+ts-node cosmwasm/query.ts its-is-chain-frozen <chain-name> -e <env>
+# Expected output: true
 ```
 
-**Backup Action:** If freeze fails, disable execution entirely via `disable_execution`.
+**Backup Action:** If freeze fails, disable execution entirely via `its-disable-execution`.
 
 ---
 
@@ -575,31 +489,20 @@ axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_chain_frozen":{"chai
 
 **Option A: Direct execution with Admin EOA:**
 ```bash
-axelard tx wasm execute <ITS_HUB_ADDRESS> \
-  '{"unfreeze_chain":{"chain":"<chain-name>"}}' \
-  --from <its-admin-key> \
-  --gas auto \
-  --gas-adjustment 1.3 \
-  --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> \
-  --node <rpc-url> \
-  -y
+ts-node cosmwasm/contract.ts its-unfreeze-chain <chain-name> -e <env> -y
 ```
 
 **Option B: Via Governance proposal:**
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c InterchainTokenService \
+ts-node cosmwasm/contract.ts its-unfreeze-chain <chain-name> -e <env> --governance \
   -t "Unfreeze <chain-name> on ITS Hub" \
-  -d "Unfreeze chain after investigation" \
-  --deposit 100000000 \
-  --msg '{"unfreeze_chain":{"chain":"<chain-name>"}}'
+  -d "Unfreeze chain after investigation"
 ```
 
 **Verification:**
 ```bash
-axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_chain_frozen":{"chain":"<chain-name>"}}'
-# Expected output: {"data":false}
+ts-node cosmwasm/query.ts its-is-chain-frozen <chain-name> -e <env>
+# Expected output: false
 ```
 
 ---
@@ -665,47 +568,55 @@ ts-node cosmwasm/query.ts contract-info -c <ContractName>
 
 ```bash
 # Query ITS chain configuration
-ts-node cosmwasm/query.ts its-chain-config <chain-name>
+ts-node cosmwasm/query.ts its-chain-config <chain-name> -e <env>
 
 # Query contract info (version, address)
-ts-node cosmwasm/query.ts contract-info -c <ContractName>
+ts-node cosmwasm/query.ts contract-info -c <ContractName> -e <env>
 
 # Query all contract versions
 ts-node cosmwasm/query.ts contract-versions -e <env>
 
 # Query rewards pool state
-ts-node cosmwasm/query.ts rewards <chain-name>
+ts-node cosmwasm/query.ts rewards <chain-name> -e <env>
 
 # Query token configuration
-ts-node cosmwasm/query.ts token-config <tokenId>
+ts-node cosmwasm/query.ts token-config <tokenId> -e <env>
 ```
 
-### Query via axelard CLI
+### Emergency Status Queries
 
 ```bash
 # Query Router frozen status
-axelard q wasm contract-state smart <ROUTER_ADDRESS> '{"is_chain_frozen":{"chain":"<chain-name>"}}'
+ts-node cosmwasm/query.ts router-is-chain-frozen <chain-name> -e <env>
 
 # Query Multisig signing status
-axelard q wasm contract-state smart <MULTISIG_ADDRESS> '{"is_signing_enabled":{}}'
+ts-node cosmwasm/query.ts multisig-is-signing-enabled -e <env>
 
 # Query Multisig authorized callers
-axelard q wasm contract-state smart <MULTISIG_ADDRESS> '{"authorized_caller":{"chain_name":"<chain-name>"}}'
+ts-node cosmwasm/query.ts multisig-authorized-caller <chain-name> -e <env>
 
 # Query VotingVerifier voting threshold
-axelard q wasm contract-state smart <VOTING_VERIFIER_ADDRESS> '{"voting_threshold":{}}'
+ts-node cosmwasm/query.ts voting-verifier-threshold <chain-name> -e <env>
 
 # Query MultisigProver signing threshold
-axelard q wasm contract-state smart <MULTISIG_PROVER_ADDRESS> '{"signing_threshold":{}}'
+ts-node cosmwasm/query.ts multisig-prover-signing-threshold <chain-name> -e <env>
 
-# Query ITS Hub chain status
-axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"its_chain":{"chain":"<chain-name>"}}'
+# Query MultisigProver current verifier set
+ts-node cosmwasm/query.ts multisig-prover-current-verifier-set <chain-name> -e <env>
+
+# Query MultisigProver next verifier set
+ts-node cosmwasm/query.ts multisig-prover-next-verifier-set <chain-name> -e <env>
+
+# Query ITS Hub chain frozen status
+ts-node cosmwasm/query.ts its-is-chain-frozen <chain-name> -e <env>
 
 # Query ITS Hub execution status
-axelard q wasm contract-state smart <ITS_HUB_ADDRESS> '{"is_execution_enabled":{}}'
+ts-node cosmwasm/query.ts its-is-execution-enabled -e <env>
 
 # Query contract admin
-axelard q wasm contract-state smart <CONTRACT_ADDRESS> '{"admin":{}}'
+ts-node cosmwasm/query.ts contract-admin -c <ContractName> -e <env>
+# For chain-specific contracts (VotingVerifier, MultisigProver, Gateway):
+ts-node cosmwasm/query.ts contract-admin -c <ContractName> -n <chain-name> -e <env>
 ```
 
 ---
@@ -749,96 +660,93 @@ For any significant emergency (particularly on mainnet), once the immediate issu
 
 ---
 
-## 7. Missing Script Support (Action Items)
+## 7. Emergency Commands Quick Reference
 
-### Summary: Which Operations Can Use `submit-proposal.js execute`?
+### Router Operations (Admin EOA Only)
 
-Based on the [Role Transfers document](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1217/files):
-
-### ❌ Admin-Only Operations (CANNOT use governance proposal)
-
-These operations can ONLY be executed by Admin EOA. Use `axelard tx wasm execute` directly:
-
-| Operation | Contract | Message Format |
-|-----------|----------|----------------|
-| `freeze_chain` | Router | `{"freeze_chain":{"chain":"<chain>"}}` |
-| `unfreeze_chain` | Router | `{"unfreeze_chain":{"chain":"<chain>"}}` |
-| `disable_routing` | Router | `{"disable_routing":{}}` |
-| `enable_routing` | Router | `{"enable_routing":{}}` |
-| `register_p2p_token_instance` | InterchainTokenService | `{"register_p2p_token_instance":{...}}` |
-| `modify_supply` | InterchainTokenService | `{"modify_supply":{...}}` |
-
-**Example for Admin-Only operation:**
 ```bash
-axelard tx wasm execute <ROUTER_ADDRESS> \
-  '{"freeze_chain":{"chain":"<chain-name>"}}' \
-  --from <router-admin-key> \
-  --gas auto --gas-adjustment 1.3 --gas-prices 0.00005uaxl \
-  --chain-id <chain-id> --node <rpc-url> -y
+# Freeze a chain on Router
+ts-node cosmwasm/contract.ts router-freeze-chain <chain-name> -e <env> -y
+
+# Unfreeze a chain on Router
+ts-node cosmwasm/contract.ts router-unfreeze-chain <chain-name> -e <env> -y
+
+# Disable ALL routing (killswitch)
+ts-node cosmwasm/contract.ts router-disable-routing -e <env> -y
+
+# Enable routing
+ts-node cosmwasm/contract.ts router-enable-routing -e <env> -y
 ```
 
-### ✅ Both Admin & Governance Operations (CAN use either)
+### Multisig Operations (Admin EOA or Governance)
 
-These operations can be done by Admin EOA (faster) OR via governance proposal:
+```bash
+# Disable signing - Admin EOA
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> -y
 
-| Operation | Contract | Message Format |
-|-----------|----------|----------------|
-| `disable_signing` | Multisig | `{"disable_signing":{}}` |
-| `enable_signing` | Multisig | `{"enable_signing":{}}` |
-| `unauthorize_callers` | Multisig | `{"unauthorize_callers":{"contracts":{...}}}` |
-| `freeze_chain` | InterchainTokenService | `{"freeze_chain":{"chain":"<chain>"}}` |
-| `unfreeze_chain` | InterchainTokenService | `{"unfreeze_chain":{"chain":"<chain>"}}` |
-| `disable_execution` | InterchainTokenService | `{"disable_execution":{}}` |
-| `enable_execution` | InterchainTokenService | `{"enable_execution":{}}` |
-| `update_verifier_set` | MultisigProver | via `rotate-signers.js` or proposal |
+# Disable signing - Governance
+ts-node cosmwasm/contract.ts multisig-disable-signing -e <env> --governance \
+  -t "Disable signing" -d "Emergency disable"
 
-### ✅ Governance-Only Operations (Use `submit-proposal.js execute`)
+# Enable signing - Admin EOA
+ts-node cosmwasm/contract.ts multisig-enable-signing -e <env> -y
 
-### High Priority (Emergency Operations)
+# Enable signing - Governance
+ts-node cosmwasm/contract.ts multisig-enable-signing -e <env> --governance \
+  -t "Enable signing" -d "Re-enable after fix"
+```
 
-| Operation | Contract | Message Format |
+### ITS Hub Operations (Admin EOA or Governance)
+
+```bash
+# Disable execution - Admin EOA
+ts-node cosmwasm/contract.ts its-disable-execution -e <env> -y
+
+# Disable execution - Governance
+ts-node cosmwasm/contract.ts its-disable-execution -e <env> --governance \
+  -t "Disable ITS execution" -d "Emergency disable"
+
+# Enable execution - Admin EOA
+ts-node cosmwasm/contract.ts its-enable-execution -e <env> -y
+
+# Enable execution - Governance
+ts-node cosmwasm/contract.ts its-enable-execution -e <env> --governance \
+  -t "Enable ITS execution" -d "Re-enable after fix"
+
+# Freeze chain - Admin EOA
+ts-node cosmwasm/contract.ts its-freeze-chain <chain-name> -e <env> -y
+
+# Freeze chain - Governance
+ts-node cosmwasm/contract.ts its-freeze-chain <chain-name> -e <env> --governance \
+  -t "Freeze <chain-name>" -d "Freeze due to abnormal activity"
+
+# Unfreeze chain - Admin EOA
+ts-node cosmwasm/contract.ts its-unfreeze-chain <chain-name> -e <env> -y
+
+# Unfreeze chain - Governance
+ts-node cosmwasm/contract.ts its-unfreeze-chain <chain-name> -e <env> --governance \
+  -t "Unfreeze <chain-name>" -d "Unfreeze after investigation"
+```
+
+### Governance-Only Operations (Use `submit-proposal.js execute`)
+
+| Operation | Contract | Script Command |
 |-----------|----------|---------------|
-| `freeze_chain` | Router | `{"freeze_chain":{"chain":"<chain>"}}` |
-| `unfreeze_chain` | Router | `{"unfreeze_chain":{"chain":"<chain>"}}` |
-| `disable_routing` | Router | `{"disable_routing":{}}` |
-| `enable_routing` | Router | `{"enable_routing":{}}` |
-| `disable_signing` | Multisig | `{"disable_signing":{}}` |
-| `enable_signing` | Multisig | `{"enable_signing":{}}` |
-| `authorize_callers` | Multisig | `{"authorize_callers":{"contracts":{"<chain>":"<prover_addr>"}}}` |
-| `unauthorize_callers` | Multisig | `{"unauthorize_callers":{"contracts":{"<chain>":"<prover_addr>"}}}` |
-| `freeze_chain` | InterchainTokenService | `{"freeze_chain":{"chain":"<chain>"}}` |
-| `unfreeze_chain` | InterchainTokenService | `{"unfreeze_chain":{"chain":"<chain>"}}` |
-| `disable_execution` | InterchainTokenService | `{"disable_execution":{}}` |
-| `enable_execution` | InterchainTokenService | `{"enable_execution":{}}` |
-
-### Medium Priority (Threshold/Admin Updates)
-
-| Operation | Contract | Message Format |
-|-----------|----------|---------------|
-| `update_voting_threshold` | VotingVerifier | `{"update_voting_threshold":{"new_voting_threshold":["n","d"]}}` |
-| `update_signing_threshold` | MultisigProver | `{"update_signing_threshold":{"new_signing_threshold":["n","d"]}}` |
-| `update_admin` | MultisigProver | `{"update_admin":{"new_admin":"<addr>"}}` |
-| `update_admin` | Router | `{"update_admin":{"new_admin":"<addr>"}}` |
-| `update_admin` | Multisig | `{"update_admin":{"new_admin":"<addr>"}}` |
-
-### Lower Priority (Service Management)
-
-| Operation | Contract | Message Format |
-|-----------|----------|---------------|
-| `authorize_verifiers` | ServiceRegistry | `{"authorize_verifiers":{"verifiers":[...],"service_name":"..."}}` |
-| `unauthorize_verifiers` | ServiceRegistry | `{"unauthorize_verifiers":{"verifiers":[...],"service_name":"..."}}` |
-| `jail_verifiers` | ServiceRegistry | `{"jail_verifiers":{"verifiers":[...],"service_name":"..."}}` |
-| `update_pool_params` | Rewards | `{"update_pool_params":{"pool_id":{...},"params":{...}}}` |
+| `authorize_callers` | Multisig | `ts-node cosmwasm/submit-proposal.js execute -c Multisig --msg '{"authorize_callers":{...}}'` |
+| `unauthorize_callers` | Multisig | `ts-node cosmwasm/submit-proposal.js execute -c Multisig --msg '{"unauthorize_callers":{...}}'` |
+| `update_voting_threshold` | VotingVerifier | `ts-node cosmwasm/submit-proposal.js execute -c VotingVerifier -n <chain> --msg '{"update_voting_threshold":{...}}'` |
+| `update_signing_threshold` | MultisigProver | `ts-node cosmwasm/submit-proposal.js execute -c MultisigProver -n <chain> --msg '{"update_signing_threshold":{...}}'` |
+| `update_admin` | Various | `ts-node cosmwasm/submit-proposal.js execute -c <Contract> --msg '{"update_admin":{...}}'` |
 
 ### XRPL-Specific Operations
 
-| Operation | Contract | Message Format |
-|-----------|----------|---------------|
-| `disable_execution` | XrplVotingVerifier | `{"disable_execution":{}}` |
-| `enable_execution` | XrplVotingVerifier | `{"enable_execution":{}}` |
-| `disable_execution` | XrplGateway | `{"disable_execution":{}}` |
-| `enable_execution` | XrplGateway | `{"enable_execution":{}}` |
-| `trust_set` | XrplMultisigProver | `{"trust_set":{"issuer":"...","currency":"..."}}` |
+These currently require `ts-node cosmwasm/submit-proposal.js execute` with raw messages:
+
+| Operation | Contract |
+|-----------|----------|
+| `disable_execution` / `enable_execution` | XrplVotingVerifier |
+| `disable_execution` / `enable_execution` | XrplGateway |
+| `trust_set` | XrplMultisigProver |
 
 ---
 
@@ -856,11 +764,3 @@ To get contract addresses for a specific environment:
 # Read from config
 cat axelar-chains-config/info/<env>.json | jq '.axelar.contracts'
 ```
-
----
-
-**Open Questions / Action Items**:
-1. ⚠️ **HIGH PRIORITY**: Implement dedicated CLI commands for admin emergency operations in `contract.ts`
-   - Current gap: Admin operations (freeze, disable_signing, etc.) cannot use `submit-proposal.js`
-   - Need: Add `--admin` flag or separate commands that execute directly with admin EOA
-2. What is the exact threshold for "abnormal volume" per chain/token type?
