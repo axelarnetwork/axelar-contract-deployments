@@ -268,9 +268,9 @@ check_governance() {
   local current_gov=$(jq -r ".axelar.contracts.$contract.$gov_field // empty" $CONFIG_FILE)
   
   if [ "$current_gov" == "$GOVERNANCE_MODULE" ]; then
-    echo "✅ $contract: Already set to Governance Module"
+    echo "[OK] $contract: Already set to Governance Module"
   elif [ -n "$current_gov" ]; then
-    echo "❌ $contract: Needs transfer"
+    echo "[NEEDS TRANSFER] $contract: Needs transfer"
     echo "   Address: $address"
     echo "   Current: $current_gov"
     echo "   Command: ts-node cosmwasm/submit-proposal.js executeByGovernance -e $ENV -c $contract -t \"Transfer $contract governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
@@ -292,9 +292,9 @@ check_chain_governance() {
   fi
   
   if [ "$current_gov" == "$GOVERNANCE_MODULE" ]; then
-    echo "✅ $contract[$chain]: Already set to Governance Module"
+    echo "[OK] $contract[$chain]: Already set to Governance Module"
   elif [ -n "$current_gov" ]; then
-    echo "❌ $contract[$chain]: Needs transfer"
+    echo "[NEEDS TRANSFER] $contract[$chain]: Needs transfer"
     echo "   Address: $address"
     echo "   Current: $current_gov"
     echo "   Command: ts-node cosmwasm/submit-proposal.js executeByGovernance -e $ENV -c $contract -n $chain -t \"Transfer $contract[$chain] governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
@@ -419,7 +419,7 @@ axelard query wasm contract-state smart $VOTING_VERIFIER '{"governance_address":
 
 **Note:** `contract-admin` queries `admin` address, not `governance` address. Use raw axelard queries above to verify governance transfers.
 
-**⚠️ Important:** If the governance address is not set to the Governance Module after the proposal passes, **STOP** and investigate before proceeding to the next steps. Possible causes:
+**Important:** If the governance address is not set to the Governance Module after the proposal passes, **STOP** and investigate before proceeding to the next steps. Possible causes:
 - Proposal did not pass (check proposal status with `axelard query gov proposal <proposal_id>`)
 - Proposal passed but not yet executed (wait for execution)
 - Wrong contract address or message format in the proposal
@@ -454,7 +454,7 @@ axelard tx wasm execute $ROUTER_CONTRACT \
 ts-node cosmwasm/query.ts contract-admin -c Router -e $ENV
 ```
 
-**⚠️ Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
+**Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 4: Transfer Multisig Admin to Emergency Operator EOA
 
@@ -482,7 +482,7 @@ axelard tx wasm execute $MULTISIG_CONTRACT \
 ts-node cosmwasm/query.ts contract-admin -c Multisig -e $ENV
 ```
 
-**⚠️ Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
+**Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 5: Transfer MultisigProver Admin to Key Rotation EOA
 
@@ -522,7 +522,7 @@ for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid m
 done
 ```
 
-**⚠️ Important:** Verify each chain's MultisigProver shows `$KEY_ROTATION_EOA` as the admin. If any chain fails, investigate that specific transaction before proceeding.
+**Important:** Verify each chain's MultisigProver shows `$KEY_ROTATION_EOA` as the admin. If any chain fails, investigate that specific transaction before proceeding.
 
 ### Step 6: Transfer InterchainTokenService Admin to Emergency Operator EOA
 
@@ -550,7 +550,7 @@ axelard tx wasm execute $ITS_CONTRACT \
 ts-node cosmwasm/query.ts contract-admin -c InterchainTokenService -e $ENV
 ```
 
-**⚠️ Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
+**Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA
 
@@ -616,7 +616,7 @@ ts-node cosmwasm/query.ts contract-admin -c XrplGateway -e $ENV
 ts-node cosmwasm/query.ts contract-admin -c XrplMultisigProver -e $ENV
 ```
 
-**⚠️ Important:** Verify all three XRPL contracts show `$EMERGENCY_OPERATOR_EOA` as the admin. If any contract fails, investigate that specific transaction before marking this step complete.
+**Important:** Verify all three XRPL contracts show `$EMERGENCY_OPERATOR_EOA` as the admin. If any contract fails, investigate that specific transaction before marking this step complete.
 
 ## Verification Checklist
 
