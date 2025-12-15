@@ -102,7 +102,7 @@ const rotateSigners = async (_client, config, options, [sessionId], _fee) => {
     }
 
     const chainConfig = config.getChainConfig(chainName);
-    const gatewayAddress = chainConfig?.contracts?.AxelarGateway?.address;
+    const gatewayAddress = chainConfig.contracts?.AxelarGateway?.address;
     const gasOptions = await getGasOptions(chainConfig, options, null);
     const provider = getDefaultProvider(chainConfig.rpc);
 
