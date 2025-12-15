@@ -179,7 +179,7 @@ sui client object "$ITS_OWNERCAP_ID"
 
 | Network             | Current OwnerCap Holder                                              | Target Address                                                       |
 | ------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Devnet Amlifier** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df` |
+| **Devnet Amplifier** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df` |
 | **Stagenet**        | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x4a755c3a0d51e25f64542e8f39ec7db91ca7cc194b5aec7efb77d54c2b67ffee` |
 | **Testnet**         | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | TBD                                                                  |
 | **Mainnet**         | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
