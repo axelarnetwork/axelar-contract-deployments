@@ -611,9 +611,9 @@ for CONTRACT_ADDR in $XRPL_VOTING_VERIFIER $XRPL_GATEWAY $XRPL_MULTISIG_PROVER; 
 done
 
 # Verify all transfers
-ts-node cosmwasm/query.ts contract-admin -c XrplVotingVerifier -e $ENV
-ts-node cosmwasm/query.ts contract-admin -c XrplGateway -e $ENV
-ts-node cosmwasm/query.ts contract-admin -c XrplMultisigProver -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplVotingVerifier -n xrpl -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplGateway -n xrpl -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplMultisigProver -n xrpl -e $ENV
 ```
 
 **Important:** Verify all three XRPL contracts show `$EMERGENCY_OPERATOR_EOA` as the admin. If any contract fails, investigate that specific transaction before marking this step complete.
