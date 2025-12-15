@@ -165,7 +165,6 @@ async function itsChainConfig(client, config, _options, args, _fee) {
 
 // ==================== Emergency Query Functions ====================
 
-// Router queries
 async function routerIsChainFrozen(client, config, _options, args, _fee) {
     const [chainName] = args;
     const routerAddress = config.getContractConfig('Router').address;
@@ -191,7 +190,6 @@ async function routerIsChainFrozen(client, config, _options, args, _fee) {
     }
 }
 
-// Multisig queries
 async function multisigIsSigningEnabled(client, config, _options, _args, _fee) {
     const multisigAddress = config.getContractConfig('Multisig').address;
 
@@ -235,7 +233,6 @@ async function multisigAuthorizedCaller(client, config, _options, args, _fee) {
     }
 }
 
-// ITS Hub queries
 async function itsIsExecutionEnabled(client, config, _options, _args, _fee) {
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
@@ -279,7 +276,6 @@ async function itsIsChainFrozen(client, config, _options, args, _fee) {
     }
 }
 
-// VotingVerifier queries
 async function votingVerifierThreshold(client, config, _options, args, _fee) {
     const [chainName] = args;
     const votingVerifier = config.getVotingVerifierContract(chainName);
@@ -300,7 +296,6 @@ async function votingVerifierThreshold(client, config, _options, args, _fee) {
     }
 }
 
-// MultisigProver queries
 async function multisigProverSigningThreshold(client, config, _options, args, _fee) {
     const [chainName] = args;
     const multisigProver = config.getMultisigProverContract(chainName);
@@ -592,7 +587,7 @@ const programHandler = () => {
     // Router queries
     const routerIsChainFrozenCmd = program
         .command('router-is-chain-frozen <chainName>')
-        .description('[EMERGENCY] Query if a chain is frozen on Router')
+        .description('Query if a chain is frozen on Router')
         .action((chainName, options) => {
             mainQueryProcessor(routerIsChainFrozen, options, [chainName]);
         });
@@ -601,7 +596,7 @@ const programHandler = () => {
     // Multisig queries
     const multisigIsSigningEnabledCmd = program
         .command('multisig-is-signing-enabled')
-        .description('[EMERGENCY] Query if signing is enabled on Multisig')
+        .description('Query if signing is enabled on Multisig')
         .action((options) => {
             mainQueryProcessor(multisigIsSigningEnabled, options, []);
         });
@@ -618,7 +613,7 @@ const programHandler = () => {
     // ITS Hub queries
     const itsIsExecutionEnabledCmd = program
         .command('its-is-execution-enabled')
-        .description('[EMERGENCY] Query if execution is enabled on ITS Hub')
+        .description('Query if execution is enabled on ITS Hub')
         .action((options) => {
             mainQueryProcessor(itsIsExecutionEnabled, options, []);
         });
@@ -626,7 +621,7 @@ const programHandler = () => {
 
     const itsIsChainFrozenCmd = program
         .command('its-is-chain-frozen <chainName>')
-        .description('[EMERGENCY] Query if a chain is frozen on ITS Hub')
+        .description('Query if a chain is frozen on ITS Hub')
         .action((chainName, options) => {
             mainQueryProcessor(itsIsChainFrozen, options, [chainName]);
         });
