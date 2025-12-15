@@ -19,7 +19,7 @@ The `gateway.js` script exposes the `setTokenMintLimits` action, which calls the
 #### Example (direct mint limiter)
 
 ```bash
-node evm/gateway.js \
+ts-node evm/gateway.js \
   -e mainnet \
   -n ethereum \
   --privateKey <MINT_LIMITER_KEY> \
@@ -49,7 +49,7 @@ Where the mint limiter role is assigned to a Multisig contract, use the `multisi
 #### Example (freeze mints)
 
 ```bash
-node evm/multisig.js \
+ts-node evm/multisig.js \
   -e mainnet \
   -n ethereum \
   --privateKey ledger \

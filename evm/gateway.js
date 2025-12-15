@@ -472,28 +472,8 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error('setTokenMintLimits is only available for consensus gateways');
             }
 
-            if (!symbols) {
-                throw new Error('Missing symbols');
-            }
-
-            if (!limits) {
-                throw new Error('Missing limits');
-            }
-
-            let symbolsArray;
-            let limitsArray;
-
-            try {
-                symbolsArray = JSON.parse(symbols);
-            } catch (error) {
-                throw new Error(`Invalid JSON for symbols: ${symbols}`);
-            }
-
-            try {
-                limitsArray = JSON.parse(limits);
-            } catch (error) {
-                throw new Error(`Invalid JSON for limits: ${limits}`);
-            }
+            const symbolsArray = JSON.parse(symbols);
+            const limitsArray = JSON.parse(limits);
 
             validateParameters({
                 isNonEmptyStringArray: { symbolsArray },
