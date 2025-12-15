@@ -1,9 +1,9 @@
-## Interchain Token Service Rate Limits
+## Interchain Token Service Flow Limits (rate limits)
 
 ### Overview
 
-The Interchain Token Service (ITS) supports **per-token flow limits** to rate-limit how much value can move in or out of a chain over a period of time.  
-These limits are managed by the ITS operator on each chain via the `evm/its.js` script.
+The Interchain Token Service (ITS) supports **per-token flow limits** to rate-limit how much value can move in and out of a specific blockchain over a period of time(6 hours).  
+These limits are controlled by an address whitelisted with the ITS `operator` role on each chain via the `evm/its.js` script.
 
 
 #### Key Concepts
@@ -42,7 +42,7 @@ where:
 
 - You have a funded EVM wallet with:
   - Access to the private key via `.env` (see main `README.md`).
-  - **Operator** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`).
+- **Operator** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`). See [operators.js](../operators.js) for related operations (e.g., whitelist an operator: `evm/operators.js --action addOperator --operator <addr>`).
 
 You can use the standard EVM options for `its.js`, for example:
 
@@ -109,7 +109,7 @@ Freeze one or more ITS tokens on the current chain by setting their flow limits 
 ts-node evm/its.js freeze-tokens <token-id-1> <token-id-2> ...
 ```
 
-It stop transfers for specific tokens.
+It freezes transfers for specific tokens.
 
 ---
 
