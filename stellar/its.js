@@ -30,7 +30,14 @@ const {
     getNetworkPassphrase,
     getAuthValidUntilLedger,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
+const {
+    prompt,
+    parseTrustedChains,
+    encodeITSDestination,
+    tokenManagerTypes,
+    validateLinkType,
+    estimateITSFee,
+} = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config.chains, args);
@@ -191,7 +198,14 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         isValidStellarAddress: { gasTokenAddress },
     });
 
-    const { gasFeeValue } = await estimateITSFee(chain, destinationChain, options.env, 'InterchainTransfer', options.gasAmount, config.axelar);
+    const { gasFeeValue } = await estimateITSFee(
+        chain,
+        destinationChain,
+        options.env,
+        'InterchainTransfer',
+        options.gasAmount,
+        config.axelar,
+    );
 
     const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
