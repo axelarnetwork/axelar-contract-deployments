@@ -472,6 +472,14 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error('setTokenMintLimits is only available for consensus gateways');
             }
 
+            if (!symbols) {
+                throw new Error('Missing symbols');
+            }
+
+            if (!limits) {
+                throw new Error('Missing limits');
+            }
+
             const symbolsArray = JSON.parse(symbols);
             const limitsArray = JSON.parse(limits);
 
