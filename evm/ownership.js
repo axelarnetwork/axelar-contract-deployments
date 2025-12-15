@@ -243,7 +243,7 @@ async function main(options) {
             writeJSON(proposal, options.generateOnly);
             printInfo('Proposal written to file', options.generateOnly);
         } else if (!options.mnemonic) {
-            printInfo('Proposal created in file, provide mnemonic to submit.');
+            printInfo('Re-run with --generate-only to write proposal to a file, or provide --mnemonic to submit it.');
         } else {
             if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
                 try {
