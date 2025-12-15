@@ -184,9 +184,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidDecimal: { amount: options.amount },
             });
-            validateParameters({
-                isValidDecimal: { amount: options.amount },
-            });
 
             const amount = parseEther(options.amount);
             calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
@@ -390,6 +387,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             );
 
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'ProposalScheduled');
+            printInfo('Proposal submitted.');
             return null;
         }
 
@@ -425,6 +423,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             );
 
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'OperatorProposalApproved');
+            printInfo('Operator proposal submitted.');
             return null;
         }
 
@@ -465,9 +464,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Proposal execution cancelled.');
             }
 
-            if (nativeValue === '0') {
-                printWarn('nativeValue is 0; no native token will be forwarded to the target call.');
-            }
+            printInfo('nativeValue', nativeValue.toString());
 
             const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
@@ -501,6 +498,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             const tx = await governance.executeOperatorProposal(target, calldata, nativeValue, gasOptions);
             await handleTransactionWithEvent(tx, chain, governance, 'Operator proposal execution', 'OperatorProposalExecuted');
+            printInfo('Operator proposal executed.');
             return null;
         }
 
