@@ -185,9 +185,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidDecimal: { amount: options.amount },
             });
-            validateParameters({
-                isValidDecimal: { amount: options.amount },
-            });
 
             const amount = parseEther(options.amount);
             calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
