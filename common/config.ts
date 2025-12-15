@@ -60,6 +60,7 @@ export interface ContractConfig {
     address?: string;
     codeId?: number;
     storeCodeProposalCodeHash?: string;
+    storeInstantiateProposalId?: string;
     storeCodeProposalId?: string;
     lastUploadedCodeId?: number;
 }

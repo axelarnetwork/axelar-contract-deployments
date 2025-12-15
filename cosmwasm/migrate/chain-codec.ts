@@ -3,14 +3,15 @@
 import { CosmWasmClient, JsonObject, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 import { Command } from 'commander';
+import { createHash } from 'crypto';
 
-import { printError, printInfo, printWarn } from '../../common';
+import { printError, printInfo, printWarn, readContractCode } from '../../common';
 import { addEnvOption } from '../../common/cli-utils';
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { confirmProposalSubmission } from '../submit-proposal';
-import { encodeMigrate, isLegacySDK, submitProposal } from '../utils';
+import { encodeMigrate, encodeStoreCode, encodeStoreInstantiate, isLegacySDK, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
 const programHandler = () => {
@@ -25,6 +26,20 @@ const programHandler = () => {
             .action(async (options) => {
                 mainQueryProcessor(prepare, options);
             }),
+    );
+
+    addAmplifierOptions(
+        program
+            .command('store-instantiate-chain-codecs')
+            .description('Submit a proposal to store the ChainCodec contracts')
+            .action((options) => mainProcessor(storeChainCodecs, options)),
+        {
+            contractOptions: true,
+            storeOptions: true,
+            storeProposalOptions: true,
+            proposalOptions: true,
+            runAs: true,
+        },
     );
 
     addAmplifierOptions(
@@ -92,13 +107,46 @@ async function prepare(client: CosmWasmClient, config: ConfigManager, _: Options
     }
 }
 
-async function migrate(
-    client: ClientManager,
-    config: ConfigManager,
-    options: MigrationOptions,
-    _args: string[],
-    fee: 'auto' | StdFee,
-) {
+async function storeChainCodecs(client: ClientManager, config: ConfigManager, options: any, _args: string[], fee: 'auto' | StdFee) {
+    if (isLegacySDK(config)) {
+        printError('Legacy SDK is not supported for chain codec upload and instantiation');
+        return;
+    }
+
+    let contractName = options.contractName;
+    const { contractCodePath, contractCodePaths } = options;
+
+    if (!Array.isArray(contractName)) {
+        contractName = [contractName];
+    }
+
+    const contractNames = contractName;
+    const proposal = contractNames.map((name) => {
+        const contractOptions = {
+            ...options,
+            contractName: name,
+            contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
+        };
+        // instantiating with empty message
+        return encodeStoreInstantiate(config, contractOptions, {});
+    });
+
+    if (!confirmProposalSubmission(options, proposal)) {
+        return;
+    }
+    const proposalId = await submitProposal(client, config, options, proposal, fee);
+    contractNames.forEach((name) => {
+        const contractConfig = config.getContractConfig(contractName);
+        contractConfig.storeInstantiateProposalId = proposalId;
+        contractConfig.storeCodeProposalCodeHash = createHash('sha256')
+            .update(readContractCode({ ...options, contractName }))
+            .digest()
+            .toString('hex');
+    });
+    return proposalId;
+}
+
+async function migrate(client: ClientManager, config: ConfigManager, options: MigrationOptions, _args: string[], fee: 'auto' | StdFee) {
     try {
         if (isLegacySDK(config)) {
             printError('Legacy SDK is not supported for chain codec migration');
@@ -153,7 +201,7 @@ async function migrate(
 
         if (options.direct) {
             const [account] = client.accounts;
-        
+
             for (const migration of migrations) {
                 await client.migrate(account.address, migration.proverAddress, migration.proverCodeId, migration.proverMsg, fee);
                 printInfo('Migrated prover contract', migration.proverAddress);
