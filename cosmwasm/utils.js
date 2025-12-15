@@ -508,15 +508,8 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
-const makeChainCodecInstantiateMsg = (config, options, _contractConfig) => {
-    const { contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: codecConfig = {} },
-        },
-    } = config;
-
-    return codecConfig; // we pass on all properties in the codec config
+const makeChainCodecInstantiateMsg = (_config, _options, contractConfig) => {
+    return contractConfig; // we pass on all properties in the codec config
 };
 
 const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
