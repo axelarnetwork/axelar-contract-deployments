@@ -1602,7 +1602,7 @@ fn interchain_transfer(
     let ix_data = solana_axelar_its::instruction::InterchainTransfer {
         token_id: args.token_id,
         destination_chain: args.destination_chain,
-        destination_address: args.destination_address.into_bytes(),
+        destination_address: hex::decode(args.destination_address.trim_start_matches("0x"))?,
         amount: raw_amount,
         gas_value: args.gas_value,
         caller_program_id: None,
