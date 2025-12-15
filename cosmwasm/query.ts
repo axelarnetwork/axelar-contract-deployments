@@ -566,7 +566,6 @@ const programHandler = () => {
 
     // ==================== Emergency Query Commands ====================
 
-    // Router queries
     const routerIsChainFrozenCmd = program
         .command('router-is-chain-frozen <chainName>')
         .description('Query if a chain is frozen on Router')
@@ -575,7 +574,6 @@ const programHandler = () => {
         });
     addAmplifierQueryOptions(routerIsChainFrozenCmd);
 
-    // Multisig queries
     const multisigIsSigningEnabledCmd = program
         .command('multisig-is-signing-enabled')
         .description('Query if signing is enabled on Multisig')
@@ -592,7 +590,6 @@ const programHandler = () => {
         });
     addAmplifierQueryOptions(multisigAuthorizedCallerCmd);
 
-    // ITS Hub queries
     const itsIsExecutionEnabledCmd = program
         .command('its-is-execution-enabled')
         .description('Query if execution is enabled on ITS Hub')
@@ -609,7 +606,6 @@ const programHandler = () => {
         });
     addAmplifierQueryOptions(itsIsChainFrozenCmd);
 
-    // VotingVerifier queries
     const votingVerifierThresholdCmd = program
         .command('voting-verifier-threshold <chainName>')
         .description('Query voting threshold for a chain on VotingVerifier')
@@ -618,7 +614,6 @@ const programHandler = () => {
         });
     addAmplifierQueryOptions(votingVerifierThresholdCmd);
 
-    // MultisigProver queries
     const multisigProverSigningThresholdCmd = program
         .command('multisig-prover-signing-threshold <chainName>')
         .description('Query signing threshold for a chain on MultisigProver')
