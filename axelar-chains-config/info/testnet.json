@@ -3405,6 +3405,23 @@
           "implementation": "0x9d712a17416d2aa69e042743b7AA60BCF717602E"
         }
       }
+    },
+    "arc": {
+      "name": "Arc Testnet",
+      "axelarId": "arc",
+      "chainId": 5042002,
+      "rpc": "https://rpc.testnet.arc.network",
+      "tokenSymbol": "USDC",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Arc Testnet Explorer",
+        "url": "https://testnet.arcscan.app/"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
