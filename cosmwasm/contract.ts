@@ -503,7 +503,6 @@ const programHandler = () => {
 
     // ==================== Emergency Operations Commands ====================
 
-    // Router commands (Admin EOA only)
     const routerFreezeChainCmd = program
         .command('router-freeze-chain')
         .description('[EMERGENCY] Freeze a chain on Router (Admin EOA only, cannot use governance)')
@@ -530,7 +529,6 @@ const programHandler = () => {
         .action((options) => mainProcessor(routerEnableRouting, options));
     addAmplifierOptions(routerEnableRoutingCmd);
 
-    // Multisig commands (Admin EOA or Governance)
     const multisigDisableSigningCmd = program
         .command('multisig-disable-signing')
         .description('[EMERGENCY] Disable signing on Multisig (Admin EOA or --governance)')
@@ -543,7 +541,6 @@ const programHandler = () => {
         .action((options) => mainProcessor(multisigEnableSigning, options));
     addAmplifierOptions(multisigEnableSigningCmd);
 
-    // ITS Hub commands (Admin EOA or Governance)
     const itsDisableExecutionCmd = program
         .command('its-disable-execution')
         .description('[EMERGENCY] Disable execution on ITS Hub (Admin EOA or --governance)')
