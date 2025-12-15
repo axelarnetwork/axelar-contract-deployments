@@ -69,7 +69,7 @@ sui client object "$GATEWAY_OWNERCAP_ID"
 
 ### Step 2: Transfer AxelarGateway UpgradeCap to new EOA
 
-| Network              | Current OwnerCap Holder                                              | Target Address                                                       |
+| Network              | Current UpgradeCap Holder                                              | Target Address                                                       |
 | -------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | **Devnet Amplifier** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df` |
 | **Stagenet**         | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x4a755c3a0d51e25f64542e8f39ec7db91ca7cc194b5aec7efb77d54c2b67ffee` |
