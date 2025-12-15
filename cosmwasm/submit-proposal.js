@@ -9,11 +9,11 @@ const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     CONTRACTS,
     fromHex,
+    toArray,
     getSalt,
     getAmplifierContractConfig,
     getCodeId,
     getCodeDetails,
-    getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiate,
@@ -24,10 +24,8 @@ const {
     isLegacySDK,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
-    validateItsChainChange,
 } = require('./utils');
-const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
-const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
+const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -282,7 +280,7 @@ const instantiate = async (client, config, options, _args, fee) => {
     }
 };
 
-const execute = async (client, config, options, _args, fee) => {
+const executeByGovernance = async (client, config, options, _args, fee) => {
     const { chainName } = options;
     let contractName = options.contractName;
 
@@ -300,7 +298,7 @@ const execute = async (client, config, options, _args, fee) => {
     const isLegacy = isLegacySDK(config);
 
     if (isLegacy) {
-        const msgs = Array.isArray(options.msg) ? options.msg : [options.msg];
+        const msgs = toArray(options.msg);
         if (msgs.length > 1) {
             throw new Error('Legacy SDK only supports one message per proposal. Please provide a single --msg flag.');
         }
@@ -314,7 +312,7 @@ const execute = async (client, config, options, _args, fee) => {
         return callSubmitProposal(client, config, options, proposal, fee);
     } else {
         const { msg } = options;
-        const msgs = Array.isArray(msg) ? msg : [msg];
+        const msgs = toArray(msg);
 
         const messages = msgs.map((msgJson) => {
             const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
@@ -327,79 +325,6 @@ const execute = async (client, config, options, _args, fee) => {
 
         return callSubmitProposal(client, config, options, messages, fee);
     }
-};
-
-const registerItsChain = async (client, config, options, _args, fee) => {
-    if (options.itsEdgeContract && options.chains.length > 1) {
-        throw new Error('Cannot use --its-edge-contract option with multiple chains.');
-    }
-
-    const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
-
-    if (!itsMsgTranslator) {
-        throw new Error('ItsMsgTranslator address is required for registerItsChain');
-    }
-
-    const chains = options.chains.map((chain) => {
-        const chainConfig = getChainConfig(config.chains, chain);
-        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
-
-        return {
-            chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContractAddress,
-            msg_translator: itsMsgTranslator,
-            truncation: {
-                max_uint_bits: maxUintBits,
-                max_decimals_when_truncating: maxDecimalsWhenTruncating,
-            },
-        };
-    });
-
-    if (options.update) {
-        for (let i = 0; i < options.chains.length; i++) {
-            const chain = options.chains[i];
-            await validateItsChainChange(client, config, chain, chains[i]);
-        }
-    }
-
-    const operation = options.update ? 'update' : 'register';
-
-    return execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'InterchainTokenService',
-            msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
-        },
-        undefined,
-        fee,
-    );
-};
-
-const registerProtocol = async (client, config, options, _args, fee) => {
-    const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
-    const router = config.axelar?.contracts?.Router?.address;
-    const multisig = config.axelar?.contracts?.Multisig?.address;
-
-    return execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'Coordinator',
-            msg: JSON.stringify({
-                register_protocol: {
-                    service_registry_address: serviceRegistry,
-                    router_address: router,
-                    multisig_address: multisig,
-                },
-            }),
-        },
-        undefined,
-        fee,
-    );
 };
 
 const paramChange = async (client, config, options, _args, fee) => {
@@ -445,78 +370,6 @@ const migrate = async (client, config, options, _args, fee) => {
         }
         return callSubmitProposal(client, config, options, [proposal], fee);
     }
-};
-
-const instantiateChainContracts = async (client, config, options, _args, fee) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
-    if (!coordinatorAddress) {
-        throw new Error('Coordinator contract address not found in config');
-    }
-
-    if (!admin) {
-        throw new Error('Admin address is required when instantiating chain contracts');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required when instantiating chain contracts');
-    }
-
-    const chainConfig = config.getChainConfig(chainName);
-    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
-
-    let gatewayConfig = config.getGatewayContract(chainName);
-    let votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    let multisigProverConfig = config.getMultisigProverContract(chainName);
-
-    if (options.fetchCodeId) {
-        gatewayConfig.codeId = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
-        votingVerifierConfig.codeId =
-            verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        multisigProverConfig.codeId =
-            proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
-    } else {
-        config.validateRequired(
-            gatewayConfig.codeId || gatewayCodeId,
-            'No Gateway code ID found. Use --gatewayCodeId or fetch the code ID from the network with --fetchCodeId',
-        );
-        config.validateRequired(
-            votingVerifierConfig.codeId || verifierCodeId,
-            'No VotingVerifier code ID found. Use --verifierCodeId or fetch the code ID from the network with --fetchCodeId',
-        );
-        config.validateRequired(
-            multisigProverConfig.codeId || proverCodeId,
-            'No MultisigProver code ID found. Use --proverCodeId or fetch the code ID from the network with --fetchCodeId',
-        );
-        gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
-        votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
-        multisigProverConfig.codeId = proverCodeId || multisigProverConfig.codeId;
-    }
-
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
-
-    const proposalId = await execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'Coordinator',
-            msg: JSON.stringify(message),
-        },
-        undefined,
-        fee,
-    );
-
-    if (!config.axelar.contracts.Coordinator.deployments) {
-        config.axelar.contracts.Coordinator.deployments = {};
-    }
-    config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: salt,
-        proposalId,
-    };
 };
 
 async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
@@ -580,19 +433,6 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
 
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
-const registerDeployment = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructRegisterDeploymentMessage(chainName);
-    const proposalId = await execute(
-        client,
-        config,
-        { ...options, contractName: 'Coordinator', msg: JSON.stringify(message) },
-        undefined,
-        fee,
-    );
-    return proposalId;
-};
 
 const programHandler = () => {
     const program = new Command();
@@ -639,45 +479,16 @@ const programHandler = () => {
         runAs: true,
     });
 
-    const executeCmd = program
-        .command('execute')
+    const executeByGovernanceCmd = program
+        .command('executeByGovernance')
         .description('Submit an execute wasm contract proposal')
-        .action((options) => mainProcessor(execute, options));
-    addAmplifierOptions(executeCmd, {
+        .action((options) => mainProcessor(executeByGovernance, options));
+    addAmplifierOptions(executeByGovernanceCmd, {
         contractOptions: true,
         executeProposalOptions: true,
         proposalOptions: true,
         runAs: true,
     });
-
-    const registerItsChainCmd = program
-        .command('its-hub-register-chains')
-        .description('Submit an execute wasm contract proposal to register or update an InterchainTokenService chain')
-        .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
-        .addOption(
-            new Option(
-                '--its-msg-translator <itsMsgTranslator>',
-                'address for the message translation contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(
-            new Option(
-                '--its-edge-contract <itsEdgeContract>',
-                'address for the ITS edge contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
-        .action((chains, options) => {
-            options.chains = chains;
-            return mainProcessor(registerItsChain, options);
-        });
-    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
-
-    const registerProtocolCmd = program
-        .command('register-protocol-contracts')
-        .description('Submit an execute wasm contract proposal to register the main protocol contracts (e.g. Router)')
-        .action((options) => mainProcessor(registerProtocol, options));
-    addAmplifierOptions(registerProtocolCmd, { proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')
@@ -698,24 +509,6 @@ const programHandler = () => {
         runAs: true,
     });
 
-    const instantiateChainContractsCmd = program
-        .command('instantiate-chain-contracts')
-        .description(
-            'Submit an execute wasm contract proposal to instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator',
-        )
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
-        .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
-        .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
-        .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
-        .action((options) => mainProcessor(instantiateChainContracts, options));
-    addAmplifierOptions(instantiateChainContractsCmd, {
-        proposalOptions: true,
-        runAs: true,
-        fetchCodeId: true,
-        instantiateOptions: true,
-    });
-
     addAmplifierOptions(
         program
             .command('coordinator-instantiate-permissions')
@@ -733,16 +526,6 @@ const programHandler = () => {
         },
     );
 
-    const registerDeploymentCmd = program
-        .command('register-deployment')
-        .description('Submit an execute wasm contract proposal to register a deployment')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .action((options) => mainProcessor(registerDeployment, options));
-    addAmplifierOptions(registerDeploymentCmd, {
-        proposalOptions: true,
-        runAs: true,
-    });
-
     program.parse();
 };
 
@@ -752,6 +535,6 @@ if (require.main === module) {
 
 module.exports = {
     confirmProposalSubmission,
-    execute,
+    executeByGovernance,
     migrate,
 };

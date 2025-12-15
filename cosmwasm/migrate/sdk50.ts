@@ -7,7 +7,7 @@ import { addOptionsToCommands, getAmplifierChains, printInfo, printWarn, prompt 
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor } from '../processor';
-import { execute, migrate } from '../submit-proposal';
+import { executeByGovernance, migrate } from '../submit-proposal';
 
 interface MigrationOptions extends Options {
     title?: string;
@@ -119,7 +119,7 @@ async function updateBlockTimeRelatedParameters(
     for (const { chainName, contractName, address, message } of votingVerifierMessages) {
         try {
             printInfo(`Proceeding with updating block-expiry parameter for chain ${chainName}...`);
-            await execute(
+            await executeByGovernance(
                 client,
                 config,
                 {
@@ -162,7 +162,7 @@ async function updateSigningParametersForMultisig(
 
     printInfo(`Proceeding with updating block-expiry parameter for Multisig...`);
 
-    await execute(
+    await executeByGovernance(
         client,
         config,
         {

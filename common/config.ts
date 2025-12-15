@@ -33,6 +33,7 @@ export interface NonEVMChainConfig {
     finality: string;
     approxFinalityWaitTime: number;
     contracts: Record<string, ContractConfig>;
+    deprecated?: boolean;
 }
 
 export type ChainConfig = NonEVMChainConfig | EVMChainConfig;
@@ -50,7 +51,6 @@ export interface ExplorerConfig {
 export interface DeploymentConfig {
     deploymentName: string;
     salt: string;
-    proposalId: string;
 }
 
 export interface ContractConfig {
@@ -435,10 +435,26 @@ export class ConfigManager implements FullConfig {
             );
         }
 
+        if (numNumerator <= 0 || numDenominator <= 0) {
+            throw new Error(
+                `Invalid threshold configuration for the chain. Numerator and denominator must be greater than 0, got: [${numNumerator}, ${numDenominator}]`,
+            );
+        }
+
         if (numNumerator > numDenominator) {
             throw new Error(`Invalid threshold configuration for the chain. Numerator must not be greater than denominator.`);
         }
         return [String(value[0]), String(value[1])];
+    }
+
+    public parseThreshold(value: string, configPath: string): [string, string] {
+        let parsedValue;
+        try {
+            parsedValue = JSON.parse(value);
+        } catch {
+            throw new Error(`Invalid threshold format. Expected JSON array, got: ${value}`);
+        }
+        return this.validateThreshold(parsedValue, configPath);
     }
 
     public getMultisigProverContractForChainType(chainType: string): string {

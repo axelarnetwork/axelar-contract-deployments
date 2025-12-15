@@ -163,6 +163,228 @@ async function itsChainConfig(client, config, _options, args, _fee) {
     }
 }
 
+// ==================== Emergency Query Functions ====================
+
+async function routerIsChainFrozen(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const routerAddress = config.getContractConfig('Router').address;
+
+    if (!routerAddress) {
+        printWarn('Router contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName, { skipCheck: true });
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(routerAddress, {
+            is_chain_frozen: { chain: chainConfig.axelarId },
+        });
+        printInfo(`Router: Is chain ${chainName} frozen?`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query is_chain_frozen for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function multisigIsSigningEnabled(client, config, _options, _args, _fee) {
+    const multisigAddress = config.getContractConfig('Multisig').address;
+
+    if (!multisigAddress) {
+        printWarn('Multisig contract address not found in config');
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(multisigAddress, {
+            is_signing_enabled: {},
+        });
+        printInfo('Multisig: Is signing enabled?', JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn('Failed to query is_signing_enabled', error?.message || String(error));
+    }
+}
+
+async function multisigAuthorizedCaller(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const multisigAddress = config.getContractConfig('Multisig').address;
+
+    if (!multisigAddress) {
+        printWarn('Multisig contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName, { skipCheck: true });
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(multisigAddress, {
+            authorized_caller: { chain_name: chainConfig.axelarId },
+        });
+        printInfo(`Multisig: Authorized caller for ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query authorized_caller for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function itsIsExecutionEnabled(client, config, _options, _args, _fee) {
+    const itsHubAddress = itsHubContractAddress(config.axelar);
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            is_execution_enabled: {},
+        });
+        printInfo('ITS Hub: Is execution enabled?', JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn('Failed to query is_execution_enabled', error?.message || String(error));
+    }
+}
+
+async function itsIsChainFrozen(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName, { skipCheck: true });
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            is_chain_frozen: { chain: chainConfig.axelarId },
+        });
+        printInfo(`ITS Hub: Is chain ${chainName} frozen?`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query is_chain_frozen for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function votingVerifierThreshold(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const votingVerifier = config.getVotingVerifierContract(chainName);
+    const votingVerifierAddress = votingVerifier?.address;
+
+    if (!votingVerifierAddress) {
+        printWarn(`VotingVerifier contract address not found for chain ${chainName}`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(votingVerifierAddress, {
+            voting_threshold: {},
+        });
+        printInfo(`VotingVerifier[${chainName}]: Voting threshold`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query voting_threshold for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function multisigProverSigningThreshold(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const multisigProver = config.getMultisigProverContract(chainName);
+    const multisigProverAddress = multisigProver?.address;
+
+    if (!multisigProverAddress) {
+        printWarn(`MultisigProver contract address not found for chain ${chainName}`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(multisigProverAddress, {
+            signing_threshold: {},
+        });
+        printInfo(`MultisigProver[${chainName}]: Signing threshold`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query signing_threshold for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function multisigProverCurrentVerifierSet(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const multisigProver = config.getMultisigProverContract(chainName);
+    const multisigProverAddress = multisigProver?.address;
+
+    if (!multisigProverAddress) {
+        printWarn(`MultisigProver contract address not found for chain ${chainName}`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(multisigProverAddress, {
+            current_verifier_set: {},
+        });
+        printInfo(`MultisigProver[${chainName}]: Current verifier set`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query current_verifier_set for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function multisigProverNextVerifierSet(client, config, _options, args, _fee) {
+    const [chainName] = args;
+    const multisigProver = config.getMultisigProverContract(chainName);
+    const multisigProverAddress = multisigProver?.address;
+
+    if (!multisigProverAddress) {
+        printWarn(`MultisigProver contract address not found for chain ${chainName}`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(multisigProverAddress, {
+            next_verifier_set: {},
+        });
+        printInfo(`MultisigProver[${chainName}]: Next verifier set`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query next_verifier_set for ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function contractAdmin(client, config, options, _args, _fee) {
+    const contractName = Array.isArray(options.contractName) ? options.contractName[0] : options.contractName;
+    const chainName = options.chainName;
+
+    let contractAddress: string | undefined;
+
+    if (chainName) {
+        contractAddress = config.getContractConfigByChain(contractName, chainName)?.address;
+    } else {
+        contractAddress = config.getContractConfig(contractName)?.address;
+    }
+
+    if (!contractAddress) {
+        printWarn(`Contract address not found for ${contractName}${chainName ? ` on ${chainName}` : ''}`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(contractAddress, {
+            admin: {},
+        });
+        printInfo(`${contractName}${chainName ? `[${chainName}]` : ''}: Admin`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to query admin for ${contractName}`, error?.message || String(error));
+    }
+}
+
+// ==================== End Emergency Query Functions ====================
+
 async function saveDeployedContracts(client, config, _options, args, _fee) {
     const [chainName] = args;
 
@@ -175,7 +397,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
     if (!deploymentName) {
         return printWarn(
             `No deployment found for chain ${chainName} in config.`,
-            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}'.`,
+            `Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}'.`,
         );
     }
 
@@ -194,7 +416,7 @@ async function saveDeployedContracts(client, config, _options, args, _fee) {
 
     if (!result.verifier_address || !result.prover_address || !result.gateway_address) {
         throw new Error(
-            `Missing config for ${chainName}. Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
+            `Missing config for ${chainName}. Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
         );
     }
 
@@ -359,6 +581,90 @@ const programHandler = () => {
     addAmplifierQueryOptions(itsChainConfigCmd);
     addAmplifierQueryOptions(saveDeployedContractsCmd);
     addAmplifierQueryContractOptions(contractInfoCmd);
+
+    // ==================== Emergency Query Commands ====================
+
+    const routerIsChainFrozenCmd = program
+        .command('router-is-chain-frozen <chainName>')
+        .description('Query if a chain is frozen on Router')
+        .action((chainName, options) => {
+            mainQueryProcessor(routerIsChainFrozen, options, [chainName]);
+        });
+    addAmplifierQueryOptions(routerIsChainFrozenCmd);
+
+    const multisigIsSigningEnabledCmd = program
+        .command('multisig-is-signing-enabled')
+        .description('Query if signing is enabled on Multisig')
+        .action((options) => {
+            mainQueryProcessor(multisigIsSigningEnabled, options, []);
+        });
+    addAmplifierQueryOptions(multisigIsSigningEnabledCmd);
+
+    const multisigAuthorizedCallerCmd = program
+        .command('multisig-authorized-caller <chainName>')
+        .description('Query authorized caller for a chain on Multisig')
+        .action((chainName, options) => {
+            mainQueryProcessor(multisigAuthorizedCaller, options, [chainName]);
+        });
+    addAmplifierQueryOptions(multisigAuthorizedCallerCmd);
+
+    const itsIsExecutionEnabledCmd = program
+        .command('its-is-execution-enabled')
+        .description('Query if execution is enabled on ITS Hub')
+        .action((options) => {
+            mainQueryProcessor(itsIsExecutionEnabled, options, []);
+        });
+    addAmplifierQueryOptions(itsIsExecutionEnabledCmd);
+
+    const itsIsChainFrozenCmd = program
+        .command('its-is-chain-frozen <chainName>')
+        .description('Query if a chain is frozen on ITS Hub')
+        .action((chainName, options) => {
+            mainQueryProcessor(itsIsChainFrozen, options, [chainName]);
+        });
+    addAmplifierQueryOptions(itsIsChainFrozenCmd);
+
+    const votingVerifierThresholdCmd = program
+        .command('voting-verifier-threshold <chainName>')
+        .description('Query voting threshold for a chain on VotingVerifier')
+        .action((chainName, options) => {
+            mainQueryProcessor(votingVerifierThreshold, options, [chainName]);
+        });
+    addAmplifierQueryOptions(votingVerifierThresholdCmd);
+
+    const multisigProverSigningThresholdCmd = program
+        .command('multisig-prover-signing-threshold <chainName>')
+        .description('Query signing threshold for a chain on MultisigProver')
+        .action((chainName, options) => {
+            mainQueryProcessor(multisigProverSigningThreshold, options, [chainName]);
+        });
+    addAmplifierQueryOptions(multisigProverSigningThresholdCmd);
+
+    const multisigProverCurrentVerifierSetCmd = program
+        .command('multisig-prover-current-verifier-set <chainName>')
+        .description('Query current verifier set for a chain on MultisigProver')
+        .action((chainName, options) => {
+            mainQueryProcessor(multisigProverCurrentVerifierSet, options, [chainName]);
+        });
+    addAmplifierQueryOptions(multisigProverCurrentVerifierSetCmd);
+
+    const multisigProverNextVerifierSetCmd = program
+        .command('multisig-prover-next-verifier-set <chainName>')
+        .description('Query next verifier set for a chain on MultisigProver')
+        .action((chainName, options) => {
+            mainQueryProcessor(multisigProverNextVerifierSet, options, [chainName]);
+        });
+    addAmplifierQueryOptions(multisigProverNextVerifierSetCmd);
+
+    const contractAdminCmd = program
+        .command('contract-admin')
+        .description('Query admin address for a contract (use --chainName for chain-specific contracts)')
+        .action((options) => {
+            mainQueryProcessor(contractAdmin, options, []);
+        });
+    addAmplifierQueryContractOptions(contractAdminCmd);
+
+    // ==================== End Emergency Query Commands ====================
 
     program.parse();
 };
