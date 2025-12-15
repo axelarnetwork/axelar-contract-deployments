@@ -25,9 +25,14 @@ const {
     httpGet,
     getContractJSON,
     getMultisigProof,
+    getGovernanceContract,
+    writeJSON,
+    getScheduleProposalType,
 } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
 const { getWallet, signTransaction } = require('./sign-utils');
+const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar } = require('./governance');
+const { createGMPProposalJSON, dateToEta } = require('../common/utils');
 
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IAxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarAmplifierGateway.json');
@@ -63,7 +68,7 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
 };
 
 async function processCommand(axelar, chain, _chains, options) {
-    const { privateKey, address, action, yes } = options;
+    const { privateKey, address, action, yes, symbols, limits } = options;
 
     const contracts = chain.contracts;
     const contractName = 'AxelarGateway';
@@ -367,6 +372,23 @@ async function processCommand(axelar, chain, _chains, options) {
             const currGovernance = await gateway.governance();
             printInfo('Current governance', currGovernance);
 
+            if (options.governance) {
+                const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
+
+                const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+                printInfo('Governance contract', governanceContract);
+                const eta = dateToEta(options.activationTime || '0');
+                const nativeValue = '0';
+
+                const proposalType = getScheduleProposalType(options, ProposalType, 'transferGovernance');
+                const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
+
+                printInfo('Governance target', gatewayAddress);
+                printInfo('Governance calldata', calldata);
+
+                return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
+
             if (!(currGovernance === walletAddress)) {
                 throw new Error('Wallet address is not the governor');
             }
@@ -445,6 +467,55 @@ async function processCommand(axelar, chain, _chains, options) {
             break;
         }
 
+        case 'setTokenMintLimits': {
+            if (contracts.AxelarGateway?.connectionType === 'amplifier') {
+                throw new Error('setTokenMintLimits is only available for consensus gateways');
+            }
+
+            if (!symbols) {
+                throw new Error('Missing symbols');
+            }
+
+            if (!limits) {
+                throw new Error('Missing limits');
+            }
+
+            const symbolsArray = JSON.parse(symbols);
+            const limitsArray = JSON.parse(limits);
+
+            validateParameters({
+                isNonEmptyStringArray: { symbolsArray },
+                isNumberArray: { limitsArray },
+            });
+
+            if (symbolsArray.length !== limitsArray.length) {
+                throw new Error('Token symbols and token limits length mismatch');
+            }
+
+            const currMintLimiter = await gateway.mintLimiter();
+            printInfo('Current mint limiter', currMintLimiter);
+
+            if (currMintLimiter.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error('Wallet address is not the mint limiter');
+            }
+
+            printInfo('Rate limit tokens', symbolsArray);
+            printInfo('Rate limit values', limitsArray);
+
+            const tx = await gateway.setTokenMintLimits(symbolsArray, limitsArray, gasOptions);
+            printInfo('Set token mint limits tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, 'TokenMintLimitUpdated');
+
+            if (!eventEmitted) {
+                printWarn('TokenMintLimitUpdated event not detected in receipt.');
+            }
+
+            break;
+        }
+
         case 'transferOperatorship': {
             if (contracts.AxelarGateway?.connectionType !== 'amplifier') {
                 throw new Error('Transfer operatorship is only available for Amplifier Gateway');
@@ -462,6 +533,23 @@ async function processCommand(axelar, chain, _chains, options) {
             const owner = await gateway.owner();
             const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
             const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (options.governance) {
+                const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
+
+                const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+                printInfo('Governance contract', governanceContract);
+                const eta = dateToEta(options.activationTime || '0');
+                const nativeValue = '0';
+
+                const proposalType = getScheduleProposalType(options, ProposalType, 'transferOperatorship');
+                const gmpPayload = encodeGovernanceProposal(proposalType, gatewayAddress, calldata, nativeValue, eta);
+
+                printInfo('Governance target', gatewayAddress);
+                printInfo('Governance calldata', calldata);
+
+                return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+            }
 
             if (!isCurrentOperator && !isOwner) {
                 throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
@@ -554,7 +642,41 @@ async function processCommand(axelar, chain, _chains, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    if (!options.governance) {
+        await mainProcessor(options, processCommand);
+        return;
+    }
+
+    const proposals = [];
+
+    await mainProcessor(options, (axelar, chain, chains, opts) =>
+        processCommand(axelar, chain, chains, opts).then((proposal) => {
+            if (proposal) {
+                proposals.push(proposal);
+            }
+        }),
+    );
+
+    if (proposals.length > 0) {
+        const proposal = {
+            title: 'Gateway Governance Proposal',
+            description: 'Gateway Governance Proposal',
+            contract_calls: proposals,
+        };
+
+        const proposalJSON = JSON.stringify(proposal, null, 2);
+
+        printInfo('Proposal', proposalJSON);
+
+        if (options.generateOnly) {
+            writeJSON(proposal, options.generateOnly);
+            printInfo('Proposal written to file', options.generateOnly);
+        } else {
+            if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
+                await submitProposalToAxelar(proposal, options);
+            }
+        }
+    }
 }
 
 if (require.main === module) {
@@ -563,6 +685,7 @@ if (require.main === module) {
     program.name('gateway').description('Script to perform gateway commands');
 
     addBaseOptions(program, { address: true });
+    addGovernanceOptions(program);
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('Multisig'));
     program.addOption(
@@ -582,6 +705,7 @@ if (require.main === module) {
                 'mintLimiter',
                 'transferMintLimiter',
                 'mintLimit',
+                'setTokenMintLimits',
                 'params',
                 'approveWithBatch',
                 'rotateSigners',
@@ -601,6 +725,8 @@ if (require.main === module) {
     program.addOption(new Option('--destinationChain <destinationChain>', 'GMP destination chain'));
     program.addOption(new Option('--batchID <batchID>', 'EVM batch ID').default(''));
     program.addOption(new Option('--symbol <symbol>', 'EVM token symbol'));
+    program.addOption(new Option('--symbols <symbols>', 'EVM token symbols (JSON array)'));
+    program.addOption(new Option('--limits <limits>', 'EVM token mint limits (JSON array)'));
     program.addOption(new Option('--multisigSessionId <multisigSessionId>', 'Amplifier multisig proof session ID'));
     program.addOption(new Option('--newOperator <newOperator>', 'new operator address for transferOperatorship action'));
 
