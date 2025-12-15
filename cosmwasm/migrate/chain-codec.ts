@@ -136,7 +136,7 @@ async function storeChainCodecs(client: ClientManager, config: ConfigManager, op
     }
     const proposalId = await submitProposal(client, config, options, proposal, fee);
     contractNames.forEach((name) => {
-        const contractConfig = config.getContractConfig(contractName);
+        const contractConfig = config.getContractConfig(name);
         contractConfig.storeInstantiateProposalId = proposalId;
         contractConfig.storeCodeProposalCodeHash = createHash('sha256')
             .update(readContractCode({ ...options, contractName }))
