@@ -668,7 +668,7 @@ const programHandler = () => {
 
     const contractAdminCmd = program
         .command('contract-admin')
-        .description('Query admin address for a contract')
+        .description('Query admin address for a contract (use --chainName for chain-specific contracts)')
         .action((options) => {
             mainQueryProcessor(contractAdmin, options, []);
         });
