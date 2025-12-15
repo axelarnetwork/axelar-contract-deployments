@@ -119,6 +119,7 @@ Actions that can be executed directly from operator wallet. Immediate execution,
 - **Unfreeze Tokens**: `evm/its.js unfreeze-tokens <tokenId> <chain>` - [Unfreeze tokens](./rate-limits.md#5-unfreeze-tokens-on-a-chain)
 - **Transfer Operatorship**: `evm/its.js transfer-operatorship <newOperator>` - [Transfer operatorship](../README.md#transfer-operatorship-1) in ITS operator commands
 - **Propose Operatorship**: `evm/its.js propose-operatorship <newOperator>` - [Propose operatorship](../README.md#propose-operatorship)
+- **Set Pause Status**: `evm/its.js set-pause-status <true/false>` - [Set pause status (pause/unpause)](./pause-unpause.md) (owner or operator)
 
 ### Owner Actions
 
@@ -126,7 +127,7 @@ Actions that can be executed directly from owner wallet. Immediate execution, no
 
 - **Set Trusted Chains**: `evm/its.js set-trusted-chains <chains...>` - [Set trusted chains](../README.md#set-trusted-chains)
 - **Remove Trusted Chains**: `evm/its.js remove-trusted-chains <chains...>` - [Remove trusted chains](../README.md#remove-trusted-chains)
-- **Set Pause Status**: `evm/its.js set-pause-status <true/false>` - [Set pause status (pause/unpause)](./pause-unpause.md)
+- **Set Pause Status**: `evm/its.js set-pause-status <true/false>` - [Set pause status (pause/unpause)](./pause-unpause.md) (owner or operator)
 - **Migrate Interchain Token**: `evm/its.js migrate-interchain-token <tokenId>` - [Migrate interchain token](../README.md#migrate-interchain-token)
 - For ownership management actions, see [Contract Ownership Management](./contract-ownership.md).
 
