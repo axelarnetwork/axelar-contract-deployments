@@ -1413,17 +1413,17 @@ dependencies = [
  "k256",
  "lazy_static",
  "regex",
- "reqwest 0.12.25",
+ "reqwest 0.12.26",
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "solana-axelar-gas-service 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gateway 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gas-service 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gateway 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-axelar-governance",
- "solana-axelar-its 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-its 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-axelar-memo",
- "solana-axelar-operators 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-std 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-operators 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-std 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-clap-v3-utils",
  "solana-cli-config",
  "solana-client",
@@ -2708,9 +2708,9 @@ dependencies = [
 
 [[package]]
 name = "governance-gmp"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "661d49fb040fa1511d7373e0d70331e0bc3234c720e652daa9f73c28f9c17035"
+checksum = "6ad1af1d66ff44e2fa2bebc25bd061ab87776618c09cb6282dc27c5a92efafc1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3345,9 +3345,9 @@ dependencies = [
 
 [[package]]
 name = "interchain-token-transfer-gmp"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ad725cf27caece0989aa52fc44804110be095b1de7f303be3cd92930b3bb300"
+checksum = "232253feded97b6b6afa81892a0a8de68dc86d990e91ddbc4117865aebc23770"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3356,8 +3356,8 @@ dependencies = [
 
 [[package]]
 name = "interchain-token-transfer-gmp"
-version = "0.1.2"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.3"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4312,9 +4312,9 @@ dependencies = [
 
 [[package]]
 name = "program-utils"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83f7a18914170d89da1e0c6eb9d7dd5d240b5f7acc57ea0a40051c53a91e4656"
+checksum = "c39579168b9f3d306a1837c3068b6ccd240eacd92d8a90c641985d3ee3255f50"
 dependencies = [
  "mpl-token-metadata",
  "solana-program",
@@ -4324,8 +4324,8 @@ dependencies = [
 
 [[package]]
 name = "program-utils"
-version = "0.1.3"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.4"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "mpl-token-metadata",
  "solana-program",
@@ -4754,9 +4754,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.25"
+version = "0.12.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6eff9328d40131d43bd911d42d79eb6a47312002a4daefc9e37f17e74a7701a"
+checksum = "3b4c14b2d9afca6a60277086b0cc6a6ae0b568f6f7916c943a8cdc79f8be240f"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -4807,7 +4807,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "http 1.4.0",
- "reqwest 0.12.25",
+ "reqwest 0.12.26",
  "serde",
  "thiserror 1.0.69",
  "tower-service",
@@ -5722,32 +5722,32 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gas-service"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc31b83233f9c7651e7e377e595555887adf8a551165a9052bd36e8c128e96e5"
+checksum = "44879c55c8b10bade08848a9af6c2621344b536112865459f0837090ae862f05"
 dependencies = [
  "anchor-lang",
  "bytemuck",
- "program-utils 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-operators 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-operators 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-axelar-gas-service"
-version = "0.1.5"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.6"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "anchor-lang",
  "bytemuck",
- "program-utils 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-operators 0.1.5 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-operators 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
 ]
 
 [[package]]
 name = "solana-axelar-gateway"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40c605a63bbd34b918e919997b302b659ddfb80d9072f0de57f110d533a745bd"
+checksum = "65ffecc055d0a03cf8f81246861f1ef0d023044b202e64de8ecd3856771470ba"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -5757,14 +5757,14 @@ dependencies = [
  "libsecp256k1",
  "num-derive 0.4.2",
  "num-traits",
- "program-utils 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-std 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-std 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-axelar-gateway"
-version = "0.1.5"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.6"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -5774,98 +5774,98 @@ dependencies = [
  "libsecp256k1",
  "num-derive 0.4.2",
  "num-traits",
- "program-utils 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-std 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-std 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
 ]
 
 [[package]]
 name = "solana-axelar-governance"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06ef96f8fc51cc91336acd1dd295e251c8838ee7260a8eb8a9fc56aa30c3c92c"
+checksum = "0139cfc8a9c660056b5c5aa2d714cedbc6c07f14d3d7f1f82438e6798420dfa4"
 dependencies = [
  "alloy-sol-types",
  "anchor-lang",
  "governance-gmp",
- "program-utils 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gateway 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gateway 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-axelar-its"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce5c8db6f05124c32e1987cbdfcf8fd883ea79836b30848b8d97a69f62098949"
+checksum = "c155b9f7cb7b754f8ea78cd4fd68f97f2753b084917e6f9bfeb5a5da4570e882"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
  "anchor-spl",
  "bitflags 2.10.0",
  "bytemuck",
- "interchain-token-transfer-gmp 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "interchain-token-transfer-gmp 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "mpl-token-metadata",
- "program-utils 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gas-service 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gateway 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-operators 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gas-service 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gateway 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-operators 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-token-metadata-interface 0.6.0",
 ]
 
 [[package]]
 name = "solana-axelar-its"
-version = "0.1.5"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.6"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
  "anchor-spl",
  "bitflags 2.10.0",
  "bytemuck",
- "interchain-token-transfer-gmp 0.1.2 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "interchain-token-transfer-gmp 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
  "mpl-token-metadata",
- "program-utils 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-gas-service 0.1.5 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-gateway 0.1.5 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-operators 0.1.5 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-gas-service 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-gateway 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-operators 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
  "spl-token-metadata-interface 0.6.0",
 ]
 
 [[package]]
 name = "solana-axelar-memo"
-version = "0.1.5"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.6"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "program-utils 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-gateway 0.1.5 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-its 0.1.5 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-gateway 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-its 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
 ]
 
 [[package]]
 name = "solana-axelar-operators"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "554bd2c8d38b4e2b464c764b5f5ccc4e0b317b35663778282364afa43561c05c"
+checksum = "b6b0552a823dfbe7a25571eb9678fbf04b2aa4a16d85ed94e71b008f6c8ff208"
 dependencies = [
  "anchor-lang",
- "program-utils 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-axelar-operators"
-version = "0.1.5"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.6"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "anchor-lang",
- "program-utils 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
 ]
 
 [[package]]
 name = "solana-axelar-std"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "263c63cea60d2f8bfe6559a425620d85eeeeb2cb9736838bd71ab620abea4021"
+checksum = "c21a7b7466230e3becfc98ed62d201ed40192d044746e23d1dfc720f1d4290dc"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
@@ -5882,8 +5882,8 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-std"
-version = "0.1.3"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#8d4c3b82f9f1fc5ad7cb642fed0666058ce2e1fb"
+version = "0.1.4"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
@@ -6645,7 +6645,7 @@ dependencies = [
  "crossbeam-channel",
  "gethostname",
  "log",
- "reqwest 0.12.25",
+ "reqwest 0.12.26",
  "solana-cluster-type",
  "solana-sha256-hasher",
  "solana-time-utils",
@@ -7157,7 +7157,7 @@ dependencies = [
  "futures",
  "indicatif",
  "log",
- "reqwest 0.12.25",
+ "reqwest 0.12.26",
  "reqwest-middleware",
  "semver 1.0.27",
  "serde",
@@ -7192,7 +7192,7 @@ checksum = "2dbc138685c79d88a766a8fd825057a74ea7a21e1dd7f8de275ada899540fff7"
 dependencies = [
  "anyhow",
  "jsonrpc-core",
- "reqwest 0.12.25",
+ "reqwest 0.12.26",
  "reqwest-middleware",
  "serde",
  "serde_derive",

@@ -16,6 +16,7 @@ use solana_axelar_std::U256;
 use solana_axelar_std::execute_data::{
     ExecuteData, MerklizedPayload, Payload, encode, hash_payload,
 };
+use solana_axelar_std::PayloadType;
 use solana_axelar_std::hasher::Hasher;
 use solana_axelar_std::message::{CrossChainId, MerklizedMessage, Message, MessageLeaf, Messages};
 use solana_axelar_std::pubkey::{PublicKey, Signature};
@@ -479,15 +480,22 @@ fn append_verification_flow_instructions(
         &execute_data.signing_verifier_set_merkle_root,
     );
 
+    let payload_type = match &execute_data.payload_items {
+        MerklizedPayload::NewMessages { .. } => PayloadType::ApproveMessages,
+        MerklizedPayload::VerifierSetRotation { .. } => PayloadType::RotateSigners,
+    };
+
     let (verification_session_pda, _bump) =
         solana_axelar_gateway::SignatureVerificationSessionData::find_pda(
             &execute_data.payload_merkle_root,
+            payload_type,
             &execute_data.signing_verifier_set_merkle_root,
         );
 
     let init_session_ix_data =
         solana_axelar_gateway::instruction::InitializePayloadVerificationSession {
             merkle_root: execute_data.payload_merkle_root,
+            payload_type,
         }
         .data();
 

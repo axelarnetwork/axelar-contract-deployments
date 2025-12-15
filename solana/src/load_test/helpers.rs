@@ -12,7 +12,7 @@ use crate::config::Config;
 
 pub(crate) fn load_default_keypair(fee_payer_path: Option<&str>) -> eyre::Result<Keypair> {
     let key_path = if let Some(path) = fee_payer_path {
-        path.to_string()
+        path.to_owned()
     } else {
         let config = solana_cli_config::CONFIG_FILE
             .as_ref()
