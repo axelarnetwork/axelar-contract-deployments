@@ -2,8 +2,8 @@
   "chains": {
     "core-avalanche": {
       "start": 0,
-      "end": 48770730,
-      "max": 48770730,
+      "end": 49099284,
+      "max": 49099284,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax-test.network/ext/bc/C/rpc"
@@ -11,8 +11,8 @@
     },
     "core-ethereum": {
       "start": 0,
-      "end": 9804509,
-      "max": 9804509,
+      "end": 9846868,
+      "max": 9846868,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
@@ -20,8 +20,8 @@
     },
     "core-optimism": {
       "start": 0,
-      "end": 36750539,
-      "max": 36750539,
+      "end": 37005785,
+      "max": 37005785,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"

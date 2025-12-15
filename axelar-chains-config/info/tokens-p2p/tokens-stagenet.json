@@ -2,8 +2,8 @@
   "chains": {
     "avalanche": {
       "start": 0,
-      "end": 48770711,
-      "max": 48770711,
+      "end": 49099308,
+      "max": 49099308,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax-test.network/ext/bc/C/rpc"
@@ -11,8 +11,8 @@
     },
     "fantom": {
       "start": 0,
-      "end": 72001572,
-      "max": 72001572,
+      "end": 72008485,
+      "max": 72008485,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.fantom.network"
@@ -20,8 +20,8 @@
     },
     "moonbeam": {
       "start": 0,
-      "end": 14463309,
-      "max": 14463309,
+      "end": 14515900,
+      "max": 14515900,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.api.moonbase.moonbeam.network"
@@ -38,8 +38,8 @@
     },
     "kava": {
       "start": 0,
-      "end": 21096849,
-      "max": 21096849,
+      "end": 21198682,
+      "max": 21198682,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://evm.testnet.kava.io"
@@ -47,8 +47,8 @@
     },
     "ethereum-sepolia": {
       "start": 0,
-      "end": 9804506,
-      "max": 9804506,
+      "end": 9846870,
+      "max": 9846870,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.drpc.org"
@@ -56,8 +56,8 @@
     },
     "arbitrum-sepolia": {
       "start": 0,
-      "end": 223186569,
-      "max": 223186569,
+      "end": 224876590,
+      "max": 224876590,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia-rollup.arbitrum.io/rpc"
@@ -65,8 +65,8 @@
     },
     "linea-sepolia": {
       "start": 0,
-      "end": 21809603,
-      "max": 21809603,
+      "end": 22063431,
+      "max": 22063431,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.linea.build"
@@ -74,8 +74,8 @@
     },
     "polygon-sepolia": {
       "start": 0,
-      "end": 30235620,
-      "max": 30235620,
+      "end": 30574387,
+      "max": 30574387,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc-amoy.polygon.technology/"
@@ -83,8 +83,8 @@
     },
     "base-sepolia": {
       "start": 0,
-      "end": 34767645,
-      "max": 34767645,
+      "end": 35022922,
+      "max": 35022922,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.base.org"
@@ -92,8 +92,8 @@
     },
     "blast-sepolia": {
       "start": 0,
-      "end": 30308445,
-      "max": 30308445,
+      "end": 30563723,
+      "max": 30563723,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.blast.io/"
@@ -101,8 +101,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 2421519,
-      "max": 2421519,
+      "end": 2676796,
+      "max": 2676796,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.testnet.frax.com"
@@ -110,8 +110,8 @@
     },
     "mantle-sepolia": {
       "start": 0,
-      "end": 31879452,
-      "max": 31879452,
+      "end": 32134729,
+      "max": 32134729,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.sepolia.mantle.xyz"
@@ -119,8 +119,8 @@
     },
     "optimism-sepolia": {
       "start": 0,
-      "end": 36750519,
-      "max": 36750519,
+      "end": 37005797,
+      "max": 37005797,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://sepolia.optimism.io"
@@ -4809,6 +4809,21 @@
           "tokenAddress": "0x3215543BDb8E2CC9bDDFCa7eb1B20441CDDCeA31",
           "decimals": 6,
           "registrationTimestamp": 1733854123
+        }
+      ]
+    },
+    "0xa2012a997391ffaf7fb6b9adfbf2c8c37024e9b99adee674d5bf579eefc42013": {
+      "tokenId": "0xa2012a997391ffaf7fb6b9adfbf2c8c37024e9b99adee674d5bf579eefc42013",
+      "originAxelarChainId": "avalanche",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "avalanche",
+          "tokenId": "0xa2012a997391ffaf7fb6b9adfbf2c8c37024e9b99adee674d5bf579eefc42013",
+          "tokenAddress": "0x88902ebDe2d578262EB8A4530D9e1231433Dca8C",
+          "decimals": 18,
+          "registrationTimestamp": 1765372910
         }
       ]
     }
