@@ -30,7 +30,7 @@ const {
     getNetworkPassphrase,
     getAuthValidUntilLedger,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config.chains, args);
@@ -186,15 +186,16 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasAmount = options.gasAmount;
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
-        isValidNumber: { gasAmount },
     });
+
+    const { gasFeeValue } = await estimateITSFee(chain, destinationChain, options.env, 'InterchainTransfer', options.gasAmount, config.axelar);
 
     const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
+    printInfo('Gas fee value', gasFeeValue);
 
     const operation = contract.call(
         'interchain_transfer',
@@ -204,7 +205,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         hexToScVal(itsDestinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
         data,
-        tokenToScVal(gasTokenAddress, gasAmount),
+        tokenToScVal(gasTokenAddress, gasFeeValue),
     );
 
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
@@ -342,22 +343,32 @@ async function deployedTokenManager(wallet, _config, chain, contract, args, opti
     return tokenManagerAddress;
 }
 
-async function registerTokenMetadata(wallet, _config, chain, contract, args, options) {
+async function registerTokenMetadata(wallet, config, chain, contract, args, options) {
     const [tokenAddress] = args;
     const spender = addressToScVal(wallet.publicKey());
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasAmount = options.gasAmount;
+    const destinationChain = 'axelar';
 
     validateParameters({
         isValidStellarAddress: { tokenAddress, gasTokenAddress },
-        isValidNumber: { gasAmount },
     });
+
+    const { gasFeeValue } = await estimateITSFee(
+        chain,
+        destinationChain,
+        options.env,
+        'TokenMetadataRegistered',
+        options.gasAmount,
+        config.axelar,
+    );
+
+    printInfo('Gas fee value', gasFeeValue);
 
     const operation = contract.call(
         'register_token_metadata',
         nativeToScVal(tokenAddress, { type: 'address' }),
         spender,
-        tokenToScVal(gasTokenAddress, gasAmount),
+        tokenToScVal(gasTokenAddress, gasFeeValue),
     );
 
     await broadcast(operation, wallet, chain, 'Token Metadata Registered', options);
@@ -395,11 +406,9 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     const [salt, destinationChain, destinationTokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasAmount = options.gasAmount;
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
-        isValidNumber: { gasAmount },
         isNonEmptyString: { destinationChain, destinationTokenAddress, type },
     });
     validateChain(config.chains, destinationChain);
@@ -407,8 +416,11 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
     const tokenManagerType = validateLinkType(chainType, type);
 
+    const { gasFeeValue } = await estimateITSFee(chain, destinationChain, options.env, 'LinkToken', options.gasAmount, config.axelar);
+
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
+    printInfo('Gas fee value', gasFeeValue);
 
     const itsDestinationTokenAddress = encodeITSDestinationToken(config.chains, destinationChain, destinationTokenAddress);
     printInfo('Human-readable destination token address', destinationTokenAddress);
@@ -427,7 +439,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
         hexToScVal(itsDestinationTokenAddress),
         nativeToScVal(tokenManagerType, { type: 'u32' }),
         operatorBytes,
-        tokenToScVal(gasTokenAddress, gasAmount),
+        tokenToScVal(gasTokenAddress, gasFeeValue),
     );
 
     const returnValue = await broadcast(operation, wallet, chain, 'Token Linked', options);
@@ -537,7 +549,7 @@ if (require.main === module) {
         .command('register-token-metadata <tokenAddress>')
         .description('register token metadata')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((tokenAddress, options) => {
             mainProcessor(registerTokenMetadata, [tokenAddress], options);
         });
@@ -555,7 +567,7 @@ if (require.main === module) {
         .description('link token')
         .addArgument(new Argument('<type>', 'token manager type').choices(Object.keys(tokenManagerTypes)))
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .addOption(new Option('--operator <operator>', 'operator for the token id on the destination chain'))
         .action((salt, destinationChain, destinationTokenAddress, type, options) => {
             mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, type], options);
@@ -566,7 +578,7 @@ if (require.main === module) {
         .description('interchain transfer')
         .addOption(new Option('--data <data>', 'data').default(''))
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((tokenId, destinationChain, destinationAddress, amount, options) => {
             mainProcessor(interchainTransfer, [tokenId, destinationChain, destinationAddress, amount], options);
         });
