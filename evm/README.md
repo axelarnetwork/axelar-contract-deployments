@@ -31,7 +31,7 @@ ts-node evm/deploy-contract.js -c Create3Deployer -m create2
 
 Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
 
-`ts-node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
+`ts-node evm/deploy-amplifier-gateway.js`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
@@ -47,30 +47,45 @@ ts-node evm/gateway.js --action submitProof --multisigSessionId [session id]
 
 Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
 
-`ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+`ts-node evm/deploy-gateway-v6.2.x.js`
 
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
 2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
-3. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy` OR
-4. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy --reuseHelpers`
+3. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy` OR
+4. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy --reuseHelpers`
 5. This sets the new `implementation` in the chain config.
 6. Upgrade to the new implementation contract
-   `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --upgrade`
+   `ts-node evm/deploy-gateway-v6.2.x.js --upgrade`
 
 ## AxelarGasService and AxelarDepositService
 
-1. Run the following depending on the service,
-   `ts-node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
+1. Run the following depending on the service,  
+   `ts-node evm/deploy-upgradable.js -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
+3. To reuse the existing proxy, you can:
+   - Deploy new implementation contract:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --reuseProxy
+     ```
+   - Perform the upgrade using the stored implementation address:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --upgrade
+     ```
 
 ## InterchainTokenService
 
 To test the Interchain Token Service deployment
 
 ```bash
-ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
+ts-node evm/deploy-its -s '[salt]' --proxySalt 'v1.0.0' -m create2
 ```
 
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
