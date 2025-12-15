@@ -621,6 +621,7 @@ fn call_contract(
 
     let accounts = vec![
         AccountMeta::new(*fee_payer, true),
+        AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(gateway_config_pda, false),
         AccountMeta::new_readonly(event_authority_pda, false),
         AccountMeta::new_readonly(solana_axelar_gateway::id(), false),

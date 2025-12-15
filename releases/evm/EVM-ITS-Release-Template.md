@@ -108,3 +108,32 @@ ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient
 # Transfer token back from remote chain
 ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
 ```
+
+## Ownership and Operator Roles Checklist
+
+The following steps should be performed for role transfers after deploying contracts on a new chain.
+
+1. **Transfer InterchainTokenService owner role to AxelarServiceGovernance**  
+   (only if `contracts.InterchainTokenService` exists for the chain)
+
+    ```bash
+    AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+    ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
+    ts-node evm/ownership.js -c InterchainTokenService --action owner 
+    ```
+
+2. **Transfer InterchainTokenService operator role to Rate Limiter EOA**  
+   (only if ITS exists; set operator first if zero address)
+
+    | Network              | `RATE_LIMITER_EOA_ADDRESS`              |
+    | -------------------- | --------------------------------------- |
+    | **Devnet-amplifier** | `<RATE_LIMITER_EOA_ADDRESS>`            |
+    | **Stagenet**         | `<RATE_LIMITER_EOA_ADDRESS>`            |
+    | **Testnet**          | `<RATE_LIMITER_EOA_ADDRESS>`            |
+    | **Mainnet**          | `<RATE_LIMITER_EOA_ADDRESS>`            |
+
+    ```bash
+    RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
+    ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA 
+    ts-node evm/its.js operator
+    ```
