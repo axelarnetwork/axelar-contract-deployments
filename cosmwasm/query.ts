@@ -271,7 +271,7 @@ async function queryAllContractVersions(
     );
 }
 
-export async function multisigProof(client: CosmWasmClient, config: ConfigManager, _options: Options, args: string[]): Promise<any> {
+export async function multisigProof(client: CosmWasmClient, config: ConfigManager, _options: Options, args: string[]) {
     try {
         const chain = args[0];
         const session_id = args[1];

@@ -72,7 +72,7 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
     configManager.saveConfig();
 }
 
-export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]): Promise<any> {
+export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
     const { rpc: axelarNode } = options;
     const { configManager, fee } = prepareProcessor(options);
     const axelarNodeFromConfig = configManager.axelar.rpc;
