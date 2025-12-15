@@ -129,27 +129,35 @@ async function deployInterchainToken(wallet, _config, chain, contract, args, opt
     printInfo('tokenId', serializeValue(response.value()));
 }
 
-async function deployRemoteInterchainToken(wallet, _config, chain, contract, args, options) {
+async function deployRemoteInterchainToken(wallet, config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasAmount = options.gasAmount;
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
-        isValidNumber: { gasAmount },
     });
+
+    const { gasFeeValue } = await estimateITSFee(
+        chain,
+        destinationChain,
+        options.env,
+        'InterchainTokenDeploymentStarted',
+        options.gasAmount,
+        config.axelar,
+    );
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
+    printInfo('Gas fee value', gasFeeValue);
 
     const operation = contract.call(
         'deploy_remote_interchain_token',
         caller,
         hexToScVal(saltBytes32),
         nativeToScVal(destinationChain, { type: 'string' }),
-        tokenToScVal(gasTokenAddress, gasAmount),
+        tokenToScVal(gasTokenAddress, gasFeeValue),
     );
 
     const response = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
@@ -165,23 +173,32 @@ async function registerCanonicalToken(wallet, _config, chain, contract, args, op
     printInfo('tokenId', serializeValue(response.value()));
 }
 
-async function deployRemoteCanonicalToken(wallet, _config, chain, contract, args, options) {
+async function deployRemoteCanonicalToken(wallet, config, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
     const [tokenAddress, destinationChain] = args;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasAmount = options.gasAmount;
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
-        isValidNumber: { gasAmount },
     });
+
+    const { gasFeeValue } = await estimateITSFee(
+        chain,
+        destinationChain,
+        options.env,
+        'InterchainTokenDeploymentStarted',
+        options.gasAmount,
+        config.axelar,
+    );
+
+    printInfo('Gas fee value', gasFeeValue);
 
     const operation = contract.call(
         'deploy_remote_canonical_token',
         nativeToScVal(tokenAddress, { type: 'address' }),
         nativeToScVal(destinationChain, { type: 'string' }),
         spenderScVal,
-        tokenToScVal(gasTokenAddress, gasAmount),
+        tokenToScVal(gasTokenAddress, gasFeeValue),
     );
 
     const response = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
@@ -538,7 +555,7 @@ if (require.main === module) {
         .command('deploy-remote-interchain-token <salt> <destinationChain>')
         .description('deploy remote interchain token')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((salt, destinationChain, options) => {
             mainProcessor(deployRemoteInterchainToken, [salt, destinationChain], options);
         });
@@ -554,7 +571,7 @@ if (require.main === module) {
         .command('deploy-remote-canonical-token <tokenAddress> <destinationChain>')
         .description('deploy remote canonical token')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((tokenAddress, destinationChain, options) => {
             mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
         });
