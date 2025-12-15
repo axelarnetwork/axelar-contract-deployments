@@ -358,30 +358,12 @@ async function multisigProverNextVerifierSet(client, config, _options, args, _fe
 
 async function contractAdmin(client, config, options, _args, _fee) {
     const contractName = Array.isArray(options.contractName) ? options.contractName[0] : options.contractName;
-    let chainName = options.chainName;
+    const chainName = options.chainName;
 
     let contractAddress: string | undefined;
 
-    // XRPL variant contracts have chain-specific structure with 'xrpl' as the only chain
-    const xrplVariantContracts = ['XrplVotingVerifier', 'XrplGateway', 'XrplMultisigProver'];
-    if (xrplVariantContracts.includes(contractName) && !chainName) {
-        chainName = 'xrpl';
-    }
-
     if (chainName) {
-        if (contractName === 'VotingVerifier' || contractName === 'XrplVotingVerifier') {
-            contractAddress = config.getContractConfigByChain(contractName, chainName)?.address;
-        } else if (contractName === 'MultisigProver' || contractName === 'XrplMultisigProver') {
-            contractAddress = config.getContractConfigByChain(contractName, chainName)?.address;
-        } else if (contractName === 'Gateway' || contractName === 'XrplGateway') {
-            contractAddress = config.getContractConfigByChain(contractName, chainName)?.address;
-        } else {
-            try {
-                contractAddress = config.getContractConfigByChain(contractName, chainName)?.address;
-            } catch {
-                contractAddress = config.getContractConfig(contractName)?.address;
-            }
-        }
+        contractAddress = config.getContractConfigByChain(contractName, chainName)?.address;
     } else {
         contractAddress = config.getContractConfig(contractName)?.address;
     }
