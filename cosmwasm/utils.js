@@ -122,6 +122,13 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
+const getUnitDenom = (config) => {
+    const {
+        axelar: { unitDenom },
+    } = config;
+    return unitDenom;
+};
+
 const validateGovernanceMode = (config, contractName, chainName) => {
     const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
     const governanceAddress = contractConfig.governanceAddress;
@@ -1456,15 +1463,11 @@ const submitCallContracts = async (client, config, options, proposalData, fee) =
         throw new Error('Invalid proposal data: must have title, description, and contract_calls');
     }
 
-    // Encode CallContractsProposal content (axelar.axelarnet.v1beta1.CallContractsProposal)
     const content = encodeCallContracts(proposalData);
 
-    const {
-        axelar: { tokenSymbol },
-    } = config;
     const { deposit, title, description } = options;
 
-    const initialDeposit = [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }];
+    const initialDeposit = [{ denom: getUnitDenom(config), amount: deposit }];
 
     const accounts = client.accounts || (await client.signer.getAccounts());
     const [account] = accounts;
@@ -1697,5 +1700,6 @@ module.exports = {
     validateItsChainChange,
     isLegacySDK,
     validateGovernanceMode,
+    getUnitDenom,
     GOVERNANCE_MODULE_ADDRESS,
 };
