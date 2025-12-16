@@ -54,7 +54,7 @@ INIT_ADDRESSES=xyz
     RPC=$(cat ./axelar-chains-config/info/$ENV.json | jq -r '.axelar.rpc')
     HASHES=($(cat ./axelar-chains-config/info/$ENV.json | jq -r '.axelar.contracts.ChainCodecSui.storeCodeProposalCodeHash + " " + .axelar.contracts.ChainCodecStellar.storeCodeProposalCodeHash + " " + .axelar.contracts.ChainCodecEvm.storeCodeProposalCodeHash'))
 
-    CODE_JSON=$(axelard q --node "$RPC" wasm list-code -o json)
+    CODE_JSON=$(axelard q --node "$RPC" wasm list-code --reverse -o json)
     for HASH in $HASHES; do
         echo "Hash: $HASH"
         CODE_ID=$(echo "$CODE_JSON" | jq -r '.code_infos[] | select(.data_hash | ascii_downcase == "'$HASH'").code_id')
