@@ -219,7 +219,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
 
 **Verification:**
 ```bash
-ts-node cosmwasm/query.ts contract-info -c <ContractName>
+ts-node cosmwasm/query.ts contract-info -c <ContractName> -e <env>
 # Verify version matches expected
 ```
 
@@ -520,7 +520,7 @@ ts-node cosmwasm/contract.ts its-hub-register-chains <chain-name> \
 
 **Verification:**
 ```bash
-ts-node cosmwasm/query.ts its-chain-config <chain-name>
+ts-node cosmwasm/query.ts its-chain-config <chain-name> -e <env>
 ```
 
 ---
@@ -536,9 +536,9 @@ ts-node cosmwasm/query.ts its-chain-config <chain-name>
 
 **Step 1: Query current configuration**
 ```bash
-ts-node cosmwasm/query.ts its-chain-config <chain-name>
-ts-node cosmwasm/query.ts contract-info -c <ContractName>
-ts-node cosmwasm/query.ts rewards <chain-name>
+ts-node cosmwasm/query.ts its-chain-config <chain-name> -e <env>
+ts-node cosmwasm/query.ts contract-info -c <ContractName> -e <env>
+ts-node cosmwasm/query.ts rewards <chain-name> -e <env>
 ```
 
 **Step 2: Freeze/pause if unsafe** (if needed, PARALLEL with Step 1)
@@ -557,7 +557,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 **Step 4: Verify fix**
 ```bash
-ts-node cosmwasm/query.ts contract-info -c <ContractName>
+ts-node cosmwasm/query.ts contract-info -c <ContractName> -e <env>
 ```
 
 ---
