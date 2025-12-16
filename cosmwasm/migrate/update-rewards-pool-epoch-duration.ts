@@ -247,6 +247,12 @@ async function updateRewardsPoolEpochDuration(
         printWarn(`Expected ${expectedPoolCount} pools but only found ${poolParams.length}. Some pools may be missing.`);
     }
 
+    if (options.rewardsPerEpoch) {
+        printInfo('Rewards per epoch', `Updating to ${options.rewardsPerEpoch} for all pools`);
+    } else {
+        printInfo('Rewards per epoch', 'Using existing values per pool');
+    }
+
     const messages = buildUpdateMessages(poolParams, options.epochDuration, options.rewardsPerEpoch);
 
     const requiresGovernance = isGovernanceRequired(configManager);
