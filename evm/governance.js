@@ -380,10 +380,11 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const contracts = chain.contracts;
+            const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
             const tx = await governance.execute(
                 commandId,
-                contracts.InterchainGovernance.governanceChain,
-                contracts.InterchainGovernance.governanceAddress,
+                contractConfig.governanceChain,
+                contractConfig.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
@@ -416,10 +417,11 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const contracts = chain.contracts;
+            const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
             const tx = await governance.execute(
                 commandId,
-                contracts.InterchainGovernance.governanceChain,
-                contracts.InterchainGovernance.governanceAddress,
+                contractConfig.governanceChain,
+                contractConfig.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
@@ -468,7 +470,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             printInfo('nativeValue', nativeValue.toString());
 
-            const tx = await governance.executeProposal(target, calldata, nativeValue, gasOptions);
+            const tx = await governance.executeProposal(target, calldata, nativeValue, { value: nativeValue, ...gasOptions });
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
 
             printInfo('Proposal executed.');
@@ -494,11 +496,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Operator proposal execution cancelled.');
             }
 
-            if (nativeValue === '0') {
-                printWarn('nativeValue is 0; no native token will be forwarded to the target call.');
-            }
+            printInfo('nativeValue', nativeValue.toString());
 
-            const tx = await governance.executeOperatorProposal(target, calldata, nativeValue, gasOptions);
+            const tx = await governance.executeOperatorProposal(target, calldata, nativeValue, { value: nativeValue, ...gasOptions });
             await handleTransactionWithEvent(tx, chain, governance, 'Operator proposal execution', 'OperatorProposalExecuted');
             printInfo('Operator proposal executed.');
             return null;
