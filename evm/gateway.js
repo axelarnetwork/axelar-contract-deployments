@@ -72,7 +72,7 @@ async function processCommand(axelar, chain, _chains, options) {
 
     if (options.governance) {
         const governanceSupportedActions = ['transferGovernance', 'transferOperatorship'];
-        
+
         if (!governanceSupportedActions.includes(action)) {
             throw new Error(`'${action}' does not support governance proposals.`);
         }
