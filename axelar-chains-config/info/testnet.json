@@ -4013,6 +4013,7 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
+    "unitDenom": "uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "2000000000",
     "govProposalInstantiateAddresses": [

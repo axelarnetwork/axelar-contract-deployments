@@ -1949,6 +1949,7 @@
     "grpc": "devnet-amplifier.axelar.dev:9090",
     "tokenSymbol": "AMPLIFIER",
     "gasPrice": "0.00005uamplifier",
+    "unitDenom": "uamplifier",
     "gasLimit": "auto",
     "govProposalDepositAmount": "100000000",
     "govProposalInstantiateAddresses": [

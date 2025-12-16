@@ -3462,9 +3462,9 @@
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
-        "name": "TBD",
-        "url": "TBD",
-        "api": "TBD"
+        "name": "MonadScan",
+        "url": "https://monadscan.com/",
+        "api": "https://api.monadscan.com/api"
       },
       "contracts": {
         "ConstAddressDeployer": {
@@ -3562,6 +3562,7 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://api.axelarscan.io",
     "gasPrice": "0.007uaxl",
+    "unitDenom": "uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "2000000000",
     "govProposalInstantiateAddresses": [
