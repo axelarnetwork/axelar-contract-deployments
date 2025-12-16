@@ -163,6 +163,108 @@ async function itsChainConfig(client, config, _options, args) {
     }
 }
 
+async function saveDeployedContracts(client, config, _options, args) {
+    const [chainName] = args;
+
+    const coordinatorAddress = config.getContractConfig('Coordinator').address;
+    if (!coordinatorAddress) {
+        return printWarn(`Coordinator contract address not found in config for ${chainName}`);
+    }
+
+    const deploymentName = config.getContractConfig('Coordinator').deployments?.[chainName]?.deploymentName;
+    if (!deploymentName) {
+        return printWarn(
+            `No deployment found for chain ${chainName} in config.`,
+            `Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}'.`,
+        );
+    }
+
+    let result;
+    try {
+        result = await client.queryContractSmart(coordinatorAddress, {
+            deployment: {
+                deployment_name: deploymentName,
+            },
+        });
+
+        printInfo(`Fetched deployed contracts for ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        return printWarn(`Failed to fetch deployed contracts for ${chainName}`, error?.message || String(error));
+    }
+
+    if (!result.verifier_address || !result.prover_address || !result.gateway_address) {
+        throw new Error(
+            `Missing config for ${chainName}. Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
+        );
+    }
+
+    config.getVotingVerifierContract(chainName).address = result.verifier_address;
+    config.getMultisigProverContract(chainName).address = result.prover_address;
+    config.getGatewayContract(chainName).address = result.gateway_address;
+
+    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier_address);
+    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover_address);
+    printInfo(`Updated Gateway[${chainName}].address`, result.gateway_address);
+    printInfo(`Config updated successfully for ${chainName}`);
+}
+
+export async function getContractInfo(client: CosmWasmClient, contract_address: string): Promise<ContractInfo> {
+    const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
+    const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
+    return contract_info;
+}
+
+async function contractInfo(client: CosmWasmClient, config: ConfigManager, options: Options): Promise<void> {
+    try {
+        const address = config.getContractConfig(options.contractName).address;
+        if (!address) {
+            throw new Error(`No address configured for contract '${options.contractName}'`);
+        }
+
+        const contract_info: ContractInfo = await getContractInfo(client, address);
+        console.log(contract_info);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function queryAllContractVersions(client: CosmWasmClient, config: ConfigManager, _options: Options, _args?: string[]): Promise<void> {
+    const axelarContracts = config.axelar.contracts;
+
+    await Promise.all(
+        Object.entries(axelarContracts).map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
+            if (contractConfig.address) {
+                try {
+                    const contractInfo = await getContractInfo(client, contractConfig.address);
+                    contractConfig.version = contractInfo.version;
+                } catch (error) {
+                    printError(`Failed to get contract info for ${contractName}`, error);
+                }
+            }
+
+            const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
+            const versions = {} as Record<string, string[]>;
+            await Promise.all(
+                chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
+                    try {
+                        const contractInfo = await getContractInfo(client, chainContractConfig.address);
+                        chainContractConfig.version = contractInfo.version;
+                        if (!versions[contractInfo.version]) {
+                            versions[contractInfo.version] = [];
+                        }
+                        versions[contractInfo.version].push(chainName);
+                    } catch (error) {
+                        printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                    }
+                }),
+            );
+            if (Object.keys(versions).length > 1) {
+                printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
+            }
+        }),
+    );
+}
+
 // ==================== Emergency Query Functions ====================
 
 async function routerIsChainFrozen(client, config, _options, args) {
@@ -384,108 +486,6 @@ async function contractAdmin(client, config, options, _args) {
 }
 
 // ==================== End Emergency Query Functions ====================
-
-async function saveDeployedContracts(client, config, _options, args) {
-    const [chainName] = args;
-
-    const coordinatorAddress = config.getContractConfig('Coordinator').address;
-    if (!coordinatorAddress) {
-        return printWarn(`Coordinator contract address not found in config for ${chainName}`);
-    }
-
-    const deploymentName = config.getContractConfig('Coordinator').deployments?.[chainName]?.deploymentName;
-    if (!deploymentName) {
-        return printWarn(
-            `No deployment found for chain ${chainName} in config.`,
-            `Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}'.`,
-        );
-    }
-
-    let result;
-    try {
-        result = await client.queryContractSmart(coordinatorAddress, {
-            deployment: {
-                deployment_name: deploymentName,
-            },
-        });
-
-        printInfo(`Fetched deployed contracts for ${chainName}`, JSON.stringify(result, null, 2));
-    } catch (error) {
-        return printWarn(`Failed to fetch deployed contracts for ${chainName}`, error?.message || String(error));
-    }
-
-    if (!result.verifier_address || !result.prover_address || !result.gateway_address) {
-        throw new Error(
-            `Missing config for ${chainName}. Run 'ts-node cosmwasm/contract.ts instantiate-chain-contracts -n ${chainName}' to instantiate the contracts.`,
-        );
-    }
-
-    config.getVotingVerifierContract(chainName).address = result.verifier_address;
-    config.getMultisigProverContract(chainName).address = result.prover_address;
-    config.getGatewayContract(chainName).address = result.gateway_address;
-
-    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier_address);
-    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover_address);
-    printInfo(`Updated Gateway[${chainName}].address`, result.gateway_address);
-    printInfo(`Config updated successfully for ${chainName}`);
-}
-
-export async function getContractInfo(client: CosmWasmClient, contract_address: string): Promise<ContractInfo> {
-    const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
-    const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
-    return contract_info;
-}
-
-async function contractInfo(client: CosmWasmClient, config: ConfigManager, options: Options): Promise<void> {
-    try {
-        const address = config.getContractConfig(options.contractName).address;
-        if (!address) {
-            throw new Error(`No address configured for contract '${options.contractName}'`);
-        }
-
-        const contract_info: ContractInfo = await getContractInfo(client, address);
-        console.log(contract_info);
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-async function queryAllContractVersions(client: CosmWasmClient, config: ConfigManager, _options: Options, _args?: string[]): Promise<void> {
-    const axelarContracts = config.axelar.contracts;
-
-    await Promise.all(
-        Object.entries(axelarContracts).map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
-            if (contractConfig.address) {
-                try {
-                    const contractInfo = await getContractInfo(client, contractConfig.address);
-                    contractConfig.version = contractInfo.version;
-                } catch (error) {
-                    printError(`Failed to get contract info for ${contractName}`, error);
-                }
-            }
-
-            const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
-            const versions = {} as Record<string, string[]>;
-            await Promise.all(
-                chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
-                    try {
-                        const contractInfo = await getContractInfo(client, chainContractConfig.address);
-                        chainContractConfig.version = contractInfo.version;
-                        if (!versions[contractInfo.version]) {
-                            versions[contractInfo.version] = [];
-                        }
-                        versions[contractInfo.version].push(chainName);
-                    } catch (error) {
-                        printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
-                    }
-                }),
-            );
-            if (Object.keys(versions).length > 1) {
-                printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
-            }
-        }),
-    );
-}
 
 const programHandler = () => {
     const program = new Command();
