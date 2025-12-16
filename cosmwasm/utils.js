@@ -421,6 +421,96 @@ const makeEventVerifierInstantiateMsg = (config, _options, contractConfig) => {
     };
 };
 
+const makeSolanaVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
+    const {
+        axelar: { contracts },
+        chains: {
+            [chainName]: {
+                contracts: {
+                    [AXELAR_GATEWAY_CONTRACT_NAME]: { address: gatewayAddress },
+                },
+            },
+        },
+    } = config;
+    const {
+        ServiceRegistry: { address: serviceRegistryAddress },
+        Rewards: { address: rewardsAddress },
+    } = contracts;
+    const {
+        governanceAddress,
+        serviceName,
+        sourceGatewayAddress,
+        votingThreshold,
+        blockExpiry,
+        confirmationHeight,
+        msgIdFormat,
+        addressFormat,
+    } = contractConfig;
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(rewardsAddress)) {
+        throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isString(sourceGatewayAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
+    }
+
+    if (gatewayAddress !== undefined && gatewayAddress !== sourceGatewayAddress) {
+        throw new Error(
+            `Address mismatch for [${chainName}] in config:\n` +
+                `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
+                `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`,
+        );
+    }
+
+    if (!isStringArray(votingThreshold)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
+    }
+
+    if (!isNumber(blockExpiry)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
+    }
+
+    if (!isNumber(confirmationHeight)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
+    }
+
+    if (!isString(msgIdFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
+    }
+
+    if (!isString(addressFormat)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
+    }
+
+    return {
+        service_registry_address: serviceRegistryAddress,
+        rewards_address: rewardsAddress,
+        governance_address: governanceAddress,
+        service_name: serviceName,
+        source_gateway_address: sourceGatewayAddress,
+        voting_threshold: votingThreshold,
+        block_expiry: toBigNumberString(blockExpiry),
+        confirmation_height: confirmationHeight,
+        source_chain: chainName,
+        msg_id_format: msgIdFormat,
+        address_format: addressFormat,
+    };
+};
+
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
@@ -718,6 +808,108 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
         available_tickets: availableTickets,
         next_sequence_number: nextSequenceNumber,
         last_assigned_ticket_number: lastAssignedTicketNumber,
+    };
+};
+
+const makeSolanaMultisigProverInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
+
+    const {
+        axelar: { contracts, chainId: axelarChainId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+        Coordinator: { address: coordinatorAddress },
+        Multisig: { address: multisigAddress },
+        ServiceRegistry: { address: serviceRegistryAddress },
+        [VERIFIER_CONTRACT_NAME]: {
+            [chainName]: { address: verifierAddress },
+        },
+        [GATEWAY_CONTRACT_NAME]: {
+            [chainName]: { address: gatewayAddress },
+        },
+    } = contracts;
+    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
+        contractConfig;
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
+    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+    contractConfig.domainSeparator = separator;
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(gatewayAddress)) {
+        throw new Error(`Missing or invalid Gateway[${chainName}].address in axelar info`);
+    }
+
+    if (!validateAddress(coordinatorAddress)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    if (!validateAddress(multisigAddress)) {
+        throw new Error('Missing or invalid Multisig.address in axelar info');
+    }
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
+    }
+
+    if (!isKeccak256Hash(separator)) {
+        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
+    }
+
+    if (!isStringArray(signingThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
+    }
+
+    if (!isString(encoder)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
+    }
+
+    if (!isString(keyType)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
+    }
+
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        gateway_address: gatewayAddress,
+        coordinator_address: coordinatorAddress,
+        multisig_address: multisigAddress,
+        service_registry_address: serviceRegistryAddress,
+        voting_verifier_address: verifierAddress,
+        domain_separator: separator.replace('0x', ''),
+        signing_threshold: signingThreshold,
+        service_name: serviceName,
+        chain_name: chainName,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
+        encoder,
+        key_type: keyType,
     };
 };
 
@@ -1610,6 +1802,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
+    SolanaVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeSolanaVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1628,7 +1824,7 @@ const CONTRACTS = {
     },
     SolanaMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+        makeInstantiateMsg: makeSolanaMultisigProverInstantiateMsg,
     },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
