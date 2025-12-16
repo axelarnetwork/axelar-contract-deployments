@@ -4016,6 +4016,7 @@
     "unitDenom": "uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "2000000000",
+    "govProposalExpeditedDepositAmount": "3000000000",
     "govProposalInstantiateAddresses": [
       "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
