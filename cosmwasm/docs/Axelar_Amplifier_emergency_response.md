@@ -94,7 +94,7 @@ ts-node cosmwasm/submit-proposal.js executeByGovernance \
 **Update verifier set**:
 ```bash
 ts-node cosmwasm/rotate-signers.js update-verifier-set <chain> -e <env>
-ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain> <tx> -e <env>
+ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain> <txHash> -e <env>
 ```
 
 **Update thresholds** (governance required):
