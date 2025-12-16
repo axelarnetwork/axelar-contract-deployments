@@ -167,7 +167,7 @@ async function submitAsGovernanceProposal(
     const proposalOptions = {
         title: options.title,
         description: options.description,
-        deposit: options.deposit || config.getProposalDepositAmount(),
+        deposit: options.deposit || config.proposalDepositAmount(),
     };
 
     if (!confirmProposalSubmission(options, encodedMessages)) {
@@ -290,7 +290,7 @@ addAmplifierOptions(
         .description('Query and display current rewards pool parameters')
         .action(async (options) => {
             await mainQueryProcessor(
-                async (client, configManager, options, _args, _fee) => {
+                async (client, configManager, options, _args) => {
                     const poolParams = await queryAllRewardsPools(client, configManager);
                     printPoolParams(poolParams, options.env);
                 },
