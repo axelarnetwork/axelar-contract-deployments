@@ -3256,6 +3256,7 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://stagenet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
+    "unitDenom": "uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "100000000",
     "govProposalExpeditedDepositAmount": "150000000",
