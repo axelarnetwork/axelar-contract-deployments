@@ -272,8 +272,7 @@ async fn execute_and_record(
                     eprintln!("Failed to write signature to file: {e}");
                 }
             }
-            #[allow(clippy::string_slice)]
-            let sig_prefix = &metrics.signature[..16];
+            let sig_prefix = metrics.signature.get(..16).unwrap_or(&metrics.signature);
             println!(
                 "\u{2713} {} ({}ms, {} CU)",
                 sig_prefix,
@@ -315,6 +314,8 @@ async fn execute_transfer_with_metrics(
         get_associated_token_address(&keypair.pubkey(), &mint, &token_program)
     };
 
+    let data = generate_payload(args.payload.as_ref(), args.vary_payload);
+
     let interchain_transfer_args = its::InterchainTransferArgs {
         source_account,
         token_id: args.token_id,
@@ -326,6 +327,7 @@ async fn execute_transfer_with_metrics(
         gas_config_account: None,
         timestamp: None,
         authority: Some(keypair.pubkey()),
+        data,
     };
 
     let instructions = its::build_instruction(
@@ -387,4 +389,37 @@ fn fetch_tx_details(
         .and_then(|m| Option::from(m.compute_units_consumed));
 
     Ok((compute_units, slot))
+}
+
+/// Generate payload data based on CLI arguments.
+///
+/// - If `vary_payload` is set, generate random bytes of a random size (1 to vary_payload).
+/// - If `payload` is set, use it directly.
+/// - Otherwise, return `None`.
+#[allow(clippy::integer_division_remainder_used)]
+fn generate_payload(payload: Option<&String>, vary_payload: Option<usize>) -> Option<String> {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    if let Some(max_size) = vary_payload {
+        if max_size == 0 {
+            return None;
+        }
+        // Simple random using timestamp nanos for variation
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.subsec_nanos())
+            .unwrap_or(0);
+        #[allow(clippy::cast_possible_truncation)]
+        let size = ((nanos as usize) % max_size).saturating_add(1);
+        let random_bytes: Vec<u8> = (0..size)
+            .map(|i| {
+                #[allow(clippy::cast_possible_truncation)]
+                let byte = (nanos.wrapping_add(i as u32) % 256) as u8;
+                byte
+            })
+            .collect();
+        return Some(hex::encode(random_bytes));
+    }
+
+    payload.cloned()
 }

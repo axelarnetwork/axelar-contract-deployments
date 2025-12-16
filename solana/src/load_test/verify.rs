@@ -219,14 +219,44 @@ async fn verify_single_transaction(
         return VerificationResult::Success;
     }
 
-    if let Err(e) = verify_axelarscan_gmp(signature, config).await {
-        return VerificationResult::Failed(format!("Axelarscan verification error: {e}"));
+    match verify_axelarscan_gmp(signature, config).await {
+        Ok(GmpStatus::Executed) => VerificationResult::Success,
+        Ok(GmpStatus::Pending(status)) => {
+            VerificationResult::Pending(format!("GMP status: {status}"))
+        }
+        Ok(GmpStatus::Failed(status)) => {
+            VerificationResult::Failed(format!("GMP failed with status: {status}"))
+        }
+        Err(e) => VerificationResult::Failed(format!("Axelarscan verification error: {e}")),
     }
-
-    VerificationResult::Success
 }
 
-async fn verify_axelarscan_gmp(signature: &Signature, config: &Config) -> eyre::Result<()> {
+/// GMP verification status from Axelarscan.
+enum GmpStatus {
+    /// Transaction has been fully executed on destination chain.
+    Executed,
+    /// Transaction is still in progress (pending, confirming, approved, etc.).
+    Pending(String),
+    /// Transaction has definitively failed.
+    Failed(String),
+}
+
+/// Known intermediate GMP statuses that indicate the transaction is still in progress.
+const PENDING_STATUSES: &[&str] = &[
+    "pending",
+    "confirming",
+    "approved",
+    "approving",
+    "executing",
+    "gas_paid",
+    "gas_paid_not_enough_gas",
+    "called",
+];
+
+/// Known terminal failure statuses.
+const FAILED_STATUSES: &[&str] = &["error", "failed", "reverted", "insufficient_fee"];
+
+async fn verify_axelarscan_gmp(signature: &Signature, config: &Config) -> eyre::Result<GmpStatus> {
     let axelarscan_url = get_axelarscan_api_url(config)?;
 
     let client = reqwest::Client::builder()
@@ -270,11 +300,22 @@ async fn verify_axelarscan_gmp(signature: &Signature, config: &Config) -> eyre::
         .and_then(|s| s.as_str())
         .ok_or_else(|| eyre!("Status not found in Axelarscan response"))?;
 
-    if status != "executed" {
-        return Err(eyre!("GMP status is {} (expected executed)", status));
+    let status_lower = status.to_lowercase();
+
+    if status_lower == "executed" {
+        return Ok(GmpStatus::Executed);
     }
 
-    Ok(())
+    if PENDING_STATUSES.iter().any(|s| status_lower == *s) {
+        return Ok(GmpStatus::Pending(status.to_owned()));
+    }
+
+    if FAILED_STATUSES.iter().any(|s| status_lower == *s) {
+        return Ok(GmpStatus::Failed(status.to_owned()));
+    }
+
+    // Unknown status - treat as pending to avoid false failures
+    Ok(GmpStatus::Pending(status.to_owned()))
 }
 
 fn get_axelarscan_api_url(config: &Config) -> eyre::Result<String> {

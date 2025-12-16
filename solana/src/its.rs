@@ -562,6 +562,10 @@ pub(crate) struct InterchainTransferArgs {
     /// The authority account (owner or delegate of the source account)
     #[clap(long)]
     pub(crate) authority: Option<Pubkey>,
+
+    /// Optional payload data (hex encoded)
+    #[clap(long)]
+    pub(crate) data: Option<String>,
 }
 
 #[derive(Parser, Debug)]
@@ -1599,6 +1603,11 @@ fn interchain_transfer(
         AccountMeta::new_readonly(solana_axelar_its::id(), false),
     ];
 
+    let data = args
+        .data
+        .map(|d| hex::decode(d.trim_start_matches("0x")))
+        .transpose()?;
+
     let ix_data = solana_axelar_its::instruction::InterchainTransfer {
         token_id: args.token_id,
         destination_chain: args.destination_chain,
@@ -1607,7 +1616,7 @@ fn interchain_transfer(
         gas_value: args.gas_value,
         caller_program_id: None,
         caller_pda_seeds: None,
-        data: None,
+        data,
     }
     .data();
 
