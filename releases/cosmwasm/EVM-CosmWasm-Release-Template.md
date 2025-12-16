@@ -132,7 +132,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         -s "$SALT" \
         --fetchCodeId \
         --admin "$CONTRACT_ADMIN" \
-        --governance
+        --governance # omit on devnet-amplifier
     ```
 
 1. Wait for proposal to pass (or transaction to confirm if direct execution) and query deployed contract addresses
@@ -146,7 +146,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```bash
     ts-node cosmwasm/contract.ts register-deployment \
         $CHAIN \
-        --governance
+        --governance # omit on devnet-amplifier
     ```
 
 1. Set environment variables
@@ -196,7 +196,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         --epochDuration "[epoch_duration]" \
         --participationThreshold "[participation threshold]" \
         --rewardsPerEpoch "[rewards per epoch]" \
-        --governance
+        --governance # omit on devnet-amplifier
     ```
 
 1. Register ITS edge contract on ITS Hub
@@ -237,7 +237,8 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
     ```bash
-    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN --governance
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+        --governance # omit on devnet-amplifier
     ```
 
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
