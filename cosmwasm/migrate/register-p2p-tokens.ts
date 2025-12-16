@@ -112,7 +112,7 @@ async function registerTokensInFile(client: ClientManager, config: ConfigManager
         }
         const tokenData: TokenData = {
             tokenId: token.tokenId,
-            originChain: originChainFromAxelar ?? token.originAxelarChainId.toLowerCase(),
+            originChain: originChainFromAxelar?.toLowerCase() ?? token.originAxelarChainId.toLowerCase(),
             decimals: chain.decimals ?? token.decimals,
             chainName: chain.axelarChainId.toLowerCase(),
         } as TokenData;
