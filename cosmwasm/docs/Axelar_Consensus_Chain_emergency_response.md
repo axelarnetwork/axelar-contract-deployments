@@ -174,18 +174,47 @@ axelard tx evm sign-commands <chain> --from <any-account> ...
 
 ---
 
-## 7. TODO: Script Support
+## 7. TODO: Script Support for Consensus Chain Operations
 
-The `cosmwasm/` scripts are for **CosmWasm Amplifier contracts** only. Consensus chain operations require raw `axelard` CLI commands.
+### Current Status
 
-### High Priority (P0-P1)
+The `cosmwasm/` directory contains scripts for **CosmWasm Amplifier contracts** only (e.g., `contract.ts`, `query.ts`, `rotate-signers.js`). These scripts **cannot** be used for **Axelar Consensus Chain native modules** (`nexus`, `evm`, `multisig`, `permission`).
 
-| Operation | Current Command |
-|-----------|-----------------|
-| Deactivate chain | `axelard tx nexus deactivate-chain` |
-| Deactivate all chains | `axelard tx nexus deactivate-chain :all:` |
-| Disable link-deposit | `axelard tx nexus disable-link-deposit` |
-| Set rate limit | `axelard tx nexus set-transfer-rate-limit` |
-| Query chain state | `axelard q nexus chain-state` |
+### Operations Requiring Script Development
+
+#### ROLE_ACCESS_CONTROL Operations (High Priority)
+
+| Operation | Current Command | Priority |
+|-----------|-----------------|----------|
+| Deactivate chain | `axelard tx nexus deactivate-chain <chain>` | P0 |
+| Deactivate all chains | `axelard tx nexus deactivate-chain :all:` | P0 |
+| Activate chain | `axelard tx nexus activate-chain <chain>` | P1 |
+| Disable link-deposit | `axelard tx nexus disable-link-deposit` | P0 |
+| Enable link-deposit | `axelard tx nexus enable-link-deposit` | P1 |
+| Set transfer rate limit | `axelard tx nexus set-transfer-rate-limit` | P1 |
+| Deregister controller | `axelard tx permission deregister-controller` | P1 |
+| Register controller | `axelard tx permission register-controller` | P2 |
+| Set gateway address | `axelard tx evm set-gateway` | P2 |
+
+#### ROLE_CHAIN_MANAGEMENT Operations (Medium Priority)
+
+| Operation | Current Command | Priority |
+|-----------|-----------------|----------|
+| Start keygen | `axelard tx multisig start-keygen` | P2 |
+| Rotate key | `axelard tx multisig rotate-key` | P2 |
+| Transfer EVM operatorship | `axelard tx evm transfer-operatorship` | P2 |
+| Register asset fee | `axelard tx nexus register-asset-fee` | P3 |
+
+#### Query Operations (Medium Priority)
+
+| Query | Current Command | Priority |
+|-------|-----------------|----------|
+| Chain state | `axelard q nexus chain-state` | P1 |
+| All chains | `axelard q nexus chains` | P2 |
+| Link-deposit status | `axelard q nexus link-deposit-enabled` | P1 |
+| Transfer rate limit | `axelard q nexus transfer-rate-limit` | P2 |
+| Key info | `axelard q multisig key` / `key-id` | P2 |
+| Gateway address | `axelard q evm gateway-address` | P2 |
+| Permission params | `axelard q permission params` | P2 |
 
 **Recommendation**: Create `consensus/` directory with dedicated scripts for these operations.
