@@ -11,7 +11,7 @@ import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { confirmProposalSubmission } from '../submit-proposal';
-import { encodeMigrate, encodeStoreCode, encodeStoreInstantiate, isLegacySDK, submitProposal } from '../utils';
+import { encodeMigrate, encodeStoreInstantiate, isLegacySDK, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
 const programHandler = () => {
@@ -23,9 +23,7 @@ const programHandler = () => {
         program
             .command('prepare')
             .description('Prepare the config for chain-codec instantiation and migration of MultisigProver and VotingVerifier')
-            .action(async (options) => {
-                mainQueryProcessor(prepare, options);
-            }),
+            .action((options) => mainQueryProcessor(prepare, options)),
     );
 
     addAmplifierOptions(
@@ -44,12 +42,10 @@ const programHandler = () => {
 
     addAmplifierOptions(
         program
-            .command('migrate')
+            .command('migrate-mp-vv')
             .option('--direct', 'make a direct migration rather than a proposal')
-            .description('Generate migrate commands for the MultisigProver and VotingVerifier contracts')
-            .action(async (options) => {
-                mainProcessor(migrate, options);
-            }),
+            .description('Submit a proposal migrate the MultisigProver and VotingVerifier contracts')
+            .action((options) => mainProcessor(migrate, options)),
         {
             proposalOptions: true,
         },
@@ -107,20 +103,22 @@ async function prepare(client: CosmWasmClient, config: ConfigManager, _: Options
     }
 }
 
-async function storeChainCodecs(client: ClientManager, config: ConfigManager, options: any, _args: string[], fee: 'auto' | StdFee) {
+async function storeChainCodecs(
+    client: ClientManager,
+    config: ConfigManager,
+    options: Options & { contractCodePath?: string; contractCodePaths?: Record<string, string> },
+    _args: string[],
+    fee: 'auto' | StdFee,
+) {
     if (isLegacySDK(config)) {
         printError('Legacy SDK is not supported for chain codec upload and instantiation');
         return;
     }
 
-    let contractName = options.contractName;
     const { contractCodePath, contractCodePaths } = options;
 
-    if (!Array.isArray(contractName)) {
-        contractName = [contractName];
-    }
+    const contractNames = !Array.isArray(options.contractName) ? [options.contractName] : options.contractName;
 
-    const contractNames = contractName;
     const proposal = contractNames.map((name) => {
         const contractOptions = {
             ...options,
@@ -137,7 +135,7 @@ async function storeChainCodecs(client: ClientManager, config: ConfigManager, op
     const proposalId = await submitProposal(client, config, options, proposal, fee);
     contractNames.forEach((name) => {
         const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
-        const contractConfig = config.getContractConfig(contractName);
+        const contractConfig = config.getContractConfig(name);
         contractConfig.storeInstantiateProposalId = proposalId;
         contractConfig.storeCodeProposalCodeHash = createHash('sha256')
             .update(readContractCode({ ...options, contractCodePath: codePath, contractName: name }))
