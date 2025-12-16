@@ -70,6 +70,14 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
 async function processCommand(axelar, chain, _chains, options) {
     const { privateKey, address, action, yes, symbols, limits } = options;
 
+    if (options.governance) {
+        const governanceSupportedActions = ['transferGovernance', 'transferOperatorship'];
+        
+        if (!governanceSupportedActions.includes(action)) {
+            throw new Error(`'${action}' does not support governance proposals.`);
+        }
+    }
+
     const contracts = chain.contracts;
     const contractName = 'AxelarGateway';
 
