@@ -584,10 +584,29 @@ Transfer admin roles for XrplVotingVerifier, XrplGateway, and XrplMultisigProver
 
 **New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
+**XRPL Chain Names by Environment:**
+
+| Environment | XRPL Chain Name |
+|-------------|-----------------|
+| devnet-amplifier | `xrpl-dev` |
+| stagenet | `xrpl` |
+| testnet | `xrpl` |
+| mainnet | `xrpl` |
+
 ```bash
 # Set variables
 ENV=mainnet
 EMERGENCY_OPERATOR_EOA=<EMERGENCY_OPERATOR_EOA_ADDRESS>
+
+# Set XRPL chain name based on environment
+case $ENV in
+  devnet-amplifier)
+    XRPL_CHAIN_NAME="xrpl-dev"
+    ;;
+  *)
+    XRPL_CHAIN_NAME="xrpl"
+    ;;
+esac
 
 # Get contract addresses from config
 XRPL_VOTING_VERIFIER=$(jq -r '.axelar.contracts.XrplVotingVerifier.address' ./axelar-chains-config/info/$ENV.json)
@@ -611,9 +630,9 @@ for CONTRACT_ADDR in $XRPL_VOTING_VERIFIER $XRPL_GATEWAY $XRPL_MULTISIG_PROVER; 
 done
 
 # Verify all transfers
-ts-node cosmwasm/query.ts contract-admin -c XrplVotingVerifier -e $ENV
-ts-node cosmwasm/query.ts contract-admin -c XrplGateway -e $ENV
-ts-node cosmwasm/query.ts contract-admin -c XrplMultisigProver -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplVotingVerifier -n $XRPL_CHAIN_NAME -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplGateway -n $XRPL_CHAIN_NAME -e $ENV
+ts-node cosmwasm/query.ts contract-admin -c XrplMultisigProver -n $XRPL_CHAIN_NAME -e $ENV
 ```
 
 **Important:** Verify all three XRPL contracts show `$EMERGENCY_OPERATOR_EOA` as the admin. If any contract fails, investigate that specific transaction before marking this step complete.
