@@ -256,13 +256,25 @@ function getGovernanceContract(chain, options = {}) {
     const governanceAddress = getGovernanceAddress(chain, governanceContract);
 
     if (!governanceAddress) {
-        throw new Error(`${governanceContract} contract is not configured on ${chain.name}. Please provide --governanceContract or ensure the contract is deployed.`);
+        throw new Error(
+            `${governanceContract} contract is not configured on ${chain.name}. Please provide --governanceContract or ensure the contract is deployed.`,
+        );
     }
 
     return { governanceContract, governanceAddress };
 }
 
-function createGovernanceProposal({ chain, options, targetAddress, calldata, nativeValue = '0', ProposalType, encodeGovernanceProposal, createGMPProposalJSON, dateToEta }) {
+function createGovernanceProposal({
+    chain,
+    options,
+    targetAddress,
+    calldata,
+    nativeValue = '0',
+    ProposalType,
+    encodeGovernanceProposal,
+    createGMPProposalJSON,
+    dateToEta,
+}) {
     const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
     printInfo('Governance contract', governanceContract);
     const eta = dateToEta(options.activationTime || '0');
