@@ -1398,8 +1398,6 @@
         "version": "1.2.0"
       },
       "Router": {
-        "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "codeId": 1546,
         "lastUploadedCodeId": 1546,
         "address": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
@@ -1414,7 +1412,6 @@
         "version": "1.4.0"
       },
       "Multisig": {
-        "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "blockExpiry": 50,
         "codeId": 1586,
         "lastUploadedCodeId": 1586,
@@ -1425,7 +1422,6 @@
         "version": "2.4.0"
       },
       "Coordinator": {
-        "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "codeId": 1580,
         "lastUploadedCodeId": 1580,
         "address": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g",
@@ -1451,7 +1447,6 @@
         "version": "2.1.3"
       },
       "Rewards": {
-        "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "rewardsDenom": "uamplifier",
         "params": {
           "epoch_duration": "10",
@@ -1481,8 +1476,6 @@
         "version": "1.0.0"
       },
       "InterchainTokenService": {
-        "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "codeId": 1406,
         "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
         "instantiateProposalId": "61",
@@ -1501,7 +1494,6 @@
       },
       "VotingVerifier": {
         "avalanche-fuji": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
           "votingThreshold": [
@@ -1518,7 +1510,6 @@
         },
         "lastUploadedCodeId": 1606,
         "eth-sepolia": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
           "votingThreshold": [
@@ -1534,7 +1525,6 @@
           "version": "2.0.0"
         },
         "optimism-sepolia": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
           "votingThreshold": [
@@ -1550,7 +1540,6 @@
           "version": "2.0.0"
         },
         "flow": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
           "votingThreshold": [
@@ -1566,7 +1555,6 @@
           "version": "2.0.0"
         },
         "sui-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0x988bbe6e98f653887e78912f529247675030334ae4b0fbc1d1f512f0f95b71e4",
           "msgIdFormat": "base58_tx_digest_and_event_index",
@@ -1582,7 +1570,6 @@
           "version": "2.0.0"
         },
         "xrpl-evm-devnet": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0x6850335DA5b6E960eB509B7ec4D159ebA8e89eFd",
           "votingThreshold": [
@@ -1598,7 +1585,6 @@
           "version": "2.0.0"
         },
         "plume-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xA7938970ebF2E35E2789dc8C3019754c2ed762A8",
           "votingThreshold": [
@@ -1614,7 +1600,6 @@
           "version": "2.0.0"
         },
         "berachain": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xA7938970ebF2E35E2789dc8C3019754c2ed762A8",
           "votingThreshold": [
@@ -1630,7 +1615,6 @@
           "version": "2.0.0"
         },
         "solana-14": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "gtwiF7Bamsq5zBQCnKjK7kHfmBQe7StQE9VPucWrtmA",
           "votingThreshold": [
@@ -1724,8 +1708,6 @@
       },
       "XrplMultisigProver": {
         "xrpl-dev": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "signingThreshold": [
             "2",
             "3"
@@ -1740,8 +1722,6 @@
       },
       "MultisigProver": {
         "avalanche-fuji": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "43113",
           "signingThreshold": [
             "6",
@@ -1758,8 +1738,6 @@
         },
         "lastUploadedCodeId": 1529,
         "eth-sepolia": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "11155111",
           "signingThreshold": [
             "6",
@@ -1775,8 +1753,6 @@
           "version": "1.1.1"
         },
         "optimism-sepolia": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "11155420",
           "signingThreshold": [
             "6",
@@ -1792,8 +1768,6 @@
           "version": "1.1.1"
         },
         "flow": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "545",
           "signingThreshold": [
             "6",
@@ -1809,8 +1783,6 @@
           "version": "1.1.1"
         },
         "sui-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
             "6",
             "10"
@@ -1825,8 +1797,6 @@
           "version": "1.1.1"
         },
         "xrpl-evm-devnet": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1hxcz4z263uxvlsmrj2pzfhmy8ggwwqjwu58w4t",
           "signingThreshold": [
             "1",
             "1"
@@ -1841,8 +1811,6 @@
           "version": "1.1.1"
         },
         "plume-2": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
             "6",
             "10"
@@ -1857,8 +1825,6 @@
           "version": "1.1.1"
         },
         "berachain": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
             "6",
             "10"
@@ -1911,7 +1877,6 @@
       "XrplVotingVerifier": {
         "xrpl-dev": {
           "address": "axelar1w0cwqtytmjuhak4v0rd4fy65pugqcxz4g48n6puw55zcy896e6ksn9gkj2",
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "votingThreshold": [
             "2",
@@ -1925,8 +1890,6 @@
       "XrplGateway": {
         "xrpl-dev": {
           "address": "axelar1fqy77ptzsspmewy547dappss2j7scy9asju8qqjts67r2tl4k5cqg6zfxa",
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "version": "1.3.2"
         }
       },
@@ -1938,6 +1901,25 @@
         "instantiateProposalId": "991",
         "address": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7",
         "version": "2.0.0"
+      },
+      "SolanaMultisigProver": {
+        "lastUploadedCodeId": 1608,
+        "storeCodeProposalId": "1492",
+        "storeCodeProposalCodeHash": "8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068",
+        "solana-14": {
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "solana",
+          "keyType": "ecdsa",
+          "codeId": 1608,
+          "domainSeparator": "0xf5da4e797ad4363e1ac83e88d072055455e5b5dc0c6e67c808eb1560d39302ff",
+          "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "address": "axelar19z0yzazs0tc35mk5sc0w0tm7kru45mtqnjcftc8xqngeqxjj9yts9gfu6s"
+        }
       }
     },
     "axelarId": "axelar",
