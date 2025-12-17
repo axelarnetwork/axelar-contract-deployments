@@ -228,6 +228,10 @@ ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 Full docs can be found on [here](./docs/governance.md).
 Detailed workflows are mentioned [here](./docs/governance-workflows.md).
 
+## Contract Ownership Management
+
+Full docs can be found [here](./docs/contract-ownership.md).
+
 ## Utilities
 
 ### Decode Function Calldata
