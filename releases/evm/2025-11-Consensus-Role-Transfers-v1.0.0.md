@@ -162,7 +162,7 @@ ts-node evm/deploy-contract.js -c AxelarServiceGovernance --parallel
 
 ```bash
 # Query the deployed address / owner
-ts-node evm/governance.js --contractName AxelarServiceGovernance --action owner
+ts-node evm/ownership.js -c AxelarServiceGovernance --action owner
 ```
 
 ```bash
@@ -192,16 +192,18 @@ ts-node evm/governance.js schedule transferGovernance $minimumTimeDelay \
   --newGovernance "$AXELAR_SERVICE_GOVERNANCE"
 
 # After minimumTimeDelay has passed, execute the proposal
-ts-node evm/governance.js execute transferGovernance \
+# Use the target and calldata values printed by the schedule command above
+ts-node evm/governance.js execute \
   --contractName InterchainGovernance \
-  --targetContractName AxelarGateway \
-  --newGovernance "$AXELAR_SERVICE_GOVERNANCE" --parallel
+  --target <TARGET> \
+  --calldata <CALLDATA> \
+  --parallel
 
 # Verify governance is now AxelarServiceGovernance
 ts-node evm/gateway.js -e $ENV -n $CHAIN --action governance
 
-# Verify transfer completed successfully
-ts-node evm/governance.js --contractName AxelarGateway --action governance --parallel
+# Verify transfer completed successfully 
+ts-node evm/gateway.js --action governance --parallel
 ```
 
 ### Step 3: Align AxelarGateway MintLimiter to Rate Limiter EOA
@@ -220,13 +222,13 @@ New mintLimiter: Rate Limiter EOA
 MINT_LIMITER="<RATE_LIMITER_EOA>"
 
 # Verify current mintLimiter
-ts-node evm/governance.js -n $CHAIN --contractName AxelarGateway --action mintLimiter
+ts-node evm/gateway.js --action mintLimiter
 
 # Transfer mintLimiter role
-ts-node evm/governance.js --contractName AxelarGateway --action transferMintLimiter --newMintLimiter $MINT_LIMITER --parallel
+ts-node evm/gateway.js --action transferMintLimiter --destination $MINT_LIMITER --parallel
 
 # Verify transfer completed successfully
-ts-node evm/governance.js --contractName AxelarGateway --action mintLimiter --parallel
+ts-node evm/gateway.js --action mintLimiter --parallel
 ```
 
 ### Step 4: Transfer AxelarGasService Owner Role
