@@ -150,7 +150,7 @@ async function submitAsGovernanceProposal(
     client: ClientManager,
     config: ConfigManager,
     messages: UpdatePoolParamsMessage[],
-    options: { title: string; description: string; deposit?: string; yes?: boolean },
+    options: { title: string; description: string; deposit?: string; standardProposal?: boolean; yes?: boolean },
     fee: string | StdFee,
 ): Promise<string> {
     const [account] = client.accounts;
@@ -168,6 +168,7 @@ async function submitAsGovernanceProposal(
         title: options.title,
         description: options.description,
         deposit: options.deposit || config.proposalDepositAmount(),
+        standardProposal: options.standardProposal,
     };
 
     if (!confirmProposalSubmission(options, encodedMessages)) {
