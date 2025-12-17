@@ -2,6 +2,12 @@
 
 The `ownership.js` script manages contracts that implement `IOwnable`. It supports both **direct EOA execution** and **governance proposals** (timelock or operator-based).
 
+## Prerequisites
+
+- Set the environment (`-e` or `--env`) - defaults to `testnet` if not specified. See [README.md](../README.md#setup) for setup instructions.
+- For direct EOA execution, provide a private key (`-p` or `--privateKey`) or set `PRIVATE_KEY` environment variable.
+- For governance proposal submission, provide a mnemonic (`-m` or `--mnemonic`) or set `MNEMONIC` environment variable.
+
 ## Direct actions (EOA)
 
 ```bash
@@ -33,11 +39,13 @@ ts-node evm/ownership.js --governance -n <chain> -c AxelarGateway \
 
 # Generate to file
 ts-node evm/ownership.js --governance --generate-only ownership-proposal.json \
-  -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress
+  -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress \
+  --activationTime <YYYY-MM-DDTHH:mm:ss|relative-seconds>
 
 # Submit (requires MNEMONIC)
 ts-node evm/ownership.js --governance \
-  -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress
+  -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress \
+  --activationTime <YYYY-MM-DDTHH:mm:ss|relative-seconds>
 ```
 
 ### Operator-based (bypass timelock)

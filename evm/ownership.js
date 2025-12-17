@@ -11,6 +11,7 @@ const {
 const { Command, Option } = require('commander');
 const {
     printInfo,
+    printWarn,
     printWalletInfo,
     mainProcessor,
     prompt,
@@ -173,6 +174,9 @@ async function processCommand(_axelar, chain, _chains, options) {
 
         case 'acceptOwnership': {
             if (options.governance) {
+                if (newOwner) {
+                    printWarn('--newOwner is ignored for acceptOwnership action.');
+                }
                 const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
                 return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
             }
