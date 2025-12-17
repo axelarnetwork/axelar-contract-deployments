@@ -193,8 +193,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
     ```bash
-    ts-node cosmwasm/contract.ts its-hub-register-chains \
-        -n $CHAIN \
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
         --governance
     ```
 
