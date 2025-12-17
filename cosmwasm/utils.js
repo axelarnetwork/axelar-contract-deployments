@@ -307,7 +307,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
         Rewards: { address: rewardsAddress },
     } = contracts;
     const { serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
-    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
     const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
