@@ -174,8 +174,8 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
     ```bash
     ts-node cosmwasm/contract.ts create-reward-pools $CHAIN \
         --epochDuration "[epoch_duration]" \
-        --participationThreshold "[participation threshold]" \
-        --rewardsPerEpoch "[rewards per epoch]" \
+        --participationThreshold "[participation_threshold]" \
+        --rewardsPerEpoch "[rewards_per_epoch]" \
         --governance # omit on devnet-amplifier
     ```
 
