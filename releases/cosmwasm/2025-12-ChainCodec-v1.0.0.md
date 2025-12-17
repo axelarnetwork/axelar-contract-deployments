@@ -34,13 +34,13 @@ INIT_ADDRESSES=xyz
 2. Prepare the config for chain-codec instantiation and migration of MultisigProver and VotingVerifier
 
     ```bash
-    ts-node cosmwasm/migrate/chain-codec.js prepare
+    ts-node cosmwasm/migrate/chain-codec.ts prepare
     ```
 
 3. Upload and instantiate new ChainCodec* contracts. Depending on the network, you can either upload and instantiate directly using the usual scripts (if you have the governance key) or submit a proposal to the network like this:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store-instantiate-chain-codecs \
+    ts-node cosmwasm/migrate/chain-codec.ts store-instantiate-chain-codecs \
         -t "Store and instantiate chain-codec contracts" \
         -d "stores and instantiates chain-codec v1.0.0 for sui, stellar and evm" \
         -a "$ARTIFACT_PATH" \
