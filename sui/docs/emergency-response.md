@@ -152,7 +152,7 @@ For operations requiring multisig approval, follow these steps:
 
 ### Step 1: Generate Transaction File
 
-Add `--offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS` to any command to generate an unsigned transaction file:
+Add `--offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS` to a command to generate an unsigned transaction file(currently not all scripts support offline operations):
 
 ```bash
 ts-node sui/deploy-contract.js upgrade <ContractName> <policy> --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
