@@ -132,7 +132,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
         -s "$SALT" \
         --fetchCodeId \
         --admin "$CONTRACT_ADMIN" \
-        --governance
+        --governance # omit on devnet-amplifier
     ```
 
 1. Wait for proposal to pass (or transaction to confirm if direct execution) and query deployed contract addresses
@@ -146,7 +146,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```bash
     ts-node cosmwasm/contract.ts register-deployment \
         $CHAIN \
-        --governance
+        --governance # omit on devnet-amplifier
     ```
 
 1. Set environment variables
@@ -175,7 +175,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     REWARD_AMOUNT=[reward amount]
     ```
 
-    - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
+    - Add a community post for the mainnet proposal (i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>) and share on `mainnet-announcements` channel on Discord.
 
     - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
@@ -194,9 +194,9 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ts-node cosmwasm/contract.ts create-reward-pools \
         $CHAIN \
         --epochDuration "[epoch_duration]" \
-        --participationThreshold "[participation threshold]" \
-        --rewardsPerEpoch "[rewards per epoch]" \
-        --governance
+        --participationThreshold "[participation_threshold]" \
+        --rewardsPerEpoch "[rewards_per_epoch]" \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Register ITS edge contract on ITS Hub
@@ -237,7 +237,8 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
     ```bash
-    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN --governance
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+        --governance # omit on devnet-amplifier
     ```
 
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
