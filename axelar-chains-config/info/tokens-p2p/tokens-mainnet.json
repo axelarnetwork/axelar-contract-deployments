@@ -2,17 +2,17 @@
   "chains": {
     "celo": {
       "start": 0,
-      "end": 54088230,
-      "max": 54088230,
+      "end": 54109313,
+      "max": 54109313,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
-        "https://celo.gateway.tenderly.co"
+        ""
       ]
     },
     "Ethereum": {
       "start": 0,
-      "end": 24033532,
-      "max": 24033532,
+      "end": 24035277,
+      "max": 24035277,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://ethereum-rpc.publicnode.com"
@@ -20,8 +20,8 @@
     },
     "Avalanche": {
       "start": 0,
-      "end": 73919868,
-      "max": 73919868,
+      "end": 73935541,
+      "max": 73935541,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://api.avax.network/ext/bc/C/rpc"
@@ -29,8 +29,8 @@
     },
     "Fantom": {
       "start": 0,
-      "end": 118723930,
-      "max": 118723930,
+      "end": 118730987,
+      "max": 118730987,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.fantom.network"
@@ -38,8 +38,8 @@
     },
     "Polygon": {
       "start": 0,
-      "end": 80437473,
-      "max": 80437473,
+      "end": 80446423,
+      "max": 80446423,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://polygon.gateway.tenderly.co"
@@ -47,8 +47,8 @@
     },
     "Moonbeam": {
       "start": 0,
-      "end": 13739520,
-      "max": 13739520,
+      "end": 13742439,
+      "max": 13742439,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.api.moonbeam.network"
@@ -56,8 +56,8 @@
     },
     "binance": {
       "start": 0,
-      "end": 71982704,
-      "max": 71982704,
+      "end": 72010815,
+      "max": 72010815,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://bsc.llamarpc.com"
@@ -65,8 +65,8 @@
     },
     "arbitrum": {
       "start": 0,
-      "end": 411642967,
-      "max": 411642967,
+      "end": 411727453,
+      "max": 411727453,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://arb1.arbitrum.io/rpc"
@@ -74,11 +74,11 @@
     },
     "kava": {
       "start": 0,
-      "end": 18489659,
-      "max": 18489659,
+      "end": 18493324,
+      "max": 18493324,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
-        "https://evm.kava.io"
+        ""
       ]
     },
     "filecoin": {
@@ -92,8 +92,8 @@
     },
     "optimism": {
       "start": 0,
-      "end": 145195106,
-      "max": 145195106,
+      "end": 145205647,
+      "max": 145205647,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://gateway.tenderly.co/public/optimism",
@@ -102,8 +102,8 @@
     },
     "linea": {
       "start": 0,
-      "end": 26798409,
-      "max": 26798409,
+      "end": 26806997,
+      "max": 26806997,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.linea.build"
@@ -111,8 +111,8 @@
     },
     "base": {
       "start": 0,
-      "end": 39599822,
-      "max": 39599822,
+      "end": 39610363,
+      "max": 39610363,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://developer-access-mainnet.base.org"
@@ -120,8 +120,8 @@
     },
     "mantle": {
       "start": 0,
-      "end": 88929340,
-      "max": 88929340,
+      "end": 88939880,
+      "max": 88939880,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.mantle.xyz"
@@ -129,8 +129,8 @@
     },
     "scroll": {
       "start": 0,
-      "end": 26725754,
-      "max": 26725754,
+      "end": 26741509,
+      "max": 26741509,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.scroll.io"
@@ -147,8 +147,8 @@
     },
     "immutable": {
       "start": 0,
-      "end": 31853423,
-      "max": 31853423,
+      "end": 31863963,
+      "max": 31863963,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.immutable.com/"
@@ -156,8 +156,8 @@
     },
     "fraxtal": {
       "start": 0,
-      "end": 29589139,
-      "max": 29589139,
+      "end": 29599680,
+      "max": 29599680,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.frax.com"
@@ -165,8 +165,8 @@
     },
     "blast": {
       "start": 0,
-      "end": 28589587,
-      "max": 28589587,
+      "end": 28600128,
+      "max": 28600128,
       "alreadyProcessedPercentage": "100.00",
       "rpcs": [
         "https://rpc.blast.io"
@@ -236,6 +236,13 @@
           "tokenAddress": "0xfe6bfc223ecE5a289A909A4Cf6723E54300138a0",
           "decimals": 18,
           "registrationTimestamp": 1708644175
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x25f910e3c812836717836ee26b1cad640ded2d85d053560082e4f778ade9ff1b",
+          "tokenAddress": "0x4738DaeC4c8c17dC4FC97637D88959Cc57C63b2C",
+          "decimals": 18,
+          "registrationTimestamp": 1708663581
         }
       ]
     },
@@ -371,6 +378,20 @@
           "tokenAddress": "0x2598c30330D5771AE9F983979209486aE26dE875",
           "decimals": 18,
           "registrationTimestamp": 1703893962
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x4eed4be1acf5e047f86fed1d359d4767bb2569b42c9aac71e91d27efc56b8815",
+          "tokenAddress": "0x2598c30330D5771AE9F983979209486aE26dE875",
+          "decimals": 18,
+          "registrationTimestamp": 1703893983
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4eed4be1acf5e047f86fed1d359d4767bb2569b42c9aac71e91d27efc56b8815",
+          "tokenAddress": "0x2598c30330D5771AE9F983979209486aE26dE875",
+          "decimals": 18,
+          "registrationTimestamp": 1703893974
         }
       ]
     },
@@ -506,12 +527,26 @@
           "tokenAddress": "0xbfeA674ce7d16E26E39e3c088810367a708eF94C",
           "decimals": 18,
           "registrationTimestamp": 1707514542
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x66e0a014c903b38d2f3b8ce829b9f34a69da691e1c9a49889483a67c9bfbff10",
+          "tokenAddress": "0x18719D2e1e57A1A64708e4550fF3DEF9d1074621",
+          "decimals": 18,
+          "registrationTimestamp": 1707514648
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x66e0a014c903b38d2f3b8ce829b9f34a69da691e1c9a49889483a67c9bfbff10",
+          "tokenAddress": "0x18719D2e1e57A1A64708e4550fF3DEF9d1074621",
+          "decimals": 18,
+          "registrationTimestamp": 1707585652
         }
       ]
     },
     "0x92cd32120a7b38bc8a31bfd88cce6c0b68c2eb2855622b8b980dd3be35a7a025": {
       "tokenId": "0x92cd32120a7b38bc8a31bfd88cce6c0b68c2eb2855622b8b980dd3be35a7a025",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -549,6 +584,13 @@
           "tokenAddress": "0x90A0767f95A1f423a2Ed2776414B4AEe31Df13b6",
           "decimals": 18,
           "registrationTimestamp": 1710603264
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x92cd32120a7b38bc8a31bfd88cce6c0b68c2eb2855622b8b980dd3be35a7a025",
+          "tokenAddress": "0x90A0767f95A1f423a2Ed2776414B4AEe31Df13b6",
+          "decimals": 18,
+          "registrationTimestamp": 1710603090
         }
       ]
     },
@@ -698,6 +740,20 @@
           "tokenAddress": "0x1cbaBCc07469D5beA81E20Cf10aD94a6b56e877c",
           "decimals": 18,
           "registrationTimestamp": 1711344345
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x63dfc3fa9c32f4526bbf43213b004d61ad0ebde155968df0c699c0201db5bd4a",
+          "tokenAddress": "0x1cbaBCc07469D5beA81E20Cf10aD94a6b56e877c",
+          "decimals": 18,
+          "registrationTimestamp": 1711344333
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x63dfc3fa9c32f4526bbf43213b004d61ad0ebde155968df0c699c0201db5bd4a",
+          "tokenAddress": "0x1cbaBCc07469D5beA81E20Cf10aD94a6b56e877c",
+          "decimals": 18,
+          "registrationTimestamp": 1711344327
         }
       ]
     },
@@ -804,6 +860,20 @@
           "tokenAddress": "0xB187730eB4A3260797c15D843eD2e1165066926B",
           "decimals": 18,
           "registrationTimestamp": 1710271038
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb89cdb9f82a7f2cf7c29fb287b3c13b6dbd36001e7ca7a53848490984a1fea56",
+          "tokenAddress": "0xB187730eB4A3260797c15D843eD2e1165066926B",
+          "decimals": 18,
+          "registrationTimestamp": 1711470456
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb89cdb9f82a7f2cf7c29fb287b3c13b6dbd36001e7ca7a53848490984a1fea56",
+          "tokenAddress": "0xB187730eB4A3260797c15D843eD2e1165066926B",
+          "decimals": 18,
+          "registrationTimestamp": 1711470447
         }
       ]
     },
@@ -982,6 +1052,20 @@
           "tokenAddress": "0xb7C0A627b0d81774B46e7880a0EA58e41B450BBB",
           "decimals": 18,
           "registrationTimestamp": 1711994189
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb4357c8c0bbab2fd661b931674fb1fb81cc8c96c40c6bf33541562507f915038",
+          "tokenAddress": "0xb7C0A627b0d81774B46e7880a0EA58e41B450BBB",
+          "decimals": 18,
+          "registrationTimestamp": 1711994196
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb4357c8c0bbab2fd661b931674fb1fb81cc8c96c40c6bf33541562507f915038",
+          "tokenAddress": "0xb7C0A627b0d81774B46e7880a0EA58e41B450BBB",
+          "decimals": 18,
+          "registrationTimestamp": 1711994199
         }
       ]
     },
@@ -1110,6 +1194,20 @@
           "tokenAddress": "0xe480A3e258d1a8eA77df46d2eD243fE0492A83F7",
           "decimals": 18,
           "registrationTimestamp": 1712263470
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x6ceca60b18b70f34f32a2b8cb3b1048d70168ecb583ca750373182bf5167c3e3",
+          "tokenAddress": "0xe480A3e258d1a8eA77df46d2eD243fE0492A83F7",
+          "decimals": 18,
+          "registrationTimestamp": 1712263484
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x6ceca60b18b70f34f32a2b8cb3b1048d70168ecb583ca750373182bf5167c3e3",
+          "tokenAddress": "0xe480A3e258d1a8eA77df46d2eD243fE0492A83F7",
+          "decimals": 18,
+          "registrationTimestamp": 1712263470
         }
       ]
     },
@@ -1216,6 +1314,20 @@
           "tokenAddress": "0x527856315a4bCD2F428EA7fA05ea251f7e96A50A",
           "decimals": 18,
           "registrationTimestamp": 1712266861
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x74b8c31990023340e665f7238b52690845cd8b0019d190a32a19828701d1dc69",
+          "tokenAddress": "0x527856315a4bCD2F428EA7fA05ea251f7e96A50A",
+          "decimals": 18,
+          "registrationTimestamp": 1712266881
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x74b8c31990023340e665f7238b52690845cd8b0019d190a32a19828701d1dc69",
+          "tokenAddress": "0x527856315a4bCD2F428EA7fA05ea251f7e96A50A",
+          "decimals": 18,
+          "registrationTimestamp": 1712266865
         }
       ]
     },
@@ -1315,6 +1427,20 @@
           "tokenAddress": "0xC87324F84283067471fF79CA19E0742132Ab4347",
           "decimals": 18,
           "registrationTimestamp": 1712289554
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb4236ee92ef342a602d5d76d8b1437c0ba8ed95e447bc2a67d7981b1fbd3474d",
+          "tokenAddress": "0xC87324F84283067471fF79CA19E0742132Ab4347",
+          "decimals": 18,
+          "registrationTimestamp": 1712289567
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb4236ee92ef342a602d5d76d8b1437c0ba8ed95e447bc2a67d7981b1fbd3474d",
+          "tokenAddress": "0xC87324F84283067471fF79CA19E0742132Ab4347",
+          "decimals": 18,
+          "registrationTimestamp": 1712289567
         }
       ]
     },
@@ -1417,6 +1543,20 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xe78f8847cb6f3c15c01c762122cb045cb46bbea5cf89bbc07792a20fce390c67",
+          "tokenAddress": "0x73be2F444f51Ef29e6F1eEBF92e35198C64dc1Be",
+          "decimals": 18,
+          "registrationTimestamp": 1712377340
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xe78f8847cb6f3c15c01c762122cb045cb46bbea5cf89bbc07792a20fce390c67",
+          "tokenAddress": "0x73be2F444f51Ef29e6F1eEBF92e35198C64dc1Be",
+          "decimals": 18,
+          "registrationTimestamp": 1712377351
+        },
+        {
+          "axelarChainId": "kava",
           "tokenId": "0xe78f8847cb6f3c15c01c762122cb045cb46bbea5cf89bbc07792a20fce390c67",
           "tokenAddress": "0x73be2F444f51Ef29e6F1eEBF92e35198C64dc1Be",
           "decimals": 18,
@@ -1527,6 +1667,20 @@
           "tokenAddress": "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
           "decimals": 18,
           "registrationTimestamp": 1712387759
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xfb2246226560067e3f2ebe5fe8a92dda88f9de5c961bc9807d85207519cc37c5",
+          "tokenAddress": "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
+          "decimals": 18,
+          "registrationTimestamp": 1712387771
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xfb2246226560067e3f2ebe5fe8a92dda88f9de5c961bc9807d85207519cc37c5",
+          "tokenAddress": "0xDDf7d080C82b8048BAAe54e376a3406572429b4e",
+          "decimals": 18,
+          "registrationTimestamp": 1712387772
         }
       ]
     },
@@ -1967,6 +2121,20 @@
           "tokenAddress": "0x5f06a0B2688b9A46452BC9edC7972A048E66fcE3",
           "decimals": 18,
           "registrationTimestamp": 1713440262
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x0901b3ba354e322a5c5961720c5299f7c1d40ee9e86e387de2e01fc77ff7c0eb",
+          "tokenAddress": "0x5f06a0B2688b9A46452BC9edC7972A048E66fcE3",
+          "decimals": 18,
+          "registrationTimestamp": 1713440281
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x0901b3ba354e322a5c5961720c5299f7c1d40ee9e86e387de2e01fc77ff7c0eb",
+          "tokenAddress": "0x5f06a0B2688b9A46452BC9edC7972A048E66fcE3",
+          "decimals": 18,
+          "registrationTimestamp": 1713440256
         }
       ]
     },
@@ -2073,6 +2241,20 @@
           "tokenAddress": "0x43e62b7a9CEb36b454fC3eA8c9468Ade46FAD5bf",
           "decimals": 18,
           "registrationTimestamp": 1714146474
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xeaa7a00db1c3ac60d11327cda0b5b94927bd75773f75a26b8f3375a80dabb238",
+          "tokenAddress": "0x43e62b7a9CEb36b454fC3eA8c9468Ade46FAD5bf",
+          "decimals": 18,
+          "registrationTimestamp": 1714146490
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xeaa7a00db1c3ac60d11327cda0b5b94927bd75773f75a26b8f3375a80dabb238",
+          "tokenAddress": "0x43e62b7a9CEb36b454fC3eA8c9468Ade46FAD5bf",
+          "decimals": 18,
+          "registrationTimestamp": 1714146492
         }
       ]
     },
@@ -2175,6 +2357,20 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xdfff1da63046d5d01f0cd90bfb4a655cbb66882414f32cba46fdf940f6506edc",
+          "tokenAddress": "0x64A3e0AEF8c02c1AB1A3A0d6728a61E1a3F64B75",
+          "decimals": 18,
+          "registrationTimestamp": 1714208684
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xdfff1da63046d5d01f0cd90bfb4a655cbb66882414f32cba46fdf940f6506edc",
+          "tokenAddress": "0x64A3e0AEF8c02c1AB1A3A0d6728a61E1a3F64B75",
+          "decimals": 18,
+          "registrationTimestamp": 1714208677
+        },
+        {
+          "axelarChainId": "kava",
           "tokenId": "0xdfff1da63046d5d01f0cd90bfb4a655cbb66882414f32cba46fdf940f6506edc",
           "tokenAddress": "0x64A3e0AEF8c02c1AB1A3A0d6728a61E1a3F64B75",
           "decimals": 18,
@@ -2328,6 +2524,20 @@
           "tokenAddress": "0x4Ccc456A9D8B6a6Bf33010C16EA6BB0b1d1a4046",
           "decimals": 18,
           "registrationTimestamp": 1714664698
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xdbb2ea1dd8902971fb507fa0a1da64605e9d9eb0e2c55ab76ac1ccb9f98b3f14",
+          "tokenAddress": "0x4Ccc456A9D8B6a6Bf33010C16EA6BB0b1d1a4046",
+          "decimals": 18,
+          "registrationTimestamp": 1714664689
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xdbb2ea1dd8902971fb507fa0a1da64605e9d9eb0e2c55ab76ac1ccb9f98b3f14",
+          "tokenAddress": "0x4Ccc456A9D8B6a6Bf33010C16EA6BB0b1d1a4046",
+          "decimals": 18,
+          "registrationTimestamp": 1714664701
         }
       ]
     },
@@ -2434,6 +2644,20 @@
           "tokenAddress": "0x311eC870e3d7172896CA9f18145bAfc8902c9F3B",
           "decimals": 18,
           "registrationTimestamp": 1714705083
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3e5424de1bbd6e8ad1d03b45c5ddc231009b7fa9307c3a742656db6622a5161e",
+          "tokenAddress": "0x311eC870e3d7172896CA9f18145bAfc8902c9F3B",
+          "decimals": 18,
+          "registrationTimestamp": 1714705087
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x3e5424de1bbd6e8ad1d03b45c5ddc231009b7fa9307c3a742656db6622a5161e",
+          "tokenAddress": "0x311eC870e3d7172896CA9f18145bAfc8902c9F3B",
+          "decimals": 18,
+          "registrationTimestamp": 1714705085
         }
       ]
     },
@@ -2540,6 +2764,20 @@
           "tokenAddress": "0x52578CB422f8b7e666d0E54d2295267A3390EB57",
           "decimals": 18,
           "registrationTimestamp": 1714757340
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4c3cb35cc0a928bccc8a7e22e4f29ae06d96956023abfbf62147917a5179cf6f",
+          "tokenAddress": "0x52578CB422f8b7e666d0E54d2295267A3390EB57",
+          "decimals": 18,
+          "registrationTimestamp": 1714757342
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x4c3cb35cc0a928bccc8a7e22e4f29ae06d96956023abfbf62147917a5179cf6f",
+          "tokenAddress": "0x52578CB422f8b7e666d0E54d2295267A3390EB57",
+          "decimals": 18,
+          "registrationTimestamp": 1714757348
         }
       ]
     },
@@ -2605,6 +2843,13 @@
           "tokenAddress": "0x0018D96C579121a94307249d47F053E2D687b5e7",
           "decimals": 18,
           "registrationTimestamp": 1722009406
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x9f25cb1fa8328de2fdfcbb16ed3e0d2bb65ee3ce573a8a0d855c6589b96d8d04",
+          "tokenAddress": "0x0018D96C579121a94307249d47F053E2D687b5e7",
+          "decimals": 18,
+          "registrationTimestamp": 1732715954
         }
       ]
     },
@@ -2718,6 +2963,20 @@
           "tokenAddress": "0x5120DAf6f323E03b70EFa289f1EDF0e5019d5436",
           "decimals": 18,
           "registrationTimestamp": 1707245892
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x244f81f1e3081a28471d5f0e58a6f145559e5a02d230133d7f9c31afc996bccd",
+          "tokenAddress": "0x5120DAf6f323E03b70EFa289f1EDF0e5019d5436",
+          "decimals": 18,
+          "registrationTimestamp": 1707245904
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x244f81f1e3081a28471d5f0e58a6f145559e5a02d230133d7f9c31afc996bccd",
+          "tokenAddress": "0x5120DAf6f323E03b70EFa289f1EDF0e5019d5436",
+          "decimals": 18,
+          "registrationTimestamp": 1707245917
         }
       ]
     },
@@ -2882,6 +3141,20 @@
           "tokenAddress": "0x61FbAb4799d892420e8e678EA8FA660EdCD2664C",
           "decimals": 18,
           "registrationTimestamp": 1707403082
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x2536a74d55f0a8b5ee622753cc5851f6c2ce23d6cad67cbae0fba7c632b36004",
+          "tokenAddress": "0x61FbAb4799d892420e8e678EA8FA660EdCD2664C",
+          "decimals": 18,
+          "registrationTimestamp": 1707403099
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x2536a74d55f0a8b5ee622753cc5851f6c2ce23d6cad67cbae0fba7c632b36004",
+          "tokenAddress": "0x61FbAb4799d892420e8e678EA8FA660EdCD2664C",
+          "decimals": 18,
+          "registrationTimestamp": 1707403231
         }
       ]
     },
@@ -3003,6 +3276,20 @@
           "tokenAddress": "0x8e51710Bf82919304149333EEb9fDA7C9C9b2ED5",
           "decimals": 18,
           "registrationTimestamp": 1707407191
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xeda4252b5903c1bc3c5134cc7ff292bb6af326c8f3c5cf42582cd58641a6dd3a",
+          "tokenAddress": "0x8e51710Bf82919304149333EEb9fDA7C9C9b2ED5",
+          "decimals": 18,
+          "registrationTimestamp": 1707409660
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xeda4252b5903c1bc3c5134cc7ff292bb6af326c8f3c5cf42582cd58641a6dd3a",
+          "tokenAddress": "0x8e51710Bf82919304149333EEb9fDA7C9C9b2ED5",
+          "decimals": 18,
+          "registrationTimestamp": 1707409639
         }
       ]
     },
@@ -3189,6 +3476,20 @@
           "tokenAddress": "0x7026581608e2031a2b96D0ef5f74b4c32b80044E",
           "decimals": 18,
           "registrationTimestamp": 1716425146
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x67e0573a79f08ba843e58f9c81acfac46a73b57bce4f62857ad524a30d77167b",
+          "tokenAddress": "0x7026581608e2031a2b96D0ef5f74b4c32b80044E",
+          "decimals": 18,
+          "registrationTimestamp": 1716425113
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x67e0573a79f08ba843e58f9c81acfac46a73b57bce4f62857ad524a30d77167b",
+          "tokenAddress": "0x7026581608e2031a2b96D0ef5f74b4c32b80044E",
+          "decimals": 18,
+          "registrationTimestamp": 1716425116
         }
       ]
     },
@@ -3295,6 +3596,20 @@
           "tokenAddress": "0xa4d242F29455841cdd3a1BEb9bA9fE3defFeE135",
           "decimals": 18,
           "registrationTimestamp": 1716630580
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa9603c65444150f15247eab8a84fceebcaa1f75ab662510d6bdeb5bfdfb1ed55",
+          "tokenAddress": "0xa4d242F29455841cdd3a1BEb9bA9fE3defFeE135",
+          "decimals": 18,
+          "registrationTimestamp": 1716630576
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xa9603c65444150f15247eab8a84fceebcaa1f75ab662510d6bdeb5bfdfb1ed55",
+          "tokenAddress": "0xa4d242F29455841cdd3a1BEb9bA9fE3defFeE135",
+          "decimals": 18,
+          "registrationTimestamp": 1716630607
         }
       ]
     },
@@ -3387,6 +3702,20 @@
           "tokenAddress": "0xf9378e87bbbC01cC42bA8fC349805C8872B906Ef",
           "decimals": 18,
           "registrationTimestamp": 1707742553
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x895c2f42478badac23f5b399ae2ae618643b09ea64bb3ce03d6ed0a44c06d088",
+          "tokenAddress": "0xf9378e87bbbC01cC42bA8fC349805C8872B906Ef",
+          "decimals": 18,
+          "registrationTimestamp": 1707742668
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x895c2f42478badac23f5b399ae2ae618643b09ea64bb3ce03d6ed0a44c06d088",
+          "tokenAddress": "0xf9378e87bbbC01cC42bA8fC349805C8872B906Ef",
+          "decimals": 18,
+          "registrationTimestamp": 1707742783
         }
       ]
     },
@@ -3472,6 +3801,20 @@
           "tokenAddress": "0x845705db1623b8363a6D9813F33b73eC50ceA0A2",
           "decimals": 9,
           "registrationTimestamp": 1707758934
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xf5c66cdb815bf81975ffa8f5e78390205193332785a8560cce9c20911bffd670",
+          "tokenAddress": "0x29e0c81dCAC72E5318459E41c828177B29Ec05e2",
+          "decimals": 9,
+          "registrationTimestamp": 1707759045
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf5c66cdb815bf81975ffa8f5e78390205193332785a8560cce9c20911bffd670",
+          "tokenAddress": "0x29e0c81dCAC72E5318459E41c828177B29Ec05e2",
+          "decimals": 9,
+          "registrationTimestamp": 1707759080
         }
       ]
     },
@@ -3564,6 +3907,20 @@
           "tokenAddress": "0x792EDe502Cb24C181a796b081AC9717701908cD8",
           "decimals": 18,
           "registrationTimestamp": 1707884116
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x8eabba083434096070ab16f833fec2bc7160bc7cc9ab2ff9ff255bd17b8d36b9",
+          "tokenAddress": "0x792EDe502Cb24C181a796b081AC9717701908cD8",
+          "decimals": 18,
+          "registrationTimestamp": 1710255697
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x8eabba083434096070ab16f833fec2bc7160bc7cc9ab2ff9ff255bd17b8d36b9",
+          "tokenAddress": "0x792EDe502Cb24C181a796b081AC9717701908cD8",
+          "decimals": 18,
+          "registrationTimestamp": 1710255678
         }
       ]
     },
@@ -3685,6 +4042,20 @@
           "tokenAddress": "0xCB3a19B049a2eeD445B4167558Ea7e90966Db17f",
           "decimals": 18,
           "registrationTimestamp": 1708048943
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xe2f428b4c9aa1e3f55923461c0535f683993bce529a59771a96436de45abdfa9",
+          "tokenAddress": "0xCB3a19B049a2eeD445B4167558Ea7e90966Db17f",
+          "decimals": 18,
+          "registrationTimestamp": 1708048947
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xe2f428b4c9aa1e3f55923461c0535f683993bce529a59771a96436de45abdfa9",
+          "tokenAddress": "0xCB3a19B049a2eeD445B4167558Ea7e90966Db17f",
+          "decimals": 18,
+          "registrationTimestamp": 1708049126
         }
       ]
     },
@@ -3777,6 +4148,20 @@
           "tokenAddress": "0x3E14880eCf1017cbBe1d2135B7AE45FA4f9ee607",
           "decimals": 2,
           "registrationTimestamp": 1708080396
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xddcdc3d8b1fc195dfa37fb493f13b043bfedc7607491050a4fe7fecae4af0042",
+          "tokenAddress": "0x3E14880eCf1017cbBe1d2135B7AE45FA4f9ee607",
+          "decimals": 2,
+          "registrationTimestamp": 1708080424
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xddcdc3d8b1fc195dfa37fb493f13b043bfedc7607491050a4fe7fecae4af0042",
+          "tokenAddress": "0x3E14880eCf1017cbBe1d2135B7AE45FA4f9ee607",
+          "decimals": 2,
+          "registrationTimestamp": 1708080610
         }
       ]
     },
@@ -3818,7 +4203,7 @@
     },
     "0x08fa07a7f7826fd47972dff52df4b8490ff9034c24447a773088b34f49f08e71": {
       "tokenId": "0x08fa07a7f7826fd47972dff52df4b8490ff9034c24447a773088b34f49f08e71",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -3884,6 +4269,20 @@
           "tokenAddress": "0xf6497804D74c7D9892cfA5A70feadBb8B3C1B3Ee",
           "decimals": 18,
           "registrationTimestamp": 1708208066
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x08fa07a7f7826fd47972dff52df4b8490ff9034c24447a773088b34f49f08e71",
+          "tokenAddress": "0xf6497804D74c7D9892cfA5A70feadBb8B3C1B3Ee",
+          "decimals": 18,
+          "registrationTimestamp": 1707225047
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x08fa07a7f7826fd47972dff52df4b8490ff9034c24447a773088b34f49f08e71",
+          "tokenAddress": "0xf6497804D74c7D9892cfA5A70feadBb8B3C1B3Ee",
+          "decimals": 18,
+          "registrationTimestamp": 1708208957
         }
       ]
     },
@@ -3983,6 +4382,20 @@
           "tokenAddress": "0x9da6AEe2879671ECc3CAf3Eb35547B1a4c4C6D8E",
           "decimals": 18,
           "registrationTimestamp": 1717141949
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa97f6bae6248fa7867ff1513fff1b459a834516035df1c05396bb0a55c9a427e",
+          "tokenAddress": "0x9da6AEe2879671ECc3CAf3Eb35547B1a4c4C6D8E",
+          "decimals": 18,
+          "registrationTimestamp": 1717143971
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xa97f6bae6248fa7867ff1513fff1b459a834516035df1c05396bb0a55c9a427e",
+          "tokenAddress": "0x9da6AEe2879671ECc3CAf3Eb35547B1a4c4C6D8E",
+          "decimals": 18,
+          "registrationTimestamp": 1717141694
         }
       ]
     },
@@ -4096,6 +4509,20 @@
           "tokenAddress": "0x65C52d273ED3570218df81E5A09E357F95265E21",
           "decimals": 18,
           "registrationTimestamp": 1717160017
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3de4e29160c5bd561d0d0fe71dd494b97711c29608f5c5d954466447eae66e1b",
+          "tokenAddress": "0x65C52d273ED3570218df81E5A09E357F95265E21",
+          "decimals": 18,
+          "registrationTimestamp": 1717159658
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x3de4e29160c5bd561d0d0fe71dd494b97711c29608f5c5d954466447eae66e1b",
+          "tokenAddress": "0x65C52d273ED3570218df81E5A09E357F95265E21",
+          "decimals": 18,
+          "registrationTimestamp": 1717159643
         }
       ]
     },
@@ -4231,6 +4658,20 @@
           "tokenAddress": "0x6d1aEADf574963410De6E8FfE797F12f5CdeF2cB",
           "decimals": 18,
           "registrationTimestamp": 1717332827
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x18f92aee904b87396327101e3875406a758e986bacb954faace1239c2d9c7328",
+          "tokenAddress": "0x6d1aEADf574963410De6E8FfE797F12f5CdeF2cB",
+          "decimals": 18,
+          "registrationTimestamp": 1717332441
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x18f92aee904b87396327101e3875406a758e986bacb954faace1239c2d9c7328",
+          "tokenAddress": "0x6d1aEADf574963410De6E8FfE797F12f5CdeF2cB",
+          "decimals": 18,
+          "registrationTimestamp": 1717332449
         }
       ]
     },
@@ -4395,6 +4836,20 @@
           "tokenAddress": "0x6AB4b0c5781Ef36d1474F5187B5945945dfE53C0",
           "decimals": 18,
           "registrationTimestamp": 1727662279
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x9a71be3a19fde13df0a6b20d736144ce7b257a66e427c9bf88647b2bf6bbb0b8",
+          "tokenAddress": "0x6AB4b0c5781Ef36d1474F5187B5945945dfE53C0",
+          "decimals": 18,
+          "registrationTimestamp": 1727662276
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x9a71be3a19fde13df0a6b20d736144ce7b257a66e427c9bf88647b2bf6bbb0b8",
+          "tokenAddress": "0x6AB4b0c5781Ef36d1474F5187B5945945dfE53C0",
+          "decimals": 18,
+          "registrationTimestamp": 1727662269
         }
       ]
     },
@@ -4459,7 +4914,7 @@
     },
     "0x26f415b0c794d56064a4b19d60adb9f0ee4d4095058812783c74786f2ca8e6fb": {
       "tokenId": "0x26f415b0c794d56064a4b19d60adb9f0ee4d4095058812783c74786f2ca8e6fb",
-      "originAxelarChainId": "optimism",
+      "originAxelarChainId": "kava",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -4560,6 +5015,20 @@
           "tokenAddress": "0x03F062fae2E9856025d10C02a3c2e0EB959a2733",
           "decimals": 18,
           "registrationTimestamp": 1719084463
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x26f415b0c794d56064a4b19d60adb9f0ee4d4095058812783c74786f2ca8e6fb",
+          "tokenAddress": "0x03F062fae2E9856025d10C02a3c2e0EB959a2733",
+          "decimals": 18,
+          "registrationTimestamp": 1719084078
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x26f415b0c794d56064a4b19d60adb9f0ee4d4095058812783c74786f2ca8e6fb",
+          "tokenAddress": "0x03F062fae2E9856025d10C02a3c2e0EB959a2733",
+          "decimals": 18,
+          "registrationTimestamp": 1719083840
         }
       ]
     },
@@ -4673,6 +5142,20 @@
           "tokenAddress": "0x0f75734E669B833fda7F3E2B7837bbE7C361B4C4",
           "decimals": 18,
           "registrationTimestamp": 1719123509
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x7df9be93b85b4c8f0196a4e5aa9206a02aafcc5593b3ad0805b4fdcdb81ed2a5",
+          "tokenAddress": "0x0f75734E669B833fda7F3E2B7837bbE7C361B4C4",
+          "decimals": 18,
+          "registrationTimestamp": 1719123129
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x7df9be93b85b4c8f0196a4e5aa9206a02aafcc5593b3ad0805b4fdcdb81ed2a5",
+          "tokenAddress": "0x0f75734E669B833fda7F3E2B7837bbE7C361B4C4",
+          "decimals": 18,
+          "registrationTimestamp": 1719123131
         }
       ]
     },
@@ -4779,6 +5262,20 @@
           "tokenAddress": "0xe3194f363Fe5F54a2fe334d68bB4E2210651149c",
           "decimals": 18,
           "registrationTimestamp": 1719126525
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb3adb656da76de89e1c32873cc6b0e432b339dd13578d13736cd471f09f3a668",
+          "tokenAddress": "0xe3194f363Fe5F54a2fe334d68bB4E2210651149c",
+          "decimals": 18,
+          "registrationTimestamp": 1719126144
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb3adb656da76de89e1c32873cc6b0e432b339dd13578d13736cd471f09f3a668",
+          "tokenAddress": "0xe3194f363Fe5F54a2fe334d68bB4E2210651149c",
+          "decimals": 18,
+          "registrationTimestamp": 1719126144
         }
       ]
     },
@@ -4878,6 +5375,20 @@
           "tokenAddress": "0x14794e06ff5F6c88FB83Ad174A957241f8f78FC8",
           "decimals": 18,
           "registrationTimestamp": 1719163393
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xd4acae1ac2b2a815b3074cdf9942415b6b6c2ea26736863f2ded173255acb4fe",
+          "tokenAddress": "0x14794e06ff5F6c88FB83Ad174A957241f8f78FC8",
+          "decimals": 18,
+          "registrationTimestamp": 1719163019
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xd4acae1ac2b2a815b3074cdf9942415b6b6c2ea26736863f2ded173255acb4fe",
+          "tokenAddress": "0x14794e06ff5F6c88FB83Ad174A957241f8f78FC8",
+          "decimals": 18,
+          "registrationTimestamp": 1719163014
         }
       ]
     },
@@ -4977,6 +5488,20 @@
           "tokenAddress": "0x258A79F76DbB98e29ad3121f02c4C8469dE03F60",
           "decimals": 18,
           "registrationTimestamp": 1719165399
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x37e921eaa9cca6615d9eae45a8fc1e4a302d37b5dc113659843281c63d66528b",
+          "tokenAddress": "0x258A79F76DbB98e29ad3121f02c4C8469dE03F60",
+          "decimals": 18,
+          "registrationTimestamp": 1719165009
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x37e921eaa9cca6615d9eae45a8fc1e4a302d37b5dc113659843281c63d66528b",
+          "tokenAddress": "0x258A79F76DbB98e29ad3121f02c4C8469dE03F60",
+          "decimals": 18,
+          "registrationTimestamp": 1719165015
         }
       ]
     },
@@ -5301,6 +5826,20 @@
           "tokenAddress": "0x822f800fe1C02B3928d4890544EA3F867b074ff5",
           "decimals": 18,
           "registrationTimestamp": 1719356394
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa17c813cfc1ada7411e87ea12b0895480bc9902dbc28b4d30328c7df4c1a4ea1",
+          "tokenAddress": "0x822f800fe1C02B3928d4890544EA3F867b074ff5",
+          "decimals": 18,
+          "registrationTimestamp": 1719356001
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xa17c813cfc1ada7411e87ea12b0895480bc9902dbc28b4d30328c7df4c1a4ea1",
+          "tokenAddress": "0x822f800fe1C02B3928d4890544EA3F867b074ff5",
+          "decimals": 18,
+          "registrationTimestamp": 1719356010
         }
       ]
     },
@@ -5407,6 +5946,20 @@
           "tokenAddress": "0xEBde02166CF5e9CE2DBf27895AFF3FFD0055b873",
           "decimals": 18,
           "registrationTimestamp": 1717836701
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4073bc25781abce32f9121b1dffe99f1f9e3ddc19792066276e0597f8a7c0b56",
+          "tokenAddress": "0xEBde02166CF5e9CE2DBf27895AFF3FFD0055b873",
+          "decimals": 18,
+          "registrationTimestamp": 1719431087
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x4073bc25781abce32f9121b1dffe99f1f9e3ddc19792066276e0597f8a7c0b56",
+          "tokenAddress": "0xEBde02166CF5e9CE2DBf27895AFF3FFD0055b873",
+          "decimals": 18,
+          "registrationTimestamp": 1719431090
         }
       ]
     },
@@ -5485,6 +6038,20 @@
           "tokenAddress": "0xE4bD2114a016ebD11074Da0C5689d6171965eced",
           "decimals": 18,
           "registrationTimestamp": 1709462236
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x70d8726eeff4119c30b290dfb92aa63f73f313dbd0e209123949334211185f98",
+          "tokenAddress": "0xE4bD2114a016ebD11074Da0C5689d6171965eced",
+          "decimals": 18,
+          "registrationTimestamp": 1709462260
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x70d8726eeff4119c30b290dfb92aa63f73f313dbd0e209123949334211185f98",
+          "tokenAddress": "0xE4bD2114a016ebD11074Da0C5689d6171965eced",
+          "decimals": 18,
+          "registrationTimestamp": 1709462259
         }
       ]
     },
@@ -5571,6 +6138,13 @@
           "tokenAddress": "0xfE0a10e81DE3bE47835F3D3A9BD1884E9795DC8C",
           "decimals": 6,
           "registrationTimestamp": 1710668256
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf3df72b537743721c155e8b537861c85d76c65903e90cb0436065bdc814c24c7",
+          "tokenAddress": "0xfE0a10e81DE3bE47835F3D3A9BD1884E9795DC8C",
+          "decimals": 6,
+          "registrationTimestamp": 1710668153
         }
       ]
     },
@@ -5670,6 +6244,20 @@
           "tokenAddress": "0xfbD9C8654Ee3447152F5f8a71dFcD17a914025A5",
           "decimals": 18,
           "registrationTimestamp": 1721393726
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb94dc64619152ab58893ef9cd6d7b09c21794edaebe90248055bbe7af2300ea0",
+          "tokenAddress": "0xfbD9C8654Ee3447152F5f8a71dFcD17a914025A5",
+          "decimals": 18,
+          "registrationTimestamp": 1721393343
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb94dc64619152ab58893ef9cd6d7b09c21794edaebe90248055bbe7af2300ea0",
+          "tokenAddress": "0xfbD9C8654Ee3447152F5f8a71dFcD17a914025A5",
+          "decimals": 18,
+          "registrationTimestamp": 1721393347
         }
       ]
     },
@@ -5776,6 +6364,20 @@
           "tokenAddress": "0xF03026A756200E613cc310f0365C950b629Dd18e",
           "decimals": 18,
           "registrationTimestamp": 1721410785
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x61b3814f5d35f3a5e77f5c4749800ed674ca6415ce8251dbb388cba9a503440a",
+          "tokenAddress": "0xF03026A756200E613cc310f0365C950b629Dd18e",
+          "decimals": 18,
+          "registrationTimestamp": 1721410931
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x61b3814f5d35f3a5e77f5c4749800ed674ca6415ce8251dbb388cba9a503440a",
+          "tokenAddress": "0xF03026A756200E613cc310f0365C950b629Dd18e",
+          "decimals": 18,
+          "registrationTimestamp": 1721410947
         }
       ]
     },
@@ -5882,6 +6484,20 @@
           "tokenAddress": "0x86E600fB439CA1541abbD588ef08607ac4347A44",
           "decimals": 18,
           "registrationTimestamp": 1721505452
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x662e9d92fd134da1bf5500e9b4987ba1f90146ccaaa1769211bd5ed1bf8dc8dc",
+          "tokenAddress": "0x86E600fB439CA1541abbD588ef08607ac4347A44",
+          "decimals": 18,
+          "registrationTimestamp": 1721505072
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x662e9d92fd134da1bf5500e9b4987ba1f90146ccaaa1769211bd5ed1bf8dc8dc",
+          "tokenAddress": "0x86E600fB439CA1541abbD588ef08607ac4347A44",
+          "decimals": 18,
+          "registrationTimestamp": 1721505087
         }
       ]
     },
@@ -6010,6 +6626,20 @@
           "tokenAddress": "0xEbEBCC4C8dF41AA8D180784d4C749C36EaAb275e",
           "decimals": 18,
           "registrationTimestamp": 1721685170
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x22d706149644a6d4b2dbe460c169a542c132f89b64e7d1a60cdad61892dc74f5",
+          "tokenAddress": "0xEbEBCC4C8dF41AA8D180784d4C749C36EaAb275e",
+          "decimals": 18,
+          "registrationTimestamp": 1721684789
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x22d706149644a6d4b2dbe460c169a542c132f89b64e7d1a60cdad61892dc74f5",
+          "tokenAddress": "0xEbEBCC4C8dF41AA8D180784d4C749C36EaAb275e",
+          "decimals": 18,
+          "registrationTimestamp": 1721684790
         }
       ]
     },
@@ -6074,6 +6704,20 @@
           "tokenAddress": "0xEB3d638DADafB0c17037FbBfA65e6B8D76A10F21",
           "decimals": 9,
           "registrationTimestamp": 1722491220
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xc70e66b2646e0d35e85f708c9b4672eb41ecb7a1da6318df4c1bbb5842a7dff7",
+          "tokenAddress": "0xEB3d638DADafB0c17037FbBfA65e6B8D76A10F21",
+          "decimals": 9,
+          "registrationTimestamp": 1722472804
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xc70e66b2646e0d35e85f708c9b4672eb41ecb7a1da6318df4c1bbb5842a7dff7",
+          "tokenAddress": "0xEB3d638DADafB0c17037FbBfA65e6B8D76A10F21",
+          "decimals": 9,
+          "registrationTimestamp": 1723372137
         }
       ]
     },
@@ -6187,6 +6831,20 @@
           "tokenAddress": "0x836d0E8becf88f22533Cb4f21A20993B3332c304",
           "decimals": 18,
           "registrationTimestamp": 1722601026
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x8fb36c8ce370266ce967ccde1e533cae82cc84e531bf3c4bcd6879fef4873127",
+          "tokenAddress": "0x836d0E8becf88f22533Cb4f21A20993B3332c304",
+          "decimals": 18,
+          "registrationTimestamp": 1722600652
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x8fb36c8ce370266ce967ccde1e533cae82cc84e531bf3c4bcd6879fef4873127",
+          "tokenAddress": "0x836d0E8becf88f22533Cb4f21A20993B3332c304",
+          "decimals": 18,
+          "registrationTimestamp": 1722600663
         }
       ]
     },
@@ -6300,6 +6958,20 @@
           "tokenAddress": "0x318b441d351cF16201d0225571F8A90b1a3Af7a8",
           "decimals": 18,
           "registrationTimestamp": 1723767255
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x757e6ed6349976d9eaa99e3a1f8e6a0d497601f390ce2d08f3a2495762027bf2",
+          "tokenAddress": "0x318b441d351cF16201d0225571F8A90b1a3Af7a8",
+          "decimals": 18,
+          "registrationTimestamp": 1723766870
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x757e6ed6349976d9eaa99e3a1f8e6a0d497601f390ce2d08f3a2495762027bf2",
+          "tokenAddress": "0x318b441d351cF16201d0225571F8A90b1a3Af7a8",
+          "decimals": 18,
+          "registrationTimestamp": 1723766882
         }
       ]
     },
@@ -6456,6 +7128,20 @@
           "tokenAddress": "0x6B897Abd292880915A9D5aa00F439DB75fC9Cea3",
           "decimals": 18,
           "registrationTimestamp": 1724129791
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3ef435c1d6926a4878139b47b6ebef1fd389790e61788562145430af2a2247b2",
+          "tokenAddress": "0x6B897Abd292880915A9D5aa00F439DB75fC9Cea3",
+          "decimals": 18,
+          "registrationTimestamp": 1724129391
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x3ef435c1d6926a4878139b47b6ebef1fd389790e61788562145430af2a2247b2",
+          "tokenAddress": "0x6B897Abd292880915A9D5aa00F439DB75fC9Cea3",
+          "decimals": 18,
+          "registrationTimestamp": 1724129405
         }
       ]
     },
@@ -6569,6 +7255,20 @@
           "tokenAddress": "0x1a43e35Fce51834111BC80318ebF1994Ea6Dd5F8",
           "decimals": 18,
           "registrationTimestamp": 1725475284
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x81aa0903aeca06c778fe8ac20e399dab9aed504b02110fddf8b9daa7709d9e12",
+          "tokenAddress": "0x1a43e35Fce51834111BC80318ebF1994Ea6Dd5F8",
+          "decimals": 18,
+          "registrationTimestamp": 1725474946
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x81aa0903aeca06c778fe8ac20e399dab9aed504b02110fddf8b9daa7709d9e12",
+          "tokenAddress": "0x1a43e35Fce51834111BC80318ebF1994Ea6Dd5F8",
+          "decimals": 18,
+          "registrationTimestamp": 1725474904
         }
       ]
     },
@@ -6733,6 +7433,20 @@
           "tokenAddress": "0x25dE0193979AeF039Bcb131a09FAF2af2dEBA045",
           "decimals": 18,
           "registrationTimestamp": 1727122407
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x498df70ba74e0d90b7740ffd1f279c2874a76e2d258f0e20936b5138fa4e90c0",
+          "tokenAddress": "0x13665b44066E285e01F2571B73A370EC446C51DF",
+          "decimals": 18,
+          "registrationTimestamp": 1727122565
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x498df70ba74e0d90b7740ffd1f279c2874a76e2d258f0e20936b5138fa4e90c0",
+          "tokenAddress": "0x13665b44066E285e01F2571B73A370EC446C51DF",
+          "decimals": 18,
+          "registrationTimestamp": 1727122566
         }
       ]
     },
@@ -6954,6 +7668,20 @@
           "tokenAddress": "0xEd813f5b0717b9636dA1efBF1E8711D5E6307d60",
           "decimals": 18,
           "registrationTimestamp": 1728200143
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xfabc0cceb0ff3573906786e23eeb5709d8d3628ec3f79f81bf1634030fda838b",
+          "tokenAddress": "0xEd813f5b0717b9636dA1efBF1E8711D5E6307d60",
+          "decimals": 18,
+          "registrationTimestamp": 1728200104
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xfabc0cceb0ff3573906786e23eeb5709d8d3628ec3f79f81bf1634030fda838b",
+          "tokenAddress": "0xEd813f5b0717b9636dA1efBF1E8711D5E6307d60",
+          "decimals": 18,
+          "registrationTimestamp": 1728200117
         }
       ]
     },
@@ -7246,6 +7974,20 @@
           "tokenAddress": "0xf9b864b6d7B2f6348f6adDE5557c676f14FB53e8",
           "decimals": 9,
           "registrationTimestamp": 1729775967
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xc290bcd85e448b6049c16ec4b3b3f344d6f7bc64513b9bacb0cbdb480d919d50",
+          "tokenAddress": "0xf9b864b6d7B2f6348f6adDE5557c676f14FB53e8",
+          "decimals": 9,
+          "registrationTimestamp": 1729775958
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xc290bcd85e448b6049c16ec4b3b3f344d6f7bc64513b9bacb0cbdb480d919d50",
+          "tokenAddress": "0xf9b864b6d7B2f6348f6adDE5557c676f14FB53e8",
+          "decimals": 9,
+          "registrationTimestamp": 1729775965
         }
       ]
     },
@@ -7708,6 +8450,20 @@
           "tokenAddress": "0x6C002baf931b0D0Cb6A8f3407e7915f002Ca8A2F",
           "decimals": 18,
           "registrationTimestamp": 1731336385
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xf6d23517f534469171e4c0e21923f7b4f48dfbff641e29c0ebd8eb6d82009a8d",
+          "tokenAddress": "0x6C002baf931b0D0Cb6A8f3407e7915f002Ca8A2F",
+          "decimals": 18,
+          "registrationTimestamp": 1731336378
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf6d23517f534469171e4c0e21923f7b4f48dfbff641e29c0ebd8eb6d82009a8d",
+          "tokenAddress": "0x6C002baf931b0D0Cb6A8f3407e7915f002Ca8A2F",
+          "decimals": 18,
+          "registrationTimestamp": 1731336388
         }
       ]
     },
@@ -7821,6 +8577,20 @@
           "tokenAddress": "0x58142c93A754B91B3AcD06c5bb0502d388D96FDD",
           "decimals": 18,
           "registrationTimestamp": 1731359212
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xd9b03ff5674e0370b8065c154636cbed53ddba0025d7a72e12a40e0926b1e2ba",
+          "tokenAddress": "0x58142c93A754B91B3AcD06c5bb0502d388D96FDD",
+          "decimals": 18,
+          "registrationTimestamp": 1731359208
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xd9b03ff5674e0370b8065c154636cbed53ddba0025d7a72e12a40e0926b1e2ba",
+          "tokenAddress": "0x58142c93A754B91B3AcD06c5bb0502d388D96FDD",
+          "decimals": 18,
+          "registrationTimestamp": 1731359604
         }
       ]
     },
@@ -8070,6 +8840,20 @@
           "tokenAddress": "0x29316A487b7F6dc4bFE42b93543c8618ec377C8f",
           "decimals": 18,
           "registrationTimestamp": 1732733802
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x622e4d31f22de122b670e80fc31209129ebc1242d0439394678dc10fb1dc602e",
+          "tokenAddress": "0x29316A487b7F6dc4bFE42b93543c8618ec377C8f",
+          "decimals": 18,
+          "registrationTimestamp": 1732733945
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x622e4d31f22de122b670e80fc31209129ebc1242d0439394678dc10fb1dc602e",
+          "tokenAddress": "0x29316A487b7F6dc4bFE42b93543c8618ec377C8f",
+          "decimals": 18,
+          "registrationTimestamp": 1732733951
         }
       ]
     },
@@ -8183,6 +8967,20 @@
           "tokenAddress": "0x34B06CC54da931cbbd591fAD94B4953F4D955386",
           "decimals": 18,
           "registrationTimestamp": 1733379885
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xfee63379e7c05aeec65ac14ba9bb1c327c2fb4a637671a0a22da8a92e046c7a0",
+          "tokenAddress": "0x34B06CC54da931cbbd591fAD94B4953F4D955386",
+          "decimals": 18,
+          "registrationTimestamp": 1733379881
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xfee63379e7c05aeec65ac14ba9bb1c327c2fb4a637671a0a22da8a92e046c7a0",
+          "tokenAddress": "0x34B06CC54da931cbbd591fAD94B4953F4D955386",
+          "decimals": 18,
+          "registrationTimestamp": 1733379876
         }
       ]
     },
@@ -8303,6 +9101,13 @@
           "tokenAddress": "0xa6A746bad97B239C1ABca98Ff96566769Df196C0",
           "decimals": 18,
           "registrationTimestamp": 1742976248
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x9576b564bc9d73803c17c30a8f1839140f7de6211cf819e7957f3d6e99d3b942",
+          "tokenAddress": "0xa6A746bad97B239C1ABca98Ff96566769Df196C0",
+          "decimals": 18,
+          "registrationTimestamp": 1742976249
         }
       ]
     },
@@ -8416,6 +9221,20 @@
           "tokenAddress": "0x323BAe8Ea748A3c3E48B544063fEbc0e7424C04a",
           "decimals": 8,
           "registrationTimestamp": 1734159856
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x7b725bfcb4f7604f3f1c867f4732595ae99e751cb74f48d511d3cce6d985f427",
+          "tokenAddress": "0x323BAe8Ea748A3c3E48B544063fEbc0e7424C04a",
+          "decimals": 8,
+          "registrationTimestamp": 1734200657
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x7b725bfcb4f7604f3f1c867f4732595ae99e751cb74f48d511d3cce6d985f427",
+          "tokenAddress": "0x323BAe8Ea748A3c3E48B544063fEbc0e7424C04a",
+          "decimals": 8,
+          "registrationTimestamp": 1734200655
         }
       ]
     },
@@ -8786,6 +9605,20 @@
           "tokenAddress": "0xd0cca66A0eDc927add48a7f1b31EA2a69c72C9D6",
           "decimals": 0,
           "registrationTimestamp": 1736270026
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x32120da90b01613e54bcad6ca8b9a2488c6d11c8a6bf43374522a3b11861781e",
+          "tokenAddress": "0xd0cca66A0eDc927add48a7f1b31EA2a69c72C9D6",
+          "decimals": 0,
+          "registrationTimestamp": 1736326873
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x32120da90b01613e54bcad6ca8b9a2488c6d11c8a6bf43374522a3b11861781e",
+          "tokenAddress": "0xd0cca66A0eDc927add48a7f1b31EA2a69c72C9D6",
+          "decimals": 0,
+          "registrationTimestamp": 1736270169
         }
       ]
     },
@@ -8899,6 +9732,20 @@
           "tokenAddress": "0x1D831c9efe88d8EB9e1252EEeCF5Be048A1763aB",
           "decimals": 18,
           "registrationTimestamp": 1736371595
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xd884d90871ecdbec9fc3fb8c7a54074c5a5a9a64711409d39503a60fda384c40",
+          "tokenAddress": "0x1D831c9efe88d8EB9e1252EEeCF5Be048A1763aB",
+          "decimals": 18,
+          "registrationTimestamp": 1736371595
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xd884d90871ecdbec9fc3fb8c7a54074c5a5a9a64711409d39503a60fda384c40",
+          "tokenAddress": "0x1D831c9efe88d8EB9e1252EEeCF5Be048A1763aB",
+          "decimals": 18,
+          "registrationTimestamp": 1736371625
         }
       ]
     },
@@ -8956,6 +9803,13 @@
           "tokenAddress": "0x0EE340ddDaCb0C90A93bC4A0802B21DAb53fa5F1",
           "decimals": 18,
           "registrationTimestamp": 1736608169
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xaaeeb2f83a7d90a8b58c6a3c0c3abbec394838a86732ca1617dc30839c101ec0",
+          "tokenAddress": "0x0EE340ddDaCb0C90A93bC4A0802B21DAb53fa5F1",
+          "decimals": 18,
+          "registrationTimestamp": 1736608160
         }
       ]
     },
@@ -9134,6 +9988,13 @@
           "tokenAddress": "0x9C7167C39ED16f42Eb7610543D815573eC5b5E32",
           "decimals": 18,
           "registrationTimestamp": 1747086319
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x5520d1770042fbb0712595f0ce7d86084b346de12da393aa77051ef82e82b5ca",
+          "tokenAddress": "0x9C7167C39ED16f42Eb7610543D815573eC5b5E32",
+          "decimals": 18,
+          "registrationTimestamp": 1747086326
         }
       ]
     },
@@ -9247,6 +10108,20 @@
           "tokenAddress": "0xA585058C384EfE22bFf9BE5Ad0e37520481c6AED",
           "decimals": 18,
           "registrationTimestamp": 1739117520
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x1e26fc88b5a0b9de962c2080ef55022a407708b3c2a51adaf8fd7610981fad19",
+          "tokenAddress": "0xA585058C384EfE22bFf9BE5Ad0e37520481c6AED",
+          "decimals": 18,
+          "registrationTimestamp": 1739117520
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x1e26fc88b5a0b9de962c2080ef55022a407708b3c2a51adaf8fd7610981fad19",
+          "tokenAddress": "0xA585058C384EfE22bFf9BE5Ad0e37520481c6AED",
+          "decimals": 18,
+          "registrationTimestamp": 1739117531
         }
       ]
     },
@@ -9311,6 +10186,13 @@
           "tokenAddress": "0x97DCb0a55936B142e90Aa7275939B1aFcbDa1f41",
           "decimals": 18,
           "registrationTimestamp": 1703034169
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x994302b495c45ae052a97aea4aa84f6e31e044d3edee4f56f4798f77e127cefb",
+          "tokenAddress": "0x97DCb0a55936B142e90Aa7275939B1aFcbDa1f41",
+          "decimals": 18,
+          "registrationTimestamp": 1703034171
         }
       ]
     },
@@ -9496,6 +10378,20 @@
           "tokenAddress": "0xaDc0E51476F6a483e65d2a379eBB0a4ac68852e9",
           "decimals": 18,
           "registrationTimestamp": 1740686602
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x54c12f833f113a4db1250db78eeb121794733ae4011c5fdadf45397458a459f2",
+          "tokenAddress": "0xaDc0E51476F6a483e65d2a379eBB0a4ac68852e9",
+          "decimals": 18,
+          "registrationTimestamp": 1740686601
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x54c12f833f113a4db1250db78eeb121794733ae4011c5fdadf45397458a459f2",
+          "tokenAddress": "0xaDc0E51476F6a483e65d2a379eBB0a4ac68852e9",
+          "decimals": 18,
+          "registrationTimestamp": 1740686634
         }
       ]
     },
@@ -9673,6 +10569,20 @@
           "tokenAddress": "0xf8F70340C263c080c4458D7A22F527058639D13a",
           "decimals": 18,
           "registrationTimestamp": 1741178218
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x1e6e2b3f18a734022e36510291d2df620b6db74149f6772849a92ea875443b7e",
+          "tokenAddress": "0xf8F70340C263c080c4458D7A22F527058639D13a",
+          "decimals": 18,
+          "registrationTimestamp": 1741178208
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x1e6e2b3f18a734022e36510291d2df620b6db74149f6772849a92ea875443b7e",
+          "tokenAddress": "0xf8F70340C263c080c4458D7A22F527058639D13a",
+          "decimals": 18,
+          "registrationTimestamp": 1741178602
         }
       ]
     },
@@ -9857,6 +10767,20 @@
           "tokenAddress": "0x1fBBd2788a7eA97a767982f9734d112fD4009059",
           "decimals": 18,
           "registrationTimestamp": 1703355962
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x03b0968d4cba741b8714de6cc4da13a2ccab75a87d01a9a9f3e0ebd0c57b705a",
+          "tokenAddress": "0x1fBBd2788a7eA97a767982f9734d112fD4009059",
+          "decimals": 18,
+          "registrationTimestamp": 1703356155
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x03b0968d4cba741b8714de6cc4da13a2ccab75a87d01a9a9f3e0ebd0c57b705a",
+          "tokenAddress": "0x1fBBd2788a7eA97a767982f9734d112fD4009059",
+          "decimals": 18,
+          "registrationTimestamp": 1703355979
         }
       ]
     },
@@ -9957,6 +10881,13 @@
           "tokenAddress": "0x0c6492b2235595DcDcEEfDE23ac210Df9455B157",
           "decimals": 18,
           "registrationTimestamp": 1702938197
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xebd272d6035967aac872fb220ac6076db49ddc7c8591e917cdfb0fee1c4a0277",
+          "tokenAddress": "0x0c6492b2235595DcDcEEfDE23ac210Df9455B157",
+          "decimals": 18,
+          "registrationTimestamp": 1702951910
         }
       ]
     },
@@ -10264,6 +11195,20 @@
           "tokenAddress": "0xf256F45b9029076C48877Aa5f9Db5251E140b459",
           "decimals": 18,
           "registrationTimestamp": 1704184124
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xf5c58f7fa543db562ddeab2403649c8b96edb255b03fed7fd351eed1dfe7b1ee",
+          "tokenAddress": "0xf256F45b9029076C48877Aa5f9Db5251E140b459",
+          "decimals": 18,
+          "registrationTimestamp": 1704184137
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf5c58f7fa543db562ddeab2403649c8b96edb255b03fed7fd351eed1dfe7b1ee",
+          "tokenAddress": "0xf256F45b9029076C48877Aa5f9Db5251E140b459",
+          "decimals": 18,
+          "registrationTimestamp": 1704240898
         }
       ]
     },
@@ -10436,6 +11381,20 @@
           "tokenAddress": "0x3b6a43cd7011bA2E79BEBfb7DD0693923cEEc73a",
           "decimals": 18,
           "registrationTimestamp": 1704794812
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xbb91508827cd7a57e074b99f285073e3e92298cb6de71479fbbd8a13e968d46d",
+          "tokenAddress": "0x3b6a43cd7011bA2E79BEBfb7DD0693923cEEc73a",
+          "decimals": 18,
+          "registrationTimestamp": 1704794829
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xbb91508827cd7a57e074b99f285073e3e92298cb6de71479fbbd8a13e968d46d",
+          "tokenAddress": "0x3b6a43cd7011bA2E79BEBfb7DD0693923cEEc73a",
+          "decimals": 18,
+          "registrationTimestamp": 1704794939
         }
       ]
     },
@@ -11200,6 +12159,13 @@
           "tokenAddress": "0xeBD88bE46F171AeEC99c3bf6da4E9e694f7eD343",
           "decimals": 18,
           "registrationTimestamp": 1720002457
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x86715bcb25fc4651efeb4089d0764e5f09794fc055d6c8fd5b6dab7969edcbf2",
+          "tokenAddress": "0xeBD88bE46F171AeEC99c3bf6da4E9e694f7eD343",
+          "decimals": 18,
+          "registrationTimestamp": 1720002559
         }
       ]
     },
@@ -11418,6 +12384,13 @@
           "tokenAddress": "0xF68F149979404F50AB8d9A5e2b620aC9a90b4c0e",
           "decimals": 18,
           "registrationTimestamp": 1707593035
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x0ae959d377b8971c969c8faa489dbb69f9b8669be7afd2becd9e9de1d0e9cfae",
+          "tokenAddress": "0x7f341Fb8EA4bf623970F4bB60bF3A0Ca1C43F35f",
+          "decimals": 18,
+          "registrationTimestamp": 1707601535
         }
       ]
     },
@@ -12231,6 +13204,20 @@
           "tokenAddress": "0x0E2D3985A69EAEabaacF3845AD2D8F8FC7Eb8312",
           "decimals": 18,
           "registrationTimestamp": 1704304137
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x64e7b9e30f367dc589483d2e040b7c00da02c1cebd09f15812bf1fd0bccdbfb1",
+          "tokenAddress": "0x0E2D3985A69EAEabaacF3845AD2D8F8FC7Eb8312",
+          "decimals": 18,
+          "registrationTimestamp": 1704304662
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x64e7b9e30f367dc589483d2e040b7c00da02c1cebd09f15812bf1fd0bccdbfb1",
+          "tokenAddress": "0x0E2D3985A69EAEabaacF3845AD2D8F8FC7Eb8312",
+          "decimals": 18,
+          "registrationTimestamp": 1704304653
         }
       ]
     },
@@ -13352,6 +14339,13 @@
           "tokenAddress": "0x3b21DB2DBB3a206DcEc1534C38DE3c042E21fFEa",
           "decimals": 18,
           "registrationTimestamp": 1755899014
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xc9f9b7c4a94cd6fe970d3ea82f9b18db6bed388933345a565ad7c0cce8ad8031",
+          "tokenAddress": "0x3b21DB2DBB3a206DcEc1534C38DE3c042E21fFEa",
+          "decimals": 18,
+          "registrationTimestamp": 1755969129
         }
       ]
     },
@@ -15127,6 +16121,13 @@
           "tokenAddress": "0x0ea010dCB1DfBE5c9d1AC475901a59642bad90f4",
           "decimals": 18,
           "registrationTimestamp": 1721941285
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xdf00cfa0e97e2266a2d06bb6ed285239a85d727dcd83d97a9952ccc2890297da",
+          "tokenAddress": "0x0ea010dCB1DfBE5c9d1AC475901a59642bad90f4",
+          "decimals": 18,
+          "registrationTimestamp": 1721940901
         }
       ]
     },
@@ -15226,6 +16227,20 @@
           "tokenAddress": "0xA64FEF35E684cd2DC32A503fA8c4D1987391F35B",
           "decimals": 18,
           "registrationTimestamp": 1724504914
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x70e70a78089fcf51ca4f29ae7d437b731615eb9080d21956b5d156d64aba033c",
+          "tokenAddress": "0xA64FEF35E684cd2DC32A503fA8c4D1987391F35B",
+          "decimals": 18,
+          "registrationTimestamp": 1724504526
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x70e70a78089fcf51ca4f29ae7d437b731615eb9080d21956b5d156d64aba033c",
+          "tokenAddress": "0xA64FEF35E684cd2DC32A503fA8c4D1987391F35B",
+          "decimals": 18,
+          "registrationTimestamp": 1724504537
         }
       ]
     },
@@ -15928,6 +16943,13 @@
           "tokenAddress": "0xE269567B621eBA5c46fB1AF192a1DAB48443D3da",
           "decimals": 18,
           "registrationTimestamp": 1724876282
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa75afa9805d9232ce21ce27fe531bb069fbf8064fa4820ee14795e42deb19300",
+          "tokenAddress": "0xE269567B621eBA5c46fB1AF192a1DAB48443D3da",
+          "decimals": 18,
+          "registrationTimestamp": 1724875904
         }
       ]
     },
@@ -16565,6 +17587,13 @@
           "tokenAddress": "0xc0b173e19F1eA942046a39b64E5745A93fd5e87E",
           "decimals": 18,
           "registrationTimestamp": 1702960710
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3f63f4fe16ab18d090c02f7fcde835a7f8961070ea7aa5df75a3c7036f84fdb8",
+          "tokenAddress": "0xc0b173e19F1eA942046a39b64E5745A93fd5e87E",
+          "decimals": 18,
+          "registrationTimestamp": 1702954755
         }
       ]
     },
@@ -16862,6 +17891,13 @@
           "tokenAddress": "0x2043C2e2E23EA31346fBb49B57EfC828BD9A13C7",
           "decimals": 18,
           "registrationTimestamp": 1703110399
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf2ce2b0d2fb19392d3bf10b3ed0356641e1079c12c1ff02ff7f9ef88e1546d6f",
+          "tokenAddress": "0x2043C2e2E23EA31346fBb49B57EfC828BD9A13C7",
+          "decimals": 18,
+          "registrationTimestamp": 1703110579
         }
       ]
     },
@@ -17225,6 +18261,13 @@
           "tokenAddress": "0xA888241e88bA6b4F006ec8Db92921052451e3059",
           "decimals": 18,
           "registrationTimestamp": 1705346469
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x6106e77bd25cc7098a1aa8ca6e09ed8a3b5874c673e7f79df22cc9f01e5b113f",
+          "tokenAddress": "0xFAEab4a07E720e881bFC1c64B6d7a9Cb525d5c72",
+          "decimals": 18,
+          "registrationTimestamp": 1705346586
         }
       ]
     },
@@ -17295,7 +18338,7 @@
     },
     "0x57a4698d954866ba036a8631320b7a698faa256d4dd71b2d01cb830ebf5b9084": {
       "tokenId": "0x57a4698d954866ba036a8631320b7a698faa256d4dd71b2d01cb830ebf5b9084",
-      "originAxelarChainId": "Polygon",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -17312,6 +18355,13 @@
           "tokenAddress": "0x990968eF8E4088FC125f7A5b369044C9613271F0",
           "decimals": 18,
           "registrationTimestamp": 1707166638
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x57a4698d954866ba036a8631320b7a698faa256d4dd71b2d01cb830ebf5b9084",
+          "tokenAddress": "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+          "decimals": 18,
+          "registrationTimestamp": 1707166445
         }
       ]
     },
@@ -17346,7 +18396,7 @@
     },
     "0xc957f29c29926ebf54ab794b1cb0664db05af7c98a51f2032e3089d6c65821af": {
       "tokenId": "0xc957f29c29926ebf54ab794b1cb0664db05af7c98a51f2032e3089d6c65821af",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -17363,6 +18413,20 @@
           "tokenAddress": "0x036907737BBad570aa63A71EdfbC97E33a2F2D97",
           "decimals": 18,
           "registrationTimestamp": 1707227378
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xc957f29c29926ebf54ab794b1cb0664db05af7c98a51f2032e3089d6c65821af",
+          "tokenAddress": "0x036907737BBad570aa63A71EdfbC97E33a2F2D97",
+          "decimals": 18,
+          "registrationTimestamp": 1707225452
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xc957f29c29926ebf54ab794b1cb0664db05af7c98a51f2032e3089d6c65821af",
+          "tokenAddress": "0x036907737BBad570aa63A71EdfbC97E33a2F2D97",
+          "decimals": 18,
+          "registrationTimestamp": 1707225595
         }
       ]
     },
@@ -17427,12 +18491,19 @@
           "tokenAddress": "0xC04c8B92Ca25579DB66E3C4ae859d02e5b6C50B2",
           "decimals": 18,
           "registrationTimestamp": 1707251237
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x929bc92849835d876e39f6b7d64c78fd6b9dcf70b69a9853aa82be7406c25ea2",
+          "tokenAddress": "0xC04c8B92Ca25579DB66E3C4ae859d02e5b6C50B2",
+          "decimals": 18,
+          "registrationTimestamp": 1707252319
         }
       ]
     },
     "0x69c0601ae22f6b948a8421071ea50039039153a221c532a7d56a0f0f0bb5f161": {
       "tokenId": "0x69c0601ae22f6b948a8421071ea50039039153a221c532a7d56a0f0f0bb5f161",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "kava",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -17456,6 +18527,13 @@
           "tokenAddress": "0xA4334C961731AF4aB5910Cea9dcAEC2a50f2dbdF",
           "decimals": 18,
           "registrationTimestamp": 1707298790
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x69c0601ae22f6b948a8421071ea50039039153a221c532a7d56a0f0f0bb5f161",
+          "tokenAddress": "0xA4334C961731AF4aB5910Cea9dcAEC2a50f2dbdF",
+          "decimals": 18,
+          "registrationTimestamp": 1707298438
         }
       ]
     },
@@ -17527,12 +18605,26 @@
           "tokenAddress": "0xb42Cbf62E5785cC7cc5c0e3fBc2960f39348a847",
           "decimals": 18,
           "registrationTimestamp": 1707345069
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xf8b55395cfcaf757c0b6e4b1cca67be18f144b89304db4f8f685532b97d22d68",
+          "tokenAddress": "0xb42Cbf62E5785cC7cc5c0e3fBc2960f39348a847",
+          "decimals": 18,
+          "registrationTimestamp": 1707345070
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf8b55395cfcaf757c0b6e4b1cca67be18f144b89304db4f8f685532b97d22d68",
+          "tokenAddress": "0xb42Cbf62E5785cC7cc5c0e3fBc2960f39348a847",
+          "decimals": 18,
+          "registrationTimestamp": 1707345263
         }
       ]
     },
     "0x510663bab9aad535b650c69fe81cf10e11308886af140be5ea878aa97355dceb": {
       "tokenId": "0x510663bab9aad535b650c69fe81cf10e11308886af140be5ea878aa97355dceb",
-      "originAxelarChainId": "Moonbeam",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -17549,6 +18641,20 @@
           "tokenAddress": "0xc724E95861EbD6C75Aceb29BdF47df2c542eB223",
           "decimals": 18,
           "registrationTimestamp": 1707338785
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x510663bab9aad535b650c69fe81cf10e11308886af140be5ea878aa97355dceb",
+          "tokenAddress": "0xc724E95861EbD6C75Aceb29BdF47df2c542eB223",
+          "decimals": 18,
+          "registrationTimestamp": 1707338474
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x510663bab9aad535b650c69fe81cf10e11308886af140be5ea878aa97355dceb",
+          "tokenAddress": "0xc724E95861EbD6C75Aceb29BdF47df2c542eB223",
+          "decimals": 18,
+          "registrationTimestamp": 1707338799
         }
       ]
     },
@@ -17635,6 +18741,20 @@
           "tokenAddress": "0xf619988062Ac65ce2BB4f0420389A1FBf6F99e3A",
           "decimals": 18,
           "registrationTimestamp": 1707359595
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x434b6144b18c9d3b785d83dd53bdfce054f2e132a0926222e062faa72763999a",
+          "tokenAddress": "0xf619988062Ac65ce2BB4f0420389A1FBf6F99e3A",
+          "decimals": 18,
+          "registrationTimestamp": 1707359604
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x434b6144b18c9d3b785d83dd53bdfce054f2e132a0926222e062faa72763999a",
+          "tokenAddress": "0xf619988062Ac65ce2BB4f0420389A1FBf6F99e3A",
+          "decimals": 18,
+          "registrationTimestamp": 1707359624
         }
       ]
     },
@@ -17814,6 +18934,20 @@
           "tokenAddress": "0xa0D706846714F6473A55B42dF29DDF38F5a948ff",
           "decimals": 18,
           "registrationTimestamp": 1707421366
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa1dd0d73fad8c54666240d902d01fe4286709e71bb864d1885d49ce92b87f811",
+          "tokenAddress": "0xa0D706846714F6473A55B42dF29DDF38F5a948ff",
+          "decimals": 18,
+          "registrationTimestamp": 1707421481
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xa1dd0d73fad8c54666240d902d01fe4286709e71bb864d1885d49ce92b87f811",
+          "tokenAddress": "0xa0D706846714F6473A55B42dF29DDF38F5a948ff",
+          "decimals": 18,
+          "registrationTimestamp": 1707421532
         }
       ]
     },
@@ -17878,6 +19012,20 @@
           "tokenAddress": "0x5a797F39f50EbaAAabfC939c8B71687b7B56015B",
           "decimals": 18,
           "registrationTimestamp": 1707419075
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x0a336ea73db774140f6daba98d2980528bc500d706758321a072a1ca6831ee9f",
+          "tokenAddress": "0x5a797F39f50EbaAAabfC939c8B71687b7B56015B",
+          "decimals": 18,
+          "registrationTimestamp": 1707421802
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x0a336ea73db774140f6daba98d2980528bc500d706758321a072a1ca6831ee9f",
+          "tokenAddress": "0x5a797F39f50EbaAAabfC939c8B71687b7B56015B",
+          "decimals": 18,
+          "registrationTimestamp": 1707421845
         }
       ]
     },
@@ -17956,6 +19104,20 @@
           "tokenAddress": "0x193240cF06d02312d3460fb9FB6e0d742e4732Ef",
           "decimals": 2,
           "registrationTimestamp": 1707424285
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x73482990042483e33b5fb9d43c2f3d8a61741bedee716e0229648785db09e473",
+          "tokenAddress": "0x193240cF06d02312d3460fb9FB6e0d742e4732Ef",
+          "decimals": 2,
+          "registrationTimestamp": 1707424296
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x73482990042483e33b5fb9d43c2f3d8a61741bedee716e0229648785db09e473",
+          "tokenAddress": "0x193240cF06d02312d3460fb9FB6e0d742e4732Ef",
+          "decimals": 2,
+          "registrationTimestamp": 1707424309
         }
       ]
     },
@@ -18028,6 +19190,13 @@
           "tokenAddress": "0xFbd43358c46f9B9A11BC0083CF6712C4382A8696",
           "decimals": 18,
           "registrationTimestamp": 1707475780
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x05b43af447781196a930a1400312cb9a5e4253d450fce09635589b75b128d679",
+          "tokenAddress": "0xFbd43358c46f9B9A11BC0083CF6712C4382A8696",
+          "decimals": 18,
+          "registrationTimestamp": 1707475788
         }
       ]
     },
@@ -18072,6 +19241,20 @@
           "tokenAddress": "0x952a46D5868905000Be65b82B3fE8701Aae1F6e2",
           "decimals": 18,
           "registrationTimestamp": 1707479628
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xccf2ef4812ae9b21c89d34105516df7dc8af64737c7c365274f07e16c02d6257",
+          "tokenAddress": "0x952a46D5868905000Be65b82B3fE8701Aae1F6e2",
+          "decimals": 18,
+          "registrationTimestamp": 1707480014
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xccf2ef4812ae9b21c89d34105516df7dc8af64737c7c365274f07e16c02d6257",
+          "tokenAddress": "0x952a46D5868905000Be65b82B3fE8701Aae1F6e2",
+          "decimals": 18,
+          "registrationTimestamp": 1707480146
         }
       ]
     },
@@ -18094,6 +19277,13 @@
           "tokenAddress": "0xBe318bA30C842bbf7797fc07230CE81eA5981572",
           "decimals": 18,
           "registrationTimestamp": 1707479791
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x6f6b89ed3ebc265fd8d4f1c7f3cda84cb4a3d2704d23748538da8641ae3d1233",
+          "tokenAddress": "0xBe318bA30C842bbf7797fc07230CE81eA5981572",
+          "decimals": 18,
+          "registrationTimestamp": 1707479918
         }
       ]
     },
@@ -18159,6 +19349,13 @@
           "tokenAddress": "0xab68BE8063f073857c2052c3362E1Ea86F1e2A3c",
           "decimals": 18,
           "registrationTimestamp": 1707481139
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x489fa3925e215a3a72700755a14bd6e039fc770d9402dec24e67cb6d4b0a056e",
+          "tokenAddress": "0xab68BE8063f073857c2052c3362E1Ea86F1e2A3c",
+          "decimals": 18,
+          "registrationTimestamp": 1707481546
         }
       ]
     },
@@ -18203,6 +19400,13 @@
           "tokenAddress": "0x4Dc8Ceb746cBFC94713bF9a39cC8c08Bd2fe07b7",
           "decimals": 18,
           "registrationTimestamp": 1707483881
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x498b3516ff54b3634ab9e7cedd89db95df7835249b57986bf7ef2e4d24ed83f8",
+          "tokenAddress": "0x4Dc8Ceb746cBFC94713bF9a39cC8c08Bd2fe07b7",
+          "decimals": 18,
+          "registrationTimestamp": 1707486585
         }
       ]
     },
@@ -18225,6 +19429,13 @@
           "tokenAddress": "0x04e964aAe31EDa657510F839135F3462DC8CEAbe",
           "decimals": 18,
           "registrationTimestamp": 1707493283
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xef5375215527cfc555ff65622a5992c8c592f2544fd3117301db41d886f0ecb3",
+          "tokenAddress": "0x04e964aAe31EDa657510F839135F3462DC8CEAbe",
+          "decimals": 18,
+          "registrationTimestamp": 1707494808
         }
       ]
     },
@@ -18259,7 +19470,7 @@
     },
     "0x2705a200de7439eab41447e29389f7aa2025a7d5ab16221e671dde9564ebac51": {
       "tokenId": "0x2705a200de7439eab41447e29389f7aa2025a7d5ab16221e671dde9564ebac51",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -18304,6 +19515,20 @@
           "tokenAddress": "0x2E466403f2758ab20FF79795eC035E843f4ec852",
           "decimals": 18,
           "registrationTimestamp": 1707505302
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x2705a200de7439eab41447e29389f7aa2025a7d5ab16221e671dde9564ebac51",
+          "tokenAddress": "0x2E466403f2758ab20FF79795eC035E843f4ec852",
+          "decimals": 18,
+          "registrationTimestamp": 1707330828
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x2705a200de7439eab41447e29389f7aa2025a7d5ab16221e671dde9564ebac51",
+          "tokenAddress": "0x2E466403f2758ab20FF79795eC035E843f4ec852",
+          "decimals": 18,
+          "registrationTimestamp": 1707330926
         }
       ]
     },
@@ -18375,6 +19600,20 @@
           "tokenAddress": "0x6d0eA6b66Bb898a0BC40df25404ba711e9C7f302",
           "decimals": 18,
           "registrationTimestamp": 1707532194
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xddf0b70f515dcca7607ffd2b50b3dee8a539f20b172da7ec2605a1e23337b5f0",
+          "tokenAddress": "0x6d0eA6b66Bb898a0BC40df25404ba711e9C7f302",
+          "decimals": 18,
+          "registrationTimestamp": 1707532575
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xddf0b70f515dcca7607ffd2b50b3dee8a539f20b172da7ec2605a1e23337b5f0",
+          "tokenAddress": "0x6d0eA6b66Bb898a0BC40df25404ba711e9C7f302",
+          "decimals": 18,
+          "registrationTimestamp": 1707532402
         }
       ]
     },
@@ -18418,6 +19657,20 @@
           "tokenAddress": "0xc20fF003662d9B91B4139fFA6b7c9d69968bad2c",
           "decimals": 18,
           "registrationTimestamp": 1707506222
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xe7e6e3ddeb6637dbec1fe4e13487b58c4d12f3d15268095c302e8dd0d95cb804",
+          "tokenAddress": "0x0F4ecC9B491c68738EF4E9c4b782c3b423A9461B",
+          "decimals": 18,
+          "registrationTimestamp": 1707506318
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xe7e6e3ddeb6637dbec1fe4e13487b58c4d12f3d15268095c302e8dd0d95cb804",
+          "tokenAddress": "0x0F4ecC9B491c68738EF4E9c4b782c3b423A9461B",
+          "decimals": 18,
+          "registrationTimestamp": 1707506357
         }
       ]
     },
@@ -18457,6 +19710,20 @@
         },
         {
           "axelarChainId": "Moonbeam",
+          "tokenId": "0x0f2639ff93ecbefca1a9f5e98de58469bfef7cb6aa36bb749e926db9686f599e",
+          "tokenAddress": "0xb8B64394f0A52970B6ADc67a7ca5B51E2E6Ff8d6",
+          "decimals": 18,
+          "registrationTimestamp": 1707509226
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x0f2639ff93ecbefca1a9f5e98de58469bfef7cb6aa36bb749e926db9686f599e",
+          "tokenAddress": "0xb8B64394f0A52970B6ADc67a7ca5B51E2E6Ff8d6",
+          "decimals": 18,
+          "registrationTimestamp": 1707509213
+        },
+        {
+          "axelarChainId": "kava",
           "tokenId": "0x0f2639ff93ecbefca1a9f5e98de58469bfef7cb6aa36bb749e926db9686f599e",
           "tokenAddress": "0xb8B64394f0A52970B6ADc67a7ca5B51E2E6Ff8d6",
           "decimals": 18,
@@ -18511,6 +19778,20 @@
           "tokenAddress": "0x31ecbff94EF830b621880cD6F91F0Ea32fF0Ba81",
           "decimals": 18,
           "registrationTimestamp": 1707511317
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x52374e3efc74ee9e2246285835e6db2a062058dc95124bda2ce2ed8dc5fddd13",
+          "tokenAddress": "0x31ecbff94EF830b621880cD6F91F0Ea32fF0Ba81",
+          "decimals": 18,
+          "registrationTimestamp": 1707511313
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x52374e3efc74ee9e2246285835e6db2a062058dc95124bda2ce2ed8dc5fddd13",
+          "tokenAddress": "0x31ecbff94EF830b621880cD6F91F0Ea32fF0Ba81",
+          "decimals": 18,
+          "registrationTimestamp": 1707511364
         }
       ]
     },
@@ -18568,6 +19849,20 @@
           "tokenAddress": "0xB9374c5F5E2fc2D67F1b54E9Ae261EFaD69845f1",
           "decimals": 18,
           "registrationTimestamp": 1707514419
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x9bd946a97d87abe8f08b01b0c0f10939b10b30f75bfaea7432cafeb94e6f9910",
+          "tokenAddress": "0xB9374c5F5E2fc2D67F1b54E9Ae261EFaD69845f1",
+          "decimals": 18,
+          "registrationTimestamp": 1707514428
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x9bd946a97d87abe8f08b01b0c0f10939b10b30f75bfaea7432cafeb94e6f9910",
+          "tokenAddress": "0xB9374c5F5E2fc2D67F1b54E9Ae261EFaD69845f1",
+          "decimals": 18,
+          "registrationTimestamp": 1707514401
         }
       ]
     },
@@ -18646,6 +19941,20 @@
           "tokenAddress": "0xB666D5deaD3894Db67A5157D88Cdf9cefcE9aA46",
           "decimals": 18,
           "registrationTimestamp": 1707489206
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xe93110e1d37e642de64cc3ae4da838184903736bb3b44a65c0e9e09e7b519162",
+          "tokenAddress": "0xB666D5deaD3894Db67A5157D88Cdf9cefcE9aA46",
+          "decimals": 18,
+          "registrationTimestamp": 1707531635
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xe93110e1d37e642de64cc3ae4da838184903736bb3b44a65c0e9e09e7b519162",
+          "tokenAddress": "0xB666D5deaD3894Db67A5157D88Cdf9cefcE9aA46",
+          "decimals": 18,
+          "registrationTimestamp": 1707531638
         }
       ]
     },
@@ -18717,6 +20026,13 @@
           "tokenAddress": "0xbeB0557996D3A8743eef0AA5548C624977F2e626",
           "decimals": 1,
           "registrationTimestamp": 1707510487
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x27e382e814ee698122d6d7335a7d3fce90848d0d8c678ea8177364b96cbd9bb5",
+          "tokenAddress": "0xbeB0557996D3A8743eef0AA5548C624977F2e626",
+          "decimals": 1,
+          "registrationTimestamp": 1707512638
         }
       ]
     },
@@ -18774,6 +20090,20 @@
           "tokenAddress": "0x1ec1395605D65399DF4A994E9F15dC795aC3430E",
           "decimals": 18,
           "registrationTimestamp": 1707531828
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xed9364158bab0b30cb04042c2826acf6be11d90dc34a0b2979d1409a070e5ca9",
+          "tokenAddress": "0x1ec1395605D65399DF4A994E9F15dC795aC3430E",
+          "decimals": 18,
+          "registrationTimestamp": 1707531850
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xed9364158bab0b30cb04042c2826acf6be11d90dc34a0b2979d1409a070e5ca9",
+          "tokenAddress": "0x1ec1395605D65399DF4A994E9F15dC795aC3430E",
+          "decimals": 18,
+          "registrationTimestamp": 1707531893
         }
       ]
     },
@@ -18875,6 +20205,13 @@
           "tokenAddress": "0x6a7314FaC9AaD82E99f2b0233B5f056F3eEe4210",
           "decimals": 18,
           "registrationTimestamp": 1707557762
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xeaef93ce02a3da6e617b484a871dd30a581b5971de591f78e761252d77b29ce5",
+          "tokenAddress": "0x6a7314FaC9AaD82E99f2b0233B5f056F3eEe4210",
+          "decimals": 18,
+          "registrationTimestamp": 1707601267
         }
       ]
     },
@@ -18933,6 +20270,20 @@
           "tokenAddress": "0x22778D26E1E45D4120A308b745Cec840c5B747b3",
           "decimals": 18,
           "registrationTimestamp": 1707566392
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4a32468bc3d7598ebf4ab2f043050eb1c7986e5c2f1cb20c662673d56f4183d8",
+          "tokenAddress": "0x22778D26E1E45D4120A308b745Cec840c5B747b3",
+          "decimals": 18,
+          "registrationTimestamp": 1707568740
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x4a32468bc3d7598ebf4ab2f043050eb1c7986e5c2f1cb20c662673d56f4183d8",
+          "tokenAddress": "0x22778D26E1E45D4120A308b745Cec840c5B747b3",
+          "decimals": 18,
+          "registrationTimestamp": 1707568748
         }
       ]
     },
@@ -19004,12 +20355,26 @@
           "tokenAddress": "0xa7e61298AC80B214763757e08D8AB67A5f78689f",
           "decimals": 18,
           "registrationTimestamp": 1707556367
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xe2bbd39047803466201846fe1eacfe0b3ecc400a169efa1eed368dcdb5db4830",
+          "tokenAddress": "0xa7e61298AC80B214763757e08D8AB67A5f78689f",
+          "decimals": 18,
+          "registrationTimestamp": 1707573617
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xe2bbd39047803466201846fe1eacfe0b3ecc400a169efa1eed368dcdb5db4830",
+          "tokenAddress": "0xa7e61298AC80B214763757e08D8AB67A5f78689f",
+          "decimals": 18,
+          "registrationTimestamp": 1707573660
         }
       ]
     },
     "0x93d9769a4455b4819477fa9a8577ac93f84d3d01f9ab10567eca89c021f60d3c": {
       "tokenId": "0x93d9769a4455b4819477fa9a8577ac93f84d3d01f9ab10567eca89c021f60d3c",
-      "originAxelarChainId": "Moonbeam",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -19033,6 +20398,20 @@
           "tokenAddress": "0x72756390405F0889713baa41ef7C50dd0E1D5497",
           "decimals": 18,
           "registrationTimestamp": 1707574566
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x93d9769a4455b4819477fa9a8577ac93f84d3d01f9ab10567eca89c021f60d3c",
+          "tokenAddress": "0x72756390405F0889713baa41ef7C50dd0E1D5497",
+          "decimals": 18,
+          "registrationTimestamp": 1707574312
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x93d9769a4455b4819477fa9a8577ac93f84d3d01f9ab10567eca89c021f60d3c",
+          "tokenAddress": "0x72756390405F0889713baa41ef7C50dd0E1D5497",
+          "decimals": 18,
+          "registrationTimestamp": 1707574640
         }
       ]
     },
@@ -19083,6 +20462,20 @@
           "tokenAddress": "0xaB6110860BCbA34783645Da6B3F8167979eC4D7b",
           "decimals": 18,
           "registrationTimestamp": 1707646237
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xd99bab14083516e259c8f6f42216129d0f84a9438f146ba8e02d5989ec2e0f7e",
+          "tokenAddress": "0xaB6110860BCbA34783645Da6B3F8167979eC4D7b",
+          "decimals": 18,
+          "registrationTimestamp": 1707645734
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xd99bab14083516e259c8f6f42216129d0f84a9438f146ba8e02d5989ec2e0f7e",
+          "tokenAddress": "0xaB6110860BCbA34783645Da6B3F8167979eC4D7b",
+          "decimals": 18,
+          "registrationTimestamp": 1707645933
         }
       ]
     },
@@ -19105,6 +20498,13 @@
           "tokenAddress": "0x0659E865454b0F2904D8ad8d6838Cf8c8AdfAfD1",
           "decimals": 18,
           "registrationTimestamp": 1707649317
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x86f67e8bf6c0becbbdc66fef9e87b6a5336e07da92e65abd5dc7071a01c1b1cd",
+          "tokenAddress": "0x0659E865454b0F2904D8ad8d6838Cf8c8AdfAfD1",
+          "decimals": 18,
+          "registrationTimestamp": 1707651077
         }
       ]
     },
@@ -19148,6 +20548,13 @@
           "tokenAddress": "0x39F1bcF0827EaFb3aABd919fD4B9f4DB09c800b0",
           "decimals": 18,
           "registrationTimestamp": 1707709154
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x354a08f4fa458de67eef6b56115957fc722abe394beb1a14450b72c18c4bb07a",
+          "tokenAddress": "0x39F1bcF0827EaFb3aABd919fD4B9f4DB09c800b0",
+          "decimals": 18,
+          "registrationTimestamp": 1707709171
         }
       ]
     },
@@ -19219,6 +20626,20 @@
           "tokenAddress": "0xc98591eB1569F5cfB4087C3eFaF1BEaF3d9d8cb5",
           "decimals": 18,
           "registrationTimestamp": 1707676966
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xacc700d7d62c9f492a54d7501a098e257f1d42dd538a37b2ef549be619efb356",
+          "tokenAddress": "0xc98591eB1569F5cfB4087C3eFaF1BEaF3d9d8cb5",
+          "decimals": 18,
+          "registrationTimestamp": 1707704406
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xacc700d7d62c9f492a54d7501a098e257f1d42dd538a37b2ef549be619efb356",
+          "tokenAddress": "0xc98591eB1569F5cfB4087C3eFaF1BEaF3d9d8cb5",
+          "decimals": 18,
+          "registrationTimestamp": 1707704622
         }
       ]
     },
@@ -19241,6 +20662,13 @@
           "tokenAddress": "0x3bEeDeEb30c26406B27C568Aa765dF4947943300",
           "decimals": 18,
           "registrationTimestamp": 1707725819
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x98bb21fef34a21e3c2d11cbb7d453cebbd3a1e11505a14c829acebe1c035dc76",
+          "tokenAddress": "0x3bEeDeEb30c26406B27C568Aa765dF4947943300",
+          "decimals": 18,
+          "registrationTimestamp": 1707725911
         }
       ]
     },
@@ -19277,6 +20705,13 @@
           "tokenAddress": "0xB0B9bcD0cD78F0A12cEcb7fdc99a9098C8A99A1b",
           "decimals": 18,
           "registrationTimestamp": 1707727589
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x81ea95d6b0d4cab4d7728e2b1d9c68a0b2dbfad962a59bd5a73ef5e43097adce",
+          "tokenAddress": "0xB0B9bcD0cD78F0A12cEcb7fdc99a9098C8A99A1b",
+          "decimals": 18,
+          "registrationTimestamp": 1707727611
         }
       ]
     },
@@ -19378,6 +20813,20 @@
           "tokenAddress": "0x30a5a7D727C23C04A011a921eA79267C7CeD5492",
           "decimals": 18,
           "registrationTimestamp": 1707895756
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3c9515357933a302479871e5c12f80537754058290ae7b6366634636968fee59",
+          "tokenAddress": "0x30a5a7D727C23C04A011a921eA79267C7CeD5492",
+          "decimals": 18,
+          "registrationTimestamp": 1707896210
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x3c9515357933a302479871e5c12f80537754058290ae7b6366634636968fee59",
+          "tokenAddress": "0x30a5a7D727C23C04A011a921eA79267C7CeD5492",
+          "decimals": 18,
+          "registrationTimestamp": 1707896233
         }
       ]
     },
@@ -19464,6 +20913,20 @@
           "tokenAddress": "0x2B8CC8aAc5207c84881f627E420071A670449FBb",
           "decimals": 18,
           "registrationTimestamp": 1708709436
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xcf6be92f4f6a2da01eb6b4f228ffe254804108c8bd74f44328c772bdef5fbb69",
+          "tokenAddress": "0x2B8CC8aAc5207c84881f627E420071A670449FBb",
+          "decimals": 18,
+          "registrationTimestamp": 1707986375
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xcf6be92f4f6a2da01eb6b4f228ffe254804108c8bd74f44328c772bdef5fbb69",
+          "tokenAddress": "0x2B8CC8aAc5207c84881f627E420071A670449FBb",
+          "decimals": 18,
+          "registrationTimestamp": 1708327347
         }
       ]
     },
@@ -19500,6 +20963,13 @@
           "tokenAddress": "0x31498c63322f6093ae4fD4ce4932Fc59740b00dd",
           "decimals": 18,
           "registrationTimestamp": 1707992679
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x01d1a17f028a3d045b9df45690b107ba759386e5dc0d41d645efd540c8643c8e",
+          "tokenAddress": "0x31498c63322f6093ae4fD4ce4932Fc59740b00dd",
+          "decimals": 18,
+          "registrationTimestamp": 1707994350
         }
       ]
     },
@@ -19652,6 +21122,13 @@
           "tokenAddress": "0x4F4e2E3365e5705E8F27Cecb12b76ADE0D2fD17B",
           "decimals": 18,
           "registrationTimestamp": 1707352617
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x591b3cebd1ce0ecc34273317686c93009f8bd52a9dac7433273e33caa40e641a",
+          "tokenAddress": "0x4F4e2E3365e5705E8F27Cecb12b76ADE0D2fD17B",
+          "decimals": 18,
+          "registrationTimestamp": 1707354594
         }
       ]
     },
@@ -19667,6 +21144,13 @@
           "tokenAddress": "0xDFED10CD77b5308c9AE06767452e1bBfb3200090",
           "decimals": 18,
           "registrationTimestamp": 1708197488
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x107fec81ba002a73c4de3168c9412849b894b4662bc5b2fa207f99fe2e92ffd2",
+          "tokenAddress": "0xbde46C6C880eeE0656091cE081E6B0B3731Eb895",
+          "decimals": 18,
+          "registrationTimestamp": 1708197976
         }
       ]
     },
@@ -19790,6 +21274,13 @@
           "tokenAddress": "0x50CDcb13759632666249bc31F8a25e2a8B9b77Fa",
           "decimals": 18,
           "registrationTimestamp": 1708405187
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x6692a7ce687df08160db5a1cc782955ee6f7276fe7faaef47fb754348f4aca17",
+          "tokenAddress": "0x50CDcb13759632666249bc31F8a25e2a8B9b77Fa",
+          "decimals": 18,
+          "registrationTimestamp": 1708405394
         }
       ]
     },
@@ -19805,6 +21296,13 @@
           "tokenAddress": "0xA18FF19aDD867856054b8d78EEEdE0A6dd7f7bD8",
           "decimals": 18,
           "registrationTimestamp": 1708433071
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x51c95d9f14f164c2662057382113316336288e716b40d8396c3ef46ac66f33c3",
+          "tokenAddress": "0xA18FF19aDD867856054b8d78EEEdE0A6dd7f7bD8",
+          "decimals": 18,
+          "registrationTimestamp": 1708433181
         }
       ]
     },
@@ -20076,6 +21574,13 @@
           "tokenAddress": "0x123c0ca2aAfbA4b667f9605A3c81E5cc632eC067",
           "decimals": 18,
           "registrationTimestamp": 1729181056
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xd6cfeee29a8be1190be94bc0260ce6b6de3ae175b09dd943e18b0a2525c85a1e",
+          "tokenAddress": "0x123c0ca2aAfbA4b667f9605A3c81E5cc632eC067",
+          "decimals": 18,
+          "registrationTimestamp": 1729181228
         }
       ]
     },
@@ -20252,12 +21757,19 @@
           "tokenAddress": "0x346675Be813678caa0c572fed748713802ae5918",
           "decimals": 18,
           "registrationTimestamp": 1709288334
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x0e4582dd448fcb5d95ba4f755c02379ecfb3a3a7b18de79770d2542cd890fadd",
+          "tokenAddress": "0x9d9aD0b73f784a52Eba29f5C4Cc23BFf5edb3839",
+          "decimals": 18,
+          "registrationTimestamp": 1709288943
         }
       ]
     },
     "0xbc283949fb8f53f9b611b303ee02c0a586a07427784bc3dc907a3bb23873be0a": {
       "tokenId": "0xbc283949fb8f53f9b611b303ee02c0a586a07427784bc3dc907a3bb23873be0a",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "kava",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -20267,6 +21779,13 @@
           "tokenAddress": "0xAD5Bbf25264ee6eDD719Ef3BeC8b2BdD76D115DE",
           "decimals": 18,
           "registrationTimestamp": 1709290313
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xbc283949fb8f53f9b611b303ee02c0a586a07427784bc3dc907a3bb23873be0a",
+          "tokenAddress": "0xAD5Bbf25264ee6eDD719Ef3BeC8b2BdD76D115DE",
+          "decimals": 18,
+          "registrationTimestamp": 1709289814
         }
       ]
     },
@@ -20326,6 +21845,13 @@
           "tokenAddress": "0x178cF92874668A6CD5650F85DDD7Ad8f4A1bcfC1",
           "decimals": 18,
           "registrationTimestamp": 1709319918
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x0d9d0e9e3b633f36d42cdab016feea501204548af20dcde76994c64c02b94280",
+          "tokenAddress": "0x178cF92874668A6CD5650F85DDD7Ad8f4A1bcfC1",
+          "decimals": 18,
+          "registrationTimestamp": 1709320297
         }
       ]
     },
@@ -20391,6 +21917,20 @@
           "tokenAddress": "0xbfBd6900FF5A7AEc3f6eC8F47Bb40B7898dCC8A7",
           "decimals": 18,
           "registrationTimestamp": 1709377368
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa4e92693f9a62c9ec4d67f135e5cb2a6e0ec704a3b536372a42a6159982f5257",
+          "tokenAddress": "0xbfBd6900FF5A7AEc3f6eC8F47Bb40B7898dCC8A7",
+          "decimals": 18,
+          "registrationTimestamp": 1709377300
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xa4e92693f9a62c9ec4d67f135e5cb2a6e0ec704a3b536372a42a6159982f5257",
+          "tokenAddress": "0xbfBd6900FF5A7AEc3f6eC8F47Bb40B7898dCC8A7",
+          "decimals": 18,
+          "registrationTimestamp": 1709377316
         }
       ]
     },
@@ -20441,6 +21981,13 @@
           "tokenAddress": "0xEe6a84D4A103cCebC1518cCD5e776FAC88d63644",
           "decimals": 18,
           "registrationTimestamp": 1709316605
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x33efe0c7623cf4a3384ef70c201d0ae02a67d7a15b8efddff4e1d533466d24ed",
+          "tokenAddress": "0xEe6a84D4A103cCebC1518cCD5e776FAC88d63644",
+          "decimals": 18,
+          "registrationTimestamp": 1709316692
         }
       ]
     },
@@ -20505,6 +22052,13 @@
           "tokenAddress": "0x13DfC29d46b9fB8F3D3bCD1fc27e7E6257F6EeDB",
           "decimals": 18,
           "registrationTimestamp": 1709657567
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x59c529e1e2ac88964935a9ddf0e6276b8721971e74c40944b2c221909271e86e",
+          "tokenAddress": "0x13DfC29d46b9fB8F3D3bCD1fc27e7E6257F6EeDB",
+          "decimals": 18,
+          "registrationTimestamp": 1709657575
         }
       ]
     },
@@ -20548,6 +22102,20 @@
           "tokenAddress": "0xd1611FD1F7c912Cf0b7E475EFDdA6142CF058057",
           "decimals": 18,
           "registrationTimestamp": 1709658711
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x293126e9f7a332c6c0ca6c494a1888783613371b08356dab4c2c4e9c4ab79d02",
+          "tokenAddress": "0xd1611FD1F7c912Cf0b7E475EFDdA6142CF058057",
+          "decimals": 18,
+          "registrationTimestamp": 1709658740
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x293126e9f7a332c6c0ca6c494a1888783613371b08356dab4c2c4e9c4ab79d02",
+          "tokenAddress": "0xd1611FD1F7c912Cf0b7E475EFDdA6142CF058057",
+          "decimals": 18,
+          "registrationTimestamp": 1709658757
         }
       ]
     },
@@ -20597,7 +22165,7 @@
     },
     "0x852d134ae8e6044edb183df6cf0542e9f4db35849525b95664b05f57c2b1f3fc": {
       "tokenId": "0x852d134ae8e6044edb183df6cf0542e9f4db35849525b95664b05f57c2b1f3fc",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -20607,6 +22175,20 @@
           "tokenAddress": "0xcF3DF546f22CCC286A4Ff19FB3431ad136b97906",
           "decimals": 18,
           "registrationTimestamp": 1709956887
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x852d134ae8e6044edb183df6cf0542e9f4db35849525b95664b05f57c2b1f3fc",
+          "tokenAddress": "0xcF3DF546f22CCC286A4Ff19FB3431ad136b97906",
+          "decimals": 18,
+          "registrationTimestamp": 1709956872
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x852d134ae8e6044edb183df6cf0542e9f4db35849525b95664b05f57c2b1f3fc",
+          "tokenAddress": "0xcF3DF546f22CCC286A4Ff19FB3431ad136b97906",
+          "decimals": 18,
+          "registrationTimestamp": 1709956768
         }
       ]
     },
@@ -20670,7 +22252,7 @@
     },
     "0x287ecd0ef20c81121cad522b27b0da9688c3913877b0e06a129efedbe1fdada0": {
       "tokenId": "0x287ecd0ef20c81121cad522b27b0da9688c3913877b0e06a129efedbe1fdada0",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -20680,12 +22262,26 @@
           "tokenAddress": "0x8dB2a3906795187fdBfC3b8506C3eb6C702bd418",
           "decimals": 18,
           "registrationTimestamp": 1710263582
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x287ecd0ef20c81121cad522b27b0da9688c3913877b0e06a129efedbe1fdada0",
+          "tokenAddress": "0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787",
+          "decimals": 18,
+          "registrationTimestamp": 1710263362
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x287ecd0ef20c81121cad522b27b0da9688c3913877b0e06a129efedbe1fdada0",
+          "tokenAddress": "0x8dB2a3906795187fdBfC3b8506C3eb6C702bd418",
+          "decimals": 18,
+          "registrationTimestamp": 1710263493
         }
       ]
     },
     "0x096ba37d137f61d18eab24e34f2159f49baa876aee4e59d293736a06294faf1a": {
       "tokenId": "0x096ba37d137f61d18eab24e34f2159f49baa876aee4e59d293736a06294faf1a",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -20695,6 +22291,20 @@
           "tokenAddress": "0x15748Fdb02bd916BCC57a8FF99cDA34002D68458",
           "decimals": 18,
           "registrationTimestamp": 1710263752
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x096ba37d137f61d18eab24e34f2159f49baa876aee4e59d293736a06294faf1a",
+          "tokenAddress": "0x15748Fdb02bd916BCC57a8FF99cDA34002D68458",
+          "decimals": 18,
+          "registrationTimestamp": 1710263617
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x096ba37d137f61d18eab24e34f2159f49baa876aee4e59d293736a06294faf1a",
+          "tokenAddress": "0x15748Fdb02bd916BCC57a8FF99cDA34002D68458",
+          "decimals": 18,
+          "registrationTimestamp": 1710263718
         }
       ]
     },
@@ -20782,6 +22392,20 @@
           "tokenAddress": "0x03AFa665FB0938fEe8412A8fdB2d9fea98c17941",
           "decimals": 18,
           "registrationTimestamp": 1707652332
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3999933ec0ad97e5ec088b395b25dbfa949ffff3e0bb152e7bffd101e9f0b976",
+          "tokenAddress": "0x03AFa665FB0938fEe8412A8fdB2d9fea98c17941",
+          "decimals": 18,
+          "registrationTimestamp": 1707652310
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x3999933ec0ad97e5ec088b395b25dbfa949ffff3e0bb152e7bffd101e9f0b976",
+          "tokenAddress": "0x03AFa665FB0938fEe8412A8fdB2d9fea98c17941",
+          "decimals": 18,
+          "registrationTimestamp": 1707652331
         }
       ]
     },
@@ -20804,6 +22428,13 @@
           "tokenAddress": "0x74DafBc5Ac181a98D7370b583684BE3f3E561959",
           "decimals": 18,
           "registrationTimestamp": 1707657600
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xdbbf4dd5e1c69ed3e49ce712727e689044f5cbbc82c721c90c4f743f7aa73d79",
+          "tokenAddress": "0x74DafBc5Ac181a98D7370b583684BE3f3E561959",
+          "decimals": 18,
+          "registrationTimestamp": 1707657609
         }
       ]
     },
@@ -20819,6 +22450,13 @@
           "tokenAddress": "0x4E9D012Cc1C3F59998a01158f195F9c67f48097d",
           "decimals": 18,
           "registrationTimestamp": 1707654305
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x07fe77749d75c452dd4e4b8a705771afb5dbaff7a48e91f6cb338eeb86a4e614",
+          "tokenAddress": "0x4E9D012Cc1C3F59998a01158f195F9c67f48097d",
+          "decimals": 18,
+          "registrationTimestamp": 1707657963
         }
       ]
     },
@@ -21235,7 +22873,7 @@
     },
     "0x4aff173fcd231c16b50555694e81a7e2fd39c4f43a9ef98a1fc245605ecb794d": {
       "tokenId": "0x4aff173fcd231c16b50555694e81a7e2fd39c4f43a9ef98a1fc245605ecb794d",
-      "originAxelarChainId": "Polygon",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -21245,6 +22883,13 @@
           "tokenAddress": "0x9a4595368171DbBcE7537924129b63D25a555681",
           "decimals": 18,
           "registrationTimestamp": 1702960726
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4aff173fcd231c16b50555694e81a7e2fd39c4f43a9ef98a1fc245605ecb794d",
+          "tokenAddress": "0x9a4595368171DbBcE7537924129b63D25a555681",
+          "decimals": 18,
+          "registrationTimestamp": 1702959270
         }
       ]
     },
@@ -21289,6 +22934,20 @@
           "tokenAddress": "0xbcB39Bd6c58f30b0909b216f0a065dF3eB0556a6",
           "decimals": 18,
           "registrationTimestamp": 1703002632
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x2944a7d40cb87b0eb7be352ed6ea39cafdf3a620974ecf88b48364a62b1286da",
+          "tokenAddress": "0xbcB39Bd6c58f30b0909b216f0a065dF3eB0556a6",
+          "decimals": 18,
+          "registrationTimestamp": 1703002601
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x2944a7d40cb87b0eb7be352ed6ea39cafdf3a620974ecf88b48364a62b1286da",
+          "tokenAddress": "0xbcB39Bd6c58f30b0909b216f0a065dF3eB0556a6",
+          "decimals": 18,
+          "registrationTimestamp": 1703002296
         }
       ]
     },
@@ -21632,6 +23291,13 @@
           "tokenAddress": "0x77f6A5f1B7a2b6D6C322Af8581317D6Bb0a52689",
           "decimals": 18,
           "registrationTimestamp": 1706907460
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x8d1c7fe548b480e443521c5e58982e6142e4a707f35288c0c1117083de1ef224",
+          "tokenAddress": "0x93E611c3955f219FB9260a4a3Fed3a1a6CB44930",
+          "decimals": 18,
+          "registrationTimestamp": 1706908031
         }
       ]
     },
@@ -21912,6 +23578,20 @@
           "tokenAddress": "0x04266F87A2b45546B2205a17255861d79cf9EeD0",
           "decimals": 6,
           "registrationTimestamp": 1707032086
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xcba9eb8818b408dc65f3544f1c5656fa5977965a005168c57fc0bdb59599d7fa",
+          "tokenAddress": "0x04266F87A2b45546B2205a17255861d79cf9EeD0",
+          "decimals": 6,
+          "registrationTimestamp": 1707032180
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xcba9eb8818b408dc65f3544f1c5656fa5977965a005168c57fc0bdb59599d7fa",
+          "tokenAddress": "0x04266F87A2b45546B2205a17255861d79cf9EeD0",
+          "decimals": 6,
+          "registrationTimestamp": 1707032222
         }
       ]
     },
@@ -22152,6 +23832,13 @@
           "tokenAddress": "0x33cDdd42949fEdd6f3E543101f356BFe1a8c4990",
           "decimals": 18,
           "registrationTimestamp": 1707380793
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3aaf741c86c9ecd9c59cfdbb4bcfcb559e5469ded91e8a22ae6d7bc7c6030088",
+          "tokenAddress": "0x33cDdd42949fEdd6f3E543101f356BFe1a8c4990",
+          "decimals": 18,
+          "registrationTimestamp": 1707380905
         }
       ]
     },
@@ -23255,6 +24942,13 @@
           "tokenAddress": "0x016604e35A42744EEaeefcBE74CD13222CB9c30E",
           "decimals": 18,
           "registrationTimestamp": 1727461271
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xae926b650a8b4f7ecb60e759413408493b7ab57a25a82da6ab7cab8628f9d0cd",
+          "tokenAddress": "0x016604e35A42744EEaeefcBE74CD13222CB9c30E",
+          "decimals": 18,
+          "registrationTimestamp": 1727461229
         }
       ]
     },
@@ -23386,6 +25080,20 @@
           "tokenAddress": "0x35A01e3d17304B4A7e9c71AcF830e50913e3C8e8",
           "decimals": 18,
           "registrationTimestamp": 1707786653
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x161a1130c7decb303f4371d4f8d165bf4ec0e22b91ea32bc274f4b3fc90b320d",
+          "tokenAddress": "0x35A01e3d17304B4A7e9c71AcF830e50913e3C8e8",
+          "decimals": 18,
+          "registrationTimestamp": 1707790820
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x161a1130c7decb303f4371d4f8d165bf4ec0e22b91ea32bc274f4b3fc90b320d",
+          "tokenAddress": "0x35A01e3d17304B4A7e9c71AcF830e50913e3C8e8",
+          "decimals": 18,
+          "registrationTimestamp": 1707790801
         }
       ]
     },
@@ -23737,6 +25445,20 @@
           "tokenAddress": "0x65DCb1AaC9db969E7421F0518B85f2B51B6eb6Df",
           "decimals": 18,
           "registrationTimestamp": 1708442913
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xe0b59d84d06ea18dc07d891f52b56f1d669ae386a3208e6d41809cd3d598022b",
+          "tokenAddress": "0x65DCb1AaC9db969E7421F0518B85f2B51B6eb6Df",
+          "decimals": 18,
+          "registrationTimestamp": 1708694010
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xe0b59d84d06ea18dc07d891f52b56f1d669ae386a3208e6d41809cd3d598022b",
+          "tokenAddress": "0x65DCb1AaC9db969E7421F0518B85f2B51B6eb6Df",
+          "decimals": 18,
+          "registrationTimestamp": 1709307446
         }
       ]
     },
@@ -23904,6 +25626,13 @@
           "tokenAddress": "0x89Ce4e890b81f3B2b4612604a015afd191D27C37",
           "decimals": 18,
           "registrationTimestamp": 1732660250
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x22eadc2360bf998cadd890e07af3c6238fbc383c74d0c32d9ac07c559ad8145b",
+          "tokenAddress": "0x89Ce4e890b81f3B2b4612604a015afd191D27C37",
+          "decimals": 18,
+          "registrationTimestamp": 1732660197
         }
       ]
     },
@@ -23976,6 +25705,13 @@
           "tokenAddress": "0x36B2C609e60941328246d43c9896Dd4F20e67A87",
           "decimals": 18,
           "registrationTimestamp": 1732871449
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb12818f891fbb0d2b3bd525484b82a1fcf52acfe22b5fddc9f4c4c19459b0817",
+          "tokenAddress": "0x36B2C609e60941328246d43c9896Dd4F20e67A87",
+          "decimals": 18,
+          "registrationTimestamp": 1732871420
         }
       ]
     },
@@ -24268,6 +26004,13 @@
           "tokenAddress": "0xa58800bE96471E0Ca7Ff2f69D995BA1B1091b559",
           "decimals": 9,
           "registrationTimestamp": 1708792198
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x6a40189bc2d233b18e919b87f2ea3ba0916e75ee5a122a43a5b258673227d280",
+          "tokenAddress": "0xa58800bE96471E0Ca7Ff2f69D995BA1B1091b559",
+          "decimals": 9,
+          "registrationTimestamp": 1708792564
         }
       ]
     },
@@ -24863,6 +26606,13 @@
           "tokenAddress": "0x9d6501275e91c0b2b0845C2c5334dEa1EC6a3c18",
           "decimals": 18,
           "registrationTimestamp": 1738055647
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xb3245635de36c44e857c06f94ac0baa7e0be44ac693e897808a721a48dc0fa62",
+          "tokenAddress": "0xBe4247bDF0e161B65747E4fEFBd4821D21Ed05d2",
+          "decimals": 18,
+          "registrationTimestamp": 1738057358
         }
       ]
     },
@@ -25051,6 +26801,13 @@
           "tokenAddress": "0x3d4801933831e973286bFfDb32c88B0C96e892cd",
           "decimals": 18,
           "registrationTimestamp": 1738979844
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4beaede5cfc80d4c0998eedbb63fa3383152c37a1dd1af3d36d9b414c9fa9d33",
+          "tokenAddress": "0x3d4801933831e973286bFfDb32c88B0C96e892cd",
+          "decimals": 18,
+          "registrationTimestamp": 1738979818
         }
       ]
     },
@@ -25931,6 +27688,13 @@
           "tokenAddress": "0xB0b4bcEA4Fbea0b8dD311dF8149Efa6FA3908C1b",
           "decimals": 18,
           "registrationTimestamp": 1709228836
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xf9a09df7b92f158990ca09f119d537bfe0d266e601fda0247872e168fb7ccb8b",
+          "tokenAddress": "0xB0b4bcEA4Fbea0b8dD311dF8149Efa6FA3908C1b",
+          "decimals": 18,
+          "registrationTimestamp": 1709229210
         }
       ]
     },
@@ -26021,6 +27785,13 @@
           "tokenAddress": "0xA5e2134E6188E51d0221B840F3060B35988995e1",
           "decimals": 18,
           "registrationTimestamp": 1709308468
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x57935851cca0fb2678434af5565bd084e7290c5fc6d58eae15142d4b8d5b18dd",
+          "tokenAddress": "0xA5e2134E6188E51d0221B840F3060B35988995e1",
+          "decimals": 18,
+          "registrationTimestamp": 1709308857
         }
       ]
     },
@@ -26073,6 +27844,13 @@
           "tokenAddress": "0xcCc6Fb65E4a12616bfCeF8FE2cCdca10ea33AD52",
           "decimals": 18,
           "registrationTimestamp": 1709312996
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x021a6e55774600c0125fd9f952d31a2f8237f47df432f7c79f759bdb72e392bd",
+          "tokenAddress": "0xcCc6Fb65E4a12616bfCeF8FE2cCdca10ea33AD52",
+          "decimals": 18,
+          "registrationTimestamp": 1709313364
         }
       ]
     },
@@ -26088,6 +27866,13 @@
           "tokenAddress": "0x18269F8b728E48595863a4DA1D999d81eF6616e8",
           "decimals": 18,
           "registrationTimestamp": 1709313237
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xdea3adc7d776887bec2d14c20b97b4b742bd704cf07ee4f4f2b48baed400b5d1",
+          "tokenAddress": "0x18269F8b728E48595863a4DA1D999d81eF6616e8",
+          "decimals": 18,
+          "registrationTimestamp": 1709313612
         }
       ]
     },
@@ -26103,6 +27888,13 @@
           "tokenAddress": "0x990310b43AF2A5993f0662783000fee961dAC470",
           "decimals": 18,
           "registrationTimestamp": 1709313941
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x9e6d8200fc991c94fde9d4046a861092c0761e69b5925607092ff0fc9d905ce9",
+          "tokenAddress": "0x990310b43AF2A5993f0662783000fee961dAC470",
+          "decimals": 18,
+          "registrationTimestamp": 1709314332
         }
       ]
     },
@@ -26140,6 +27932,13 @@
           "tokenAddress": "0xFc0f3e1e9Edf139E1D4934a8Dcaa0f63b7A70534",
           "decimals": 18,
           "registrationTimestamp": 1709324351
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x1c8d54b24d593f73038cb64963c510e1164481bd23813a505d25418c9c3ec6ce",
+          "tokenAddress": "0xFc0f3e1e9Edf139E1D4934a8Dcaa0f63b7A70534",
+          "decimals": 18,
+          "registrationTimestamp": 1709324760
         }
       ]
     },
@@ -26155,6 +27954,20 @@
           "tokenAddress": "0x1a106Ea8716120a833192E91212fDC9cC994b5C8",
           "decimals": 18,
           "registrationTimestamp": 1709328856
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x90518fa22e034800eb15cf134462334be9ec40382bd536043d79ee32953523d9",
+          "tokenAddress": "0x1a106Ea8716120a833192E91212fDC9cC994b5C8",
+          "decimals": 18,
+          "registrationTimestamp": 1709329320
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x90518fa22e034800eb15cf134462334be9ec40382bd536043d79ee32953523d9",
+          "tokenAddress": "0x1a106Ea8716120a833192E91212fDC9cC994b5C8",
+          "decimals": 18,
+          "registrationTimestamp": 1709329335
         }
       ]
     },
@@ -26170,6 +27983,20 @@
           "tokenAddress": "0xB1356da514D3d50912b1b2f3098c730f45656779",
           "decimals": 18,
           "registrationTimestamp": 1709329115
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4e51114dee9b4354cfa428d6346dcd9b0d9c651cbb42841f1e4be95fe04637f2",
+          "tokenAddress": "0xB1356da514D3d50912b1b2f3098c730f45656779",
+          "decimals": 18,
+          "registrationTimestamp": 1709329510
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x4e51114dee9b4354cfa428d6346dcd9b0d9c651cbb42841f1e4be95fe04637f2",
+          "tokenAddress": "0xB1356da514D3d50912b1b2f3098c730f45656779",
+          "decimals": 18,
+          "registrationTimestamp": 1709329501
         }
       ]
     },
@@ -26185,6 +28012,13 @@
           "tokenAddress": "0xdD875635231E68E846cE190b1396AC0295D9e577",
           "decimals": 18,
           "registrationTimestamp": 1709330106
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x8cf99971245230096e45115d89924c3d9db73b50f29315fbe8e61838f3c4ec98",
+          "tokenAddress": "0x9a5466fb91cd0d51c8Fea17a822A103d7E738d4C",
+          "decimals": 18,
+          "registrationTimestamp": 1709330490
         }
       ]
     },
@@ -27221,6 +29055,13 @@
           "tokenAddress": "0x01885405872Bb62EC17Ddd0F063d769dba34BA78",
           "decimals": 18,
           "registrationTimestamp": 1709558044
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa450004692192faf6c5f10994e48026240659bcf466994e3a77df2dd9ce814b1",
+          "tokenAddress": "0x01885405872Bb62EC17Ddd0F063d769dba34BA78",
+          "decimals": 18,
+          "registrationTimestamp": 1709572941
         }
       ]
     },
@@ -27236,6 +29077,13 @@
           "tokenAddress": "0xCeF6b998BFeDe0eaabe5D6d8470261d4212f0aDB",
           "decimals": 18,
           "registrationTimestamp": 1709560143
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x844adb100a995bb23b4cb0a2fef6e6c5f0cfe9462ee088feaa6bf2c285c6e1ee",
+          "tokenAddress": "0xCeF6b998BFeDe0eaabe5D6d8470261d4212f0aDB",
+          "decimals": 18,
+          "registrationTimestamp": 1709591663
         }
       ]
     },
@@ -27411,12 +29259,19 @@
           "tokenAddress": "0xE1F24fb747aB8d06ccecBfE2a7040Bbb95EdE119",
           "decimals": 18,
           "registrationTimestamp": 1711283752
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x7bfd6785dfdb9b0e027adfddc7ca233655d026697b2635732abe8709f8bde949",
+          "tokenAddress": "0xE1F24fb747aB8d06ccecBfE2a7040Bbb95EdE119",
+          "decimals": 18,
+          "registrationTimestamp": 1711350558
         }
       ]
     },
     "0x15e6c57495bd03db8eb4c029d8e8d70f6192b1e1ac99067a3a32dedde1203eac": {
       "tokenId": "0x15e6c57495bd03db8eb4c029d8e8d70f6192b1e1ac99067a3a32dedde1203eac",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -27426,12 +29281,19 @@
           "tokenAddress": "0xe687d5E03212CE547C597a6B9a66103C182854C2",
           "decimals": 18,
           "registrationTimestamp": 1711345130
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x15e6c57495bd03db8eb4c029d8e8d70f6192b1e1ac99067a3a32dedde1203eac",
+          "tokenAddress": "0x17700282592D6917F6A73D0bF8AcCf4D578c131e",
+          "decimals": 18,
+          "registrationTimestamp": 1711344968
         }
       ]
     },
     "0x0f43a9d7f8b7bbe16d072dca409eac1e2562b686ee863d4a9952e96836829330": {
       "tokenId": "0x0f43a9d7f8b7bbe16d072dca409eac1e2562b686ee863d4a9952e96836829330",
-      "originAxelarChainId": "Fantom",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -27441,6 +29303,13 @@
           "tokenAddress": "0xA87e7737F004B9cb42051bfbBF4efCAAf2F72868",
           "decimals": 18,
           "registrationTimestamp": 1711345487
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x0f43a9d7f8b7bbe16d072dca409eac1e2562b686ee863d4a9952e96836829330",
+          "tokenAddress": "0xA87e7737F004B9cb42051bfbBF4efCAAf2F72868",
+          "decimals": 18,
+          "registrationTimestamp": 1711345113
         }
       ]
     },
@@ -27721,6 +29590,13 @@
           "tokenAddress": "0xAD0C59EA0f24c1A98a9710138a960C1d9bFeA5FB",
           "decimals": 18,
           "registrationTimestamp": 1717505503
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x4641e23b70765b37d4ed55635f4775a2942ca430cdeb1a0ece9f776d57c8cb61",
+          "tokenAddress": "0x6Cf484978dcA998800CC6c6a3c98803C04883cf8",
+          "decimals": 18,
+          "registrationTimestamp": 1717505906
         }
       ]
     },
@@ -29222,7 +31098,7 @@
     },
     "0x2af33506f508e90c4c801e7b8b14b4091924cf4029c28c2042337a5e3c55c291": {
       "tokenId": "0x2af33506f508e90c4c801e7b8b14b4091924cf4029c28c2042337a5e3c55c291",
-      "originAxelarChainId": "optimism",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -29239,6 +31115,13 @@
           "tokenAddress": "0x21a05D9686F87783078605D2774429CA234F6D24",
           "decimals": 18,
           "registrationTimestamp": 1721228199
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x2af33506f508e90c4c801e7b8b14b4091924cf4029c28c2042337a5e3c55c291",
+          "tokenAddress": "0x21a05D9686F87783078605D2774429CA234F6D24",
+          "decimals": 18,
+          "registrationTimestamp": 1721227983
         }
       ]
     },
@@ -29941,7 +31824,7 @@
     },
     "0xb2b616cf048c0c9862998ac061c7eb0b5593a752bb03e9258059743c8eb1cd6b": {
       "tokenId": "0xb2b616cf048c0c9862998ac061c7eb0b5593a752bb03e9258059743c8eb1cd6b",
-      "originAxelarChainId": "Avalanche",
+      "originAxelarChainId": "kava",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -29986,6 +31869,13 @@
           "tokenAddress": "0x2d89D053E51c59707903445B303371b249c8cF58",
           "decimals": 18,
           "registrationTimestamp": 1722236242
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb2b616cf048c0c9862998ac061c7eb0b5593a752bb03e9258059743c8eb1cd6b",
+          "tokenAddress": "0x851feE47C6588506277c439A7526aE58cD1d15e5",
+          "decimals": 18,
+          "registrationTimestamp": 1722235593
         }
       ]
     },
@@ -30357,6 +32247,13 @@
           "tokenAddress": "0xc98860BAc06b60856D6aFff155dBEF1e282271a6",
           "decimals": 18,
           "registrationTimestamp": 1722606778
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3f9592814b84b832849e54fa605045312e5100ecdf9411edc67314775cbb1152",
+          "tokenAddress": "0xc98860BAc06b60856D6aFff155dBEF1e282271a6",
+          "decimals": 18,
+          "registrationTimestamp": 1722606412
         }
       ]
     },
@@ -30393,6 +32290,13 @@
           "tokenAddress": "0xeF52752cd3E650d04bEd165C1329E24B2785325e",
           "decimals": 18,
           "registrationTimestamp": 1722608703
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x31ee2b887546d7e065e5da7dc7c9567b612fb05d3a5856813c4793cf368a3eb3",
+          "tokenAddress": "0xeF52752cd3E650d04bEd165C1329E24B2785325e",
+          "decimals": 18,
+          "registrationTimestamp": 1722450902
         }
       ]
     },
@@ -31125,6 +33029,13 @@
           "tokenAddress": "0x2Df1D254D7659Ef281B35716457AADf07AFe15D7",
           "decimals": 18,
           "registrationTimestamp": 1718453094
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x56782480cee857fbe53c5528ad0628afc80d4f98463552d5ef916d99fad09c0a",
+          "tokenAddress": "0x2Df1D254D7659Ef281B35716457AADf07AFe15D7",
+          "decimals": 18,
+          "registrationTimestamp": 1718453064
         }
       ]
     },
@@ -32012,7 +33923,7 @@
     },
     "0x734f71cc35f5f5d426b84f285a71251dc00b955bd52282ef3d5fba84874a7b12": {
       "tokenId": "0x734f71cc35f5f5d426b84f285a71251dc00b955bd52282ef3d5fba84874a7b12",
-      "originAxelarChainId": "Polygon",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -32029,6 +33940,13 @@
           "tokenAddress": "0x1085090104A3a39A45Ca7F989E41f1DE3121aE96",
           "decimals": 18,
           "registrationTimestamp": 1716491043
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x734f71cc35f5f5d426b84f285a71251dc00b955bd52282ef3d5fba84874a7b12",
+          "tokenAddress": "0x1085090104A3a39A45Ca7F989E41f1DE3121aE96",
+          "decimals": 18,
+          "registrationTimestamp": 1716490899
         }
       ]
     },
@@ -32044,6 +33962,13 @@
           "tokenAddress": "0x5cC092ec5138A30ceEf7A739443F9E83620684fB",
           "decimals": 18,
           "registrationTimestamp": 1716914147
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3bf2963a3840cb2786e73d0d59243275485e9630f16a86b972c4e2356e538aad",
+          "tokenAddress": "0x5cC092ec5138A30ceEf7A739443F9E83620684fB",
+          "decimals": 18,
+          "registrationTimestamp": 1716914708
         }
       ]
     },
@@ -32263,6 +34188,13 @@
           "tokenAddress": "0x08097A9393747F184D2B402F7Ac16D1B14DC9ed2",
           "decimals": 18,
           "registrationTimestamp": 1719410705
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x056e065db42fe691ca07a8d8b86112df2db379f1807144df66be62abeb13807d",
+          "tokenAddress": "0x08097A9393747F184D2B402F7Ac16D1B14DC9ed2",
+          "decimals": 18,
+          "registrationTimestamp": 1719410328
         }
       ]
     },
@@ -32721,6 +34653,13 @@
           "tokenAddress": "0x87D9699BA4d2467BbB2261e82d94F9039f9B6de7",
           "decimals": 18,
           "registrationTimestamp": 1732980083
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x61df5ff9b5bb7e4cf08c061bd8e8d6002a77b5a4cb0161bb21e2539d59641bcf",
+          "tokenAddress": "0x87D9699BA4d2467BbB2261e82d94F9039f9B6de7",
+          "decimals": 18,
+          "registrationTimestamp": 1732981742
         }
       ]
     },
@@ -33990,6 +35929,20 @@
           "tokenAddress": "0x2de78D9caFe6e3b333c7204101b63581BE38fF4A",
           "decimals": 18,
           "registrationTimestamp": 1725371214
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x86674462807a9291224a2a1b0fdea1b4eb2ef14de9a3ad3f8502c4556c282822",
+          "tokenAddress": "0x2de78D9caFe6e3b333c7204101b63581BE38fF4A",
+          "decimals": 18,
+          "registrationTimestamp": 1725371346
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x86674462807a9291224a2a1b0fdea1b4eb2ef14de9a3ad3f8502c4556c282822",
+          "tokenAddress": "0x2de78D9caFe6e3b333c7204101b63581BE38fF4A",
+          "decimals": 18,
+          "registrationTimestamp": 1725371357
         }
       ]
     },
@@ -34257,6 +36210,13 @@
           "tokenAddress": "0xd357Ab01970e4FD6746d062f9e840f6Fbe3ff501",
           "decimals": 18,
           "registrationTimestamp": 1735031061
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x352cd5c42815ed9d99f650f2c79c67dfc9da344d1e665faf619b28106a123333",
+          "tokenAddress": "0xd357Ab01970e4FD6746d062f9e840f6Fbe3ff501",
+          "decimals": 18,
+          "registrationTimestamp": 1735031059
         }
       ]
     },
@@ -34728,6 +36688,13 @@
           "tokenAddress": "0x657f9258b5154567118c90a1C2E455d0669cd6b5",
           "decimals": 18,
           "registrationTimestamp": 1736401985
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xda25668c0e2bd4e0af4298582dba868488902eae281c24c9973f0aa1719717a2",
+          "tokenAddress": "0x657f9258b5154567118c90a1C2E455d0669cd6b5",
+          "decimals": 18,
+          "registrationTimestamp": 1736401970
         }
       ]
     },
@@ -34932,6 +36899,13 @@
           "tokenAddress": "0x311eC870e3d7172896CA9f18145bAfc8902c9F3B",
           "decimals": 18,
           "registrationTimestamp": 1723135524
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x71b19c9dd9d574946db73ef19075ce6323b5892581c254429ab23b35e1d8394e",
+          "tokenAddress": "0xA2ee45712aDD55482B9E6690F05de448096001f0",
+          "decimals": 18,
+          "registrationTimestamp": 1723135924
         }
       ]
     },
@@ -35683,6 +37657,13 @@
           "tokenAddress": "0xe0F94Ac5462997D2BC57287Ac3a3aE4C31345D66",
           "decimals": 18,
           "registrationTimestamp": 1729729536
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x7e3eb46a809f0f90e06068245e4f35ec679768fa8301143fc521a69ae381bfc9",
+          "tokenAddress": "0x4d93F07381b87884a45Fae32b57c299378cEa263",
+          "decimals": 18,
+          "registrationTimestamp": 1729729674
         }
       ]
     },
@@ -35712,6 +37693,13 @@
           "tokenAddress": "0xa9DF1D895dC5132DaA92b6c3d06b4d12BF2394D9",
           "decimals": 10,
           "registrationTimestamp": 1729730871
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xa05ddc0de321706a69ee770ea14bac4e92da0162fbb09f9d765351520349db86",
+          "tokenAddress": "0xa9DF1D895dC5132DaA92b6c3d06b4d12BF2394D9",
+          "decimals": 10,
+          "registrationTimestamp": 1729730999
         }
       ]
     },
@@ -35737,6 +37725,13 @@
         },
         {
           "axelarChainId": "binance",
+          "tokenId": "0xb63e95b5b090b4b8a75be14588b22140026b7b97c647a266be092cadf02aeac2",
+          "tokenAddress": "0xa1bCfa9b501f73568420eBd8eD29654981e1B9ab",
+          "decimals": 18,
+          "registrationTimestamp": 1729963485
+        },
+        {
+          "axelarChainId": "celo",
           "tokenId": "0xb63e95b5b090b4b8a75be14588b22140026b7b97c647a266be092cadf02aeac2",
           "tokenAddress": "0xa1bCfa9b501f73568420eBd8eD29654981e1B9ab",
           "decimals": 18,
@@ -35988,7 +37983,7 @@
     },
     "0xe6d37e345b37275f89400f8e07af312d25b33ef58b7ed8e99daa3d518e3cc70f": {
       "tokenId": "0xe6d37e345b37275f89400f8e07af312d25b33ef58b7ed8e99daa3d518e3cc70f",
-      "originAxelarChainId": "Polygon",
+      "originAxelarChainId": "kava",
       "decimals": 8,
       "tokenType": "interchain",
       "chains": [
@@ -35998,6 +37993,13 @@
           "tokenAddress": "0x5F759b1d72304010e40b8d93fDcbB97A97DfD4BD",
           "decimals": 8,
           "registrationTimestamp": 1726916219
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xe6d37e345b37275f89400f8e07af312d25b33ef58b7ed8e99daa3d518e3cc70f",
+          "tokenAddress": "0xb5c4423a65B953905949548276654C96fcaE6992",
+          "decimals": 8,
+          "registrationTimestamp": 1726915930
         }
       ]
     },
@@ -36402,6 +38404,13 @@
           "tokenAddress": "0x30bB2F6991a6dFC56e0133371f1AFA0cbdbE73e5",
           "decimals": 18,
           "registrationTimestamp": 1728492069
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xf0b366a4b2863d9de7f5667885e9a778ec25ed38198822525efebabd4aa59ea2",
+          "tokenAddress": "0x30bB2F6991a6dFC56e0133371f1AFA0cbdbE73e5",
+          "decimals": 18,
+          "registrationTimestamp": 1728492202
         }
       ]
     },
@@ -36737,6 +38746,13 @@
           "tokenAddress": "0x99aFeF995D38967e7C16A6f83a673Fb2DB706DF0",
           "decimals": 18,
           "registrationTimestamp": 1734026719
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xb559d1aa8d11c933f49381b37467b2dd8c51f1be23a713ac8c5850499f8a2448",
+          "tokenAddress": "0x99aFeF995D38967e7C16A6f83a673Fb2DB706DF0",
+          "decimals": 18,
+          "registrationTimestamp": 1734023649
         }
       ]
     },
@@ -37552,6 +39568,13 @@
           "tokenAddress": "0x88A6c0A791Fe29a13E629c8c79Bc116A41b9C902",
           "decimals": 18,
           "registrationTimestamp": 1742500989
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3e00bf272148df7c40976030a6372135ecdd61a949ed235b50642ebd6f6ecd69",
+          "tokenAddress": "0xb2Eab3fC5f71a9885f5ca8172E83ad853C8c9A8b",
+          "decimals": 18,
+          "registrationTimestamp": 1742501890
         }
       ]
     },
@@ -42789,7 +44812,7 @@
     },
     "0x686b6d4f1ab9029f1b7baad374c0d6027aa0e061f27434d3b67f6eb43f4a763a": {
       "tokenId": "0x686b6d4f1ab9029f1b7baad374c0d6027aa0e061f27434d3b67f6eb43f4a763a",
-      "originAxelarChainId": "arbitrum",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -42799,6 +44822,13 @@
           "tokenAddress": "0x17a7f1F7b519269B9696FF5f108ac276551695e4",
           "decimals": 18,
           "registrationTimestamp": 1705665581
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x686b6d4f1ab9029f1b7baad374c0d6027aa0e061f27434d3b67f6eb43f4a763a",
+          "tokenAddress": "0x17a7f1F7b519269B9696FF5f108ac276551695e4",
+          "decimals": 18,
+          "registrationTimestamp": 1705665413
         }
       ]
     },
@@ -43434,7 +45464,7 @@
     },
     "0xc6076b8019119d382758092f0de7bb860b3e7caa53c1a0fa1f3067996cdb6297": {
       "tokenId": "0xc6076b8019119d382758092f0de7bb860b3e7caa53c1a0fa1f3067996cdb6297",
-      "originAxelarChainId": "arbitrum",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -43444,6 +45474,13 @@
           "tokenAddress": "0x66c3dfe3664c96df1fb6cDA5dC3150AE78bd0b3d",
           "decimals": 18,
           "registrationTimestamp": 1705666179
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xc6076b8019119d382758092f0de7bb860b3e7caa53c1a0fa1f3067996cdb6297",
+          "tokenAddress": "0x66c3dfe3664c96df1fb6cDA5dC3150AE78bd0b3d",
+          "decimals": 18,
+          "registrationTimestamp": 1705665803
         }
       ]
     },
@@ -45753,6 +47790,13 @@
           "tokenAddress": "0x65B95C61B7697b3fdBAB0512E0567EE641381FC8",
           "decimals": 18,
           "registrationTimestamp": 1707720614
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x40b3022b0ace48177ac29d5053fd831cb2f2a1e89ced533f9486f2e740220e06",
+          "tokenAddress": "0x65B95C61B7697b3fdBAB0512E0567EE641381FC8",
+          "decimals": 18,
+          "registrationTimestamp": 1707720996
         }
       ]
     },
@@ -46643,6 +48687,13 @@
           "tokenAddress": "0x51477d972dD3B0711EB25A745BB3CEFc94252ED9",
           "decimals": 18,
           "registrationTimestamp": 1710246146
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x36b58a5bde2845e7a6d9c083bcb548b64c4d86fa3d454144ba05b5670c45df12",
+          "tokenAddress": "0x51477d972dD3B0711EB25A745BB3CEFc94252ED9",
+          "decimals": 18,
+          "registrationTimestamp": 1710246166
         }
       ]
     },
@@ -46687,6 +48738,13 @@
           "tokenAddress": "0x7E22C8601bCB6350a69334264d7Fd342e530DCb3",
           "decimals": 18,
           "registrationTimestamp": 1710606013
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xeab28395ea327997d1906faf2e7b7ece8d9612dec7f6274e4778a10789bc3c50",
+          "tokenAddress": "0x7E22C8601bCB6350a69334264d7Fd342e530DCb3",
+          "decimals": 18,
+          "registrationTimestamp": 1710606106
         }
       ]
     },
@@ -52946,6 +55004,20 @@
           "tokenAddress": "0xb148719bb6ca2535695d4e5200fbb0c6b2635cc1",
           "decimals": 18,
           "registrationTimestamp": 1707387752
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x2515fa07e8ac80287e4c053760bfc48456f06b33af855fd781a56463ac24a036",
+          "tokenAddress": "0xb148719bb6ca2535695d4e5200fbb0c6b2635cc1",
+          "decimals": 18,
+          "registrationTimestamp": 1707393642
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x2515fa07e8ac80287e4c053760bfc48456f06b33af855fd781a56463ac24a036",
+          "tokenAddress": "0xb148719bb6ca2535695d4e5200fbb0c6b2635cc1",
+          "decimals": 18,
+          "registrationTimestamp": 1707422430
         }
       ]
     },
@@ -63309,6 +65381,13 @@
           "tokenAddress": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "decimals": 18,
           "registrationTimestamp": 1714061293
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xd493b4843797fb662a7a4217ffb9ae547cb09562f06edf1b746ccaa2caf8a17f",
+          "tokenAddress": "0x94FC70EF7791EE857A1f420B9A471a55F32382be",
+          "decimals": 18,
+          "registrationTimestamp": 1714061554
         }
       ]
     },
@@ -63331,6 +65410,13 @@
           "tokenAddress": "0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE",
           "decimals": 18,
           "registrationTimestamp": 1713999920
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x459c90c3e7f5c4b7fc79b202c010814fec130e46f3ee1a398877b0d9aa5ea2bc",
+          "tokenAddress": "0x8e20A0a1B4664D1ae5d18cc48bA6FAD4d9569406",
+          "decimals": 18,
+          "registrationTimestamp": 1714000929
         }
       ]
     },
@@ -63730,6 +65816,13 @@
           "tokenAddress": "0x672C724Bb618A24e6A05b03c64eE5C5DbC18bb9b",
           "decimals": 18,
           "registrationTimestamp": 1718115531
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x5413fcb9767402099bba83eb73eaff701bc98fe12d50747ce8a5784e7f18858b",
+          "tokenAddress": "0x672C724Bb618A24e6A05b03c64eE5C5DbC18bb9b",
+          "decimals": 18,
+          "registrationTimestamp": 1718117379
         }
       ]
     },
@@ -67337,6 +69430,13 @@
           "tokenAddress": "0x38dBA4C74fAf072F5F325545FE478fE7c7994Fb3",
           "decimals": 18,
           "registrationTimestamp": 1720544617
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x92aecbe262eb89898b2ecf6b521ee82cb214bbbbdf35b7fb429afd7231257d11",
+          "tokenAddress": "0x38dBA4C74fAf072F5F325545FE478fE7c7994Fb3",
+          "decimals": 18,
+          "registrationTimestamp": 1720546187
         }
       ]
     },
@@ -72004,7 +74104,7 @@
     },
     "0x22a6913aafbcd5fbc636d0083e2c89d6ca9b9ae4849a383196909432d3391a54": {
       "tokenId": "0x22a6913aafbcd5fbc636d0083e2c89d6ca9b9ae4849a383196909432d3391a54",
-      "originAxelarChainId": "base",
+      "originAxelarChainId": "kava",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -72014,6 +74114,13 @@
           "tokenAddress": "0xaa7718c8969c6BDf3f33a227aE7D222DBEace704",
           "decimals": 18,
           "registrationTimestamp": 1721751465
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x22a6913aafbcd5fbc636d0083e2c89d6ca9b9ae4849a383196909432d3391a54",
+          "tokenAddress": "0x097A74cB7A71a9f10CC0f26cEE71C122a08B1813",
+          "decimals": 18,
+          "registrationTimestamp": 1721751154
         }
       ]
     },
@@ -72458,7 +74565,7 @@
     },
     "0x3726d6f1a330ca34975e8c53184c1cba21e2a46d38c2104382097a6cef5c4655": {
       "tokenId": "0x3726d6f1a330ca34975e8c53184c1cba21e2a46d38c2104382097a6cef5c4655",
-      "originAxelarChainId": "base",
+      "originAxelarChainId": "celo",
       "decimals": 18,
       "tokenType": "interchain",
       "chains": [
@@ -72468,6 +74575,13 @@
           "tokenAddress": "0x34D2C8C5Ee6139AF1070e868c4860ce7a4Cb3Bcb",
           "decimals": 18,
           "registrationTimestamp": 1728493327
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3726d6f1a330ca34975e8c53184c1cba21e2a46d38c2104382097a6cef5c4655",
+          "tokenAddress": "0x34D2C8C5Ee6139AF1070e868c4860ce7a4Cb3Bcb",
+          "decimals": 18,
+          "registrationTimestamp": 1728493142
         }
       ]
     },
@@ -74646,6 +76760,13 @@
           "tokenAddress": "0xeF44bd828912A0c99F4af82E4bb0F67599a82170",
           "decimals": 16,
           "registrationTimestamp": 1707409200
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xced8bffc7c95111a1828a8378e1eac3e0ee8a3600529caf420488c7f37a3ad3c",
+          "tokenAddress": "0xeF44bd828912A0c99F4af82E4bb0F67599a82170",
+          "decimals": 16,
+          "registrationTimestamp": 1707411638
         }
       ]
     },
@@ -78652,6 +80773,13 @@
           "tokenAddress": "0x51Ac37116C66ec517B1FFaCe0e8f93767C3e6f3A",
           "decimals": 6,
           "registrationTimestamp": 1706026975
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x3f01851bb3a437c30827f5707a2722d85e68a838326c70369bb656846f9916d7",
+          "tokenAddress": "0x51Ac37116C66ec517B1FFaCe0e8f93767C3e6f3A",
+          "decimals": 6,
+          "registrationTimestamp": 1706027074
         }
       ]
     },
@@ -78667,6 +80795,13 @@
           "tokenAddress": "0x14729984a3f2a0DCD2a0C41096D6CcD5c2Bb628d",
           "decimals": 6,
           "registrationTimestamp": 1706116196
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x8d4e690bfa5cb1e73c0180ca431a3105193f9e9190ff1424b1bea02e9c6d5a78",
+          "tokenAddress": "0x14729984a3f2a0DCD2a0C41096D6CcD5c2Bb628d",
+          "decimals": 6,
+          "registrationTimestamp": 1706116302
         }
       ]
     },
@@ -78682,6 +80817,13 @@
           "tokenAddress": "0x3bEeDeEb30c26406B27C568Aa765dF4947943300",
           "decimals": 18,
           "registrationTimestamp": 1707726383
+        },
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x00c2073989293426588a3fcf406b20e12faf30fe9ece27742510c89e986cecae",
+          "tokenAddress": "0x22E5D26F4c1955d2Ac09104aD8422745fed307fC",
+          "decimals": 18,
+          "registrationTimestamp": 1707726496
         }
       ]
     },
@@ -78727,6 +80869,13 @@
           "tokenAddress": "0x167dc1D9cE3e8343De927aE3B0Cdeb9ddC410034",
           "decimals": 18,
           "registrationTimestamp": 1713513853
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0xa83c26bd70eb423d118d1041b11f26f8dd9c35e5c4ea714230e4c83ff7916f92",
+          "tokenAddress": "0x167dc1D9cE3e8343De927aE3B0Cdeb9ddC410034",
+          "decimals": 18,
+          "registrationTimestamp": 1713513949
         }
       ]
     },
@@ -82123,6 +84272,163 @@
           "tokenAddress": "0xA4FF56eF7Ef4a2CaD03cFa130208C9BC1b45d293",
           "decimals": 6,
           "registrationTimestamp": 1765857899
+        }
+      ]
+    },
+    "0x384f8600f5ff4b3c6a57848f2da86faf8d65be99bf36fe4a3a9b7f788baee50f": {
+      "tokenId": "0x384f8600f5ff4b3c6a57848f2da86faf8d65be99bf36fe4a3a9b7f788baee50f",
+      "originAxelarChainId": "kava",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x384f8600f5ff4b3c6a57848f2da86faf8d65be99bf36fe4a3a9b7f788baee50f",
+          "tokenAddress": "0xe33a84cE0079C7Fe5F0E96E98572C27EB65eC29a",
+          "decimals": 18,
+          "registrationTimestamp": 1707247899
+        }
+      ]
+    },
+    "0x9bd1eee02c82345f7d97d5a2eef907a4f5b3be2222225b36b2fd9e929b54a47d": {
+      "tokenId": "0x9bd1eee02c82345f7d97d5a2eef907a4f5b3be2222225b36b2fd9e929b54a47d",
+      "originAxelarChainId": "kava",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x9bd1eee02c82345f7d97d5a2eef907a4f5b3be2222225b36b2fd9e929b54a47d",
+          "tokenAddress": "0xA554EB8Eebe7340e659a9915d1839fD9c53895D4",
+          "decimals": 18,
+          "registrationTimestamp": 1709413005
+        },
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x9bd1eee02c82345f7d97d5a2eef907a4f5b3be2222225b36b2fd9e929b54a47d",
+          "tokenAddress": "0xA554EB8Eebe7340e659a9915d1839fD9c53895D4",
+          "decimals": 18,
+          "registrationTimestamp": 1709412773
+        }
+      ]
+    },
+    "0x10078b75c807f2b02236f92122d21743ecb9ea7233d638f191870268d9e075e1": {
+      "tokenId": "0x10078b75c807f2b02236f92122d21743ecb9ea7233d638f191870268d9e075e1",
+      "originAxelarChainId": "kava",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x10078b75c807f2b02236f92122d21743ecb9ea7233d638f191870268d9e075e1",
+          "tokenAddress": "0x2E35C9Cf29019c66B4a99B5EcF917838d610fcE6",
+          "decimals": 18,
+          "registrationTimestamp": 1709301597
+        }
+      ]
+    },
+    "0x23f85ea14674f89f4537b34e994f0c561ef8222884032ebd589c0db64413754a": {
+      "tokenId": "0x23f85ea14674f89f4537b34e994f0c561ef8222884032ebd589c0db64413754a",
+      "originAxelarChainId": "celo",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x23f85ea14674f89f4537b34e994f0c561ef8222884032ebd589c0db64413754a",
+          "tokenAddress": "0xCccD1C03a59F90eebdb4c9507b64e79A7bC38375",
+          "decimals": 18,
+          "registrationTimestamp": 1718788953
+        }
+      ]
+    },
+    "0x376816b0650e8d6814e28920048e9a7ac9adc66f9439e67a64076068b58a39c6": {
+      "tokenId": "0x376816b0650e8d6814e28920048e9a7ac9adc66f9439e67a64076068b58a39c6",
+      "originAxelarChainId": "celo",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x376816b0650e8d6814e28920048e9a7ac9adc66f9439e67a64076068b58a39c6",
+          "tokenAddress": "0xd98907916A786f7D71Ee9858B6bE3182389cF653",
+          "decimals": 18,
+          "registrationTimestamp": 1719467094
+        }
+      ]
+    },
+    "0xd9ac19437cc3c12eb38d631435134befc18eba7914eb3f97368214b6fddefc0a": {
+      "tokenId": "0xd9ac19437cc3c12eb38d631435134befc18eba7914eb3f97368214b6fddefc0a",
+      "originAxelarChainId": "celo",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xd9ac19437cc3c12eb38d631435134befc18eba7914eb3f97368214b6fddefc0a",
+          "tokenAddress": "0x03166082fb56F70dA02C21bf4dbC3ac36F73C9a7",
+          "decimals": 18,
+          "registrationTimestamp": 1742420997
+        }
+      ]
+    },
+    "0x2dfba62c45309cf39ee1ef9b8fcc2081f4aafe1e4aa628a683a23ce978accca3": {
+      "tokenId": "0x2dfba62c45309cf39ee1ef9b8fcc2081f4aafe1e4aa628a683a23ce978accca3",
+      "originAxelarChainId": "celo",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x2dfba62c45309cf39ee1ef9b8fcc2081f4aafe1e4aa628a683a23ce978accca3",
+          "tokenAddress": "0x03166082fb56F70dA02C21bf4dbC3ac36F73C9a7",
+          "decimals": 18,
+          "registrationTimestamp": 1742488509
+        }
+      ]
+    },
+    "0x6079bc3c6bbca513acc5c5aa5d8ecbcc96e9dbf148abe15e3e762571325f978c": {
+      "tokenId": "0x6079bc3c6bbca513acc5c5aa5d8ecbcc96e9dbf148abe15e3e762571325f978c",
+      "originAxelarChainId": "celo",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0x6079bc3c6bbca513acc5c5aa5d8ecbcc96e9dbf148abe15e3e762571325f978c",
+          "tokenAddress": "0x03166082fb56F70dA02C21bf4dbC3ac36F73C9a7",
+          "decimals": 18,
+          "registrationTimestamp": 1742491739
+        }
+      ]
+    },
+    "0xd78fe33de9d281c944a8bcc7bb2068bbf3047ddcbe4bf073cc7c94c11c156ba7": {
+      "tokenId": "0xd78fe33de9d281c944a8bcc7bb2068bbf3047ddcbe4bf073cc7c94c11c156ba7",
+      "originAxelarChainId": "celo",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "celo",
+          "tokenId": "0xd78fe33de9d281c944a8bcc7bb2068bbf3047ddcbe4bf073cc7c94c11c156ba7",
+          "tokenAddress": "0x03166082fb56F70dA02C21bf4dbC3ac36F73C9a7",
+          "decimals": 18,
+          "registrationTimestamp": 1742496900
+        }
+      ]
+    },
+    "0x6583c63913c9c2e72d99e5d984a912b542f7a41a144cb945d76219b631e7c0b7": {
+      "tokenId": "0x6583c63913c9c2e72d99e5d984a912b542f7a41a144cb945d76219b631e7c0b7",
+      "originAxelarChainId": "kava",
+      "decimals": 18,
+      "tokenType": "interchain",
+      "chains": [
+        {
+          "axelarChainId": "kava",
+          "tokenId": "0x6583c63913c9c2e72d99e5d984a912b542f7a41a144cb945d76219b631e7c0b7",
+          "tokenAddress": "0x0018D96C579121a94307249d47F053E2D687b5e7",
+          "decimals": 18,
+          "registrationTimestamp": 1747202545
         }
       ]
     }
