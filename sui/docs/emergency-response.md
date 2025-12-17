@@ -1,6 +1,6 @@
 ## Sui Emergency Response Playbook
 
-> **Owner actions** require OwnerCap ownership. **Operator actions** require OperatorCap ownership. All actions execute immediately with no timelock.
+> **Owner actions** require OwnerCap ownership. **Operator actions** require OperatorCap ownership.
 
 ---
 
@@ -29,7 +29,7 @@ Actions that can be executed directly from owner wallet (OwnerCap holder).
 
 ### Owner Actions
 
-Actions that can be executed directly from owner wallet (OwnerCap holder). Immediate execution, no timelock.
+Actions that can be executed directly from owner wallet (OwnerCap holder).
 
 **Upgrade**
 
@@ -46,7 +46,7 @@ Actions that can be executed directly from owner wallet (OwnerCap holder). Immed
 
 ### Operator Actions
 
-Actions that can be executed directly from operator wallet (OperatorCap holder). Immediate execution, no timelock.
+Actions that can be executed directly from operator wallet (OperatorCap holder).
 
 - **Collect Gas**: `sui/gas-service.js collectGas --amount <amount> --receiver <receiver>` - [Collect Gas](../README.md#collect-gas)
 - **Refund Gas**: `sui/gas-service.js refund <messageId> --amount <amount> --receiver <receiver>` - [Refund Gas](../README.md#refund-gas)
@@ -57,7 +57,7 @@ Actions that can be executed directly from operator wallet (OperatorCap holder).
 
 ### Owner Actions
 
-Actions that can be executed directly from owner wallet (OwnerCap holder). Immediate execution, no timelock.
+Actions that can be executed directly from owner wallet (OwnerCap holder).
 
 **Upgrade**
 
@@ -82,7 +82,7 @@ Actions that can be executed directly from owner wallet (OwnerCap holder). Immed
 
 ### Operator Actions
 
-Actions that can be executed directly from operator wallet (OperatorCap holder). Immediate execution, no timelock.
+Actions that can be executed directly from operator wallet (OperatorCap holder).
 
 - **Set Flow Limits**: `sui/its.js set-flow-limits <token-ids> <flow-limits>` - [Set Flow Limits](../README.md#set-flow-limits)
 
@@ -140,7 +140,6 @@ ts-node sui/deploy-contract.js migrate <ContractName>
 ```
 
 **Notes**
-- All operations execute immediately with no timelock delay.
 - OwnerCap and UpgradeCap are Sui objects that can be transferred using `transfer-object.js`.
 - Ensure you have the correct capabilities (OwnerCap/OperatorCap) before executing actions.
 - For multisig operations, see [Multisig Operations](../README.md#multisig-operations).
