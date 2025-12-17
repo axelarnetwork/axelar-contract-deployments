@@ -122,6 +122,13 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
+const getUnitDenom = (config) => {
+    const {
+        axelar: { unitDenom },
+    } = config;
+    return unitDenom;
+};
+
 const validateGovernanceMode = (config, contractName, chainName) => {
     const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
     const governanceAddress = contractConfig.governanceAddress;
@@ -1571,7 +1578,7 @@ const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer)
     const {
         axelar: { tokenSymbol },
     } = config;
-    const { deposit, title, description } = options;
+    const { deposit, title, description, standardProposal } = options;
 
     const initialDeposit = [{ denom: `u${tokenSymbol.toLowerCase()}`, amount: deposit }];
     const isLegacy = isLegacySDK(config);
@@ -1586,16 +1593,18 @@ const encodeSubmitProposal = (proposalDataOrMessages, config, options, proposer)
             }),
         };
     } else {
+        const proposalData = {
+            messages: proposalDataOrMessages,
+            initialDeposit,
+            proposer,
+            metadata: '',
+            title,
+            summary: description,
+            expedited: !standardProposal,
+        };
         return {
             typeUrl: '/cosmos.gov.v1.MsgSubmitProposal',
-            value: MsgSubmitProposalV1.fromPartial({
-                messages: proposalDataOrMessages,
-                initialDeposit,
-                proposer,
-                metadata: '',
-                title,
-                summary: description,
-            }),
+            value: MsgSubmitProposalV1.fromPartial(proposalData),
         };
     }
 };
@@ -1655,8 +1664,47 @@ const submitCallContracts = async (client, config, options, proposalData, fee) =
         throw new Error('Invalid proposal data: must have title, description, and contract_calls');
     }
 
-    const proposal = encodeCallContracts(proposalData);
-    return submitProposal(client, config, options, proposal, fee);
+    const content = encodeCallContracts(proposalData);
+
+    const { deposit, title, description } = options;
+
+    const initialDeposit = [{ denom: getUnitDenom(config), amount: deposit }];
+
+    const accounts = client.accounts || (await client.signer.getAccounts());
+    const [account] = accounts;
+
+    if (!account || !account.address) {
+        throw new Error('Failed to determine proposer account from client');
+    }
+
+    // Always submit CallContractsProposal via legacy MsgSubmitProposal (v1beta1) regardless of SDK version
+    const submitProposalMsg = {
+        typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
+        value: MsgSubmitProposal.fromPartial({
+            content,
+            initialDeposit,
+            proposer: account.address,
+        }),
+    };
+
+    printInfo('Proposer address', account.address);
+    printInfo('Proposal title', title);
+    printInfo('Proposal description', description);
+
+    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
+    const { events } = result;
+
+    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
+    if (!proposalEvent) {
+        throw new Error('Proposal submission event not found');
+    }
+
+    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
+    if (!proposalId) {
+        throw new Error('Proposal ID not found in events');
+    }
+
+    return proposalId;
 };
 
 const getContractR2Url = (contractName, contractVersion) => {
@@ -1878,5 +1926,6 @@ module.exports = {
     validateItsChainChange,
     isLegacySDK,
     validateGovernanceMode,
+    getUnitDenom,
     GOVERNANCE_MODULE_ADDRESS,
 };

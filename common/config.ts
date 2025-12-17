@@ -18,6 +18,7 @@ export interface AxelarConfig {
     gasLimit: string | number;
     govProposalInstantiateAddresses: string[];
     govProposalDepositAmount: string;
+    govProposalExpeditedDepositAmount?: string;
     chainId: string;
 }
 
@@ -33,6 +34,7 @@ export interface NonEVMChainConfig {
     finality: string;
     approxFinalityWaitTime: number;
     contracts: Record<string, ContractConfig>;
+    deprecated?: boolean;
 }
 
 export type ChainConfig = NonEVMChainConfig | EVMChainConfig;
@@ -370,12 +372,22 @@ export class ConfigManager implements FullConfig {
         saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
-    public getProposalInstantiateAddresses(): string[] {
+    public proposalInstantiateAddresses(): string[] {
         return this.axelar.govProposalInstantiateAddresses;
     }
 
-    public getProposalDepositAmount(): string {
+    public proposalDepositAmount(): string {
         return this.axelar.govProposalDepositAmount;
+    }
+
+    public proposalExpeditedDepositAmount(): string {
+        const expeditedAmount = this.axelar.govProposalExpeditedDepositAmount;
+        if (!expeditedAmount) {
+            throw new Error(
+                `Expedited deposit amount not configured for ${this.environment}. Use --standardProposal flag to submit a standard proposal.`,
+            );
+        }
+        return expeditedAmount;
     }
 
     public getChainConfig(chainName: string): ChainConfig {
