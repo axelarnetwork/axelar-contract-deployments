@@ -201,10 +201,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
         isValidAddress: { target },
         isValidCalldata: { calldata },
     });
-
-    printInfo('Governance target', target);
-    printInfo('Governance calldata', calldata);
-
     return { target, calldata, title, description };
 }
 
@@ -297,6 +293,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
             printInfo('Governance target (for eta/execute)', target);
             printInfo('Governance calldata (for eta/execute)', calldata);
+            printInfo('Governance proposal payload', gmpPayload);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
@@ -339,6 +336,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             const eta = dateToEta(activationTime);
             const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
+            printInfo('Governance target (for execute-operator-proposal)', target);
+            printInfo('Governance calldata (for execute-operator-proposal)', calldata);
+            printInfo('Governanceproposal payload', gmpPayload);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
