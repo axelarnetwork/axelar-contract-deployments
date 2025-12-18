@@ -93,7 +93,7 @@ const unauthorizeVerifier = async (client, config, options, [serviceName, verifi
     execute(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
 };
 
-const rotateSigners = async (_client, config, options, [sessionId], _fee) => {
+const rotateSigners = async (client, config, options, [sessionId], _fee) => {
     const { privateKey, chainName } = options;
 
     if (!chainName) {
@@ -102,13 +102,18 @@ const rotateSigners = async (_client, config, options, [sessionId], _fee) => {
     }
 
     const chainConfig = config.getChainConfig(chainName);
+    if (chainConfig.type != "evm") {
+        printError('only rotations for evm chains are supported');
+        return;
+    }
+
     const gatewayAddress = chainConfig.contracts?.AxelarGateway?.address;
     const gasOptions = await getGasOptions(chainConfig, options, null);
     const provider = getDefaultProvider(chainConfig.rpc);
 
     const wallet = await getWallet(privateKey, provider, options);
 
-    const message = await mainQueryProcessor(multisigProof, { ...options, contractName: 'Multisig' }, [chainName, sessionId]);
+    const message = await multisigProof(client, config, {}, [chainName, sessionId]);
     const executeData = message?.status?.completed?.execute_data;
 
     printInfo(`Multisig Proof`, message);
