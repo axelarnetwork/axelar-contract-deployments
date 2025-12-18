@@ -728,108 +728,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
     };
 };
 
-const makeSolanaMultisigProverInstantiateMsg = (config, options, contractConfig) => {
-    const { chainName } = options;
-
-    const {
-        axelar: { contracts, chainId: axelarChainId },
-    } = config;
-    const {
-        Router: { address: routerAddress },
-        Coordinator: { address: coordinatorAddress },
-        Multisig: { address: multisigAddress },
-        ServiceRegistry: { address: serviceRegistryAddress },
-        [VERIFIER_CONTRACT_NAME]: {
-            [chainName]: { address: verifierAddress },
-        },
-        [GATEWAY_CONTRACT_NAME]: {
-            [chainName]: { address: gatewayAddress },
-        },
-    } = contracts;
-    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
-        contractConfig;
-
-    if (!validateAddress(routerAddress)) {
-        throw new Error('Missing or invalid Router.address in axelar info');
-    }
-
-    if (!isString(axelarChainId)) {
-        throw new Error(`Missing or invalid chain ID`);
-    }
-
-    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
-    contractConfig.domainSeparator = separator;
-
-    if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
-    }
-
-    if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
-    }
-
-    if (!validateAddress(gatewayAddress)) {
-        throw new Error(`Missing or invalid Gateway[${chainName}].address in axelar info`);
-    }
-
-    if (!validateAddress(coordinatorAddress)) {
-        throw new Error('Missing or invalid Coordinator.address in axelar info');
-    }
-
-    if (!validateAddress(multisigAddress)) {
-        throw new Error('Missing or invalid Multisig.address in axelar info');
-    }
-
-    if (!validateAddress(serviceRegistryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
-    }
-
-    if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
-    }
-
-    if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
-    }
-
-    if (!isNumber(verifierSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
-    }
-
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
-    }
-
-    if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
-    }
-
-    return {
-        admin_address: adminAddress,
-        governance_address: governanceAddress,
-        gateway_address: gatewayAddress,
-        coordinator_address: coordinatorAddress,
-        multisig_address: multisigAddress,
-        service_registry_address: serviceRegistryAddress,
-        voting_verifier_address: verifierAddress,
-        domain_separator: separator.replace('0x', ''),
-        signing_threshold: signingThreshold,
-        service_name: serviceName,
-        chain_name: chainName,
-        verifier_set_diff_threshold: verifierSetDiffThreshold,
-        encoder,
-        key_type: keyType,
-    };
-};
-
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
 
@@ -1779,10 +1677,6 @@ const CONTRACTS = {
     XrplMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
-    },
-    SolanaMultisigProver: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeSolanaMultisigProverInstantiateMsg,
     },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,

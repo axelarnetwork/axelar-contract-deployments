@@ -480,7 +480,6 @@ export class ConfigManager implements FullConfig {
 
     public getMultisigProverContractForChainType(chainType: string): string {
         const chainProverMapping: Record<string, string> = {
-            svm: 'SolanaMultisigProver',
             xrpl: 'XrplMultisigProver',
         };
         return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
