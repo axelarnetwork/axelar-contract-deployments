@@ -84,6 +84,14 @@
           "implementation": "0xaf3EA5fFAeb86EF25cecfBb7C0c7e4Ffca79375A",
           "address": "0xD08cd727E13FAA39F4041C2f5d4D3FF89A519d5b",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "minimumTimeDelay": 0,
+          "multisig": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "address": "0x8D057a43947D1e75C3F15992b62c81486e44839a"
         }
       }
     },
