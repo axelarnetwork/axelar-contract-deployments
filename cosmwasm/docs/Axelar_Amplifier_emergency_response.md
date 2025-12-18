@@ -27,7 +27,7 @@
 | Disable ITS execution | `ts-node cosmwasm/contract.ts its-disable-execution -e <env> -y` | Admin EOA | Leadership |
 | Enable ITS execution | `ts-node cosmwasm/contract.ts its-enable-execution -e <env> -y` | Admin EOA | Leadership |
 
-**Governance alternative**: Add `--governance -t "Title" -d "Description"` to use governance proposal instead of Admin EOA.
+**Governance alternative**: Add `--governance -t "Title" -d "Description"` to use governance proposal instead of Admin EOA. Note: Not all operations support governance mode (e.g., Router operations are Admin-only). See [Axelar Amplifier Role Transfers Release Doc](../../releases/cosmwasm/2025-11-Axelar-Amplifier-Role-Transfers-Release-v1.0.0.md) for the complete list of actions available to each role.
 
 ### Verification Queries
 
