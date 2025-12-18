@@ -8,10 +8,10 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet amplifier** | TBD                   | 20xx-xx-xx |
-| **Stagenet**         | TBD                   | 20xx-xx-xx |
-| **Testnet**          | TBD                   | 20xx-xx-xx |
-| **Mainnet**          | TBD                   | 20xx-xx-xx |
+| **Devnet amplifier** | Completed             | 2025-12-12 |
+| **Stagenet**         | Completed             | 2025-12-12 |
+| **Testnet**          | Completed             | 2025-12-13 |
+| **Mainnet**          | Completed             | 2025-12-17 |
 
 
 ### Background
@@ -32,7 +32,9 @@ ENV="[mainnet | testnet | stagenet | devnet-amplifier]"
 
 1. Fetch tokens that are not listed in Squid configs
 
-One can find pre-fetched tokens stored on the branch [chore(its,evm): p2p tokens found](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1169). These should be placed in:
+Scripts can be found in this [PR #1136](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1136) if they are not present on the main branch.
+
+Pre-fetched tokens can be found in this [PR #1255](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1255).
 
 ```bash
  % axelar-chains-config/info/tokens-p2p/tokens-devnet-amplifier.json
