@@ -218,6 +218,17 @@ function getProposalHash(target, calldata, nativeValue) {
     return keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
 }
 
+function decodeProposalPayload(proposal) {
+    const decoded = defaultAbiCoder.decode(['uint256', 'address', 'bytes', 'uint256', 'uint256'], proposal);
+    return {
+        commandType: decoded[0],
+        target: decoded[1],
+        calldata: decoded[2],
+        nativeValue: decoded[3].toString(),
+        eta: decoded[4],
+    };
+}
+
 async function processCommand(_axelar, chain, _chains, action, options) {
     const { contractName, address, privateKey, args = [] } = options;
 
@@ -244,10 +255,10 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             let calldata = options.calldata;
 
             if (options.proposal) {
-                const decoded = defaultAbiCoder.decode(['uint256', 'address', 'bytes', 'uint256', 'uint256'], options.proposal);
-                target = decoded[1];
-                calldata = decoded[2];
-                nativeValue = decoded[3].toString();
+                const decoded = decodeProposalPayload(options.proposal);
+                target = decoded.target;
+                calldata = decoded.calldata;
+                nativeValue = decoded.nativeValue;
             }
 
             validateParameters({
@@ -297,6 +308,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
             printInfo('Governance target (for eta/execute)', target);
             printInfo('Governance calldata (for eta/execute)', calldata);
+            printInfo('Governance proposal payload (for eta/execute)', gmpPayload);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
@@ -326,30 +338,37 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'schedule-operator': {
             ensureAxelarServiceGovernance(contractName, 'scheduleOperator');
 
-            const [target, calldata, activationTime] = args;
+            const [action, activationTime] = args;
 
-            validateParameters({
-                isValidAddress: { target },
-                isValidCalldata: { calldata },
-            });
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
             validateParameters({
                 isValidTimeFormat: { activationTime },
             });
 
             const eta = dateToEta(activationTime);
+            const currTime = getCurrentTimeInSeconds();
+            printInfo('Current time', etaToDate(currTime));
+
+            const proposalHash = getProposalHash(target, calldata, nativeValue);
+            const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
+            if (isApproved) {
+                printWarn('Operator proposal is already approved.');
+            }
+
             const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
+            printInfo('Governance target (for execute-operator-proposal)', target);
+            printInfo('Governance calldata (for execute-operator-proposal)', calldata);
+            printInfo('Governance proposal payload (for execute-operator-proposal)', gmpPayload);
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
 
         case 'cancel-operator': {
             ensureAxelarServiceGovernance(contractName, 'cancelOperator');
-            const [target, calldata] = args;
 
-            validateParameters({
-                isValidAddress: { target },
-                isValidCalldata: { calldata },
-            });
+            const [action] = args;
+
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
             const proposalHash = getProposalHash(target, calldata, nativeValue);
             const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
@@ -397,12 +416,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'submit-operator': {
             ensureAxelarServiceGovernance(contractName, 'submitOperator');
 
-            const [target, calldata, commandId, activationTime] = args;
+            const [action, commandId, activationTime] = args;
 
-            validateParameters({
-                isValidAddress: { target },
-                isValidCalldata: { calldata },
-            });
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
             validateParameters({
                 isKeccak256Hash: { commandId },
@@ -437,10 +453,10 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             if (options.proposal) {
                 printInfo('Decoding proposal to get governance data');
-                const decoded = defaultAbiCoder.decode(['uint256', 'address', 'bytes', 'uint256', 'uint256'], options.proposal);
-                target = decoded[1];
-                calldata = decoded[2];
-                nativeValue = decoded[3].toString();
+                const decoded = decodeProposalPayload(options.proposal);
+                target = decoded.target;
+                calldata = decoded.calldata;
+                nativeValue = decoded.nativeValue;
             }
 
             validateParameters({
@@ -480,7 +496,16 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'execute-operator-proposal': {
             ensureAxelarServiceGovernance(contractName, 'execute-operator-proposal');
 
-            const [target, calldata] = args;
+            let target = options.target;
+            let calldata = options.calldata;
+
+            if (options.proposal) {
+                printInfo('Decoding proposal to get governance data');
+                const decoded = decodeProposalPayload(options.proposal);
+                target = decoded.target;
+                calldata = decoded.calldata;
+                nativeValue = decoded.nativeValue;
+            }
 
             validateParameters({
                 isValidAddress: { target },
@@ -507,7 +532,16 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         case 'is-operator-approved': {
             ensureAxelarServiceGovernance(contractName, 'is-operator-approved');
 
-            const [target, calldata] = args;
+            let target = options.target;
+            let calldata = options.calldata;
+
+            if (options.proposal) {
+                printInfo('Decoding proposal to get governance data');
+                const decoded = decodeProposalPayload(options.proposal);
+                target = decoded.target;
+                calldata = decoded.calldata;
+                nativeValue = decoded.nativeValue;
+            }
 
             validateParameters({
                 isValidAddress: { target },
@@ -683,27 +717,53 @@ if (require.main === module) {
     program
         .command('schedule-operator')
         .description('Schedule an operator proposal (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
+        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
-        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .action((target, calldata, activationTime, options, cmd) => {
-            main(cmd.name(), [target, calldata, activationTime], options);
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('AxelarServiceGovernance'),
+        )
+        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
+        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .action((governanceAction, activationTime, options, cmd) => {
+            main(cmd.name(), [governanceAction, activationTime], options);
         });
 
     program
         .command('cancel-operator')
         .description('Cancel an operator proposal (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
+        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
-        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .action((target, calldata, options, cmd) => {
-            main(cmd.name(), [target, calldata], options);
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('AxelarServiceGovernance'),
+        )
+        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
+        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .action((governanceAction, options, cmd) => {
+            main(cmd.name(), [governanceAction], options);
         });
 
     program
@@ -737,36 +797,57 @@ if (require.main === module) {
     program
         .command('submit-operator')
         .description('Submit an operator proposal via cross-chain message (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
+        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .action((target, calldata, commandId, activationTime, options, cmd) => {
-            main(cmd.name(), [target, calldata, commandId, activationTime], options);
+        .addOption(
+            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
+        )
+        .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
+        .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('AxelarServiceGovernance'),
+        )
+        .addOption(new Option('--newGovernance <governance>', 'governance address').env('GOVERNANCE'))
+        .addOption(new Option('--newMintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'))
+        .addOption(new Option('--newOperator <newOperator>', 'operator address').env('OPERATOR'))
+        .addOption(new Option('--implementation <implementation>', 'new gateway implementation'))
+        .addOption(new Option('--amount <amount>', 'withdraw amount'))
+        .action((governanceAction, commandId, activationTime, options, cmd) => {
+            main(cmd.name(), [governanceAction, commandId, activationTime], options);
         });
 
     program
         .command('execute-operator-proposal')
         .description('Execute an approved operator proposal (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
+        .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
+        .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
+        .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .action((target, calldata, options, cmd) => {
-            main(cmd.name(), [target, calldata], options);
+        .action((options, cmd) => {
+            if (!options.proposal && (!options.target || !options.calldata)) {
+                throw new Error('Either --proposal or both --target and --calldata must be provided');
+            }
+            main(cmd.name(), [], options);
         });
 
     program
         .command('is-operator-approved')
         .description('Check whether an operator proposal has been approved (AxelarServiceGovernance only)')
-        .argument('<target>', 'target address')
-        .argument('<calldata>', 'call data')
+        .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
+        .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
+        .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
-        .action((target, calldata, options, cmd) => {
-            main(cmd.name(), [target, calldata], options);
+        .action((options, cmd) => {
+            if (!options.proposal && (!options.target || !options.calldata)) {
+                throw new Error('Either --proposal or both --target and --calldata must be provided');
+            }
+            main(cmd.name(), [], options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { address: true });
@@ -783,4 +864,5 @@ module.exports = {
     getSetupParams,
     ProposalType,
     submitProposalToAxelar,
+    decodeProposalPayload,
 };
