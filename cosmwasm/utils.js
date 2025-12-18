@@ -26,6 +26,7 @@ const {
     MsgMigrateContract,
     MsgStoreCode,
     MsgStoreAndInstantiateContract,
+    MsgUpdateInstantiateConfig,
 } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 const { Tendermint34Client } = require('@cosmjs/tendermint-rpc');
 const {
@@ -1259,11 +1260,26 @@ const encodeParameterChangeProposal = (options) => {
 };
 
 const encodeUpdateInstantiateConfigProposal = (options) => {
-    const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
+    const accessConfigUpdates = JSON.parse(options.msg);
+
+    if (!Array.isArray(accessConfigUpdates) || accessConfigUpdates.length !== 1) {
+        throw new Error('msg must contain exactly one access config update');
+    }
+
+    const { codeId, instantiatePermission } = accessConfigUpdates[0];
+
+    const msg = MsgUpdateInstantiateConfig.fromPartial({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        codeId: BigInt(codeId),
+        newInstantiatePermission: {
+            permission: instantiatePermission.permission,
+            addresses: instantiatePermission.addresses,
+        },
+    });
 
     return {
-        typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
-        value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
+        typeUrl: '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig',
+        value: Uint8Array.from(MsgUpdateInstantiateConfig.encode(msg).finish()),
     };
 };
 
