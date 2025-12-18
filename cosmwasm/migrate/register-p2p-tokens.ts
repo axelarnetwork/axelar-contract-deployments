@@ -34,9 +34,7 @@ async function filteredTokens(env: string, tokenIds: string[]): Promise<SquidTok
     const tokenIdsToProcess = new Set(tokenIds);
     const tokenInfoString = fs.readFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
-    return Object.values(tokenInfo.tokens).filter(
-        (token: SquidToken) => (tokenIds ? tokenIdsToProcess.has(token.tokenId) : true) && token.tokenType === 'interchain',
-    );
+    return Object.values(tokenInfo.tokens).filter((token: SquidToken) => (tokenIds ? tokenIdsToProcess.has(token.tokenId) : true));
 }
 
 async function forEachTokenAndChain(
