@@ -1262,12 +1262,8 @@ const encodeParameterChangeProposal = (options) => {
 const encodeUpdateInstantiateConfigProposal = (options) => {
     const accessConfigUpdates = JSON.parse(options.msg);
 
-    if (!Array.isArray(accessConfigUpdates) || accessConfigUpdates.length === 0) {
-        throw new Error('msg must contain at least one access config update');
-    }
-
-    if (accessConfigUpdates.length > 1) {
-        throw new Error('Only one code ID can be updated per proposal. Please submit separate proposals.');
+    if (!Array.isArray(accessConfigUpdates) || accessConfigUpdates.length !== 1) {
+        throw new Error('msg must contain exactly one access config update');
     }
 
     const { codeId, instantiatePermission } = accessConfigUpdates[0];
