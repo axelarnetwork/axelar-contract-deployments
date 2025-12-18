@@ -235,6 +235,7 @@ async function coordinatorToVersion2_1_1(
         runAs: senderAddress,
         codeId: codeId,
         deposit: options.deposit,
+        standardProposal: options.standardProposal,
         fetchCodeId: false,
         address: coordinatorAddress,
     };

@@ -1,7 +1,7 @@
 # &lt; ChainName &gt; GMP vX.X.X
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                                |
+| -------------- | ---------------------------------------- |
 | **Created By** | @[github-username] <user@interoplabs.io> |
 | **Deployment** | @[github-username] <user@interoplabs.io> |
 
@@ -25,7 +25,7 @@ Create an `.env` config. Local environment variable `CHAIN` should be set to `<c
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAINS=<chain name>
 ```
 
 An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
@@ -67,7 +67,7 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
 
 ```bash
 "$CHAIN": {
-    "name": "<chain name",
+    "name": "<chain name>",
     "axelarId": "$CHAIN",
     "chainId": <chain id>,
     "rpc": "<RPC URL>",
@@ -98,7 +98,6 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 1. Deploy `ConstAddrDeployer`:
-
     - `stagenet` and `testnet` use the same contract address, so we only deploy on `testnet`.
 
     | Network              | `deployer address`                           |
@@ -113,7 +112,6 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     ```
 
 1. Deploy `Create3Deployer`:
-
     - `stagenet` and `testnet` use the same contract address, so we only deploy on `testnet`.
 
     | Network              | `deployer address`                           |
@@ -190,37 +188,6 @@ Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solid
     ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
     ```
 
-1. Transfer ownership for contracts
-
-    1. Transfer Operators ownership
-
-        | Network              | `OPERATORS_OWNER_ADDRESS`                    |
-        | -------------------- | -------------------------------------------- |
-        | **Devnet-amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
-        | **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
-        | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-
-        ```bash
-        ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
-        ```
-
-    1. Transfer AxelarGateway ownership (mainnet and testnet only)
-
-        | Network              | New Owner Address                            |
-        | -------------------- | -------------------------------------------- |
-        | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-        | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-
-        ```bash
-        ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
-        ```
-
-    1. Transfer AxelarGateway ownership (testnet only)
-
-        ```bash
-        ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
-        ```
-
 ## Checklist
 
 The following checks should be performed after the rollout
@@ -234,7 +201,6 @@ The following checks should be performed after the rollout
     ```
 
 1. Route GMP call via Amplifier
-
     - <https://docs.axelar.dev/dev/amplifier/chain-integration/relay-messages>
 
 1. Submit proof with multisig session id
@@ -258,7 +224,6 @@ The following checks should be performed after the rollout
     ```
 
 1. Route GMP call via Amplifier
-
     - <https://docs.axelar.dev/dev/amplifier/chain-integration/relay-messages>
 
 1. Submit proof with multisig session id
@@ -272,3 +237,66 @@ The following checks should be performed after the rollout
     ```bash
     ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
     ```
+
+### Steps (continued)
+
+9. Deploy AxelarServiceGovernance
+    - Ensure `${ENV}.json` has `contracts.AxelarServiceGovernance` filled with `governanceChain`, `governanceAddress`, `minimumTimeDelay`, `multisig` (or operator, as applicable), `deploymentMethod` (create2), `salt`, and that `contracts.AxelarGateway.address` is present.
+
+    ```bash
+    ts-node evm/deploy-contract.js -c AxelarServiceGovernance
+    ts-node evm/ownership.js -c AxelarServiceGovernance --action owner
+    ```
+
+1. Transfer ownership for contracts
+    1. Transfer Operators ownership
+
+        | Network              | `OPERATORS_OWNER_ADDRESS`       |
+        | -------------------- | ------------------------------- |
+        | **Devnet-amplifier** | `<OPERATORS_OWNER_EOA_ADDRESS>` |
+        | **Stagenet**         | `<OPERATORS_OWNER_EOA_ADDRESS>` |
+        | **Testnet**          | `<OPERATORS_OWNER_EOA_ADDRESS>` |
+        | **Mainnet**          | `<OPERATORS_OWNER_EOA_ADDRESS>` |
+
+        ```bash
+        ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
+        ```
+
+    2. Transfer AxelarGateway owner role to AxelarServiceGovernance
+
+        | Network              | New Owner (AxelarServiceGovernance) |
+        | -------------------- | ----------------------------------- |
+        | **Devnet-amplifier** | `<AxelarServiceGovernance address>` |
+        | **Stagenet**         | `<AxelarServiceGovernance address>` |
+        | **Testnet**          | `<AxelarServiceGovernance address>` |
+        | **Mainnet**          | `<AxelarServiceGovernance address>` |
+
+        ```bash
+        AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+        ts-node evm/ownership.js -c AxelarGateway --action owner
+        ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+        ts-node evm/ownership.js -c AxelarGateway --action owner
+        ```
+
+    3. Transfer AxelarGateway operator role to Emergency Operator EOA
+
+        | Network              | `EMERGENCY_OPERATOR_EOA_ADDRESS`   |
+        | -------------------- | ---------------------------------- |
+        | **Devnet-amplifier** | `<EMERGENCY_OPERATOR_EOA_ADDRESS>` |
+        | **Stagenet**         | `<EMERGENCY_OPERATOR_EOA_ADDRESS>` |
+        | **Testnet**          | `<EMERGENCY_OPERATOR_EOA_ADDRESS>` |
+        | **Mainnet**          | `<EMERGENCY_OPERATOR_EOA_ADDRESS>` |
+
+        ```bash
+        EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
+        ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA
+        ts-node evm/gateway.js -n $CHAIN --action operator
+        ```
+
+    4. Transfer AxelarGasService owner role to AxelarServiceGovernance
+
+        ```bash
+        AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+        ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+        ts-node evm/ownership.js -c AxelarGasService --action owner
+        ```
