@@ -26,7 +26,7 @@ where:
 ### What It Does
 
 The ITS contract supports a **global pause flag** on each chain. When paused, ITS operations on that chain are restricted according to the contract’s implementation.  
-Pause/unpause is controlled by the **ITS owner** via `evm/its.js`.
+Pause/unpause is controlled by the **ITS owner or operator** via `evm/its.js`.
 
 ### Command: Set Pause Status
 
@@ -37,7 +37,7 @@ ts-node evm/its.js set-pause-status <pause-status> -e <env> -n <chain>
 - **`pause-status`**: `true` to pause, `false` to unpause.
 
 **Requirements:**
-- Caller must be the **owner** of the ITS contract on the target chain.
+- Caller must be the **owner or operator** of the ITS contract on the target chain.
 - The command uses `setPauseStatus(bool)` and emits `Paused` / `Unpaused` events.
 
 #### Examples
@@ -122,6 +122,6 @@ ts-node evm/axelar-transceiver.ts transfer-pauser 0xNewPauserAddress \
 
 | Error / Symptom | Likely Cause | Suggested Fix |
 |-----------------|-------------|---------------|
-| `set-pause-status` revert / “can only be performed by contract owner” | Caller is not ITS owner. | Use the ITS owner wallet for the target chain. |
+| `set-pause-status` revert / “can only be performed by contract owner or operator” | Caller is not ITS owner or operator. | Use the ITS owner or operator wallet for the target chain. |
 | `transfer-pauser` revert / unauthorized | Caller does not have permission on the transceiver. | Use the transceiver owner/authorized account. |
 | Unexpected behavior after pausing | Downstream apps are not handling paused state as expected. | Coordinate with application teams to ensure they honor pause semantics and monitor relevant events. |
