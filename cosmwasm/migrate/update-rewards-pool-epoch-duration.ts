@@ -167,7 +167,7 @@ async function submitAsGovernanceProposal(
     const proposalOptions = {
         title: options.title,
         description: options.description,
-        deposit: options.deposit || config.proposalDepositAmount(),
+        deposit: options.deposit,
         standardProposal: options.standardProposal,
     };
 
