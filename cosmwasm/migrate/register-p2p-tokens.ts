@@ -1,5 +1,6 @@
 import { Command, Option } from 'commander';
 import fs from 'fs';
+import path from 'path';
 
 import { addEnvOption, printError } from '../../common';
 import { ConfigManager } from '../../common/config';
@@ -32,7 +33,8 @@ export type SquidTokenInfoFile = {
 
 async function filteredTokens(env: string, tokenIds: string[]): Promise<SquidToken[]> {
     const tokenIdsToProcess = new Set(tokenIds);
-    const tokenInfoString = fs.readFileSync(`axelar-chains-config/info/tokens-p2p/tokens-${env}.json`, 'utf8');
+    const tokensFilePath = path.resolve(__dirname, `../../axelar-chains-config/info/tokens-p2p/tokens-${env}.json`);
+    const tokenInfoString = fs.readFileSync(tokensFilePath, 'utf8');
     const tokenInfo = JSON.parse(tokenInfoString) as SquidTokenInfoFile;
     return Object.values(tokenInfo.tokens).filter((token: SquidToken) => (tokenIds ? tokenIdsToProcess.has(token.tokenId) : true));
 }
@@ -146,6 +148,10 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
         },
     );
 
+    if (!validateTokenSupplyResult) {
+        throw new Error('Error validating token supply');
+    }
+
     const modifyTokenSupplyResult = await forEachTokenAndChain(config, tokens, chains, async (token: SquidToken, chain: SquidTokenData) => {
         const chainName = chain.axelarChainId.toLowerCase();
         await alignTokenSupplyOnHub(
@@ -159,8 +165,8 @@ async function modifyTokenSupplyInFile(client: ClientManager, config: ConfigMana
         );
     });
 
-    if (!validateTokenSupplyResult || !modifyTokenSupplyResult) {
-        throw new Error('Error validating or modifying token supply');
+    if (!modifyTokenSupplyResult) {
+        throw new Error('Error modifying token supply');
     }
 }
 
