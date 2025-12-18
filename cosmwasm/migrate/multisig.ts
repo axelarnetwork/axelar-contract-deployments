@@ -60,6 +60,7 @@ async function multisigToVersion2_3_1(
         runAs: senderAddress,
         codeId: codeId,
         deposit: options.deposit,
+        standardProposal: options.standardProposal,
         fetchCodeId: false,
         address: multisigAddress,
     };
