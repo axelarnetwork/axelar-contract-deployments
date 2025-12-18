@@ -245,7 +245,7 @@ ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <activ
 
 ### Check Operator Approval Status
 
-Check if an operator proposal has been approved on the destination chain.
+Check whether an operator proposal has been approved on the destination chain.
 
 ```bash
 ts-node evm/governance.js is-operator-approved <target> <calldata> [options]
