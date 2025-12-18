@@ -273,6 +273,8 @@ function getScheduleProposalType(options, ProposalType, action) {
     }
 
     return proposalType;
+}
+
 function createGovernanceProposal({
     chain,
     options,
