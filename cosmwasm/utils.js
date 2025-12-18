@@ -1259,43 +1259,32 @@ const encodeParameterChangeProposal = (options) => {
     };
 };
 
-const encodeUpdateInstantiateConfigProposal = (config, options) => {
-    const isLegacy = isLegacySDK(config);
+const encodeUpdateInstantiateConfigProposal = (options) => {
+    const accessConfigUpdates = JSON.parse(options.msg);
 
-    if (isLegacy) {
-        const proposal = UpdateInstantiateConfigProposal.fromPartial(getUpdateInstantiateParams(options));
-
-        return {
-            typeUrl: '/cosmwasm.wasm.v1.UpdateInstantiateConfigProposal',
-            value: Uint8Array.from(UpdateInstantiateConfigProposal.encode(proposal).finish()),
-        };
-    } else {
-        const accessConfigUpdates = JSON.parse(options.msg);
-
-        if (!Array.isArray(accessConfigUpdates) || accessConfigUpdates.length === 0) {
-            throw new Error('msg must contain at least one access config update');
-        }
-
-        if (accessConfigUpdates.length > 1) {
-            throw new Error('v0.50+ only supports updating one code ID at a time. Please submit separate proposals.');
-        }
-
-        const { codeId, instantiatePermission } = accessConfigUpdates[0];
-
-        const msg = MsgUpdateInstantiateConfig.fromPartial({
-            sender: GOVERNANCE_MODULE_ADDRESS,
-            codeId: BigInt(codeId),
-            newInstantiatePermission: {
-                permission: instantiatePermission.permission,
-                addresses: instantiatePermission.addresses,
-            },
-        });
-
-        return {
-            typeUrl: '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig',
-            value: Uint8Array.from(MsgUpdateInstantiateConfig.encode(msg).finish()),
-        };
+    if (!Array.isArray(accessConfigUpdates) || accessConfigUpdates.length === 0) {
+        throw new Error('msg must contain at least one access config update');
     }
+
+    if (accessConfigUpdates.length > 1) {
+        throw new Error('Only one code ID can be updated per proposal. Please submit separate proposals.');
+    }
+
+    const { codeId, instantiatePermission } = accessConfigUpdates[0];
+
+    const msg = MsgUpdateInstantiateConfig.fromPartial({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        codeId: BigInt(codeId),
+        newInstantiatePermission: {
+            permission: instantiatePermission.permission,
+            addresses: instantiatePermission.addresses,
+        },
+    });
+
+    return {
+        typeUrl: '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig',
+        value: Uint8Array.from(MsgUpdateInstantiateConfig.encode(msg).finish()),
+    };
 };
 
 const encodeMigrate = (config, options) => {

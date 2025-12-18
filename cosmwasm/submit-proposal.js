@@ -395,20 +395,13 @@ async function instantiatePermissions(client, options, config, senderAddress, co
         deposit: options.deposit,
     };
 
-    const isLegacy = isLegacySDK(config);
-    const proposal = encodeUpdateInstantiateConfigProposal(config, updateOptions);
+    const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
 
-    if (isLegacy) {
-        if (!confirmProposalSubmission(options, proposal, UpdateInstantiateConfigProposal)) {
-            return;
-        }
-    } else {
-        if (!confirmProposalSubmission(options, [proposal])) {
-            return;
-        }
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
     }
 
-    const proposalId = await submitProposal(client, config, updateOptions, proposal, fee);
+    const proposalId = await submitProposal(client, config, updateOptions, [proposal], fee);
     printInfo('Instantiate params proposal successfully submitted. Proposal ID', proposalId);
     return proposalId;
 }
