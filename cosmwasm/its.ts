@@ -123,25 +123,28 @@ export async function alignTokenSupplyOnHub(
         return;
     }
 
-    const supplyModifier = supply > supplyOnHub ? 'increase_supply' : 'decrease_supply';
-    const supplyDifference = supply > supplyOnHub ? supply - supplyOnHub : supplyOnHub - supply;
+    const [account] = client.accounts;
+    const axelarChainId = config.getChainConfig(chain).axelarId;
+    const formattedTokenId = formatTokenId(tokenId);
 
-    const msg = {
-        modify_supply: {
-            chain: config.getChainConfig(chain).axelarId,
-            token_id: formatTokenId(tokenId),
-            supply_modifier: {
-                [supplyModifier]: supplyDifference.toString(),
-            },
-        },
+    const modifySupply = async (modifier: string, amount: string) => {
+        const msg = { modify_supply: { chain: axelarChainId, token_id: formattedTokenId, supply_modifier: { [modifier]: amount } } };
+        printInfo('Modifying supply ', JSON.stringify(msg));
+        if (!dryRun) {
+            await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+        }
     };
 
-    const [account] = client.accounts;
-    printInfo('Aligning token supply ', JSON.stringify(msg.modify_supply));
-
-    if (!dryRun) {
-        await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+    // Workaround: SupplyModifier doesn't allow 0, so use increase+decrease to set untracked to Tracked(0)
+    if (isUntracked && supply === BigInt(0)) {
+        await modifySupply('increase_supply', '1');
+        await modifySupply('decrease_supply', '1');
+        return;
     }
+
+    const supplyModifier = supply > supplyOnHub ? 'increase_supply' : 'decrease_supply';
+    const supplyDifference = supply > supplyOnHub ? supply - supplyOnHub : supplyOnHub - supply;
+    await modifySupply(supplyModifier, supplyDifference.toString());
 }
 
 export async function isTokenSupplyTracked(token: Contract): Promise<boolean> {
@@ -158,7 +161,7 @@ export async function tokenSupplyByChain(tokenAddress: string, rpc: string): Pro
     };
 }
 
-function formatTokenId(tokenAddress: string): string {
+export function formatTokenId(tokenAddress: string): string {
     if (tokenAddress.startsWith('0x')) {
         return tokenAddress.slice(2);
     }
