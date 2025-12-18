@@ -521,7 +521,6 @@ const programHandler = () => {
                 mainProcessor(coordinatorInstantiatePermissions, options, []);
             }),
         {
-            contractOptions: true,
             proposalOptions: true,
         },
     );
