@@ -12,7 +12,6 @@ use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde_json::json;
 use solana_axelar_gateway::state::config::RotationDelaySecs;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
-use solana_axelar_std::U256;
 use solana_axelar_std::execute_data::{
     ExecuteData, MerklizedPayload, Payload, encode, hash_payload,
 };
@@ -20,6 +19,7 @@ use solana_axelar_std::hasher::Hasher;
 use solana_axelar_std::message::{CrossChainId, MerklizedMessage, Message, MessageLeaf, Messages};
 use solana_axelar_std::pubkey::{PublicKey, Signature};
 use solana_axelar_std::verifier_set::{VerifierSet, verifier_set_hash};
+use solana_axelar_std::{PayloadType, U256};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::message::Message as SolanaMessage;
@@ -474,6 +474,7 @@ fn append_verification_flow_instructions(
     instructions: &mut Vec<Instruction>,
     execute_data: &ExecuteData,
     gateway_config_pda: &Pubkey,
+    payload_type: PayloadType,
 ) -> eyre::Result<Pubkey> {
     let (verifier_set_tracker_pda, _bump) = solana_axelar_gateway::VerifierSetTracker::find_pda(
         &execute_data.signing_verifier_set_merkle_root,
@@ -482,12 +483,14 @@ fn append_verification_flow_instructions(
     let (verification_session_pda, _bump) =
         solana_axelar_gateway::SignatureVerificationSessionData::find_pda(
             &execute_data.payload_merkle_root,
+            payload_type,
             &execute_data.signing_verifier_set_merkle_root,
         );
 
     let init_session_ix_data =
         solana_axelar_gateway::instruction::InitializePayloadVerificationSession {
             merkle_root: execute_data.payload_merkle_root,
+            payload_type,
         }
         .data();
 
@@ -693,6 +696,7 @@ fn approve(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
+        PayloadType::ApproveMessages,
     )?;
     let MerklizedPayload::NewMessages { mut messages } = execute_data.payload_items else {
         eyre::bail!("Expected Messages payload");
@@ -789,6 +793,7 @@ async fn rotate(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
+        PayloadType::RotateSigners,
     )?;
 
     let (event_authority_pda, _) =
@@ -857,6 +862,7 @@ async fn submit_proof(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
+        PayloadType::ApproveMessages,
     )?;
 
     match execute_data.payload_items {
