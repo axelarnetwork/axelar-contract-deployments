@@ -84,7 +84,9 @@
           "implementation": "0xaf3EA5fFAeb86EF25cecfBb7C0c7e4Ffca79375A",
           "address": "0xD08cd727E13FAA39F4041C2f5d4D3FF89A519d5b",
           "version": "2.1.1"
-        },
+        }
+      }
+    },
     "core-ethereum": {
       "name": "Ethereum Sepolia",
       "axelarId": "core-ethereum",
