@@ -72,6 +72,16 @@ const addTopUpOptions = (program: Command): void => {
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 };
 
+interface GovernanceOptions {
+    governance?: boolean;
+    operatorProposal?: boolean;
+    activationTime?: string;
+    file?: string;
+    contractName?: string;
+    governanceContract?: 'InterchainGovernance' | 'AxelarServiceGovernance';
+    mnemonic?: string;
+}
+
 const addGovernanceOptions = (program: Command): Command => {
     program.addOption(new Option('--governance', 'Submit this change via interchain governance'));
     program.addOption(
@@ -105,4 +115,4 @@ module.exports = {
     addGovernanceOptions,
 };
 
-export type { BaseOptions, EvmOptions };
+export type { BaseOptions, EvmOptions, GovernanceOptions };
