@@ -1385,7 +1385,7 @@
   },
   "axelar": {
     "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-    "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+    "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
     "multisigProverAdminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
     "contracts": {
       "ServiceRegistry": {
@@ -1722,6 +1722,7 @@
       },
       "MultisigProver": {
         "avalanche-fuji": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "destinationChainID": "43113",
           "signingThreshold": [
             "6",
@@ -1738,6 +1739,7 @@
         },
         "lastUploadedCodeId": 1529,
         "eth-sepolia": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "destinationChainID": "11155111",
           "signingThreshold": [
             "6",
@@ -1753,6 +1755,7 @@
           "version": "1.1.1"
         },
         "optimism-sepolia": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "destinationChainID": "11155420",
           "signingThreshold": [
             "6",
@@ -1768,6 +1771,7 @@
           "version": "1.1.1"
         },
         "flow": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "destinationChainID": "545",
           "signingThreshold": [
             "6",
@@ -1797,6 +1801,7 @@
           "version": "1.1.1"
         },
         "xrpl-evm-devnet": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "signingThreshold": [
             "1",
             "1"
@@ -1811,6 +1816,7 @@
           "version": "1.1.1"
         },
         "plume-2": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "signingThreshold": [
             "6",
             "10"
@@ -1825,6 +1831,7 @@
           "version": "1.1.1"
         },
         "berachain": {
+          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "signingThreshold": [
             "6",
             "10"
