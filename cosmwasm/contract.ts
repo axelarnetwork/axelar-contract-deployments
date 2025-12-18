@@ -77,6 +77,46 @@ const executeContractMessage = async (
     return executeDirectly(client, contractAddress, msg, fee);
 };
 
+const payloadToHexBinary = (payload: string): string => {
+    if (!payload) return '';
+    
+    if (payload.startsWith('0x')) {
+        return Buffer.from(payload.slice(2), 'hex').toString('hex');
+    }
+
+    if (/^[0-9a-fA-F]+$/.test(payload) && payload.length % 2 === 0) {
+        return Buffer.from(payload, 'hex').toString('hex');
+    }
+
+    return Buffer.from(payload, 'base64').toString('hex');
+};
+
+const axelarnetGatewayCallContract = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [destinationChain, destinationAddress, payload] = args;
+    validateParameters({ isNonEmptyString: { destinationChain, destinationAddress, payload } });
+
+    const msg = [
+        {
+            call_contract: {
+                destination_chain: destinationChain,
+                destination_address: destinationAddress,
+                payload: payloadToHexBinary(payload),
+            },
+        },
+    ];
+
+    const defaultTitle = `Governance Proposal`;
+    const defaultDescription = `Governance Proposal`;
+
+    return executeContractMessage(client, config, options, 'AxelarnetGateway', msg, fee, defaultTitle, defaultDescription);
+};
+
 const buildItsHubChains = (config: ConfigManager, chainNames: string[]) => {
     return chainNames.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
@@ -453,6 +493,17 @@ const programHandler = () => {
             return mainProcessor(registerItsChain, options, chains);
         });
     addAmplifierOptions(registerItsChainCmd);
+
+    const axelarnetGatewayCallContractCmd = program
+        .command('axelarnet-gateway-call-contract')
+        .description('Initiate a cross-chain contract call via AxelarnetGateway (Admin EOA or --governance)')
+        .argument('<destinationChain>', 'destination chain name (e.g. avalanche-fuji)')
+        .argument('<destinationAddress>', 'destination contract address (e.g. 0x...)')
+        .argument('<payload>', 'payload as base64, 0x-hex, or raw hex (will be encoded as HexBinary)')
+        .action((destinationChain, destinationAddress, payload, options) => {
+            return mainProcessor(axelarnetGatewayCallContract, options, [destinationChain, destinationAddress, payload]);
+        });
+    addAmplifierOptions(axelarnetGatewayCallContractCmd);
 
     const updateItsChainCmd = program
         .command('its-hub-update-chains')
