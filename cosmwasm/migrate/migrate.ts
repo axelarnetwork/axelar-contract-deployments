@@ -16,8 +16,8 @@ async function migrate(
     client: ClientManager,
     config: FullConfig,
     options: MigrationOptions,
-    _args: string[],
-    fee: string | StdFee,
+    _args?: string[],
+    fee?: string | StdFee,
 ): Promise<void> {
     const senderAddress = client.accounts[0].address;
     const contractAddress = options.address ?? config.axelar.contracts[options.contractName]?.address;
@@ -33,13 +33,7 @@ async function migrate(
     }
 }
 
-async function checkMigration(
-    client: CosmWasmClient,
-    config: FullConfig,
-    options: MigrationCheckOptions,
-    _args: string[],
-    _fee: string | StdFee,
-): Promise<void> {
+async function checkMigration(client: CosmWasmClient, config: FullConfig, options: MigrationCheckOptions, _args?: string[]): Promise<void> {
     const contract_address = options.address ?? config.axelar.contracts[options.contractName]?.address;
 
     const contract_info = await getContractInfo(client, contract_address);
