@@ -161,7 +161,6 @@ ts-node evm/governance.js eta --proposal <encoded-payload>
 
 - Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
-
 ### Submit Proposal (if relayers fail to submit)
 
 Manually submit a proposal when relayers haven't executed the GMP call automatically.
@@ -194,7 +193,6 @@ ts-node evm/governance.js execute --proposal <encoded-payload>
 
 - Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
-
 ## Parallel Execution (`--parallel`) and Multi-Chain Proposals
 
 Most EVM scripts accept a **`--parallel`** flag (via shared CLI utilities) when running over multiple chains
@@ -205,7 +203,6 @@ Most EVM scripts accept a **`--parallel`** flag (via shared CLI utilities) when 
 - The final proposal therefore contains **one Axelar governance proposal** with **multiple EVM contract calls**.
 
 Use `--parallel` when you want to schedule the **same logical change** (for example, updating trusted chains or transferring operatorship) on many chains in one governance proposal, while still benefiting from concurrent execution of the EVM helper script itself.
-
 
 ## AxelarServiceGovernance (Service Governance)
 
@@ -229,8 +226,8 @@ ts-node evm/governance.js schedule-operator <action> <activationTime> [options]
 - **`activationTime`**: Absolute UTC timestamp (e.g., `YYYY-MM-DDTHH:mm:ss`) or relative seconds (e.g., `3600` for 60 minutes from now)
 - **Options**: Same as `schedule` command (see [Schedule Proposal](#schedule-proposal) section)
 - **Notes:**
-  - The command generates an `ApproveOperator` payload.
-  - Use `--generate-only <file>` to write the generated Axelar proposal JSON instead of submitting immediately.
+    - The command generates an `ApproveOperator` payload.
+    - Use `--generate-only <file>` to write the generated Axelar proposal JSON instead of submitting immediately.
 
 ### Cancel Operator Proposal
 
@@ -327,9 +324,9 @@ ts-node evm/governance.js submit transferGovernance <commandId> <YYYY-MM-DDTHH:m
 
 ## Troubleshooting
 
-| Error                                                | Solution                                              |
-| ---------------------------------------------------- | ----------------------------------------------------- |
-| "Proposal already exists"                            | Cancel existing proposal or use different parameters  |
-| "TimeLock proposal is not yet eligible"              | Wait until ETA passes                                 |
-| "Proposal does not exist"                            | Check if GMP call was executed successfully           |
+| Error                                                | Solution                                               |
+| ---------------------------------------------------- | ------------------------------------------------------ |
+| "Proposal already exists"                            | Cancel existing proposal or use different parameters   |
+| "TimeLock proposal is not yet eligible"              | Wait until ETA passes                                  |
+| "Proposal does not exist"                            | Check if GMP call was executed successfully            |
 | "Invalid governance action for InterchainGovernance" | Use `-c AxelarServiceGovernance` for operator commands |
