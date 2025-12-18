@@ -118,6 +118,23 @@ async function processCommand(axelar, chain, chains, options) {
             break;
         }
 
+        case 'AxelarServiceGovernance': {
+            await verifyContract(
+                env,
+                chain.axelarId,
+                contractAddress,
+                [
+                    chain.contracts.AxelarGateway.address,
+                    contractConfig.governanceChain,
+                    contractConfig.governanceAddress,
+                    contractConfig.minimumTimeDelay,
+                    contractConfig.multisig,
+                ],
+                verifyOptions,
+            );
+            break;
+        }
+
         case 'Multisig': {
             await verifyContract(env, chain.axelarId, contractAddress, [contractConfig.signers, contractConfig.threshold], verifyOptions);
             break;
