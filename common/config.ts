@@ -510,7 +510,6 @@ export class ConfigManager implements FullConfig {
     public getVotingVerifierContractForChainType(chainType: string): string {
         const chainVerifierMapping: Record<string, string> = {
             xrpl: 'XrplVotingVerifier',
-            svm: 'SolanaVotingVerifier',
         };
         return chainVerifierMapping[chainType] || VERIFIER_CONTRACT_NAME;
     }

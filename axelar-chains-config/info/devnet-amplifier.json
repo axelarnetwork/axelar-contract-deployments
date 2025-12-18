@@ -1496,25 +1496,6 @@
         "lastUploadedCodeId": 1406,
         "version": "1.3.0"
       },
-      "SolanaVotingVerifier": {
-        "solana-14": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "serviceName": "validators",
-          "sourceGatewayAddress": "gtwiF7Bamsq5zBQCnKjK7kHfmBQe7StQE9VPucWrtmA",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
-          "blockExpiry": 50,
-          "confirmationHeight": 1000000,
-          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-          "addressFormat": "solana",
-          "codeId": 1606,
-          "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "address": "axelar1cm7tmafwrslpsr5239js5ypcdpdqzm2uv2vur4kxqh7zlj78ht8q679jl3"
-        },
-        "codeId": 1606
-      },
       "VotingVerifier": {
         "avalanche-fuji": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1644,6 +1625,22 @@
           "codeId": 1585,
           "address": "axelar1uypvvkd820cs4t6y47hqszawegwyrxaxr9ehpla74e98g0rezr5sw9lj4z",
           "version": "2.0.0"
+        },
+        "solana-14": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "gtwiF7Bamsq5zBQCnKjK7kHfmBQe7StQE9VPucWrtmA",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 50,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
+          "addressFormat": "solana",
+          "codeId": 1606,
+          "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "address": "axelar1cm7tmafwrslpsr5239js5ypcdpdqzm2uv2vur4kxqh7zlj78ht8q679jl3"
         },
         "arc-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
