@@ -17,27 +17,26 @@
 ## Background
 
 These are the instructions for deploying the new ChainCodec Amplifier contract and
-migrating the MultisigProver and VotingVerifier to latest version.
+migrating the MultisigProver, VotingVerifier and Coordinator to latest version.
 
 ## Deployment
 
-1. Create a `.env` config.
+### Preparation
+
+Setup your `.env` config.
 
 ```yaml
 MNEMONIC=xyz
 ENV=xyz
 ARTIFACT_PATH=wasm
-DEPOSIT_VALUE=xyz
 INIT_ADDRESSES=xyz
 ```
 
-2. Prepare the config for chain-codec instantiation and migration of MultisigProver and VotingVerifier
+The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and VotingVerifier migration](#multisigprover-and-votingverifier-migration) steps have to be done sequentially, but the [Coordinator migration](#coordinator-migration) can be done independently.
 
-    ```bash
-    ts-node cosmwasm/migrate/chain-codec.ts prepare
-    ```
+### ChainCodec deployment
 
-3. Upload and instantiate new ChainCodec* contracts. Depending on the network, you can either upload and instantiate directly using the usual scripts (if you have the governance key) or submit a proposal to the network like this:
+1. Upload and instantiate new ChainCodec* contracts. Depending on the network, you can either upload and instantiate directly using the usual scripts (if you have the governance key) or submit a proposal to the network like this:
 
     ```bash
     ts-node cosmwasm/migrate/chain-codec.ts store-instantiate-chain-codecs \
@@ -88,7 +87,16 @@ INIT_ADDRESSES=xyz
         "address": "axelar1800drchmd7pq8l3jdc0hpr8ngk8d9vpqqay9r07ms5kjyx34838sdeh4z9"
     }
     ```
-4. Upload new MultisigProver and VotingVerifier contracts. You need to provide a chain name for some reason,
+
+### MultisigProver and VotingVerifier migration
+
+1. Prepare the config for chain-codec instantiation and migration of MultisigProver and VotingVerifier
+
+    ```bash
+    ts-node cosmwasm/migrate/chain-codec.ts prepare
+    ```
+
+2. Upload new MultisigProver and VotingVerifier contracts. You need to provide a chain name for some reason,
     so just provide whatever amplifier chain name you want.
     ```bash
     ts-node cosmwasm/submit-proposal.js store \
@@ -101,13 +109,35 @@ INIT_ADDRESSES=xyz
     ```
     Make sure to update the `lastUploadedCodeId` fields for MultisigProver and VotingVerifier in the config.
 
-4. Migrate MultisigProver and VotingVerifier to latest version. You can migrate directly by passing the `--direct` flag.
+3. Migrate MultisigProver and VotingVerifier to latest version. You can migrate directly by passing the `--direct` flag.
     ```bash
     ts-node cosmwasm/migrate/chain-codec.ts migrate-mp-vv \
         -t "Migrate MultisigProver to v1.2.0 and VotingVerifier to v2.1.0" \
         -d "Migrate MultisigProver to v1.2.0 and VotingVerifier to v2.1.0"
     ```
     Make sure to update the `codeId` fields for MultisigProver and VotingVerifier in the config when the proposal passed.
+
+### Coordinator migration
+
+1. Store the new Coordinator contract.
+    ```bash
+    ts-node cosmwasm/submit-proposal.js store \
+        -c Coordinator \
+        -t "Upload Coordinator contract v3.0.0" \
+        -d "Upload Coordinator contract v3.0.0" \
+        -a "$ARTIFACT_PATH" \
+        -i $INIT_ADDRESSES \
+    ```
+2. Migrate the Coordinator to the stored contract.
+    ```bash
+    ts-node cosmwasm/submit-proposal.js migrate \
+        -c Coordinator \
+        -t "Migrate Coordinator to v3.0.0" \
+        -d "Migrate Coordinator to v3.0.0" \
+        --msg '{}' \
+        --fetchCodeId
+    ```
+
 
 ## Checklist
 
