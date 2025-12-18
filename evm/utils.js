@@ -246,6 +246,51 @@ function getGovernanceAddress(chain, contractName, address) {
     return contractConfig.address;
 }
 
+function getGovernanceContract(chain, options = {}) {
+    const governanceContract = options.governanceContract || 'AxelarServiceGovernance';
+
+    if (options.operatorProposal && governanceContract !== 'AxelarServiceGovernance') {
+        throw new Error('Operator proposals require --governanceContract AxelarServiceGovernance or unset --operatorProposal.');
+    }
+
+    const governanceAddress = getGovernanceAddress(chain, governanceContract);
+
+    if (!governanceAddress) {
+        throw new Error(
+            `${governanceContract} contract is not configured on ${chain.name}. Please provide --governanceContract or ensure the contract is deployed.`,
+        );
+    }
+
+    return { governanceContract, governanceAddress };
+}
+
+function createGovernanceProposal({
+    chain,
+    options,
+    targetAddress,
+    calldata,
+    nativeValue = '0',
+    ProposalType,
+    encodeGovernanceProposal,
+    createGMPProposalJSON,
+    dateToEta,
+}) {
+    const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+    printInfo('Governance contract', governanceContract);
+    const eta = dateToEta(options.activationTime || '0');
+
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+    if (options.operatorProposal) {
+        printInfo('Using operator-based proposal', 'ApproveOperator');
+    }
+    const gmpPayload = encodeGovernanceProposal(proposalType, targetAddress, calldata, nativeValue, eta);
+
+    printInfo('Governance target', targetAddress);
+    printInfo('Governance calldata', calldata);
+
+    return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+}
+
 // Validate if the input privateKey is correct
 function isValidPrivateKey(privateKey) {
     // Check if it's a valid hexadecimal string
@@ -1166,7 +1211,9 @@ module.exports = {
     handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceContract,
     getGovernanceAddress,
+    createGovernanceProposal,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
