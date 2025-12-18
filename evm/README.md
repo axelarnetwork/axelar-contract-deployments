@@ -211,6 +211,7 @@ ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
+Use `evm/governance.js` for proposal submission/timelock flows (schedule/submit/eta/execute) and upgrades. For non-upgrade operational commands, use the contract-specific scripts (`gateway.js`, `operators.js`, `its.js`, etc.).
 
 1. Generate and submit the proposal on Axelar 
  
@@ -263,6 +264,125 @@ ts-node evm/governance.js submit upgrade [commandId] 2023-12-11T08:45:00 --targe
 
 ```bash
 ts-node evm/governance.js execute --targetContractName AxelarGateway --target [target-address] --calldata [calldata] -n [chain]
+```
+
+8. Verify the governance command went through correctly.
+
+### InterchainTokenService owner commands (evm/its.js)
+
+#### Set trusted chains
+`ts-node evm/its.js set-trusted-chains <chain1> <chain2> ...`
+
+#### Remove trusted chains
+`ts-node evm/its.js remove-trusted-chains <chain1> <chain2> ... --yes`
+
+#### Migrate interchain token
+`ts-node evm/its.js migrate-interchain-token <tokenId> --yes`
+
+*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+
+### Gateway operator commands (evm/gateway.js)
+
+#### Rotate signers (emergency)
+`ts-node evm/gateway.js --action rotateSigners --payload <payload> --proof <proof> --yes`
+
+#### Transfer operatorship
+`ts-node evm/gateway.js --action transferOperatorship --destination <gatewayAddress> --payload <calldata> --yes`
+
+Other gateway actions remain in `evm/gateway.js`; use `--action` accordingly.
+
+### Operators script (evm/operators.js)
+
+#### Add operator
+`ts-node evm/operators.js --action addOperator --operator <addr> --yes`
+
+#### Remove operator
+`ts-node evm/operators.js --action removeOperator --operator <addr> --yes`
+
+#### Transfer ownership
+`ts-node evm/operators.js --action transferOwnership --newOwner <addr> --yes`
+
+#### Propose ownership
+`ts-node evm/operators.js --action proposeOwnership --newOwner <addr> --yes`
+
+#### Execute contract (operators role)
+`ts-node evm/operators.js --action executeContract --target <addr> --calldata <0x...> --nativeValue <wei> --yes`
+
+### AxelarGasService commands (evm/gas-service.js)
+
+#### Estimate gas fee
+`ts-node evm/gas-service.js --action estimateGasFee --destinationChain <chain> --destinationAddress <addr> --payload <0x...> --executionGasLimit <gas> [--isExpress]`
+
+#### Update gas info across chains
+`ts-node evm/gas-service.js --action updateGasInfo --chains <chain1> <chain2> ...`
+
+Note: For upgrades, continue to use governance flows; operational actions run via this script.
+
+### InterchainTokenService operator commands (evm/its.js)
+Note: For upgrades, continue to use governance flows; operational actions run via this script.
+
+#### Transfer operatorship
+`ts-node evm/its.js transfer-operatorship <operator> --yes`
+
+#### Propose operatorship
+`ts-node evm/its.js propose-operatorship <operator> --yes`
+
+*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+
+### AxelarServiceGovernance (operator) extensions
+
+`AxelarServiceGovernance` extends `InterchainGovernance` with operator approval functionality that bypasses timelock. The CLI includes convenience commands for operator-style proposals:
+
+1. Schedule operator approval proposal
+
+```bash
+ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+Note: Defaults to `AxelarServiceGovernance` .
+
+2. Cancel operator approval proposal
+
+```bash
+# Generate proposal JSON only
+ts-node evm/governance.js cancel-operator <target> <calldata> --file proposal.json
+```
+
+If `--file` is not supplied, the script will prompt for confirmation and then submit the proposal to the Axelar network using `MNEMONIC`.
+
+3. Submit operator approval via GMP (if relayers failed)
+
+```bash
+ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+4. Execute an approved operator proposal
+
+```bash
+# Note: Operator EOA must call this after approval
+ts-node evm/governance.js execute-operator-proposal <target> <calldata>
+```
+
+5. Check operator proposal approval status
+
+```bash
+ts-node evm/governance.js is-operator-approved <target> <calldata>
+```
+
+Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --calldata <calldata>
 ```
 
 ## Utilities
