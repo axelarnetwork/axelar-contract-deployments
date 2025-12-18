@@ -519,6 +519,7 @@ export class ConfigManager implements FullConfig {
             evm: 'ChainCodecEvm',
             sui: 'ChainCodecSui',
             stellar: 'ChainCodecStellar',
+            svm: 'ChainCodecSolana',
         };
 
         const result = mapping[chainType];

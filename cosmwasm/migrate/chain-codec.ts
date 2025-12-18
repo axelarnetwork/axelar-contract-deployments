@@ -54,10 +54,11 @@ const programHandler = () => {
     program.parse();
 };
 
-const CODEC_MAPPING: Record<string, 'ChainCodecEvm' | 'ChainCodecSui' | 'ChainCodecStellar'> = {
+const CODEC_MAPPING: Record<string, 'ChainCodecEvm' | 'ChainCodecSui' | 'ChainCodecStellar' | 'ChainCodecSolana'> = {
     evm: 'ChainCodecEvm',
     sui: 'ChainCodecSui',
     stellar: 'ChainCodecStellar',
+    svm: 'ChainCodecSolana',
 };
 
 async function prepare(client: CosmWasmClient, config: ConfigManager, _: Options) {
