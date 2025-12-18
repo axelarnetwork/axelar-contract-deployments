@@ -393,6 +393,7 @@ async function instantiatePermissions(client, options, config, senderAddress, co
         description: options.description,
         runAs: senderAddress,
         deposit: options.deposit,
+        standardProposal: options.standardProposal,
     };
 
     const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
