@@ -1756,6 +1756,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeChainCodecInstantiateMsg,
     },
+    ChainCodecSolana: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeChainCodecInstantiateMsg,
+    },
     XrplVotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
