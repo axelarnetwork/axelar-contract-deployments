@@ -85,6 +85,7 @@ const printProposal = (proposalData) => {
             const MsgType = root.lookupType(msgTypeName);
             const decoded = MsgType.decode(message.value);
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+            
         } else if (MessageType) {
             const decoded = MessageType.decode(message.value);
             if (decoded.codeId) {
