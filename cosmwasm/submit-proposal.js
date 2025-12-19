@@ -43,6 +43,7 @@ const {
     MsgMigrateContract,
     MsgStoreCode,
     MsgStoreAndInstantiateContract,
+    MsgUpdateInstantiateConfig,
 } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
@@ -78,6 +79,7 @@ const printProposal = (proposalData, proposalType = null) => {
                 '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
                 '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
                 '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
+                '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
             };
             const MessageType = typeMap[message.typeUrl];
             if (MessageType) {
@@ -396,16 +398,13 @@ async function instantiatePermissions(client, options, config, senderAddress, co
 
     const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
 
-    if (!confirmProposalSubmission(options, proposal, UpdateInstantiateConfigProposal)) {
+    if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
 
-    try {
-        await submitProposal(client, config, updateOptions, proposal, fee);
-        printInfo('Instantiate params proposal successfully submitted');
-    } catch (e) {
-        printError(`Error: ${e}`);
-    }
+    const proposalId = await submitProposal(client, config, updateOptions, [proposal], fee);
+    printInfo('Instantiate params proposal successfully submitted. Proposal ID', proposalId);
+    return proposalId;
 }
 
 async function coordinatorInstantiatePermissions(client, config, options, _args, fee) {
