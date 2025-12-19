@@ -61,28 +61,17 @@ EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
 NODE=[Axelar RPC URL]
 ```
 
-| Axelar Env           | `DEPOSIT_VALUE` |
-| -------------------- | --------------- |
-| **Devnet-amplifier** | `100000000`     |
-| **Stagenet**         | `100000000`     |
-| **Testnet**          | `2000000000`    |
-| **Mainnet**          | `2000000000`    |
-
 Add `INIT_ADDRESSES` to `.env`.
 
-| Axelar Env           | `INIT_ADDRESSES`                                                                                                                                                                                              | `RUN_AS_ACCOUNT`                                |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9,axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g`                                               | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
-| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky,axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-
-> **_NOTE:_**
-> Set `RUN_AS_ACCOUNT` to an EOA account's address instead of the governance address to avoid having to instantiate the contracts via another governance proposal.
+| Axelar Env           | `INIT_ADDRESSES`                                                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9,axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g`                                               |
+| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky,axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y` |
+| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` |
+| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` |
 
 ```yaml
 INIT_ADDRESSES=[INIT_ADDRESSES]
-RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 ```
 
 1. Store VotingVerifier:
