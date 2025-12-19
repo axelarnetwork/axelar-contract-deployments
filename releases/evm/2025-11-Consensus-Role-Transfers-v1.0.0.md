@@ -186,10 +186,12 @@ AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".c
 - Note: Specify all the chain names on -n flag where we want proposal to run
 
 # Transfer governance to AxelarServiceGovernance
-ts-node evm/governance.js schedule transferGovernance $minimumTimeDelay \
-  --contractName InterchainGovernance \
-  --targetContractName AxelarGateway \
-  --newGovernance "$AXELAR_SERVICE_GOVERNANCE"
+ts-node evm/gateway.js \
+  --action transferGovernance \
+  --destination "$AXELAR_SERVICE_GOVERNANCE" \
+  --governance \
+  --governanceContract InterchainGovernance \
+  --activationTime $minimumTimeDelay
 
 # After minimumTimeDelay has passed, execute the proposal
 # Use the target and calldata values printed by the schedule command above
