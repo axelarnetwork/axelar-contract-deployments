@@ -1209,6 +1209,76 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
+const encodeActivateChain = (chains) => {
+    const protoDefinition = loadProtoDefinition('nexus_chain.proto');
+
+    let root;
+    try {
+        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+        root = parsed.root;
+    } catch (error) {
+        throw new Error(`Failed to parse proto definition: ${error.message}`);
+    }
+
+    const ActivateChainRequest = root.lookupType('axelar.nexus.v1beta1.ActivateChainRequest');
+
+    if (!ActivateChainRequest) {
+        throw new Error('Failed to lookup ActivateChainRequest proto type');
+    }
+
+    const request = ActivateChainRequest.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chains: chains,
+    });
+
+    const errMsg = ActivateChainRequest.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid ActivateChainRequest: ${errMsg}`);
+    }
+
+    const message = ActivateChainRequest.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.nexus.v1beta1.ActivateChainRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeDeactivateChain = (chains) => {
+    const protoDefinition = loadProtoDefinition('nexus_chain.proto');
+
+    let root;
+    try {
+        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+        root = parsed.root;
+    } catch (error) {
+        throw new Error(`Failed to parse proto definition: ${error.message}`);
+    }
+
+    const DeactivateChainRequest = root.lookupType('axelar.nexus.v1beta1.DeactivateChainRequest');
+
+    if (!DeactivateChainRequest) {
+        throw new Error('Failed to lookup DeactivateChainRequest proto type');
+    }
+
+    const request = DeactivateChainRequest.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chains: chains,
+    });
+
+    const errMsg = DeactivateChainRequest.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid DeactivateChainRequest: ${errMsg}`);
+    }
+
+    const message = DeactivateChainRequest.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.nexus.v1beta1.DeactivateChainRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
 const submitProposal = async (client, config, options, proposal, fee) => {
     const deposit =
         options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
@@ -1491,6 +1561,8 @@ module.exports = {
     encodeMigrate,
     encodeCallContracts,
     encodeSubmitProposal,
+    encodeActivateChain,
+    encodeDeactivateChain,
     submitProposal,
     submitCallContracts,
     loadProtoDefinition,

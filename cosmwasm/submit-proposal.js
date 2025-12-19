@@ -22,6 +22,8 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
+    encodeActivateChain,
+    encodeDeactivateChain,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -66,8 +68,28 @@ const printProposal = (proposalData) => {
             '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
             '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
         };
+        
         const MessageType = typeMap[message.typeUrl];
-        if (MessageType) {
+        
+        if (message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' || 
+            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest') {
+            // For nexus messages, try to decode manually
+            try {
+                const { loadProtoDefinition } = require('./utils');
+                const protobuf = require('protobufjs');
+                const protoDefinition = loadProtoDefinition('nexus_chain.proto');
+                const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+                const root = parsed.root;
+                const msgTypeName = message.typeUrl.includes('Activate') ? 
+                    'axelar.nexus.v1beta1.ActivateChainRequest' : 
+                    'axelar.nexus.v1beta1.DeactivateChainRequest';
+                const MsgType = root.lookupType(msgTypeName);
+                const decoded = MsgType.decode(message.value);
+                printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+            } catch (error) {
+                printInfo(`${message.typeUrl}`, '<Unable to decode>');
+            }
+        } else if (MessageType) {
             const decoded = MessageType.decode(message.value);
             if (decoded.codeId) {
                 decoded.codeId = decoded.codeId.toString();
@@ -332,6 +354,38 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
 
+const activateChain = async (client, config, options, _args, fee) => {
+    const { chains } = options;
+    
+    if (!chains || chains.length === 0) {
+        throw new Error('At least one chain name must be provided');
+    }
+
+    const proposal = encodeActivateChain(chains);
+
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+    
+    return callSubmitProposal(client, config, options, [proposal], fee);
+};
+
+const deactivateChain = async (client, config, options, _args, fee) => {
+    const { chains } = options;
+    
+    if (!chains || chains.length === 0) {
+        throw new Error('At least one chain name must be provided');
+    }
+
+    const proposal = encodeDeactivateChain(chains);
+
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+    
+    return callSubmitProposal(client, config, options, [proposal], fee);
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -394,6 +448,24 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
+    });
+
+    const activateChainCmd = program
+        .command('activateChain')
+        .description('Submit a proposal to activate chain(s)')
+        .requiredOption('--chains <chains...>', 'Chain name(s) to activate')
+        .action((options) => mainProcessor(activateChain, options));
+    addAmplifierOptions(activateChainCmd, {
+        proposalOptions: true,
+    });
+
+    const deactivateChainCmd = program
+        .command('deactivateChain')
+        .description('Submit a proposal to deactivate chain(s)')
+        .requiredOption('--chains <chains...>', 'Chain name(s) to deactivate')
+        .action((options) => mainProcessor(deactivateChain, options));
+    addAmplifierOptions(deactivateChainCmd, {
+        proposalOptions: true,
     });
 
     addAmplifierOptions(
