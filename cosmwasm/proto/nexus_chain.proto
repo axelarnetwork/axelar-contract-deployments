@@ -6,11 +6,11 @@ option go_package = "github.com/axelarnetwork/axelar-core/x/nexus/types";
 message ActivateChainRequest {
   bytes sender_deprecated = 1;  // deprecated, don't use
   repeated string chains = 2;
-  string sender = 3;            // actual sender field
+  string sender = 3;
 }
 
 message DeactivateChainRequest {
   bytes sender_deprecated = 1;  // deprecated, don't use
   repeated string chains = 2;
-  string sender = 3;            // actual sender field
+  string sender = 3;
 }

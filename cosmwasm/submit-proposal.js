@@ -6,6 +6,8 @@ const { createHash } = require('crypto');
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 
+const protobuf = require('protobufjs');
+
 const {
     CONTRACTS,
     fromHex,
@@ -24,6 +26,7 @@ const {
     GOVERNANCE_MODULE_ADDRESS,
     encodeActivateChain,
     encodeDeactivateChain,
+    loadProtoDefinition,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -73,22 +76,15 @@ const printProposal = (proposalData) => {
         
         if (message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' || 
             message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest') {
-            // For nexus messages, try to decode manually
-            try {
-                const { loadProtoDefinition } = require('./utils');
-                const protobuf = require('protobufjs');
-                const protoDefinition = loadProtoDefinition('nexus_chain.proto');
-                const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-                const root = parsed.root;
-                const msgTypeName = message.typeUrl.includes('Activate') ? 
-                    'axelar.nexus.v1beta1.ActivateChainRequest' : 
-                    'axelar.nexus.v1beta1.DeactivateChainRequest';
-                const MsgType = root.lookupType(msgTypeName);
-                const decoded = MsgType.decode(message.value);
-                printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-            } catch (error) {
-                printInfo(`${message.typeUrl}`, '<Unable to decode>');
-            }
+            const protoDefinition = loadProtoDefinition('nexus_chain.proto');
+            const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+            const root = parsed.root;
+            const msgTypeName = message.typeUrl.includes('Activate') ? 
+                'axelar.nexus.v1beta1.ActivateChainRequest' : 
+                'axelar.nexus.v1beta1.DeactivateChainRequest';
+            const MsgType = root.lookupType(msgTypeName);
+            const decoded = MsgType.decode(message.value);
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
         } else if (MessageType) {
             const decoded = MessageType.decode(message.value);
             if (decoded.codeId) {
