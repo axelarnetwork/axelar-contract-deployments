@@ -1,0 +1,289 @@
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { Argument, Command, Option } from 'commander';
+import { Contract, constants, getDefaultProvider } from 'ethers';
+
+import { addEnvOption, printError, validateParameters } from '../common';
+import { printInfo } from '../common';
+import { ConfigManager } from '../common/config';
+import { getContractJSON } from '../evm/utils';
+import { ClientManager, mainProcessor, mainQueryProcessor } from './processor';
+
+const IInterchainToken = getContractJSON('IInterchainToken');
+
+export type TokenInstance = {
+    supply: 'untracked' | { tracked: string };
+    decimals: number;
+};
+
+export type TokenData = {
+    tokenId: string;
+    originChain: string;
+    decimals: number;
+    chainName: string;
+};
+
+export async function registerToken(
+    config: ConfigManager,
+    interchainTokenServiceAddress: string,
+    client: ClientManager,
+    tokenData: TokenData,
+    dryRun: boolean,
+) {
+    const alreadyRegistered = await tokenInstanceByChain(
+        config,
+        client,
+        interchainTokenServiceAddress,
+        tokenData.tokenId,
+        tokenData.chainName,
+    );
+    if (alreadyRegistered) {
+        printInfo(`Token ${tokenData.tokenId} on ${tokenData.chainName} is already registered`);
+        return;
+    }
+
+    const msg = {
+        register_p2p_token_instance: {
+            chain: config.getChainConfig(tokenData.chainName).axelarId,
+            token_id: formatTokenId(tokenData.tokenId),
+            origin_chain: config.getChainConfig(tokenData.originChain).axelarId,
+            decimals: tokenData.decimals,
+            supply: 'untracked',
+        },
+    };
+
+    const [account] = client.accounts;
+    printInfo('Registering token ', JSON.stringify(msg.register_p2p_token_instance));
+
+    if (!dryRun) {
+        await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+    }
+}
+
+export async function tokenInstanceByChain(
+    config: ConfigManager,
+    client: CosmWasmClient,
+    interchainTokenServiceAddress: string,
+    tokenId: string,
+    chainName: string,
+): Promise<TokenInstance> {
+    const registered = await client.queryContractSmart(interchainTokenServiceAddress, {
+        token_instance: { chain: config.getChainConfig(chainName).axelarId, token_id: formatTokenId(tokenId) },
+    });
+    return registered;
+}
+
+export async function alignTokenSupplyOnHub(
+    client: ClientManager,
+    config: ConfigManager,
+    interchainTokenServiceAddress: string,
+    tokenId: string,
+    tokenAddress: string,
+    chain: string,
+    dryRun: boolean,
+) {
+    const chainConfig = config.getChainConfig(chain);
+    if (chainConfig.chainType !== 'evm') {
+        throw new Error(`This method supports only EVM-compatible chains`);
+    }
+
+    const tokenInstance = await tokenInstanceByChain(config, client, interchainTokenServiceAddress, tokenId, chain);
+    if (!tokenInstance) {
+        printInfo(`Token ${tokenId} on ${chain} is not registered`);
+        return;
+    }
+
+    const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
+        token_config: { token_id: formatTokenId(tokenId) },
+    });
+
+    if (origin_chain === chainConfig.axelarId) {
+        printInfo(`Token ${tokenId} origin chain is ${chain}, it should be set to untracked.`);
+        return;
+    }
+
+    const { supply, isTokenSupplyTracked } = await tokenSupplyByChain(tokenAddress, config.getChainConfig(chain).rpc);
+
+    if (!isTokenSupplyTracked) {
+        printInfo(`Token ${tokenId} on ${chain} supply should not be tracked`);
+        return;
+    }
+
+    let supplyOnHub: bigint;
+    const isUntracked = tokenInstance.supply === 'untracked';
+    if (isUntracked) {
+        supplyOnHub = BigInt(0);
+    } else if (typeof tokenInstance.supply === 'object' && 'tracked' in tokenInstance.supply) {
+        supplyOnHub = BigInt(tokenInstance.supply.tracked);
+    } else {
+        throw new Error(`Unexpected supply state: ${JSON.stringify(tokenInstance.supply)}`);
+    }
+
+    if (!isUntracked && supply === supplyOnHub) {
+        printInfo(`Token ${tokenId} on ${chain} supply is up-to-date`);
+        return;
+    }
+
+    const [account] = client.accounts;
+    const axelarChainId = config.getChainConfig(chain).axelarId;
+    const formattedTokenId = formatTokenId(tokenId);
+
+    const modifySupply = async (modifier: string, amount: string) => {
+        const msg = { modify_supply: { chain: axelarChainId, token_id: formattedTokenId, supply_modifier: { [modifier]: amount } } };
+        printInfo('Modifying supply ', JSON.stringify(msg));
+        if (!dryRun) {
+            await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+        }
+    };
+
+    // Workaround: SupplyModifier doesn't allow 0, so use increase+decrease to set untracked to Tracked(0)
+    if (isUntracked && supply === BigInt(0)) {
+        await modifySupply('increase_supply', '1');
+        await modifySupply('decrease_supply', '1');
+        return;
+    }
+
+    const supplyModifier = supply > supplyOnHub ? 'increase_supply' : 'decrease_supply';
+    const supplyDifference = supply > supplyOnHub ? supply - supplyOnHub : supplyOnHub - supply;
+    await modifySupply(supplyModifier, supplyDifference.toString());
+}
+
+export async function isTokenSupplyTracked(token: Contract): Promise<boolean> {
+    return await token.isMinter(constants.AddressZero);
+}
+
+export async function tokenSupplyByChain(tokenAddress: string, rpc: string): Promise<{ supply: bigint; isTokenSupplyTracked: boolean }> {
+    const provider = getDefaultProvider(rpc);
+    const token = new Contract(tokenAddress, IInterchainToken.abi, provider);
+    const supply = await token.totalSupply();
+    return {
+        supply: BigInt(supply.toString()),
+        isTokenSupplyTracked: await isTokenSupplyTracked(token),
+    };
+}
+
+export function formatTokenId(tokenAddress: string): string {
+    if (tokenAddress.startsWith('0x')) {
+        return tokenAddress.slice(2);
+    }
+    return tokenAddress;
+}
+
+async function registerP2pToken(client: ClientManager, config: ConfigManager, options) {
+    const { chain, tokenId, originChain, decimals, dryRun } = options;
+    const tokenData = {
+        tokenId: tokenId,
+        originChain: originChain.toLowerCase(),
+        decimals: decimals,
+        chainName: chain.toLowerCase(),
+    };
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
+
+    await registerToken(config, interchainTokenServiceAddress, client, tokenData, dryRun);
+}
+
+async function checkTokenRegistration(client: ClientManager, config: ConfigManager, options) {
+    const { tokenId } = options;
+
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
+
+    let originChain = null;
+    try {
+        const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
+            token_config: { token_id: formatTokenId(tokenId) },
+        });
+        originChain = origin_chain;
+    } catch (error) {
+        printInfo(`Token ${tokenId} is not registered on any chain`);
+        return;
+    }
+
+    const registeredChains = (
+        await Promise.all(
+            Object.keys(config.chains).map(async (axelarChainId: string) => {
+                const registered = await tokenInstanceByChain(config, client, interchainTokenServiceAddress, tokenId, axelarChainId);
+                if (registered) {
+                    return axelarChainId;
+                }
+            }),
+        )
+    ).filter(Boolean);
+
+    printInfo(`Token ${tokenId} origin chain is ${originChain}. It is registered on: ${registeredChains.join(', ')}`);
+}
+
+async function alignTokenSupply(client: ClientManager, config: ConfigManager, options) {
+    const { tokenId, tokenAddress, chain, dryRun } = options;
+    const interchainTokenServiceAddress = config.getContractConfig('InterchainTokenService').address;
+    validateParameters({
+        isNonEmptyString: { interchainTokenServiceAddress },
+    });
+
+    await alignTokenSupplyOnHub(client, config, interchainTokenServiceAddress, tokenId, tokenAddress, chain, dryRun);
+}
+
+const programHandler = () => {
+    const program = new Command();
+
+    program
+        .name('ITS p2p token registration')
+        .description('Script to perform ITS p2p token registration on ITS Hub and check tokens registration status.');
+
+    const registerP2pTokenCmd = program
+        .command('register-p2p-token')
+        .description('Register a single P2P consensus token to the ITS Hub.')
+        .addOption(new Option('--chain <chain>', 'axelar chain id to run the script for').makeOptionMandatory(true))
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to register').makeOptionMandatory(true))
+        .addOption(new Option('--originChain <originChain>', 'Origin chain of the token').makeOptionMandatory(true))
+        .addOption(new Option('--decimals <decimals>', 'Decimals of the token').makeOptionMandatory(true).argParser(parseInt))
+        .addOption(
+            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
+                .makeOptionMandatory(true)
+                .env('MNEMONIC'),
+        )
+        .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
+        .action((options) => {
+            mainProcessor(registerP2pToken, options, []);
+        });
+
+    addEnvOption(registerP2pTokenCmd);
+
+    const registeredChainsByTokenCmd = program
+        .command('registered-chains-by-token')
+        .description('Check if a token is registered on a chain.')
+        .addArgument(new Argument('tokenId', 'Token ID to check the registration of'))
+        .action((tokenId, options) => {
+            options.tokenId = tokenId;
+            mainQueryProcessor(checkTokenRegistration, options, []);
+        });
+    addEnvOption(registeredChainsByTokenCmd);
+
+    const alignTokenSupplyCmd = program
+        .command('align-token-supply')
+        .description('Align the token supply on the ITS Hub with the actual supply on the EVM chain.')
+        .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
+        .addOption(new Option('--chain <chain>', 'Chain to modify the supply of').makeOptionMandatory(true))
+        .addOption(new Option('--tokenAddress <tokenAddress>', 'Token address to modify the supply of').makeOptionMandatory(true))
+        .addOption(new Option('--dryRun', 'Provide to just print out what will happen when running the command.'))
+        .addOption(
+            new Option('-m, --mnemonic <mnemonic>', 'Mnemonic of the InterchainTokenService operator account')
+                .makeOptionMandatory(true)
+                .env('MNEMONIC'),
+        )
+        .action((options) => {
+            mainProcessor(alignTokenSupply, options, []);
+        });
+
+    addEnvOption(alignTokenSupplyCmd);
+
+    program.parse();
+};
+
+if (require.main === module) {
+    programHandler();
+}
