@@ -11,7 +11,7 @@ import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { confirmProposalSubmission } from '../submit-proposal';
-import { encodeMigrate, encodeStoreInstantiate, isLegacySDK, submitProposal } from '../utils';
+import { encodeMigrate, encodeStoreInstantiate, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
 
 const programHandler = () => {
@@ -111,11 +111,6 @@ async function storeChainCodecs(
     _args: string[],
     fee: 'auto' | StdFee,
 ) {
-    if (isLegacySDK(config)) {
-        printError('Legacy SDK is not supported for chain codec upload and instantiation');
-        return;
-    }
-
     const { contractCodePath, contractCodePaths } = options;
 
     const contractNames = !Array.isArray(options.contractName) ? [options.contractName] : options.contractName;
@@ -127,7 +122,7 @@ async function storeChainCodecs(
             contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
         };
         // instantiating with empty message
-        return encodeStoreInstantiate(config, contractOptions, {});
+        return encodeStoreInstantiate(contractOptions, {});
     });
 
     if (!confirmProposalSubmission(options, proposal)) {
@@ -148,11 +143,6 @@ async function storeChainCodecs(
 
 async function migrate(client: ClientManager, config: ConfigManager, options: MigrationOptions, _args: string[], fee: 'auto' | StdFee) {
     try {
-        if (isLegacySDK(config)) {
-            printError('Legacy SDK is not supported for chain codec migration');
-            return;
-        }
-
         const migrations: {
             proverAddress: string;
             proverCodeId: number;
