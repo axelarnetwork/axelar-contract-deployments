@@ -522,46 +522,50 @@ pub(crate) struct LinkTokenArgs {
 pub(crate) struct InterchainTransferArgs {
     /// The token account from which tokens should transferred
     #[clap(long)]
-    source_account: Pubkey,
+    pub(crate) source_account: Pubkey,
 
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
+    pub(crate) token_id: [u8; 32],
 
     /// The chain to which the tokens should be transferred
     #[clap(long)]
-    destination_chain: String,
+    pub(crate) destination_chain: String,
 
     /// The address on the destination chain to which the tokens should be transferred
     #[clap(long)]
-    destination_address: String,
+    pub(crate) destination_address: String,
 
     /// The amount of tokens to transfer (supports fractional amounts like 123.55)
     #[clap(long)]
-    amount: String,
+    pub(crate) amount: String,
 
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
-    gas_value: u64,
+    pub(crate) gas_value: u64,
 
     /// Optional AxelarGasService program id on Solana
     #[clap(long)]
-    gas_service: Option<Pubkey>,
+    pub(crate) gas_service: Option<Pubkey>,
 
     /// Optional AxelarGasService config account on Solana
     #[clap(long)]
-    gas_config_account: Option<Pubkey>,
+    pub(crate) gas_config_account: Option<Pubkey>,
 
     /// Optional timestamp for the transaction. If not provided, the current time will be used.
     /// This is used to track the token flow. Attention must be paid when generating the
     /// transaction for offline signing, when this value should be set to the expected time the
     /// transaction will be broadcasted.
     #[clap(long)]
-    timestamp: Option<i64>,
+    pub(crate) timestamp: Option<i64>,
 
     /// The authority account (owner or delegate of the source account)
     #[clap(long)]
-    authority: Option<Pubkey>,
+    pub(crate) authority: Option<Pubkey>,
+
+    /// Optional payload data (hex encoded)
+    #[clap(long)]
+    pub(crate) data: Option<String>,
 }
 
 #[derive(Parser, Debug)]
@@ -1599,6 +1603,11 @@ fn interchain_transfer(
         AccountMeta::new_readonly(solana_axelar_its::id(), false),
     ];
 
+    let data = args
+        .data
+        .map(|d| hex::decode(d.trim_start_matches("0x")))
+        .transpose()?;
+
     let ix_data = solana_axelar_its::instruction::InterchainTransfer {
         token_id: args.token_id,
         destination_chain: args.destination_chain,
@@ -1607,7 +1616,7 @@ fn interchain_transfer(
         gas_value: args.gas_value,
         caller_program_id: None,
         caller_pda_seeds: None,
-        data: None,
+        data,
     }
     .data();
 
