@@ -1113,13 +1113,8 @@ const encodeCallContracts = (proposalData) => {
 
     const protoDefinition = loadProtoDefinition('axelarnet_call_contracts.proto');
 
-    let root;
-    try {
-        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-        root = parsed.root;
-    } catch (error) {
-        throw new Error(`Failed to parse proto definition: ${error.message}`);
-    }
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
 
     const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
     const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
@@ -1214,6 +1209,47 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             printInfo('Retrying proposal submission..... 🔄');
         }
     }
+};
+
+const getNexusProtoType = (typeName) => {
+    const protoDefinition = loadProtoDefinition('nexus_chain.proto');
+
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
+
+    const fullTypeName = `axelar.nexus.v1beta1.${typeName}`;
+    const ProtoType = root.lookupType(fullTypeName);
+
+    if (!ProtoType) {
+        throw new Error(`Failed to lookup ${typeName} proto type`);
+    }
+
+    return ProtoType;
+};
+
+const encodeChainStatusRequest = (chains, requestType) => {
+    if (!Array.isArray(chains) || chains.length === 0 || !chains.every((chain) => typeof chain === 'string' && chain.trim() !== '')) {
+        throw new Error('chains must be a non-empty array of non-empty strings');
+    }
+
+    const RequestType = getNexusProtoType(requestType);
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chains: chains,
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid ${requestType}: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: `/axelar.nexus.v1beta1.${requestType}`,
+        value: Uint8Array.from(message),
+    };
 };
 
 const submitProposal = async (client, config, options, proposal, fee) => {
@@ -1498,9 +1534,11 @@ module.exports = {
     encodeMigrate,
     encodeCallContracts,
     encodeSubmitProposal,
+    encodeChainStatusRequest,
     submitProposal,
     submitCallContracts,
     loadProtoDefinition,
+    getNexusProtoType,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
