@@ -1286,20 +1286,17 @@ const encodeAddIBCChain = (options) => {
     const AddCosmosBasedChainRequest = getAxelarnetProtoType('AddCosmosBasedChainRequest');
 
     const request = AddCosmosBasedChainRequest.create({
-        // sender_deprecated is field 1 - leave empty
         chain: {
             name: '',
-            // native_asset_deprecated is field 2 - leave empty
             supports_foreign_assets: false,
             key_type: 0, // KEY_TYPE_UNSPECIFIED
             module: '',
         },
         addr_prefix: addrPrefix,
-        // min_amount_deprecated is field 4 - leave empty
         native_assets: [],
         cosmos_chain: cosmosChain,
         ibc_path: ibcPath,
-        sender: GOVERNANCE_MODULE_ADDRESS,  // field 8 - as string, not bytes!
+        sender: GOVERNANCE_MODULE_ADDRESS,
     });
 
     const errMsg = AddCosmosBasedChainRequest.verify(request);
