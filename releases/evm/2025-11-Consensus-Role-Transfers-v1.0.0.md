@@ -10,19 +10,19 @@
 | **Devnet Amplifier** | `core-avalanche`    | -                     | TBD      |
 |                      | `core-ethereum`     | -                     | TBD      |
 |                      | `core-optimism`     | -                     | TBD      |
-| **Stagenet**         | `avalanche`         | -                     | TBD      |
-|                      | `fantom`            | -                     | TBD      |
+| **Stagenet**         | `avalanche`         | Completed             | 19/12/2025      |
+|                      | `fantom`            | Completed             | 19/12/2025      |
 |                      | `moonbeam`          | -                     | TBD      |
-|                      | `kava`              | -                     | TBD      |
-|                      | `ethereum-sepolia`  | -                     | TBD      |
-|                      | `arbitrum-sepolia`  | -                     | TBD      |
-|                      | `linea-sepolia`     | -                     | TBD      |
-|                      | `polygon-sepolia`   | -                     | TBD      |
-|                      | `base-sepolia`      | -                     | TBD      |
+|                      | `kava`              | Completed             | 19/12/2025      |
+|                      | `ethereum-sepolia`  | Completed             | 19/12/2025      |
+|                      | `arbitrum-sepolia`  | Completed             | 19/12/2025      |
+|                      | `linea-sepolia`     | Completed             | 19/12/2025      |
+|                      | `polygon-sepolia`   | Completed             | 19/12/2025      |
+|                      | `base-sepolia`      | Completed             | 19/12/2025      |
 |                      | `blast-sepolia`     | -                     | TBD      |
 |                      | `fraxtal`           | -                     | TBD      |
-|                      | `mantle-sepolia`    | -                     | TBD      |
-|                      | `optimism-sepolia`  | -                     | TBD      |
+|                      | `mantle-sepolia`    | Completed             | 19/12/2025      |
+|                      | `optimism-sepolia`  | Completed             | 19/12/2025      |
 | **Testnet**          | `ethereum-sepolia`  | -                     | TBD      |
 |                      | `avalanche`         | -                     | TBD      |
 |                      | `fantom`            | -                     | TBD      |
@@ -175,7 +175,7 @@ ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-
 | Network              | Current Governance                                                                         | Axelar Service Governance |
 | -------------------- | ------------------------------------------------------------------------------------------ | ------------------------- |
 | **Devnet-Amplifier** | `0xfB71a4d90c37C9BCE7cD4Cb692cE26EA3AC0A319`, `0x677c130e0f17F91F7361AcC15b8d7e6A3D6ECeeb` | TBD                       |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550` |
 | **Testnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD                       |
 | **Mainnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD                       |
 
@@ -183,7 +183,12 @@ ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-
 # Get the AxelarServiceGovernance contract address for this environment
 AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
+# Stagenet/devnet
+ts-node evm/gateway.js --action transferGovernance --destination $AXELAR_SERVICE_GOVERNANCE
+
 - Note: Specify all the chain names on -n flag where we want proposal to run
+
+# Mainnet/Testnet
 
 # Transfer governance to AxelarServiceGovernance
 ts-node evm/governance.js schedule transferGovernance $minimumTimeDelay \
@@ -238,7 +243,7 @@ New owner: AxelarServiceGovernance.
 | **Network**          | Current Owner                                | Axelar Service Governance |
 | -------------------- | -------------------------------------------- | ------------------------- |
 | **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD                       |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 
@@ -288,7 +293,7 @@ New owner: AxelarServiceGovernance.
 | Network              | Current Owner                                | Axelar Service Governance |
 | -------------------- | -------------------------------------------- | ------------------------- |
 | **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD                       |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 

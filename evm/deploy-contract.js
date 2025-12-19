@@ -73,15 +73,15 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-            const multisig = contractConfig.multisig;
+            const operator = contractConfig.operator;
 
             validateParameters({
-                isAddress: { gateway, multisig },
+                isAddress: { gateway, operator },
                 isNonEmptyString: { governanceChain, governanceAddress },
                 isNumber: { minimumTimeDelay },
             });
 
-            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
+            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, operator];
         }
 
         case 'InterchainProposalSender': {
