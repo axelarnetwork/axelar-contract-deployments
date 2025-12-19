@@ -67,6 +67,10 @@ export interface ContractConfig {
     lastUploadedCodeId?: number;
 }
 
+export interface InstantiatedContractConfig extends ContractConfig {
+    address: string;
+}
+
 export interface ContractsChainInfo {
     address: string;
     codeId: number;
@@ -125,6 +129,8 @@ export interface GatewayChainConfig {
     address?: string;
 }
 
+const AMPLIFIER_PROTOCOL_CONTRACTS = ['ServiceRegistry', 'Router', 'Coordinator', 'Multisig', 'Rewards'] as const;
+
 export class ConfigManager implements FullConfig {
     private environment: string;
 
@@ -146,6 +152,7 @@ export class ConfigManager implements FullConfig {
         this.chains = fullConfig.chains;
 
         this.validateConfig();
+        this.validateAmplifierProtocolContracts();
     }
 
     private validateConfig(): void {
@@ -333,6 +340,21 @@ export class ConfigManager implements FullConfig {
         printWarn('');
     }
 
+    private validateAmplifierProtocolContracts(): void {
+        const missing: string[] = [];
+
+        for (const contractName of AMPLIFIER_PROTOCOL_CONTRACTS) {
+            const config = this.getContractConfig(contractName);
+            if (!config.address) {
+                missing.push(contractName);
+            }
+        }
+
+        if (missing.length > 0) {
+            throw new Error(`Amplifier Protocol contracts missing addresses in ${this.environment} config: ${missing.join(', ')}.`);
+        }
+    }
+
     private isValidGasPrice(price: string): boolean {
         const numericOnlyPattern = /^\d+$/;
         const withDenominationPattern = /^\d+(\.\d+)?[a-zA-Z]+$/;
@@ -422,6 +444,27 @@ export class ConfigManager implements FullConfig {
             throw new Error(`Contract '${configContractName}' not found on chain '${chainName}' in ${this.environment} config`);
         }
         return contractConfig[chainName];
+    }
+
+    public getContractAddress(name: string): string {
+        const config = this.getContractConfig(name);
+        return config.address!;
+    }
+
+    public getInstantiatedContractConfig(name: string): InstantiatedContractConfig {
+        const config = this.getContractConfig(name);
+        if (!config.address) {
+            throw new Error(`Contract '${name}' has not been instantiated`);
+        }
+        return config as InstantiatedContractConfig;
+    }
+
+    public getInstantiatedContractByChain(name: string, chainName: string): InstantiatedContractConfig {
+        const config = this.getContractConfigByChain(name, chainName);
+        if (!config.address) {
+            throw new Error(`Contract '${name}' for chain '${chainName}' has not been instantiated`);
+        }
+        return config as InstantiatedContractConfig;
     }
 
     public validateRequired<T>(value: T | undefined | null, configPath: string, type?: string): T {
@@ -535,8 +578,7 @@ export class ConfigManager implements FullConfig {
 
     public getChainCodecAddress(chainType: string): string {
         const chainCodec = this.getChainCodecContractForChainType(chainType);
-        const chainCodecConfig = this.getContractConfig(chainCodec);
-        return this.validateRequired(chainCodecConfig.address, `${chainCodec}.address`);
+        return this.getInstantiatedContractConfig(chainCodec).address;
     }
 
     public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {

@@ -40,13 +40,14 @@ export async function queryRewardsPool(
 
 async function rewards(client, config, _options, args) {
     const [chainName] = args;
-    const rewardsAddress = config.getContractConfig('Rewards').address;
+    const rewardsAddress = config.getContractAddress('Rewards');
 
-    const votingVerifier = config.getVotingVerifierContract(chainName);
-    const votingVerifierAddress = config.validateRequired(votingVerifier.address, `VotingVerifier.${chainName}.address`);
+    const chainConfig = config.getChainConfig(chainName);
+    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+    const votingVerifierAddress = config.getInstantiatedContractByChain(verifierContractName, chainName).address;
 
     const rewardsContractAddresses = {
-        multisig: config.getContractConfig('Multisig').address,
+        multisig: config.getContractAddress('Multisig'),
         voting_verifier: votingVerifierAddress,
     };
 

@@ -164,16 +164,16 @@ async function migrate(client: ClientManager, config: ConfigManager, options: Mi
             }
 
             // migration data for MultisigProver contract
-            const multisigProver = config.getMultisigProverContract(chainName);
-            const multisigProverAddress = config.validateRequired(multisigProver.address, `MultisigProver[${chainName}].address`);
-            const proverConfig = config.getContractConfig('MultisigProver');
-            const proverCodeId = config.validateRequired(proverConfig.lastUploadedCodeId, `MultisigProver.lastUploadedCodeId`);
+            const proverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
+            const multisigProverAddress = config.getInstantiatedContractByChain(proverContractName, chainName).address;
+            const proverConfig = config.getContractConfig(proverContractName);
+            const proverCodeId = config.validateRequired(proverConfig.lastUploadedCodeId, `${proverContractName}.lastUploadedCodeId`);
 
             // migration data for VotingVerifier contract
-            const votingVerifier = config.getVotingVerifierContract(chainName);
-            const votingVerifierAddress = config.validateRequired(votingVerifier.address, `VotingVerifier[${chainName}].address`);
-            const verifierConfig = config.getContractConfig('VotingVerifier');
-            const verifierCodeId = config.validateRequired(verifierConfig.lastUploadedCodeId, `VotingVerifier.lastUploadedCodeId`);
+            const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+            const votingVerifierAddress = config.getInstantiatedContractByChain(verifierContractName, chainName).address;
+            const verifierConfig = config.getContractConfig(verifierContractName);
+            const verifierCodeId = config.validateRequired(verifierConfig.lastUploadedCodeId, `${verifierContractName}.lastUploadedCodeId`);
 
             migrations.push({
                 proverAddress: multisigProverAddress,

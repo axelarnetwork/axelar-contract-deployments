@@ -29,16 +29,15 @@ async function migrateAllVotingVerifiers(
     const votingVerifiers: Array<{ chainName: string; address: string; contractName: string }> = [];
 
     for (const { name: chainName, config: chainConfig } of chains) {
-        const votingVerifierConfig = config.getVotingVerifierContract(chainName);
         const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-        config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
+        const address = config.getInstantiatedContractByChain(contractName, chainName).address;
 
         votingVerifiers.push({
             chainName,
-            address: votingVerifierConfig.address,
+            address,
             contractName,
         });
-        printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address})`);
+        printInfo(`Added ${chainName} voting verifier (address: ${address})`);
     }
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
@@ -80,9 +79,10 @@ async function updateBlockTimeRelatedParameters(
             chains.map(async ({ name: chainName, config: chainConfig }) => {
                 try {
                     const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-                    config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
+                    const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+                    const address = config.getInstantiatedContractByChain(contractName, chainName).address;
 
-                    const { block_expiry } = await client.queryContractSmart(votingVerifierConfig.address, 'voting_parameters');
+                    const { block_expiry } = await client.queryContractSmart(address, 'voting_parameters');
 
                     const message = {
                         update_voting_parameters: {
@@ -99,12 +99,10 @@ async function updateBlockTimeRelatedParameters(
                         `Current voting parameters for ${chainName}: block_expiry: ${block_expiry}. New proposed block_expiry: ${message.update_voting_parameters.block_expiry}`,
                     );
 
-                    const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-
                     return {
                         chainName,
                         contractName,
-                        address: votingVerifierConfig.address,
+                        address,
                         message,
                     };
                 } catch (error) {
@@ -147,10 +145,10 @@ async function updateSigningParametersForMultisig(
     fee: string | StdFee,
 ): Promise<void> {
     const multisigConfig = config.getContractConfig('Multisig');
-    config.validateRequired(multisigConfig.address, 'axelar.contracts.Multisig.address', 'string');
+    const multisigAddress = config.getContractAddress('Multisig');
     config.validateRequired(multisigConfig.blockExpiry, 'axelar.contracts.Multisig.blockExpiry', 'number');
 
-    const { block_expiry } = await client.queryContractSmart(multisigConfig.address, 'signing_parameters');
+    const { block_expiry } = await client.queryContractSmart(multisigAddress, 'signing_parameters');
     printInfo(`Current signing parameters: block_expiry: ${block_expiry}. New proposed block_expiry: ${multisigConfig.blockExpiry}`);
 
     const msg = {

@@ -37,8 +37,7 @@ interface UpdatePoolParamsMessage {
 
 async function queryAllRewardsPools(client: CosmWasmClient, configManager: ConfigManager): Promise<PoolParams[]> {
     const poolParams: PoolParams[] = [];
-    const rewardsConfig = configManager.getContractConfig('Rewards');
-    const rewardsAddress = configManager.validateRequired(rewardsConfig.address, 'Rewards.address');
+    const rewardsAddress = configManager.getContractAddress('Rewards');
 
     const amplifierChains = getAmplifierChains(configManager.chains);
 
@@ -46,8 +45,7 @@ async function queryAllRewardsPools(client: CosmWasmClient, configManager: Confi
         throw new Error('No amplifier chains found');
     }
 
-    const multisigConfig = configManager.getContractConfig('Multisig');
-    const multisigAddress = configManager.validateRequired(multisigConfig.address, 'Multisig.address');
+    const multisigAddress = configManager.getContractAddress('Multisig');
 
     for (const { name: chainName } of amplifierChains) {
         const chainPools: PoolParams[] = [];
