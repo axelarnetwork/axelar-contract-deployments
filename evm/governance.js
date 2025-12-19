@@ -204,7 +204,7 @@ function decodeProposalPayload(proposal) {
     };
 }
 
-async function processCommand(_axelar, chain, _chains, action, options) {
+async function processCommand(axelar, chain, _chains, action, options) {
     const { contractName, address, privateKey, args = [] } = options;
 
     const governanceAddress = getGovernanceAddress(chain, contractName, address);
@@ -377,8 +377,8 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
             const tx = await governance.execute(
                 commandId,
-                contractConfig.governanceChain,
-                contractConfig.governanceAddress,
+                contracts.InterchainGovernance.governanceChain,
+                axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
@@ -411,8 +411,8 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
             const tx = await governance.execute(
                 commandId,
-                contractConfig.governanceChain,
-                contractConfig.governanceAddress,
+                contracts.InterchainGovernance.governanceChain,
+                axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );

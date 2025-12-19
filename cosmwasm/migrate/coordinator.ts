@@ -232,7 +232,6 @@ async function coordinatorToVersion2_1_1(
         msg: JSON.stringify(migrationMsg),
         title: 'Migrate Coordinator v2.1.1',
         description: 'Migrate Coordinator v2.1.1',
-        runAs: senderAddress,
         codeId: codeId,
         deposit: options.deposit,
         standardProposal: options.standardProposal,

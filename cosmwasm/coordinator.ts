@@ -28,7 +28,7 @@ export interface VerifierParams {
         source_chain: string;
         rewards_address: string;
         msg_id_format: string;
-        address_format: string;
+        chain_codec_address: string;
     };
     contract_admin: string;
 }
@@ -44,9 +44,12 @@ export interface ProverParams {
         service_name: string;
         chain_name: string;
         verifier_set_diff_threshold: number;
-        encoder: string;
         key_type: string;
         domain_separator: string;
+        notify_signing_session: boolean;
+        expect_full_message_payloads: boolean;
+        sig_verifier_address: string | null;
+        chain_codec_address: string;
     };
     contract_admin: string;
 }
@@ -115,9 +118,10 @@ export class CoordinatorManager {
                 `${verifierContractName}[${chainName}].sourceGatewayAddress`,
             );
             this.configManager.validateRequired(votingVerifierConfig.msgIdFormat, `${verifierContractName}[${chainName}].msgIdFormat`);
-            this.configManager.validateRequired(votingVerifierConfig.addressFormat, `${verifierContractName}[${chainName}].addressFormat`);
-            this.configManager.validateRequired(multisigProverConfig.encoder, `${proverContractName}[${chainName}].encoder`);
             this.configManager.validateRequired(multisigProverConfig.keyType, `${proverContractName}[${chainName}].keyType`);
+
+            // Get chain codec address
+            const chainCodecAddress = this.configManager.getChainCodecAddress(chainConfig.chainType);
 
             return {
                 instantiate_chain_contracts: {
@@ -135,7 +139,7 @@ export class CoordinatorManager {
                                 code_id: verifierCodeId,
                                 label: `${verifierContractName}-${chainName}`,
                                 msg: {
-                                    governance_address: votingVerifierConfig.governanceAddress,
+                                    governance_address: this.configManager.axelar.governanceAddress,
                                     service_name: votingVerifierConfig.serviceName,
                                     source_gateway_address: votingVerifierConfig.sourceGatewayAddress,
                                     voting_threshold: [
@@ -147,7 +151,7 @@ export class CoordinatorManager {
                                     source_chain: chainConfig.axelarId,
                                     rewards_address: rewardsAddress,
                                     msg_id_format: votingVerifierConfig.msgIdFormat,
-                                    address_format: votingVerifierConfig.addressFormat,
+                                    chain_codec_address: chainCodecAddress,
                                 },
                                 contract_admin: votingVerifierConfig.contractAdmin,
                             },
@@ -155,8 +159,9 @@ export class CoordinatorManager {
                                 code_id: proverCodeId,
                                 label: `${proverContractName}-${chainName}`,
                                 msg: {
-                                    governance_address: multisigProverConfig.governanceAddress,
-                                    admin_address: multisigProverConfig.adminAddress,
+                                    governance_address: this.configManager.axelar.governanceAddress,
+                                    admin_address:
+                                        multisigProverConfig.adminAddress || this.configManager.axelar.multisigProverAdminAddress,
                                     multisig_address: multisigAddress,
                                     signing_threshold: [
                                         String(multisigProverConfig.signingThreshold[0]),
@@ -165,9 +170,12 @@ export class CoordinatorManager {
                                     service_name: votingVerifierConfig.serviceName,
                                     chain_name: chainConfig.axelarId,
                                     verifier_set_diff_threshold: multisigProverConfig.verifierSetDiffThreshold,
-                                    encoder: multisigProverConfig.encoder,
                                     key_type: multisigProverConfig.keyType,
                                     domain_separator: domainSeparator.replace('0x', ''),
+                                    notify_signing_session: Boolean(multisigProverConfig.notifySigningSession) || false,
+                                    expect_full_message_payloads: Boolean(multisigProverConfig.expectFullMessagePayloads) || false,
+                                    sig_verifier_address: multisigProverConfig.sigVerifierAddress || null,
+                                    chain_codec_address: chainCodecAddress,
                                 },
                                 contract_admin: multisigProverConfig.contractAdmin,
                             },
