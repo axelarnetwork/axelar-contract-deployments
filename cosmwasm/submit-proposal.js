@@ -68,16 +68,17 @@ const printProposal = (proposalData) => {
             '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
             '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
         };
-        
+
         const MessageType = typeMap[message.typeUrl];
-        
-        if (message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' || 
-            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest') {
+
+        if (
+            message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
+            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest'
+        ) {
             const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
             const MsgType = getNexusProtoType(typeName);
             const decoded = MsgType.decode(message.value);
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-
         } else if (MessageType) {
             const decoded = MessageType.decode(message.value);
             if (decoded.codeId) {

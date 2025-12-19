@@ -1107,7 +1107,7 @@ const encodeCallContracts = (proposalData) => {
     const protoDefinition = loadProtoDefinition('axelarnet_call_contracts.proto');
 
     const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-    const root = parsed.root;    
+    const root = parsed.root;
 
     const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
     const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
@@ -1244,7 +1244,6 @@ const encodeChainStatusRequest = (chains, requestType) => {
         value: Uint8Array.from(message),
     };
 };
-
 
 const submitProposal = async (client, config, options, proposal, fee) => {
     const deposit =
