@@ -256,6 +256,10 @@ export class ConfigManager implements FullConfig {
             }
         });
 
+        if (chainConfig.axelarId?.toLowerCase() !== chainName.toLowerCase()) {
+            errors.push(`Chain '${chainName}': axelarId '${chainConfig.axelarId}' does not match chain name '${chainName}'`);
+        }
+
         if (chainConfig.chainType === 'evm') {
             const evmConfig = chainConfig as EVMChainConfig;
             if (!evmConfig.chainId || !Number.isInteger(evmConfig.chainId) || evmConfig.chainId <= 0) {
