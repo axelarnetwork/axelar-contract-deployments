@@ -232,7 +232,7 @@ const programHandler = () => {
 
     program
         .name('ITS p2p token registration')
-        .description('Script to perform ITS p2p token registration and check tokens registration status.');
+        .description('Script to perform ITS p2p token registration on ITS Hub and check tokens registration status.');
 
     const registerP2pTokenCmd = program
         .command('register-p2p-token')
