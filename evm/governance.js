@@ -626,9 +626,7 @@ if (require.main === module) {
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -650,9 +648,7 @@ if (require.main === module) {
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -697,9 +693,7 @@ if (require.main === module) {
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -721,9 +715,7 @@ if (require.main === module) {
         .command('cancel-operator')
         .description('Cancel an operator proposal (AxelarServiceGovernance only)')
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -750,9 +742,7 @@ if (require.main === module) {
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
@@ -778,9 +768,7 @@ if (require.main === module) {
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
