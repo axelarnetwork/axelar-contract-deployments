@@ -1252,6 +1252,69 @@ const encodeChainStatusRequest = (chains, requestType) => {
     };
 };
 
+const getAxelarnetProtoType = (typeName) => {
+    const protoDefinition = loadProtoDefinition('axelarnet_add_chain.proto');
+
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
+
+    const fullTypeName = `axelar.axelarnet.v1beta1.${typeName}`;
+    const ProtoType = root.lookupType(fullTypeName);
+
+    if (!ProtoType) {
+        throw new Error(`Failed to lookup ${typeName} proto type`);
+    }
+
+    return ProtoType;
+};
+
+const encodeAddIBCChain = (options) => {
+    const { cosmosChain, addrPrefix, ibcPath } = options;
+
+    if (!cosmosChain || typeof cosmosChain !== 'string' || cosmosChain.trim() === '') {
+        throw new Error('cosmosChain must be a non-empty string');
+    }
+
+    if (!addrPrefix || typeof addrPrefix !== 'string' || addrPrefix.trim() === '') {
+        throw new Error('addrPrefix must be a non-empty string');
+    }
+
+    if (!ibcPath || typeof ibcPath !== 'string' || ibcPath.trim() === '') {
+        throw new Error('ibcPath must be a non-empty string');
+    }
+
+    const AddCosmosBasedChainRequest = getAxelarnetProtoType('AddCosmosBasedChainRequest');
+
+    const request = AddCosmosBasedChainRequest.create({
+        // sender_deprecated is field 1 - leave empty
+        chain: {
+            name: '',
+            // native_asset_deprecated is field 2 - leave empty
+            supports_foreign_assets: false,
+            key_type: 0, // KEY_TYPE_UNSPECIFIED
+            module: '',
+        },
+        addr_prefix: addrPrefix,
+        // min_amount_deprecated is field 4 - leave empty
+        native_assets: [],
+        cosmos_chain: cosmosChain,
+        ibc_path: ibcPath,
+        sender: GOVERNANCE_MODULE_ADDRESS,  // field 8 - as string, not bytes!
+    });
+
+    const errMsg = AddCosmosBasedChainRequest.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid AddCosmosBasedChainRequest: ${errMsg}`);
+    }
+
+    const message = AddCosmosBasedChainRequest.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.axelarnet.v1beta1.AddCosmosBasedChainRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
 const submitProposal = async (client, config, options, proposal, fee) => {
     const deposit =
         options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
@@ -1535,10 +1598,12 @@ module.exports = {
     encodeCallContracts,
     encodeSubmitProposal,
     encodeChainStatusRequest,
+    encodeAddIBCChain,
     submitProposal,
     submitCallContracts,
     loadProtoDefinition,
     getNexusProtoType,
+    getAxelarnetProtoType,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,

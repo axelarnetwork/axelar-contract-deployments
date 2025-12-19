@@ -23,7 +23,9 @@ const {
     submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
     encodeChainStatusRequest,
+    encodeAddIBCChain,
     getNexusProtoType,
+    getAxelarnetProtoType,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -77,6 +79,10 @@ const printProposal = (proposalData) => {
         ) {
             const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
             const MsgType = getNexusProtoType(typeName);
+            const decoded = MsgType.decode(message.value);
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+        } else if (message.typeUrl === '/axelar.axelarnet.v1beta1.AddCosmosBasedChainRequest') {
+            const MsgType = getAxelarnetProtoType('AddCosmosBasedChainRequest');
             const decoded = MsgType.decode(message.value);
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
         } else if (MessageType) {
@@ -355,6 +361,15 @@ const chainState = async (client, config, options, _args, fee) => {
     return callSubmitProposal(client, config, options, [proposal], fee);
 };
 
+const addIBCChain = async (client, config, options, _args, fee) => {
+    const proposal = encodeAddIBCChain(options);
+
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+    return callSubmitProposal(client, config, options, [proposal], fee);
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -426,7 +441,19 @@ const programHandler = () => {
         .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
         .action((options) => mainProcessor(chainState, options));
 
+    const addIBCChainCmd = program
+        .command('addIBCChain')
+        .description('Submit a proposal to add an IBC chain')
+        .requiredOption('--cosmosChain <cosmosChain>', 'Cosmos chain name (e.g., zigchain)')
+        .requiredOption('--addrPrefix <addrPrefix>', 'Address prefix for the chain (e.g., zig)')
+        .requiredOption('--ibcPath <ibcPath>', 'IBC path (e.g., transfer/channel-182)')
+        .action((options) => mainProcessor(addIBCChain, options));
+
     addAmplifierOptions(chainStateCmd, {
+        proposalOptions: true,
+    });
+
+    addAmplifierOptions(addIBCChainCmd, {
         proposalOptions: true,
     });
 
