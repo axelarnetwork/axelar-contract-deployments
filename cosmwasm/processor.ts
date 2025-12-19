@@ -9,7 +9,6 @@ export type Options = {
     contractName: string;
     chainName: string;
     mnemonic: string;
-    runAs?: string;
     deposit?: string;
     standardProposal?: boolean;
     instantiateAddresses?: string[];
@@ -41,13 +40,9 @@ function prepareQueryProcessor(options: Options): { configManager: ConfigManager
 }
 
 function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
-    const { runAs, instantiateAddresses, env } = options;
+    const { instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
     const fee = configManager.getFee();
-
-    options.runAs =
-        runAs ||
-        (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
 
     options.instantiateAddresses = instantiateAddresses || configManager.proposalInstantiateAddresses();
 
@@ -88,10 +83,12 @@ export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, opt
     }
 
     const client = await CosmWasmClient.connect(configManager.axelar.rpc);
-    await processorQueryFn(client, configManager, options, args);
+    const res = await processorQueryFn(client, configManager, options, args);
 
     configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
+
+    return res;
 }
 
 async function prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {

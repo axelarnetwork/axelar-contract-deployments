@@ -49,12 +49,12 @@ After the proposal passes, a GMP call should be automatically executed by relaye
 
 1. Go to https://axelarscan.io/gmp/search
 2. Filter by:
-   - **Source Chain**: `axelar`
-   - **Method**: `Call Contract`
-   - **Destination Chain**: Your target chain
+    - **Source Chain**: `axelar`
+    - **Method**: `Call Contract`
+    - **Destination Chain**: Your target chain
 3. Look for the most recent GMP call matching your proposal
 
-5. Manual Submission
+4. Manual Submission
 
 If relayers didn't execute the GMP call automatically, manually submit it:
 
@@ -117,24 +117,24 @@ The `raw` action allows you to execute any function on any contract through gove
 
 1. **Generate Calldata:**
 
-   ```bash
-   CALLDATA=$(
-     node -e "
-       const { utils: { Interface } } = require('ethers');
-       const iface = new Interface(['function yourFunctionName(type1,type2)']);
-       console.log(iface.encodeFunctionData('yourFunctionName', [param1, param2]));
-     "
-   )
-   echo "Calldata: $CALLDATA"
-   ```
+    ```bash
+    CALLDATA=$(
+      node -e "
+        const { utils: { Interface } } = require('ethers');
+        const iface = new Interface(['function yourFunctionName(type1,type2)']);
+        console.log(iface.encodeFunctionData('yourFunctionName', [param1, param2]));
+      "
+    )
+    echo "Calldata: $CALLDATA"
+    ```
 
 2. **Schedule Proposal:**
 
-   ```bash
-   ts-node evm/governance.js schedule raw <activationTime> \
-     --target <contractAddress> \
-     --calldata <generatedCalldata>
-   ```
+    ```bash
+    ts-node evm/governance.js schedule raw <activationTime> \
+      --target <contractAddress> \
+      --calldata <generatedCalldata>
+    ```
 
 3. **Submit to Axelar** (automatic if `MNEMONIC` is set, or via Cosmos CLI)
 
@@ -142,23 +142,23 @@ The `raw` action allows you to execute any function on any contract through gove
 
 5. **Manual Submit (if relayers failed):**
 
-   ```bash
-   ts-node evm/governance.js submit raw <commandId> <activationTime> \
-     --target <contractAddress> \
-     --calldata <generatedCalldata>
-   ```
+    ```bash
+    ts-node evm/governance.js submit raw <commandId> <activationTime> \
+      --target <contractAddress> \
+      --calldata <generatedCalldata>
+    ```
 
 6. **Check ETA:**
 
-   ```bash
-   ts-node evm/governance.js eta --target <contractAddress> --calldata <generatedCalldata>
-   ```
+    ```bash
+    ts-node evm/governance.js eta --target <contractAddress> --calldata <generatedCalldata>
+    ```
 
 7. **Execute after ETA:**
 
-   ```bash
-   ts-node evm/governance.js execute --target <contractAddress> --calldata <generatedCalldata>
-   ```
+    ```bash
+    ts-node evm/governance.js execute --target <contractAddress> --calldata <generatedCalldata>
+    ```
 
 ---
 
@@ -171,13 +171,13 @@ governance proposals directly by passing `--governance`. These scripts share a c
 
 - **`--governance`**: Generate a governance proposal JSON (and optionally submit it to Axelar).
 - **`--governanceContract <governanceContract>`**:
-  - Selects which governance contract on the destination EVM chain will receive the proposal.
-  - **Choices**: `InterchainGovernance`, `AxelarServiceGovernance`.
-  - **Default**: `AxelarServiceGovernance`.
+    - Selects which governance contract on the destination EVM chain will receive the proposal.
+    - **Choices**: `InterchainGovernance`, `AxelarServiceGovernance`.
+    - **Default**: `AxelarServiceGovernance`.
 - **`--operatorProposal`**:
-  - Treats the generated proposal as an **operator-based proposal** (uses `ApproveOperator` under the hood).
-  - Only valid when `--governanceContract AxelarServiceGovernance` is used.
-  - If omitted, a standard timelock proposal (`ScheduleTimelock`) is generated instead.
+    - Treats the generated proposal as an **operator-based proposal** (uses `ApproveOperator` under the hood).
+    - Only valid when `--governanceContract AxelarServiceGovernance` is used.
+    - If omitted, a standard timelock proposal (`ScheduleTimelock`) is generated instead.
 
 **Example (gateway – timelock style via InterchainGovernance):**
 
@@ -289,35 +289,35 @@ These are proposals created **without** `--operatorProposal`. They use the `Sche
 are executed via the governance contract’s timelock.
 
 1. **Wait for Axelar proposal to pass and GMP to be relayed**
-   - Monitor the Axelar governance proposal on-chain or via Axelarscan until it reaches `Passed`.
-   - Check the Axelarscan GMP view (`Source Chain: axelar`, `Method: Call Contract`) to confirm that the GMP call to the destination chain was executed.
+    - Monitor the Axelar governance proposal on-chain or via Axelarscan until it reaches `Passed`.
+    - Check the Axelarscan GMP view (`Source Chain: axelar`, `Method: Call Contract`) to confirm that the GMP call to the destination chain was executed.
 
 2. **If relayers failed, manually submit the GMP call (optional)**
-   - Use the `submit` command from `evm/governance.js`:
-     ```bash
-     ts-node evm/governance.js submit raw <commandId> <activationTime> [options]
-     ```
-   - **Where:**
-     - `<commandId>` is the GMP `commandId` from Axelarscan (see the "Submit Proposal" section in `governance.md` for how to find it).
-     - `<activationTime>` is the same activation time you used when scheduling (UTC timestamp or relative seconds).
+    - Use the `submit` command from `evm/governance.js`:
+        ```bash
+        ts-node evm/governance.js submit raw <commandId> <activationTime> [options]
+        ```
+    - **Where:**
+        - `<commandId>` is the GMP `commandId` from Axelarscan (see the "Submit Proposal" section in `governance.md` for how to find it).
+        - `<activationTime>` is the same activation time you used when scheduling (UTC timestamp or relative seconds).
 
 3. **Inspect ETA on the destination chain**
-   - Once the GMP has executed and the timelock is created on the destination chain, compute the ETA with:
-     ```bash
-     ts-node evm/governance.js eta \
-       --target <target> \
-       --calldata <calldata>
-     ```
-   - Use the same `target` and `calldata` that were used when scheduling.
+    - Once the GMP has executed and the timelock is created on the destination chain, compute the ETA with:
+        ```bash
+        ts-node evm/governance.js eta \
+          --target <target> \
+          --calldata <calldata>
+        ```
+    - Use the same `target` and `calldata` that were used when scheduling.
 
 4. **Execute after ETA has passed**
-   - Once the ETA has passed, execute the proposal:
-     ```bash
-     ts-node evm/governance.js execute \
-       --target <target> \
-       --calldata <calldata>
-     ```
-   - Again, use the same `target` and `calldata` that were used when scheduling.
+    - Once the ETA has passed, execute the proposal:
+        ```bash
+        ts-node evm/governance.js execute \
+          --target <target> \
+          --calldata <calldata>
+        ```
+    - Again, use the same `target` and `calldata` that were used when scheduling.
 
 #### B. Operator-based proposals (`--operatorProposal` with `AxelarServiceGovernance`)
 
@@ -325,22 +325,29 @@ For operator‑gated proposals (those created with `--governanceContract AxelarS
 EVM‑side operator must then approve and execute the proposal.
 
 1. **Wait for Axelar proposal to pass and GMP to be relayed**
-   - As above, monitor the Axelar proposal and confirm that the GMP call to `AxelarServiceGovernance` on the destination chain was executed.
+    - As above, monitor the Axelar proposal and confirm that the GMP call to `AxelarServiceGovernance` on the destination chain was executed.
 
 2. **(Optional) Manually submit the operator proposal if relayers fail**
-   - Use the `submit-operator` command:
-     ```bash
-     ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <activationTime> [options]
-     ```
+    - Use the `submit-operator` command:
+        ```bash
+        ts-node evm/governance.js submit-operator <action> <commandId> <activationTime> [options]
+        ```
+    - Use the same `action` and options as when scheduling the proposal.
 
 3. **Check whether the operator proposal has been approved**
-   - Use the `is-operator-approved` command:
-     ```bash
-     ts-node evm/governance.js is-operator-approved <target> <calldata> [options]
-     ```
+    - Use the `is-operator-approved` command:
+        ```bash
+        ts-node evm/governance.js is-operator-approved --target <address> --calldata <calldata> [options]
+        # OR
+        ts-node evm/governance.js is-operator-approved --proposal <encoded-payload> [options]
+        ```
+    - Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
 4. **Execute the approved operator proposal**
-   - Once the operator has approved the proposal, execute it on the destination chain:
-     ```bash
-     ts-node evm/governance.js execute-operator-proposal <target> <calldata> [options]
-     ```
+    - Once the operator has approved the proposal, execute it on the destination chain:
+        ```bash
+        ts-node evm/governance.js execute-operator-proposal --target <address> --calldata <calldata> [options]
+        # OR
+        ts-node evm/governance.js execute-operator-proposal --proposal <encoded-payload> [options]
+        ```
+    - Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
