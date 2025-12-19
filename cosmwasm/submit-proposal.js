@@ -21,6 +21,7 @@ const {
     encodeMigrate,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
+    GOVERNANCE_MODULE_ADDRESS,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -39,10 +40,15 @@ const { mainProcessor } = require('./processor');
 const { CoordinatorManager } = require('./coordinator');
 
 const predictAddress = async (client, contractConfig, options) => {
-    const { contractName, salt, chainName, runAs } = options;
+    const { contractName, salt, chainName } = options;
 
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
-    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainName), 'axelar');
+    const contractAddress = instantiate2Address(
+        fromHex(checksum),
+        GOVERNANCE_MODULE_ADDRESS,
+        getSalt(salt, contractName, chainName),
+        'axelar',
+    );
 
     printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 
@@ -284,7 +290,6 @@ async function instantiatePermissions(client, options, config, senderAddress, co
         msg: updateMsg,
         title: options.title,
         description: options.description,
-        runAs: senderAddress,
         deposit: options.deposit,
         standardProposal: options.standardProposal,
     };
@@ -341,7 +346,6 @@ const programHandler = () => {
         storeOptions: true,
         storeProposalOptions: true,
         proposalOptions: true,
-        runAs: true,
     });
 
     const storeInstantiateCmd = program
@@ -354,7 +358,6 @@ const programHandler = () => {
         storeProposalOptions: true,
         proposalOptions: true,
         instantiateOptions: true,
-        runAs: true,
     });
 
     const instantiateCmd = program
@@ -369,7 +372,6 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
-        runAs: true,
     });
 
     const executeByGovernanceCmd = program
@@ -380,7 +382,6 @@ const programHandler = () => {
         contractOptions: true,
         executeProposalOptions: true,
         proposalOptions: true,
-        runAs: true,
     });
 
     const migrateCmd = program
@@ -393,7 +394,6 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
-        runAs: true,
     });
 
     addAmplifierOptions(

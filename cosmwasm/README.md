@@ -263,7 +263,7 @@ The command `storeInstantiate` from the `submit-proposal` script, allows uploadi
 Example usage:
 
 ```
-ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" --deposit 100000000
 ```
 
 ### Execute a contract through governance proposal
