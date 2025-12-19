@@ -100,8 +100,7 @@ const getUnitDenom = (config) => {
 };
 
 const validateGovernanceMode = (config, contractName, chainName) => {
-    const { contractConfig } = getAmplifierContractConfig(config, { contractName, chainName });
-    const governanceAddress = contractConfig.governanceAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
@@ -180,8 +179,8 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = (_config, _options, contractConfig) => {
-    const { governanceAddress } = contractConfig;
+const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
@@ -190,11 +189,11 @@ const makeCoordinatorInstantiateMsg = (_config, _options, contractConfig) => {
     return { governance_address: governanceAddress };
 };
 
-const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
-    const { governanceAccount } = contractConfig;
+const makeServiceRegistryInstantiateMsg = (config, _options, _contractConfig) => {
+    const governanceAccount = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAccount)) {
-        throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
+        throw new Error('Missing or invalid axelar.governanceAddress in axelar info');
     }
 
     return { governance_account: governanceAccount };
@@ -208,7 +207,9 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
         Rewards: { address: rewardsAddress },
         Coordinator: { address: coordinatorAddress },
     } = contracts;
-    const { adminAddress, governanceAddress, blockExpiry } = contractConfig;
+    const { blockExpiry } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(adminAddress)) {
         throw new Error('Missing or invalid Multisig.adminAddress in axelar info');
@@ -239,8 +240,9 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
     };
 };
 
-const makeRewardsInstantiateMsg = (_config, _options, contractConfig) => {
-    const { governanceAddress, rewardsDenom } = contractConfig;
+const makeRewardsInstantiateMsg = (config, _options, contractConfig) => {
+    const { rewardsDenom } = contractConfig;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
@@ -261,7 +263,8 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         AxelarnetGateway: { address: axelarnetGateway },
         Coordinator: { address: coordinator },
     } = contracts;
-    const { adminAddress, governanceAddress } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(adminAddress)) {
         throw new Error('Missing or invalid Router.adminAddress in axelar info');
@@ -303,7 +306,9 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
     } = contracts;
-    const { adminAddress, governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
+    const { serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -362,7 +367,9 @@ const makeEventVerifierInstantiateMsg = (config, _options, contractConfig) => {
     const {
         ServiceRegistry: { address: serviceRegistryAddress },
     } = contracts;
-    const { governanceAddress, adminAddress, serviceName, votingThreshold, blockExpiry } = contractConfig;
+    const { serviceName, votingThreshold, blockExpiry } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -419,8 +426,9 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const chainConfig = config.getChainConfig(chainName);
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
 
-    const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
+    const { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat, addressFormat } =
         contractConfig;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -510,7 +518,8 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
             axelarId: itsHubChainName,
         },
     } = config;
-    const { governanceAddress, adminAddress } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(governanceAddress)) {
         throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].governanceAddress in axelar info`);
@@ -600,15 +609,9 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const {
-        adminAddress,
-        governanceAddress,
-        signingThreshold,
-        serviceName,
-        verifierSetDiffThreshold,
-        xrplTransactionFee,
-        ticketCountThreshold,
-    } = contractConfig;
+    const { signingThreshold, serviceName, verifierSetDiffThreshold, xrplTransactionFee, ticketCountThreshold } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
@@ -721,7 +724,9 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const chainConfig = config.getChainConfig(chainName);
     const chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
 
-    const { adminAddress, governanceAddress, signingThreshold, serviceName, verifierSetDiffThreshold, keyType } = contractConfig;
+    const { domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.multisigProverAdminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
@@ -831,7 +836,9 @@ const makeAxelarnetGatewayInstantiateMsg = (config, _options, contractConfig) =>
 };
 
 const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConfig) => {
-    const { adminAddress, governanceAddress, operatorAddress } = contractConfig;
+    const { operatorAddress } = contractConfig;
+    const adminAddress = contractConfig.adminAddress || config.axelar.adminAddress;
+    const governanceAddress = config.axelar.governanceAddress;
     const {
         axelar: { contracts },
     } = config;
@@ -1106,13 +1113,8 @@ const encodeCallContracts = (proposalData) => {
 
     const protoDefinition = loadProtoDefinition('axelarnet_call_contracts.proto');
 
-    let root;
-    try {
-        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-        root = parsed.root;
-    } catch (error) {
-        throw new Error(`Failed to parse proto definition: ${error.message}`);
-    }
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
 
     const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
     const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
@@ -1207,6 +1209,47 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
             printInfo('Retrying proposal submission..... 🔄');
         }
     }
+};
+
+const getNexusProtoType = (typeName) => {
+    const protoDefinition = loadProtoDefinition('nexus_chain.proto');
+
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
+
+    const fullTypeName = `axelar.nexus.v1beta1.${typeName}`;
+    const ProtoType = root.lookupType(fullTypeName);
+
+    if (!ProtoType) {
+        throw new Error(`Failed to lookup ${typeName} proto type`);
+    }
+
+    return ProtoType;
+};
+
+const encodeChainStatusRequest = (chains, requestType) => {
+    if (!Array.isArray(chains) || chains.length === 0 || !chains.every((chain) => typeof chain === 'string' && chain.trim() !== '')) {
+        throw new Error('chains must be a non-empty array of non-empty strings');
+    }
+
+    const RequestType = getNexusProtoType(requestType);
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chains: chains,
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid ${requestType}: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: `/axelar.nexus.v1beta1.${requestType}`,
+        value: Uint8Array.from(message),
+    };
 };
 
 const submitProposal = async (client, config, options, proposal, fee) => {
@@ -1491,9 +1534,11 @@ module.exports = {
     encodeMigrate,
     encodeCallContracts,
     encodeSubmitProposal,
+    encodeChainStatusRequest,
     submitProposal,
     submitCallContracts,
     loadProtoDefinition,
+    getNexusProtoType,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,

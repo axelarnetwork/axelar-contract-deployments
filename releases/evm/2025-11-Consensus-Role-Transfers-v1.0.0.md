@@ -117,12 +117,12 @@ Key checks:
 
 #### Configuration (if not deployed)
 
-| Network              | `governanceAddress`                             | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `deploymentMethod` | `operatorAddress (AxelarServiceGovernance Operator EOA)` |
-| -------------------- | ----------------------------------------------- | ------------------ | -------------------------------------------- | ------------------------- | ------------------ | -------------------------------------------------------- |
-| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v6.0.4 devnet-amplifier` | `create2`          | `0xD3Ba43B92cED452D04B20710C4db627667476024`             |
-| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v6.0.4`                  | `create2`          | `0x466548FaD128a4A7e1B4D51322061F270bb756DF`             |
-| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `300`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | `v6.0.4`                  | `create3`          | `TBD`                                                    |
-| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `259200`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `TBD`                                                    |
+| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `deploymentMethod` | `operatorAddress (AxelarServiceGovernance Operator EOA)` |
+| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | ------------------ | -------------------------------------------------------- |
+| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v6.0.4 devnet-amplifier` | `create2`          | `0xD3Ba43B92cED452D04B20710C4db627667476024`             |           
+| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v6.0.4`                  | `create2`          | `0x466548FaD128a4A7e1B4D51322061F270bb756DF`             |
+| **Testnet**          | `300`              | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | `v6.0.4`                  | `create3`          | `TBD`                                                    |
+| **Mainnet**          | `259200`           | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `TBD`                                                    |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -132,7 +132,7 @@ For each consensus chain where AxelarServiceGovernance is not deployed, add the 
 {
   "AxelarServiceGovernance": {
     "governanceChain": "Axelarnet",
-    "governanceAddress": "[governanceAddress]",
+    "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
     "minimumTimeDelay": [minimumTimeDelay],
     "operator": "[operatorAddress]",
     "deploymentMethod": "[deploymentMethod]",
@@ -191,10 +191,12 @@ ts-node evm/gateway.js --action transferGovernance --destination $AXELAR_SERVICE
 # Mainnet/Testnet
 
 # Transfer governance to AxelarServiceGovernance
-ts-node evm/governance.js schedule transferGovernance $minimumTimeDelay \
-  --contractName InterchainGovernance \
-  --targetContractName AxelarGateway \
-  --newGovernance "$AXELAR_SERVICE_GOVERNANCE"
+ts-node evm/gateway.js \
+  --action transferGovernance \
+  --destination "$AXELAR_SERVICE_GOVERNANCE" \
+  --governance \
+  --governanceContract InterchainGovernance \
+  --activationTime $minimumTimeDelay
 
 # After minimumTimeDelay has passed, execute the proposal
 # Use the target and calldata values printed by the schedule command above
