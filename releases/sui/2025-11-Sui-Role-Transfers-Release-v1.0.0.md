@@ -51,7 +51,7 @@ Notes:
 | Network              | Current OwnerCap Holder                                              | Target Address                                                       |
 | -------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | **Devnet Amplifier** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0xd25e71a4726ca4da6561be45c2b7c1c2bb58e31db66c27bc48e5a7a4176d5d20` |
-| **Stagenet**         | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x710889a7891ac29bf5bcd892fb8c0039dff68fdee98bb734eb8e6e34d3896105` |
+| **Stagenet**         | `0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f` | `0x710889a7891ac29bf5bcd892fb8c0039dff68fdee98bb734eb8e6e34d3896105` |
 | **Testnet**          | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x0e11b06bb58020e868d01602f71f862153003217e22e974043eec302b0d68b24` |
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
@@ -75,7 +75,7 @@ sui client object "$GATEWAY_OWNERCAP_ID"
 | Network              | Current UpgradeCap Holder                                            | Target Address                                                       |
 | -------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | **Devnet Amplifier** | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0xd25e71a4726ca4da6561be45c2b7c1c2bb58e31db66c27bc48e5a7a4176d5d20` |
-| **Stagenet**         | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x710889a7891ac29bf5bcd892fb8c0039dff68fdee98bb734eb8e6e34d3896105` |
+| **Stagenet**         | `0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f` | `0x710889a7891ac29bf5bcd892fb8c0039dff68fdee98bb734eb8e6e34d3896105` |
 | **Testnet**          | `0x3a6ff6c3d2b12d8acd39d9bbddca1094c28081123e59ffd0dee618d36207ee88` | `0x0e11b06bb58020e868d01602f71f862153003217e22e974043eec302b0d68b24` |
 | **Mainnet**          | `0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9` | TBD                                                                  |
 
