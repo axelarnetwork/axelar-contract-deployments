@@ -96,7 +96,7 @@ export interface VotingVerifierChainConfig {
 export interface MultisigProverChainConfig {
     encoder?: string;
     keyType?: string;
-    adminAddress: string;
+    adminAddress?: string;
     verifierSetDiffThreshold: number;
     signingThreshold: [string | number, string | number];
     codeId?: number;
