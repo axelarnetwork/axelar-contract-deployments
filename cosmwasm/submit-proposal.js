@@ -6,8 +6,6 @@ const { createHash } = require('crypto');
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 
-const protobuf = require('protobufjs');
-
 const {
     CONTRACTS,
     fromHex,
@@ -24,9 +22,8 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
-    encodeActivateChain,
-    encodeDeactivateChain,
-    loadProtoDefinition,
+    encodeChainStatusRequest,
+    getNexusProtoType,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -76,16 +73,11 @@ const printProposal = (proposalData) => {
         
         if (message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' || 
             message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest') {
-            const protoDefinition = loadProtoDefinition('nexus_chain.proto');
-            const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-            const root = parsed.root;
-            const msgTypeName = message.typeUrl.includes('Activate') ? 
-                'axelar.nexus.v1beta1.ActivateChainRequest' : 
-                'axelar.nexus.v1beta1.DeactivateChainRequest';
-            const MsgType = root.lookupType(msgTypeName);
+            const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
+            const MsgType = getNexusProtoType(typeName);
             const decoded = MsgType.decode(message.value);
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-            
+
         } else if (MessageType) {
             const decoded = MessageType.decode(message.value);
             if (decoded.codeId) {
@@ -351,35 +343,14 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
 
-const activateChain = async (client, config, options, _args, fee) => {
-    const { chains } = options;
-    
-    if (!chains || chains.length === 0) {
-        throw new Error('At least one chain name must be provided');
-    }
-
-    const proposal = encodeActivateChain(chains);
+const chainState = async (client, config, options, _args, fee) => {
+    const requestType = options.action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
+    const proposal = encodeChainStatusRequest(options.chains, requestType);
 
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
-    
-    return callSubmitProposal(client, config, options, [proposal], fee);
-};
 
-const deactivateChain = async (client, config, options, _args, fee) => {
-    const { chains } = options;
-    
-    if (!chains || chains.length === 0) {
-        throw new Error('At least one chain name must be provided');
-    }
-
-    const proposal = encodeDeactivateChain(chains);
-
-    if (!confirmProposalSubmission(options, [proposal])) {
-        return;
-    }
-    
     return callSubmitProposal(client, config, options, [proposal], fee);
 };
 
@@ -447,21 +418,14 @@ const programHandler = () => {
         fetchCodeId: true,
     });
 
-    const activateChainCmd = program
-        .command('activateChain')
-        .description('Submit a proposal to activate chain(s)')
-        .requiredOption('--chains <chains...>', 'Chain name(s) to activate')
-        .action((options) => mainProcessor(activateChain, options));
-    addAmplifierOptions(activateChainCmd, {
-        proposalOptions: true,
-    });
+    const chainStateCmd = program
+        .command('chainState')
+        .description('Submit a proposal to activate or deactivate chain(s)')
+        .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
+        .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
+        .action((options) => mainProcessor(chainState, options));
 
-    const deactivateChainCmd = program
-        .command('deactivateChain')
-        .description('Submit a proposal to deactivate chain(s)')
-        .requiredOption('--chains <chains...>', 'Chain name(s) to deactivate')
-        .action((options) => mainProcessor(deactivateChain, options));
-    addAmplifierOptions(deactivateChainCmd, {
+    addAmplifierOptions(chainStateCmd, {
         proposalOptions: true,
     });
 

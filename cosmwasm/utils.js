@@ -1106,13 +1106,8 @@ const encodeCallContracts = (proposalData) => {
 
     const protoDefinition = loadProtoDefinition('axelarnet_call_contracts.proto');
 
-    let root;
-    try {
-        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-        root = parsed.root;
-    } catch (error) {
-        throw new Error(`Failed to parse proto definition: ${error.message}`);
-    }
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;    
 
     const CallContractsProposal = root.lookupType('axelar.axelarnet.v1beta1.CallContractsProposal');
     const ContractCall = root.lookupType('axelar.axelarnet.v1beta1.ContractCall');
@@ -1209,75 +1204,47 @@ const signAndBroadcastWithRetry = async (client, signerAddress, msgs, fee, memo 
     }
 };
 
-const encodeActivateChain = (chains) => {
+const getNexusProtoType = (typeName) => {
     const protoDefinition = loadProtoDefinition('nexus_chain.proto');
 
-    let root;
-    try {
-        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-        root = parsed.root;
-    } catch (error) {
-        throw new Error(`Failed to parse proto definition: ${error.message}`);
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
+
+    const fullTypeName = `axelar.nexus.v1beta1.${typeName}`;
+    const ProtoType = root.lookupType(fullTypeName);
+
+    if (!ProtoType) {
+        throw new Error(`Failed to lookup ${typeName} proto type`);
     }
 
-    const ActivateChainRequest = root.lookupType('axelar.nexus.v1beta1.ActivateChainRequest');
+    return ProtoType;
+};
 
-    if (!ActivateChainRequest) {
-        throw new Error('Failed to lookup ActivateChainRequest proto type');
+const encodeChainStatusRequest = (chains, requestType) => {
+    if (!Array.isArray(chains) || chains.length === 0 || !chains.every((chain) => typeof chain === 'string' && chain.trim() !== '')) {
+        throw new Error('chains must be a non-empty array of non-empty strings');
     }
 
-    const request = ActivateChainRequest.create({
+    const RequestType = getNexusProtoType(requestType);
+
+    const request = RequestType.create({
         sender: GOVERNANCE_MODULE_ADDRESS,
         chains: chains,
     });
 
-    const errMsg = ActivateChainRequest.verify(request);
+    const errMsg = RequestType.verify(request);
     if (errMsg) {
-        throw new Error(`Invalid ActivateChainRequest: ${errMsg}`);
+        throw new Error(`Invalid ${requestType}: ${errMsg}`);
     }
 
-    const message = ActivateChainRequest.encode(request).finish();
+    const message = RequestType.encode(request).finish();
 
     return {
-        typeUrl: '/axelar.nexus.v1beta1.ActivateChainRequest',
+        typeUrl: `/axelar.nexus.v1beta1.${requestType}`,
         value: Uint8Array.from(message),
     };
 };
 
-const encodeDeactivateChain = (chains) => {
-    const protoDefinition = loadProtoDefinition('nexus_chain.proto');
-
-    let root;
-    try {
-        const parsed = protobuf.parse(protoDefinition, { keepCase: true });
-        root = parsed.root;
-    } catch (error) {
-        throw new Error(`Failed to parse proto definition: ${error.message}`);
-    }
-
-    const DeactivateChainRequest = root.lookupType('axelar.nexus.v1beta1.DeactivateChainRequest');
-
-    if (!DeactivateChainRequest) {
-        throw new Error('Failed to lookup DeactivateChainRequest proto type');
-    }
-
-    const request = DeactivateChainRequest.create({
-        sender: GOVERNANCE_MODULE_ADDRESS,
-        chains: chains,
-    });
-
-    const errMsg = DeactivateChainRequest.verify(request);
-    if (errMsg) {
-        throw new Error(`Invalid DeactivateChainRequest: ${errMsg}`);
-    }
-
-    const message = DeactivateChainRequest.encode(request).finish();
-
-    return {
-        typeUrl: '/axelar.nexus.v1beta1.DeactivateChainRequest',
-        value: Uint8Array.from(message),
-    };
-};
 
 const submitProposal = async (client, config, options, proposal, fee) => {
     const deposit =
@@ -1561,11 +1528,11 @@ module.exports = {
     encodeMigrate,
     encodeCallContracts,
     encodeSubmitProposal,
-    encodeActivateChain,
-    encodeDeactivateChain,
+    encodeChainStatusRequest,
     submitProposal,
     submitCallContracts,
     loadProtoDefinition,
+    getNexusProtoType,
     isValidCosmosAddress,
     getContractCodePath,
     validateItsChainChange,
