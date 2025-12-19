@@ -374,7 +374,8 @@ async function processCommand(_axelar, chain, chains, options) {
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
 
-    const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
+    const salt = options.salt || contractConfig.salt || contractName;
+    const { deployerContract } = getDeployOptions(deployMethod, salt, chain);
 
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt,
