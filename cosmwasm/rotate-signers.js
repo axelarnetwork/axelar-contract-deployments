@@ -8,7 +8,7 @@ const { addAmplifierOptions, addAmplifierQueryOptions } = require('./cli-utils')
 const { getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { executeTransaction } = require('./utils');
 const { mainProcessor, mainQueryProcessor } = require('./processor');
-const { execute } = require('./submit-proposal');
+const { executeByGovernance } = require('./submit-proposal');
 const { multisigProof } = require('./query');
 const { getDefaultProvider } = require('ethers');
 const { getWallet } = require('../evm/sign-utils');
@@ -79,7 +79,7 @@ const authorizeVerifier = async (client, config, options, [serviceName, verifier
         },
     };
 
-    execute(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
+    executeByGovernance(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
 };
 
 const unauthorizeVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
@@ -90,7 +90,7 @@ const unauthorizeVerifier = async (client, config, options, [serviceName, verifi
         },
     };
 
-    execute(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
+    executeByGovernance(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
 };
 
 const rotateSigners = async (client, config, options, [sessionId], _fee) => {
@@ -102,7 +102,7 @@ const rotateSigners = async (client, config, options, [sessionId], _fee) => {
     }
 
     const chainConfig = config.getChainConfig(chainName);
-    if (chainConfig.type != "evm") {
+    if (chainConfig.chainType != 'evm') {
         printError('only rotations for evm chains are supported');
         return;
     }
@@ -126,7 +126,7 @@ const rotateSigners = async (client, config, options, [sessionId], _fee) => {
     const tx = await wallet.sendTransaction({
         to: gatewayAddress,
         data: `0x${executeData}`,
-        gasLimit: (await gasOptions)?.gasLimit ?? 8000000,
+        gasLimit: gasOptions?.gasLimit ?? 8000000,
     });
 
     const result = await tx.wait();
