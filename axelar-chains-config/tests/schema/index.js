@@ -23,7 +23,6 @@ const axelarSchema = {
         'tokenSymbol',
         'cosmosSDK',
         'governanceAddress',
-        'adminAddress',
         'multisigProverAdminAddress',
     ],
 };
