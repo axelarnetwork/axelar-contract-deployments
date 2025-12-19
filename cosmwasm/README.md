@@ -263,7 +263,7 @@ The command `storeInstantiate` from the `submit-proposal` script, allows uploadi
 Example usage:
 
 ```
-ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" --deposit 100000000
 ```
 
 ### Execute a contract through governance proposal
@@ -331,27 +331,6 @@ ts-node cosmwasm/contract.ts its-hub-register-chains avalanche-fuji sui-test2 -t
 
 # Update existing chain registration (e.g., to change translator contract)
 ts-node cosmwasm/contract.ts its-hub-update-chains aleo-2 -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000
-```
-
-### Submit a proposal to change a parameter
-
-To submit a governance proposal to change a parameter, use the `submit-proposal` script with the `paramChange` command. The `--changes` option should be used to pass a JSON string representing an array of parameter changes.
-
-Note: `-t` & `-d` is still required for `paramChange` & `execute` command
-
-Example usage:
-
-```
-ts-node cosmwasm/submit-proposal.js paramChange \
-	-t "Set Gateway at Nexus Module" \
-	-d "Proposal to update nexus param gateway address." \
-	--changes '[
-  {
-    "subspace": "nexus",
-    "key": "gateway",
-    "value": "'$GATEWAY_ADDRESS'"
-  }
-]'
 ```
 
 ### Submit a proposal to migrate a contract

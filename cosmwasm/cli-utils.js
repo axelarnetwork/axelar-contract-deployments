@@ -88,10 +88,6 @@ const addAmplifierOptions = (program, options = {}) => {
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }
-
-    if (options.runAs) {
-        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
-    }
 };
 
 const addChainNameOption = (program) => {
