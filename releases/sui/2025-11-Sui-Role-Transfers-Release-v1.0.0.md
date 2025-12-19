@@ -3,14 +3,14 @@
 |                | **Owner**                              |
 | -------------- | -------------------------------------- |
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
-| **Deployment** |                                        |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
-| **Environment**      | **Chain** | **Deployment Status** | **Date** |
-| -------------------- | --------- | --------------------- | -------- |
-| **Devnet Amplifier** | `sui-2`   | -                     | TBD      |
-| **Stagenet**         | `sui`     | -                     | TBD      |
-| **Testnet**          | `sui`     | -                     | TBD      |
-| **Mainnet**          | `sui`     | -                     | TBD      |
+| **Environment**      | **Chain** | **Deployment Status** | **Date**   |
+| -------------------- | --------- | --------------------- | ---------- |
+| **Devnet Amplifier** | `sui-2`   | Completed             | 19/12/2025 |
+| **Stagenet**         | `sui`     | Completed             | 19/12/2025 |
+| **Testnet**          | `sui`     | -                     | TBD        |
+| **Mainnet**          | `sui`     | -                     | TBD        |
 
 ## Background
 
