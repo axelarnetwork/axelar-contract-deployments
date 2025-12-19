@@ -3114,119 +3114,6 @@
         }
       }
     },
-    "stellar-2025-q3": {
-      "name": "Stellar",
-      "axelarId": "stellar-2025-q3",
-      "rpc": "https://soroban-testnet.stellar.org",
-      "horizonRpc": "https://horizon-testnet.stellar.org",
-      "networkType": "testnet",
-      "chainType": "stellar",
-      "decimals": 7,
-      "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "tokenSymbol": "XLM",
-      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-      "explorer": {
-        "name": "Stellar Expert",
-        "url": "https://stellar.expert/explorer/testnet"
-      },
-      "contracts": {
-        "AxelarGateway": {
-          "address": "CBFGW56YVDPERRDORQ3CLYE2PJKXNRCS72WPYNDFG4XD23DJJA2EOIT6",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24",
-          "version": "1.1.1",
-          "initializeArgs": {
-            "owner": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-            "operator": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-            "domainSeparator": "288240c68eef8080264cc1fa403ae8f9a1886c91cbe70021aad91ef43a4027e1",
-            "minimumRotationDelay": "3600",
-            "previousSignersRetention": "15",
-            "initialSigners": [
-              {
-                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
-                "signers": [
-                  {
-                    "signer": "3c78773c77a7b61703171884cb0e41a57d1f0ccf6be1a36d885a85fd37f83e82",
-                    "weight": "1"
-                  }
-                ],
-                "threshold": "1"
-              }
-            ]
-          },
-          "connectionType": "amplifier"
-        },
-        "AxelarOperators": {
-          "address": "CDV2FWNSYYKRVJ3HLXTKGF3XYYU5X5CXCC72CKNRLW2CXDYU4PX3F72E",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
-          "version": "1.1.1",
-          "initializeArgs": {
-            "owner": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z"
-          }
-        },
-        "AxelarGasService": {
-          "address": "CDWY5GTDXN62IGNGJGBWIELVDBQNU45F2UR2JI2DG5CO6D5SNT5GG5WK",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729",
-          "version": "1.1.1",
-          "initializeArgs": {
-            "owner": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-            "operator": "CDV2FWNSYYKRVJ3HLXTKGF3XYYU5X5CXCC72CKNRLW2CXDYU4PX3F72E"
-          }
-        },
-        "AxelarExample": {
-          "address": "CAEF5QFYCYKSN55VAVCCAQTSAFYV5O2XNIA7QSRRE7EI3GSYXHXLNDTG",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "cb96e568d52b5933111d3d97c7a3c23330df1db086aad6001f67e2daaa62d73b",
-          "version": "1.0.3",
-          "initializeArgs": {
-            "gatewayAddress": "CBFGW56YVDPERRDORQ3CLYE2PJKXNRCS72WPYNDFG4XD23DJJA2EOIT6",
-            "gasServiceAddress": "CDWY5GTDXN62IGNGJGBWIELVDBQNU45F2UR2JI2DG5CO6D5SNT5GG5WK",
-            "itsAddress": "CBTYHGZSS2HG2DJT7KJAHVUVUOSHCNZNBAPEKJW4U5RRBUHSYKDPZH3T"
-          }
-        },
-        "Upgrader": {
-          "address": "CDDWUZWOMK66IFPF6IN7N6EFMABIVLJB7TAFY4GQETWEMDEO7AR2JUCH",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
-          "version": "1.1.1",
-          "initializeArgs": {}
-        },
-        "InterchainTokenService": {
-          "address": "CBTYHGZSS2HG2DJT7KJAHVUVUOSHCNZNBAPEKJW4U5RRBUHSYKDPZH3T",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
-          "version": "1.4.1",
-          "initializeArgs": {
-            "owner": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-            "operator": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-            "gatewayAddress": "CBFGW56YVDPERRDORQ3CLYE2PJKXNRCS72WPYNDFG4XD23DJJA2EOIT6",
-            "gasServiceAddress": "CDWY5GTDXN62IGNGJGBWIELVDBQNU45F2UR2JI2DG5CO6D5SNT5GG5WK",
-            "itsHubAddress": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
-            "chainName": "stellar-2025-q3",
-            "nativeTokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-            "interchainTokenWasmHash": "6cc453f7c1a0e7c2a153a11d7d7218a76ebeb41785239000bc5c428e02749cc8",
-            "tokenManagerWasmHash": "e29417a07222fe6ce5644ab9848757758bdb12ce973c5298f018384e27eecab9"
-          }
-        },
-        "Multicall": {
-          "address": "CALCRZ45U2VRKG7TS6JLZODZU4I7YAF4EI2AAB27ZAXPLYADC5ASRTV6",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
-          "version": "1.0.1",
-          "initializeArgs": {}
-        },
-        "TokenUtils": {
-          "address": "CDGWYTBD3V5LGG2RTXYULCZ5ZWMR7FDAFP5WYRMETLKV2ACXTFMSTVBV",
-          "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
-          "version": "1.0.0",
-          "initializeArgs": {}
-        }
-      }
-    },
     "celo-sepolia": {
       "name": "Celo-Sepolia",
       "axelarId": "celo-sepolia",
@@ -3610,22 +3497,6 @@
           "address": "axelar1fxd8rq5j6wluyc07vl9vqr4xmdxxm25l2gd6m2an20mn5fdnzy6qll2nxx",
           "version": "1.1.1"
         },
-        "stellar-2025-q3": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "stellar_xdr",
-          "keyType": "ed25519",
-          "codeId": 18,
-          "domainSeparator": "0x288240c68eef8080264cc1fa403ae8f9a1886c91cbe70021aad91ef43a4027e1",
-          "address": "axelar1aux2l6er84m6gtayqdwqhz4rl0txqdlj3v7szr72j7etve3jmpks7x4euy",
-          "version": "1.1.1"
-        },
         "celo-sepolia": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
@@ -3704,11 +3575,6 @@
         "monad": {
           "codeId": 24,
           "address": "axelar1pwjjvn9cqtk8f5furw26szn7pl2x547cyc8qrsjk542c9gpyfs0spuetwl",
-          "version": "1.1.1"
-        },
-        "stellar-2025-q3": {
-          "codeId": 24,
-          "address": "axelar187kq80afqr94lvs2w7ek6pjczv3789qjx7hpg6dpkfg08n8ll3ssyg9dl8",
           "version": "1.1.1"
         },
         "celo-sepolia": {
@@ -3851,22 +3717,6 @@
           "address": "axelar1n64vk7l3zagh2eadkuhl7602lxluu86dn9smfxyp7c2e4v8pqj5sv4ypjr",
           "version": "2.0.0"
         },
-        "stellar-2025-q3": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "CBFGW56YVDPERRDORQ3CLYE2PJKXNRCS72WPYNDFG4XD23DJJA2EOIT6",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 50,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "stellar",
-          "codeId": 26,
-          "address": "axelar18y8p7dxesmxttvdzp5sqjksqrnh9xg32gtfqnkkucvv9de38f69qfn6ph3",
-          "version": "2.0.0"
-        },
         "celo-sepolia": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
@@ -3915,10 +3765,6 @@
         "sui": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
-        },
-        "stellar-2025-q3": {
-          "maxUintBits": 127,
-          "maxDecimalsWhenTruncating": 255
         },
         "xrpl": {
           "maxUintBits": 256,

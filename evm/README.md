@@ -31,7 +31,7 @@ ts-node evm/deploy-contract.js -c Create3Deployer -m create2
 
 Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
 
-`ts-node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
+`ts-node evm/deploy-amplifier-gateway.js`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
@@ -47,30 +47,45 @@ ts-node evm/gateway.js --action submitProof --multisigSessionId [session id]
 
 Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
 
-`ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+`ts-node evm/deploy-gateway-v6.2.x.js`
 
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
 2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
-3. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy` OR
-4. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy --reuseHelpers`
+3. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy` OR
+4. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy --reuseHelpers`
 5. This sets the new `implementation` in the chain config.
 6. Upgrade to the new implementation contract
-   `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --upgrade`
+   `ts-node evm/deploy-gateway-v6.2.x.js --upgrade`
 
 ## AxelarGasService and AxelarDepositService
 
-1. Run the following depending on the service,
-   `ts-node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
+1. Run the following depending on the service,  
+   `ts-node evm/deploy-upgradable.js -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
+3. To reuse the existing proxy, you can:
+   - Deploy new implementation contract:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --reuseProxy
+     ```
+   - Perform the upgrade using the stored implementation address:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --upgrade
+     ```
 
 ## InterchainTokenService
 
 To test the Interchain Token Service deployment
 
 ```bash
-ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
+ts-node evm/deploy-its -s '[salt]' --proxySalt 'v1.0.0' -m create2
 ```
 
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
@@ -208,63 +223,14 @@ ts-node evm/hyperliquid.js deployer <token-id>
 ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 ```
 
-## Governance
+## InterchainGovernance & AxelarServiceGovernance
 
-A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
-Use `evm/governance.js` for proposal submission/timelock flows (schedule/submit/eta/execute) and upgrades. For non-upgrade operational commands, use the contract-specific scripts (`gateway.js`, `operators.js`, `its.js`, etc.).
+Full docs can be found on [here](./docs/governance.md).
+Detailed workflows are mentioned [here](./docs/governance-workflows.md).
 
-1. Generate and submit the proposal on Axelar 
- 
-- Note: `MNEMONIC` must be set in your .env
+## Contract Ownership Management
 
-```
-ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
-  --targetContractName AxelarGateway 
-```
-
-If `--file` is not supplied, the script will prompt for confirmation and then submit a `call-contracts` type proposal to the Axelar network using `MNEMONIC`.
-
-OR follow these steps:
-
-- Generate the governance proposal for Axelar (JSON only)
-
-```bash
-ts-node evm/governance.js schedule upgrade 2023-11-10T03:00:00 \
-  --targetContractName AxelarGateway \
-  --file proposal.json
-```
-
-The date can be specified in two formats:
-- **Absolute UTC timestamp**: `YYYY-MM-DDTHH:mm:ss` (e.g., `2023-11-10T03:00:00`)
-- **Relative seconds**: Numeric value representing seconds from current UTC time (e.g., `3600` for 1 hour from now)
-
-2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
-- Submit the proposal via Cosmos CLI instead  
-   A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
-
-```bash
-axelard tx gov submit-proposal call-contracts proposal.json --deposit [min-deposit]uaxl --from [wallet] --chain-id [chain-id] --gas auto --gas-adjustment 1.4 --node [rpc]
-```
-
-2. Ask validators and community to vote on the proposal
-
-```bash
-axelard tx gov vote [proposal-id] [vote-option] --from [wallet] --chain-id [chain-id] --node [rpc]
-```
-
-3. Once the proposal passes after the voting period, a GMP call is initiated from Axelar to the EVM Governance contract.
-4. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
-
-```bash
-ts-node evm/governance.js submit upgrade [commandId] 2023-12-11T08:45:00 --targetContractName AxelarGateway -n [chain] 
-```
-
-5. Wait for timelock to pass on the proposal
-6. Execute the proposal
-
-```bash
-ts-node evm/governance.js execute --targetContractName AxelarGateway --target [target-address] --calldata [calldata] -n [chain]
-```
+Full docs can be found [here](./docs/contract-ownership.md).
 
 8. Verify the governance command went through correctly.
 
@@ -615,48 +581,6 @@ ts-node evm/verify-contract.js --help
 ```
 
 ## Interchain Token Service
-
-### Flow Limits
-
-Flow Limit is a rate-limiting mechanism in ITS that restricts the **net flow** of tokens in and out of a chain within a 6-hour epoch window.
-
-#### Key Concepts
-
-- **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
-- **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
-- **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
-- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
-- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
-- Flow limits protect against exploits by capping potential losses per epoch
-
-#### Example Flow Tracking
-
-```
-Epoch starts, flowLimit = 10,000 tokens
-
-T+1h: Send 8,000 OUT    → netFlow = 8,000   ✅
-T+2h: Receive 5,000 IN  → netFlow = 3,000   ✅
-T+3h: Send 8,000 OUT    → netFlow = 11,000  ❌ REVERTS (FlowLimitExceeded)
-T+6h: New epoch         → netFlow = 0       (counters reset)
-```
-
-#### Roles
-
-| Role | Permissions |
-|------|-------------|
-| **OPERATOR** (on TokenManager) | `addFlowLimiter()`, `removeFlowLimiter()` |
-| **OPERATOR** (on ITS) | `setFlowLimits()` - batch set limits for multiple tokens |
-| **FLOW_LIMITER** | `setFlowLimit()` - set limit for specific TokenManager |
-
-#### Setting Flow Limits
-
-```bash
-# Set flow limit for a token (requires ITS OPERATOR role)
-ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
-
-# Query current flow limit
-ts-node evm/its.js flow-limit <token-id>
-```
 
 ### Link Token
 

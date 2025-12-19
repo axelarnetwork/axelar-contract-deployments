@@ -557,7 +557,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const trustedChains = args;
 
             if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to remove trusted chain(s): ${trustedChains}?`, yes)) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
                     return;
                 }
 
@@ -904,9 +909,9 @@ async function main(action, args, options) {
 
             printInfo('Proposal', proposalJSON);
 
-            if (options.file) {
-                writeJSON(proposal, options.file);
-                printInfo('Proposal written to file', options.file);
+            if (options.generateOnly) {
+                writeJSON(proposal, options.generateOnly);
+                printInfo('Proposal written to file', options.generateOnly);
             } else {
                 if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
                     await submitProposalToAxelar(proposal, options);
