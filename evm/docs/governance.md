@@ -110,11 +110,10 @@ Schedule a new timelock proposal. Generates a proposal JSON for submission to Ax
 ts-node evm/governance.js schedule <action> <activationTime> [options]
 ```
 
-**Actions:** `raw`, `upgrade`, `transferGovernance`, `transferOperatorship`, `withdraw`
+**Actions:** `raw`, `upgrade`, `transferOperatorship`, `withdraw`
 
 - `raw`: Schedule a custom governance action by providing the target address and calldata directly. Use this for arbitrary function calls that aren't covered by other actions (including advanced InterchainTokenService operations).
 - `upgrade`: Upgrade a contract to a new implementation (requires `--targetContractName`)
-- `transferGovernance`: Transfer governance of a contract (requires `--targetContractName`)
 - `transferOperatorship`: Transfer operatorship of `AxelarServiceGovernance` (requires `--newOperator`, only works with `AxelarServiceGovernance`)
 - `withdraw`: Withdraw native tokens from the governance contract (requires `--target` and `--amount`)
 
@@ -222,7 +221,7 @@ Schedule an operator proposal governed by `AxelarServiceGovernance`.
 ts-node evm/governance.js schedule-operator <action> <activationTime> [options]
 ```
 
-- **`action`**: Governance action (`raw`, `upgrade`, `transferGovernance`, `transferOperatorship`, `withdraw`)
+- **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
 - **`activationTime`**: Absolute UTC timestamp (e.g., `YYYY-MM-DDTHH:mm:ss`) or relative seconds (e.g., `3600` for 60 minutes from now)
 - **Options**: Same as `schedule` command (see [Schedule Proposal](#schedule-proposal) section)
 - **Notes:**
@@ -237,7 +236,7 @@ Cancel a previously scheduled operator proposal.
 ts-node evm/governance.js cancel-operator <action> [options]
 ```
 
-- **`action`**: Governance action (`raw`, `upgrade`, `transferGovernance`, `transferOperatorship`, `withdraw`)
+- **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
 - **Options**: Same as `schedule-operator` command (except `activationTime` argument)
 - Cancels the operator proposal identified by `(target, calldata, nativeValue)`.
 - This generates a `CancelOperator` payload for `AxelarServiceGovernance`.
@@ -251,7 +250,7 @@ Submit an operator proposal when relayers haven't submitted the GMP call automat
 ts-node evm/governance.js submit-operator <action> <commandId> <activationTime> [options]
 ```
 
-- **`action`**: Governance action (`raw`, `upgrade`, `transferGovernance`, `transferOperatorship`, `withdraw`)
+- **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
 - **`commandId`**: Same `commandId` used in the regular `submit` command (can be obtained from Axelarscan as described above).
 - **`activationTime`**: Same activation time used when scheduling the proposal.
 - **Options**: Same as `schedule-operator` command
@@ -301,25 +300,6 @@ ts-node evm/governance.js cancel transferOperatorship \
 # submit after vote
 ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
   --newOperator 0xNewOperator
-```
-
-### Transfer governance:
-
-```bash
-# schedule
-ts-node evm/governance.js schedule transferGovernance <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --targetContractName AxelarGateway \
-  --newGovernance 0xNewGovernor
-
-# cancel
-ts-node evm/governance.js cancel transferGovernance \
-  --targetContractName AxelarGateway \
-  --newGovernance 0xNewGovernor
-
-# submit after vote
-ts-node evm/governance.js submit transferGovernance <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --targetContractName AxelarGateway \
-  --newGovernance 0xNewGovernor
 ```
 
 ## Troubleshooting
