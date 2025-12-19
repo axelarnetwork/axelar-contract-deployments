@@ -265,7 +265,7 @@ const programHandler = () => {
 
     const alignTokenSupplyCmd = program
         .command('align-token-supply')
-        .description('Align the supply of a token on a chain with the supply on the chain.')
+        .description('Align the token supply on the ITS Hub with the actual supply on the EVM chain.')
         .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--chain <chain>', 'Chain to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--tokenAddress <tokenAddress>', 'Token address to modify the supply of').makeOptionMandatory(true))

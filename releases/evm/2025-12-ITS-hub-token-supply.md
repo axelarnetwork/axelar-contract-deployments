@@ -47,7 +47,11 @@ Run the following command to align token supply per each environment:
 ts-node cosmwasm/migrate/register-p2p-tokens.ts align-token-supply
 ```
 
-**Note:** This command should be run for both squid & non-squid tokens
+**Note:** This command should be run for both squid & fetched tokens. The config file should be placed in `axelar-chains-config/info/tokens-p2p/tokens-${env}.json`.
+
+Pre-fetched (non-squid) tokens can be found in this [PR #1255](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1255).
+
+Squid tokens can be found in the config repository.
 
 ### Checklist
 
