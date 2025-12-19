@@ -421,7 +421,7 @@ const programHandler = () => {
 
     const chainStateCmd = program
         .command('chainState')
-        .description('Submit a proposal to activate or deactivate chain(s)')
+        .description('Submit a proposal to activate or deactivate chain(s) on Nexus module')
         .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
         .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
         .action((options) => mainProcessor(chainState, options));
