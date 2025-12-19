@@ -61,8 +61,6 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register xrpl-evm ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
-
 ```bash
 ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
     --governance # omit on devnet-amplifier
