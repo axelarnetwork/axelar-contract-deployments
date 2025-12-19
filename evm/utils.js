@@ -247,7 +247,7 @@ function getGovernanceAddress(chain, contractName, address) {
 }
 
 function getGovernanceContract(chain, options = {}) {
-    const governanceContract = options.governanceContract || 'AxelarServiceGovernance';
+    const governanceContract = options.governanceContract;
 
     if (options.operatorProposal && governanceContract !== 'AxelarServiceGovernance') {
         throw new Error('Operator proposals require --governanceContract AxelarServiceGovernance or unset --operatorProposal.');
@@ -262,6 +262,17 @@ function getGovernanceContract(chain, options = {}) {
     }
 
     return { governanceContract, governanceAddress };
+}
+
+function getScheduleProposalType(options, ProposalType, action) {
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+
+    if (options.operatorProposal) {
+        const actionLabel = action ? ` for action ${action}` : '';
+        printInfo(`Using operator-based proposal${actionLabel}`, 'ApproveOperator');
+    }
+
+    return proposalType;
 }
 
 function createGovernanceProposal({
@@ -1213,6 +1224,7 @@ module.exports = {
     isValidAddress,
     getGovernanceContract,
     getGovernanceAddress,
+    getScheduleProposalType,
     createGovernanceProposal,
     isValidPrivateKey,
     isValidTokenId,
