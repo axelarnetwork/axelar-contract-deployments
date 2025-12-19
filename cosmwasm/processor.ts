@@ -83,10 +83,12 @@ export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, opt
     }
 
     const client = await CosmWasmClient.connect(configManager.axelar.rpc);
-    await processorQueryFn(client, configManager, options, args);
+    const res = await processorQueryFn(client, configManager, options, args);
 
     configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
+
+    return res;
 }
 
 async function prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {
