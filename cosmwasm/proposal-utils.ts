@@ -16,12 +16,13 @@ import { getNexusProtoType, submitProposal } from './utils';
 
 interface ProposalOptions {
     yes?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 const printProposal = (proposalData: object[]): void => {
-    proposalData.forEach((message: any) => {
-        const typeMap: Record<string, any> = {
+    proposalData.forEach((msg: unknown) => {
+        const message = msg as { typeUrl: string; value: Uint8Array };
+        const typeMap: Record<string, unknown> = {
             '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
             '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
             '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
@@ -42,7 +43,7 @@ const printProposal = (proposalData: object[]): void => {
             const decoded = MsgType.decode(message.value);
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
         } else if (MessageType) {
-            const decoded = MessageType.decode(message.value);
+            const decoded = (MessageType as { decode: (value: Uint8Array) => Record<string, unknown> }).decode(message.value);
             if (decoded.codeId) {
                 decoded.codeId = decoded.codeId.toString();
             }
@@ -54,10 +55,10 @@ const printProposal = (proposalData: object[]): void => {
                     message.typeUrl === '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract') &&
                 decoded.msg
             ) {
-                decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
+                decoded.msg = JSON.parse(Buffer.from(decoded.msg as Uint8Array).toString());
             }
             if (decoded.wasmByteCode) {
-                decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
+                decoded.wasmByteCode = `<${(decoded.wasmByteCode as Uint8Array).length} bytes>`;
             }
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
         } else {

@@ -27,7 +27,7 @@ const executeCoreOperation = async (
     defaultDescription?: string,
 ): Promise<void> => {
     if (options.direct) {
-        const [account] = (client as any).accounts || (await (client as any).signer.getAccounts());
+        const [account] = client.accounts;
 
         printInfo('Executing directly', `${messages.length} message(s)`);
         await signAndBroadcastWithRetry(client, account.address, messages, fee);
@@ -58,7 +58,7 @@ const nexusChainState = async (
     let message: object;
 
     if (options.direct) {
-        const [account] = (client as any).accounts || (await (client as any).signer.getAccounts());
+        const [account] = client.accounts;
 
         const RequestType = getNexusProtoType(requestType);
         const request = RequestType.create({
