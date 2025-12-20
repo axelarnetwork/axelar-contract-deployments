@@ -19,13 +19,13 @@
 | Deactivate chain | `axelard tx nexus deactivate-chain <chain>` | ACCESS_CONTROL | Engineer alone |
 | Deactivate ALL chains | `axelard tx nexus deactivate-chain :all:` | ACCESS_CONTROL | Leadership |
 | Activate chain | `axelard tx nexus activate-chain <chain>` | ACCESS_CONTROL | After verification |
-| Disable link-deposit | `axelard tx nexus disable-link-deposit` | ACCESS_CONTROL | Engineer alone |
-| Enable link-deposit | `axelard tx nexus enable-link-deposit` | ACCESS_CONTROL | After verification |
 | Set rate limit | `axelard tx nexus set-transfer-rate-limit <chain> <amount> <window>` | ACCESS_CONTROL | Leadership |
 | Deregister controller | `axelard tx permission deregister-controller <addr>` | ACCESS_CONTROL | Leadership |
 | Register controller | `axelard tx permission register-controller <addr>` | ACCESS_CONTROL | Leadership |
 
 **Common flags**: `--from <key> --gas auto --gas-adjustment 1.3 --gas-prices 0.00005uaxl --chain-id axelar-dojo-1 --node <rpc> -y`
+
+**Note on ACCESS_CONTROL operations**: Operations requiring `ROLE_ACCESS_CONTROL` can also be executed via **governance proposal**, which bypasses the access control checks. This provides an alternative path when the ACCESS_CONTROL key holder is unavailable.
 
 ### Verification Queries
 
@@ -33,7 +33,6 @@
 |-------|---------|
 | Chain state | `axelard q nexus chain-state <chain>` |
 | All chains | `axelard q nexus chains` |
-| Link-deposit status | `axelard q nexus link-deposit-enabled` |
 | Transfer rate limit | `axelard q nexus transfer-rate-limit <chain> <denom>` |
 | Key info | `axelard q multisig key <key-id>` |
 | Current key ID | `axelard q multisig key-id <chain>` |
@@ -49,11 +48,10 @@
 | Step | Action | SLA | Parallel |
 |------|--------|-----|----------|
 | 1 | Deactivate affected chain(s) | 15 min | No |
-| 2 | Disable link-deposit | 15 min | Yes |
-| 3 | Set rate limit to 0 | 15 min | Yes |
-| 4 | Investigate and develop fix | 24-72h | No |
-| 5 | Deploy fix (network upgrade if needed) | 24h+ | No |
-| 6 | Re-enable operations | 30 min | No |
+| 2 | Set rate limit to 0 | 15 min | Yes |
+| 3 | Investigate and develop fix | 24-72h | No |
+| 4 | Deploy fix (network upgrade if needed) | 24h+ | No |
+| 5 | Re-enable operations | 30 min | No |
 
 **Backup**: If deactivation fails → deactivate ALL chains. If that fails → contact validators to halt.
 
@@ -132,7 +130,6 @@ axelard tx evm sign-commands <chain> --from <any-account> ...
 | Action | Engineer Alone? | Leadership Required? |
 |--------|-----------------|---------------------|
 | Deactivate single chain | Yes | No |
-| Disable link-deposit | Yes | No |
 | Deactivate ALL chains | No | Yes |
 | Set transfer rate limit | No | Yes |
 | Rotate key | No | Yes |
@@ -148,12 +145,15 @@ axelard tx evm sign-commands <chain> --from <any-account> ...
 | **ROLE_CHAIN_MANAGEMENT** | Chain ops, key rotation, params | Chain management account |
 | **ROLE_UNRESTRICTED** | Normal operations | Any account |
 
+**Important Notes**:
+- **Governance Key Must Be Multisig**: The governance key (`ROLE_ACCESS_CONTROL` holder) must be a multisig key (`cosmos.crypto.multisig.LegacyAminoPubKey`). Regular EOA keys cannot be set as the governance key.
+- **Governance Proposal Bypass**: Any operation requiring `ROLE_ACCESS_CONTROL` can be executed via a governance proposal, which bypasses the access control role check. This is useful when the ACCESS_CONTROL key holder is unavailable or for decentralized decision-making.
+
 ### Module Permissions
 
 | Module | Operations | Required Role |
 |--------|------------|---------------|
 | **nexus** | ActivateChain, DeactivateChain, SetTransferRateLimit | ACCESS_CONTROL |
-| **nexus** | EnableLinkDeposit, DisableLinkDeposit | ACCESS_CONTROL |
 | **nexus** | RegisterAssetFee | CHAIN_MANAGEMENT |
 | **evm** | SetGateway, AddChain | ACCESS_CONTROL |
 | **evm** | CreateDeployToken, CreateTransferOperatorship | CHAIN_MANAGEMENT |
@@ -189,8 +189,6 @@ The `cosmwasm/` directory contains scripts for **CosmWasm Amplifier contracts** 
 | Deactivate chain | `axelard tx nexus deactivate-chain <chain>` | P0 |
 | Deactivate all chains | `axelard tx nexus deactivate-chain :all:` | P0 |
 | Activate chain | `axelard tx nexus activate-chain <chain>` | P1 |
-| Disable link-deposit | `axelard tx nexus disable-link-deposit` | P0 |
-| Enable link-deposit | `axelard tx nexus enable-link-deposit` | P1 |
 | Set transfer rate limit | `axelard tx nexus set-transfer-rate-limit` | P1 |
 | Deregister controller | `axelard tx permission deregister-controller` | P1 |
 | Register controller | `axelard tx permission register-controller` | P2 |
@@ -211,7 +209,6 @@ The `cosmwasm/` directory contains scripts for **CosmWasm Amplifier contracts** 
 |-------|-----------------|----------|
 | Chain state | `axelard q nexus chain-state` | P1 |
 | All chains | `axelard q nexus chains` | P2 |
-| Link-deposit status | `axelard q nexus link-deposit-enabled` | P1 |
 | Transfer rate limit | `axelard q nexus transfer-rate-limit` | P2 |
 | Key info | `axelard q multisig key` / `key-id` | P2 |
 | Gateway address | `axelard q evm gateway-address` | P2 |
