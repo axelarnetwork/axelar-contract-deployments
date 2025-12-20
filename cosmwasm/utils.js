@@ -1,7 +1,6 @@
 'use strict';
 
 const zlib = require('zlib');
-const { createHash } = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const protobuf = require('protobufjs');
@@ -70,6 +69,20 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 
 const toArray = (value) => {
     return Array.isArray(value) ? value : [value];
+};
+
+const payloadToHexBinary = (payload) => {
+    if (!payload) return '';
+
+    if (payload.startsWith('0x')) {
+        return Buffer.from(payload.slice(2), 'hex').toString('hex');
+    }
+
+    if (/^[0-9a-fA-F]+$/.test(payload) && payload.length % 2 === 0) {
+        return Buffer.from(payload, 'hex').toString('hex');
+    }
+
+    return Buffer.from(payload, 'base64').toString('hex');
 };
 
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
@@ -1500,6 +1513,7 @@ module.exports = {
     encodeSubmitProposal,
     submitProposal,
     submitCallContracts,
+    payloadToHexBinary,
     loadProtoDefinition,
     isValidCosmosAddress,
     getContractCodePath,

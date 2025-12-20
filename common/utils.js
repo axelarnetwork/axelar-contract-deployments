@@ -519,20 +519,13 @@ const dateToEta = (input) => {
     }
 
     if (/^\d+$/.test(trimmedInput)) {
-        const seconds = parseInt(trimmedInput, 10);
-        if (isNaN(seconds) || seconds < 0) {
-            throw new Error(`Invalid relative time in seconds: ${input}`);
-        }
-        const currentTime = getCurrentTimeInSeconds();
-        return currentTime + seconds;
+        throw new Error(`Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss)`);
     }
 
     const date = new Date(trimmedInput + 'Z');
 
     if (isNaN(date.getTime())) {
-        throw new Error(
-            `Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss) or relative seconds (numeric)`,
-        );
+        throw new Error(`Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss)`);
     }
 
     return Math.floor(date.getTime() / 1000);
