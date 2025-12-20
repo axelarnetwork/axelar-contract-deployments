@@ -280,7 +280,8 @@ ts-node evm/governance.js submit-operator <proposaltype> <action> <commandId> <a
 - **`commandId`**: Same `commandId` used in the regular `submit` command (can be obtained from Axelarscan as described above).
 - **`activationTime`**: Same activation time used when scheduling the proposal.
 - **Options**: Same as `schedule-operator` command
-- Manually calls `governance.executeOperatorProposal()` on `AxelarServiceGovernance` (ApproveOperator / CancelOperator, depending on `proposaltype`).
+- Manually calls `governance.execute()` (GMP-style) on `AxelarServiceGovernance` to submit the approved GMP message when relayers fail (ApproveOperator / CancelOperator payload, depending on `proposaltype`).
+- This is **not** the same as `execute-operator-proposal` (which executes an already-approved operator proposal locally via `executeOperatorProposal(target, calldata, nativeValue)`).
 - Use the same options as when scheduling the proposal.
 
 ### Check Operator Approval Status

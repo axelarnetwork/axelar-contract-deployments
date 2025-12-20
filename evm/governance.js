@@ -492,7 +492,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Proposal submission cancelled.');
             }
 
-            const tx = await governance.executeOperatorProposal(
+            const tx = await governance.execute(
                 commandId,
                 isConsensusChain(chain) ? 'Axelarnet' : 'axelar',
                 GOVERNANCE_MODULE_ADDRESS,
@@ -855,7 +855,7 @@ if (require.main === module) {
 
     program
         .command('submit-operator')
-        .description('Submit an operator proposal via cross-chain message (AxelarServiceGovernance only)')
+        .description('Manually submit an operator proposal GMP message if relayers fail (AxelarServiceGovernance only)')
         .addArgument(
             new Argument('<proposaltype>', 'proposal type (schedule-operator, cancel-operator)').choices([
                 'schedule-operator',

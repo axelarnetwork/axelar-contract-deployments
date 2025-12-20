@@ -118,6 +118,8 @@ On the destination chain explorer, find the `MessageApproved` event and copy its
 
 Important: you must pass the **same action + parameters** you used when creating the proposal in step 1, otherwise the payload won’t match the approved `payload_hash`.
 
+Note: `submit` / `submit-operator` submit the underlying GMP message to the destination governance contract (they call `governance.execute(...)`). They do **not** execute the final target call directly. After eligibility/approval, execute the proposal with `execute` or `execute-operator-proposal`.
+
 For **operator proposals**:
 
 ```bash
@@ -129,7 +131,7 @@ ts-node evm/governance.js submit-operator schedule-operator upgrade "$COMMAND_ID
   --implementation "$NEW_IMPL"
 ```
 
-If you are **cancelling** an operator proposal (and relayers don’t execute the GMP), submit the cancellation with `cancel-operator`:
+If you are **cancelling** an operator proposal (and relayers don’t execute the GMP), submit the cancellation GMP with `submit-operator cancel-operator`:
 
 ```bash
 ts-node evm/governance.js submit-operator cancel-operator upgrade "$COMMAND_ID" "$ACTIVATION_TIME" \
@@ -147,7 +149,7 @@ ts-node evm/governance.js submit schedule upgrade "$COMMAND_ID" "$ACTIVATION_TIM
   --implementation "$NEW_IMPL"
 ```
 
-If you are **cancelling** a timelock proposal (and relayers don’t execute the GMP), submit the cancellation with `cancel`:
+If you are **cancelling** a timelock proposal (and relayers don’t execute the GMP), submit the cancellation GMP with `submit cancel`:
 
 ```bash
 ts-node evm/governance.js submit cancel upgrade "$COMMAND_ID" "$ACTIVATION_TIME" \

@@ -349,6 +349,7 @@ EVM‑side operator must then approve and execute the proposal.
         ```
     - `proposaltype` must be one of: `schedule-operator`, `cancel-operator`.
     - Use the same `action` and options as when scheduling the proposal.
+    - This command submits the underlying GMP message by calling `governance.execute(commandId, sourceChain, sourceAddress, payload)` on the destination governance contract.
 
 3. **Check whether the operator proposal has been approved**
     - Use the `is-operator-approved` command:
