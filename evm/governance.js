@@ -170,7 +170,7 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             validateParameters({
                 isValidDecimal: { amount: options.amount },
                 isValidAddress: { target: options.target },
-            })
+            });
 
             const amount = parseEther(options.amount);
             calldata = governance.interface.encodeFunctionData('withdraw', [options.target, amount]);
@@ -243,7 +243,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
         isValidDecimal: { nativeValue },
     });
     nativeValue = nativeValue.toString();
-    printInfo('Native value', nativeValue)
+    printInfo('Native value', nativeValue);
 
     switch (action) {
         case 'eta': {
@@ -394,7 +394,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             printInfo('Governance target (for execute-operator-proposal)', target);
             printInfo('Governance calldata (for execute-operator-proposal)', calldata);
-            
+
             eta = dateToEta(activationTime);
             printInfo('Proposal eta', etaToDate(eta));
             const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
@@ -403,13 +403,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Operator proposal is not approved.');
             }
 
-            const gmpPayload = encodeGovernanceProposal(
-                ProposalType.CancelOperator,
-                target,
-                calldata,
-                nativeValue,
-                eta,
-            );
+            const gmpPayload = encodeGovernanceProposal(ProposalType.CancelOperator, target, calldata, nativeValue, eta);
             console.log('Governance proposal payload (for execute-operator-proposal)', gmpPayload);
 
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
@@ -434,7 +428,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             printInfo('Governance target', target);
             printInfo('Governance calldata', calldata);
 
-            const gmpPayload = encodeGovernanceProposal(proposaltype == 'schedule' ? ProposalType.ScheduleTimelock : ProposalType.CancelTimelock, target, calldata, nativeValue, eta);
+            const gmpPayload = encodeGovernanceProposal(
+                proposaltype == 'schedule' ? ProposalType.ScheduleTimelock : ProposalType.CancelTimelock,
+                target,
+                calldata,
+                nativeValue,
+                eta,
+            );
 
             if (prompt('Proceed with submitting this proposal?', options.yes)) {
                 throw new Error('Proposal submission cancelled.');
@@ -448,7 +448,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 gasOptions,
             );
 
-            await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', proposaltype == 'schedule' ? 'ProposalScheduled' : 'ProposalCancelled');
+            await handleTransactionWithEvent(
+                tx,
+                chain,
+                governance,
+                'Proposal submission',
+                proposaltype == 'schedule' ? 'ProposalScheduled' : 'ProposalCancelled',
+            );
             printInfo('Proposal submitted.');
             return null;
         }
@@ -474,7 +480,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             printInfo('Governance target', target);
             printInfo('Governance calldata', calldata);
 
-            const gmpPayload = encodeGovernanceProposal(proposaltype == 'schedule-operator' ? ProposalType.ApproveOperator : ProposalType.CancelOperator, target, calldata, nativeValue, eta);
+            const gmpPayload = encodeGovernanceProposal(
+                proposaltype == 'schedule-operator' ? ProposalType.ApproveOperator : ProposalType.CancelOperator,
+                target,
+                calldata,
+                nativeValue,
+                eta,
+            );
 
             if (prompt('Proceed with submitting this proposal?', options.yes)) {
                 throw new Error('Proposal submission cancelled.');
@@ -488,7 +500,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 gasOptions,
             );
 
-            await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', proposaltype == 'schedule-operator' ? 'OperatorProposalApproved' : 'OperatorProposalCancelled');
+            await handleTransactionWithEvent(
+                tx,
+                chain,
+                governance,
+                'Proposal submission',
+                proposaltype == 'schedule-operator' ? 'OperatorProposalApproved' : 'OperatorProposalCancelled',
+            );
             printInfo('Operator proposal submitted.');
             return null;
         }
@@ -717,9 +735,7 @@ if (require.main === module) {
         .description('Schedule a new timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
@@ -741,9 +757,7 @@ if (require.main === module) {
         .description('Cancel a scheduled timelock proposal')
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
@@ -763,13 +777,12 @@ if (require.main === module) {
     program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .argument('<proposaltype>', 'proposal type (schedule, cancel)').choices(['schedule', 'cancel'])
+        .argument('<proposaltype>', 'proposal type (schedule, cancel)')
+        .choices(['schedule', 'cancel'])
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
@@ -810,9 +823,7 @@ if (require.main === module) {
         .description('Schedule an operator proposal (AxelarServiceGovernance only)')
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
@@ -830,9 +841,7 @@ if (require.main === module) {
         .description('Cancel an operator proposal (AxelarServiceGovernance only)')
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
@@ -848,14 +857,13 @@ if (require.main === module) {
     program
         .command('submit-operator')
         .description('Submit an operator proposal via cross-chain message (AxelarServiceGovernance only)')
-        .argument('<proposaltype>', 'proposal type (schedule-operator, cancel-operator)').choices(['schedule-operator', 'cancel-operator'])
+        .argument('<proposaltype>', 'proposal type (schedule-operator, cancel-operator)')
+        .choices(['schedule-operator', 'cancel-operator'])
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
-        
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'),
-        )
+
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('-c, --contractName <contractName>', 'contract name').default('AxelarServiceGovernance'))
