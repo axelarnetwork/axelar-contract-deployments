@@ -1537,6 +1537,7 @@ module.exports = {
     encodeChainStatusRequest,
     submitProposal,
     submitCallContracts,
+    signAndBroadcastWithRetry,
     loadProtoDefinition,
     getNexusProtoType,
     isValidCosmosAddress,
