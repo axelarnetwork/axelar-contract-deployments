@@ -27,6 +27,8 @@
 
 **Note on ACCESS_CONTROL operations**: Operations requiring `ROLE_ACCESS_CONTROL` can also be executed via **governance proposal**, which bypasses the access control checks. This provides an alternative path when the ACCESS_CONTROL key holder is unavailable.
 
+**Pre-signed Transactions**: For critical emergency operations (especially "Deactivate ALL chains"), **keep pre-signed transactions ready** that can be broadcast immediately without requiring real-time signing. This significantly reduces response time in P0 incidents.
+
 ### Verification Queries
 
 | Query | Command |
