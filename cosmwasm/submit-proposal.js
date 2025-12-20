@@ -22,8 +22,6 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
-    encodeChainStatusRequest,
-    getNexusProtoType,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -344,17 +342,6 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
 
-const chainState = async (client, config, options, _args, fee) => {
-    const requestType = options.action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
-    const proposal = encodeChainStatusRequest(options.chains, requestType);
-
-    if (!confirmProposalSubmission(options, [proposal])) {
-        return;
-    }
-
-    return callSubmitProposal(client, config, options, [proposal], fee);
-};
-
 const programHandler = () => {
     const program = new Command();
 
@@ -417,17 +404,6 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
-    });
-
-    const chainStateCmd = program
-        .command('chainState')
-        .description('Submit a proposal to activate or deactivate chain(s) on Nexus module')
-        .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
-        .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
-        .action((options) => mainProcessor(chainState, options));
-
-    addAmplifierOptions(chainStateCmd, {
-        proposalOptions: true,
     });
 
     addAmplifierOptions(
