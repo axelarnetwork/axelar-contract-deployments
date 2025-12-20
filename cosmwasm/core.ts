@@ -41,7 +41,7 @@ const executeCoreOperation = async (
             return;
         }
 
-        return submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
+        await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
     }
 };
 

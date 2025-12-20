@@ -70,11 +70,12 @@ const executeContractMessage = async (
         const description = options.description || defaultDescription || defaultTitle;
         validateParameters({ isNonEmptyString: { title, description } });
         const stringifiedMsg = msg.map((m) => JSON.stringify(m));
-        return executeByGovernance(client, config, { ...options, contractName, msg: stringifiedMsg, title, description }, [], fee);
+        await executeByGovernance(client, config, { ...options, contractName, msg: stringifiedMsg, title, description }, [], fee);
+        return;
     }
 
     printDirectExecutionInfo(msg, contractAddress);
-    return executeDirectly(client, contractAddress, msg, fee);
+    await executeDirectly(client, contractAddress, msg, fee);
 };
 
 const buildItsHubChains = (config: ConfigManager, chainNames: string[]) => {

@@ -81,9 +81,10 @@ const submitProposalAndPrint = async (
     options: ProposalOptions,
     proposal: object[],
     fee?: string | StdFee,
-): Promise<void> => {
+): Promise<string> => {
     const proposalId = await submitProposal(client, config, options, proposal, fee);
     printInfo('Proposal submitted', proposalId);
+    return proposalId;
 };
 
 export { printProposal, confirmProposalSubmission, submitProposalAndPrint };
