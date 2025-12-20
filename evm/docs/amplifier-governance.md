@@ -129,10 +129,28 @@ ts-node evm/governance.js submit-operator schedule-operator upgrade "$COMMAND_ID
   --implementation "$NEW_IMPL"
 ```
 
+If you are **cancelling** an operator proposal (and relayers don’t execute the GMP), submit the cancellation with `cancel-operator`:
+
+```bash
+ts-node evm/governance.js submit-operator cancel-operator upgrade "$COMMAND_ID" "$ACTIVATION_TIME" \
+  -c AxelarServiceGovernance \
+  --targetContractName InterchainTokenFactory \
+  --implementation "$NEW_IMPL"
+```
+
 For **timelock proposals** (non-operator), use `submit` instead:
 
 ```bash
 ts-node evm/governance.js submit schedule upgrade "$COMMAND_ID" "$ACTIVATION_TIME" \
+  -c AxelarServiceGovernance \
+  --targetContractName AxelarGateway \
+  --implementation "$NEW_IMPL"
+```
+
+If you are **cancelling** a timelock proposal (and relayers don’t execute the GMP), submit the cancellation with `cancel`:
+
+```bash
+ts-node evm/governance.js submit cancel upgrade "$COMMAND_ID" "$ACTIVATION_TIME" \
   -c AxelarServiceGovernance \
   --targetContractName AxelarGateway \
   --implementation "$NEW_IMPL"

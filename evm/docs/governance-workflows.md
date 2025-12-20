@@ -65,6 +65,14 @@ ts-node evm/governance.js submit schedule upgrade <commandId> <activationTime> \
   --implementation 0xNewImplementationAddress
 ```
 
+If you are **cancelling** a scheduled proposal and relayers fail, submit the cancellation similarly:
+
+```bash
+ts-node evm/governance.js submit cancel upgrade <commandId> <activationTime> \
+  --targetContractName AxelarGateway \
+  --implementation 0xNewImplementationAddress
+```
+
 **Amplifier note (no relayers):** For Amplifier-style proposals where there is **no relayer setup**, the “manual” steps also require
 constructing proof on `MultisigProver` and submitting it to the destination EVM gateway. Follow:
 [Amplifier governance (no relayers / manual proof)](amplifier-governance.md).
@@ -110,6 +118,8 @@ ts-node evm/governance.js cancel upgrade <activationTime> \
   --targetContractName AxelarGateway \
   --implementation 0xNewImplementationAddress
 ```
+
+If relayers fail to execute the cancellation GMP, use the `submit cancel ...` command shown above.
 
 **Note:** You can only cancel proposals that haven't reached their ETA yet.
 

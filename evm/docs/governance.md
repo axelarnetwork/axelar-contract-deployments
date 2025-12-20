@@ -163,6 +163,12 @@ you used for the schedule.
 
 **Note:** `cancel` does **not** accept `activationTime=0`. If you scheduled with `0`, use the resolved timestamp you recorded (or the destination-chain ETA) as `<activationTime>`.
 
+**If relayers fail:** cancellation is also a GMP call. If relayers don’t execute it, manually submit the cancellation using:
+
+```bash
+ts-node evm/governance.js submit cancel <action> <commandId> <activationTime> [options]
+```
+
 ### Check Proposal ETA
 
 Query the execution time for a scheduled proposal.
