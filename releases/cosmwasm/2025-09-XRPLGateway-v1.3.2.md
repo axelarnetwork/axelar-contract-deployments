@@ -1,12 +1,12 @@
 # XRPLGateway v1.3.2
 
 |                | **Owner**                                                         |
-|----------------|-------------------------------------------------------------------|
+| -------------- | ----------------------------------------------------------------- |
 | **Created By** | @k4m4 <nikolas@commonprefix.com>                                  |
 | **Deployment** | @isi8787 <isaac@interoplabs.io>, @k4m4 <nikolas@commonprefix.com> |
 
 | **Network**          | **Deployment Status** | **Date**   |
-|----------------------|-----------------------|------------|
+| -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Deployed              | 2025-09-03 |
 | **Stagenet**         | Deployed              | 2025-09-08 |
 | **Testnet**          | Deployed              | 2025-09-08 |
@@ -27,19 +27,12 @@ Changes in this release:
 
 1. Create `.env`.
 
-| Network              | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-
-| Network              | `DEPOSIT_VALUE` |
-| -------------------- | --------------- |
-| **Devnet-amplifier** | `100000000`     |
-| **Stagenet**         | `100000000`     |
-| **Testnet**          | `2000000000`    |
-| **Mainnet**          | `2000000000`    |
+| Network              | `INIT_ADDRESSES`                                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               |
+| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
+| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
+| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
 ```bash
 MNEMONIC=xyz
@@ -49,8 +42,6 @@ RELEASES_BASE_URL=https://pub-7233af746dc8432f8d9547af0133309d.r2.dev
 ARTIFACT_PATH=wasm
 XRPL_GATEWAY=
 INIT_ADDRESSES=
-RUN_AS_ACCOUNT=
-DEPOSIT_VALUE=
 ```
 
 ```bash
@@ -86,7 +77,6 @@ ts-node cosmwasm/submit-proposal.js store \
   -t "Upload XRPLGateway contract v1.3.2" \
   -d "Upload XRPLGateway contract v1.3.2" \
   -a "$ARTIFACT_PATH" \
-  --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
 
@@ -98,8 +88,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
   -t "Migrate XRPLGateway to v1.3.2" \
   -d "Migrate XRPLGateway to v1.3.2" \
   --msg '{}' \
-  --fetchCodeId \
-  --deposit $DEPOSIT_VALUE
+  --fetchCodeId
 ```
 
 ## Checklist

@@ -79,12 +79,12 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 #### Configuration
 
-| Network              | `governanceAddress`                             | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `operatorAddress`                            |
-| -------------------- | ----------------------------------------------- | ------------------ | -------------------------------------------- | ------------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `operatorAddress`                            |
+| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet**          | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -93,8 +93,8 @@ For each amplifier chain, add the following configuration:
 ```json
 {
   "AxelarServiceGovernance": {
-    "governanceChain": "Axelarnet",
-    "governanceAddress": "[governanceAddress]",
+    "governanceChain": "axelar",
+    "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
     "minimumTimeDelay": [minimumTimeDelay],
     "operator": "[operatorAddress]",
     "deploymentMethod": "create2",

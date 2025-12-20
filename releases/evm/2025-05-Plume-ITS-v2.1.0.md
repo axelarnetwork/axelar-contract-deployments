@@ -60,8 +60,6 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register Plume ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Plume GMP Amplifier](../cosmwasm/2025-05-Plume-GMP-v6.0.4.md).
-
 ```bash
 ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
     --governance # omit on devnet-amplifier

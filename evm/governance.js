@@ -159,27 +159,6 @@ async function getProposalCalldata(governance, chain, wallet, action, options) {
             break;
         }
 
-        case 'transferGovernance': {
-            const newGovernance = options.newGovernance || chain.contracts.InterchainGovernance?.address;
-
-            validateParameters({
-                isValidAddress: { newGovernance },
-            });
-
-            const gateway = new Contract(target, AxelarGateway.abi, wallet);
-            const currGovernance = await gateway.governance();
-
-            printInfo('Current gateway governance', currGovernance);
-            printInfo('New gateway governance', newGovernance);
-
-            if (currGovernance !== governance.address) {
-                printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
-            }
-
-            calldata = gateway.interface.encodeFunctionData('transferGovernance', [newGovernance]);
-            break;
-        }
-
         case 'withdraw': {
             validateParameters({
                 isValidDecimal: { amount: options.amount },
@@ -225,7 +204,7 @@ function decodeProposalPayload(proposal) {
     };
 }
 
-async function processCommand(_axelar, chain, _chains, action, options) {
+async function processCommand(axelar, chain, _chains, action, options) {
     const { contractName, address, privateKey, args = [] } = options;
 
     const governanceAddress = getGovernanceAddress(chain, contractName, address);
@@ -398,8 +377,8 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
             const tx = await governance.execute(
                 commandId,
-                contractConfig.governanceChain,
-                contractConfig.governanceAddress,
+                contracts.InterchainGovernance.governanceChain,
+                axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
@@ -432,8 +411,8 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
             const tx = await governance.execute(
                 commandId,
-                contractConfig.governanceChain,
-                contractConfig.governanceAddress,
+                contracts.InterchainGovernance.governanceChain,
+                axelar.governanceAddress,
                 gmpPayload,
                 gasOptions,
             );
@@ -642,14 +621,12 @@ if (require.main === module) {
     program
         .command('schedule')
         .description('Schedule a new timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -670,10 +647,8 @@ if (require.main === module) {
     program
         .command('cancel')
         .description('Cancel a scheduled timelock proposal')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
+        .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -713,14 +688,12 @@ if (require.main === module) {
     program
         .command('schedule-operator')
         .description('Schedule an operator proposal (AxelarServiceGovernance only)')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -741,10 +714,8 @@ if (require.main === module) {
     program
         .command('cancel-operator')
         .description('Cancel an operator proposal (AxelarServiceGovernance only)')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
+        .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'))
@@ -765,15 +736,13 @@ if (require.main === module) {
     program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
@@ -793,15 +762,13 @@ if (require.main === module) {
     program
         .command('submit-operator')
         .description('Submit an operator proposal via cross-chain message (AxelarServiceGovernance only)')
-        .argument('<action>', 'governance action (raw, upgrade, transferGovernance, transferOperatorship, withdraw)')
+        .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument(
             '<activationTime>',
             'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss) or relative delay in seconds (numeric)',
         )
-        .addOption(
-            new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade, transferGovernance)'),
-        )
+        .addOption(new Option('--targetContractName <targetContractName>', 'target contract name (required for upgrade)'))
         .addOption(new Option('--target <target>', 'governance execution target (required for raw action)'))
         .addOption(new Option('--calldata <calldata>', 'calldata (required for raw action)'))
         .addOption(
