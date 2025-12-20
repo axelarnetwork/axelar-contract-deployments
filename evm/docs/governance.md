@@ -6,6 +6,9 @@ The Interchain Governance system enables cross-chain governance actions for cont
 
 For complete end-to-end examples and contract-specific recipes, see the separate [governance workflow guide](governance-workflows.md).
 
+For **Amplifier** governance proposals where there are **no relayers** (manual proof construction + EVM gateway proof submission),
+see [Amplifier governance (no relayers / manual proof)](amplifier-governance.md).
+
 ## Governance Flow
 
 ```
@@ -27,6 +30,9 @@ For complete end-to-end examples and contract-specific recipes, see the separate
 - Proposals are created on Axelar and executed on EVM chains via GMP.
 - Timelock ensures a minimum delay between scheduling and execution (can be skipped using AxelarServiceGovernance operator approval).
 - Each proposal is uniquely identified by `keccak256(target, calldata, nativeValue)`.
+
+**Amplifier note:** On Amplifier-style routes (AxelarnetGateway `call_contract`), there may be no relayer set up. In that case,
+you must follow the manual proof flow in [amplifier-governance.md](amplifier-governance.md).
 
 ## Proposal Structure
 
@@ -119,8 +125,14 @@ ts-node evm/governance.js schedule <action> <activationTime> [options]
 
 **Activation Time Format:**
 
-- **Absolute**: `YYYY-MM-DDTHH:mm:ss` (UTC), for example `2025-12-31T12:00:00`
-- **Relative**: numeric seconds (e.g., `3600` for “1 hour from now”)
+- **UTC**: `YYYY-MM-DDTHH:mm:ss` (UTC), for example `2025-12-31T12:00:00`
+- **Immediate**: `0` (**supported only for `schedule` and `schedule-operator`**; the destination governance contract will enforce `minimumTimeLockDelay`)
+
+**Important (when using `0`):** after the proposal is actually scheduled on the destination chain, run `eta` and **note down the printed `Proposal ETA`** (you’ll need it to know when `execute` becomes eligible):
+
+```bash
+ts-node evm/governance.js eta --proposal <encoded-payload>
+```
 
 **Examples:**
 
@@ -143,10 +155,13 @@ ts-node evm/governance.js schedule raw <activationTime> \
 Cancel a scheduled timelock proposal before execution.
 
 ```bash
-ts-node evm/governance.js cancel <action> [options]
+ts-node evm/governance.js cancel <action> <activationTime> [options]
 ```
 
-**Options:** Same as `schedule` command (except `--generate-only` and date argument). All options from `schedule` are available.
+**Options:** Same as `schedule` command. Use the same `action` + options as when scheduling, and pass the same `<activationTime>`
+you used for the schedule.
+
+**Note:** `cancel` does **not** accept `activationTime=0`. If you scheduled with `0`, use the resolved timestamp you recorded (or the destination-chain ETA) as `<activationTime>`.
 
 ### Check Proposal ETA
 
@@ -165,10 +180,13 @@ ts-node evm/governance.js eta --proposal <encoded-payload>
 Manually submit a proposal when relayers haven't executed the GMP call automatically.
 
 ```bash
-ts-node evm/governance.js submit <action> <commandId> <activationTime> [options]
+ts-node evm/governance.js submit <proposaltype> <action> <commandId> <activationTime> [options]
 ```
 
 **Note:** This command calls `governance.execute()` directly on the EVM chain when relayers fail to execute automatically.
+
+- **`proposaltype`**: `schedule` or `cancel`
+- **`activationTime`**: must be a UTC timestamp (`YYYY-MM-DDTHH:mm:ss`), not `0`
 
 **How to Find the `commandId` from Axelarscan:**
 
@@ -222,7 +240,7 @@ ts-node evm/governance.js schedule-operator <action> <activationTime> [options]
 ```
 
 - **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
-- **`activationTime`**: Absolute UTC timestamp (e.g., `YYYY-MM-DDTHH:mm:ss`) or relative seconds (e.g., `3600` for 60 minutes from now)
+- **`activationTime`**: UTC timestamp (`YYYY-MM-DDTHH:mm:ss`) or `0`
 - **Options**: Same as `schedule` command (see [Schedule Proposal](#schedule-proposal) section)
 - **Notes:**
     - The command generates an `ApproveOperator` payload.
@@ -233,11 +251,12 @@ ts-node evm/governance.js schedule-operator <action> <activationTime> [options]
 Cancel a previously scheduled operator proposal.
 
 ```bash
-ts-node evm/governance.js cancel-operator <action> [options]
+ts-node evm/governance.js cancel-operator <action> <activationTime> [options]
 ```
 
 - **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
-- **Options**: Same as `schedule-operator` command (except `activationTime` argument)
+- **`activationTime`**: Same activation time used when scheduling the operator proposal
+- **Options**: Same as `schedule-operator` command
 - Cancels the operator proposal identified by `(target, calldata, nativeValue)`.
 - This generates a `CancelOperator` payload for `AxelarServiceGovernance`.
 - Use the same options as when scheduling the proposal.
@@ -247,14 +266,15 @@ ts-node evm/governance.js cancel-operator <action> [options]
 Submit an operator proposal when relayers haven't submitted the GMP call automatically.
 
 ```bash
-ts-node evm/governance.js submit-operator <action> <commandId> <activationTime> [options]
+ts-node evm/governance.js submit-operator <proposaltype> <action> <commandId> <activationTime> [options]
 ```
 
+- **`proposaltype`**: `schedule-operator` or `cancel-operator`
 - **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
 - **`commandId`**: Same `commandId` used in the regular `submit` command (can be obtained from Axelarscan as described above).
 - **`activationTime`**: Same activation time used when scheduling the proposal.
 - **Options**: Same as `schedule-operator` command
-- Manually calls `governance.execute()` on `AxelarServiceGovernance` with an `ApproveOperator` payload.
+- Manually calls `governance.executeOperatorProposal()` on `AxelarServiceGovernance` (ApproveOperator / CancelOperator, depending on `proposaltype`).
 - Use the same options as when scheduling the proposal.
 
 ### Check Operator Approval Status
@@ -290,15 +310,15 @@ ts-node evm/governance.js execute-operator-proposal --proposal <encoded-payload>
 
 ```bash
 # schedule
-ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|0> \
   --newOperator 0xNewOperator
 
 # cancel
-ts-node evm/governance.js cancel transferOperatorship \
+ts-node evm/governance.js cancel transferOperatorship <YYYY-MM-DDTHH:mm:ss|0> \
   --newOperator 0xNewOperator
 
 # submit after vote
-ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+ts-node evm/governance.js submit schedule transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|0> \
   --newOperator 0xNewOperator
 ```
 
