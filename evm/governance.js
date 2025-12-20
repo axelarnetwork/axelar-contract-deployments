@@ -395,7 +395,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             printInfo('Governance target (for execute-operator-proposal)', target);
             printInfo('Governance calldata (for execute-operator-proposal)', calldata);
 
-            eta = dateToEta(activationTime);
+            const eta = dateToEta(activationTime);
             printInfo('Proposal eta', etaToDate(eta));
             const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
 
