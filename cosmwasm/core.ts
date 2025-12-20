@@ -19,10 +19,6 @@ interface CoreCommandOptions extends Options {
     [key: string]: unknown;
 }
 
-/**
- * Execute a core protocol operation either directly (via EOA) or through governance proposal.
- * Default is governance proposal unless --direct flag is set.
- */
 const executeCoreOperation = async (
     client: ClientManager,
     config: ConfigManager,
@@ -31,14 +27,12 @@ const executeCoreOperation = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     if (options.direct) {
-        // Direct execution by EOA
         const [account] = (client as any).accounts || (await (client as any).signer.getAccounts());
 
         printInfo('Executing directly', `${messages.length} message(s)`);
         await signAndBroadcastWithRetry(client, account.address, messages, fee, '');
         printInfo('Transaction successful');
     } else {
-        // Governance proposal (default)
         validateParameters({ isNonEmptyString: { title: options.title, description: options.description } });
 
         if (!confirmProposalSubmission(options, messages)) {
@@ -62,7 +56,6 @@ const nexusChainState = async (
     let message: object;
 
     if (direct) {
-        // For direct execution, encode with EOA as sender
         const [account] = (client as any).accounts || (await (client as any).signer.getAccounts());
 
         const RequestType = getNexusProtoType(requestType);
@@ -81,7 +74,6 @@ const nexusChainState = async (
             value: RequestType.encode(request).finish(),
         };
     } else {
-        // For governance, encode with GOVERNANCE_MODULE_ADDRESS as sender
         message = encodeChainStatusRequest(chains, requestType);
     }
 
