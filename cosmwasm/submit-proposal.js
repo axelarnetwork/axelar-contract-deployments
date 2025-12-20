@@ -22,6 +22,8 @@ const {
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
+    encodeChainStatusRequest,
+    getNexusProtoType,
     validateGovernanceMode,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
@@ -67,8 +69,18 @@ const printProposal = (proposalData) => {
             '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
             '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
         };
+
         const MessageType = typeMap[message.typeUrl];
-        if (MessageType) {
+
+        if (
+            message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
+            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest'
+        ) {
+            const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
+            const MsgType = getNexusProtoType(typeName);
+            const decoded = MsgType.decode(message.value);
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+        } else if (MessageType) {
             const decoded = MessageType.decode(message.value);
             if (decoded.codeId) {
                 decoded.codeId = decoded.codeId.toString();
@@ -355,6 +367,17 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
 
+const chainState = async (client, config, options, _args, fee) => {
+    const requestType = options.action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
+    const proposal = encodeChainStatusRequest(options.chains, requestType);
+
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+
+    return callSubmitProposal(client, config, options, [proposal], fee);
+};
+
 const programHandler = () => {
     const program = new Command();
 
@@ -417,6 +440,17 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
+    });
+
+    const chainStateCmd = program
+        .command('chainState')
+        .description('Submit a proposal to activate or deactivate chain(s) on Nexus module')
+        .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
+        .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
+        .action((options) => mainProcessor(chainState, options));
+
+    addAmplifierOptions(chainStateCmd, {
+        proposalOptions: true,
     });
 
     addAmplifierOptions(
