@@ -349,11 +349,6 @@ function isValidTimeFormat(timeString) {
 
     const trimmedInput = String(timeString).trim();
 
-    if (/^\d+$/.test(trimmedInput)) {
-        const seconds = parseInt(trimmedInput, 10);
-        return !isNaN(seconds) && seconds >= 0;
-    }
-
     const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
     return regex.test(trimmedInput);
 }

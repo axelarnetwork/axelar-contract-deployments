@@ -212,6 +212,15 @@ function decodeProposalPayload(proposal) {
     };
 }
 
+function ensureNonZeroActivationTime(commandName, activationTime) {
+    if (String(activationTime).trim() === '0') {
+        throw new Error(
+            `${commandName} does not support activationTime=0. Use an explicit UTC timestamp (YYYY-MM-DDTHH:mm:ss). ` +
+                `If you scheduled with 0, record the resolved timestamp (e.g. from the script output / destination-chain ETA) and reuse it.`,
+        );
+    }
+}
+
 async function processCommand(_axelar, chain, _chains, action, options) {
     if (!isEvmChain(chain)) {
         throw new Error(`Chain "${chain?.name}" is not an EVM chain (chainType must be "evm")`);
@@ -271,11 +280,6 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 isValidTimeFormat: { activationTime },
             });
 
-            const existingProposalEta = await governance.getProposalEta(target, calldata, nativeValue);
-            if (!existingProposalEta.eq(BigNumber.from(0))) {
-                throw new Error(`Proposal already exists with eta: ${existingProposalEta}.`);
-            }
-
             const eta = dateToEta(activationTime);
             const currTime = getCurrentTimeInSeconds();
             printInfo('Current time', etaToDate(currTime));
@@ -293,6 +297,11 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             printInfo('Governance target (for eta/execute)', target);
             printInfo('Governance calldata (for eta/execute)', calldata);
 
+            const existingProposalEta = await governance.getProposalEta(target, calldata, nativeValue);
+            if (!existingProposalEta.eq(BigNumber.from(0))) {
+                throw new Error(`Proposal already exists with eta: ${existingProposalEta}.`);
+            }
+
             const gmpPayload = encodeGovernanceProposal(ProposalType.ScheduleTimelock, target, calldata, nativeValue, eta);
             printInfo('Governance proposal payload (for eta/execute)', gmpPayload);
 
@@ -305,6 +314,11 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             validateParameters({
                 isValidTimeFormat: { activationTime },
             });
+            ensureNonZeroActivationTime('cancel', activationTime);
+
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
+            printInfo('Governance target (for execute)', target);
+            printInfo('Governance calldata (for execute)', calldata);
 
             const eta = dateToEta(activationTime);
             printInfo('Proposal eta', etaToDate(eta));
@@ -323,10 +337,6 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 printWarn('Proposal eta has already passed.');
             }
 
-            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
-            printInfo('Governance target (for execute)', target);
-            printInfo('Governance calldata (for execute)', calldata);
-
             const gmpPayload = encodeGovernanceProposal(ProposalType.CancelTimelock, target, calldata, nativeValue, eta);
             printInfo('Governance proposal payload (for execute)', gmpPayload);
 
@@ -341,6 +351,10 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             validateParameters({
                 isValidTimeFormat: { activationTime },
             });
+
+            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
+            printInfo('Governance target (for execute-operator-proposal)', target);
+            printInfo('Governance calldata (for execute-operator-proposal)', calldata);
 
             const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
             if (isApproved) {
@@ -360,10 +374,6 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
             }
 
-            const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
-            printInfo('Governance target (for execute-operator-proposal)', target);
-            printInfo('Governance calldata (for execute-operator-proposal)', calldata);
-
             const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
             printInfo('Governance proposal payload (for execute-operator-proposal)', gmpPayload);
 
@@ -375,8 +385,16 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
             const [action, activationTime] = args;
 
+            validateParameters({
+                isValidTimeFormat: { activationTime },
+            });
+            ensureNonZeroActivationTime('cancel-operator', activationTime);
+
             const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
 
+            printInfo('Governance target (for execute-operator-proposal)', target);
+            printInfo('Governance calldata (for execute-operator-proposal)', calldata);
+            
             eta = dateToEta(activationTime);
             printInfo('Proposal eta', etaToDate(eta));
             const isApproved = await governance.isOperatorProposalApproved(target, calldata, nativeValue);
@@ -384,9 +402,6 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             if (!isApproved) {
                 throw new Error('Operator proposal is not approved.');
             }
-
-            printInfo('Governance target (for execute-operator-proposal)', target);
-            printInfo('Governance calldata (for execute-operator-proposal)', calldata);
 
             const gmpPayload = encodeGovernanceProposal(
                 ProposalType.CancelOperator,
@@ -407,6 +422,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 isKeccak256Hash: { commandId },
                 isValidTimeFormat: { activationTime },
             });
+            ensureNonZeroActivationTime('submit', activationTime);
 
             printInfo('Proposal type', proposaltype);
             printInfo('Command ID', commandId);
@@ -446,6 +462,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 isKeccak256Hash: { commandId },
                 isValidTimeFormat: { activationTime },
             });
+            ensureNonZeroActivationTime('submit-operator', activationTime);
 
             printInfo('Proposal type', proposaltype);
             printInfo('Command ID', commandId);
