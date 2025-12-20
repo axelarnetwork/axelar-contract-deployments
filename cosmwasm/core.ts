@@ -1,12 +1,13 @@
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
-import { printInfo, prompt, validateParameters } from '../common';
+import { validateParameters } from '../common';
 import { ConfigManager } from '../common/config';
 import { addAmplifierOptions } from './cli-utils';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { encodeChainStatusRequest, submitProposal } from './utils';
+import { confirmProposalSubmission, submitProposalAndPrint } from './proposal-utils';
+import { encodeChainStatusRequest } from './utils';
 
 interface CoreCommandOptions extends Options {
     yes?: boolean;
@@ -16,22 +17,6 @@ interface CoreCommandOptions extends Options {
     action?: 'activate' | 'deactivate';
     [key: string]: unknown;
 }
-
-const confirmProposalSubmission = (options: CoreCommandOptions, proposalData: object[]): boolean => {
-    printInfo('Proposal messages', JSON.stringify(proposalData, null, 2));
-    return !prompt(`Proceed with proposal submission?`, options.yes);
-};
-
-const callSubmitProposal = async (
-    client: ClientManager,
-    config: ConfigManager,
-    options: CoreCommandOptions,
-    proposal: object[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    const proposalId = await submitProposal(client, config, options, proposal, fee);
-    printInfo('Proposal submitted', proposalId);
-};
 
 const nexusChainState = async (
     client: ClientManager,
@@ -51,7 +36,7 @@ const nexusChainState = async (
         return;
     }
 
-    return callSubmitProposal(client, config, options, [proposal], fee);
+    return submitProposalAndPrint(client, config, options, [proposal], fee);
 };
 
 const programHandler = () => {
