@@ -8,7 +8,7 @@ const {
     BigNumber,
     constants: { AddressZero },
 } = ethers;
-const { Command, Option } = require('commander');
+const { Command, Option, Argument } = require('commander');
 const {
     printInfo,
     getGasOptions,
@@ -777,8 +777,7 @@ if (require.main === module) {
     program
         .command('submit')
         .description('Submit a scheduled proposal via cross-chain message')
-        .argument('<proposaltype>', 'proposal type (schedule, cancel)')
-        .choices(['schedule', 'cancel'])
+        .addArgument(new Argument('<proposaltype>', 'proposal type (schedule, cancel)').choices(['schedule', 'cancel']))
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')
@@ -857,8 +856,12 @@ if (require.main === module) {
     program
         .command('submit-operator')
         .description('Submit an operator proposal via cross-chain message (AxelarServiceGovernance only)')
-        .argument('<proposaltype>', 'proposal type (schedule-operator, cancel-operator)')
-        .choices(['schedule-operator', 'cancel-operator'])
+        .addArgument(
+            new Argument('<proposaltype>', 'proposal type (schedule-operator, cancel-operator)').choices([
+                'schedule-operator',
+                'cancel-operator',
+            ]),
+        )
         .argument('<action>', 'governance action (raw, upgrade, transferOperatorship, withdraw)')
         .argument('<commandId>', 'command id')
         .argument('<activationTime>', 'proposal activation time as UTC timestamp (YYYY-MM-DDTHH:mm:ss)')

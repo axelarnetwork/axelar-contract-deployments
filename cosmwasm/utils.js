@@ -72,7 +72,9 @@ const toArray = (value) => {
 };
 
 const payloadToHexBinary = (payload) => {
-    if (!payload) return '';
+    if (!payload) {
+        return '';
+    }
 
     if (payload.startsWith('0x')) {
         return Buffer.from(payload.slice(2), 'hex').toString('hex');
