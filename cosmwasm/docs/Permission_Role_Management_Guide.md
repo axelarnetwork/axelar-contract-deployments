@@ -4,8 +4,8 @@
 
 This guide covers how to:
 1. Update `ROLE_ACCESS_CONTROL` to a new multisig key
-2. Register a new `ROLE_CHAIN_MANAGEMENT` (controller) address
-3. Deregister an old controller address
+2. Register a new `ROLE_CHAIN_MANAGEMENT` (controller/Key Rotation EOA) address
+3. Deregister an old controller/Key Rotation EOA address
 
 > **⚠️ All operations require `ROLE_ACCESS_CONTROL` permission**
 
@@ -13,7 +13,7 @@ This guide covers how to:
 
 ## Current Role Addresses
 
-### Governance Multisig (ROLE_ACCESS_CONTROL)
+### Governance Multisig/Emergency Operator Multisig (ROLE_ACCESS_CONTROL)
 
 | Network | Address |
 |---------|---------|
@@ -22,7 +22,7 @@ This guide covers how to:
 | **Stagenet** | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
 | **Devnet** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` ⚠️ EOA, not multisig |
 
-### Controller (ROLE_CHAIN_MANAGEMENT)
+### Controller/Key Rotation EOA (ROLE_CHAIN_MANAGEMENT)
 
 | Network | Address |
 |---------|---------|
@@ -165,7 +165,7 @@ axelard query auth account <address> --node $NODE -o json | jq '.account.pub_key
 
 ---
 
-## Step 2: Register New Controller (ROLE_CHAIN_MANAGEMENT)
+## Step 2: Register New Controller/Key Rotation EOA (ROLE_CHAIN_MANAGEMENT)
 
 Registers a new address with `ROLE_CHAIN_MANAGEMENT` permission.
 
@@ -188,9 +188,9 @@ Follow the same signing process as Step 1.2-1.4.
 
 ---
 
-## Step 3: Deregister Old Controller
+## Step 3: Deregister Old Controller/Key Rotation EOA
 
-Removes `ROLE_CHAIN_MANAGEMENT` from an old controller address.
+Removes `ROLE_CHAIN_MANAGEMENT` from an old controller/Key Rotation EOA address.
 
 ### 3.1 Generate unsigned transaction
 
