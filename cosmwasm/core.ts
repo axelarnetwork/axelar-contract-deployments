@@ -13,8 +13,6 @@ interface CoreCommandOptions extends Options {
     yes?: boolean;
     title?: string;
     description?: string;
-    chains?: string[];
-    action?: 'activate' | 'deactivate';
     direct?: boolean;
     [key: string]: unknown;
 }
@@ -25,6 +23,8 @@ const executeCoreOperation = async (
     options: CoreCommandOptions,
     messages: object[],
     fee?: string | StdFee,
+    defaultTitle?: string,
+    defaultDescription?: string,
 ): Promise<void> => {
     if (options.direct) {
         const [account] = (client as any).accounts || (await (client as any).signer.getAccounts());
@@ -33,29 +33,32 @@ const executeCoreOperation = async (
         await signAndBroadcastWithRetry(client, account.address, messages, fee, '');
         printInfo('Transaction successful');
     } else {
-        validateParameters({ isNonEmptyString: { title: options.title, description: options.description } });
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription || defaultTitle;
+        validateParameters({ isNonEmptyString: { title, description } });
 
         if (!confirmProposalSubmission(options, messages)) {
             return;
         }
 
-        return submitProposalAndPrint(client, config, options, messages, fee);
+        return submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
     }
 };
 
-const nexusChainState = async (
+const nexusChainStateHandler = async (
+    action: 'activate' | 'deactivate',
     client: ClientManager,
     config: ConfigManager,
     options: CoreCommandOptions,
-    _args: string[],
+    args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const { chains, action, direct } = options;
+    const chains = args;
     const requestType = action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
 
     let message: object;
 
-    if (direct) {
+    if (options.direct) {
         const [account] = (client as any).accounts || (await (client as any).signer.getAccounts());
 
         const RequestType = getNexusProtoType(requestType);
@@ -77,26 +80,41 @@ const nexusChainState = async (
         message = encodeChainStatusRequest(chains, requestType);
     }
 
-    return executeCoreOperation(client, config, options, [message], fee);
+    const actionText = action.charAt(0).toUpperCase() + action.slice(1);
+    const defaultTitle = `${actionText} ${chains.join(', ')} on Nexus`;
+
+    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
 };
+
+const activateChain = (client: ClientManager, config: ConfigManager, options: CoreCommandOptions, args: string[], fee?: string | StdFee) =>
+    nexusChainStateHandler('activate', client, config, options, args, fee);
+
+const deactivateChain = (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+) => nexusChainStateHandler('deactivate', client, config, options, args, fee);
 
 const programHandler = () => {
     const program = new Command();
 
     program.name('core').description('Execute core Axelar protocol operations');
 
-    const nexusChainStateCmd = program
-        .command('nexus-chain-state')
-        .description(
-            'Activate or deactivate chain(s) on Nexus module (via governance proposal by default, or direct execution with --direct)',
-        )
-        .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
-        .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
-        .option('-t, --title <title>', 'Proposal title (required for governance proposals)')
-        .option('-d, --description <description>', 'Proposal description (required for governance proposals)')
-        .action((options) => mainProcessor(nexusChainState, options));
+    const activateChainCmd = program
+        .command('activate-chain <chains...>')
+        .description('Activate chain(s) on Nexus module')
+        .action((chains, options) => mainProcessor(activateChain, options, chains));
 
-    addCoreOptions(nexusChainStateCmd);
+    addCoreOptions(activateChainCmd);
+
+    const deactivateChainCmd = program
+        .command('deactivate-chain <chains...>')
+        .description('Deactivate chain(s) on Nexus module')
+        .action((chains, options) => mainProcessor(deactivateChain, options, chains));
+
+    addCoreOptions(deactivateChainCmd);
 
     program.parse();
 };
@@ -105,4 +123,4 @@ if (require.main === module) {
     programHandler();
 }
 
-export { nexusChainState };
+export { activateChain, deactivateChain };
