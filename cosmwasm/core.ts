@@ -7,7 +7,7 @@ import { addCoreOptions } from './cli-utils';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { confirmProposalSubmission, submitProposalAndPrint } from './proposal-utils';
-import { encodeChainStatusRequest, getNexusProtoType, signAndBroadcastWithRetry } from './utils';
+import { encodeChainStatusRequest } from './utils';
 
 interface CoreCommandOptions extends Options {
     yes?: boolean;
@@ -27,22 +27,21 @@ const executeCoreOperation = async (
     defaultDescription?: string,
 ): Promise<void> => {
     if (options.direct) {
-        const [account] = client.accounts;
-
-        printInfo('Executing directly', `${messages.length} message(s)`);
-        await signAndBroadcastWithRetry(client, account.address, messages, fee);
-        printInfo('Transaction successful');
-    } else {
-        const title = options.title || defaultTitle;
-        const description = options.description || defaultDescription || defaultTitle;
-        validateParameters({ isNonEmptyString: { title, description } });
-
-        if (!confirmProposalSubmission(options, messages)) {
-            return;
-        }
-
-        await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
+        // TODO: Implement direct execution with custom registry
+        // Direct execution requires registering custom Axelar protobuf types
+        // (e.g., ActivateChainRequest, DeactivateChainRequest) in the client's registry.
+        throw new Error('Direct execution is not yet supported for core operations. Please submit as a governance proposal.');
     }
+
+    const title = options.title || defaultTitle;
+    const description = options.description || defaultDescription || defaultTitle;
+    validateParameters({ isNonEmptyString: { title, description } });
+
+    if (!confirmProposalSubmission(options, messages)) {
+        return;
+    }
+
+    await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
 };
 
 const nexusChainState = async (
@@ -54,30 +53,7 @@ const nexusChainState = async (
     fee?: string | StdFee,
 ): Promise<void> => {
     const requestType = action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
-
-    let message: object;
-
-    if (options.direct) {
-        const [account] = client.accounts;
-
-        const RequestType = getNexusProtoType(requestType);
-        const request = RequestType.create({
-            sender: account.address,
-            chains: args,
-        });
-
-        const errMsg = RequestType.verify(request);
-        if (errMsg) {
-            throw new Error(`Invalid ${requestType}: ${errMsg}`);
-        }
-
-        message = {
-            typeUrl: `/axelar.nexus.v1beta1.${requestType}`,
-            value: RequestType.encode(request).finish(),
-        };
-    } else {
-        message = encodeChainStatusRequest(args, requestType);
-    }
+    const message = encodeChainStatusRequest(args, requestType);
 
     const actionText = action.charAt(0).toUpperCase() + action.slice(1);
     const defaultTitle = `${actionText} ${args.join(', ')} on Nexus`;
