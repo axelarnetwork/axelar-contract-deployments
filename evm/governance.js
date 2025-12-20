@@ -404,7 +404,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.CancelOperator, target, calldata, nativeValue, eta);
-            console.log('Governance proposal payload (for execute-operator-proposal)', gmpPayload);
+            printInfo('Governance proposal payload (for execute-operator-proposal)', gmpPayload);
 
             return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
         }
