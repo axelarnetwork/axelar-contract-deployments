@@ -24,6 +24,7 @@ const {
     GOVERNANCE_MODULE_ADDRESS,
     encodeChainStatusRequest,
     getNexusProtoType,
+    validateGovernanceMode,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
@@ -264,6 +265,28 @@ const executeByGovernance = async (client, config, options, _args, fee) => {
     return callSubmitProposal(client, config, options, messages, fee);
 };
 
+const submitAxelarnetGatewayMessagesByGovernance = async (axelarnetGatewayMsgs, options, { title, description }) => {
+    const submitOptions = {
+        env: options.env,
+        mnemonic: options.mnemonic,
+        contractName: 'AxelarnetGateway',
+        title,
+        description,
+        standardProposal: options.standardProposal,
+        // Avoid a second interactive prompt: caller already confirmed.
+        yes: true,
+        msg: axelarnetGatewayMsgs.map((m) => JSON.stringify(m)),
+    };
+
+    const submitFn = async (client, config, _opts, _args, fee) => {
+        // Fail fast if AxelarnetGateway isn't configured to be governed by the gov module account
+        validateGovernanceMode(config, 'AxelarnetGateway');
+        return executeByGovernance(client, config, submitOptions, [], fee);
+    };
+
+    await mainProcessor(submitFn, submitOptions);
+};
+
 const migrate = async (client, config, options, _args, fee) => {
     let { contractName } = options;
 
@@ -458,4 +481,5 @@ module.exports = {
     confirmProposalSubmission,
     executeByGovernance,
     migrate,
+    submitAxelarnetGatewayMessagesByGovernance,
 };
