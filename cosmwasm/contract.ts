@@ -237,6 +237,120 @@ const createRewardPools = async (
     return executeContractMessage(client, config, options, 'Rewards', messages, fee, defaultTitle, defaultDescription);
 };
 
+const instantiateChainContracts = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const { chainName, salt, admin } = options;
+
+    validateParameters({ isNonEmptyString: { admin, salt } });
+
+    const chainConfig = config.getChainConfig(chainName);
+    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
+    const gatewayContractName = config.getGatewayContractForChainType(chainConfig.chainType);
+    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+
+    config.initContractConfig(gatewayContractName, chainName);
+
+    const gatewayConfig = config.getGatewayContract(chainName);
+    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+    const multisigProverConfig = config.getMultisigProverContract(chainName);
+
+    if (options.fetchCodeId) {
+        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: gatewayContractName });
+        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: verifierContractName });
+        multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
+    }
+
+    validateParameters({
+        isNumber: {
+            gatewayCodeId: gatewayConfig.codeId,
+            votingVerifierCodeId: votingVerifierConfig.codeId,
+            multisigProverCodeId: multisigProverConfig.codeId,
+        },
+    });
+
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
+    const msg = [message];
+
+    const defaultTitle = `Instantiate chain contracts for ${chainName}`;
+    const defaultDescription = `Instantiate Gateway, VotingVerifier and MultisigProver contracts for ${chainName} via Coordinator`;
+
+    if (!config.axelar.contracts.Coordinator.deployments) {
+        config.axelar.contracts.Coordinator.deployments = {};
+    }
+    config.axelar.contracts.Coordinator.deployments[chainName] = {
+        deploymentName: message.instantiate_chain_contracts.deployment_name,
+        salt: salt,
+    };
+
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
+};
+
+const coordinatorInstantiatePermissions = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    // TODO: Support direct execution by registering MsgUpdateInstantiateConfig in the client registry
+    if (!options.governance) {
+        throw new Error('coordinator-instantiate-permissions requires --governance flag');
+    }
+
+    const coordinatorAddress = config.axelar.contracts['Coordinator']?.address;
+
+    if (!coordinatorAddress) {
+        throw new Error('cannot find coordinator address in configuration');
+    }
+
+    const codeId = await getCodeId(client, config, { ...options, contractName: options.contractName });
+    const codeDetails = await getCodeDetails(config, codeId);
+    const permissions = codeDetails.instantiatePermission;
+
+    if (permissions?.permission === AccessType.ACCESS_TYPE_EVERYBODY) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const permittedAddresses = permissions?.addresses ?? [];
+    if (permittedAddresses.includes(coordinatorAddress) && permissions?.permission === AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const addresses = [...permittedAddresses, coordinatorAddress];
+
+    const updateMsg = JSON.stringify([
+        {
+            codeId: codeId,
+            instantiatePermission: {
+                permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
+                addresses: addresses,
+            },
+        },
+    ]);
+
+    const updateOptions = {
+        ...options,
+        msg: updateMsg,
+    };
+
+    const messages = [encodeUpdateInstantiateConfigProposal(updateOptions)];
+
+    const defaultTitle = `Grant Coordinator instantiate permissions for ${options.contractName}`;
+    const defaultDescription = `Allow Coordinator to instantiate ${options.contractName} contracts (code ID: ${codeId})`;
+    const title = options.title || defaultTitle;
+    const description = options.description || defaultDescription;
+
+    validateParameters({ isNonEmptyString: { title, description } });
+
+    await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
+};
+
 // ==================== Emergency Operations ====================
 
 // Router operations (Admin EOA only - cannot use governance)
@@ -395,120 +509,6 @@ const itsUnfreezeChain = async (
 };
 
 // ==================== End Emergency Operations ====================
-
-const instantiateChainContracts = async (
-    client: ClientManager,
-    config: ConfigManager,
-    options: ContractCommandOptions,
-    _args?: string[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    const { chainName, salt, admin } = options;
-
-    validateParameters({ isNonEmptyString: { admin, salt } });
-
-    const chainConfig = config.getChainConfig(chainName);
-    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
-    const gatewayContractName = config.getGatewayContractForChainType(chainConfig.chainType);
-    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-
-    config.initContractConfig(gatewayContractName, chainName);
-
-    const gatewayConfig = config.getGatewayContract(chainName);
-    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    const multisigProverConfig = config.getMultisigProverContract(chainName);
-
-    if (options.fetchCodeId) {
-        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: gatewayContractName });
-        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: verifierContractName });
-        multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
-    }
-
-    validateParameters({
-        isNumber: {
-            gatewayCodeId: gatewayConfig.codeId,
-            votingVerifierCodeId: votingVerifierConfig.codeId,
-            multisigProverCodeId: multisigProverConfig.codeId,
-        },
-    });
-
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
-    const msg = [message];
-
-    const defaultTitle = `Instantiate chain contracts for ${chainName}`;
-    const defaultDescription = `Instantiate Gateway, VotingVerifier and MultisigProver contracts for ${chainName} via Coordinator`;
-
-    if (!config.axelar.contracts.Coordinator.deployments) {
-        config.axelar.contracts.Coordinator.deployments = {};
-    }
-    config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: salt,
-    };
-
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
-};
-
-const coordinatorInstantiatePermissions = async (
-    client: ClientManager,
-    config: ConfigManager,
-    options: ContractCommandOptions,
-    _args?: string[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    // TODO: Support direct execution by registering MsgUpdateInstantiateConfig in the client registry
-    if (!options.governance) {
-        throw new Error('coordinator-instantiate-permissions requires --governance flag');
-    }
-
-    const coordinatorAddress = config.axelar.contracts['Coordinator']?.address;
-
-    if (!coordinatorAddress) {
-        throw new Error('cannot find coordinator address in configuration');
-    }
-
-    const codeId = await getCodeId(client, config, { ...options, contractName: options.contractName });
-    const codeDetails = await getCodeDetails(config, codeId);
-    const permissions = codeDetails.instantiatePermission;
-
-    if (permissions?.permission === AccessType.ACCESS_TYPE_EVERYBODY) {
-        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
-    }
-
-    const permittedAddresses = permissions?.addresses ?? [];
-    if (permittedAddresses.includes(coordinatorAddress) && permissions?.permission === AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES) {
-        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
-    }
-
-    const addresses = [...permittedAddresses, coordinatorAddress];
-
-    const updateMsg = JSON.stringify([
-        {
-            codeId: codeId,
-            instantiatePermission: {
-                permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
-                addresses: addresses,
-            },
-        },
-    ]);
-
-    const updateOptions = {
-        ...options,
-        msg: updateMsg,
-    };
-
-    const messages = [encodeUpdateInstantiateConfigProposal(updateOptions)];
-
-    const defaultTitle = `Grant Coordinator instantiate permissions for ${options.contractName}`;
-    const defaultDescription = `Allow Coordinator to instantiate ${options.contractName} contracts (code ID: ${codeId})`;
-    const title = options.title || defaultTitle;
-    const description = options.description || defaultDescription;
-
-    validateParameters({ isNonEmptyString: { title, description } });
-
-    await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
-};
 
 const programHandler = () => {
     const program = new Command();
