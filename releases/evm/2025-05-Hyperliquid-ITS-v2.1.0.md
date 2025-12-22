@@ -66,8 +66,6 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register Hyperliquid ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Hyperliquid GMP Amplifier](../cosmwasm/2025-04-Hyperliquid-GMP-v6.0.4.md).
-
 ```bash
 ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
     --governance # omit on devnet-amplifier
