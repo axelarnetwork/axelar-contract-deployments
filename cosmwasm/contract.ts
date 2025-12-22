@@ -1,8 +1,11 @@
+import { instantiate2Address } from '@cosmjs/cosmwasm-stargate';
+import { fromHex } from '@cosmjs/encoding';
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 import { AccessType } from 'cosmjs-types/cosmwasm/wasm/v1/types';
+import { createHash } from 'crypto';
 
-import { getChainConfig, printInfo, validateParameters } from '../common';
+import { getChainConfig, printInfo, readContractCode, validateParameters } from '../common';
 import { ConfigManager, GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from '../common/config';
 import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
@@ -10,11 +13,17 @@ import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { executeByGovernance, submitMessagesAsProposal } from './proposal-utils';
 import {
+    encodeStoreCode,
     encodeUpdateInstantiateConfigProposal,
     executeTransaction,
+    getAmplifierContractConfig,
     getCodeDetails,
     getCodeId,
+    getSalt,
     itsHubChainParams,
+    predictAddress,
+    signAndBroadcastWithRetry,
+    uploadContract,
     validateGovernanceMode,
     validateItsChainChange,
 } from './utils';
@@ -351,6 +360,83 @@ const coordinatorInstantiatePermissions = async (
     await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
 };
 
+const saveStoreCodeProposalInfo = (config: ConfigManager, contractName: string, contractCodePath: string, proposalId: string) => {
+    const contractBaseConfig = config.getContractConfig(contractName);
+    contractBaseConfig.storeCodeProposalId = proposalId;
+
+    const contractOptions = { contractName, contractCodePath };
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(contractOptions)).digest().toString('hex');
+};
+
+const storeCode = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractNames = args;
+
+    if (options.governance) {
+        const { contractCodePath, contractCodePaths } = options;
+
+        const proposals = contractNames.map((name) => {
+            validateGovernanceMode(config, name, options.chainName);
+            const contractOptions = {
+                ...options,
+                contractName: name,
+                contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
+            };
+            return encodeStoreCode(contractOptions);
+        });
+
+        const contractList = contractNames.join(', ');
+        const defaultTitle = `Store ${contractList} contract${contractNames.length > 1 ? 's' : ''}`;
+        const defaultDescription = `Upload ${contractList} contract bytecode to the chain`;
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+
+        validateParameters({ isNonEmptyString: { title, description } });
+
+        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, proposals, fee);
+
+        if (proposalId) {
+            contractNames.forEach((name) => {
+                const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
+                if (codePath) {
+                    saveStoreCodeProposalInfo(config, name, codePath, proposalId);
+                }
+            });
+        }
+
+        return;
+    }
+
+    if (contractNames.length > 1) {
+        throw new Error('Direct execution only supports single contract at a time');
+    }
+
+    const [contractName] = contractNames;
+    const { instantiate2, salt, chainName } = options;
+    const storeOptions = { ...options, contractName };
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, storeOptions);
+
+    printInfo('Uploading contract binary');
+    const { checksum, codeId } = await uploadContract(client, storeOptions, fee);
+
+    printInfo('Uploaded contract binary with codeId', codeId);
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    if (instantiate2) {
+        const [account] = client.accounts;
+        const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
+
+        contractConfig.address = address;
+
+        printInfo('Expected contract address', address);
+    }
+};
+
 // ==================== Emergency Operations ====================
 
 // Router operations (Admin EOA only - cannot use governance)
@@ -583,6 +669,15 @@ const programHandler = () => {
     addAmplifierOptions(coordinatorInstantiatePermissionsCmd, {
         codeId: true,
         fetchCodeId: true,
+    });
+
+    const storeCodeCmd = program
+        .command('store-code')
+        .description('Upload contract bytecode')
+        .argument('<contractNames...>', 'contract name(s) to upload')
+        .action((contractNames, options) => mainProcessor(storeCode, options, contractNames));
+    addAmplifierOptions(storeCodeCmd, {
+        storeOptions: true,
     });
 
     // ==================== Emergency Operations Commands ====================

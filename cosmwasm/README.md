@@ -113,9 +113,9 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
 Contract wasm binary can be passed by specifiying the path to the directory containing contract artifact files or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-- `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-dir [contract wasm dir] -c [contract name] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] <contractName> --artifact-dir [contract wasm dir] -e [environment] -n <chain name>`
 
-- `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] <contractName> -v [contract version] -e [environment] -n <chain name>`
 
 **Common options:**
 
@@ -123,7 +123,7 @@ Contract wasm binary can be passed by specifiying the path to the directory cont
 
 Available subcommands:
 
-- `upload`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
+- `store-code`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
 
 - `instantiate`: Instantiates a contract, it gets the codeId by order of priority from:
     1. Value of `--codeId` option
@@ -138,24 +138,30 @@ Some of the contracts depend on each other and need to be deployed in a specific
 
 Example deployments with order dependency:
 
-1.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-dir [contract wasm dir] -c "AxelarnetGateway" --instantiate2 -e devnet`
-2.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-dir [contract wasm dir] -c "Router" --instantiate2 -e devnet`
-3.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
-4.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
-5.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "ServiceRegistry" -e devnet`
-6.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Rewards" -e devnet`
-7.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Coordinator" -e devnet`
-8.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Multisig" -e devnet`
-9.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "InterchainTokenService" -e devnet`
-10. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "VotingVerifier" -e devnet -n "avalanche"`
-11. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Gateway" -e devnet -n "avalanche"`
-12. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "MultisigProver" -e devnet -n "avalanche"`
+1.  `ts-node cosmwasm/contract store-code AxelarnetGateway --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+2.  `ts-node cosmwasm/contract store-code Router --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+3.  `ts-node cosmwasm/contract instantiate AxelarnetGateway --instantiate2 -e devnet`
+4.  `ts-node cosmwasm/contract instantiate Router --instantiate2 -e devnet`
+5.  `ts-node cosmwasm/contract store-instantiate ServiceRegistry --artifact-dir [contract wasm dir] -e devnet`
+6.  `ts-node cosmwasm/contract store-instantiate Rewards --artifact-dir [contract wasm dir] -e devnet`
+7.  `ts-node cosmwasm/contract store-instantiate Coordinator --artifact-dir [contract wasm dir] -e devnet`
+8.  `ts-node cosmwasm/contract store-instantiate Multisig --artifact-dir [contract wasm dir] -e devnet`
+9.  `ts-node cosmwasm/contract store-instantiate InterchainTokenService --artifact-dir [contract wasm dir] -e devnet`
+10. `ts-node cosmwasm/contract store-instantiate VotingVerifier --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+11. `ts-node cosmwasm/contract store-instantiate Gateway --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+12. `ts-node cosmwasm/contract store-instantiate MultisigProver --artifact-dir [contract wasm dir] -e devnet -n avalanche`
 
 ### Constant Address Deployment
 
 To deploy with a constant address using instantiate2, pass the `--instantiate2` flag.
-To upload the contract and compute the expected address without instantiating, pass `--instantiate2` while using the `upload` subcommand. This will write the contract address and the code id to the config file.
+To upload the contract and compute the expected address without instantiating, pass `--instantiate2` while using the `store-code` command. This will write the contract address and the code id to the config file.
 A salt can be passed with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used as a salt.
+
+Example:
+
+```
+ts-node cosmwasm/contract store-code Gateway --instantiate2 -s my-salt
+```
 
 ### Deploying through governance proposals
 
@@ -185,7 +191,13 @@ The deposit amount is automatically set from the config based on whether the pro
 Example usage:
 
 ```
-ts-node cosmwasm/submit-proposal.js store -c ServiceRegistry
+ts-node cosmwasm/contract store-code ServiceRegistry --governance
+```
+
+For multiple contracts in a single proposal:
+
+```
+ts-node cosmwasm/contract store-code Gateway VotingVerifier MultisigProver --governance
 ```
 
 By default, only governance will be able to instantiate the bytecode. To allow other addresses to instantiate the bytecode, pass `--instantiateAddresses [address1],[address2],[addressN]`.

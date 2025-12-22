@@ -3,7 +3,6 @@
 require('../common/cli-utils');
 
 const { createHash } = require('crypto');
-const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 
 const {
@@ -14,6 +13,7 @@ const {
     getAmplifierContractConfig,
     getCodeId,
     getCodeDetails,
+    predictAddress,
     encodeStoreCode,
     encodeStoreInstantiate,
     encodeInstantiate,
@@ -37,22 +37,6 @@ const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { mainProcessor } = require('./processor');
 const { CoordinatorManager } = require('./coordinator');
-
-const predictAddress = async (client, contractConfig, options) => {
-    const { contractName, salt, chainName } = options;
-
-    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
-    const contractAddress = instantiate2Address(
-        fromHex(checksum),
-        GOVERNANCE_MODULE_ADDRESS,
-        getSalt(salt, contractName, chainName),
-        'axelar',
-    );
-
-    printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
-
-    return contractAddress;
-};
 
 const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, proposalId) => {
     const contractBaseConfig = config.getContractConfig(contractName);
