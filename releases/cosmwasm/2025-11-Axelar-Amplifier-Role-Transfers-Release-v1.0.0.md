@@ -52,17 +52,13 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 
 ### Critical: Contract Upgrade Required Before Role Transfers
 
-**Most Amplifier contracts currently lack the `UpdateAdmin` message handler.** Before executing the admin role transfers described in this document, the following contracts must be upgraded to include the required functionality:
+**Some Amplifier contracts currently lack the `UpdateAdmin` message handler.** Before executing the admin role transfers described in this document, the following contracts must be upgraded to include the required functionality:
 
 | Contract | `UpdateAdmin` Available? | Action Required |
 |----------|-------------------------|-----------------|
 | Router | No | Upgrade required |
 | Multisig | No | Upgrade required |
 | InterchainTokenService | No | Upgrade required |
-| ServiceRegistry | No | Upgrade required |
-| Coordinator | No | Upgrade required |
-| Rewards | No | Upgrade required |
-| VotingVerifier | No | Upgrade required |
 | MultisigProver | Yes (but requires Governance, not Admin) | See note below |
 | XRPL Contracts | Yes | N/A |
 
