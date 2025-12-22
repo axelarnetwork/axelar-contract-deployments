@@ -7,7 +7,7 @@ import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { executeByGovernance } from './submit-proposal';
+import { executeByGovernance } from './proposal-utils';
 import { executeTransaction, getCodeId, itsHubChainParams, validateGovernanceMode, validateItsChainChange } from './utils';
 
 interface ContractCommandOptions extends Omit<Options, 'contractName'> {

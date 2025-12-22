@@ -12,7 +12,16 @@ import {
 import { printInfo, prompt } from '../common';
 import { ConfigManager } from '../common/config';
 import { ClientManager } from './processor';
-import { getNexusProtoType, submitProposal } from './utils';
+import {
+    encodeExecuteContract,
+    encodeMigrate,
+    encodeSubmitProposal,
+    getAmplifierContractConfig,
+    getCodeId,
+    getNexusProtoType,
+    signAndBroadcastWithRetry,
+    toArray,
+} from './utils';
 
 interface ProposalOptions {
     yes?: boolean;
@@ -75,16 +84,107 @@ const confirmProposalSubmission = (options: ProposalOptions, proposalData: objec
     return true;
 };
 
-const submitProposalAndPrint = async (
+const submitProposal = async (
     client: ClientManager,
     config: ConfigManager,
     options: ProposalOptions,
     proposal: object[],
     fee?: string | StdFee,
 ): Promise<string> => {
-    const proposalId = await submitProposal(client, config, options, proposal, fee);
+    const deposit =
+        options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
+    const proposalOptions = { ...options, deposit };
+
+    const [account] = client.accounts;
+
+    printInfo('Proposer address', account.address);
+
+    const messages = toArray(proposal);
+
+    const submitProposalMsg = encodeSubmitProposal(messages, config, proposalOptions, account.address);
+
+    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
+    const { events } = result;
+
+    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
+    if (!proposalEvent) {
+        throw new Error('Proposal submission event not found');
+    }
+
+    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
+    if (!proposalId) {
+        throw new Error('Proposal ID not found in events');
+    }
+
+    return proposalId;
+};
+
+const executeByGovernance = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ProposalOptions & { contractName?: string | string[]; msg?: string | string[]; chainName?: string },
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<string | undefined> => {
+    const { chainName } = options;
+    let contractName = options.contractName;
+
+    if (!Array.isArray(contractName)) {
+        contractName = [contractName as string];
+    }
+
+    const singleContractName = contractName[0];
+    if (contractName.length > 1) {
+        throw new Error(
+            'Execute command only supports one contract at a time. Use multiple --msg flags for multiple messages to the same contract.',
+        );
+    }
+
+    const { msg } = options;
+    const msgs = toArray(msg);
+
+    const messages = msgs.map((msgJson) => {
+        const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
+        return encodeExecuteContract(config, msgOptions, chainName);
+    });
+
+    if (!confirmProposalSubmission(options, messages)) {
+        return;
+    }
+
+    const proposalId = await submitProposal(client, config, options, messages, fee);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
 };
 
-export { printProposal, confirmProposalSubmission, submitProposalAndPrint };
+const migrate = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ProposalOptions & { contractName?: string | string[] },
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<string | undefined> => {
+    let { contractName } = options;
+
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error('migrate only supports a single contract at a time');
+        }
+        contractName = contractName[0];
+    }
+
+    const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName } as any);
+    contractConfig.codeId = await getCodeId(client, config, { ...options, contractName } as any);
+
+    const proposal = encodeMigrate(config, { ...options, contractName } as any);
+
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+
+    const proposalId = await submitProposal(client, config, options, [proposal], fee);
+    printInfo('Proposal submitted', proposalId);
+    return proposalId;
+};
+
+export { printProposal, confirmProposalSubmission, submitProposal, executeByGovernance, migrate };

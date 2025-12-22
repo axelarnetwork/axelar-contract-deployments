@@ -17,15 +17,12 @@ const {
     encodeStoreCode,
     encodeStoreInstantiate,
     encodeInstantiate,
-    encodeExecuteContract,
-    encodeMigrate,
     encodeUpdateInstantiateConfigProposal,
     getNexusProtoType,
-    submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
-const { printProposal, confirmProposalSubmission, submitProposalAndPrint } = require('./proposal-utils');
+const { printProposal, confirmProposalSubmission, submitProposal } = require('./proposal-utils');
 const {
     MsgExecuteContract,
     MsgInstantiateContract,
@@ -86,7 +83,8 @@ const storeCode = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, proposal)) {
         return;
     }
-    const proposalId = await submitProposalAndPrint(client, config, options, proposal, fee);
+    const proposalId = await submitProposal(client, config, options, proposal, fee);
+    printInfo('Proposal submitted', proposalId);
     contractNames.forEach((name) => {
         const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
         saveStoreCodeProposalInfo(config, name, codePath, proposalId);
@@ -117,7 +115,8 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
-    const proposalId = await submitProposalAndPrint(client, config, options, [proposal], fee);
+    const proposalId = await submitProposal(client, config, options, [proposal], fee);
+    printInfo('Proposal submitted', proposalId);
 
     contractConfig.storeInstantiateProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
@@ -166,62 +165,12 @@ const instantiate = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
-    const proposalId = await submitProposalAndPrint(client, config, options, [proposal], fee);
+    const proposalId = await submitProposal(client, config, options, [proposal], fee);
+    printInfo('Proposal submitted', proposalId);
     contractConfig.instantiateProposalId = proposalId;
     if (instantiate2) {
         contractConfig.address = contractAddress;
     }
-};
-
-const executeByGovernance = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
-    let contractName = options.contractName;
-
-    if (!Array.isArray(contractName)) {
-        contractName = [contractName];
-    }
-
-    const singleContractName = contractName[0];
-    if (contractName.length > 1) {
-        throw new Error(
-            'Execute command only supports one contract at a time. Use multiple --msg flags for multiple messages to the same contract.',
-        );
-    }
-
-    const { msg } = options;
-    const msgs = toArray(msg);
-
-    const messages = msgs.map((msgJson) => {
-        const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
-        return encodeExecuteContract(config, msgOptions, chainName);
-    });
-
-    if (!confirmProposalSubmission(options, messages)) {
-        return;
-    }
-
-    return submitProposalAndPrint(client, config, options, messages, fee);
-};
-
-const migrate = async (client, config, options, _args, fee) => {
-    let { contractName } = options;
-
-    if (Array.isArray(contractName)) {
-        if (contractName.length > 1) {
-            throw new Error('migrate only supports a single contract at a time');
-        }
-        contractName = contractName[0];
-    }
-
-    const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName });
-    contractConfig.codeId = await getCodeId(client, config, { ...options, contractName });
-
-    const proposal = encodeMigrate(config, { ...options, contractName });
-
-    if (!confirmProposalSubmission(options, [proposal])) {
-        return;
-    }
-    return submitProposalAndPrint(client, config, options, [proposal], fee);
 };
 
 async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
@@ -373,6 +322,4 @@ if (require.main === module) {
 
 module.exports = {
     confirmProposalSubmission,
-    executeByGovernance,
-    migrate,
 };

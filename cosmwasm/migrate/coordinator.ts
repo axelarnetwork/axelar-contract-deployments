@@ -2,7 +2,8 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrate, getCodeId, submitProposal } from '../utils';
+import { submitProposal } from '../proposal-utils';
+import { encodeMigrate, getCodeId } from '../utils';
 import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -248,7 +249,7 @@ async function coordinatorToVersion2_1_1(
                 await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
                 printInfo('Migration succeeded');
             } else {
-                await submitProposal(client, config, migrateOptions, proposal, fee);
+                await submitProposal(client, config, migrateOptions, [proposal], fee);
                 printInfo('Migration proposal successfully submitted');
             }
         } catch (e) {

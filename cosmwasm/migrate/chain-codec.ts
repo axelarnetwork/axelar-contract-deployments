@@ -10,8 +10,8 @@ import { addEnvOption } from '../../common/cli-utils';
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
-import { confirmProposalSubmission } from '../submit-proposal';
-import { encodeMigrate, encodeStoreInstantiate, submitProposal } from '../utils';
+import { confirmProposalSubmission, submitProposal } from '../proposal-utils';
+import { encodeMigrate, encodeStoreInstantiate } from '../utils';
 import { MigrationOptions } from './types';
 
 const programHandler = () => {
@@ -138,7 +138,6 @@ async function storeChainCodecs(
             .digest()
             .toString('hex');
     });
-    return proposalId;
 }
 
 async function migrate(client: ClientManager, config: ConfigManager, options: MigrationOptions, _args: string[], fee: 'auto' | StdFee) {

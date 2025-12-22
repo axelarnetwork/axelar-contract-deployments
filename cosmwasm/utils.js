@@ -1252,35 +1252,6 @@ const encodeChainStatusRequest = (chains, requestType) => {
     };
 };
 
-const submitProposal = async (client, config, options, proposal, fee) => {
-    const deposit =
-        options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
-    const proposalOptions = { ...options, deposit };
-
-    const [account] = await client.signer.getAccounts();
-
-    printInfo('Proposer address', account.address);
-
-    const messages = toArray(proposal);
-
-    const submitProposalMsg = encodeSubmitProposal(messages, config, proposalOptions, account.address);
-
-    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
-    const { events } = result;
-
-    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
-    if (!proposalEvent) {
-        throw new Error('Proposal submission event not found');
-    }
-
-    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
-    if (!proposalId) {
-        throw new Error('Proposal ID not found in events');
-    }
-
-    return proposalId;
-};
-
 const submitCallContracts = async (client, config, options, proposalData, fee) => {
     if (!proposalData.title || !proposalData.description || !proposalData.contract_calls) {
         throw new Error('Invalid proposal data: must have title, description, and contract_calls');
@@ -1535,7 +1506,6 @@ module.exports = {
     encodeCallContracts,
     encodeSubmitProposal,
     encodeChainStatusRequest,
-    submitProposal,
     submitCallContracts,
     signAndBroadcastWithRetry,
     loadProtoDefinition,
