@@ -16,6 +16,7 @@ interface MigrationOptions extends Options {
     yes?: boolean;
     fetchCodeId?: boolean;
     codeId?: number;
+    [key: string]: unknown;
 }
 
 async function migrateAllVotingVerifiers(
