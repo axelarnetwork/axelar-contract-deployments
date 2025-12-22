@@ -90,7 +90,7 @@ ts-node evm/governance.js schedule upgrade <activationTime> \
 ```bash
 # Generate file
 ts-node evm/governance.js schedule upgrade <activationTime> \
-  --targetContractName AxelarGateway --file proposal.json
+  --targetContractName AxelarGateway --generate-only proposal.json
 
 # Submit via CLI
 axelard tx gov submit-proposal call-contracts proposal.json \
@@ -110,11 +110,11 @@ Schedule a new timelock proposal. Generates a proposal JSON for submission to Ax
 ts-node evm/governance.js schedule <action> <activationTime> [options]
 ```
 
-**Actions:** `raw`, `upgrade`, `transferGovernance`, `withdraw`
+**Actions:** `raw`, `upgrade`, `transferOperatorship`, `withdraw`
 
 - `raw`: Schedule a custom governance action by providing the target address and calldata directly. Use this for arbitrary function calls that aren't covered by other actions (including advanced InterchainTokenService operations).
 - `upgrade`: Upgrade a contract to a new implementation (requires `--targetContractName`)
-- `transferGovernance`: Transfer governance of a contract (requires `--targetContractName`)
+- `transferOperatorship`: Transfer operatorship of `AxelarServiceGovernance` (requires `--newOperator`, only works with `AxelarServiceGovernance`)
 - `withdraw`: Withdraw native tokens from the governance contract (requires `--target` and `--amount`)
 
 **Activation Time Format:**
@@ -129,6 +129,10 @@ ts-node evm/governance.js schedule <action> <activationTime> [options]
 ts-node evm/governance.js schedule upgrade <activationTime> \
   --targetContractName AxelarGateway
 
+# Schedule transfer operatorship (AxelarServiceGovernance only)
+ts-node evm/governance.js schedule transferOperatorship <activationTime> \
+  --newOperator 0xNewOperatorAddress
+
 # Raw action - custom function call
 ts-node evm/governance.js schedule raw <activationTime> \
   --target 0x1234... --calldata 0xabcd...
@@ -142,17 +146,19 @@ Cancel a scheduled timelock proposal before execution.
 ts-node evm/governance.js cancel <action> [options]
 ```
 
-**Options:** Same as `schedule` command (except `--file` and date argument). All options from `schedule` are available.
+**Options:** Same as `schedule` command (except `--generate-only` and date argument). All options from `schedule` are available.
 
 ### Check Proposal ETA
 
 Query the execution time for a scheduled proposal.
 
 ```bash
-ts-node evm/governance.js eta --target <address> --calldata <hex>
+ts-node evm/governance.js eta --target <address> --calldata <calldata>
 # OR
-ts-node evm/governance.js eta --proposal <encoded>
+ts-node evm/governance.js eta --proposal <encoded-payload>
 ```
+
+- Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
 ### Submit Proposal (if relayers fail to submit)
 
@@ -179,10 +185,12 @@ ts-node evm/governance.js submit <action> <commandId> <activationTime> [options]
 Execute a scheduled proposal after the timelock period has passed.
 
 ```bash
-ts-node evm/governance.js execute --target <address> --calldata <hex>
+ts-node evm/governance.js execute --target <address> --calldata <calldata>
 # OR
-ts-node evm/governance.js execute --proposal <encoded>
+ts-node evm/governance.js execute --proposal <encoded-payload>
 ```
+
+- Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
 ## Parallel Execution (`--parallel`) and Multi-Chain Proposals
 
@@ -195,10 +203,9 @@ Most EVM scripts accept a **`--parallel`** flag (via shared CLI utilities) when 
 
 Use `--parallel` when you want to schedule the **same logical change** (for example, updating trusted chains or transferring operatorship) on many chains in one governance proposal, while still benefiting from concurrent execution of the EVM helper script itself.
 
-
 ## AxelarServiceGovernance (Service Governance)
 
-`AxelarServiceGovernance` is an alternative governance contract used for Axelar-operated services (for example, `AxelarGasService` or other service contracts configured to use it). Instead of enforcing an on-chain timelock, it introduces **operator proposals** that are approved or rejected by a designated EVM-side operator.
+`AxelarServiceGovernance` is an alternative governance contract used for Axelar-operated services (for example, `AxelarGasService` or other service contracts are configured to use it). Instead of enforcing an on-chain timelock, it introduces **operator proposals** that are approved or rejected by a designated EVM-side operator.
 
 **Key characteristics of service governance:**
 
@@ -206,69 +213,100 @@ Use `--parallel` when you want to schedule the **same logical change** (for exam
 - **Same Axelar governance source of truth:** Proposals are still created and voted on through the Axelar PoS governance system; `AxelarServiceGovernance` only changes how they are gated on the destination chain.
 - **Contract selection:** All base commands (`schedule`, `cancel`, `submit`, `execute`) accept `-c AxelarServiceGovernance` to target the service governance contract instead of `InterchainGovernance`.
 
-### Operator Proposal Lifecycle
-
 ### Schedule Operator Proposal
 
 Schedule an operator proposal governed by `AxelarServiceGovernance`.
 
 ```bash
-ts-node evm/governance.js schedule-operator <target> <calldata> <activationTime> [options]
+ts-node evm/governance.js schedule-operator <action> <activationTime> [options]
 ```
 
-- **`target`**: Address of the contract the operator proposal will call.
-- **`calldata`**: Encoded function calldata.
-- **`activationTime`**: Same format as the standard `schedule` command (absolute UTC timestamp or relative seconds).
+- **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
+- **`activationTime`**: Absolute UTC timestamp (e.g., `YYYY-MM-DDTHH:mm:ss`) or relative seconds (e.g., `3600` for 60 minutes from now)
+- **Options**: Same as `schedule` command (see [Schedule Proposal](#schedule-proposal) section)
 - **Notes:**
-  - The command generates an `ApproveOperator` payload.
-  - Use `--file` to write the generated Axelar proposal JSON instead of submitting immediately.
+    - The command generates an `ApproveOperator` payload.
+    - Use `--generate-only <file>` to write the generated Axelar proposal JSON instead of submitting immediately.
 
 ### Cancel Operator Proposal
 
 Cancel a previously scheduled operator proposal.
 
 ```bash
-ts-node evm/governance.js cancel-operator <target> <calldata> [options]
+ts-node evm/governance.js cancel-operator <action> [options]
 ```
 
+- **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
+- **Options**: Same as `schedule-operator` command (except `activationTime` argument)
 - Cancels the operator proposal identified by `(target, calldata, nativeValue)`.
 - This generates a `CancelOperator` payload for `AxelarServiceGovernance`.
+- Use the same options as when scheduling the proposal.
 
 ### Submit Operator Proposal (if relayers fail to submit)
 
 Submit an operator proposal when relayers haven't submitted the GMP call automatically.
 
 ```bash
-ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <activationTime> [options]
+ts-node evm/governance.js submit-operator <action> <commandId> <activationTime> [options]
 ```
 
+- **`action`**: Governance action (`raw`, `upgrade`, `transferOperatorship`, `withdraw`)
 - **`commandId`**: Same `commandId` used in the regular `submit` command (can be obtained from Axelarscan as described above).
+- **`activationTime`**: Same activation time used when scheduling the proposal.
+- **Options**: Same as `schedule-operator` command
 - Manually calls `governance.execute()` on `AxelarServiceGovernance` with an `ApproveOperator` payload.
+- Use the same options as when scheduling the proposal.
 
 ### Check Operator Approval Status
 
 Check whether an operator proposal has been approved on the destination chain.
 
 ```bash
-ts-node evm/governance.js is-operator-approved <target> <calldata> [options]
+ts-node evm/governance.js is-operator-approved --target <address> --calldata <calldata> [options]
+# OR
+ts-node evm/governance.js is-operator-approved --proposal <encoded-payload> [options]
 ```
+
+- Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
 ### Execute Approved Operator Proposal
 
 Execute an operator proposal that has already been approved.
 
 ```bash
-ts-node evm/governance.js execute-operator-proposal <target> <calldata>  [options]
+ts-node evm/governance.js execute-operator-proposal --target <address> --calldata <calldata> [options]
+# OR
+ts-node evm/governance.js execute-operator-proposal --proposal <encoded-payload> [options]
 ```
+
+- Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
 - Requires the operator proposal to be approved (otherwise it will revert).
 - Forwards `nativeValue` (if non-zero) along with the call to `target`.
 
+## Governance Contract Actions
+
+### Transfer operatorship (AxelarServiceGovernance only):
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --newOperator 0xNewOperator
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+```
+
 ## Troubleshooting
 
-| Error                                                | Solution                                              |
-| ---------------------------------------------------- | ----------------------------------------------------- |
-| "Proposal already exists"                            | Cancel existing proposal or use different parameters  |
-| "TimeLock proposal is not yet eligible"              | Wait until ETA passes                                 |
-| "Proposal does not exist"                            | Check if GMP call was executed successfully           |
+| Error                                                | Solution                                               |
+| ---------------------------------------------------- | ------------------------------------------------------ |
+| "Proposal already exists"                            | Cancel existing proposal or use different parameters   |
+| "TimeLock proposal is not yet eligible"              | Wait until ETA passes                                  |
+| "Proposal does not exist"                            | Check if GMP call was executed successfully            |
 | "Invalid governance action for InterchainGovernance" | Use `-c AxelarServiceGovernance` for operator commands |

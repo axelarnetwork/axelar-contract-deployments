@@ -16,7 +16,7 @@ interface MigrationOptions extends Options {
     yes?: boolean;
     fetchCodeId?: boolean;
     codeId?: number;
-    runAs?: string;
+    [key: string]: unknown;
 }
 
 async function migrateAllVotingVerifiers(
@@ -209,7 +209,7 @@ const programHandler = () => {
             mainProcessor(updateSigningParametersForMultisig, options);
         });
 
-    addOptionsToCommands(program, addAmplifierOptions, { runAs: true });
+    addOptionsToCommands(program, addAmplifierOptions, {});
 
     program.parse();
 };

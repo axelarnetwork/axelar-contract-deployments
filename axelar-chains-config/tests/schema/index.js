@@ -1,3 +1,6 @@
+// Axelar bech32 address pattern (axelar1...)
+const axelarAddressPattern = '^axelar1[a-z0-9]{38,58}$';
+
 const axelarSchema = {
     id: '/info.axelar',
     type: 'object',
@@ -8,8 +11,21 @@ const axelarSchema = {
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
         cosmosSDK: { type: 'string' },
+        governanceAddress: { type: 'string', pattern: axelarAddressPattern },
+        adminAddress: { type: 'string', pattern: axelarAddressPattern },
+        multisigProverAdminAddress: { type: 'string', pattern: axelarAddressPattern },
     },
-    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol', 'cosmosSDK'],
+    required: [
+        'axelarId',
+        'rpc',
+        'lcd',
+        'grpc',
+        'tokenSymbol',
+        'cosmosSDK',
+        'governanceAddress',
+        'adminAddress',
+        'multisigProverAdminAddress',
+    ],
 };
 
 export const contractValueSchema = {

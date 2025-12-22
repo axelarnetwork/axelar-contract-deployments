@@ -88,10 +88,6 @@ const addAmplifierOptions = (program, options = {}) => {
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }
-
-    if (options.runAs) {
-        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
-    }
 };
 
 const addChainNameOption = (program) => {
@@ -106,6 +102,19 @@ const addAmplifierQueryOptions = (program) => {
 
 const addAxelarNodeOption = (program) => {
     program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
+};
+
+const addCoreOptions = (program) => {
+    addEnvOption(program);
+    addAxelarNodeOption(program);
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(
+        new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
+    );
+    program.addOption(new Option('-t, --title <title>', 'Proposal title (optional, auto-generated if not provided)'));
+    program.addOption(new Option('-d, --description <description>', 'Proposal description (optional, defaults to title)'));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
@@ -207,4 +216,5 @@ module.exports = {
     addAmplifierQueryOptions,
     addAmplifierQueryContractOptions,
     addChainNameOption,
+    addCoreOptions,
 };

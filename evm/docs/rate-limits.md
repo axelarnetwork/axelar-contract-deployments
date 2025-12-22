@@ -1,38 +1,53 @@
-## Interchain Token Service Rate Limits
+## Interchain Token Service Flow Limits (rate limits)
 
 ### Overview
 
-The Interchain Token Service (ITS) supports **per-token flow limits** to rate-limit how much value can move in or out of a chain over a period of time.  
-These limits are managed by the ITS owner on each chain via the `evm/its.js` script.
+The Interchain Token Service (ITS) supports **per-token flow limits** to rate-limit how much value can move in and out of a specific blockchain over a period of time(6 hours).  
+These limits are controlled by an address whitelisted with the ITS `operator` role on each chain via the `evm/its.js` script.
 
-**Key points:**
-- **Flow limit** is tracked per ITS `tokenId` on each chain.
-- A **non‑zero flow limit** enables rate limiting; **zero disables** the limit.
-- You can **query**, **set**, or **bulk update** limits, as well as use helpers to **freeze** or **unfreeze** tokens on a chain.
+
+#### Key Concepts
+
+- **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
+- **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
+- **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
+- **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
+- **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
+- Flow limits protect against exploits by capping potential losses per epoch
+
+#### Example Flow Tracking
+
+```
+Epoch starts, flowLimit = 10,000 tokens
+T+1h: Send 8,000 OUT    → netFlow = 8,000   ✅
+T+2h: Receive 5,000 IN  → netFlow = 3,000   ✅
+T+3h: Send 8,000 OUT    → netFlow = 11,000  ❌ REVERTS (FlowLimitExceeded)
+T+6h: New epoch         → netFlow = 0       (counters reset)
+```
 
 All examples below assume:
 
 ```bash
-ts-node evm/its.js <command> -e <env> -n <chain>
+ts-node evm/its.js <command>
 ```
 
 where:
 - `-e, --env` is the deployment environment (e.g. `mainnet`, `testnet`).
 - `-n, --chain` is the EVM chain name from the Axelar chains config.
+- `-p, --privateKey` is set
 
 ---
 
 ### Prerequisites
 
-- ITS must be deployed and configured for the target chain.
 - You have a funded EVM wallet with:
   - Access to the private key via `.env` (see main `README.md`).
-  - **Owner** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`).
+- **Operator** privileges on the ITS contract for **write** operations (`set-flow-limit`, `freeze-tokens`, `unfreeze-tokens`). See [operators.js](../operators.js) for related operations (e.g., whitelist an operator: `evm/operators.js --action addOperator --operator <addr>`).
 
 You can use the standard EVM options for `its.js`, for example:
 
 ```bash
-ts-node evm/its.js flow-limit <token-id> -e mainnet -n ethereum --privateKey 0x...
+ts-node evm/its.js flow-limit <token-id>
 ```
 
 ---
@@ -44,7 +59,7 @@ ts-node evm/its.js flow-limit <token-id> -e mainnet -n ethereum --privateKey 0x.
 Query the current **flow limit** for a token on the current chain.
 
 ```bash
-ts-node evm/its.js flow-limit <token-id> -e <env> -n <chain>
+ts-node evm/its.js flow-limit <token-id>
 ```
 
 - **`token-id`**: ITS token identifier (32‑byte hex string, with or without `0x` prefix).
@@ -59,13 +74,13 @@ Inspect how much value has flowed **into** or **out of** the chain for a given t
 
 ```bash
 # Flow out amount (leaving current chain)
-ts-node evm/its.js flow-out-amount <token-id> -e <env> -n <chain>
+ts-node evm/its.js flow-out-amount <token-id>
 
 # Flow in amount (arriving to current chain)
-ts-node evm/its.js flow-in-amount <token-id> -e <env> -n <chain>
+ts-node evm/its.js flow-in-amount <token-id>
 ```
 
-Use these to monitor how close a token is to hitting its rate limit.
+The combined in-flow and out-flow is used when calculating total flows. Use these to monitor how close a token is to hitting its rate limit to prevent transactions from failing that will exceed the set flow-limit.
 
 ---
 
@@ -74,15 +89,15 @@ Use these to monitor how close a token is to hitting its rate limit.
 Set or update the **flow limit** for a single token.
 
 ```bash
-ts-node evm/its.js set-flow-limit <token-id> <flow-limit> -e <env> -n <chain>
+ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
 ```
 
 - **`token-id`**: ITS token identifier.
 - **`flow-limit`**: New flow limit for this token on the current chain.
 
 Notes:
-- Requires **ITS owner** privileges.
-- `flow-limit = 0` effectively **removes** the limit (no rate limiting for that token on this chain).
+- Requires **ITS operator** privileges.
+- `flow-limit = 0` effectively **removes** the limit (no rate limiting for that token on this chain). Use minimum integer number according to  token decimals to disable flows.
 
 ---
 
@@ -91,14 +106,10 @@ Notes:
 Freeze one or more ITS tokens on the current chain by setting their flow limits to the minimum value (1).
 
 ```bash
-ts-node evm/its.js freeze-tokens <token-id-1> <token-id-2> ... -e <env> -n <chain>
+ts-node evm/its.js freeze-tokens <token-id-1> <token-id-2> ...
 ```
 
-Behavior:
-- Internally calls `setFlowLimits(tokenIds, flowLimits)` with each `flowLimit` set to `1`.
-- Effectively **halts outbound flows** for those token IDs on the current chain (subject to implementation details).
-
-Use this for emergency response when you need to stop transfers for specific tokens.
+It freezes transfers for specific tokens.
 
 ---
 
@@ -107,12 +118,10 @@ Use this for emergency response when you need to stop transfers for specific tok
 Unfreeze one or more ITS tokens on the current chain by setting their flow limits to `0`.
 
 ```bash
-ts-node evm/its.js unfreeze-tokens <token-id-1> <token-id-2> ... -e <env> -n <chain>
+ts-node evm/its.js unfreeze-tokens <token-id-1> <token-id-2> ...
 ```
 
-Behavior:
-- Internally calls `setFlowLimits(tokenIds, flowLimits)` with each `flowLimit` set to `0`.
-- **Re-enables transfers** for those tokens on the current chain by removing the per-chain flow limit.
+It resumes transfers for specific tokens.
 
 ---
 
@@ -122,25 +131,25 @@ Behavior:
 
 1. **Check current flow metrics**
    ```bash
-   ts-node evm/its.js flow-limit <token-id> -e mainnet -n ethereum
-   ts-node evm/its.js flow-out-amount <token-id> -e mainnet -n ethereum
+   ts-node evm/its.js flow-limit <token-id>
+   ts-node evm/its.js flow-out-amount <token-id>
    ```
 2. **Decide on new limit** (based on business/operational constraints).
 3. **Apply new limit**
    ```bash
-   ts-node evm/its.js set-flow-limit <token-id> <new-flow-limit> -e mainnet -n ethereum
+   ts-node evm/its.js set-flow-limit <token-id> <new-flow-limit>
    ```
 
 #### Emergency Freeze and Later Unfreeze
 
 1. **Freeze tokens** on the affected chain:
    ```bash
-   ts-node evm/its.js freeze-tokens <token-id-1> <token-id-2> -e mainnet -n ethereum
+   ts-node evm/its.js freeze-tokens <token-id-1> <token-id-2>
    ```
 2. Investigate and communicate with stakeholders.
 3. **Unfreeze tokens** once it is safe:
    ```bash
-   ts-node evm/its.js unfreeze-tokens <token-id-1> <token-id-2> -e mainnet -n ethereum
+   ts-node evm/its.js unfreeze-tokens <token-id-1> <token-id-2>
    ```
 
 ---
@@ -151,6 +160,6 @@ Behavior:
 |-----------------|-------------|---------------|
 | `TokenManager for tokenId ... does not yet exist.` | Token not yet deployed/linked on this chain. | Verify ITS configuration and that the token was deployed/linked on this chain. |
 | `flow-limit` / `flow-in-amount` / `flow-out-amount` return 0 unexpectedly | Token has not yet been used or limits were never set. | Send a small transfer or set a non‑zero limit where appropriate. |
-| `set-flow-limit` / `freeze-tokens` / `unfreeze-tokens` revert | Caller is not the ITS owner. | Ensure you are using the ITS owner wallet for the target chain. |
+| `set-flow-limit` / `freeze-tokens` / `unfreeze-tokens` revert | Caller is not the ITS operator. | Ensure you are using the ITS operator wallet for the target chain. |
 
 
