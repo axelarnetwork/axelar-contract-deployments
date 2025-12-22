@@ -119,6 +119,22 @@ const submitProposal = async (
     return proposalId;
 };
 
+const submitMessagesAsProposal = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ProposalOptions & { title?: string; description?: string },
+    messages: object[],
+    fee?: string | StdFee,
+): Promise<string> => {
+    if (!confirmProposalSubmission(options, messages)) {
+        throw new Error('Proposal submission cancelled');
+    }
+
+    const proposalId = await submitProposal(client, config, options, messages, fee);
+    printInfo('Proposal submitted', proposalId);
+    return proposalId;
+};
+
 const executeByGovernance = async (
     client: ClientManager,
     config: ConfigManager,
@@ -187,4 +203,4 @@ const migrate = async (
     return proposalId;
 };
 
-export { printProposal, confirmProposalSubmission, submitProposal, executeByGovernance, migrate };
+export { printProposal, confirmProposalSubmission, submitProposal, submitMessagesAsProposal, executeByGovernance, migrate };
