@@ -79,12 +79,12 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 #### Configuration
 
-| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `operatorAddress`                            |
-| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `deploymentMethod` | `operatorAddress`                            |
+| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | ------------------ | -------------------------------------------- |
+| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v6.0.4 devnet-amplifier` | `create2`          | `0xD3Ba43B92cED452D04B20710C4db627667476024` |
+| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v6.0.4`                  | `create2`          | `0x6BA4C187056BF592B29B206381606a2F4d0e9b7d` |
+| **Testnet**          | `300`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-` |
+| **Mainnet**          | `259200`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-` |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
