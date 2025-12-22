@@ -101,23 +101,23 @@ ts-node evm/its.js mint-token [token-id] [to] [amount]
 # Record Token Manger Address
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --salt [same salt as above] -n $CHAIN -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination_chain] --salt [same salt as above] -n $CHAIN -y
 
 
 # Approve token manager to spend tokens
 ts-node evm/its.js approve [token-id] [spender] [amount] 
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value]
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value]
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
 ```
 
 Additionally, to test the patch itself:
 
 ```bash
-ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress [token_address] --chainNames $CHAIN
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token [token_address] --chainNames $CHAIN
 ```
 
 To find an appropriate token address, go to [HashScan](https://hashscan.io/), either testnet or mainnet, and look for a fungible token created with the `max supply` field set to a finite value (e.g. `1000000`).
