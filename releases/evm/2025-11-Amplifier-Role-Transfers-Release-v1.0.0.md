@@ -155,6 +155,36 @@ ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 
 ts-node evm/ownership.js -c AxelarGateway --action owner --parallel
 ```
 
+**For devnet-amplifier with specific chains (avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain):**
+
+```bash
+# Set environment
+ENV=devnet-amplifier
+CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
+
+# Loop through each chain and transfer ownership
+for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
+  echo "Processing chain: $CHAIN"
+  
+  # Get the AxelarServiceGovernance contract address for this chain
+  AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+  
+  echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
+  
+  # Verify current owner
+  ts-node evm/ownership.js -c AxelarGateway --action owner -n $CHAIN
+  
+  # Transfer ownership to AxelarServiceGovernance
+  ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
+  
+  # Verify transfer completed successfully
+  ts-node evm/ownership.js -c AxelarGateway --action owner -n $CHAIN
+  
+  echo "Completed transfer for $CHAIN"
+  echo "---"
+done
+```
+
 ### Step 3: Transfer AxelarAmplifierGateway Operator Role
 
 **New Operator**: Emergency Operator EOA
@@ -200,6 +230,36 @@ ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwn
 
 # Verify transfer completed successfully
 ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
+```
+
+**For devnet-amplifier with specific chains (avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain):**
+
+```bash
+# Set environment
+ENV=devnet-amplifier
+CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
+
+# Loop through each chain and transfer ownership
+for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
+  echo "Processing chain: $CHAIN"
+  
+  # Get the AxelarServiceGovernance contract address for this chain
+  AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+  
+  echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
+  
+  # Verify current owner
+  ts-node evm/ownership.js -c AxelarGasService --action owner -n $CHAIN
+  
+  # Transfer ownership to AxelarServiceGovernance
+  ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
+  
+  # Verify transfer completed successfully
+  ts-node evm/ownership.js -c AxelarGasService --action owner -n $CHAIN
+  
+  echo "Completed transfer for $CHAIN"
+  echo "---"
+done
 ```
 
 ### Step 5: Transfer Operators Owner Role
@@ -250,6 +310,36 @@ ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --
 
 # Verify transfer completed successfully
 ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
+```
+
+**For devnet-amplifier with specific chains (avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain):**
+
+```bash
+# Set environment
+ENV=devnet-amplifier
+CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
+
+# Loop through each chain and transfer ownership
+for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
+  echo "Processing chain: $CHAIN"
+  
+  # Get the AxelarServiceGovernance contract address for this chain
+  AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+  
+  echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
+  
+  # Verify current owner
+  ts-node evm/ownership.js -c InterchainTokenService --action owner -n $CHAIN
+  
+  # Transfer ownership to AxelarServiceGovernance
+  ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
+  
+  # Verify transfer completed successfully
+  ts-node evm/ownership.js -c InterchainTokenService --action owner -n $CHAIN
+  
+  echo "Completed transfer for $CHAIN"
+  echo "---"
+done
 ```
 
 ### Step 7: Transfer InterchainTokenService Operator Role
