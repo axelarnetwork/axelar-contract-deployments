@@ -7,12 +7,12 @@ import { Command } from 'commander';
 import { printInfo, printWarn } from '../../common';
 import { addEnvOption } from '../../common/cli-utils';
 import { ConfigManager } from '../../common/config';
+import { isConsensusChain } from '../../evm/utils';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
 import { confirmProposalSubmission } from '../submit-proposal';
 import { encodeMigrate, getCodeId, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
-import { isConsensusChain } from '../../evm/utils';
 
 const programHandler = () => {
     const program = new Command();
