@@ -531,29 +531,71 @@ The MultisigProver admin role (for all supported chains) should be transferred t
 # Set variables
 ENV=mainnet
 KEY_ROTATION_EOA=<KEY_ROTATION_EOA_ADDRESS>
+PROPOSAL_FILE=multisig_prover_admin_transfer.json
 
-# MultisigProver requires governance proposal for admin updates
+# Step 1: Generate proposal JSON for all chains using --dry-run
+echo "Generating proposal messages for all MultisigProver contracts..."
+
+# Start JSON structure
+echo '{
+  "title": "Transfer MultisigProver Admin to Key Rotation EOA",
+  "summary": "Transfer admin role of MultisigProver for all chains to Key Rotation EOA for timely verifier set updates",
+  "messages": [' > $PROPOSAL_FILE
+
+FIRST=true
 for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid monad; do
   MULTISIG_PROVER_CONTRACT=$(jq -r ".axelar.contracts.MultisigProver[\"$CHAIN_NAME\"].address // empty" ./axelar-chains-config/info/$ENV.json)
   
   if [ -n "$MULTISIG_PROVER_CONTRACT" ] && [ "$MULTISIG_PROVER_CONTRACT" != "null" ]; then
-    echo "Submitting governance proposal for MultisigProver[$CHAIN_NAME]: $MULTISIG_PROVER_CONTRACT"
+    echo "  Adding MultisigProver[$CHAIN_NAME]: $MULTISIG_PROVER_CONTRACT"
     
-    ts-node cosmwasm/submit-proposal.js executeByGovernance \
+    # Use --dry-run to get the message JSON without submitting
+    OUTPUT=$(ts-node cosmwasm/submit-proposal.js executeByGovernance \
       -e $ENV \
       -c MultisigProver \
       -n $CHAIN_NAME \
-      -t "Transfer MultisigProver[$CHAIN_NAME] Admin to Key Rotation EOA" \
-      -d "This proposal transfers the admin role of MultisigProver for $CHAIN_NAME to the Key Rotation EOA for timely verifier set updates." \
-      --msg "{\"update_admin\":{\"admin\":\"$KEY_ROTATION_EOA\"}}"
+      -t "placeholder" \
+      -d "placeholder" \
+      --msg "{\"update_admin\":{\"admin\":\"$KEY_ROTATION_EOA\"}}" \
+      --dry-run 2>/dev/null)
     
-    sleep 6
+    if [ -n "$OUTPUT" ] && [ "$OUTPUT" != "[]" ]; then
+      if [ "$FIRST" = true ]; then
+        FIRST=false
+      else
+        echo "," >> $PROPOSAL_FILE
+      fi
+      # Remove outer brackets from array and append
+      echo "$OUTPUT" | sed 's/^\[//;s/\]$//' >> $PROPOSAL_FILE
+    fi
   fi
 done
 
-# After proposals pass, verify all transfers
+# Close JSON structure
+echo '
+  ],
+  "deposit": "2000000000uaxl"
+}' >> $PROPOSAL_FILE
+
+echo "Generated $PROPOSAL_FILE"
+cat $PROPOSAL_FILE
+
+# Step 2: Submit combined proposal via axelard
+echo ""
+echo "Submitting combined governance proposal..."
+axelard tx gov submit-proposal $PROPOSAL_FILE \
+  --from <wallet> \
+  --chain-id $CHAIN_ID \
+  --node $NODE \
+  --gas auto \
+  --gas-adjustment 1.4 \
+  -y
+
+# Step 3: After proposal passes, verify all transfers
+echo ""
+echo "After proposal passes, verify transfers with:"
 for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid monad; do
-  ts-node cosmwasm/query.ts contract-admin -c MultisigProver -n $CHAIN_NAME -e $ENV 2>/dev/null || true
+  echo "ts-node cosmwasm/query.ts contract-admin -c MultisigProver -n $CHAIN_NAME -e $ENV"
 done
 ```
 

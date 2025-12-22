@@ -174,7 +174,7 @@ const instantiate = async (client, config, options, _args, fee) => {
 };
 
 const executeByGovernance = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
+    const { chainName, dryRun } = options;
     let contractName = options.contractName;
 
     if (!Array.isArray(contractName)) {
@@ -195,6 +195,23 @@ const executeByGovernance = async (client, config, options, _args, fee) => {
         const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
         return encodeExecuteContract(config, msgOptions, chainName);
     });
+
+    if (dryRun) {
+        const contractConfig = config.axelar.contracts[singleContractName];
+        const chainConfig = chainName ? getChainConfig(config.chains, chainName) : null;
+        const contractAddress = contractConfig[chainConfig?.axelarId]?.address || contractConfig.address;
+
+        const dryRunOutput = messages.map((message, index) => ({
+            '@type': '/cosmwasm.wasm.v1.MsgExecuteContract',
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: contractAddress,
+            msg: JSON.parse(msgs[index]),
+            funds: [],
+        }));
+
+        console.log(JSON.stringify(dryRunOutput, null, 2));
+        return;
+    }
 
     if (!confirmProposalSubmission(options, messages)) {
         return;
