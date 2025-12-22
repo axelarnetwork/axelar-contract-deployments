@@ -533,6 +533,19 @@ ENV=mainnet
 KEY_ROTATION_EOA=<KEY_ROTATION_EOA_ADDRESS>
 PROPOSAL_FILE=multisig_prover_admin_transfer.json
 
+# Set deposit based on environment (expedited proposals require higher deposit)
+case $ENV in
+  mainnet|testnet)
+    DEPOSIT="3000000000uaxl"  # 3000 AXL for expedited on mainnet/testnet
+    ;;
+  stagenet)
+    DEPOSIT="150000000uaxl"   # 150 AXL for expedited on stagenet
+    ;;
+  devnet-amplifier)
+    DEPOSIT="150000000uamplifier"  # 150 for expedited on devnet-amplifier
+    ;;
+esac
+
 # Step 1: Generate proposal JSON for all chains using --dry-run
 echo "Generating proposal messages for all MultisigProver contracts..."
 
@@ -540,6 +553,7 @@ echo "Generating proposal messages for all MultisigProver contracts..."
 echo '{
   "title": "Transfer MultisigProver Admin to Key Rotation EOA",
   "summary": "Transfer admin role of MultisigProver for all chains to Key Rotation EOA for timely verifier set updates",
+  "expedited": true,
   "messages": [' > $PROPOSAL_FILE
 
 FIRST=true
@@ -572,10 +586,10 @@ for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid m
 done
 
 # Close JSON structure
-echo '
+echo "
   ],
-  "deposit": "2000000000uaxl"
-}' >> $PROPOSAL_FILE
+  \"deposit\": \"$DEPOSIT\"
+}" >> $PROPOSAL_FILE
 
 echo "Generated $PROPOSAL_FILE"
 cat $PROPOSAL_FILE
