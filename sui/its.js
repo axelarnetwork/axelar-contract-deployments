@@ -270,13 +270,13 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
 
         const mintTxBuilder = new TxBuilder(client);
 
-        const coin = await mintTxBuilder.moveCall({
+        const minted = await mintTxBuilder.moveCall({
             target: `${SUI_PACKAGE_ID}::coin::mint`,
             arguments: [treasuryCap, unitAmount],
             typeArguments: [tokenType],
         });
 
-        mintTxBuilder.tx.transferObjects([coin], walletAddress);
+        mintTxBuilder.tx.transferObjects([minted], walletAddress);
 
         await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
     }
