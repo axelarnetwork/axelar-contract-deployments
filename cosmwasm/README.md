@@ -113,9 +113,9 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
 Contract wasm binary can be passed by specifiying the path to the directory containing contract artifact files or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] <contractName> --artifact-dir [contract wasm dir] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] -c [contract name] --artifact-dir [contract wasm dir] -e [environment] -n <chain name>`
 
-- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] <contractName> -v [contract version] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] -c [contract name] -v [contract version] -e [environment] -n <chain name>`
 
 **Common options:**
 
@@ -129,8 +129,10 @@ Available subcommands:
     1. Value of `--codeId` option
     2. From the network when using `--fetchCodeId` option by comparing previously uploaded bytecode's code hash with config `storeCodeProposalCodeHash`
     3. Value of previously saved `lastUploadedCodeId` in config
+    - Use `--predictOnly` with `--instantiate2` to predict and save the address without instantiating
 
-- `upload-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+- `store-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+    - Note: `instantiate2` is not supported with `--governance` flag for this command
 
 - `migrate`: Migrates a contract using a new codeId, which is retrieved the same way as `instantiate` subcommand. The migrate message must be provided using the `--msg` option.
 
@@ -138,18 +140,18 @@ Some of the contracts depend on each other and need to be deployed in a specific
 
 Example deployments with order dependency:
 
-1.  `ts-node cosmwasm/contract store-code AxelarnetGateway --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
-2.  `ts-node cosmwasm/contract store-code Router --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
-3.  `ts-node cosmwasm/contract instantiate AxelarnetGateway --instantiate2 -e devnet`
-4.  `ts-node cosmwasm/contract instantiate Router --instantiate2 -e devnet`
-5.  `ts-node cosmwasm/contract store-instantiate ServiceRegistry --artifact-dir [contract wasm dir] -e devnet`
-6.  `ts-node cosmwasm/contract store-instantiate Rewards --artifact-dir [contract wasm dir] -e devnet`
-7.  `ts-node cosmwasm/contract store-instantiate Coordinator --artifact-dir [contract wasm dir] -e devnet`
-8.  `ts-node cosmwasm/contract store-instantiate Multisig --artifact-dir [contract wasm dir] -e devnet`
-9.  `ts-node cosmwasm/contract store-instantiate InterchainTokenService --artifact-dir [contract wasm dir] -e devnet`
-10. `ts-node cosmwasm/contract store-instantiate VotingVerifier --artifact-dir [contract wasm dir] -e devnet -n avalanche`
-11. `ts-node cosmwasm/contract store-instantiate Gateway --artifact-dir [contract wasm dir] -e devnet -n avalanche`
-12. `ts-node cosmwasm/contract store-instantiate MultisigProver --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+1.  `ts-node cosmwasm/contract store-code -c AxelarnetGateway --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+2.  `ts-node cosmwasm/contract store-code -c Router --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+3.  `ts-node cosmwasm/contract instantiate -c AxelarnetGateway --instantiate2 -e devnet`
+4.  `ts-node cosmwasm/contract instantiate -c Router --instantiate2 -e devnet`
+5.  `ts-node cosmwasm/contract store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet`
+6.  `ts-node cosmwasm/contract store-instantiate -c Rewards --artifact-dir [contract wasm dir] -e devnet`
+7.  `ts-node cosmwasm/contract store-instantiate -c Coordinator --artifact-dir [contract wasm dir] -e devnet`
+8.  `ts-node cosmwasm/contract store-instantiate -c Multisig --artifact-dir [contract wasm dir] -e devnet`
+9.  `ts-node cosmwasm/contract store-instantiate -c InterchainTokenService --artifact-dir [contract wasm dir] -e devnet`
+10. `ts-node cosmwasm/contract store-instantiate -c VotingVerifier --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+11. `ts-node cosmwasm/contract store-instantiate -c Gateway --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+12. `ts-node cosmwasm/contract store-instantiate -c MultisigProver --artifact-dir [contract wasm dir] -e devnet -n avalanche`
 
 ### Constant Address Deployment
 
@@ -160,7 +162,7 @@ A salt can be passed with `-s`. If no salt is passed but a salt is needed for co
 Example:
 
 ```
-ts-node cosmwasm/contract store-code Gateway --instantiate2 -s my-salt
+ts-node cosmwasm/contract store-code -c Gateway --instantiate2 -s my-salt
 ```
 
 ### Deploying through governance proposals
@@ -191,13 +193,13 @@ The deposit amount is automatically set from the config based on whether the pro
 Example usage:
 
 ```
-ts-node cosmwasm/contract store-code ServiceRegistry --governance
+ts-node cosmwasm/contract store-code -c ServiceRegistry --governance
 ```
 
 For multiple contracts in a single proposal:
 
 ```
-ts-node cosmwasm/contract store-code Gateway VotingVerifier MultisigProver --governance
+ts-node cosmwasm/contract store-code -c Gateway -c VotingVerifier -c MultisigProver --governance
 ```
 
 By default, only governance will be able to instantiate the bytecode. To allow other addresses to instantiate the bytecode, pass `--instantiateAddresses [address1],[address2],[addressN]`.
@@ -218,7 +220,7 @@ Prerequisites: Submit a proposal to upload the bytecode as described in the prev
 Example usage:
 
 ```
-ts-node cosmwasm/submit-proposal.js instantiate -c ServiceRegistry --fetchCodeId
+ts-node cosmwasm/contract instantiate -c ServiceRegistry --fetchCodeId --governance
 ```
 
 Use the option `--fetchCodeId` to retrieve and update the code id from the network by comparing the code hash of the uploaded bytecode with the code hash submitted through the store code proposal mentioned in the previous section.
@@ -266,16 +268,24 @@ ts-node cosmwasm/query.js save-deployed-contracts avalanche
 
 ### Uploading and instantiating in one step
 
-The command `storeInstantiate` from the `submit-proposal` script, allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
+The command `store-instantiate` allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of when using with governance:
 
-1. There is no support for `instantiate2` using this proposal type. This means that the contract address will not be known until the proposal is executed and therefore it cannot be saved in the config.
+1. There is no support for `instantiate2` using this proposal type with `--governance`. This means that the contract address will not be known until the proposal is executed and therefore it cannot be saved in the config.
 
 2. Since governance proposals are executed asynchronously, both the codeId and contract address are not immediately available. Querying the network for the correct values could be tricky if multiple proposals are executed together.
 
 Example usage:
 
+Direct execution:
+
 ```
-ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" --deposit 100000000
+ts-node cosmwasm/contract store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet
+```
+
+Governance proposal:
+
+```
+ts-node cosmwasm/contract store-instantiate -c ServiceRegistry --governance
 ```
 
 ### Execute a contract through governance proposal
