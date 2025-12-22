@@ -237,4 +237,4 @@ axelard query permission params --node $NODE -o json
 | `register-controller` | `ROLE_ACCESS_CONTROL` | ✅ Multiple allowed |
 | `deregister-controller` | `ROLE_ACCESS_CONTROL` | - |
 
-> **💡 Tip:** All these operations can also be executed via **governance proposal** which bypasses the ante handler permission checks.
+> **💡 Tip:** All these operations can also be executed via **governance proposal** which bypasses the ante handler permission checks. See [axelard tx gov CLI reference](https://github.com/axelarnetwork/axelar-core/blob/main/docs/cli/axelard_tx_gov.md) for details on submitting governance proposals.
