@@ -1923,6 +1923,24 @@
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar19z0yzazs0tc35mk5sc0w0tm7kru45mtqnjcftc8xqngeqxjj9yts9gfu6s"
         }
+      },
+      "ChainCodecSui": {
+        "storeInstantiateProposalId": "1541",
+        "storeCodeProposalCodeHash": "c718438e73edb31a1385ce47c4a8e619f5c28456f5035daf1cce1b10b7af67ef",
+        "lastUploadedCodeId": 1615,
+        "codeId": 1615
+      },
+      "ChainCodecStellar": {
+        "storeInstantiateProposalId": "1541",
+        "storeCodeProposalCodeHash": "5b901b82fa5e22999e4d404d2d0cfc24a804fdecd983a9a184446100d3321b66",
+        "lastUploadedCodeId": 1616,
+        "codeId": 1616
+      },
+      "ChainCodecEvm": {
+        "storeInstantiateProposalId": "1541",
+        "storeCodeProposalCodeHash": "50298ab1f7afbe3c802a7378d62a09e6296a5560e9a37de2a838dd579ba76719",
+        "lastUploadedCodeId": 1617,
+        "codeId": 1617
       }
     },
     "axelarId": "axelar",
