@@ -158,6 +158,15 @@ const isValidNumber = (arg) => {
     return !isNaN(num) && isFinite(num);
 };
 
+const isPositiveInteger = (arg) => {
+    if (!isValidNumber(arg)) {
+        return false;
+    }
+
+    const num = Number(arg);
+    return Number.isInteger(num) && num > 0;
+};
+
 const isValidDecimal = (arg) => {
     if (arg === '' || arg === null || arg === undefined) {
         return false;
@@ -480,6 +489,7 @@ const validationFunctions = {
     isValidStellarContract,
     isValidSvmAddressFormat,
     isHexString,
+    isPositiveInteger,
 };
 
 function validateParameters(parameters) {
@@ -619,6 +629,7 @@ const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'Mult
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
+/** Get the domain separator for the given chain. */
 async function getDomainSeparator(axelar, chain, options, contract = 'MultisigProver') {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {

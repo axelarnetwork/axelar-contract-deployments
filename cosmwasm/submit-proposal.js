@@ -9,35 +9,23 @@ const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     CONTRACTS,
     fromHex,
+    toArray,
     getSalt,
     getAmplifierContractConfig,
     getCodeId,
     getCodeDetails,
-    getChainTruncationParams,
-    decodeProposalAttributes,
     encodeStoreCode,
     encodeStoreInstantiate,
     encodeInstantiate,
     encodeExecuteContract,
-    encodeParameterChangeProposal,
     encodeMigrate,
-    isLegacySDK,
     encodeUpdateInstantiateConfigProposal,
     submitProposal,
-    validateItsChainChange,
+    GOVERNANCE_MODULE_ADDRESS,
+    encodeChainStatusRequest,
+    getNexusProtoType,
 } = require('./utils');
-const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
-const { printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
-const {
-    StoreCodeProposal,
-    StoreAndInstantiateContractProposal,
-    InstantiateContractProposal,
-    InstantiateContract2Proposal,
-    ExecuteContractProposal,
-    MigrateContractProposal,
-    UpdateInstantiateConfigProposal,
-} = require('cosmjs-types/cosmwasm/wasm/v1/proposal_legacy');
-const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
+const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
 const {
     MsgExecuteContract,
     MsgInstantiateContract,
@@ -45,6 +33,7 @@ const {
     MsgMigrateContract,
     MsgStoreCode,
     MsgStoreAndInstantiateContract,
+    MsgUpdateInstantiateConfig,
 } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
 
 const { Command, Option } = require('commander');
@@ -53,63 +42,70 @@ const { mainProcessor } = require('./processor');
 const { CoordinatorManager } = require('./coordinator');
 
 const predictAddress = async (client, contractConfig, options) => {
-    const { contractName, salt, chainName, runAs } = options;
+    const { contractName, salt, chainName } = options;
 
     const { checksum } = await client.getCodeDetails(contractConfig.codeId);
-    const contractAddress = instantiate2Address(fromHex(checksum), runAs, getSalt(salt, contractName, chainName), 'axelar');
+    const contractAddress = instantiate2Address(
+        fromHex(checksum),
+        GOVERNANCE_MODULE_ADDRESS,
+        getSalt(salt, contractName, chainName),
+        'axelar',
+    );
 
     printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 
     return contractAddress;
 };
 
-const printProposal = (proposalData, proposalType = null) => {
-    if (proposalType) {
-        // Legacy: single proposal with decoder
-        printInfo(
-            `Encoded ${proposalData.typeUrl}`,
-            JSON.stringify(decodeProposalAttributes(proposalType.toJSON(proposalType.decode(proposalData.value))), null, 2),
-        );
-    } else {
-        // v0.50: array of messages
-        proposalData.forEach((message) => {
-            const typeMap = {
-                '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
-                '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
-                '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
-                '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
-                '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
-                '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
-            };
-            const MessageType = typeMap[message.typeUrl];
-            if (MessageType) {
-                const decoded = MessageType.decode(message.value);
-                if (decoded.codeId) {
-                    decoded.codeId = decoded.codeId.toString();
-                }
-                if (
-                    (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
-                        message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
-                        message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2' ||
-                        message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract' ||
-                        message.typeUrl === '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract') &&
-                    decoded.msg
-                ) {
-                    decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
-                }
-                if (decoded.wasmByteCode) {
-                    decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
-                }
-                printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-            } else {
-                printInfo(`Unknown message type: ${message.typeUrl}`, '<Unable to decode>');
+const printProposal = (proposalData) => {
+    proposalData.forEach((message) => {
+        const typeMap = {
+            '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
+            '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
+            '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
+            '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
+            '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
+            '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
+            '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
+        };
+
+        const MessageType = typeMap[message.typeUrl];
+
+        if (
+            message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
+            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest'
+        ) {
+            const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
+            const MsgType = getNexusProtoType(typeName);
+            const decoded = MsgType.decode(message.value);
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+        } else if (MessageType) {
+            const decoded = MessageType.decode(message.value);
+            if (decoded.codeId) {
+                decoded.codeId = decoded.codeId.toString();
             }
-        });
-    }
+            if (
+                (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
+                    message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
+                    message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2' ||
+                    message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract' ||
+                    message.typeUrl === '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract') &&
+                decoded.msg
+            ) {
+                decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
+            }
+            if (decoded.wasmByteCode) {
+                decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
+            }
+            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
+        } else {
+            printInfo(`Unknown message type: ${message.typeUrl}`, '<Unable to decode>');
+        }
+    });
 };
 
-const confirmProposalSubmission = (options, proposalData, proposalType = null) => {
-    printProposal(proposalData, proposalType);
+const confirmProposalSubmission = (options, proposalData) => {
+    printProposal(proposalData);
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return false;
     }
@@ -131,7 +127,6 @@ const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, propo
 };
 
 const storeCode = async (client, config, options, _args, fee) => {
-    const isLegacy = isLegacySDK(config);
     let contractName = options.contractName;
     const { contractCodePath, contractCodePaths } = options;
 
@@ -139,45 +134,28 @@ const storeCode = async (client, config, options, _args, fee) => {
         contractName = [contractName];
     }
 
-    if (isLegacy) {
-        if (contractName.length > 1) {
-            throw new Error('Legacy SDK only supports storing one contract at a time. Please provide a single contract name.');
-        }
-        const singleContractName = contractName[0];
-        const legacyOptions = { ...options, contractName: singleContractName };
-        const proposal = encodeStoreCode(config, legacyOptions);
+    const contractNames = contractName;
+    const proposal = contractNames.map((name) => {
+        const contractOptions = {
+            ...options,
+            contractName: name,
+            contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
+        };
+        return encodeStoreCode(contractOptions);
+    });
 
-        if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
-            return;
-        }
-        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-        saveStoreCodeProposalInfo(config, singleContractName, contractCodePath, proposalId);
-        return proposalId;
-    } else {
-        const contractNames = contractName;
-        const proposal = contractNames.map((name) => {
-            const contractOptions = {
-                ...options,
-                contractName: name,
-                contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
-            };
-            return encodeStoreCode(config, contractOptions);
-        });
-
-        if (!confirmProposalSubmission(options, proposal)) {
-            return;
-        }
-        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-        contractNames.forEach((name) => {
-            const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
-            saveStoreCodeProposalInfo(config, name, codePath, proposalId);
-        });
-        return proposalId;
+    if (!confirmProposalSubmission(options, proposal)) {
+        return;
     }
+    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
+    contractNames.forEach((name) => {
+        const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
+        saveStoreCodeProposalInfo(config, name, codePath, proposalId);
+    });
+    return proposalId;
 };
 
 const storeInstantiate = async (client, config, options, _args, fee) => {
-    const isLegacy = isLegacySDK(config);
     let { contractName } = options;
     const { instantiate2 } = options;
 
@@ -195,31 +173,18 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
     }
 
     const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, { ...options, contractName }, contractConfig);
-    const proposal = encodeStoreInstantiate(config, { ...options, contractName }, initMsg);
+    const proposal = encodeStoreInstantiate({ ...options, contractName }, initMsg);
 
-    if (isLegacy) {
-        if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
-            return;
-        }
-        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-
-        contractConfig.storeInstantiateProposalId = proposalId;
-        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-            .update(readContractCode({ ...options, contractName }))
-            .digest()
-            .toString('hex');
-    } else {
-        if (!confirmProposalSubmission(options, [proposal])) {
-            return;
-        }
-        const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
-
-        contractConfig.storeInstantiateProposalId = proposalId;
-        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-            .update(readContractCode({ ...options, contractName }))
-            .digest()
-            .toString('hex');
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
     }
+    const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
+
+    contractConfig.storeInstantiateProposalId = proposalId;
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+        .update(readContractCode({ ...options, contractName }))
+        .digest()
+        .toString('hex');
 };
 
 const instantiate = async (client, config, options, _args, fee) => {
@@ -234,7 +199,6 @@ const instantiate = async (client, config, options, _args, fee) => {
         throw new Error('Instantiate command only supports one contract at a time.');
     }
 
-    const isLegacy = isLegacySDK(config);
     const { instantiate2, predictOnly } = options;
 
     const instantiateOptions = { ...options, contractName: singleContractName };
@@ -260,29 +224,17 @@ const instantiate = async (client, config, options, _args, fee) => {
         printInfo('Contract address cannot be predicted without using `--instantiate2` flag, address will not be saved in the config');
     }
 
-    if (isLegacy) {
-        const proposalType = instantiate2 ? InstantiateContract2Proposal : InstantiateContractProposal;
-        if (!confirmProposalSubmission(options, proposal, proposalType)) {
-            return;
-        }
-        const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
-        contractConfig.instantiateProposalId = proposalId;
-        if (instantiate2) {
-            contractConfig.address = contractAddress;
-        }
-    } else {
-        if (!confirmProposalSubmission(options, [proposal])) {
-            return;
-        }
-        const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
-        contractConfig.instantiateProposalId = proposalId;
-        if (instantiate2) {
-            contractConfig.address = contractAddress;
-        }
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+    const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
+    contractConfig.instantiateProposalId = proposalId;
+    if (instantiate2) {
+        contractConfig.address = contractAddress;
     }
 };
 
-const execute = async (client, config, options, _args, fee) => {
+const executeByGovernance = async (client, config, options, _args, fee) => {
     const { chainName } = options;
     let contractName = options.contractName;
 
@@ -297,125 +249,19 @@ const execute = async (client, config, options, _args, fee) => {
         );
     }
 
-    const isLegacy = isLegacySDK(config);
+    const { msg } = options;
+    const msgs = toArray(msg);
 
-    if (isLegacy) {
-        const msgs = Array.isArray(options.msg) ? options.msg : [options.msg];
-        if (msgs.length > 1) {
-            throw new Error('Legacy SDK only supports one message per proposal. Please provide a single --msg flag.');
-        }
-        const singleMsg = msgs[0];
-        const legacyOptions = { ...options, contractName: singleContractName, msg: singleMsg };
-        const proposal = encodeExecuteContract(config, legacyOptions, chainName);
-
-        if (!confirmProposalSubmission(options, proposal, ExecuteContractProposal)) {
-            return;
-        }
-        return callSubmitProposal(client, config, options, proposal, fee);
-    } else {
-        const { msg } = options;
-        const msgs = Array.isArray(msg) ? msg : [msg];
-
-        const messages = msgs.map((msgJson) => {
-            const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
-            return encodeExecuteContract(config, msgOptions, chainName);
-        });
-
-        if (!confirmProposalSubmission(options, messages)) {
-            return;
-        }
-
-        return callSubmitProposal(client, config, options, messages, fee);
-    }
-};
-
-const registerItsChain = async (client, config, options, _args, fee) => {
-    if (options.itsEdgeContract && options.chains.length > 1) {
-        throw new Error('Cannot use --its-edge-contract option with multiple chains.');
-    }
-
-    const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
-
-    if (!itsMsgTranslator) {
-        throw new Error('ItsMsgTranslator address is required for registerItsChain');
-    }
-
-    const chains = options.chains.map((chain) => {
-        const chainConfig = getChainConfig(config.chains, chain);
-        const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
-
-        return {
-            chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContractAddress,
-            msg_translator: itsMsgTranslator,
-            truncation: {
-                max_uint_bits: maxUintBits,
-                max_decimals_when_truncating: maxDecimalsWhenTruncating,
-            },
-        };
+    const messages = msgs.map((msgJson) => {
+        const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
+        return encodeExecuteContract(config, msgOptions, chainName);
     });
 
-    if (options.update) {
-        for (let i = 0; i < options.chains.length; i++) {
-            const chain = options.chains[i];
-            await validateItsChainChange(client, config, chain, chains[i]);
-        }
-    }
-
-    const operation = options.update ? 'update' : 'register';
-
-    return execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'InterchainTokenService',
-            msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
-        },
-        undefined,
-        fee,
-    );
-};
-
-const registerProtocol = async (client, config, options, _args, fee) => {
-    const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
-    const router = config.axelar?.contracts?.Router?.address;
-    const multisig = config.axelar?.contracts?.Multisig?.address;
-
-    return execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'Coordinator',
-            msg: JSON.stringify({
-                register_protocol: {
-                    service_registry_address: serviceRegistry,
-                    router_address: router,
-                    multisig_address: multisig,
-                },
-            }),
-        },
-        undefined,
-        fee,
-    );
-};
-
-const paramChange = async (client, config, options, _args, fee) => {
-    const isLegacy = isLegacySDK(config);
-
-    if (!isLegacy) {
-        throw new Error('Parameter change proposals are not yet supported on SDK v0.50+.');
-    }
-
-    const proposal = encodeParameterChangeProposal(options);
-
-    if (!confirmProposalSubmission(options, proposal, ParameterChangeProposal)) {
+    if (!confirmProposalSubmission(options, messages)) {
         return;
     }
 
-    return callSubmitProposal(client, config, options, proposal, fee);
+    return callSubmitProposal(client, config, options, messages, fee);
 };
 
 const migrate = async (client, config, options, _args, fee) => {
@@ -428,95 +274,15 @@ const migrate = async (client, config, options, _args, fee) => {
         contractName = contractName[0];
     }
 
-    const isLegacy = isLegacySDK(config);
     const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName });
     contractConfig.codeId = await getCodeId(client, config, { ...options, contractName });
 
     const proposal = encodeMigrate(config, { ...options, contractName });
 
-    if (isLegacy) {
-        if (!confirmProposalSubmission(options, proposal, MigrateContractProposal)) {
-            return;
-        }
-        return callSubmitProposal(client, config, options, proposal, fee);
-    } else {
-        if (!confirmProposalSubmission(options, [proposal])) {
-            return;
-        }
-        return callSubmitProposal(client, config, options, [proposal], fee);
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
     }
-};
-
-const instantiateChainContracts = async (client, config, options, _args, fee) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, admin } = options;
-
-    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
-    if (!coordinatorAddress) {
-        throw new Error('Coordinator contract address not found in config');
-    }
-
-    if (!admin) {
-        throw new Error('Admin address is required when instantiating chain contracts');
-    }
-
-    if (!salt) {
-        throw new Error('Salt is required when instantiating chain contracts');
-    }
-
-    const chainConfig = config.getChainConfig(chainName);
-    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
-
-    let gatewayConfig = config.getGatewayContract(chainName);
-    let votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    let multisigProverConfig = config.getMultisigProverContract(chainName);
-
-    if (options.fetchCodeId) {
-        gatewayConfig.codeId = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: GATEWAY_CONTRACT_NAME }));
-        votingVerifierConfig.codeId =
-            verifierCodeId || (await getCodeId(client, config, { ...options, contractName: VERIFIER_CONTRACT_NAME }));
-        multisigProverConfig.codeId =
-            proverCodeId || (await getCodeId(client, config, { ...options, contractName: multisigProverContractName }));
-    } else {
-        config.validateRequired(
-            gatewayConfig.codeId || gatewayCodeId,
-            'No Gateway code ID found. Use --gatewayCodeId or fetch the code ID from the network with --fetchCodeId',
-        );
-        config.validateRequired(
-            votingVerifierConfig.codeId || verifierCodeId,
-            'No VotingVerifier code ID found. Use --verifierCodeId or fetch the code ID from the network with --fetchCodeId',
-        );
-        config.validateRequired(
-            multisigProverConfig.codeId || proverCodeId,
-            'No MultisigProver code ID found. Use --proverCodeId or fetch the code ID from the network with --fetchCodeId',
-        );
-        gatewayConfig.codeId = gatewayCodeId || gatewayConfig.codeId;
-        votingVerifierConfig.codeId = verifierCodeId || votingVerifierConfig.codeId;
-        multisigProverConfig.codeId = proverCodeId || multisigProverConfig.codeId;
-    }
-
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
-
-    const proposalId = await execute(
-        client,
-        config,
-        {
-            ...options,
-            contractName: 'Coordinator',
-            msg: JSON.stringify(message),
-        },
-        undefined,
-        fee,
-    );
-
-    if (!config.axelar.contracts.Coordinator.deployments) {
-        config.axelar.contracts.Coordinator.deployments = {};
-    }
-    config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: salt,
-        proposalId,
-    };
+    return callSubmitProposal(client, config, options, [proposal], fee);
 };
 
 async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
@@ -536,22 +302,19 @@ async function instantiatePermissions(client, options, config, senderAddress, co
         msg: updateMsg,
         title: options.title,
         description: options.description,
-        runAs: senderAddress,
         deposit: options.deposit,
+        standardProposal: options.standardProposal,
     };
 
     const proposal = encodeUpdateInstantiateConfigProposal(updateOptions);
 
-    if (!confirmProposalSubmission(options, proposal, UpdateInstantiateConfigProposal)) {
+    if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
 
-    try {
-        await submitProposal(client, config, updateOptions, proposal, fee);
-        printInfo('Instantiate params proposal successfully submitted');
-    } catch (e) {
-        printError(`Error: ${e}`);
-    }
+    const proposalId = await submitProposal(client, config, updateOptions, [proposal], fee);
+    printInfo('Instantiate params proposal successfully submitted. Proposal ID', proposalId);
+    return proposalId;
 }
 
 async function coordinatorInstantiatePermissions(client, config, options, _args, fee) {
@@ -580,18 +343,16 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
 
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
-const registerDeployment = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructRegisterDeploymentMessage(chainName);
-    const proposalId = await execute(
-        client,
-        config,
-        { ...options, contractName: 'Coordinator', msg: JSON.stringify(message) },
-        undefined,
-        fee,
-    );
-    return proposalId;
+
+const chainState = async (client, config, options, _args, fee) => {
+    const requestType = options.action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
+    const proposal = encodeChainStatusRequest(options.chains, requestType);
+
+    if (!confirmProposalSubmission(options, [proposal])) {
+        return;
+    }
+
+    return callSubmitProposal(client, config, options, [proposal], fee);
 };
 
 const programHandler = () => {
@@ -608,7 +369,6 @@ const programHandler = () => {
         storeOptions: true,
         storeProposalOptions: true,
         proposalOptions: true,
-        runAs: true,
     });
 
     const storeInstantiateCmd = program
@@ -621,7 +381,6 @@ const programHandler = () => {
         storeProposalOptions: true,
         proposalOptions: true,
         instantiateOptions: true,
-        runAs: true,
     });
 
     const instantiateCmd = program
@@ -636,54 +395,17 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
-        runAs: true,
     });
 
-    const executeCmd = program
-        .command('execute')
+    const executeByGovernanceCmd = program
+        .command('executeByGovernance')
         .description('Submit an execute wasm contract proposal')
-        .action((options) => mainProcessor(execute, options));
-    addAmplifierOptions(executeCmd, {
+        .action((options) => mainProcessor(executeByGovernance, options));
+    addAmplifierOptions(executeByGovernanceCmd, {
         contractOptions: true,
         executeProposalOptions: true,
         proposalOptions: true,
-        runAs: true,
     });
-
-    const registerItsChainCmd = program
-        .command('its-hub-register-chains')
-        .description('Submit an execute wasm contract proposal to register or update an InterchainTokenService chain')
-        .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
-        .addOption(
-            new Option(
-                '--its-msg-translator <itsMsgTranslator>',
-                'address for the message translation contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(
-            new Option(
-                '--its-edge-contract <itsEdgeContract>',
-                'address for the ITS edge contract associated with the chain being registered or updated on ITS Hub',
-            ),
-        )
-        .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
-        .action((chains, options) => {
-            options.chains = chains;
-            return mainProcessor(registerItsChain, options);
-        });
-    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
-
-    const registerProtocolCmd = program
-        .command('register-protocol-contracts')
-        .description('Submit an execute wasm contract proposal to register the main protocol contracts (e.g. Router)')
-        .action((options) => mainProcessor(registerProtocol, options));
-    addAmplifierOptions(registerProtocolCmd, { proposalOptions: true, runAs: true });
-
-    const paramChangeCmd = program
-        .command('paramChange')
-        .description('Submit a parameter change proposal')
-        .action((options) => mainProcessor(paramChange, options));
-    addAmplifierOptions(paramChangeCmd, { paramChangeProposalOptions: true, proposalOptions: true });
 
     const migrateCmd = program
         .command('migrate')
@@ -695,25 +417,17 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
-        runAs: true,
     });
 
-    const instantiateChainContractsCmd = program
-        .command('instantiate-chain-contracts')
-        .description(
-            'Submit an execute wasm contract proposal to instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator',
-        )
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
-        .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
-        .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
-        .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')
-        .action((options) => mainProcessor(instantiateChainContracts, options));
-    addAmplifierOptions(instantiateChainContractsCmd, {
+    const chainStateCmd = program
+        .command('chainState')
+        .description('Submit a proposal to activate or deactivate chain(s) on Nexus module')
+        .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
+        .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
+        .action((options) => mainProcessor(chainState, options));
+
+    addAmplifierOptions(chainStateCmd, {
         proposalOptions: true,
-        runAs: true,
-        fetchCodeId: true,
-        instantiateOptions: true,
     });
 
     addAmplifierOptions(
@@ -733,16 +447,6 @@ const programHandler = () => {
         },
     );
 
-    const registerDeploymentCmd = program
-        .command('register-deployment')
-        .description('Submit an execute wasm contract proposal to register a deployment')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .action((options) => mainProcessor(registerDeployment, options));
-    addAmplifierOptions(registerDeploymentCmd, {
-        proposalOptions: true,
-        runAs: true,
-    });
-
     program.parse();
 };
 
@@ -752,6 +456,6 @@ if (require.main === module) {
 
 module.exports = {
     confirmProposalSubmission,
-    execute,
+    executeByGovernance,
     migrate,
 };
