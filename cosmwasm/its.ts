@@ -192,6 +192,17 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
         isNonEmptyString: { interchainTokenServiceAddress },
     });
 
+    let originChain = null;
+    try {
+        const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
+            token_config: { token_id: formatTokenId(tokenId) },
+        });
+        originChain = origin_chain;
+    } catch (error) {
+        printInfo(`Token ${tokenId} is not registered on any chain`);
+        return;
+    }
+
     const registeredChains = (
         await Promise.all(
             Object.keys(config.chains).map(async (axelarChainId: string) => {
@@ -203,16 +214,7 @@ async function checkTokenRegistration(client: ClientManager, config: ConfigManag
         )
     ).filter(Boolean);
 
-    const { origin_chain } = await client.queryContractSmart(interchainTokenServiceAddress, {
-        token_config: { token_id: formatTokenId(tokenId) },
-    });
-
-    if (registeredChains.length === 0) {
-        printInfo(`Token ${tokenId} is not registered on any chain`);
-        return;
-    }
-
-    printInfo(`Token ${tokenId} origin chain is ${origin_chain}. It is registered on: ${registeredChains.join(', ')}`);
+    printInfo(`Token ${tokenId} origin chain is ${originChain}. It is registered on: ${registeredChains.join(', ')}`);
 }
 
 async function alignTokenSupply(client: ClientManager, config: ConfigManager, options) {
@@ -230,7 +232,7 @@ const programHandler = () => {
 
     program
         .name('ITS p2p token registration')
-        .description('Script to perform ITS p2p token registration and check tokens registration status.');
+        .description('Script to perform ITS p2p token registration on ITS Hub and check tokens registration status.');
 
     const registerP2pTokenCmd = program
         .command('register-p2p-token')
@@ -263,7 +265,7 @@ const programHandler = () => {
 
     const alignTokenSupplyCmd = program
         .command('align-token-supply')
-        .description('Align the supply of a token on a chain with the supply on the chain.')
+        .description('Align the token supply on the ITS Hub with the actual supply on the EVM chain.')
         .addOption(new Option('--tokenId <tokenId>', 'Token ID to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--chain <chain>', 'Chain to modify the supply of').makeOptionMandatory(true))
         .addOption(new Option('--tokenAddress <tokenAddress>', 'Token address to modify the supply of').makeOptionMandatory(true))

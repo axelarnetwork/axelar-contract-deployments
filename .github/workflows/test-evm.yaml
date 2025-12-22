@@ -89,6 +89,9 @@ jobs:
               }
             },
             "axelar": {
+              "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+              "adminAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+              "multisigProverAdminAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
               "contracts": {
                 "InterchainTokenService": {
                   "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
@@ -136,7 +139,10 @@ jobs:
         run: ts-node evm/gateway.js --action transferGovernance -y
 
       - name: Generate governance upgrade proposal
-        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGateway --contractName InterchainGovernance  --file ./proposal.json
+        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGateway --contractName InterchainGovernance  --generate-only ./proposal.json
+
+      - name: Gateway transfer governance via InterchainGovernance
+        run: ts-node evm/gateway.js --action transferGovernance --destination 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC --governance --governanceContract InterchainGovernance --activationTime 0 --generate-only gateway-transfer-governance-interchain.json -y
 
       - name: Deploy AxelarServiceGovernance using create3
         run: ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -y
@@ -149,6 +155,10 @@ jobs:
 
       - name: Deploy AxelarGasService using create2
         run: ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
+
+      # same implementation address as the one deployed, since it's derivation must always be the same
+      - name: Generate AxelarGasService upgrade proposal via AxelarServiceGovernance
+        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGasService --implementation 0x61678eED43cd62094BcEE9c725260F0b0ECfaE7c --contractName AxelarServiceGovernance --generate-only ./service-governance-axelargasservice-upgrade.json -y
 
       - name: Deploy ITS using create2
         run: ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y
@@ -215,7 +225,7 @@ jobs:
           ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y --gasOptions \
           '{"gasLimit": 9000000,"gasPriceAdjustment": 1.1}'
 
-      - name: InterchainTokenService remove trusted chain
+      - name: InterchainTokenService remove trusted chain via EOA
         run: ts-node evm/its.js remove-trusted-chains all -y
 
       - name: InterchainTokenService check if address is operator after redeployment
@@ -223,3 +233,15 @@ jobs:
 
       - name: InterchainTokenService transfer operatorship
         run: ts-node evm/its.js transferOperatorship 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC -y
+
+      - name: InterchainTokenService set trusted chains via governance
+        run: ts-node evm/its.js set-trusted-chains remote --governance --activationTime 0 --generate-only its-set-trusted-chains-proposal.json -y
+
+      - name: InterchainTokenService remove trusted chains via governance
+        run: ts-node evm/its.js remove-trusted-chains remote --governance --activationTime 0 --generate-only its-remove-trusted-chains-proposal.json -y
+
+      - name: InterchainTokenService set pause status via governance
+        run: ts-node evm/its.js set-pause-status true --governance --activationTime 0 --generate-only its-pause-status-proposal.json -y
+
+      - name: InterchainTokenService migrate interchain token via governance
+        run: ts-node evm/its.js migrate-interchain-token 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 --governance --activationTime 0 --generate-only its-migrate-interchain-token-proposal.json -y
