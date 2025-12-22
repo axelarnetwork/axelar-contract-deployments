@@ -65,29 +65,22 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
         -c ChainCodecSui  \
         -t "Stores chain-codec contract for Sui" \
         -d "Stores chain-codec v1.0.0 for Sui" \
+        --fetchCodeId
         --instantiate2
 
     ts-node cosmwasm/submit-proposal.js instantiate \
         -c ChainCodecStellar  \
         -t "Stores chain-codec contract for Stellar" \
         -d "Stores chain-codec v1.0.0 for Stellar" \
+        --fetchCodeId
         --instantiate2
 
     ts-node cosmwasm/submit-proposal.js instantiate \
         -c ChainCodecEvm  \
         -t "Stores chain-codec contract EVM" \
         -d "Stores chain-codec v1.0.0 for EVM" \
+        --fetchCodeId
         --instantiate2
-    ```
-
-1. Wait for the proposal to pass and run the following:
-
-    ```bash
-    ts-node cosmwasm/update-code-id.js -c ChainCodecSui ChainCodecStellar ChainCodecEvm
-    ```
-
-    ```bash
-    ts-node cosmwasm/query.ts contract-versions -c ChainCodecSui ChainCodecStellar ChainCodecEvm
     ```
 
 ### MultisigProver and VotingVerifier migration
@@ -153,7 +146,7 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
 1. Verify multisig and voting verifier contract version
 
 ```bash
-ts-node cosmwasm/query.ts contract-versions -c VotingVerifier MultisigProver Coordinator
+ts-node cosmwasm/query.ts contract-versions -c VotingVerifier MultisigProver Coordinator ChainCodecSui ChainCodecStellar ChainCodecEvm
 ```
 
 Expected env config update:
