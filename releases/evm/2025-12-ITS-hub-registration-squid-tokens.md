@@ -8,8 +8,8 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Testnet**          | TBD                   | 20xx-xx-xx |
-| **Mainnet**          | TBD                   | 20xx-xx-xx |
+| **Testnet**          | Completed             | 2025-12-13 |
+| **Mainnet**          | Completed             | 2025-12-17 |
 
 
 ### Background
@@ -39,6 +39,8 @@ Before running the scripts, copy and paste the squid token config files (two `sq
 ```
 
 1. Run the following script in order to register the tokens on testnet ITS Hub (for `testnet` and `mainnet` separately):
+
+Scripts can be found in this [PR #1136](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1136) if they are not present on the main branch.
 
 ```bash
 ts-node cosmwasm/migrate/register-p2p-tokens.ts register-tokens

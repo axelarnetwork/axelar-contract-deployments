@@ -8,10 +8,10 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet amplifier** | TBD                   | 20xx-xx-xx |
-| **Stagenet**         | TBD                   | 20xx-xx-xx |
-| **Testnet**          | TBD                   | 20xx-xx-xx |
-| **Mainnet**          | TBD                   | 20xx-xx-xx |
+| **Devnet amplifier** | Completed             | 2025-12-16 |
+| **Stagenet**         | Completed             | 2025-12-16 |
+| **Testnet**          | Completed             | 2025-12-16 |
+| **Mainnet**          | Completed             | 2025-12-18 |
 
 
 ### Background
@@ -33,11 +33,13 @@ ENV="[mainnet | testnet | stagenet | devnet-amplifier]"
 1. Set `axelar` as a trusted chain on each EVM chain that has ITS deployed.
 
 ```bash
-ts-node evm/its.js set-trusted-chains axelar -n all
+ts-node evm/its.js set-trusted-chains all -n [consensus chains]
 ```
 
 
 1. Align token supply registered on ITS hub.
+
+Scripts can be found in this [PR #1136](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1136) if they are not present on the main branch.
 
 Run the following command to align token supply per each environment:
 
@@ -45,7 +47,11 @@ Run the following command to align token supply per each environment:
 ts-node cosmwasm/migrate/register-p2p-tokens.ts align-token-supply
 ```
 
-**Note:** This command should be run for both squid & non-squid tokens
+**Note:** This command should be run for both squid & fetched tokens. The config file should be placed in `axelar-chains-config/info/tokens-p2p/tokens-${env}.json`.
+
+Pre-fetched (non-squid) tokens can be found in this [PR #1255](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1255).
+
+Squid tokens can be found in the config repository.
 
 ### Checklist
 

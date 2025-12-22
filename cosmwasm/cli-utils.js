@@ -88,10 +88,6 @@ const addAmplifierOptions = (program, options = {}) => {
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }
-
-    if (options.runAs) {
-        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
-    }
 };
 
 const addChainNameOption = (program) => {
@@ -199,6 +195,7 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 
 module.exports = {
