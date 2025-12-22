@@ -10,6 +10,7 @@ export interface MigrationOptions extends Options {
     title?: string;
     description?: string;
     codeId?: number;
+    [key: string]: unknown;
 }
 
 export interface MigrationCheckOptions extends Options {
