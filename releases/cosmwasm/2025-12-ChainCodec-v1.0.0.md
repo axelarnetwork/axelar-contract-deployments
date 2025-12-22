@@ -128,7 +128,8 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
     ts-node cosmwasm/submit-proposal.js store \
         -c Coordinator \
         -t "Upload Coordinator contract v3.0.0" \
-        -d "Upload Coordinator contract v3.0.0"
+        -d "Upload Coordinator contract v3.0.0" \
+        -v 3.0.0
     ```
 2. Migrate the Coordinator to the stored contract.
     ```bash

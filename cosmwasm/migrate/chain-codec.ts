@@ -12,6 +12,7 @@ import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../pr
 import { confirmProposalSubmission } from '../submit-proposal';
 import { encodeMigrate, getCodeId, submitProposal } from '../utils';
 import { MigrationOptions } from './types';
+import { isConsensusChain } from '../../evm/utils';
 
 const programHandler = () => {
     const program = new Command();
@@ -100,7 +101,7 @@ async function migrate(client: ClientManager, config: ConfigManager, options: Mi
             verifierCodeId: number;
             verifierMsg: JsonObject;
         }[] = [];
-        for (const [chainName, chainConfig] of Object.entries(config.chains)) {
+        for (const [chainName, chainConfig] of Object.entries(config.chains).filter(([_, chainConfig]) => !isConsensusChain(chainConfig))) {
             let codecAddress: string;
             try {
                 codecAddress = config.getChainCodecAddress(chainConfig.chainType);
