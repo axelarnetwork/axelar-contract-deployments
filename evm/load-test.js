@@ -79,10 +79,12 @@ const startTest = async (config, options) => {
     const transactions = [];
     let writing = false;
 
-    const args = [destinationChain, tokenId, destinationAddress, transferAmount];
-
     const itsOptions = {
         chainNames: sourceChain,
+        destinationChain,
+        tokenId,
+        destinationAddress,
+        amount: transferAmount,
         gasValue: gasValue || (await estimateGas(config, options)),
         metadata: '0x',
         env,
@@ -113,7 +115,7 @@ const startTest = async (config, options) => {
         if (pk) {
             const promiseId = promiseCounter++;
 
-            const promise = its(ITS_ACTION_INTERCHAIN_TRANSFER, args, { ...itsOptions, privateKey: pk })
+            const promise = its(ITS_ACTION_INTERCHAIN_TRANSFER, [], { ...itsOptions, privateKey: pk })
                 .then((txHash) => {
                     txCount++;
 
