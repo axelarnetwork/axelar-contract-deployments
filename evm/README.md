@@ -618,13 +618,13 @@ ts-node evm/interchainTokenFactory.js contract-id --chainNames avalanche --env t
 Computes the deploy salt for an interchain token.
 
 ```bash
-ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer <deployer>  --chainNames <chain_name> --env <env> --salt <salt>
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt <deployer>  --chainNames <chain_name> --env <env> --salt <salt>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
 ```
 
 ### Canonical Interchain Token Deploy Salt
@@ -632,13 +632,13 @@ ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt --deployer 0x
 Computes the deploy salt for a canonical interchain token.
 
 ```bash
-ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --tokenAddress <token_address> --chainNames <chain_name>  --env <env>
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt <token_address> --chainNames <chain_name>  --env <env>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --tokenAddress 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
 ```
 
 ### Canonical Interchain Token Id
@@ -646,14 +646,14 @@ ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt --t
 Computes the ID for a canonical interchain token based on its address.
 
 ```bash
-ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddress <token_address> --chainNames <chain_name>  --env <env>
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id <token_address> --chainNames <chain_name>  --env <env>
 
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddress 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
 ```
 
 ### Interchain Token Id
@@ -661,13 +661,13 @@ ts-node evm/interchainTokenFactory.js canonical-interchain-token-id --tokenAddre
 Computes the ID for an interchain token based on the deployer and a salt.
 
 ```bash
-ts-node evm/interchainTokenFactory.js interchain-token-id --deployer <deployer> --chainNames <chain_name> --env <env> --salt <salt>
+ts-node evm/interchainTokenFactory.js interchain-token-id <deployer> --chainNames <chain_name> --env <env> --salt <salt>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js interchain-token-id --deployer 0x312dba807EAE77f01EF3dd21E885052f8F617c5B --chainNames avalanche --env testnet --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+ts-node evm/interchainTokenFactory.js interchain-token-id 0x312dba807EAE77f01EF3dd21E885052f8F617c5B --chainNames avalanche --env testnet --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
 ```
 
 ### Deploy Interchain Token
@@ -691,13 +691,13 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token --name Test_Token 
 Deploys a remote interchain token on a specified destination chain. No additional minter is set on the deployed token.
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain <destination_chain> --chainNames <chain_name>  --env <env> --salt <salt>
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token <destination_chain> --chainNames <chain_name>  --env <env> --salt <salt>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain Avalanche  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token  Avalanche  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
 ```
 
 
@@ -706,13 +706,13 @@ ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinati
 Registers a canonical token as an interchain token and deploys its token manager.
 
 ```bash
-ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress <token_address> --chainNames <chain_name> --env <env>
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token <token_address> --chainNames <chain_name> --env <env>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress 0xff0021D9201B51C681d26799A338f98741fBBB6a --chainNames ethereum-sepolia --env testnet
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token 0xff0021D9201B51C681d26799A338f98741fBBB6a --chainNames ethereum-sepolia --env testnet
 ```
 
 ### Deploy Remote Canonical Interchain Token
@@ -720,13 +720,13 @@ ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --toke
 Deploys a canonical interchain token on a remote chain.
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress <token_address> --destinationChain <destination_chain> --chainNames <chain_name> --env <env>
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token <token_address> <destination_chain> --chainNames <chain_name> --env <env>
 ```
 
 Example:
 
 ```bash
-ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress 0x4a895FB659aAD3082535Aa193886D7501650685b --destinationChain Avalanche --chainNames ethereum-sepolia --env testnet
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche --chainNames ethereum-sepolia --env testnet
 ```
 
 ### Register Custom Token
