@@ -264,7 +264,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     // Mint pre-registration coins
     const amount = Number.isFinite(Number(options.mintAmount)) ? parseInt(options.mintAmount) : 0;
     if (amount) {
-        const unitAmount = getUnitAmount(options.mintAmount, decimals);
+        const unitAmount = coin.decimals ? getUnitAmount(options.mintAmount, coin.decimals) : getUnitAmount(options.mintAmount, decimals);
 
         const mintTxBuilder = new TxBuilder(client);
 
