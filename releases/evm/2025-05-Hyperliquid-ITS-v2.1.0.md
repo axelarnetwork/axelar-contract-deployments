@@ -1,16 +1,16 @@
 ## Hyperliquid ITS v2.1.0
 
-|                | **Owner**                          |
-| -------------- | ---------------------------------- |
+|                | **Owner**                       |
+| -------------- | ------------------------------- |
 | **Created By** | @isi8787 <isaac@interoplabs.io> |
-| **Deployment** | @isi8787 <isaac@interoplabs.io>  |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | TBD             | TBD |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Network**          | **Deployment Status** | **Date** |
+| -------------------- | --------------------- | -------- |
+| **Devnet Amplifier** | TBD                   | TBD      |
+| **Stagenet**         | -                     | TBD      |
+| **Testnet**          | -                     | TBD      |
+| **Mainnet**          | -                     | TBD      |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
 
@@ -57,6 +57,7 @@ ts-node evm/deploy-its.js -s "v2.1.1" -m create2 --proxySalt 'v1.0.0'
 ### Verify Upgraded ITS Contracts
 
 Install the latest release that supports Hyperliquid ITS specific contracts for updating deployer address on Interchain Tokens. Example command is:
+
 ```bash
 npm install @axelar-network/interchain-token-service@0.0.0-snapshot.<commit-hash>
 ```
@@ -65,15 +66,9 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register Hyperliquid ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Hyperliquid GMP Amplifier](../cosmwasm/2025-04-Hyperliquid-GMP-v6.0.4.md).
-
 ```bash
-ts-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" \
-    --deposit $DEPOSIT_VALUE \
-    --runAs $RUN_AS_ACCOUNT
+ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+    --governance # omit on devnet-amplifier
 ```
 
 ## Set Hyperliquid as trusted chain on remote ITS contracts
@@ -103,12 +98,12 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --sy
 
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
 
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [tokenId] --destinationAddress [recipient] --amount 1 --gasValue 1000000000000000000 -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [tokenId] --destinationAddress [destination-address] --amount 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```

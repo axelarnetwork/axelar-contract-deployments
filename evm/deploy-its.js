@@ -386,7 +386,9 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     };
 
     for (const key in deployments) {
-        if (skipExisting && contractConfig[key]) continue;
+        if (skipExisting && contractConfig[key]) {
+            continue;
+        }
 
         const deployment = deployments[key];
 

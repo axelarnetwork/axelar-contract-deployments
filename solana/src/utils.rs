@@ -61,7 +61,7 @@ pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
-pub(crate) const MULTISIG_PROVER_KEY: &str = "SolanaMultisigProver";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
 pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
 pub(crate) const OWNER_KEY: &str = "owner";
@@ -227,7 +227,7 @@ pub(crate) fn domain_separator(
 
     let domain_separator: [u8; 32] = hex::decode(from_multisig_prover.trim_start_matches("0x"))?
         .try_into()
-        .expect("invalid domain separator");
+        .map_err(|_| eyre!("invalid domain separator"))?;
 
     Ok(domain_separator)
 }
@@ -396,7 +396,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_decimal_string_to_raw_units_basic() {
+    fn parse_decimal_string_to_raw_units_basic() {
         assert_eq!(parse_decimal_string_to_raw_units("123", 0).unwrap(), 123);
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 1).unwrap(), 15);
         assert_eq!(
@@ -408,16 +408,16 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_decimal_string_to_raw_units_edge_cases() {
+    fn parse_decimal_string_to_raw_units_edge_cases() {
         assert_eq!(parse_decimal_string_to_raw_units("1.5", 3).unwrap(), 1500);
         assert_eq!(
             parse_decimal_string_to_raw_units("1.1234567890123456789", 19).unwrap(),
-            11234567890123456789
+            11_234_567_890_123_456_789
         );
     }
 
     #[test]
-    fn test_parse_decimal_string_to_raw_units_errors() {
+    fn parse_decimal_string_to_raw_units_errors() {
         assert!(parse_decimal_string_to_raw_units("", 2).is_err());
         assert!(parse_decimal_string_to_raw_units("abc", 2).is_err());
         assert!(parse_decimal_string_to_raw_units("-1.5", 2).is_err());
@@ -426,7 +426,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_decimal_string_to_raw_units_overflow() {
+    fn parse_decimal_string_to_raw_units_overflow() {
         let max_u64 = u64::MAX;
         let max_str = max_u64.to_string();
         assert_eq!(

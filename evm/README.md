@@ -31,7 +31,7 @@ ts-node evm/deploy-contract.js -c Create3Deployer -m create2
 
 Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
 
-`ts-node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
+`ts-node evm/deploy-amplifier-gateway.js`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
@@ -47,30 +47,45 @@ ts-node evm/gateway.js --action submitProof --multisigSessionId [session id]
 
 Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
 
-`ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+`ts-node evm/deploy-gateway-v6.2.x.js`
 
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
 2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
-3. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy` OR
-4. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy --reuseHelpers`
+3. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy` OR
+4. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy --reuseHelpers`
 5. This sets the new `implementation` in the chain config.
 6. Upgrade to the new implementation contract
-   `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --upgrade`
+   `ts-node evm/deploy-gateway-v6.2.x.js --upgrade`
 
 ## AxelarGasService and AxelarDepositService
 
-1. Run the following depending on the service,
-   `ts-node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
+1. Run the following depending on the service,  
+   `ts-node evm/deploy-upgradable.js -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
+3. To reuse the existing proxy, you can:
+   - Deploy new implementation contract:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --reuseProxy
+     ```
+   - Perform the upgrade using the stored implementation address:
+     ```bash
+     ts-node evm/deploy-upgradable.js \
+       -c AxelarGasService \
+       -m create2 \
+       --upgrade
+     ```
 
 ## InterchainTokenService
 
 To test the Interchain Token Service deployment
 
 ```bash
-ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
+ts-node evm/deploy-its -s '[salt]' --proxySalt 'v1.0.0' -m create2
 ```
 
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
@@ -208,43 +223,133 @@ ts-node evm/hyperliquid.js deployer <token-id>
 ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 ```
 
-## Governance
+## InterchainGovernance & AxelarServiceGovernance
 
-A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
+Full docs can be found on [here](./docs/governance.md).
+Detailed workflows are mentioned [here](./docs/governance-workflows.md).
 
-1. Generate the governance proposal for Axelar
+## Contract Ownership Management
 
-```bash
-ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction schedule --date 2023-11-10T03:00:00 --file proposal.json
-```
-
-2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
-
-```bash
-axelard tx gov submit-proposal call-contracts proposal.json --deposit [min-deposit]uaxl --from [wallet] --chain-id [chain-id] --gas auto --gas-adjustment 1.4 --node [rpc]
-```
-
-3. Ask validators and community to vote on the proposal
-
-```bash
-axelard tx gov vote [proposal-id] [vote-option] --from [wallet] --chain-id [chain-id] --node [rpc]
-```
-
-4. Once the proposal passes after the voting period, a GMP call is initiated from Axelar to the EVM Governance contract.
-5. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
-
-```bash
-ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction submit --date 2023-12-11T08:45:00 --commandId [commandId]
-```
-
-6. Wait for timelock to pass on the proposal
-7. Execute the proposal
-
-```bash
-ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action upgrade --proposalAction execute
-```
+Full docs can be found [here](./docs/contract-ownership.md).
 
 8. Verify the governance command went through correctly.
+
+### InterchainTokenService owner commands (evm/its.js)
+
+#### Set trusted chains
+`ts-node evm/its.js set-trusted-chains <chain1> <chain2> ...`
+
+#### Remove trusted chains
+`ts-node evm/its.js remove-trusted-chains <chain1> <chain2> ... --yes`
+
+#### Migrate interchain token
+`ts-node evm/its.js migrate-interchain-token <tokenId> --yes`
+
+*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+
+### Gateway operator commands (evm/gateway.js)
+
+#### Rotate signers (emergency)
+`ts-node evm/gateway.js --action rotateSigners --payload <payload> --proof <proof> --yes`
+
+#### Transfer operatorship
+`ts-node evm/gateway.js --action transferOperatorship --destination <gatewayAddress> --payload <calldata> --yes`
+
+Other gateway actions remain in `evm/gateway.js`; use `--action` accordingly.
+
+### Operators script (evm/operators.js)
+
+#### Add operator
+`ts-node evm/operators.js --action addOperator --operator <addr> --yes`
+
+#### Remove operator
+`ts-node evm/operators.js --action removeOperator --operator <addr> --yes`
+
+#### Transfer ownership
+`ts-node evm/operators.js --action transferOwnership --newOwner <addr> --yes`
+
+#### Propose ownership
+`ts-node evm/operators.js --action proposeOwnership --newOwner <addr> --yes`
+
+#### Execute contract (operators role)
+`ts-node evm/operators.js --action executeContract --target <addr> --calldata <0x...> --nativeValue <wei> --yes`
+
+### AxelarGasService commands (evm/gas-service.js)
+
+#### Estimate gas fee
+`ts-node evm/gas-service.js --action estimateGasFee --destinationChain <chain> --destinationAddress <addr> --payload <0x...> --executionGasLimit <gas> [--isExpress]`
+
+#### Update gas info across chains
+`ts-node evm/gas-service.js --action updateGasInfo --chains <chain1> <chain2> ...`
+
+Note: For upgrades, continue to use governance flows; operational actions run via this script.
+
+### InterchainTokenService operator commands (evm/its.js)
+Note: For upgrades, continue to use governance flows; operational actions run via this script.
+
+#### Transfer operatorship
+`ts-node evm/its.js transfer-operatorship <operator> --yes`
+
+#### Propose operatorship
+`ts-node evm/its.js propose-operatorship <operator> --yes`
+
+*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+
+### AxelarServiceGovernance (operator) extensions
+
+`AxelarServiceGovernance` extends `InterchainGovernance` with operator approval functionality that bypasses timelock. The CLI includes convenience commands for operator-style proposals:
+
+1. Schedule operator approval proposal
+
+```bash
+ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+Note: Defaults to `AxelarServiceGovernance` .
+
+2. Cancel operator approval proposal
+
+```bash
+# Generate proposal JSON only
+ts-node evm/governance.js cancel-operator <target> <calldata> --file proposal.json
+```
+
+If `--file` is not supplied, the script will prompt for confirmation and then submit the proposal to the Axelar network using `MNEMONIC`.
+
+3. Submit operator approval via GMP (if relayers failed)
+
+```bash
+ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+```
+
+4. Execute an approved operator proposal
+
+```bash
+# Note: Operator EOA must call this after approval
+ts-node evm/governance.js execute-operator-proposal <target> <calldata>
+```
+
+5. Check operator proposal approval status
+
+```bash
+ts-node evm/governance.js is-operator-approved <target> <calldata>
+```
+
+Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
+
+```bash
+# schedule
+ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --newOperator 0xNewOperator
+
+# cancel
+ts-node evm/governance.js cancel transferOperatorship \
+  --calldata <calldata> 
+
+# submit after vote
+ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
+  --calldata <calldata>
+```
 
 ## Utilities
 
@@ -493,3 +598,172 @@ The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of has
 
 The Interchain Token Factory is responsible for deploying new interchain tokens and managing their token managers. It has the following functionality:
 
+### Contract-Id
+
+Getter for the contract id.
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames <chain_name> --env <env> 
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js contract-id --chainNames avalanche --env testnet  
+```
+
+
+### Interchain Token Deploy Salt
+
+Computes the deploy salt for an interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt <deployer>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-deploy-salt 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --salt 0x4ab94b9bf7e0a1c793d3ff3716b18bb3200a224832e16d1d161bb73a698c8253
+```
+
+### Canonical Interchain Token Deploy Salt
+
+Computes the deploy salt for a canonical interchain token.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt <token_address> --chainNames <chain_name>  --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-deploy-salt 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+### Canonical Interchain Token Id
+
+Computes the ID for a canonical interchain token based on its address.
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id <token_address> --chainNames <chain_name>  --env <env>
+
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js canonical-interchain-token-id 0x8A80b16621e4a14Cb98B64Fd2504b8CFe0Bf5AF1 --chainNames ethereum-sepolia  --env testnet
+```
+
+### Interchain Token Id
+
+Computes the ID for an interchain token based on the deployer and a salt.
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id <deployer> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js interchain-token-id 0x312dba807EAE77f01EF3dd21E885052f8F617c5B --chainNames avalanche --env testnet --salt 0x48d1c8f6106b661dfe16d1ccc0624c463e11e44a838e6b1f00117c5c74a2cd82
+```
+
+### Deploy Interchain Token
+
+Creates a new token and optionally mints an initial amount to a specified minter
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name <name> --symbol <symbol> --decimals <decimals> --initialSupply <initialSupply> --minter <minter>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name Test_Token --symbol TT --decimals 18 --initialSupply 12345 --minter 0x312dba807EAE77f01EF3dd21E885052f8F617c5B  --chainNames ethereum-sepolia --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Deploy Remote Interchain Token
+
+Deploys a remote interchain token on a specified destination chain. No additional minter is set on the deployed token.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token <destination_chain> --chainNames <chain_name>  --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token  Avalanche  --chainNames ethereum-sepolia  --env testnet --salt 0x7abda5c65fc2720ee1970bbf2a761f6d5b599065283d3c184cb655066950e51a
+```
+
+
+### Register Canonical Interchain Token
+
+Registers a canonical token as an interchain token and deploys its token manager.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token <token_address> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token 0xff0021D9201B51C681d26799A338f98741fBBB6a --chainNames ethereum-sepolia --env testnet
+```
+
+### Deploy Remote Canonical Interchain Token
+
+Deploys a canonical interchain token on a remote chain.
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token <token_address> <destination_chain> --chainNames <chain_name> --env <env>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token 0x4a895FB659aAD3082535Aa193886D7501650685b Avalanche --chainNames ethereum-sepolia --env testnet
+```
+
+### Register Custom Token
+
+Register an existing ERC20 token under a `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token  --tokenAddress <token_address> --tokenManagerType <token_manager_type> --operator <operator> --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js register-custom-token --tokenAddress 0x0F6814301C0DA51bFddA9D2A6Dd877950aa0F912 --tokenManagerType 4 --operator 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f --chainNames ethereum-sepolia --env testnet --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb50
+```
+
+Note:
+Custom tokens that wish to utlize Mint/Burn token managers must implement the mint and burn interfaces to match:
+
+```bash
+mint(address to, uint256 amount);
+```
+```bash
+burn(address from, uint256 amount);
+```
+
+### Link Token
+
+Links a remote token on `destinationChain` to a local token corresponding to the `tokenId` computed from the provided `salt`.
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token --destinationChain <destination_chain> --destinationTokenAddress <destination_token_address> --tokenManagerType <token_manager_type> --linkParams <link_params>  --chainNames <chain_name> --env <env> --salt <salt>
+```
+
+Example:
+
+```bash
+ts-node evm/interchainTokenFactory.js link-token --destinationChain Avalanche --destinationTokenAddress 0xB98cF318A3cB1DEBA42a5c50c365B887cA00133C --tokenManagerType 4 --linkParams 0x03555aA97c7Ece30Afe93DAb67224f3adA79A60f  --chainNames ethereum-sepolia --env testnet --yes --salt 0x3c39e5b65a730b26afa28238de20f2302c2cdb00f614f652274df74c88d4bb40
+```

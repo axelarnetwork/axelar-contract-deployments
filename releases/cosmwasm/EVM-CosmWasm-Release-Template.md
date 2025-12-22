@@ -55,12 +55,13 @@ CHAIN=<chain name>
 | **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 | **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 
-- Confirm `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
+- Confirm `ChainCodecEvm`, `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
 
 ```bash
 VotingVerifier (v1.1.0) -> "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
 Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
 MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+ChainCodecEvm (v1.0.0) -> "storeCodeProposalCodeHash": "6833d296e59dda53b7eaef8927b0d4b4316294de35eb8a28fa895b308fb46567"
 ```
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
@@ -89,7 +90,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     "blockExpiry": 10,
     "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
     "msgIdFormat": "hex_tx_hash_and_event_index",
-    "addressFormat": "eip55"
 }
 
 # Add under `config.axelar.contracts.MultisigProver` based on Network
@@ -99,7 +99,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     "signingThreshold": "[signing threshold]",
     "serviceName": "[service name]",
     "verifierSetDiffThreshold": 0,
-    "encoder": "abi",
     "keyType": "ecdsa"
 }
 ```
@@ -122,33 +121,31 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `v1.0.0` |
 | **Mainnet**          | `v1.0.0` |
 
+**Note:** On `devnet-amplifier`, omit the `--governance` flag to execute directly (it uses a governance key for direct execution).
+
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+    ts-node cosmwasm/contract.ts instantiate-chain-contracts \
         -n $CHAIN \
         -s "$SALT" \
         --fetchCodeId \
-        -t "Instantiate contracts for $CHAIN" \
-        -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator" \
         --admin "$CONTRACT_ADMIN" \
-        --runAs "[governanceAddress]"
+        --governance # omit on devnet-amplifier
     ```
 
-1. Wait for proposal to pass and query deployed contract addresses
+1. Wait for proposal to pass (or transaction to confirm if direct execution) and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts $CHAIN
+    ts-node cosmwasm/query.ts save-deployed-contracts $CHAIN
     ```
 
 1. Register deployment
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js register-deployment \
-        -n $CHAIN \
-        -t "Register deployment for $CHAIN" \
-        -d "Register deployment for $CHAIN in the Coordinator" \
-        --runAs "[governanceAddress]"
+    ts-node cosmwasm/contract.ts register-deployment \
+        $CHAIN \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Set environment variables
@@ -162,7 +159,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
     ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
     ```
-
     - Gov proposal environment variables. Update these for each network
 
     | Network              | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
@@ -175,16 +171,15 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```bash
     PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
     REWARD_AMOUNT=[reward amount]
-    EPOCH_DURATION=[epoch duration according to the environment]
     ```
 
-    - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
+    - Add a community post for the mainnet proposal (i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>) and share on `mainnet-announcements` channel on Discord.
 
     - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
 #### Rewards
 
-1. Create reward pool for voting verifier
+1. Create reward pools for VotingVerifier and Multisig
 
     | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
     | -------------------- | ---------------- | ------------------------- | ------------------- |
@@ -194,50 +189,17 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Rewards \
-        -t "Create pool for $CHAIN in $CHAIN voting verifier" \
-        -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-        --msg "{
-            \"create_pool\": {
-                \"params\": {
-                    \"epoch_duration\": \"$EPOCH_DURATION\",
-                    \"participation_threshold\": [participation threshold],
-                    \"rewards_per_epoch\": \"[rewards per epoch]\"
-                },
-                \"pool_id\": {
-                    \"chain_name\": \"$CHAIN\",
-                    \"contract\": \"$VOTING_VERIFIER\"
-                }
-            }
-        }"
-    ```
-
-1. Create reward pool for multisig
-
-    ```bash
-        ts-node cosmwasm/submit-proposal.js execute \
-        -c Rewards \
-        -t "Create pool for $CHAIN in axelar multisig" \
-        -d "Create pool for $CHAIN in axelar multisig" \
-        --msg "{
-            \"create_pool\": {
-                \"params\": {
-                    \"epoch_duration\": \"$EPOCH_DURATION\",
-                    \"participation_threshold\": [participation threshold],
-                    \"rewards_per_epoch\": \"[rewards per epoch]\"
-                },
-                \"pool_id\": {
-                    \"chain_name\": \"$CHAIN\",
-                    \"contract\": \"$MULTISIG\"
-                }
-            }
-        }"
+    ts-node cosmwasm/contract.ts create-reward-pools \
+        $CHAIN \
+        --epochDuration "[epoch_duration]" \
+        --participationThreshold "[participation_threshold]" \
+        --rewardsPerEpoch "[rewards_per_epoch]" \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Register ITS edge contract on ITS Hub
 
-    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+    Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `$ENV.json`:
 
     | Network              | `ITS_EDGE_CONTRACT`                          |
     | -------------------- | -------------------------------------------- |
@@ -254,11 +216,27 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     }
     ```
 
+    Additionally, configure the ITS hub parameters in `axelar.contracts.InterchainTokenService[$CHAIN]` within `ENV.json`. For EVM chains, `maxUintBits` and `maxDecimalsWhenTruncating` default to `256` and `255` respectively if not specified. The `msgTranslator` address defaults to the global `ItsAbiTranslator.address` if not provided per-chain.
+
+    ```json
+    {
+        "axelar": {
+            "contracts": {
+                "InterchainTokenService": {
+                    "$CHAIN": {
+                        "maxUintBits": 256,
+                        "maxDecimalsWhenTruncating": 255,
+                        "msgTranslator": "axelar1..." // Optional: per-chain override
+                    }
+                }
+            }
+        }
+    }
+    ```
+
     ```bash
-    ts-node cosmwasm/submit-proposal.js \
-        its-hub-register-chains $CHAIN \
-        -t "Register $CHAIN on ITS Hub" \
-        -d "Register $CHAIN on ITS Hub"
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+        --governance # omit on devnet-amplifier
     ```
 
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
@@ -309,7 +287,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     - Check reward pool to confirm funding worked:
 
     ```bash
-    ts-node cosmwasm/query.js rewards $CHAIN
+    ts-node cosmwasm/query.ts rewards $CHAIN
     ```
 
 1. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.

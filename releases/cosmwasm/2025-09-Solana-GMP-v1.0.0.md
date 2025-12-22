@@ -5,16 +5,16 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | Pending               | TBD      |
-| **Stagenet**         | Pending               | TBD      |
-| **Testnet**          | Pending               | TBD      |
-| **Mainnet**          | Pending               | TBD      |
+| **Axelar Env**       | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-12-04 |
+| **Stagenet**         | Pending               | TBD        |
+| **Testnet**          | Pending               | TBD        |
+| **Mainnet**          | Pending               | TBD        |
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-  - SolanaMultisigProver: `cd0c28f81d0bb735ae9ac442f1d51688582be6d380b8756b6a12aeab8ceb8d92`
+    - SolanaMultisigProver: `8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068`
 
 ## Background
 
@@ -33,7 +33,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
     ```bash
     git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
     cd axelar-amplifier-eiger
-    git checkout solana-cosmwasm
+    git checkout main
     ```
 
 1. Build the contracts and copy artifacts:
@@ -42,7 +42,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
     docker run --rm -v "$(pwd)":/code \
         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-        cosmwasm/optimizer:0.16.1
+        cosmwasm/optimizer:0.17.0
     ```
 
 1. Update the above Contract Checksums per `artifacts/checksums.txt`
@@ -61,28 +61,17 @@ EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
 NODE=[Axelar RPC URL]
 ```
 
-| Axelar Env           | `DEPOSIT_VALUE` |
-| -------------------- | --------------- |
-| **Devnet-amplifier** | `100000000`     |
-| **Stagenet**         | `100000000`     |
-| **Testnet**          | `2000000000`    |
-| **Mainnet**          | `2000000000`    |
-
 Add `INIT_ADDRESSES` to `.env`.
 
-| Axelar Env           | `INIT_ADDRESSES`                                                                                                                                                                                              | `RUN_AS_ACCOUNT`                                |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9,axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g`                                               | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
-| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky,axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` |
-
-> **_NOTE:_**
-> Set `RUN_AS_ACCOUNT` to an EOA account's address instead of the governance address to avoid having to instantiate the contracts via another governance proposal.
+| Axelar Env           | `INIT_ADDRESSES`                                                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Devnet-amplifier** | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9,axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g`                                               |
+| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky,axelar1nc3mfplae0atcchs9gqx9m6ezj5lfqqh2jmqx639kf8hd7m96lgq8a5e5y` |
+| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` |
+| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am,axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx` |
 
 ```yaml
 INIT_ADDRESSES=[INIT_ADDRESSES]
-RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
 ```
 
 1. Store VotingVerifier:
@@ -92,7 +81,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
-        -v "1.2.0" \
+        -v "2.0.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -118,7 +107,7 @@ RUN_AS_ACCOUNT=[RUN_AS_ACCOUNT]
         -c SolanaMultisigProver \
         -t "Upload SolanaMultisigProver contract for Solana" \
         -d "Upload SolanaMultisigProver contract for Solana integration" \
-        -a "$EIGER_ARTIFACT_PATH" \
+        -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES
@@ -192,15 +181,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Instantiate `Gateway`, `VotingVerifier` and `SolanaMultisigProver` contracts via Coordinator
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+    ts-node cosmwasm/contract.ts instantiate-chain-contracts \
         -n $CHAIN \
-        -s "$SALT" \
+        -s $SALT \
         --fetchCodeId \
-        -t "Instantiate contracts for $CHAIN" \
-        -d "Instantiate Gateway, VotingVerifier and SolanaMultisigProver contracts for $CHAIN via Coordinator" \
-        --admin "$CONTRACT_ADMIN" \
-        --runAs "[governanceAddress]" \
-        -m $MNEMONIC
+        --admin $CONTRACT_ADMIN \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Update the domainSeparator under `config.chains.$CHAIN.AxelarGateway`
@@ -214,16 +200,11 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Register deployment
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js register-deployment \
-        -n $CHAIN \
-        -t "Register deployment for $CHAIN" \
-        -d "Register deployment for $CHAIN in the Coordinator" \
-        --runAs "[governanceAddress]" \
-        -m $MNEMONIC
+    ts-node cosmwasm/contract.ts register-deployment $CHAIN \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Set environment variables
-
     - Env-specific environment variables: These variables need to be updated by the env.
 
     ```bash
@@ -238,40 +219,25 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     - Gov proposal environment variables. Update these for each Axelar env
 
-    | Axelar Env           | `PROVER_ADMIN`                                  | `DEPOSIT_VALUE` | `REWARD_AMOUNT`     |
-    | -------------------- | ----------------------------------------------- | --------------- | ------------------- |
-    | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `100000000`     | `1000000uamplifier` |
-    | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `100000000`     | `1000000uaxl`       |
-    | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `2000000000`    | `1000000uaxl`       |
-    | **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `2000000000`    | `1000000uaxl`       |
+    | Axelar Env           | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
+    | -------------------- | ----------------------------------------------- | ------------------- |
+    | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `1000000uamplifier` |
+    | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `1000000uaxl`       |
+    | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
+    | **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `1000000uaxl`       |
 
     ```bash
     PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
-    DEPOSIT_VALUE=[deposit value]
     REWARD_AMOUNT=[reward amount]
-    RUN_AS_ACCOUNT=[wasm deployer/governance address]
     ```
 
-    - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
+    - Add a community post for the mainnet proposal (i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>) and share on `mainnet-announcements` channel on Discord.
 
-1. Register Gateway at the Router
+    - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting.
 
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Router \
-        -t "Register Gateway for Solana" \
-        -d "Register Gateway address for Solana at Router contract" \
-        -m $MNEMONIC \
-        --msg "{
-                \"register_chain\": {
-                    \"chain\": \"$CHAIN\",
-                    \"gateway_address\": \"$GATEWAY\",
-                    \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
-                }
-            }"
-    ```
+#### Verification
 
-    - Verify Gateway Registration:
+1. Verify Gateway Registration:
 
     ```bash
     axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node $NODE | jq .
@@ -291,22 +257,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     }
     ```
 
-1. Authorize SolanaMultisigProver on Multisig
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Multisig \
-        -t "Authorize SolanaMultisigProver" \
-        -d "Authorize SolanaMultisigProver address at Multisig contract" \
-        -m $MNEMONIC \
-        --msg "{
-            \"authorize_callers\": {
-                \"contracts\": {
-                    \"$MULTISIG_PROVER\": \"$CHAIN\"
-                }
-            }
-        }"
-    ```
+1. Verify SolanaMultisigProver authorized on Multisig
 
     ```bash
     axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node $NODE | jq .
@@ -317,60 +268,23 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     }
     ```
 
-1. Create reward pool for voting verifier
+#### Rewards
 
-    - Rewards Table
+1. Create reward pools for VotingVerifier and Multisig
 
     | Axelar Env           | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
     | -------------------- | ---------------- | ------------------------- | ------------------- |
     | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
     | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
     | **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | `100`               |
-    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         |  TBD                |
+    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | TBD                 |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Rewards \
-        -t "Create pool for Solana in VotingVerifier" \
-        -d "Create pool for Solana in VotingVerifier" \
-        --deposit $DEPOSIT_VALUE \
-        -m $MNEMONIC \
-        --msg "{
-            \"create_pool\": {
-                \"params\": {
-                \"epoch_duration\": \"[epoch_duration]\",
-                \"participation_threshold\": [participation_threshold],
-                \"rewards_per_epoch\": \"[rewards_per_epoch]\"
-                },
-                \"pool_id\": {
-                    \"chain_name\": \"$CHAIN\",
-                    \"contract\": \"$VOTING_VERIFIER\"
-                }
-            }
-        }"
-    ```
-
-1. Create reward pool for multisig
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-        -c Rewards \
-        -t "Create pool for Solana in Axelar Multisig" \
-        -d "Create pool for Solana in Axelar Multisig" \
-        -m $MNEMONIC \
-        --msg "{
-            \"create_pool\": {
-                \"params\": {
-                \"epoch_duration\": \"[epoch_duration]\",
-                \"participation_threshold\": [participation_threshold],
-                \"rewards_per_epoch\": \"[rewards_per_epoch]\"
-                },
-                \"pool_id\": {
-                    \"chain_name\": \"$CHAIN\",
-                    \"contract\": \"$MULTISIG\"
-                }
-            }
-        }"
+    ts-node cosmwasm/contract.ts create-reward-pools $CHAIN \
+        --epochDuration "[epoch_duration]" \
+        --participationThreshold "[participation_threshold]" \
+        --rewardsPerEpoch "[rewards_per_epoch]" \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Update ampd with the Solana chain configuration. Verifiers should use their own Solana RPC node for the `http_url` in production.
@@ -425,7 +339,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Add public key to validator set
 
     ```bash
-    axelard query wasm contract-state smart $SERVICE_REGISTRY '{"active_verifiers": {"service_name": "[service_name]", "chain_name": "$CHAIN"}}' --node $NODE
+    axelard query wasm contract-state smart $SERVICE_REGISTRY "{ \"active_verifiers\": { \"service_name\": \"[service_name]\", \"chain_name\": \"$CHAIN\"} }" --node $NODE
     ```
 
 1. Create genesis verifier set

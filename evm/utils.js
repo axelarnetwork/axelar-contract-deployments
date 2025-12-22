@@ -151,7 +151,9 @@ const deployCreate3 = async (
 };
 
 const isAddressArray = (arr) => {
-    if (!Array.isArray(arr)) return false;
+    if (!Array.isArray(arr)) {
+        return false;
+    }
 
     for (const item of arr) {
         if (!isAddress(item)) {
@@ -229,6 +231,75 @@ function isValidAddress(address, allowZeroAddress) {
     }
 
     return isAddress(address);
+}
+
+function getGovernanceAddress(chain, contractName, address) {
+    if (isValidAddress(address)) {
+        return address;
+    }
+
+    const contractConfig = chain.contracts[contractName];
+    if (!contractConfig?.address) {
+        throw new Error(`Contract ${contractName} is not deployed on ${chain.name}`);
+    }
+
+    return contractConfig.address;
+}
+
+function getGovernanceContract(chain, options = {}) {
+    const governanceContract = options.governanceContract;
+
+    if (options.operatorProposal && governanceContract !== 'AxelarServiceGovernance') {
+        throw new Error('Operator proposals require --governanceContract AxelarServiceGovernance or unset --operatorProposal.');
+    }
+
+    const governanceAddress = getGovernanceAddress(chain, governanceContract);
+
+    if (!governanceAddress) {
+        throw new Error(
+            `${governanceContract} contract is not configured on ${chain.name}. Please provide --governanceContract or ensure the contract is deployed.`,
+        );
+    }
+
+    return { governanceContract, governanceAddress };
+}
+
+function getScheduleProposalType(options, ProposalType, action) {
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+
+    if (options.operatorProposal) {
+        const actionLabel = action ? ` for action ${action}` : '';
+        printInfo(`Using operator-based proposal${actionLabel}`, 'ApproveOperator');
+    }
+
+    return proposalType;
+}
+
+function createGovernanceProposal({
+    chain,
+    options,
+    targetAddress,
+    calldata,
+    nativeValue = '0',
+    ProposalType,
+    encodeGovernanceProposal,
+    createGMPProposalJSON,
+    dateToEta,
+}) {
+    const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+    printInfo('Governance contract', governanceContract);
+    const eta = dateToEta(options.activationTime || '0');
+
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+    if (options.operatorProposal) {
+        printInfo('Using operator-based proposal', 'ApproveOperator');
+    }
+    const gmpPayload = encodeGovernanceProposal(proposalType, targetAddress, calldata, nativeValue, eta);
+
+    printInfo('Governance target', targetAddress);
+    printInfo('Governance calldata', calldata);
+
+    return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
 }
 
 // Validate if the input privateKey is correct
@@ -635,6 +706,20 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+async function handleTransactionWithEvent(tx, chain, contract, action, eventName) {
+    printInfo(`${action} transaction`, tx.hash);
+    const receipt = await tx.wait(chain.confirmations);
+
+    if (eventName) {
+        const eventEmitted = wasEventEmitted(receipt, contract, eventName);
+        if (!eventEmitted) {
+            printWarn(`Event ${eventName} not emitted in receipt.`);
+        }
+    }
+
+    return receipt;
+}
+
 const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 /**
@@ -755,6 +840,10 @@ const mainProcessor = async (options, processCommand, save = true) => {
         printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
 
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
     printInfo(
         'Succeeded chains',
         chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
@@ -765,10 +854,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
             'Failed chains',
             chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
         );
-    }
-
-    if (save) {
-        saveConfig(config, options.env);
+        process.exit(1);
     }
 
     return results;
@@ -1133,8 +1219,13 @@ module.exports = {
     getConfigByChainId,
     printWalletInfo,
     wasEventEmitted,
+    handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceContract,
+    getGovernanceAddress,
+    getScheduleProposalType,
+    createGovernanceProposal,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,

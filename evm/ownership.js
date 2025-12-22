@@ -9,10 +9,37 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWalletInfo, mainProcessor, prompt, getGasOptions } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const {
+    printInfo,
+    printWarn,
+    printWalletInfo,
+    mainProcessor,
+    prompt,
+    getGasOptions,
+    dateToEta,
+    createGMPProposalJSON,
+    getGovernanceContract,
+    getScheduleProposalType,
+    writeJSON,
+} = require('./utils');
+const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
+const { encodeGovernanceProposal, ProposalType, submitProposalToAxelar } = require('./governance');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
+
+async function buildGovernanceProposal(chain, options, ownershipAddress, action, calldata) {
+    const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+    printInfo('Governance contract', governanceContract);
+    const eta = dateToEta(options.activationTime || '0');
+    const nativeValue = '0';
+    const proposalType = getScheduleProposalType(options, ProposalType, action);
+    const gmpPayload = encodeGovernanceProposal(proposalType, ownershipAddress, calldata, nativeValue, eta);
+
+    printInfo('Governance target', ownershipAddress);
+    printInfo('Governance calldata', calldata);
+
+    return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
+}
 
 async function processCommand(_axelar, chain, _chains, options) {
     const { contractName, address, action, privateKey, newOwner, yes } = options;
@@ -38,7 +65,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     printInfo('Contract name', contractName);
 
     const wallet = new Wallet(privateKey, provider);
-    await printWalletInfo(wallet);
+    await printWalletInfo(wallet, options, chain);
 
     const ownershipContract = new Contract(ownershipAddress, IOwnable.abi, wallet);
 
@@ -46,7 +73,8 @@ async function processCommand(_axelar, chain, _chains, options) {
 
     printInfo('Ownership Action', action);
 
-    if (prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
+    const needsConfirmation = !options.governance && ['transferOwnership', 'proposeOwnership', 'acceptOwnership'].includes(action);
+    if (needsConfirmation && prompt(`Proceed with ${action} on ${chain.name}?`, yes)) {
         return;
     }
 
@@ -71,6 +99,14 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'transferOwnership': {
+            if (options.governance) {
+                if (!isAddress(newOwner) || newOwner === AddressZero) {
+                    throw new Error(`Invalid new owner address: ${newOwner}`);
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.transferOwnership(newOwner, gasOptions);
+                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
+            }
+
             let owner = await ownershipContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
@@ -101,6 +137,14 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'proposeOwnership': {
+            if (options.governance) {
+                if (!isAddress(newOwner) || newOwner === AddressZero) {
+                    throw new Error(`Invalid new owner address: ${newOwner}`);
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.proposeOwnership(newOwner, gasOptions);
+                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
+            }
+
             const owner = await ownershipContract.owner();
 
             if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
@@ -129,6 +173,14 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'acceptOwnership': {
+            if (options.governance) {
+                if (newOwner) {
+                    printWarn('--newOwner is ignored for acceptOwnership action.');
+                }
+                const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
+                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
+            }
+
             const pendingOwner = await ownershipContract.pendingOwner();
 
             if (pendingOwner === AddressZero) {
@@ -165,7 +217,47 @@ async function processCommand(_axelar, chain, _chains, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    if (!options.governance) {
+        await mainProcessor(options, processCommand);
+        return;
+    }
+
+    const proposals = [];
+
+    await mainProcessor(options, (axelar, chain, chains, opts) =>
+        processCommand(axelar, chain, chains, opts).then((proposal) => {
+            if (proposal) {
+                proposals.push(proposal);
+            }
+        }),
+    );
+
+    if (proposals.length > 0) {
+        const proposal = {
+            title: 'Ownership Governance Proposal',
+            description: 'Ownership Governance Proposal',
+            contract_calls: proposals,
+        };
+
+        const proposalJSON = JSON.stringify(proposal, null, 2);
+
+        printInfo('Proposal', proposalJSON);
+
+        if (options.generateOnly) {
+            writeJSON(proposal, options.generateOnly);
+            printInfo('Proposal written to file', options.generateOnly);
+        } else if (!options.mnemonic) {
+            printInfo('Re-run with --generate-only to write proposal to a file, or provide --mnemonic to submit it.');
+        } else {
+            if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
+                try {
+                    await submitProposalToAxelar(proposal, options);
+                } catch (error) {
+                    throw new Error(`Failed to submit proposal to Axelar: ${error instanceof Error ? error.message : String(error)}`);
+                }
+            }
+        }
+    }
 }
 
 if (require.main === module) {
@@ -174,6 +266,7 @@ if (require.main === module) {
     program.name('ownership').description('script to manage contract ownership');
 
     addBaseOptions(program, { address: true });
+    addGovernanceOptions(program);
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name'));
     program.addOption(

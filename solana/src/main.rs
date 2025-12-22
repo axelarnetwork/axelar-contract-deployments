@@ -7,6 +7,7 @@ mod gateway;
 mod generate;
 mod governance;
 mod its;
+mod load_test;
 mod memo;
 mod misc;
 mod multisig_prover_types;
@@ -98,6 +99,10 @@ enum Command {
 
     /// Query data from Solana.
     Query(QueryCommandArgs),
+
+    /// Load testing tools for ITS operations.
+    #[clap(subcommand)]
+    LoadTest(load_test::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -228,6 +233,7 @@ async fn main() {
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
+        #[allow(clippy::exit)]
         exit(1);
     }
 }
@@ -329,12 +335,15 @@ async fn run() -> eyre::Result<()> {
         }
         Command::Query(args) => match args.instruction {
             QueryInstructionSubcommand::Gateway(command) => {
-                gateway::query(command, &config)?;
+                gateway::query(command, &config).await?;
             }
             QueryInstructionSubcommand::Its(command) => {
                 its::query(command, &config)?;
             }
         },
+        Command::LoadTest(command) => {
+            load_test::handle_command(command, &config).await?;
+        }
     }
     Ok(())
 }

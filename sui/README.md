@@ -368,6 +368,12 @@ ts-node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EF
 ts-node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
 ```
 
+### Refund Gas
+
+```bash
+ts-node sui/gas-service.js refund <messageId> --amount <amount> --receiver <receiver address>
+```
+
 ### Approve Messages
 
 If the gateway was deployed using the wallet, you can submit a message approval with it
@@ -454,6 +460,16 @@ Remove trusted chains
 ```bash
 ts-node sui/its remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
+
+### Set Flow Limits
+
+Set flow limits for multiple tokens:
+
+```bash
+ts-node sui/its set-flow-limits <token-ids> <flow-limits>
+```
+
+Where `<token-ids>` and `<flow-limits>` can both be comma-separated lists.
 
 ## Registering Coins
 

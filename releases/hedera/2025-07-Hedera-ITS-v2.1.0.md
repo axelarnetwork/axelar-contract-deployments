@@ -1,16 +1,16 @@
 # Hedera ITS v2.1.0
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                           |
+| -------------- | ----------------------------------- |
 | **Created By** | @rista404 <ristic@commonprefix.com> |
 | **Deployment** | @rista404 <ristic@commonprefix.com> |
 
-| **Network**          | **Deployment Status** | **Date**    |
-| -------------------- | --------------------- | ----------- |
-| **Devnet Amplifier** | Deployed              | 2025-08-21  |
-| **Stagenet**         | Deployed              | 2025-07-30  |
-| **Testnet**          | -                     | TBD         |
-| **Mainnet**          | -                     | TBD         |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Deployed              | 2025-08-21 |
+| **Stagenet**         | Deployed              | 2025-07-30 |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 - [Release](https://github.com/commonprefix/interchain-token-service/tree/01ac9020896b6e16577a9d922f6b7e23baae9145)
 
@@ -78,15 +78,14 @@ As HTS tokens use uint64, set that as the max uint and 6 decimals. Add following
     "maxDecimalsWhenTruncating": 6
 },
 ```
+
 #### Register ITS edge contract on ITS Hub
 
 Before proceeding, confirm ITS contract is deployed and is mentioned in `ENV.json`. Run:
 
 ```bash
-ts-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub"
+ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+    --governance # omit on devnet-amplifier
 ```
 
 ### Fund ITS with WHBAR
@@ -110,6 +109,7 @@ For local factory deployments, the user needs to have some WHBAR to pay for toke
 #### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on all EVM chains
+
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
@@ -150,7 +150,7 @@ ts-node hedera/fund-whbar.js [user-address] --amount 100 -n $CHAIN
 ts-node hedera/approve-factory-whbar.js -n $CHAIN
 
 # Create a token on Hedera
-ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial_supply] --minter [minter] --salt [some salt] -n $CHAIN 
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial_supply] --minter [minter] --salt [some salt] -n $CHAIN
 
 
 # Record the newly created token id and address from the output.
@@ -162,15 +162,15 @@ ts-node hedera/associate-token.js [token-address]
 ts-node evm/its.js mint-token [token-id] [to] [amount]
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --chainNames $CHAIN  --salt [same salt as above] -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination_chain] --chainNames $CHAIN  --salt [same salt as above] -y
 
 
 # Approve token manager to spend tokens
 ts-node evm/its.js approve [token-id] [spender] [amount]
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value]
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value]
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
 ```

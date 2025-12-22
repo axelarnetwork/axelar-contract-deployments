@@ -61,15 +61,9 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register xrpl-evm ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
-
 ```bash
-ts-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" \
-    --deposit $DEPOSIT_VALUE \
-    --runAs $RUN_AS_ACCOUNT
+ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+    --governance # omit on devnet-amplifier
 ```
 
 ## Set XRPL EVM as trusted chain on remote ITS contracts
@@ -116,12 +110,12 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --sy
 
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
 
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [tokenId] --destinationAddress [recipient] --amount 1 --gasValue 1000000000000000000 -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [tokenId] --destinationAddress [destination-address] --amount 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```

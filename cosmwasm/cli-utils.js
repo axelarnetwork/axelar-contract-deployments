@@ -8,11 +8,13 @@ const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddres
 
 const { Option, InvalidArgumentError } = require('commander');
 
-const addAmplifierOptions = (program, options) => {
+const addAmplifierOptions = (program, options = {}) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(new Option('--governance', 'submit a governance proposal instead of executing directly'));
 
     if (options.contractOptions) {
         addContractOptions(program);
@@ -86,10 +88,6 @@ const addAmplifierOptions = (program, options) => {
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }
-
-    if (options.runAs) {
-        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
-    }
 };
 
 const addChainNameOption = (program) => {
@@ -98,12 +96,30 @@ const addChainNameOption = (program) => {
 
 const addAmplifierQueryOptions = (program) => {
     addEnvOption(program);
-
+    addAxelarNodeOption(program);
     addChainNameOption(program);
+};
+
+const addAxelarNodeOption = (program) => {
+    program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
+};
+
+const addCoreOptions = (program) => {
+    addEnvOption(program);
+    addAxelarNodeOption(program);
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(
+        new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
+    );
+    program.addOption(new Option('-t, --title <title>', 'Proposal title (optional, auto-generated if not provided)'));
+    program.addOption(new Option('-d, --description <description>', 'Proposal description (optional, defaults to title)'));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 
 const addAmplifierQueryContractOptions = (program) => {
     addEnvOption(program);
+    addAxelarNodeOption(program);
 
     addContractOptions(program);
 };
@@ -192,7 +208,7 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 
 module.exports = {
@@ -200,4 +216,5 @@ module.exports = {
     addAmplifierQueryOptions,
     addAmplifierQueryContractOptions,
     addChainNameOption,
+    addCoreOptions,
 };

@@ -1160,120 +1160,6 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 25
     },
-    "fraxtal": {
-      "name": "Fraxtal",
-      "axelarId": "fraxtal",
-      "chainId": 2522,
-      "rpc": "https://rpc.testnet.frax.com",
-      "tokenSymbol": "frxETH",
-      "decimals": 18,
-      "chainType": "evm",
-      "gasOptions": {
-        "gasLimit": 8000000
-      },
-      "onchainGasEstimate": {
-        "l1ChainName": "ethereum",
-        "gasEstimationType": 2,
-        "l1FeeScalar": 50000
-      },
-      "contracts": {
-        "InterchainGovernance": {
-          "minimumTimeDelay": 300,
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "address": "0xbBd7dA8273daF1c95aC5C26271Df96399A8263ce",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "deploymentMethod": "create3",
-          "codehash": "0x222dfe9a431f41f473ba5bf71850df979619361ff8a49dcefc1fba4d72141134",
-          "predeployCodehash": "0xe2de43b29f2387b6f3575a1b50d566908fc00e03a8d88ad6be74b674a70874d2",
-          "salt": "InterchainGovernance v5.5"
-        },
-        "Multisig": {
-          "threshold": 2,
-          "signers": [
-            "0xaC481D34c48e5d3191344b853Bc00D04889BA8db",
-            "0x722C5A6A417122668e8925968f7FC13DBDFaD23C",
-            "0xBeF25f4733b9d451072416360609e5A4c115293E"
-          ],
-          "address": "0x57406321d7e96223785b5987c9929d25e960946e",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "deploymentMethod": "create3",
-          "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
-          "salt": "Multisig v5.5"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
-        },
-        "Create3Deployer": {
-          "salt": "Create3Deployer",
-          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "deploymentMethod": "create2",
-          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
-          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
-        },
-        "AxelarGateway": {
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "startingKeyIDs": [
-            "evm-fraxtal-genesis"
-          ],
-          "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "implementation": "0x1A9f5A2C0867826790EC9E3318e77298d0000C76",
-          "implementationCodehash": "0xf49fc5a9d24907c0c1de9b7c1f4478d2cd961b1835efded43267cb1be062bb9c",
-          "authModule": "0xa27aF392971f0A0D0C8767d061f4274d58856d5a",
-          "tokenDeployer": "0xb89B72CBA1766fB17199A58D2482852832a1Bd98",
-          "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
-        },
-        "AxelarGasService": {
-          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
-          "salt": "AxelarGasService",
-          "address": "0xeE1d04E4F9F9AdEB7be7d6996f4A726773460A87",
-          "implementation": "0x1F002cd258e2e818eC5ecCD46DD6cb938c5Cf7f8",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
-        },
-        "Operators": {
-          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
-          "address": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "deploymentMethod": "create2",
-          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "salt": "Operators"
-        },
-        "InterchainTokenService": {
-          "salt": "ITS v2.1.1",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0x04d7499405869C7969fd4f5d1059F66400765af9",
-          "interchainToken": "0xbEfE642EDd190358a1c48c1c2E14B044e17EC021",
-          "interchainTokenDeployer": "0x0BFF669D165a58Fb0D60FeD92Ccd1FbCd9930bCf",
-          "tokenManager": "0x381a06ef2ab8af30c5041556ed5719279b5734B2",
-          "tokenHandler": "0x2C6fb9B5A093ED0558aB794A5F4aA70901A7841F",
-          "implementation": "0xFF882Ade63338494Fdab578c2046208dB2cA08EA",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5",
-          "gatewayCaller": "0x4AE2Dac5647e218035aFA9d763DaE5E2B2E8A19d",
-          "version": "2.1.1"
-        },
-        "InterchainTokenFactory": {
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "salt": "ITS Factory v1.0.0",
-          "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
-          "version": "2.1.1"
-        }
-      },
-      "explorer": {
-        "name": "Fraxscan",
-        "url": "https://holesky.fraxscan.com",
-        "api": "https://api-holesky.fraxscan.com/api"
-      },
-      "finality": "finalized",
-      "approxFinalityWaitTime": 80
-    },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
       "axelarId": "mantle-sepolia",
@@ -2213,6 +2099,16 @@
         "name": "Hyperliquid Explorer",
         "url": "https://testnet.purrsec.com/"
       },
+      "hypercore": {
+        "domain": {
+          "chainId": 1337,
+          "name": "Exchange",
+          "verifyingContract": "0x0000000000000000000000000000000000000000",
+          "version": "1"
+        },
+        "url": "https://api.hyperliquid-testnet.xyz",
+        "source": "b"
+      },
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2265,26 +2161,26 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.1",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS v2.2.0 hyperliquid",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0xDFef5B38C1c080A4a82431b687989759cB207d24",
-          "interchainToken": "0xE6575486955D887BcFcFaDfaacF891C462cfab6B",
-          "interchainTokenDeployer": "0x22fBE0E41Cb59056CcAD0cdf2087385161042a1C",
-          "tokenManager": "0x79b3E736Fb5C21bD94862824602f856bfA4fa5a3",
-          "tokenHandler": "0x383dF8E8f96b3dF53F9bdc607811c7e96239e7da",
+          "tokenManagerDeployer": "0x5ea96D20076bF37829C15F73d097c8950fb3F5A4",
+          "interchainToken": "0x84a395Be03F103Ce823f70FE870D6d49f59581DC",
+          "interchainTokenDeployer": "0x294ba717891f67C2F4C0fcCF7C645c29997EcB9C",
+          "tokenManager": "0x37cDB543ab960121DB119a4Ff69C613c522cAdCb",
+          "tokenHandler": "0x7b5d9536651E469a14b805a5a9BEF25a2fe672Ed",
           "gatewayCaller": "0x75f121a0bfcc76D82d5BA84c156AB79F31dC3f98",
-          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
+          "implementation": "0xa3A765B546951c68C3De823660c84d786C9eee95",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5",
-          "version": "2.1.1"
+          "version": "2.2.0"
         },
         "InterchainTokenFactory": {
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
-          "implementation": "0x27Dae89620Ed5f3111d85D44ceFc6EdB7fe74551",
+          "implementation": "0x5D8d6DbDfE22DD43E3D9Be7A29b0e950fDBD7aD4",
           "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
-          "version": "2.1.1"
+          "version": "2.2.0"
         }
       }
     },
@@ -2468,119 +2364,6 @@
         }
       }
     },
-    "stellar-2025-q3": {
-      "name": "Stellar",
-      "axelarId": "stellar-2025-q3",
-      "rpc": "https://soroban-testnet.stellar.org",
-      "horizonRpc": "https://horizon-testnet.stellar.org",
-      "networkType": "testnet",
-      "chainType": "stellar",
-      "decimals": 7,
-      "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "tokenSymbol": "XLM",
-      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-      "explorer": {
-        "name": "Stellar Expert",
-        "url": "https://stellar.expert/explorer/testnet"
-      },
-      "contracts": {
-        "AxelarGateway": {
-          "address": "CDTJW72QN6NDH626I2HRRWV7PVQ47G36ZJXYQN4NP646PNI4FYW5BCGS",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24",
-          "version": "1.1.1",
-          "initializeArgs": {
-            "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-            "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-            "domainSeparator": "5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
-            "minimumRotationDelay": "300",
-            "previousSignersRetention": "15",
-            "initialSigners": [
-              {
-                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
-                "signers": [
-                  {
-                    "signer": "5fc2c80e2d7aefe801de21118b151f3f6e37ea82b6e4b8779536e0bda655f928",
-                    "weight": "1"
-                  }
-                ],
-                "threshold": "1"
-              }
-            ]
-          },
-          "connectionType": "amplifier"
-        },
-        "AxelarOperators": {
-          "address": "CBYTWO3NS3BFVSZSNJL7BH2REK7V2OCKV5HMLISPP4PLGAX3NEPIPYD3",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
-          "version": "1.1.1",
-          "initializeArgs": {
-            "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3"
-          }
-        },
-        "AxelarGasService": {
-          "address": "CBERRWADOZ65SKFH5KSZF3W5YLBZO3ICQCLZQDPLPBX3A2A3UCV4GVG2",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729",
-          "version": "1.1.1",
-          "initializeArgs": {
-            "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-            "operator": "CBYTWO3NS3BFVSZSNJL7BH2REK7V2OCKV5HMLISPP4PLGAX3NEPIPYD3"
-          }
-        },
-        "AxelarExample": {
-          "address": "CCTYQ623YBCS4HPNOKYGG7SOIUFKRAO3NBCASNMJDHCTOHEBHDVMBBFM",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "cb96e568d52b5933111d3d97c7a3c23330df1db086aad6001f67e2daaa62d73b",
-          "version": "1.0.3",
-          "initializeArgs": {
-            "gatewayAddress": "CDTJW72QN6NDH626I2HRRWV7PVQ47G36ZJXYQN4NP646PNI4FYW5BCGS",
-            "gasServiceAddress": "CBERRWADOZ65SKFH5KSZF3W5YLBZO3ICQCLZQDPLPBX3A2A3UCV4GVG2",
-            "itsAddress": "CD4KVKOEP47KHG5MIJEBCUDJSJXCZ5WCG773L5SE3SZ3JLSNOGCIQYZM"
-          }
-        },
-        "Upgrader": {
-          "address": "CBZDPDQ2FU2HFQIU73BILRA35EHCYTHSR7PQJCHVRI3S5Z4HFDLEZSPM",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
-          "version": "1.1.1",
-          "initializeArgs": {}
-        },
-        "InterchainTokenService": {
-          "address": "CD4KVKOEP47KHG5MIJEBCUDJSJXCZ5WCG773L5SE3SZ3JLSNOGCIQYZM",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
-          "version": "1.4.1",
-          "initializeArgs": {
-            "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-            "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-            "gatewayAddress": "CDTJW72QN6NDH626I2HRRWV7PVQ47G36ZJXYQN4NP646PNI4FYW5BCGS",
-            "gasServiceAddress": "CBERRWADOZ65SKFH5KSZF3W5YLBZO3ICQCLZQDPLPBX3A2A3UCV4GVG2",
-            "itsHubAddress": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
-            "chainName": "stellar-2025-q3",
-            "nativeTokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-            "interchainTokenWasmHash": "6cc453f7c1a0e7c2a153a11d7d7218a76ebeb41785239000bc5c428e02749cc8",
-            "tokenManagerWasmHash": "e29417a07222fe6ce5644ab9848757758bdb12ce973c5298f018384e27eecab9"
-          }
-        },
-        "Multicall": {
-          "address": "CCJWJRYRCNVONAQXP45NNWZCOK73HQSQVZMUZ3FGLRORNZ3WQWQ7TMRH",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
-          "version": "1.0.1",
-          "initializeArgs": {}
-        },
-        "TokenUtils": {
-          "address": "CCVOFCNYTMCQWBOEEVPIY6ASCOTTZMABTOQHOFMHFTHD6V7P73C32UHM",
-          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
-          "version": "1.0.0",
-          "initializeArgs": {}
-        }
-      }
-    },
     "celo-sepolia": {
       "name": "Celo-Sepolia",
       "axelarId": "celo-sepolia",
@@ -2672,20 +2455,21 @@
     }
   },
   "axelar": {
+    "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+    "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
+    "multisigProverAdminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "261",
-        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
-        "codeId": 66,
-        "lastUploadedCodeId": 66,
+        "storeCodeProposalId": "362",
+        "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
+        "codeId": 80,
+        "lastUploadedCodeId": 80,
         "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
         "executeProposalId": "14",
-        "version": "1.2.0"
+        "version": "1.2.1"
       },
       "Router": {
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "276",
         "storeCodeProposalCodeHash": "1a2698e36b5b341732fccd1131abc3d030ee307f30a6a0d7eb9b1a2c1856b1b7",
         "codeId": 68,
@@ -2710,7 +2494,6 @@
         "version": "1.0.0"
       },
       "Rewards": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "rewardsDenom": "uaxl",
         "params": {
           "epoch_duration": "14400",
@@ -2728,7 +2511,6 @@
         "version": "1.2.0"
       },
       "Coordinator": {
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "292",
         "storeCodeProposalCodeHash": "1cdf4d35ce0f2356741ab13d8d3ba115c1aa7ec7c0db1007fede7eb13eb45373",
         "codeId": 74,
@@ -2744,8 +2526,6 @@
         "version": "2.1.3"
       },
       "Multisig": {
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 50,
         "storeCodeProposalId": "296",
         "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
@@ -2763,8 +2543,6 @@
       },
       "MultisigProver": {
         "flow": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2779,8 +2557,6 @@
           "version": "1.1.1"
         },
         "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2795,8 +2571,6 @@
           "version": "1.1.1"
         },
         "sui": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2811,8 +2585,6 @@
           "version": "1.1.1"
         },
         "xrpl-evm": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2827,8 +2599,6 @@
           "version": "1.1.1"
         },
         "plume": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2843,8 +2613,6 @@
           "version": "1.1.1"
         },
         "hyperliquid": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2859,8 +2627,6 @@
           "version": "1.1.1"
         },
         "monad": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2875,8 +2641,6 @@
           "version": "1.1.1"
         },
         "berachain": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2891,8 +2655,6 @@
           "version": "1.1.1"
         },
         "stellar-2025-q3": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2907,8 +2669,6 @@
           "version": "1.1.1"
         },
         "celo-sepolia": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -2970,11 +2730,6 @@
           "address": "axelar1ecwslrpm2qvs6cahe4r2n5e3vugqaz9scqyga8y8t59vppvwjaqq0w65t2",
           "version": "1.1.1"
         },
-        "stellar-2025-q3": {
-          "codeId": 58,
-          "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a",
-          "version": "1.1.1"
-        },
         "celo-sepolia": {
           "codeId": 22,
           "address": "axelar1v08w6ajkrjjd8t0g5kc3lr7dtsxjxrulfq5clstgg4zrqpumrxaqe7s3s3",
@@ -2983,7 +2738,6 @@
       },
       "VotingVerifier": {
         "flow": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -2999,7 +2753,6 @@
           "version": "2.0.0"
         },
         "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3015,7 +2768,6 @@
           "version": "2.0.0"
         },
         "sui": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853",
           "msgIdFormat": "base58_tx_digest_and_event_index",
@@ -3031,7 +2783,6 @@
           "version": "2.0.0"
         },
         "xrpl-evm": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3047,7 +2798,6 @@
           "version": "2.0.0"
         },
         "plume": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3063,7 +2813,6 @@
           "version": "2.0.0"
         },
         "hyperliquid": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3079,7 +2828,6 @@
           "version": "2.0.0"
         },
         "monad": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3095,7 +2843,6 @@
           "version": "2.0.0"
         },
         "berachain": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3111,7 +2858,6 @@
           "version": "2.0.0"
         },
         "stellar-2025-q3": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "CDTJW72QN6NDH626I2HRRWV7PVQ47G36ZJXYQN4NP646PNI4FYW5BCGS",
           "votingThreshold": [
@@ -3127,7 +2873,6 @@
           "version": "2.0.0"
         },
         "celo-sepolia": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
           "votingThreshold": [
@@ -3150,17 +2895,11 @@
       "InterchainTokenService": {
         "storeCodeProposalId": "239",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "codeId": 61,
         "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
         "sui": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
-        },
-        "stellar-2025-q3": {
-          "maxUintBits": 127,
-          "maxDecimalsWhenTruncating": 255
         },
         "hedera": {
           "maxUintBits": 64,
@@ -3180,8 +2919,6 @@
       },
       "XrplGateway": {
         "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "codeId": 67,
           "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57",
           "version": "1.3.2"
@@ -3192,26 +2929,23 @@
       },
       "XrplVotingVerifier": {
         "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "votingThreshold": [
             "51",
             "100"
           ],
-          "blockExpiry": 10,
+          "blockExpiry": 50,
           "confirmationHeight": 1,
-          "codeId": 50,
+          "codeId": 78,
           "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6",
-          "version": "1.3.0"
+          "version": "2.0.0"
         },
-        "storeCodeProposalId": "184",
-        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
-        "lastUploadedCodeId": 50
+        "storeCodeProposalId": "332",
+        "storeCodeProposalCodeHash": "2abe2cbdcf0b3f983ea9121521aede7269b0b2e08787e104a7f249c217eac083",
+        "lastUploadedCodeId": 78
       },
       "XrplMultisigProver": {
         "xrpl": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
             "51",
             "100"
@@ -3246,13 +2980,15 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://stagenet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
+    "unitDenom": "uaxl",
     "gasLimit": "auto",
     "govProposalDepositAmount": "100000000",
+    "govProposalExpeditedDepositAmount": "150000000",
     "govProposalInstantiateAddresses": [
       "axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm",
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
       "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
     ],
-    "cosmosSDK": "0.45.16"
+    "cosmosSDK": "0.50.14"
   }
 }

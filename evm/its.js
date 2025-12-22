@@ -3,8 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
-    BigNumber,
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits },
     Contract,
 } = ethers;
 const { Command, Option, Argument } = require('commander');
@@ -18,7 +17,6 @@ const {
     mainProcessor,
     validateParameters,
     getContractJSON,
-    isValidTokenId,
     getGasOptions,
     isNonEmptyString,
     encodeITSDestination,
@@ -26,16 +24,21 @@ const {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     isTrustedChain,
     loadConfig,
+    getGovernanceContract,
+    createGovernanceProposal,
+    writeJSON,
 } = require('./utils');
 const {
     getChainConfigByAxelarId,
-    validateDestinationChain,
     validateChain,
     tokenManagerTypes,
     validateLinkType,
     estimateITSFee,
+    createGMPProposalJSON,
+    dateToEta,
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
+const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar } = require('./governance');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
@@ -43,7 +46,7 @@ const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const ITokenManager = getContractJSON('ITokenManager');
 const { addOptionsToCommands } = require('../common');
-const { addEvmOptions } = require('./cli-utils');
+const { addEvmOptions, addGovernanceOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 
 const IInterchainTokenServiceV211 = getContractJSON(
@@ -257,7 +260,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowLimit = await interchainTokenService.flowLimit(tokenId);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowLimit = await tokenManager.flowLimit();
             printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
 
             break;
@@ -267,7 +273,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowOutAmount = await interchainTokenService.flowOutAmount(tokenId);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowOutAmount = await tokenManager.flowOutAmount();
             printInfo(`Flow out amount for tokenId ${tokenId}`, flowOutAmount);
 
             break;
@@ -277,7 +286,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const flowInAmount = await interchainTokenService.flowInAmount(tokenId);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowInAmount = await tokenManager.flowInAmount();
             printInfo(`Flow in amount for tokenId ${tokenId}`, flowInAmount);
 
             break;
@@ -313,8 +325,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'interchain-transfer': {
-            const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { metadata, env } = options;
+            const { destinationChain, tokenId, destinationAddress, amount, metadata, env } = options;
 
             const { gasValue, gasFeeValue } = await estimateITSFee(
                 chain,
@@ -432,6 +443,40 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        case 'isOperator': {
+            const [address] = args;
+
+            validateParameters({ isValidAddress: { address } });
+
+            const isOp = await interchainTokenService.isOperator(address);
+            printInfo(`Address ${address} is operator`, isOp);
+
+            break;
+        }
+
+        case 'transferOperatorship': {
+            const [newOperator] = args;
+
+            validateParameters({ isValidAddress: { newOperator } });
+
+            const isCurrentOperator = await interchainTokenService.isOperator(walletAddress);
+            const owner = await interchainTokenService.owner();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (!isCurrentOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither an operator nor the owner (owner: ${owner}).`);
+            }
+
+            if (prompt(`Proceed with transferring operatorship to ${newOperator}?`, yes)) {
+                return;
+            }
+
+            const tx = await interchainTokenService.transferOperatorship(newOperator, gasOptions);
+            await handleTx(tx, chain, interchainTokenService, action, 'RolesRemoved', 'RolesAdded');
+
+            break;
+        }
+
         case 'is-trusted-chain': {
             const [itsChain] = args;
 
@@ -448,6 +493,41 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'set-trusted-chains': {
             const trustedChains = args;
+
+            if (options.governance) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to set trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
+                    return;
+                }
+
+                const data = [];
+                for (const trustedChain of trustedChains) {
+                    if (itsVersion === '2.1.1') {
+                        const tx = await interchainTokenService.populateTransaction.setTrustedAddress(trustedChain, 'hub', gasOptions);
+                        data.push(tx.data);
+                    } else {
+                        const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
+                        data.push(tx.data);
+                    }
+                }
+
+                const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
+
+                return createGovernanceProposal({
+                    chain,
+                    options,
+                    targetAddress: interchainTokenServiceAddress,
+                    calldata: multicallCalldata,
+                    ProposalType,
+                    encodeGovernanceProposal,
+                    createGMPProposalJSON,
+                    dateToEta,
+                });
+            }
 
             await validateOwner(interchainTokenService, walletAddress, action);
 
@@ -475,6 +555,41 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'remove-trusted-chains': {
             const trustedChains = args;
 
+            if (options.governance) {
+                if (
+                    prompt(
+                        `Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
+                        yes,
+                    )
+                ) {
+                    return;
+                }
+
+                const data = [];
+                for (const trustedChain of trustedChains) {
+                    if (itsVersion === '2.1.1') {
+                        const tx = await interchainTokenService.populateTransaction.removeTrustedAddress(trustedChain, gasOptions);
+                        data.push(tx.data);
+                    } else {
+                        const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
+                        data.push(tx.data);
+                    }
+                }
+
+                const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
+
+                return createGovernanceProposal({
+                    chain,
+                    options,
+                    targetAddress: interchainTokenServiceAddress,
+                    calldata: multicallCalldata,
+                    ProposalType,
+                    encodeGovernanceProposal,
+                    createGMPProposalJSON,
+                    dateToEta,
+                });
+            }
+
             await validateOwner(interchainTokenService, walletAddress, action);
 
             if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
@@ -500,6 +615,26 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'set-pause-status': {
             const [pauseStatus] = args;
+
+            if (options.governance) {
+                const pauseStatusBool = pauseStatus === 'true';
+                if (prompt(`Proceed with creating governance proposal to set pause status to ${pauseStatus}?`, yes)) {
+                    return;
+                }
+
+                const calldata = interchainTokenService.interface.encodeFunctionData('setPauseStatus', [pauseStatusBool]);
+
+                return createGovernanceProposal({
+                    chain,
+                    options,
+                    targetAddress: interchainTokenServiceAddress,
+                    calldata,
+                    ProposalType,
+                    encodeGovernanceProposal,
+                    createGMPProposalJSON,
+                    dateToEta,
+                });
+            }
 
             await validateOwner(interchainTokenService, walletAddress, action);
 
@@ -597,6 +732,25 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'migrate-interchain-token': {
             const [tokenId] = args;
             validateParameters({ isKeccak256Hash: { tokenId } });
+
+            if (options.governance) {
+                if (prompt(`Proceed with creating governance proposal to migrate interchain token ${tokenId}?`, yes)) {
+                    return;
+                }
+
+                const calldata = interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [tokenId]);
+
+                return createGovernanceProposal({
+                    chain,
+                    options,
+                    targetAddress: interchainTokenServiceAddress,
+                    calldata,
+                    ProposalType,
+                    encodeGovernanceProposal,
+                    createGMPProposalJSON,
+                    dateToEta,
+                });
+            }
 
             const tx = await interchainTokenService.migrateInterchainToken(tokenId, gasOptions);
 
@@ -731,6 +885,42 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
+
+    if (options.governance) {
+        const proposals = [];
+
+        await mainProcessor(options, (axelar, chain, chains, options) =>
+            processCommand(axelar, chain, chains, action, options).then((proposal) => {
+                if (proposal) {
+                    proposals.push(proposal);
+                }
+            }),
+        );
+
+        if (proposals.length > 0) {
+            const proposal = {
+                title: 'Interchain Token Service Governance Proposal',
+                description: 'Interchain Token Service Governance Proposal',
+                contract_calls: proposals,
+            };
+
+            const proposalJSON = JSON.stringify(proposal, null, 2);
+
+            printInfo('Proposal', proposalJSON);
+
+            if (options.generateOnly) {
+                writeJSON(proposal, options.generateOnly);
+                printInfo('Proposal written to file', options.generateOnly);
+            } else {
+                if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
+                    await submitProposalToAxelar(proposal, options);
+                }
+            }
+        }
+
+        return;
+    }
+
     return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
 }
 
@@ -824,15 +1014,15 @@ if (require.main === module) {
     program
         .command('interchain-transfer')
         .description('Perform interchain transfer')
-        .argument('<destination-chain>', 'Destination chain')
-        .argument('<token-id>', 'Token ID')
-        .argument('<destination-address>', 'Destination address')
-        .argument('<amount>', 'Amount')
+        .requiredOption('--destinationChain <destinationChain>', 'Destination chain')
+        .requiredOption('--tokenId <tokenId>', 'Token ID')
+        .requiredOption('--destinationAddress <destinationAddress>', 'Destination address')
+        .requiredOption('--amount <amount>', 'Amount')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
-        .action((destinationChain, tokenId, destinationAddress, amount, options, cmd) => {
-            main(cmd.name(), [destinationChain, tokenId, destinationAddress, amount], options);
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
         });
 
     program
@@ -870,6 +1060,22 @@ if (require.main === module) {
         });
 
     program
+        .command('isOperator')
+        .description('Check if address is InterchainTokenService operator')
+        .argument('<address>', 'Address to check')
+        .action((address, options, cmd) => {
+            main(cmd.name(), [address], options);
+        });
+
+    program
+        .command('transferOperatorship')
+        .description('Transfer InterchainTokenService operatorship')
+        .argument('<new-operator>', 'New operator address')
+        .action((newOperator, options, cmd) => {
+            main(cmd.name(), [newOperator], options);
+        });
+
+    program
         .command('is-trusted-chain')
         .description('Is trusted chain')
         .argument('<its-chain>', 'ITS chain')
@@ -877,29 +1083,32 @@ if (require.main === module) {
             main(cmd.name(), [itsChain], options);
         });
 
-    program
+    const setTrustedChainsCommand = program
         .command('set-trusted-chains')
         .description('Set trusted chains')
         .argument('<chains...>', 'Chains to trust')
         .action((chains, options, cmd) => {
             main(cmd.name(), chains, options);
         });
+    addGovernanceOptions(setTrustedChainsCommand);
 
-    program
+    const removeTrustedChainsCommand = program
         .command('remove-trusted-chains')
         .description('Remove trusted chains')
         .argument('<chains...>', 'Chains to not trust')
         .action((chains, options, cmd) => {
             main(cmd.name(), chains, options);
         });
+    addGovernanceOptions(removeTrustedChainsCommand);
 
-    program
+    const setPauseStatusCommand = program
         .command('set-pause-status')
         .description('Set pause status')
-        .argument('<pause-status>', 'Pause status (true/false)')
+        .argument(new Argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false']))
         .action((pauseStatus, options, cmd) => {
             main(cmd.name(), [pauseStatus], options);
         });
+    addGovernanceOptions(setPauseStatusCommand);
 
     program
         .command('execute')
@@ -919,13 +1128,14 @@ if (require.main === module) {
             main(cmd.name(), [], options);
         });
 
-    program
+    const migrateInterchainTokenCommand = program
         .command('migrate-interchain-token')
         .description('Migrate interchain token')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
             main(cmd.name(), [tokenId], options);
         });
+    addGovernanceOptions(migrateInterchainTokenCommand);
 
     program
         .command('mint-token')
