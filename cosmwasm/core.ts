@@ -21,6 +21,7 @@ import {
     encodeTransferOperatorshipRequest,
     getNexusProtoType,
     getProtoType,
+    getUnitDenom,
     signAndBroadcastWithRetry,
 } from './utils';
 
@@ -65,6 +66,15 @@ const executeDirectEOA = async (
     printInfo('Result', JSON.stringify(result, null, 2));
 };
 
+const getDefaultFee = (config: ConfigManager): StdFee => {
+    const denom = getUnitDenom(config);
+    return { amount: [{ denom, amount: '500000' }], gas: '500000' };
+};
+
+const isValidFeeObject = (fee: string | StdFee | undefined): fee is StdFee => {
+    return typeof fee === 'object' && fee !== null && 'amount' in fee && 'gas' in fee;
+};
+
 const generateMultisigTx = async (
     client: ClientManager,
     config: ConfigManager,
@@ -78,11 +88,14 @@ const generateMultisigTx = async (
 
     const { accountNumber, sequence } = await client.getSequence(signerAddress);
 
+    // For multisig unsigned tx, we need a proper fee object (not 'auto' string)
+    const txFee = isValidFeeObject(fee) ? fee : getDefaultFee(config);
+
     const unsignedTx = {
         chainId,
         accountNumber,
         sequence,
-        fee: fee || { amount: [{ denom: 'uaxl', amount: '500000' }], gas: '500000' },
+        fee: txFee,
         msgs: messages,
         memo: defaultTitle || 'Core operation',
     };
