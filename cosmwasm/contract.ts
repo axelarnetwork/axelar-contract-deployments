@@ -461,6 +461,9 @@ const instantiate = async (
         if (!instantiate2) {
             throw new Error('--predictOnly requires --instantiate2 flag');
         }
+        if (!options.governance) {
+            throw new Error('--predictOnly requires --governance flag');
+        }
         const contractAddress = await predictAddress(client, contractConfig, instantiateOptions);
         contractConfig.address = contractAddress;
         return;
