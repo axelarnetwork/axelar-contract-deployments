@@ -33,6 +33,7 @@ interface CoreCommandOptions extends Options {
     description?: string;
     direct?: boolean;
     output?: string;
+    multisigAddress?: string;
     [key: string]: unknown;
 }
 
@@ -80,13 +81,14 @@ const generateMultisigTx = async (
     config: ConfigManager,
     options: CoreCommandOptions,
     messages: object[],
+    multisigAddress: string,
     fee?: string | StdFee,
     defaultTitle?: string,
 ): Promise<void> => {
-    const signerAddress = client.accounts[0].address;
     const chainId = config.axelar.chainId;
 
-    const { accountNumber, sequence } = await client.getSequence(signerAddress);
+    // Use multisig account for accountNumber and sequence
+    const { accountNumber, sequence } = await client.getSequence(multisigAddress);
 
     // For multisig unsigned tx, we need a proper fee object (not 'auto' string)
     const txFee = isValidFeeObject(fee) ? fee : getDefaultFee(config);
@@ -103,11 +105,14 @@ const generateMultisigTx = async (
     const outputPath = options.output || `unsigned_tx_${Date.now()}.json`;
     fs.writeFileSync(outputPath, JSON.stringify(unsignedTx, null, 2));
     printInfo('Unsigned transaction saved to', outputPath);
+    printInfo('Multisig address', multisigAddress);
     printInfo('', '');
     printInfo('Next steps for multisig signing:');
     printInfo('1. Share this file with all multisig signers');
-    printInfo('2. Each signer signs with: axelard tx sign <file> --from <key> --multisig <multisig-addr> --chain-id ' + chainId);
-    printInfo('3. Combine signatures: axelard tx multisign <file> <multisig-name> <sig1> <sig2> ...');
+    printInfo(
+        '2. Each signer signs with: axelard tx sign ' + outputPath + ' --from <key> --multisig ' + multisigAddress + ' --chain-id ' + chainId,
+    );
+    printInfo('3. Combine signatures: axelard tx multisign ' + outputPath + ' <multisig-name> <sig1> <sig2> ...');
     printInfo('4. Broadcast: axelard tx broadcast <signed-file>');
 };
 
@@ -122,26 +127,51 @@ const executeCoreOperation = async (
     defaultDescription?: string,
 ): Promise<void> => {
     if (options.direct) {
-        const signerAddress = client.accounts[0].address;
-
-        const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
-            const RequestType = getRequestTypeFromMessage(msg);
-            if (RequestType) {
-                const decoded = RequestType.decode(msg.value);
-                decoded.sender = addressToBytes(signerAddress);
-                return {
-                    typeUrl: msg.typeUrl,
-                    value: Uint8Array.from(RequestType.encode(decoded).finish()),
-                };
-            }
-            return msg;
-        });
+        const eoaAddress = client.accounts[0].address;
 
         if (roleType === 'ROLE_CHAIN_MANAGEMENT') {
+            // EOA can directly execute ROLE_CHAIN_MANAGEMENT operations
+            const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
+                const RequestType = getRequestTypeFromMessage(msg);
+                if (RequestType) {
+                    const decoded = RequestType.decode(msg.value);
+                    decoded.sender = addressToBytes(eoaAddress);
+                    return {
+                        typeUrl: msg.typeUrl,
+                        value: Uint8Array.from(RequestType.encode(decoded).finish()),
+                    };
+                }
+                return msg;
+            });
             return executeDirectEOA(client, options, messagesWithSender, fee);
         } else {
+            // ROLE_ACCESS_CONTROL requires multisig
+            const multisigAddress = options.multisigAddress;
+            if (!multisigAddress) {
+                throw new Error(
+                    'ROLE_ACCESS_CONTROL operations require --multisig-address to specify the multisig account that holds the role',
+                );
+            }
+
             printInfo('ROLE_ACCESS_CONTROL operation requires multisig signing');
-            return generateMultisigTx(client, config, options, messagesWithSender, fee, defaultTitle);
+            printInfo('Multisig address (sender)', multisigAddress);
+            printInfo('Your EOA (signer)', eoaAddress);
+
+            // Use multisig address as sender in messages
+            const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
+                const RequestType = getRequestTypeFromMessage(msg);
+                if (RequestType) {
+                    const decoded = RequestType.decode(msg.value);
+                    decoded.sender = addressToBytes(multisigAddress);
+                    return {
+                        typeUrl: msg.typeUrl,
+                        value: Uint8Array.from(RequestType.encode(decoded).finish()),
+                    };
+                }
+                return msg;
+            });
+
+            return generateMultisigTx(client, config, options, messagesWithSender, multisigAddress, fee, defaultTitle);
         }
     }
 

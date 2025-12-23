@@ -112,6 +112,12 @@ const addCoreOptions = (program) => {
     program.addOption(
         new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
     );
+    program.addOption(
+        new Option(
+            '--multisig-address <address>',
+            'multisig account address (required for ROLE_ACCESS_CONTROL operations with --direct)',
+        ).env('MULTISIG_ADDRESS'),
+    );
     program.addOption(new Option('-o, --output <file>', 'output file path for unsigned tx (for multisig operations with --direct)'));
     program.addOption(new Option('-t, --title <title>', 'Proposal title (optional, auto-generated if not provided)'));
     program.addOption(new Option('-d, --description <description>', 'Proposal description (optional, defaults to title)'));
