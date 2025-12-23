@@ -191,6 +191,9 @@ const addExecuteProposalOptions = (program) => {
             'json encoded execute message(s). Can be specified multiple times for multiple messages in one proposal',
         ).makeOptionMandatory(true),
     );
+    program.addOption(
+        new Option('--dry-run', 'print the proposal JSON for combining multiple proposals manually, then exit without submitting'),
+    );
 };
 
 const addParamChangeProposalOptions = (program) => {
