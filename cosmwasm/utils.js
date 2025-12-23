@@ -1252,6 +1252,200 @@ const encodeChainStatusRequest = (chains, requestType) => {
     };
 };
 
+const getProtoType = (protoFile, packageName, typeName) => {
+    const protoDefinition = loadProtoDefinition(protoFile);
+    const parsed = protobuf.parse(protoDefinition, { keepCase: true });
+    const root = parsed.root;
+
+    const fullTypeName = `${packageName}.${typeName}`;
+    const ProtoType = root.lookupType(fullTypeName);
+
+    if (!ProtoType) {
+        throw new Error(`Failed to lookup ${typeName} proto type`);
+    }
+
+    return ProtoType;
+};
+
+const encodeSetTransferRateLimitRequest = (chain, limit, window) => {
+    const RequestType = getNexusProtoType('SetTransferRateLimitRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chain,
+        limit,
+        window,
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid SetTransferRateLimitRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.nexus.v1beta1.SetTransferRateLimitRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeRegisterAssetFeeRequest = (chain, asset, feeRate, minFee, maxFee) => {
+    const RequestType = getNexusProtoType('RegisterAssetFeeRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        fee_info: {
+            chain,
+            asset,
+            fee_rate: feeRate,
+            min_fee: minFee,
+            max_fee: maxFee,
+        },
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid RegisterAssetFeeRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.nexus.v1beta1.RegisterAssetFeeRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeRegisterControllerRequest = (controller) => {
+    const RequestType = getProtoType('permission.proto', 'axelar.permission.v1beta1', 'RegisterControllerRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        controller: Buffer.from(controller.replace('axelar', ''), 'hex'),
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid RegisterControllerRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.permission.v1beta1.RegisterControllerRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeDeregisterControllerRequest = (controller) => {
+    const RequestType = getProtoType('permission.proto', 'axelar.permission.v1beta1', 'DeregisterControllerRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        controller: Buffer.from(controller.replace('axelar', ''), 'hex'),
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid DeregisterControllerRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.permission.v1beta1.DeregisterControllerRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeSetGatewayRequest = (chain, address) => {
+    const RequestType = getProtoType('evm.proto', 'axelar.evm.v1beta1', 'SetGatewayRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chain,
+        address: Buffer.from(address.replace('0x', ''), 'hex'),
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid SetGatewayRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.evm.v1beta1.SetGatewayRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeTransferOperatorshipRequest = (chain, keyId) => {
+    const RequestType = getProtoType('evm.proto', 'axelar.evm.v1beta1', 'TransferOperatorshipRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chain,
+        key_id: keyId,
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid TransferOperatorshipRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.evm.v1beta1.TransferOperatorshipRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeStartKeygenRequest = (keyId) => {
+    const RequestType = getProtoType('multisig.proto', 'axelar.multisig.v1beta1', 'StartKeygenRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        key_id: keyId,
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid StartKeygenRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.multisig.v1beta1.StartKeygenRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
+const encodeRotateKeyRequest = (chain, keyId) => {
+    const RequestType = getProtoType('multisig.proto', 'axelar.multisig.v1beta1', 'RotateKeyRequest');
+
+    const request = RequestType.create({
+        sender: GOVERNANCE_MODULE_ADDRESS,
+        chain,
+        key_id: keyId,
+    });
+
+    const errMsg = RequestType.verify(request);
+    if (errMsg) {
+        throw new Error(`Invalid RotateKeyRequest: ${errMsg}`);
+    }
+
+    const message = RequestType.encode(request).finish();
+
+    return {
+        typeUrl: '/axelar.multisig.v1beta1.RotateKeyRequest',
+        value: Uint8Array.from(message),
+    };
+};
+
 const submitProposal = async (client, config, options, proposal, fee) => {
     const deposit =
         options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
@@ -1535,6 +1729,15 @@ module.exports = {
     encodeCallContracts,
     encodeSubmitProposal,
     encodeChainStatusRequest,
+    encodeSetTransferRateLimitRequest,
+    encodeRegisterAssetFeeRequest,
+    encodeRegisterControllerRequest,
+    encodeDeregisterControllerRequest,
+    encodeSetGatewayRequest,
+    encodeTransferOperatorshipRequest,
+    encodeStartKeygenRequest,
+    encodeRotateKeyRequest,
+    getProtoType,
     submitProposal,
     submitCallContracts,
     signAndBroadcastWithRetry,

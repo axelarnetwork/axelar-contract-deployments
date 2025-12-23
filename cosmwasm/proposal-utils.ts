@@ -12,12 +12,66 @@ import {
 import { printInfo, prompt } from '../common';
 import { ConfigManager } from '../common/config';
 import { ClientManager } from './processor';
-import { getNexusProtoType, submitProposal } from './utils';
+import { getNexusProtoType, getProtoType, submitProposal } from './utils';
 
 interface ProposalOptions {
     yes?: boolean;
     [key: string]: unknown;
 }
+
+// Map of Axelar-specific message types to their proto file and package
+const axelarMessageTypes: Record<string, { protoFile: string; packageName: string; typeName: string }> = {
+    '/axelar.nexus.v1beta1.ActivateChainRequest': {
+        protoFile: 'nexus_chain.proto',
+        packageName: 'axelar.nexus.v1beta1',
+        typeName: 'ActivateChainRequest',
+    },
+    '/axelar.nexus.v1beta1.DeactivateChainRequest': {
+        protoFile: 'nexus_chain.proto',
+        packageName: 'axelar.nexus.v1beta1',
+        typeName: 'DeactivateChainRequest',
+    },
+    '/axelar.nexus.v1beta1.SetTransferRateLimitRequest': {
+        protoFile: 'nexus_chain.proto',
+        packageName: 'axelar.nexus.v1beta1',
+        typeName: 'SetTransferRateLimitRequest',
+    },
+    '/axelar.nexus.v1beta1.RegisterAssetFeeRequest': {
+        protoFile: 'nexus_chain.proto',
+        packageName: 'axelar.nexus.v1beta1',
+        typeName: 'RegisterAssetFeeRequest',
+    },
+    '/axelar.permission.v1beta1.RegisterControllerRequest': {
+        protoFile: 'permission.proto',
+        packageName: 'axelar.permission.v1beta1',
+        typeName: 'RegisterControllerRequest',
+    },
+    '/axelar.permission.v1beta1.DeregisterControllerRequest': {
+        protoFile: 'permission.proto',
+        packageName: 'axelar.permission.v1beta1',
+        typeName: 'DeregisterControllerRequest',
+    },
+    '/axelar.evm.v1beta1.SetGatewayRequest': {
+        protoFile: 'evm.proto',
+        packageName: 'axelar.evm.v1beta1',
+        typeName: 'SetGatewayRequest',
+    },
+    '/axelar.evm.v1beta1.TransferOperatorshipRequest': {
+        protoFile: 'evm.proto',
+        packageName: 'axelar.evm.v1beta1',
+        typeName: 'TransferOperatorshipRequest',
+    },
+    '/axelar.multisig.v1beta1.StartKeygenRequest': {
+        protoFile: 'multisig.proto',
+        packageName: 'axelar.multisig.v1beta1',
+        typeName: 'StartKeygenRequest',
+    },
+    '/axelar.multisig.v1beta1.RotateKeyRequest': {
+        protoFile: 'multisig.proto',
+        packageName: 'axelar.multisig.v1beta1',
+        typeName: 'RotateKeyRequest',
+    },
+};
 
 const printProposal = (proposalData: object[]): void => {
     proposalData.forEach((msg: unknown) => {
@@ -33,13 +87,10 @@ const printProposal = (proposalData: object[]): void => {
         };
 
         const MessageType = typeMap[message.typeUrl];
+        const axelarMsgInfo = axelarMessageTypes[message.typeUrl];
 
-        if (
-            message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
-            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest'
-        ) {
-            const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
-            const MsgType = getNexusProtoType(typeName);
+        if (axelarMsgInfo) {
+            const MsgType = getProtoType(axelarMsgInfo.protoFile, axelarMsgInfo.packageName, axelarMsgInfo.typeName);
             const decoded = MsgType.decode(message.value);
             printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
         } else if (MessageType) {

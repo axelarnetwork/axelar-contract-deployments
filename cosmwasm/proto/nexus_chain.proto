@@ -14,3 +14,27 @@ message DeactivateChainRequest {
   repeated string chains = 2;
   string sender = 3;
 }
+
+// SetTransferRateLimitRequest represents a message to set transfer rate limit for an asset on a chain
+message SetTransferRateLimitRequest {
+  bytes sender_deprecated = 1;  // deprecated, don't use
+  string chain = 2;
+  string limit = 3;  // sdk.Int encoded as string
+  string window = 4;  // duration encoded as string (e.g., "24h")
+  string sender = 5;
+}
+
+// RegisterAssetFeeRequest represents a message to register fees for an asset on a chain
+message RegisterAssetFeeRequest {
+  bytes sender_deprecated = 1;  // deprecated, don't use
+  FeeInfo fee_info = 2;
+  string sender = 3;
+}
+
+message FeeInfo {
+  string chain = 1;
+  string asset = 2;
+  string fee_rate = 3;  // sdk.Dec encoded as string
+  string min_fee = 4;   // sdk.Int encoded as string
+  string max_fee = 5;   // sdk.Int encoded as string
+}

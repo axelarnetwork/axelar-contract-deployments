@@ -1,0 +1,19 @@
+syntax = "proto3";
+package axelar.multisig.v1beta1;
+
+option go_package = "github.com/axelarnetwork/axelar-core/x/multisig/types";
+
+// StartKeygenRequest represents a message to start key generation
+message StartKeygenRequest {
+  string sender = 1;
+  string key_id = 2;
+}
+
+// RotateKeyRequest represents a message to rotate a key for a chain
+message RotateKeyRequest {
+  bytes sender_deprecated = 1;  // deprecated, don't use
+  string chain = 2;
+  string key_id = 3;
+  string sender = 4;
+}
+
