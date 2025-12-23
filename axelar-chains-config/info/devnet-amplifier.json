@@ -1503,7 +1503,7 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj",
           "version": "2.0.1"
         },
@@ -1518,7 +1518,7 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m",
           "version": "2.0.1"
         },
@@ -1532,7 +1532,7 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar1qtg2es55w6zp539a2xh9mnajxqq2rsqghf604muyw85vrn0ky97qyu795s",
           "version": "2.0.1"
         },
@@ -1547,7 +1547,7 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1hn4hf23pqy2s2yacs4cuzjqe72hxn0rtxugy2vq485l7cngtcavqu9d0zq",
-          "codeId": 1585,
+          "codeId": 1619,
           "version": "2.0.1"
         },
         "sui-2": {
@@ -1560,7 +1560,7 @@
           ],
           "blockExpiry": 50,
           "confirmationHeight": 1,
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5",
           "version": "2.0.1"
         },
@@ -1574,7 +1574,7 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar1yrhlkqr0x20knf2j454lm2r3m03qry9gsl485aj0ssz4mhegewjqyauz85",
           "version": "2.0.1"
         },
@@ -1588,7 +1588,7 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl",
           "version": "2.0.1"
         },
@@ -1602,7 +1602,7 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "address": "axelar1uypvvkd820cs4t6y47hqszawegwyrxaxr9ehpla74e98g0rezr5sw9lj4z",
           "version": "2.0.1"
         },
@@ -1633,15 +1633,13 @@
           "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1585,
+          "codeId": 1619,
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar1z53yqsw8arzecjqvvzdjs54h5tvsk4n78qdj0v9jsctvfymvhkpqdatwt3",
           "version": "2.0.1"
         },
         "storeCodeProposalId": "1543",
-        "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
-        "codeId": 1585,
-        "stellar": {}
+        "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e"
       },
       "Gateway": {
         "avalanche-fuji": {
@@ -1725,7 +1723,7 @@
           "verifierSetDiffThreshold": 1,
           "keyType": "ecdsa",
           "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
-          "codeId": 855,
+          "codeId": 1618,
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q",
           "version": "1.2.0"
         },
@@ -1740,7 +1738,7 @@
           "verifierSetDiffThreshold": 1,
           "keyType": "ecdsa",
           "domainSeparator": "0xc04aba7c8ccda4059d622ac3e17bb4ef1c1e2358f25bfea5902a44d3a34d616a",
-          "codeId": 855,
+          "codeId": 1618,
           "address": "axelar15ra7d5uvnmc6ety6sqxsvsfz4t34ud6lc5gmt39res0c5thkqp2qdwj4af",
           "version": "1.2.0"
         },
@@ -1754,7 +1752,7 @@
           "verifierSetDiffThreshold": 1,
           "keyType": "ecdsa",
           "domainSeparator": "0xf865bf16595139bf568a034d575ffdbdd524dd2dbf8cce1de2ddaf7b964bf8e6",
-          "codeId": 855,
+          "codeId": 1618,
           "address": "axelar1p0yyfy7f70zdc0ludh6kffjzs8mvun5prdf7nh7s2cgq74g67nmsjcw7t4",
           "version": "1.2.0"
         },
@@ -1769,7 +1767,7 @@
           "keyType": "ecdsa",
           "domainSeparator": "0xcc0a47123f218b7f10d07212f499e418080c91cda74c46373c9a0e4aeec7332e",
           "address": "axelar19ukamzyhhaw4algkqch5relyg0h972smhj8zge2usjp8z7yaezrquc475f",
-          "codeId": 855,
+          "codeId": 1618,
           "version": "1.2.0"
         },
         "sui-2": {
@@ -1780,7 +1778,7 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "keyType": "ecdsa",
-          "codeId": 855,
+          "codeId": 1618,
           "domainSeparator": "0xa5ea3e93481643015f6273d6938484afb463de5c25f980ec72b63d56ebd55d55",
           "address": "axelar175r02r0d2u9lnjthw8jzk3wrmwfkqenxccw4kz6cnez7v4l2yrlqt9smv5",
           "version": "1.2.0"
@@ -1794,7 +1792,7 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "keyType": "ecdsa",
-          "codeId": 855,
+          "codeId": 1618,
           "domainSeparator": "0x8a1a34e4e527215bb55d1fa7996fafae63ca752ca9224cd7c0249b11b33554ff",
           "address": "axelar1su2klffayxmzuu4t094y5frslsuyf4qjzc3dswdfpuula7muw4ksk0kg4f",
           "version": "1.2.0"
@@ -1807,7 +1805,7 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "keyType": "ecdsa",
-          "codeId": 855,
+          "codeId": 1618,
           "domainSeparator": "0x974a372dccb2a81196b546432ad388af9cb49d0a5e4567d444c51ea63edb62f9",
           "address": "axelar1mfn6hevkpj54qkkdy2rznp2azgvqff0rt2cegmflxgqfm0nqx20q6aqnp5",
           "version": "1.2.0"
@@ -1820,7 +1818,7 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "keyType": "ecdsa",
-          "codeId": 855,
+          "codeId": 1618,
           "domainSeparator": "0xde451736aa7e61c58baa7e02a0531c535a0dd8d3b5a04973d99336f34efad68b",
           "address": "axelar1xdg6lezehttusu8zfr5jnshn7d3k2jjzlmr43m6ssmxd048zjv6s4h5unj",
           "version": "1.2.0"
@@ -1852,15 +1850,14 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "keyType": "ecdsa",
-          "codeId": 855,
+          "codeId": 1618,
           "domainSeparator": "0x6b1662df6493a1f8d06872212524f7f9aed835421655acac576bcd6f87c733e9",
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar155vztt0rfvpjdftqnprxr9p42rj6a07jvmegtaqmer4kar4vufcs7az9qf",
           "version": "1.2.0"
         },
         "storeCodeProposalId": "1542",
-        "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
-        "stellar": {}
+        "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb"
       },
       "XrplVotingVerifier": {
         "xrpl-dev": {

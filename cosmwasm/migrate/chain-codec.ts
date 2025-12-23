@@ -117,12 +117,14 @@ async function migrate(client: ClientManager, config: ConfigManager, options: Mi
             const multisigProverAddress = config.validateRequired(multisigProver.address, `MultisigProver[${chainName}].address`);
             const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
             const proverCodeId = await getCodeId(client, config, { contractName: multisigProverContractName, fetchCodeId: true });
+            multisigProver.codeId = proverCodeId;
 
             // migration data for VotingVerifier contract
             const votingVerifier = config.getVotingVerifierContract(chainName);
             const votingVerifierAddress = config.validateRequired(votingVerifier.address, `VotingVerifier[${chainName}].address`);
             const votingVerifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
             const verifierCodeId = await getCodeId(client, config, { contractName: votingVerifierContractName, fetchCodeId: true });
+            votingVerifier.codeId = verifierCodeId;
 
             migrations.push({
                 proverAddress: multisigProverAddress,
