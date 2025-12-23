@@ -76,11 +76,11 @@ const isValidFeeObject = (fee: string | StdFee | undefined): fee is StdFee => {
     return typeof fee === 'object' && fee !== null && 'amount' in fee && 'gas' in fee;
 };
 
-const serializeMessagesForJson = (messages: object[]): object[] => {
-    return messages.map((msg: { typeUrl?: string; value?: Uint8Array }) => ({
-        ...msg,
+const serializeMessageForJson = (msg: { typeUrl?: string; value?: Uint8Array }): object => {
+    return {
+        '@type': msg.typeUrl,
         value: msg.value instanceof Uint8Array ? Buffer.from(msg.value).toString('base64') : msg.value,
-    }));
+    };
 };
 
 const generateMultisigTx = async (
@@ -99,18 +99,32 @@ const generateMultisigTx = async (
     const txFee = isValidFeeObject(fee) ? fee : getDefaultFee(config);
 
     const unsignedTx = {
-        chainId,
-        accountNumber,
-        sequence,
-        fee: txFee,
-        msgs: serializeMessagesForJson(messages),
-        memo: defaultTitle || 'Core operation',
+        body: {
+            messages: messages.map((msg: { typeUrl?: string; value?: Uint8Array }) => serializeMessageForJson(msg)),
+            memo: defaultTitle || 'Core operation',
+            timeout_height: '0',
+            extension_options: [],
+            non_critical_extension_options: [],
+        },
+        auth_info: {
+            signer_infos: [],
+            fee: {
+                amount: txFee.amount,
+                gas_limit: txFee.gas,
+                payer: '',
+                granter: '',
+            },
+            tip: null,
+        },
+        signatures: [],
     };
 
     const outputPath = options.output || `unsigned_tx_${Date.now()}.json`;
     fs.writeFileSync(outputPath, JSON.stringify(unsignedTx, null, 2));
     printInfo('Unsigned transaction saved to', outputPath);
     printInfo('Multisig address', multisigAddress);
+    printInfo('Account number', String(accountNumber));
+    printInfo('Sequence', String(sequence));
     printInfo('', '');
     printInfo('Next steps for multisig signing:');
     printInfo('1. Share this file with all multisig signers');
@@ -120,7 +134,11 @@ const generateMultisigTx = async (
             ' --from <key> --multisig ' +
             multisigAddress +
             ' --chain-id ' +
-            chainId,
+            chainId +
+            ' --offline --account-number ' +
+            accountNumber +
+            ' --sequence ' +
+            sequence,
     );
     printInfo('3. Combine signatures: axelard tx multisign ' + outputPath + ' <multisig-name> <sig1> <sig2> ...');
     printInfo('4. Broadcast: axelard tx broadcast <signed-file>');
