@@ -50,6 +50,35 @@ Rotate non-critical roles to appropriate operational addresses, and assign criti
 
 ## Prerequisites
 
+### Critical: Contract Upgrade Required Before Role Transfers
+
+**Some Amplifier contracts currently lack the `UpdateAdmin` message handler.** Before executing the admin role transfers described in this document, the following contracts must be upgraded to include the required functionality:
+
+| Contract | `UpdateAdmin` Available? | Action Required |
+|----------|-------------------------|-----------------|
+| Router | No | Upgrade required |
+| Multisig | No | Upgrade required |
+| InterchainTokenService | No | Upgrade required |
+| MultisigProver | Yes (but requires Governance, not Admin) | See note below |
+| XRPL Contracts | Yes | N/A |
+
+**Note on MultisigProver**: The `UpdateAdmin` message exists but requires **Governance permission**, not Admin permission. The document's Step 5 should use a governance proposal instead of direct admin execution.
+
+**Note on InterchainTokenService**: This contract requires both `UpdateAdmin` (for Step 6) and `SetOperator` (for Step 7) message handlers to be implemented.
+
+### Governance Roles: No Transfer Needed
+
+**The `governanceAddress` for most contracts is already set to the Axelar Governance Module** (`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` for mainnet/testnet/stagenet, `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` for devnet-amplifier). No governance role transfers are required.
+
+Additionally, **most contracts do not have an `UpdateGovernance` message handler**. Implementing this functionality is not a current priority since governance roles are already correctly assigned.
+
+### Summary of What Can Be Executed Today
+
+- **Step 2 (Governance Transfers)**: NOT NEEDED - governance roles are already correctly set
+- **Steps 3-8 (Admin Transfers)**: BLOCKED - requires contract upgrades to add `UpdateAdmin` functionality
+
+### Environment Setup
+
 Set up your environment for Axelar operations:
 
 ```bash
@@ -213,7 +242,9 @@ axelard query wasm contract-state smart $CONTRACT_ADDRESS '{"governance_address"
 
 ### Step 2: Transfer Governance Roles to Axelar Governance Module
 
-All `governanceAddress`/`governanceAccount` roles should be transferred to the Axelar Governance Module through governance proposals, UNLESS they are already set to the Governance Module. This applies to:
+> **NO ACTION REQUIRED**: As noted in the Prerequisites section, the `governanceAddress`/`governanceAccount` for all contracts is **already set to the Axelar Governance Module**. Additionally, most contracts do not have an `UpdateGovernance` message handler implemented. Skip this step and proceed to Step 3 (after contract upgrades are completed).
+
+For reference, if governance transfers were needed in the future, they would apply to:
 
 - ServiceRegistry (governanceAccount)
 - Router (governanceAddress)
@@ -428,6 +459,8 @@ Do not proceed with admin transfers until all governance transfers are verified.
 
 ### Step 3: Transfer Router Admin to Emergency Operator EOA
 
+> **BLOCKED**: Router contract does not currently have `UpdateAdmin` message handler. Contract upgrade required before this step can be executed.
+
 The Router admin role should be transferred to an Emergency Operator EOA for rapid response capabilities.
 
 **New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
@@ -457,6 +490,8 @@ ts-node cosmwasm/query.ts contract-admin -c Router -e $ENV
 **Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 4: Transfer Multisig Admin to Emergency Operator EOA
+
+> **BLOCKED**: Multisig contract does not currently have `UpdateAdmin` message handler. Contract upgrade required before this step can be executed.
 
 **New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
@@ -488,43 +523,101 @@ ts-node cosmwasm/query.ts contract-admin -c Multisig -e $ENV
 
 The MultisigProver admin role (for all supported chains) should be transferred to a Key Rotation EOA for timely verifier set updates.
 
+> **IMPORTANT**: Unlike other contracts, MultisigProver's `update_admin` message **requires Governance permission**, not Admin permission. This must be executed via governance proposal.
+
 **New Admin**: Key Rotation EOA - refer to the Target Role Addresses Table above
 
 ```bash
 # Set variables
 ENV=mainnet
 KEY_ROTATION_EOA=<KEY_ROTATION_EOA_ADDRESS>
+PROPOSAL_FILE=multisig_prover_admin_transfer.json
 
-# Script to update all MultisigProver admins
+# Set deposit based on environment (expedited proposals require higher deposit)
+case $ENV in
+  mainnet|testnet)
+    DEPOSIT="3000000000uaxl"  # 3000 AXL for expedited on mainnet/testnet
+    ;;
+  stagenet)
+    DEPOSIT="150000000uaxl"   # 150 AXL for expedited on stagenet
+    ;;
+  devnet-amplifier)
+    DEPOSIT="150000000uamplifier"  # 150 for expedited on devnet-amplifier
+    ;;
+esac
+
+# Step 1: Generate proposal JSON for all chains using --dry-run
+echo "Generating proposal messages for all MultisigProver contracts..."
+
+# Start JSON structure
+echo '{
+  "title": "Transfer MultisigProver Admin to Key Rotation EOA",
+  "summary": "Transfer admin role of MultisigProver for all chains to Key Rotation EOA for timely verifier set updates",
+  "expedited": true,
+  "messages": [' > $PROPOSAL_FILE
+
+FIRST=true
 for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid monad; do
   MULTISIG_PROVER_CONTRACT=$(jq -r ".axelar.contracts.MultisigProver[\"$CHAIN_NAME\"].address // empty" ./axelar-chains-config/info/$ENV.json)
   
   if [ -n "$MULTISIG_PROVER_CONTRACT" ] && [ "$MULTISIG_PROVER_CONTRACT" != "null" ]; then
-    echo "Updating MultisigProver[$CHAIN_NAME]: $MULTISIG_PROVER_CONTRACT"
+    echo "  Adding MultisigProver[$CHAIN_NAME]: $MULTISIG_PROVER_CONTRACT"
     
-    axelard tx wasm execute $MULTISIG_PROVER_CONTRACT \
-      "{\"update_admin\": {\"admin\": \"$KEY_ROTATION_EOA\"}}" \
-      --from <current_admin_key> \
-      --chain-id $CHAIN_ID \
-      --gas auto \
-      --gas-adjustment 1.5 \
-      --gas-prices 0.00005uaxl \
-      -y
+    # Use --dry-run to get the message JSON without submitting
+    OUTPUT=$(ts-node cosmwasm/submit-proposal.js executeByGovernance \
+      -e $ENV \
+      -c MultisigProver \
+      -n $CHAIN_NAME \
+      -t "placeholder" \
+      -d "placeholder" \
+      --msg "{\"update_admin\":{\"admin\":\"$KEY_ROTATION_EOA\"}}" \
+      --dry-run 2>/dev/null)
     
-    # Wait for tx to be included
-    sleep 6
+    if [ -n "$OUTPUT" ] && [ "$OUTPUT" != "[]" ]; then
+      if [ "$FIRST" = true ]; then
+        FIRST=false
+      else
+        echo "," >> $PROPOSAL_FILE
+      fi
+      # Remove outer brackets from array and append
+      echo "$OUTPUT" | sed 's/^\[//;s/\]$//' >> $PROPOSAL_FILE
+    fi
   fi
 done
 
-# Verify all transfers
+# Close JSON structure
+echo "
+  ],
+  \"deposit\": \"$DEPOSIT\"
+}" >> $PROPOSAL_FILE
+
+echo "Generated $PROPOSAL_FILE"
+cat $PROPOSAL_FILE
+
+# Step 2: Submit combined proposal via axelard
+echo ""
+echo "Submitting combined governance proposal..."
+axelard tx gov submit-proposal $PROPOSAL_FILE \
+  --from <wallet> \
+  --chain-id $CHAIN_ID \
+  --node $NODE \
+  --gas auto \
+  --gas-adjustment 1.4 \
+  -y
+
+# Step 3: After proposal passes, verify all transfers
+echo ""
+echo "After proposal passes, verify transfers with:"
 for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid monad; do
-  ts-node cosmwasm/query.ts contract-admin -c MultisigProver -n $CHAIN_NAME -e $ENV 2>/dev/null || true
+  echo "ts-node cosmwasm/query.ts contract-admin -c MultisigProver -n $CHAIN_NAME -e $ENV"
 done
 ```
 
 **Important:** Verify each chain's MultisigProver shows `$KEY_ROTATION_EOA` as the admin. If any chain fails, investigate that specific transaction before proceeding.
 
 ### Step 6: Transfer InterchainTokenService Admin to Emergency Operator EOA
+
+> **BLOCKED**: InterchainTokenService contract does not currently have `UpdateAdmin` message handler. Contract upgrade required before this step can be executed.
 
 **New Admin**: Emergency Operator EOA - refer to the Target Role Addresses Table above
 
@@ -553,6 +646,8 @@ ts-node cosmwasm/query.ts contract-admin -c InterchainTokenService -e $ENV
 **Important:** Verify the output shows `$EMERGENCY_OPERATOR_EOA` as the admin. If not, check the transaction status and do not proceed until verified.
 
 ### Step 7: Set InterchainTokenService Operator to Relayer Operators EOA
+
+> **BLOCKED**: InterchainTokenService contract does not currently have `SetOperator` message handler. Contract upgrade required before this step can be executed.
 
 **New Operator**: Relayer Operators EOA - refer to the Target Role Addresses Table above
 

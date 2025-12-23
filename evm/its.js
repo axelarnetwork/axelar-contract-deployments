@@ -325,8 +325,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'interchain-transfer': {
-            const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { metadata, env } = options;
+            const { destinationChain, tokenId, destinationAddress, amount, metadata, env } = options;
 
             const { gasValue, gasFeeValue } = await estimateITSFee(
                 chain,
@@ -1015,15 +1014,15 @@ if (require.main === module) {
     program
         .command('interchain-transfer')
         .description('Perform interchain transfer')
-        .argument('<destination-chain>', 'Destination chain')
-        .argument('<token-id>', 'Token ID')
-        .argument('<destination-address>', 'Destination address')
-        .argument('<amount>', 'Amount')
+        .requiredOption('--destinationChain <destinationChain>', 'Destination chain')
+        .requiredOption('--tokenId <tokenId>', 'Token ID')
+        .requiredOption('--destinationAddress <destinationAddress>', 'Destination address')
+        .requiredOption('--amount <amount>', 'Amount')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
-        .action((destinationChain, tokenId, destinationAddress, amount, options, cmd) => {
-            main(cmd.name(), [destinationChain, tokenId, destinationAddress, amount], options);
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
         });
 
     program

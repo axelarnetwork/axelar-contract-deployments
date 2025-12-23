@@ -88,11 +88,11 @@ ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial-supply] --minter [minter] --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination-chain] --salt "salt1234" -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination-chain] --salt "salt1234" -n $CHAIN
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
 ```

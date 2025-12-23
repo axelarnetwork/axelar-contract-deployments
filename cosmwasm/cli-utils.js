@@ -104,6 +104,19 @@ const addAxelarNodeOption = (program) => {
     program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
 };
 
+const addCoreOptions = (program) => {
+    addEnvOption(program);
+    addAxelarNodeOption(program);
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(
+        new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
+    );
+    program.addOption(new Option('-t, --title <title>', 'Proposal title (optional, auto-generated if not provided)'));
+    program.addOption(new Option('-d, --description <description>', 'Proposal description (optional, defaults to title)'));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
+};
+
 const addAmplifierQueryContractOptions = (program) => {
     addEnvOption(program);
     addAxelarNodeOption(program);
@@ -178,6 +191,9 @@ const addExecuteProposalOptions = (program) => {
             'json encoded execute message(s). Can be specified multiple times for multiple messages in one proposal',
         ).makeOptionMandatory(true),
     );
+    program.addOption(
+        new Option('--dry-run', 'print the proposal JSON for combining multiple proposals manually, then exit without submitting'),
+    );
 };
 
 const addParamChangeProposalOptions = (program) => {
@@ -203,4 +219,5 @@ module.exports = {
     addAmplifierQueryOptions,
     addAmplifierQueryContractOptions,
     addChainNameOption,
+    addCoreOptions,
 };
