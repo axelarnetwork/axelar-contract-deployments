@@ -9,6 +9,7 @@ import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { confirmProposalSubmission, submitProposalAndPrint } from './proposal-utils';
 import {
+    addressToBytes,
     encodeChainStatusRequest,
     encodeSetTransferRateLimitRequest,
     encodeRegisterAssetFeeRequest,
@@ -18,6 +19,8 @@ import {
     encodeTransferOperatorshipRequest,
     encodeStartKeygenRequest,
     encodeRotateKeyRequest,
+    getNexusProtoType,
+    getProtoType,
     signAndBroadcastWithRetry,
 } from './utils';
 
@@ -107,9 +110,8 @@ const executeCoreOperation = async (
 ): Promise<void> => {
     if (options.direct) {
         const signerAddress = client.accounts[0].address;
-        const { addressToBytes } = require('./utils');
 
-        const messagesWithSender = messages.map((msg: any) => {
+        const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
             const RequestType = getRequestTypeFromMessage(msg);
             if (RequestType) {
                 const decoded = RequestType.decode(msg.value);
@@ -141,10 +143,16 @@ const executeCoreOperation = async (
     await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
 };
 
-const getRequestTypeFromMessage = (msg: any): any => {
-    const { getProtoType, getNexusProtoType } = require('./utils');
+interface ProtoMessage {
+    typeUrl: string;
+    value: Uint8Array;
+}
 
-    const typeUrlToProto: Record<string, () => any> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ProtoType = any;
+
+const getRequestTypeFromMessage = (msg: ProtoMessage): ProtoType | null => {
+    const typeUrlToProto: Record<string, () => ProtoType> = {
         '/axelar.nexus.v1beta1.ActivateChainRequest': () => getNexusProtoType('ActivateChainRequest'),
         '/axelar.nexus.v1beta1.DeactivateChainRequest': () => getNexusProtoType('DeactivateChainRequest'),
         '/axelar.nexus.v1beta1.SetTransferRateLimitRequest': () => getNexusProtoType('SetTransferRateLimitRequest'),
