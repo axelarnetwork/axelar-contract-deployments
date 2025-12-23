@@ -490,10 +490,13 @@ const instantiate = async (
         validateParameters({ isNonEmptyString: { title, description } });
 
         const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, [proposal], fee);
-        contractConfig.instantiateProposalId = proposalId;
 
-        if (instantiate2 && contractAddress) {
-            contractConfig.address = contractAddress;
+        if (proposalId) {
+            contractConfig.instantiateProposalId = proposalId;
+
+            if (instantiate2 && contractAddress) {
+                contractConfig.address = contractAddress;
+            }
         }
 
         return;
@@ -546,11 +549,13 @@ const storeInstantiate = async (
 
         const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, [proposal], fee);
 
-        contractConfig.storeInstantiateProposalId = proposalId;
-        contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-            .update(readContractCode(storeInstantiateOptions))
-            .digest()
-            .toString('hex');
+        if (proposalId) {
+            contractConfig.storeInstantiateProposalId = proposalId;
+            contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+                .update(readContractCode(storeInstantiateOptions))
+                .digest()
+                .toString('hex');
+        }
 
         return;
     }

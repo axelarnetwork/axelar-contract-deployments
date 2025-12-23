@@ -136,9 +136,9 @@ const submitMessagesAsProposal = async (
     options: ProposalOptions & { title?: string; description?: string },
     messages: object[],
     fee?: string | StdFee,
-): Promise<string> => {
+): Promise<string | undefined> => {
     if (!confirmProposalSubmission(options, messages)) {
-        throw new Error('Proposal submission cancelled');
+        return;
     }
 
     const proposalId = await submitProposal(client, config, options, messages, fee);
