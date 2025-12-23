@@ -26,6 +26,7 @@ type ProcessorQueryFn = (client: CosmWasmClient, config: ConfigManager, options:
 
 export interface ClientManager extends SigningCosmWasmClient {
     accounts: readonly AccountData[];
+    wallet: DirectSecp256k1HdWallet;
 }
 
 function prepareQueryProcessor(options: Options): { configManager: ConfigManager } {
@@ -96,6 +97,7 @@ async function prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice):
         const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
         const clientManager = (await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice: gasPrice })) as ClientManager;
         clientManager.accounts = await wallet.getAccounts();
+        clientManager.wallet = wallet;
         return clientManager;
     } catch (error) {
         throw new Error(`Failed to prepare client: ${error instanceof Error ? error.message : String(error)}`);

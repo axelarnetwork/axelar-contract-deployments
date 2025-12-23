@@ -1,5 +1,9 @@
 import { toBech32 } from '@cosmjs/encoding';
-import { StdFee } from '@cosmjs/stargate';
+import { encodePubkey, makeAuthInfoBytes, makeSignDoc } from '@cosmjs/proto-signing';
+import { calculateFee, DeliverTxResponse, GasPrice, StdFee } from '@cosmjs/stargate';
+import { Any } from 'cosmjs-types/google/protobuf/any';
+import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
+import { TxBody, TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
 import { Command } from 'commander';
 import * as fs from 'fs';
 
@@ -23,7 +27,6 @@ import {
     getNexusProtoType,
     getProtoType,
     getUnitDenom,
-    signAndBroadcastWithRetry,
 } from './utils';
 
 type RoleType = 'ROLE_ACCESS_CONTROL' | 'ROLE_CHAIN_MANAGEMENT';
@@ -38,10 +41,65 @@ interface CoreCommandOptions extends Options {
     [key: string]: unknown;
 }
 
+const signAndBroadcastRawMessages = async (
+    client: ClientManager,
+    config: ConfigManager,
+    signerAddress: string,
+    messages: { typeUrl: string; value: Uint8Array }[],
+    fee?: string | StdFee,
+    memo: string = '',
+): Promise<DeliverTxResponse> => {
+    const { accountNumber, sequence } = await client.getSequence(signerAddress);
+    const chainId = config.axelar.chainId;
+
+    const gasPrice = GasPrice.fromString('0.007uaxl');
+    const usedFee: StdFee = typeof fee === 'object' && fee ? fee : calculateFee(200000, gasPrice);
+
+    const anyMessages: Any[] = messages.map((msg) =>
+        Any.fromPartial({
+            typeUrl: msg.typeUrl,
+            value: msg.value,
+        }),
+    );
+
+    const txBody = TxBody.fromPartial({
+        messages: anyMessages,
+        memo,
+    });
+    const txBodyBytes = TxBody.encode(txBody).finish();
+
+    const account = client.accounts[0];
+    const pubkeyAny = encodePubkey({
+        type: 'tendermint/PubKeySecp256k1',
+        value: Buffer.from(account.pubkey).toString('base64'),
+    });
+    const authInfoBytes = makeAuthInfoBytes(
+        [{ pubkey: pubkeyAny, sequence }],
+        usedFee.amount,
+        parseInt(usedFee.gas, 10),
+        undefined,
+        undefined,
+        SignMode.SIGN_MODE_DIRECT,
+    );
+
+    const signDoc = makeSignDoc(txBodyBytes, authInfoBytes, chainId, accountNumber);
+    const signResponse = await client.wallet.signDirect(signerAddress, signDoc);
+
+    const txRaw = TxRaw.fromPartial({
+        bodyBytes: signResponse.signed.bodyBytes,
+        authInfoBytes: signResponse.signed.authInfoBytes,
+        signatures: [Uint8Array.from(Buffer.from(signResponse.signature.signature, 'base64'))],
+    });
+
+    const txBytes = TxRaw.encode(txRaw).finish();
+    return client.broadcastTx(txBytes);
+};
+
 const executeDirectEOA = async (
     client: ClientManager,
+    config: ConfigManager,
     options: CoreCommandOptions,
-    messages: object[],
+    messages: { typeUrl: string; value: Uint8Array }[],
     fee?: string | StdFee,
 ): Promise<void> => {
     const signerAddress = client.accounts[0].address;
@@ -63,7 +121,7 @@ const executeDirectEOA = async (
         }
     }
 
-    const result = await signAndBroadcastWithRetry(client, signerAddress, messages, fee || 'auto', '');
+    const result = await signAndBroadcastRawMessages(client, config, signerAddress, messages, fee);
     printInfo('Transaction hash', result.transactionHash);
     printInfo('Result', JSON.stringify(result, null, 2));
 };
@@ -227,7 +285,7 @@ const executeCoreOperation = async (
                 }
                 return msg;
             });
-            return executeDirectEOA(client, options, messagesWithSender, fee);
+            return executeDirectEOA(client, config, options, messagesWithSender, fee);
         } else {
             const multisigAddress = options.multisigAddress;
             if (!multisigAddress) {
