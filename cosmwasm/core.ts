@@ -1,3 +1,4 @@
+import { toBech32 } from '@cosmjs/encoding';
 import { StdFee } from '@cosmjs/stargate';
 import { Command } from 'commander';
 import * as fs from 'fs';
@@ -76,11 +77,67 @@ const isValidFeeObject = (fee: string | StdFee | undefined): fee is StdFee => {
     return typeof fee === 'object' && fee !== null && 'amount' in fee && 'gas' in fee;
 };
 
-const serializeMessageForJson = (msg: { typeUrl?: string; value?: Uint8Array }): object => {
-    return {
-        '@type': msg.typeUrl,
-        value: msg.value instanceof Uint8Array ? Buffer.from(msg.value).toString('base64') : msg.value,
-    };
+const bytesToBech32 = (bytes: Uint8Array | Buffer, prefix: string = 'axelar'): string => {
+    return toBech32(prefix, bytes);
+};
+
+const bytesToHex = (bytes: Uint8Array | Buffer): string => {
+    return '0x' + Buffer.from(bytes).toString('hex');
+};
+
+const convertFieldValue = (key: string, value: unknown): unknown => {
+    if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
+        if (key === 'sender' || key === 'controller') {
+            return bytesToBech32(value);
+        }
+        if (key === 'address') {
+            return bytesToHex(value);
+        }
+        return Buffer.from(value).toString('base64');
+    }
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const converted: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(value)) {
+            converted[k] = convertFieldValue(k, v);
+        }
+        return converted;
+    }
+    if (Array.isArray(value)) {
+        return value.map((v, i) => convertFieldValue(String(i), v));
+    }
+    if (typeof value === 'bigint') {
+        return value.toString();
+    }
+    return value;
+};
+
+const decodeMessageToJson = (msg: { typeUrl?: string; value?: Uint8Array }): object => {
+    if (!msg.typeUrl || !msg.value) {
+        return { '@type': msg.typeUrl };
+    }
+
+    const RequestType = getRequestTypeFromMessage(msg as { typeUrl: string; value: Uint8Array });
+    if (!RequestType) {
+        return {
+            '@type': msg.typeUrl,
+            value: Buffer.from(msg.value).toString('base64'),
+        };
+    }
+
+    const decoded = RequestType.decode(msg.value);
+    const jsonObj = RequestType.toObject(decoded, {
+        longs: String,
+        enums: String,
+        bytes: Buffer,
+        defaults: false,
+    });
+
+    const result: Record<string, unknown> = { '@type': msg.typeUrl };
+    for (const [key, value] of Object.entries(jsonObj)) {
+        result[key] = convertFieldValue(key, value);
+    }
+
+    return result;
 };
 
 const generateMultisigTx = async (
@@ -100,7 +157,7 @@ const generateMultisigTx = async (
 
     const unsignedTx = {
         body: {
-            messages: messages.map((msg: { typeUrl?: string; value?: Uint8Array }) => serializeMessageForJson(msg)),
+            messages: messages.map((msg: { typeUrl?: string; value?: Uint8Array }) => decodeMessageToJson(msg)),
             memo: defaultTitle || 'Core operation',
             timeout_height: '0',
             extension_options: [],
