@@ -65,21 +65,21 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
         -c ChainCodecSui  \
         -t "Stores chain-codec contract for Sui" \
         -d "Stores chain-codec v1.0.0 for Sui" \
-        --fetchCodeId
+        --fetchCodeId \
         --instantiate2
 
     ts-node cosmwasm/submit-proposal.js instantiate \
         -c ChainCodecStellar  \
         -t "Stores chain-codec contract for Stellar" \
         -d "Stores chain-codec v1.0.0 for Stellar" \
-        --fetchCodeId
+        --fetchCodeId \
         --instantiate2
 
     ts-node cosmwasm/submit-proposal.js instantiate \
         -c ChainCodecEvm  \
         -t "Stores chain-codec contract EVM" \
         -d "Stores chain-codec v1.0.0 for EVM" \
-        --fetchCodeId
+        --fetchCodeId \
         --instantiate2
     ```
 
