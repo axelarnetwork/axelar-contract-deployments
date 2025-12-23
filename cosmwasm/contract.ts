@@ -490,7 +490,7 @@ const instantiate = async (
         }
 
         const defaultTitle = `Instantiate ${contractName} contract`;
-        const defaultDescription = `Instantiate ${contractName} contract${options.chainName ? ` on ${options.chainName}` : ''}`;
+        const defaultDescription = `Instantiate ${contractName} contract${options.chainName ? ` for ${options.chainName}` : ''}`;
         const title = options.title || defaultTitle;
         const description = options.description || defaultDescription;
 
@@ -549,7 +549,7 @@ const storeInstantiate = async (
         const proposal = encodeStoreInstantiate(storeInstantiateOptions, initMsg);
 
         const defaultTitle = `Store and instantiate ${contractName} contract`;
-        const defaultDescription = `Upload and instantiate ${contractName} contract${options.chainName ? ` on ${options.chainName}` : ''}`;
+        const defaultDescription = `Upload and instantiate ${contractName} contract${options.chainName ? ` for ${options.chainName}` : ''}`;
         const title = options.title || defaultTitle;
         const description = options.description || defaultDescription;
 
@@ -593,7 +593,7 @@ const migrate = async (
         const proposal = encodeMigrate(config, migrateOptions);
 
         const defaultTitle = `Migrate ${contractName} contract`;
-        const defaultDescription = `Migrate ${contractName} contract${options.chainName ? ` on ${options.chainName}` : ''} to code ID ${contractConfig.codeId}`;
+        const defaultDescription = `Migrate ${contractName} contract${options.chainName ? ` for ${options.chainName}` : ''} to code ID ${contractConfig.codeId}`;
         const title = options.title || defaultTitle;
         const description = options.description || defaultDescription;
 
