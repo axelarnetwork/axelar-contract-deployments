@@ -251,23 +251,32 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         });
     }
 
+    const coin = options.published ? contracts[symbol.toUpperCase()] : null;
+    if (!coin && options.published) {
+        throw new Error(`Cannot find coin with symbol ${symbol} in config`);
+    }
+
     // Deploy token on Sui
-    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const [metadata, packageId, tokenType, treasuryCap] = options.published
+        ? [coin.objects.Metadata, coin.address, coin.typeArgument, coin.objects.TreasuryCap]
+        : await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // Mint pre-registration coins
     const amount = Number.isFinite(Number(options.mintAmount)) ? parseInt(options.mintAmount) : 0;
     if (amount) {
-        const unitAmount = getUnitAmount(options.mintAmount, decimals);
+        const unitAmount = options.published
+            ? getUnitAmount(options.mintAmount, coin.decimals)
+            : getUnitAmount(options.mintAmount, decimals);
 
         const mintTxBuilder = new TxBuilder(client);
 
-        const coin = await mintTxBuilder.moveCall({
+        const minted = await mintTxBuilder.moveCall({
             target: `${SUI_PACKAGE_ID}::coin::mint`,
             arguments: [treasuryCap, unitAmount],
             typeArguments: [tokenType],
         });
 
-        mintTxBuilder.tx.transferObjects([coin], walletAddress);
+        mintTxBuilder.tx.transferObjects([minted], walletAddress);
 
         await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
     }
@@ -1164,6 +1173,7 @@ if (require.main === module) {
         .addOption(new Option('--treasuryCap', `Give the coin's TreasuryCap to ITS`))
         .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
         .addOption(new Option('--mintAmount <amount>', 'Amount of pre-registration tokens to mint to the deployer').default('1000'))
+        .addOption(new Option('--published', 'Skip token deployment and only do coin registration'))
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });

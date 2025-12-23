@@ -9,10 +9,11 @@ import {
     MsgUpdateInstantiateConfig,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 
-import { printInfo, prompt } from '../common';
+import { getChainConfig, printInfo, prompt } from '../common';
 import { ConfigManager } from '../common/config';
 import { ClientManager } from './processor';
 import {
+    GOVERNANCE_MODULE_ADDRESS,
     encodeExecuteContract,
     encodeMigrate,
     encodeSubmitProposal,
@@ -138,11 +139,11 @@ const submitMessagesAsProposal = async (
 const executeByGovernance = async (
     client: ClientManager,
     config: ConfigManager,
-    options: ProposalOptions & { contractName?: string | string[]; msg?: string | string[]; chainName?: string },
+    options: ProposalOptions & { contractName?: string | string[]; msg?: string | string[]; chainName?: string; dryRun?: boolean },
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
-    const { chainName } = options;
+    const { chainName, dryRun } = options;
     let contractName = options.contractName;
 
     if (!Array.isArray(contractName)) {
@@ -163,6 +164,23 @@ const executeByGovernance = async (
         const msgOptions = { ...options, contractName: singleContractName, msg: msgJson };
         return encodeExecuteContract(config, msgOptions, chainName);
     });
+
+    if (dryRun) {
+        const contractConfig = config.axelar.contracts[singleContractName];
+        const chainConfig = chainName ? getChainConfig(config.chains, chainName) : null;
+        const contractAddress = (contractConfig[chainConfig?.axelarId] as any)?.address || contractConfig.address;
+
+        const dryRunOutput = messages.map((message, index) => ({
+            '@type': '/cosmwasm.wasm.v1.MsgExecuteContract',
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: contractAddress,
+            msg: JSON.parse(msgs[index]),
+            funds: [],
+        }));
+
+        console.log(JSON.stringify(dryRunOutput, null, 2));
+        return;
+    }
 
     if (!confirmProposalSubmission(options, messages)) {
         return;
