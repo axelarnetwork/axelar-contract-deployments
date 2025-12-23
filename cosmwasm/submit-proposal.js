@@ -20,12 +20,12 @@ const {
     encodeExecuteContract,
     encodeMigrate,
     encodeUpdateInstantiateConfigProposal,
+    getNexusProtoType,
     submitProposal,
     GOVERNANCE_MODULE_ADDRESS,
-    encodeChainStatusRequest,
-    getNexusProtoType,
 } = require('./utils');
 const { printInfo, prompt, getChainConfig, readContractCode } = require('../common');
+const { printProposal, confirmProposalSubmission, submitProposalAndPrint } = require('./proposal-utils');
 const {
     MsgExecuteContract,
     MsgInstantiateContract,
@@ -57,67 +57,6 @@ const predictAddress = async (client, contractConfig, options) => {
     return contractAddress;
 };
 
-const printProposal = (proposalData) => {
-    proposalData.forEach((message) => {
-        const typeMap = {
-            '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
-            '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
-            '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
-            '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
-            '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
-            '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
-            '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
-        };
-
-        const MessageType = typeMap[message.typeUrl];
-
-        if (
-            message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
-            message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest'
-        ) {
-            const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
-            const MsgType = getNexusProtoType(typeName);
-            const decoded = MsgType.decode(message.value);
-            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-        } else if (MessageType) {
-            const decoded = MessageType.decode(message.value);
-            if (decoded.codeId) {
-                decoded.codeId = decoded.codeId.toString();
-            }
-            if (
-                (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract') &&
-                decoded.msg
-            ) {
-                decoded.msg = JSON.parse(Buffer.from(decoded.msg).toString());
-            }
-            if (decoded.wasmByteCode) {
-                decoded.wasmByteCode = `<${decoded.wasmByteCode.length} bytes>`;
-            }
-            printInfo(`Encoded ${message.typeUrl}`, JSON.stringify(decoded, null, 2));
-        } else {
-            printInfo(`Unknown message type: ${message.typeUrl}`, '<Unable to decode>');
-        }
-    });
-};
-
-const confirmProposalSubmission = (options, proposalData) => {
-    printProposal(proposalData);
-    if (prompt(`Proceed with proposal submission?`, options.yes)) {
-        return false;
-    }
-    return true;
-};
-
-const callSubmitProposal = async (client, config, options, proposal, fee) => {
-    const proposalId = await submitProposal(client, config, options, proposal, fee);
-    printInfo('Proposal submitted', proposalId);
-    return proposalId;
-};
-
 const saveStoreCodeProposalInfo = (config, contractName, contractCodePath, proposalId) => {
     const contractBaseConfig = config.getContractConfig(contractName);
     contractBaseConfig.storeCodeProposalId = proposalId;
@@ -147,7 +86,7 @@ const storeCode = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, proposal)) {
         return;
     }
-    const proposalId = await callSubmitProposal(client, config, options, proposal, fee);
+    const proposalId = await submitProposalAndPrint(client, config, options, proposal, fee);
     contractNames.forEach((name) => {
         const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
         saveStoreCodeProposalInfo(config, name, codePath, proposalId);
@@ -178,7 +117,7 @@ const storeInstantiate = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
-    const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
+    const proposalId = await submitProposalAndPrint(client, config, options, [proposal], fee);
 
     contractConfig.storeInstantiateProposalId = proposalId;
     contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
@@ -227,7 +166,7 @@ const instantiate = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
-    const proposalId = await callSubmitProposal(client, config, options, [proposal], fee);
+    const proposalId = await submitProposalAndPrint(client, config, options, [proposal], fee);
     contractConfig.instantiateProposalId = proposalId;
     if (instantiate2) {
         contractConfig.address = contractAddress;
@@ -235,7 +174,7 @@ const instantiate = async (client, config, options, _args, fee) => {
 };
 
 const executeByGovernance = async (client, config, options, _args, fee) => {
-    const { chainName } = options;
+    const { chainName, dryRun } = options;
     let contractName = options.contractName;
 
     if (!Array.isArray(contractName)) {
@@ -257,11 +196,28 @@ const executeByGovernance = async (client, config, options, _args, fee) => {
         return encodeExecuteContract(config, msgOptions, chainName);
     });
 
+    if (dryRun) {
+        const contractConfig = config.axelar.contracts[singleContractName];
+        const chainConfig = chainName ? getChainConfig(config.chains, chainName) : null;
+        const contractAddress = contractConfig[chainConfig?.axelarId]?.address || contractConfig.address;
+
+        const dryRunOutput = messages.map((message, index) => ({
+            '@type': '/cosmwasm.wasm.v1.MsgExecuteContract',
+            sender: GOVERNANCE_MODULE_ADDRESS,
+            contract: contractAddress,
+            msg: JSON.parse(msgs[index]),
+            funds: [],
+        }));
+
+        console.log(JSON.stringify(dryRunOutput, null, 2));
+        return;
+    }
+
     if (!confirmProposalSubmission(options, messages)) {
         return;
     }
 
-    return callSubmitProposal(client, config, options, messages, fee);
+    return submitProposalAndPrint(client, config, options, messages, fee);
 };
 
 const migrate = async (client, config, options, _args, fee) => {
@@ -282,7 +238,7 @@ const migrate = async (client, config, options, _args, fee) => {
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
     }
-    return callSubmitProposal(client, config, options, [proposal], fee);
+    return submitProposalAndPrint(client, config, options, [proposal], fee);
 };
 
 async function instantiatePermissions(client, options, config, senderAddress, coordinatorAddress, permittedAddresses, codeId, fee) {
@@ -343,17 +299,6 @@ async function coordinatorInstantiatePermissions(client, config, options, _args,
 
     return instantiatePermissions(client, options, config, senderAddress, contractAddress, permittedAddresses, codeId, fee);
 }
-
-const chainState = async (client, config, options, _args, fee) => {
-    const requestType = options.action === 'activate' ? 'ActivateChainRequest' : 'DeactivateChainRequest';
-    const proposal = encodeChainStatusRequest(options.chains, requestType);
-
-    if (!confirmProposalSubmission(options, [proposal])) {
-        return;
-    }
-
-    return callSubmitProposal(client, config, options, [proposal], fee);
-};
 
 const programHandler = () => {
     const program = new Command();
@@ -417,17 +362,6 @@ const programHandler = () => {
         proposalOptions: true,
         codeId: true,
         fetchCodeId: true,
-    });
-
-    const chainStateCmd = program
-        .command('chainState')
-        .description('Submit a proposal to activate or deactivate chain(s) on Nexus module')
-        .requiredOption('--chains <chains...>', 'Chain name(s) to activate/deactivate')
-        .addOption(new Option('--action <action>', 'Action to perform').choices(['activate', 'deactivate']).makeOptionMandatory())
-        .action((options) => mainProcessor(chainState, options));
-
-    addAmplifierOptions(chainStateCmd, {
-        proposalOptions: true,
     });
 
     addAmplifierOptions(
