@@ -13,11 +13,11 @@
 |                      | `flow`             | Done                  | 23/12/2025 |
 |                      | `optimism-sepolia` | Done                  | 22/12/2025 |
 |                      | `plume-2`          | Done                  | 22/12/2025 |
-|                      | `xrpl-evm-devnet`  | Done                  | 23/12/2025 |
+|                      | `xrpl-evm-devnet`  | -                  | - |
 | **Stagenet**         | `berachain`        | Done                  | 22/12/2025 |
 |                      | `celo-sepolia`     | Done                  | 22/12/2025 |
-|                      | `flow`             | -                     | TBD        |
-|                      | `hedera`           | -                     | TBD        |
+|                      | `flow`             | Done                  | 23/12/2025 |
+|                      | `hedera`           | Done                  | 23/12/2025 |
 |                      | `hyperliquid`      | Done                  | 22/12/2025 |
 |                      | `plume`            | Done                  | 22/12/2025 |
 |                      | `xrpl-evm`         | Done                  | 22/12/2025 |
