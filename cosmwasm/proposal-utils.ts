@@ -168,7 +168,8 @@ const executeByGovernance = async (
     if (dryRun) {
         const contractConfig = config.axelar.contracts[singleContractName];
         const chainConfig = chainName ? getChainConfig(config.chains, chainName) : null;
-        const contractAddress = (contractConfig[chainConfig?.axelarId] as any)?.address || contractConfig.address;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const contractAddress = ((contractConfig as any)[chainConfig?.axelarId]?.address || contractConfig.address) as string;
 
         const dryRunOutput = messages.map((message, index) => ({
             '@type': '/cosmwasm.wasm.v1.MsgExecuteContract',
@@ -194,23 +195,27 @@ const executeByGovernance = async (
 const migrate = async (
     client: ClientManager,
     config: ConfigManager,
-    options: ProposalOptions & { contractName?: string | string[] },
+    options: ProposalOptions & { contractName?: string | string[]; chainName?: string },
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
-    let { contractName } = options;
+    let contractName: string;
 
-    if (Array.isArray(contractName)) {
-        if (contractName.length > 1) {
+    if (Array.isArray(options.contractName)) {
+        if (options.contractName.length > 1) {
             throw new Error('migrate only supports a single contract at a time');
         }
-        contractName = contractName[0];
+        contractName = options.contractName[0];
+    } else {
+        contractName = options.contractName!;
     }
 
-    const { contractConfig } = getAmplifierContractConfig(config, { ...options, contractName } as any);
-    contractConfig.codeId = await getCodeId(client, config, { ...options, contractName } as any);
+    const optionsWithContractName = { ...options, contractName };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { contractConfig } = getAmplifierContractConfig(config, optionsWithContractName as any);
+    contractConfig.codeId = await getCodeId(client, config, optionsWithContractName);
 
-    const proposal = encodeMigrate(config, { ...options, contractName } as any);
+    const proposal = encodeMigrate(config, optionsWithContractName);
 
     if (!confirmProposalSubmission(options, [proposal])) {
         return;
