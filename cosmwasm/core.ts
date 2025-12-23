@@ -108,7 +108,12 @@ const generateMultisigTx = async (
     printInfo('Next steps for multisig signing:');
     printInfo('1. Share this file with all multisig signers');
     printInfo(
-        '2. Each signer signs with: axelard tx sign ' + outputPath + ' --from <key> --multisig ' + multisigAddress + ' --chain-id ' + chainId,
+        '2. Each signer signs with: axelard tx sign ' +
+            outputPath +
+            ' --from <key> --multisig ' +
+            multisigAddress +
+            ' --chain-id ' +
+            chainId,
     );
     printInfo('3. Combine signatures: axelard tx multisign ' + outputPath + ' <multisig-name> <sig1> <sig2> ...');
     printInfo('4. Broadcast: axelard tx broadcast <signed-file>');
