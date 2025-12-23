@@ -119,9 +119,6 @@ const validateGovernanceMode = (config, contractName, chainName) => {
     const env = config?.environment || config?.env;
 
     // skip for devnet-amplifier, as we use different governance module address
-    if (env === 'devnet-amplifier') {
-        return;
-    }
 
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
