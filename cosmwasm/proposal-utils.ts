@@ -29,6 +29,16 @@ interface ProposalOptions {
     [key: string]: unknown;
 }
 
+export const getSingleContractName = (contractName: string | string[] | undefined, operation: string): string => {
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error(`${operation} only supports single contract at a time`);
+        }
+        return contractName[0];
+    }
+    return contractName!;
+};
+
 const printProposal = (proposalData: object[]): void => {
     proposalData.forEach((msg: unknown) => {
         const message = msg as { typeUrl: string; value: Uint8Array };
@@ -144,18 +154,7 @@ const executeByGovernance = async (
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
     const { chainName, dryRun } = options;
-    let contractName = options.contractName;
-
-    if (!Array.isArray(contractName)) {
-        contractName = [contractName as string];
-    }
-
-    const singleContractName = contractName[0];
-    if (contractName.length > 1) {
-        throw new Error(
-            'Execute command only supports one contract at a time. Use multiple --msg flags for multiple messages to the same contract.',
-        );
-    }
+    const singleContractName = getSingleContractName(options.contractName, 'execute');
 
     const { msg } = options;
     const msgs = toArray(msg);
@@ -199,17 +198,7 @@ const migrate = async (
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
-    let contractName: string;
-
-    if (Array.isArray(options.contractName)) {
-        if (options.contractName.length > 1) {
-            throw new Error('migrate only supports a single contract at a time');
-        }
-        contractName = options.contractName[0];
-    } else {
-        contractName = options.contractName!;
-    }
-
+    const contractName = getSingleContractName(options.contractName, 'migrate');
     const optionsWithContractName = { ...options, contractName };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { contractConfig } = getAmplifierContractConfig(config, optionsWithContractName as any);

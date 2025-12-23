@@ -11,7 +11,7 @@ import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { confirmProposalSubmission, executeByGovernance, submitMessagesAsProposal } from './proposal-utils';
+import { confirmProposalSubmission, executeByGovernance, getSingleContractName, submitMessagesAsProposal } from './proposal-utils';
 import {
     CONTRACTS,
     encodeInstantiate,
@@ -363,16 +363,6 @@ const coordinatorInstantiatePermissions = async (
     validateParameters({ isNonEmptyString: { title, description } });
 
     await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
-};
-
-const getSingleContractName = (contractName: string | string[] | undefined, operation: string): string => {
-    if (Array.isArray(contractName)) {
-        if (contractName.length > 1) {
-            throw new Error(`${operation} only supports single contract at a time`);
-        }
-        return contractName[0];
-    }
-    return contractName!;
 };
 
 const saveStoreCodeProposalInfo = (config: ConfigManager, contractName: string, contractCodePath: string, proposalId: string) => {
