@@ -72,14 +72,8 @@ const deactivateChain = (
     fee?: string | StdFee,
 ) => nexusChainState('deactivate', client, config, options, args, fee);
 
-
-const addIBCChain = (
-    client: ClientManager,
-    config: ConfigManager,
-    options: CoreCommandOptions,
-    args: string[],
-    fee?: string | StdFee,
-) => executeCoreOperation(client, config, options, [encodeAddIBCChain(args)], fee);
+const addIBCChain = (client: ClientManager, config: ConfigManager, options: CoreCommandOptions, args: string[], fee?: string | StdFee) =>
+    executeCoreOperation(client, config, options, [encodeAddIBCChain(args)], fee);
 
 const programHandler = () => {
     const program = new Command();
