@@ -2658,7 +2658,7 @@
           "codeId": 84,
           "domainSeparator": "0x5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
           "address": "axelar1960k48ezdumanv3hjf22cvp2a9zwr5skn34xgtrkhfjjhk7k4htsd4l8ze",
-          "version": "1.1.1"
+          "version": "1.2.0"
         },
         "celo-sepolia": {
           "signingThreshold": [
@@ -2853,7 +2853,7 @@
           "addressFormat": "stellar",
           "codeId": 85,
           "address": "axelar1jgp9mfalnwk0p9xfycyrrc69e9kw5l2qytvs0tz6znv5ke89q0psgcyarh",
-          "version": "2.0.0"
+          "version": "2.0.1"
         },
         "celo-sepolia": {
           "serviceName": "amplifier",
