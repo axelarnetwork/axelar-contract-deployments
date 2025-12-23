@@ -10,10 +10,10 @@
 | **Devnet Amplifier** | `avalanche-fuji`   | Done                  | 22/12/2025 |
 |                      | `berachain`        | Done                  | 22/12/2025 |
 |                      | `eth-sepolia`      | Done                  | 22/12/2025 |
-|                      | `flow`             | -                     | TBD        |
+|                      | `flow`             | Done                  | 23/12/2025 |
 |                      | `optimism-sepolia` | Done                  | 22/12/2025 |
 |                      | `plume-2`          | Done                  | 22/12/2025 |
-|                      | `xrpl-evm-devnet`  | -                     | TBD        |
+|                      | `xrpl-evm-devnet`  | Done                  | 23/12/2025 |
 | **Stagenet**         | `berachain`        | Done                  | 22/12/2025 |
 |                      | `celo-sepolia`     | Done                  | 22/12/2025 |
 |                      | `flow`             | -                     | TBD        |
@@ -204,6 +204,7 @@ EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
 ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA  --parallel
 
 # Verify transfer completed successfully
+#NOTE does not work on amplifier chains
 ts-node evm/gateway.js -n $CHAIN --action operator --parallel
 ```
 
@@ -360,13 +361,13 @@ done
 RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
 
 # Verify current owner
-ts-node evm/its.js operator --parallel
+ts-node evm/its.js isOperator <address> --parallel
 
 # Transfer operatorship
 ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA --parallel
 
 # Verify transfer completed successfully
-ts-node evm/its.js operator --parallel
+ts-node evm/its.js isOperator <address> --parallel
 ```
 
 ## Verification Checklist

@@ -2118,6 +2118,11 @@
       "tokenSymbol": "FLOW",
       "decimals": 18,
       "chainType": "evm",
+      "gasOptions": {
+        "gasLimit": 5000000,
+        "maxFeePerGas": 20000000000,
+        "maxPriorityFeePerGas": 2000000000
+      },
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2198,9 +2203,6 @@
         "name": "Flowscan",
         "url": "https://evm-testnet.flowscan.io/",
         "api": "https://evm-testnet.flowscan.io/api"
-      },
-      "gasOptions": {
-        "gasLimit": 8000000
       },
       "confirmations": 1,
       "finality": "finalized",
