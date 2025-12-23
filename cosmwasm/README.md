@@ -113,9 +113,9 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
 Contract wasm binary can be passed by specifiying the path to the directory containing contract artifact files or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] -c [contract name] --artifact-dir [contract wasm dir] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract.ts [store-code|instantiate|store-instantiate] -c [contract name] --artifact-dir [contract wasm dir] -e [environment] -n <chain name>`
 
-- `ts-node cosmwasm/contract [store-code|instantiate|store-instantiate] -c [contract name] -v [contract version] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract.ts [store-code|instantiate|store-instantiate] -c [contract name] -v [contract version] -e [environment] -n <chain name>`
 
 **Common options:**
 
@@ -139,25 +139,25 @@ Available subcommands:
 Example:
 
 ```
-ts-node cosmwasm/contract migrate -c ServiceRegistry --codeId 123 --msg '{}' -e devnet
+ts-node cosmwasm/contract.ts migrate -c ServiceRegistry --codeId 123 --msg '{}' -e devnet
 ```
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
 Example deployments with order dependency:
 
-1.  `ts-node cosmwasm/contract store-code -c AxelarnetGateway --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
-2.  `ts-node cosmwasm/contract store-code -c Router --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
-3.  `ts-node cosmwasm/contract instantiate -c AxelarnetGateway --instantiate2 -e devnet`
-4.  `ts-node cosmwasm/contract instantiate -c Router --instantiate2 -e devnet`
-5.  `ts-node cosmwasm/contract store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet`
-6.  `ts-node cosmwasm/contract store-instantiate -c Rewards --artifact-dir [contract wasm dir] -e devnet`
-7.  `ts-node cosmwasm/contract store-instantiate -c Coordinator --artifact-dir [contract wasm dir] -e devnet`
-8.  `ts-node cosmwasm/contract store-instantiate -c Multisig --artifact-dir [contract wasm dir] -e devnet`
-9.  `ts-node cosmwasm/contract store-instantiate -c InterchainTokenService --artifact-dir [contract wasm dir] -e devnet`
-10. `ts-node cosmwasm/contract store-instantiate -c VotingVerifier --artifact-dir [contract wasm dir] -e devnet -n avalanche`
-11. `ts-node cosmwasm/contract store-instantiate -c Gateway --artifact-dir [contract wasm dir] -e devnet -n avalanche`
-12. `ts-node cosmwasm/contract store-instantiate -c MultisigProver --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+1.  `ts-node cosmwasm/contract.ts store-code -c AxelarnetGateway --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+2.  `ts-node cosmwasm/contract.ts store-code -c Router --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+3.  `ts-node cosmwasm/contract.ts instantiate -c AxelarnetGateway --instantiate2 -e devnet`
+4.  `ts-node cosmwasm/contract.ts instantiate -c Router --instantiate2 -e devnet`
+5.  `ts-node cosmwasm/contract.ts store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet`
+6.  `ts-node cosmwasm/contract.ts store-instantiate -c Rewards --artifact-dir [contract wasm dir] -e devnet`
+7.  `ts-node cosmwasm/contract.ts store-instantiate -c Coordinator --artifact-dir [contract wasm dir] -e devnet`
+8.  `ts-node cosmwasm/contract.ts store-instantiate -c Multisig --artifact-dir [contract wasm dir] -e devnet`
+9.  `ts-node cosmwasm/contract.ts store-instantiate -c InterchainTokenService --artifact-dir [contract wasm dir] -e devnet`
+10. `ts-node cosmwasm/contract.ts store-instantiate -c VotingVerifier --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+11. `ts-node cosmwasm/contract.ts store-instantiate -c Gateway --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+12. `ts-node cosmwasm/contract.ts store-instantiate -c MultisigProver --artifact-dir [contract wasm dir] -e devnet -n avalanche`
 
 ### Constant Address Deployment
 
@@ -168,7 +168,7 @@ A salt can be passed with `-s`. If no salt is passed but a salt is needed for co
 Example:
 
 ```
-ts-node cosmwasm/contract store-code -c Gateway --instantiate2 -s my-salt
+ts-node cosmwasm/contract.ts store-code -c Gateway --instantiate2 -s my-salt
 ```
 
 ### Deploying through governance proposals
@@ -199,13 +199,13 @@ The deposit amount is automatically set from the config based on whether the pro
 Example usage:
 
 ```
-ts-node cosmwasm/contract store-code -c ServiceRegistry --governance
+ts-node cosmwasm/contract.ts store-code -c ServiceRegistry --governance
 ```
 
 For multiple contracts in a single proposal:
 
 ```
-ts-node cosmwasm/contract store-code -c Gateway -c VotingVerifier -c MultisigProver --governance
+ts-node cosmwasm/contract.ts store-code -c Gateway -c VotingVerifier -c MultisigProver --governance
 ```
 
 By default, only governance will be able to instantiate the bytecode. To allow other addresses to instantiate the bytecode, pass `--instantiateAddresses [address1],[address2],[addressN]`.
@@ -226,7 +226,7 @@ Prerequisites: Submit a proposal to upload the bytecode as described in the prev
 Example usage:
 
 ```
-ts-node cosmwasm/contract instantiate -c ServiceRegistry --fetchCodeId --governance
+ts-node cosmwasm/contract.ts instantiate -c ServiceRegistry --fetchCodeId --governance
 ```
 
 Use the option `--fetchCodeId` to retrieve and update the code id from the network by comparing the code hash of the uploaded bytecode with the code hash submitted through the store code proposal mentioned in the previous section.
@@ -285,13 +285,13 @@ Example usage:
 Direct execution:
 
 ```
-ts-node cosmwasm/contract store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet
+ts-node cosmwasm/contract.ts store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet
 ```
 
 Governance proposal:
 
 ```
-ts-node cosmwasm/contract store-instantiate -c ServiceRegistry --governance
+ts-node cosmwasm/contract.ts store-instantiate -c ServiceRegistry --governance
 ```
 
 ### Execute a contract through governance proposal
