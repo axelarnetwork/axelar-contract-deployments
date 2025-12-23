@@ -479,7 +479,7 @@ const instantiate = async (
     if (options.governance) {
         validateGovernanceMode(config, contractName, options.chainName);
 
-        const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, instantiateOptions, contractConfig);
+        const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, instantiateOptions, contractConfig);
         const proposal = encodeInstantiate(config, instantiateOptions, initMsg);
 
         let contractAddress;
@@ -541,7 +541,7 @@ const storeInstantiate = async (
         const storeInstantiateOptions = { ...options, contractName };
         const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, storeInstantiateOptions);
 
-        const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, storeInstantiateOptions, contractConfig);
+        const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, storeInstantiateOptions, contractConfig);
         const proposal = encodeStoreInstantiate(storeInstantiateOptions, initMsg);
 
         const defaultTitle = `Store and instantiate ${contractName} contract`;
