@@ -6,12 +6,12 @@ import { AccessType } from 'cosmjs-types/cosmwasm/wasm/v1/types';
 import { createHash } from 'crypto';
 
 import { getChainConfig, printInfo, prompt, readContractCode, validateParameters } from '../common';
-import { ConfigManager, GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from '../common/config';
+import { ConfigManager } from '../common/config';
 import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { confirmProposalSubmission, executeByGovernance, getSingleContractName, submitMessagesAsProposal } from './proposal-utils';
+import { executeByGovernance, getSingleContractName, submitMessagesAsProposal } from './proposal-utils';
 import {
     CONTRACTS,
     encodeInstantiate,
