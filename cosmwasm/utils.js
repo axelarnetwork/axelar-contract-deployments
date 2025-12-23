@@ -922,9 +922,7 @@ const itsHubChainParams = (config, chainConfig) => {
 
     const key = chainConfig.axelarId.toLowerCase();
     const chainParams = config.axelar.contracts.InterchainTokenService[key];
-    const itsMsgTranslator =
-        chainParams?.msgTranslator ||
-        config.validateRequired(config.getContractConfig('ItsAbiTranslator').address, 'ItsAbiTranslator.address');
+    const itsMsgTranslator = chainParams?.msgTranslator || config.getInstantiatedContractConfig('ItsAbiTranslator').address;
 
     return {
         itsEdgeContractAddress,

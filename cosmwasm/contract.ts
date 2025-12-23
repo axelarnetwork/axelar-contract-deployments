@@ -62,7 +62,7 @@ const executeContractMessage = async (
         throw new Error('At least one message is required');
     }
 
-    const contractAddress = config.validateRequired(config.getContractConfig(contractName).address, `${contractName}.address`);
+    const contractAddress = config.getInstantiatedContractConfig(contractName).address;
 
     if (options.governance) {
         validateGovernanceMode(config, contractName, chainName);
@@ -139,9 +139,9 @@ const registerProtocol = async (
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const serviceRegistry = config.validateRequired(config.getContractConfig('ServiceRegistry').address, 'ServiceRegistry.address');
-    const router = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
-    const multisig = config.validateRequired(config.getContractConfig('Multisig').address, 'Multisig.address');
+    const serviceRegistry = config.getContractAddress('ServiceRegistry');
+    const router = config.getContractAddress('Router');
+    const multisig = config.getContractAddress('Multisig');
 
     const msg = [
         {
@@ -187,11 +187,10 @@ const createRewardPools = async (
 
     const threshold: string[] = config.parseThreshold(participationThreshold, '--participationThreshold');
 
-    const votingVerifierAddress = config.validateRequired(
-        config.getVotingVerifierContract(chainName).address,
-        `VotingVerifier[${chainName}].address`,
-    );
-    const multisigAddress = config.validateRequired(config.getContractConfig('Multisig').address, 'Multisig.address');
+    const chainConfig = config.getChainConfig(chainName);
+    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+    const votingVerifierAddress = config.getInstantiatedContractByChain(verifierContractName, chainName).address;
+    const multisigAddress = config.getContractAddress('Multisig');
 
     const messages = [
         {
@@ -246,7 +245,7 @@ const routerFreezeChain = async (
         throw new Error('Router freeze_chain can only be executed by Admin EOA, not via governance');
     }
 
-    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    const contractAddress = config.getContractAddress('Router');
     printDirectExecutionInfo(msg, contractAddress);
     return executeDirectly(client, contractAddress, msg, fee);
 };
@@ -266,7 +265,7 @@ const routerUnfreezeChain = async (
         throw new Error('Router unfreeze_chain can only be executed by Admin EOA, not via governance');
     }
 
-    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    const contractAddress = config.getContractAddress('Router');
     printDirectExecutionInfo(msg, contractAddress);
     return executeDirectly(client, contractAddress, msg, fee);
 };
@@ -284,7 +283,7 @@ const routerDisableRouting = async (
         throw new Error('Router disable_routing can only be executed by Admin EOA, not via governance');
     }
 
-    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    const contractAddress = config.getContractAddress('Router');
     printDirectExecutionInfo(msg, contractAddress);
     return executeDirectly(client, contractAddress, msg, fee);
 };
@@ -302,7 +301,7 @@ const routerEnableRouting = async (
         throw new Error('Router enable_routing can only be executed by Admin EOA, not via governance');
     }
 
-    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
+    const contractAddress = config.getContractAddress('Router');
     printDirectExecutionInfo(msg, contractAddress);
     return executeDirectly(client, contractAddress, msg, fee);
 };

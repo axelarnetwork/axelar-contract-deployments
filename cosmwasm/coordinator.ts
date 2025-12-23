@@ -78,10 +78,7 @@ export class CoordinatorManager {
     public constructExecuteMessage(chainName: string, salt: string, admin: string): InstantiateChainContractsMsg {
         try {
             const chainConfig = this.configManager.getChainConfig(chainName);
-            const rewardsConfig = this.configManager.getContractConfig('Rewards');
-            const multisigConfig = this.configManager.getContractConfig('Multisig');
-            const routerConfig = this.configManager.getContractConfig('Router');
-            const multisigAddress = this.configManager.validateRequired(multisigConfig.address, `Multisig.address`);
+            const multisigAddress = this.configManager.getContractAddress('Multisig');
 
             const proverContractName = this.configManager.getMultisigProverContractForChainType(chainConfig.chainType);
             const verifierContractName = this.configManager.getVotingVerifierContractForChainType(chainConfig.chainType);
@@ -97,8 +94,8 @@ export class CoordinatorManager {
                 `${proverContractName}.${chainName}.codeId`,
             );
             const deploymentName = this.generateDeploymentName(chainName, `${gatewayCodeId}-${verifierCodeId}-${proverCodeId}`);
-            const rewardsAddress = this.configManager.validateRequired(rewardsConfig.address, `Rewards.address`);
-            const routerAddress = this.configManager.validateRequired(routerConfig.address, `Router.address`);
+            const rewardsAddress = this.configManager.getContractAddress('Rewards');
+            const routerAddress = this.configManager.getContractAddress('Router');
             const domainSeparator = calculateDomainSeparator(chainName, routerAddress, this.configManager.axelar.chainId);
             if (!isKeccak256Hash(domainSeparator)) {
                 throw new Error(`Invalid ${proverContractName}[${chainName}].domainSeparator in axelar info`);
