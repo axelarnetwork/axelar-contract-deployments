@@ -52,7 +52,7 @@ const signAndBroadcastRawMessages = async (
     const { accountNumber, sequence } = await client.getSequence(signerAddress);
     const chainId = config.axelar.chainId;
 
-    const gasPrice = GasPrice.fromString('0.007uaxl');
+    const gasPrice = GasPrice.fromString(config.axelar.gasPrice);
     const usedFee: StdFee = typeof fee === 'object' && fee ? fee : calculateFee(200000, gasPrice);
 
     const anyMessages: Any[] = messages.map((msg) =>
