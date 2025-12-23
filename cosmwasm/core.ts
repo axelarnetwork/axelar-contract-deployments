@@ -76,6 +76,13 @@ const isValidFeeObject = (fee: string | StdFee | undefined): fee is StdFee => {
     return typeof fee === 'object' && fee !== null && 'amount' in fee && 'gas' in fee;
 };
 
+const serializeMessagesForJson = (messages: object[]): object[] => {
+    return messages.map((msg: { typeUrl?: string; value?: Uint8Array }) => ({
+        ...msg,
+        value: msg.value instanceof Uint8Array ? Buffer.from(msg.value).toString('base64') : msg.value,
+    }));
+};
+
 const generateMultisigTx = async (
     client: ClientManager,
     config: ConfigManager,
@@ -96,7 +103,7 @@ const generateMultisigTx = async (
         accountNumber,
         sequence,
         fee: txFee,
-        msgs: messages,
+        msgs: serializeMessagesForJson(messages),
         memo: defaultTitle || 'Core operation',
     };
 
