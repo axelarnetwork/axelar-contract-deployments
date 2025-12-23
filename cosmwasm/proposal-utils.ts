@@ -56,10 +56,10 @@ const axelarMessageTypes: Record<string, { protoFile: string; packageName: strin
         packageName: 'axelar.evm.v1beta1',
         typeName: 'SetGatewayRequest',
     },
-    '/axelar.evm.v1beta1.TransferOperatorshipRequest': {
+    '/axelar.evm.v1beta1.CreateTransferOperatorshipRequest': {
         protoFile: 'evm.proto',
         packageName: 'axelar.evm.v1beta1',
-        typeName: 'TransferOperatorshipRequest',
+        typeName: 'CreateTransferOperatorshipRequest',
     },
     '/axelar.multisig.v1beta1.StartKeygenRequest': {
         protoFile: 'multisig.proto',

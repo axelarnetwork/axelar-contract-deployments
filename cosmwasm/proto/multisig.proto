@@ -5,15 +5,15 @@ option go_package = "github.com/axelarnetwork/axelar-core/x/multisig/types";
 
 // StartKeygenRequest represents a message to start key generation
 message StartKeygenRequest {
-  string sender = 1;
+  string sender_str = 1;  // deprecated
   string key_id = 2;
+  bytes sender = 3;
 }
 
 // RotateKeyRequest represents a message to rotate a key for a chain
 message RotateKeyRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+  string sender_str = 1;  // deprecated
   string chain = 2;
   string key_id = 3;
-  string sender = 4;
+  bytes sender = 4;
 }
-

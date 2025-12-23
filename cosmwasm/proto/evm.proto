@@ -5,17 +5,14 @@ option go_package = "github.com/axelarnetwork/axelar-core/x/evm/types";
 
 // SetGatewayRequest represents a message to set the gateway address for an EVM chain
 message SetGatewayRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+  bytes sender = 1;
   string chain = 2;
   bytes address = 3;
-  string sender = 4;
 }
 
-// TransferOperatorshipRequest represents a message to transfer operatorship for an EVM chain
-message TransferOperatorshipRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+// CreateTransferOperatorshipRequest represents a message to transfer operatorship for an EVM chain
+message CreateTransferOperatorshipRequest {
+  bytes sender = 1;
   string chain = 2;
   string key_id = 3;
-  string sender = 4;
 }
-

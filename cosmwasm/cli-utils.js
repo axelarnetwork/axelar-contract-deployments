@@ -112,6 +112,7 @@ const addCoreOptions = (program) => {
     program.addOption(
         new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
     );
+    program.addOption(new Option('-o, --output <file>', 'output file path for unsigned tx (for multisig operations with --direct)'));
     program.addOption(new Option('-t, --title <title>', 'Proposal title (optional, auto-generated if not provided)'));
     program.addOption(new Option('-d, --description <description>', 'Proposal description (optional, defaults to title)'));
     program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));

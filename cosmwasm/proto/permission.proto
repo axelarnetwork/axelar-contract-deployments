@@ -5,15 +5,12 @@ option go_package = "github.com/axelarnetwork/axelar-core/x/permission/types";
 
 // RegisterControllerRequest represents a message to register a controller account
 message RegisterControllerRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+  bytes sender = 1;
   bytes controller = 2;
-  string sender = 3;
 }
 
 // DeregisterControllerRequest represents a message to deregister a controller account
 message DeregisterControllerRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+  bytes sender = 1;
   bytes controller = 2;
-  string sender = 3;
 }
-

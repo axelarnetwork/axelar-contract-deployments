@@ -1,7 +1,8 @@
 import { StdFee } from '@cosmjs/stargate';
-import { Command, Option } from 'commander';
+import { Command } from 'commander';
+import * as fs from 'fs';
 
-import { printInfo, validateParameters } from '../common';
+import { printInfo, printWarn, validateParameters } from '../common';
 import { ConfigManager } from '../common/config';
 import { addCoreOptions } from './cli-utils';
 import { ClientManager, Options } from './processor';
@@ -17,30 +18,116 @@ import {
     encodeTransferOperatorshipRequest,
     encodeStartKeygenRequest,
     encodeRotateKeyRequest,
+    signAndBroadcastWithRetry,
 } from './utils';
+
+type RoleType = 'ROLE_ACCESS_CONTROL' | 'ROLE_CHAIN_MANAGEMENT';
 
 interface CoreCommandOptions extends Options {
     yes?: boolean;
     title?: string;
     description?: string;
     direct?: boolean;
+    output?: string;
     [key: string]: unknown;
 }
 
-const executeCoreOperation = async (
+const executeDirectEOA = async (
+    client: ClientManager,
+    options: CoreCommandOptions,
+    messages: object[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const signerAddress = client.accounts[0].address;
+    printInfo('Executing directly as EOA', signerAddress);
+
+    if (!options.yes) {
+        printWarn('Direct execution mode. Use -y to skip confirmation in non-interactive mode.');
+        const readline = await import('readline');
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+        const answer = await new Promise<string>((resolve) => {
+            rl.question('Proceed with direct execution? (y/N): ', resolve);
+        });
+        rl.close();
+
+        if (answer.toLowerCase() !== 'y') {
+            printInfo('Operation cancelled');
+            return;
+        }
+    }
+
+    const result = await signAndBroadcastWithRetry(client, signerAddress, messages, fee || 'auto', '');
+    printInfo('Transaction hash', result.transactionHash);
+    printInfo('Result', JSON.stringify(result, null, 2));
+};
+
+const generateMultisigTx = async (
     client: ClientManager,
     config: ConfigManager,
     options: CoreCommandOptions,
     messages: object[],
     fee?: string | StdFee,
     defaultTitle?: string,
+): Promise<void> => {
+    const signerAddress = client.accounts[0].address;
+    const chainId = config.axelar.chainId;
+
+    const { accountNumber, sequence } = await client.getSequence(signerAddress);
+
+    const unsignedTx = {
+        chainId,
+        accountNumber,
+        sequence,
+        fee: fee || { amount: [{ denom: 'uaxl', amount: '500000' }], gas: '500000' },
+        msgs: messages,
+        memo: defaultTitle || 'Core operation',
+    };
+
+    const outputPath = options.output || `unsigned_tx_${Date.now()}.json`;
+    fs.writeFileSync(outputPath, JSON.stringify(unsignedTx, null, 2));
+    printInfo('Unsigned transaction saved to', outputPath);
+    printInfo('', '');
+    printInfo('Next steps for multisig signing:');
+    printInfo('1. Share this file with all multisig signers');
+    printInfo('2. Each signer signs with: axelard tx sign <file> --from <key> --multisig <multisig-addr> --chain-id ' + chainId);
+    printInfo('3. Combine signatures: axelard tx multisign <file> <multisig-name> <sig1> <sig2> ...');
+    printInfo('4. Broadcast: axelard tx broadcast <signed-file>');
+};
+
+const executeCoreOperation = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    messages: object[],
+    roleType: RoleType,
+    fee?: string | StdFee,
+    defaultTitle?: string,
     defaultDescription?: string,
 ): Promise<void> => {
     if (options.direct) {
-        // TODO: Implement direct execution with custom registry
-        // Direct execution requires registering custom Axelar protobuf types
-        // (e.g., ActivateChainRequest, DeactivateChainRequest) in the client's registry.
-        throw new Error('Direct execution is not yet supported for core operations. Please submit as a governance proposal.');
+        const signerAddress = client.accounts[0].address;
+        const { addressToBytes } = require('./utils');
+
+        const messagesWithSender = messages.map((msg: any) => {
+            const RequestType = getRequestTypeFromMessage(msg);
+            if (RequestType) {
+                const decoded = RequestType.decode(msg.value);
+                decoded.sender = addressToBytes(signerAddress);
+                return {
+                    typeUrl: msg.typeUrl,
+                    value: Uint8Array.from(RequestType.encode(decoded).finish()),
+                };
+            }
+            return msg;
+        });
+
+        if (roleType === 'ROLE_CHAIN_MANAGEMENT') {
+            return executeDirectEOA(client, options, messagesWithSender, fee);
+        } else {
+            printInfo('ROLE_ACCESS_CONTROL operation requires multisig signing');
+            return generateMultisigTx(client, config, options, messagesWithSender, fee, defaultTitle);
+        }
     }
 
     const title = options.title || defaultTitle;
@@ -54,9 +141,29 @@ const executeCoreOperation = async (
     await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
 };
 
-// ============================================
-// Nexus Module Operations
-// ============================================
+const getRequestTypeFromMessage = (msg: any): any => {
+    const { getProtoType, getNexusProtoType } = require('./utils');
+
+    const typeUrlToProto: Record<string, () => any> = {
+        '/axelar.nexus.v1beta1.ActivateChainRequest': () => getNexusProtoType('ActivateChainRequest'),
+        '/axelar.nexus.v1beta1.DeactivateChainRequest': () => getNexusProtoType('DeactivateChainRequest'),
+        '/axelar.nexus.v1beta1.SetTransferRateLimitRequest': () => getNexusProtoType('SetTransferRateLimitRequest'),
+        '/axelar.nexus.v1beta1.RegisterAssetFeeRequest': () => getNexusProtoType('RegisterAssetFeeRequest'),
+        '/axelar.permission.v1beta1.RegisterControllerRequest': () =>
+            getProtoType('permission.proto', 'axelar.permission.v1beta1', 'RegisterControllerRequest'),
+        '/axelar.permission.v1beta1.DeregisterControllerRequest': () =>
+            getProtoType('permission.proto', 'axelar.permission.v1beta1', 'DeregisterControllerRequest'),
+        '/axelar.evm.v1beta1.SetGatewayRequest': () => getProtoType('evm.proto', 'axelar.evm.v1beta1', 'SetGatewayRequest'),
+        '/axelar.evm.v1beta1.CreateTransferOperatorshipRequest': () =>
+            getProtoType('evm.proto', 'axelar.evm.v1beta1', 'CreateTransferOperatorshipRequest'),
+        '/axelar.multisig.v1beta1.StartKeygenRequest': () =>
+            getProtoType('multisig.proto', 'axelar.multisig.v1beta1', 'StartKeygenRequest'),
+        '/axelar.multisig.v1beta1.RotateKeyRequest': () => getProtoType('multisig.proto', 'axelar.multisig.v1beta1', 'RotateKeyRequest'),
+    };
+
+    const getType = typeUrlToProto[msg.typeUrl];
+    return getType ? getType() : null;
+};
 
 const nexusChainState = async (
     action: 'activate' | 'deactivate',
@@ -72,7 +179,7 @@ const nexusChainState = async (
     const actionText = action.charAt(0).toUpperCase() + action.slice(1);
     const defaultTitle = `${actionText} ${args.join(', ')} on Nexus`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
 };
 
 const activateChain = (client: ClientManager, config: ConfigManager, options: CoreCommandOptions, args: string[], fee?: string | StdFee) =>
@@ -102,7 +209,7 @@ const setTransferRateLimit = async (
     const message = encodeSetTransferRateLimitRequest(chain, limit, window);
     const defaultTitle = `Set transfer rate limit for ${chain}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
 };
 
 const registerAssetFee = async (
@@ -121,12 +228,8 @@ const registerAssetFee = async (
     const message = encodeRegisterAssetFeeRequest(chain, asset, feeRate, minFee, maxFee);
     const defaultTitle = `Register asset fee for ${asset} on ${chain}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
 };
-
-// ============================================
-// Permission Module Operations
-// ============================================
 
 const registerController = async (
     client: ClientManager,
@@ -144,7 +247,7 @@ const registerController = async (
     const message = encodeRegisterControllerRequest(controller);
     const defaultTitle = `Register controller ${controller}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
 };
 
 const deregisterController = async (
@@ -163,12 +266,8 @@ const deregisterController = async (
     const message = encodeDeregisterControllerRequest(controller);
     const defaultTitle = `Deregister controller ${controller}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
 };
-
-// ============================================
-// EVM Module Operations
-// ============================================
 
 const setGateway = async (
     client: ClientManager,
@@ -186,7 +285,7 @@ const setGateway = async (
     const message = encodeSetGatewayRequest(chain, address);
     const defaultTitle = `Set gateway address for ${chain}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
 };
 
 const transferOperatorship = async (
@@ -205,12 +304,8 @@ const transferOperatorship = async (
     const message = encodeTransferOperatorshipRequest(chain, keyId);
     const defaultTitle = `Transfer operatorship for ${chain} to key ${keyId}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
 };
-
-// ============================================
-// Multisig Module Operations
-// ============================================
 
 const startKeygen = async (
     client: ClientManager,
@@ -228,7 +323,7 @@ const startKeygen = async (
     const message = encodeStartKeygenRequest(keyId);
     const defaultTitle = `Start keygen for key ${keyId}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
 };
 
 const rotateKey = async (
@@ -247,7 +342,7 @@ const rotateKey = async (
     const message = encodeRotateKeyRequest(chain, keyId);
     const defaultTitle = `Rotate key for ${chain} to ${keyId}`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
 };
 
 // ============================================
@@ -277,8 +372,8 @@ const programHandler = () => {
         .command('set-transfer-rate-limit')
         .description('Set transfer rate limit for an asset on a chain (ROLE_ACCESS_CONTROL)')
         .argument('<chain>', 'chain name')
-        .argument('<limit>', 'rate limit amount')
-        .argument('<window>', 'time window (e.g., "24h")')
+        .argument('<limit>', 'rate limit amount with optional denom (e.g., "1000000uaxl" or "1000000")')
+        .argument('<window>', 'time window (e.g., "3600", "60m", "24h", "7d")')
         .action((chain, limit, window, options) => mainProcessor(setTransferRateLimit, options, [chain, limit, window]));
     addCoreOptions(setTransferRateLimitCmd);
 
