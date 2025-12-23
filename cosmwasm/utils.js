@@ -60,6 +60,16 @@ const addressToBytes = (address) => {
     return Buffer.from(fromBech32(address).data);
 };
 
+const evmAddressToBytes = (address) => {
+    const cleanAddress = address.replace(/^0x/i, '');
+
+    if (!/^[0-9a-fA-F]{40}$/.test(cleanAddress)) {
+        throw new Error(`Invalid EVM address: ${address}. Expected 40 hex characters (20 bytes).`);
+    }
+
+    return Buffer.from(cleanAddress, 'hex');
+};
+
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -1389,7 +1399,7 @@ const encodeSetGatewayRequest = (chain, address, sender = GOVERNANCE_MODULE_ADDR
     const request = RequestType.create({
         sender: addressToBytes(sender),
         chain,
-        address: Buffer.from(address.replace('0x', ''), 'hex'),
+        address: evmAddressToBytes(address),
     });
 
     const errMsg = RequestType.verify(request);
