@@ -5,36 +5,36 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** |                                        |
 
-| **Environment**      | **Chain**          | **Deployment Status** | **Date** |
-| -------------------- | ------------------ | --------------------- | -------- |
-| **Devnet Amplifier** | `avalanche-fuji`   | -                     | TBD      |
-|                      | `berachain`        | -                     | TBD      |
-|                      | `eth-sepolia`      | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `optimism-sepolia` | -                     | TBD      |
-|                      | `plume-2`          | -                     | TBD      |
-|                      | `xrpl-evm-devnet`  | -                     | TBD      |
-| **Stagenet**         | `berachain`        | -                     | TBD      |
-|                      | `celo-sepolia`     | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `hedera`           | -                     | TBD      |
-|                      | `hyperliquid`      | -                     | TBD      |
-|                      | `plume`            | -                     | TBD      |
-|                      | `xrpl-evm`         | -                     | TBD      |
-| **Testnet**          | `berachain`        | -                     | TBD      |
-|                      | `celo-sepolia`     | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `hedera`           | -                     | TBD      |
-|                      | `hyperliquid`      | -                     | TBD      |
-|                      | `plume`            | -                     | TBD      |
-|                      | `xrpl-evm`         | -                     | TBD      |
-| **Mainnet**          | `berachain`        | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `hedera`           | -                     | TBD      |
-|                      | `hyperliquid`      | -                     | TBD      |
-|                      | `monad`            | -                     | TBD      |
-|                      | `plume`            | -                     | TBD      |
-|                      | `xrpl-evm`         | -                     | TBD      |
+| **Environment**      | **Chain**          | **Deployment Status** | **Date**   |
+| -------------------- | ------------------ | --------------------- | ---------- |
+| **Devnet Amplifier** | `avalanche-fuji`   | Done                  | 22/12/2025 |
+|                      | `berachain`        | Done                  | 22/12/2025 |
+|                      | `eth-sepolia`      | Done                  | 22/12/2025 |
+|                      | `flow`             | -                     | TBD        |
+|                      | `optimism-sepolia` | Done                  | 22/12/2025 |
+|                      | `plume-2`          | Done                  | 22/12/2025 |
+|                      | `xrpl-evm-devnet`  | -                     | TBD        |
+| **Stagenet**         | `berachain`        | Done                  | 22/12/2025 |
+|                      | `celo-sepolia`     | Done                  | 22/12/2025 |
+|                      | `flow`             | -                     | TBD        |
+|                      | `hedera`           | -                     | TBD        |
+|                      | `hyperliquid`      | Done                  | 22/12/2025 |
+|                      | `plume`            | Done                  | 22/12/2025 |
+|                      | `xrpl-evm`         | Done                  | 22/12/2025 |
+| **Testnet**          | `berachain`        | -                     | TBD        |
+|                      | `celo-sepolia`     | -                     | TBD        |
+|                      | `flow`             | -                     | TBD        |
+|                      | `hedera`           | -                     | TBD        |
+|                      | `hyperliquid`      | -                     | TBD        |
+|                      | `plume`            | -                     | TBD        |
+|                      | `xrpl-evm`         | -                     | TBD        |
+| **Mainnet**          | `berachain`        | -                     | TBD        |
+|                      | `flow`             | -                     | TBD        |
+|                      | `hedera`           | -                     | TBD        |
+|                      | `hyperliquid`      | -                     | TBD        |
+|                      | `monad`            | -                     | TBD        |
+|                      | `plume`            | -                     | TBD        |
+|                      | `xrpl-evm`         | -                     | TBD        |
 
 ## Background
 
@@ -83,8 +83,8 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 | -------------------- | ------------------ | -------------------------------------------- | ------------------------- | ------------------ | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v6.0.4 devnet-amplifier` | `create2`          | `0xD3Ba43B92cED452D04B20710C4db627667476024` |
 | **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v6.0.4`                  | `create2`          | `0x6BA4C187056BF592B29B206381606a2F4d0e9b7d` |
-| **Testnet**          | `300`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-` |
-| **Mainnet**          | `259200`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-` |
+| **Testnet**          | `300`              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-`                                          |
+| **Mainnet**          | `259200`           | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-`                                          |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -165,21 +165,21 @@ CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
 # Loop through each chain and transfer ownership
 for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
   echo "Processing chain: $CHAIN"
-  
+
   # Get the AxelarServiceGovernance contract address for this chain
   AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-  
+
   echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
-  
+
   # Verify current owner
   ts-node evm/ownership.js -c AxelarGateway --action owner -n $CHAIN
-  
+
   # Transfer ownership to AxelarServiceGovernance
   ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
-  
+
   # Verify transfer completed successfully
   ts-node evm/ownership.js -c AxelarGateway --action owner -n $CHAIN
-  
+
   echo "Completed transfer for $CHAIN"
   echo "---"
 done
@@ -242,21 +242,21 @@ CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
 # Loop through each chain and transfer ownership
 for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
   echo "Processing chain: $CHAIN"
-  
+
   # Get the AxelarServiceGovernance contract address for this chain
   AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-  
+
   echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
-  
+
   # Verify current owner
   ts-node evm/ownership.js -c AxelarGasService --action owner -n $CHAIN
-  
+
   # Transfer ownership to AxelarServiceGovernance
   ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
-  
+
   # Verify transfer completed successfully
   ts-node evm/ownership.js -c AxelarGasService --action owner -n $CHAIN
-  
+
   echo "Completed transfer for $CHAIN"
   echo "---"
 done
@@ -322,21 +322,21 @@ CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
 # Loop through each chain and transfer ownership
 for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
   echo "Processing chain: $CHAIN"
-  
+
   # Get the AxelarServiceGovernance contract address for this chain
   AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-  
+
   echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
-  
+
   # Verify current owner
   ts-node evm/ownership.js -c InterchainTokenService --action owner -n $CHAIN
-  
+
   # Transfer ownership to AxelarServiceGovernance
   ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
-  
+
   # Verify transfer completed successfully
   ts-node evm/ownership.js -c InterchainTokenService --action owner -n $CHAIN
-  
+
   echo "Completed transfer for $CHAIN"
   echo "---"
 done
