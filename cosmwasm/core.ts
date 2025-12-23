@@ -1,10 +1,10 @@
 import { toBech32 } from '@cosmjs/encoding';
 import { encodePubkey, makeAuthInfoBytes, makeSignDoc } from '@cosmjs/proto-signing';
-import { calculateFee, DeliverTxResponse, GasPrice, StdFee } from '@cosmjs/stargate';
-import { Any } from 'cosmjs-types/google/protobuf/any';
+import { DeliverTxResponse, GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
+import { Command } from 'commander';
 import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
 import { TxBody, TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
-import { Command } from 'commander';
+import { Any } from 'cosmjs-types/google/protobuf/any';
 import * as fs from 'fs';
 
 import { printInfo, printWarn, validateParameters } from '../common';
