@@ -15,6 +15,7 @@ import { confirmProposalSubmission, executeByGovernance, submitMessagesAsProposa
 import {
     CONTRACTS,
     encodeInstantiate,
+    encodeMigrate,
     encodeStoreCode,
     encodeStoreInstantiate,
     encodeUpdateInstantiateConfigProposal,
@@ -25,6 +26,7 @@ import {
     getSalt,
     instantiateContract,
     itsHubChainParams,
+    migrateContract,
     predictAddress,
     signAndBroadcastWithRetry,
     uploadContract,
@@ -311,7 +313,6 @@ const coordinatorInstantiatePermissions = async (
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    // TODO: Support direct execution by registering MsgUpdateInstantiateConfig in the client registry
     if (!options.governance) {
         throw new Error('coordinator-instantiate-permissions requires --governance flag');
     }
@@ -364,6 +365,16 @@ const coordinatorInstantiatePermissions = async (
     await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
 };
 
+const getSingleContractName = (contractName: string | string[] | undefined, operation: string): string => {
+    if (Array.isArray(contractName)) {
+        if (contractName.length > 1) {
+            throw new Error(`${operation} only supports single contract at a time`);
+        }
+        return contractName[0];
+    }
+    return contractName!;
+};
+
 const saveStoreCodeProposalInfo = (config: ConfigManager, contractName: string, contractCodePath: string, proposalId: string) => {
     const contractBaseConfig = config.getContractConfig(contractName);
     contractBaseConfig.storeCodeProposalId = proposalId;
@@ -396,7 +407,7 @@ const storeCode = async (
 
         const contractList = contractNames.join(', ');
         const defaultTitle = `Store ${contractList} contract${contractNames.length > 1 ? 's' : ''}`;
-        const defaultDescription = `Upload ${contractList} contract bytecode to the chain`;
+        const defaultDescription = `Store ${contractList} contract bytecode`;
         const title = options.title || defaultTitle;
         const description = options.description || defaultDescription;
 
@@ -448,15 +459,7 @@ const instantiate = async (
     _args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    let contractName = options.contractName;
-
-    if (Array.isArray(contractName)) {
-        if (contractName.length > 1) {
-            throw new Error('instantiate only supports single contract at a time');
-        }
-        contractName = contractName[0];
-    }
-
+    const contractName = getSingleContractName(options.contractName, 'instantiate');
     const instantiateOptions = { ...options, contractName };
     const { contractConfig } = getAmplifierContractConfig(config, instantiateOptions);
 
@@ -530,16 +533,7 @@ const storeInstantiate = async (
     _args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    let storeInstantiateContractName = options.contractName;
-
-    if (Array.isArray(storeInstantiateContractName)) {
-        if (storeInstantiateContractName.length > 1) {
-            throw new Error('store-instantiate only supports single contract at a time');
-        }
-        storeInstantiateContractName = storeInstantiateContractName[0];
-    }
-
-    const contractName = storeInstantiateContractName!;
+    const contractName = getSingleContractName(options.contractName, 'store-instantiate');
 
     if (options.governance) {
         if (options.instantiate2) {
@@ -578,6 +572,51 @@ const storeInstantiate = async (
 
     await storeCode(client, config, options, _args, fee);
     await instantiate(client, config, options, _args, fee);
+};
+
+const migrate = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractName = getSingleContractName(options.contractName, 'migrate');
+    const migrateOptions = { ...options, contractName };
+    const { contractConfig } = getAmplifierContractConfig(config, migrateOptions);
+
+    contractConfig.codeId = await getCodeId(client, config, migrateOptions);
+
+    if (options.governance) {
+        validateGovernanceMode(config, contractName, options.chainName);
+
+        const proposal = encodeMigrate(config, migrateOptions);
+
+        const defaultTitle = `Migrate ${contractName} contract`;
+        const defaultDescription = `Migrate ${contractName} contract${options.chainName ? ` on ${options.chainName}` : ''} to code ID ${contractConfig.codeId}`;
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+
+        validateParameters({ isNonEmptyString: { title, description } });
+
+        if (!confirmProposalSubmission(options, [proposal])) {
+            return;
+        }
+
+        await submitMessagesAsProposal(client, config, { ...options, title, description }, [proposal], fee);
+        return;
+    }
+
+    const { yes } = options;
+
+    printInfo('Using code id', contractConfig.codeId);
+
+    if (prompt(`Proceed with contract migration on axelar?`, yes)) {
+        return;
+    }
+
+    const { transactionHash } = await migrateContract(client, config, migrateOptions, fee);
+    printInfo('Migration completed. Transaction hash', transactionHash);
 };
 
 // ==================== Emergency Operations ====================
@@ -848,6 +887,17 @@ const programHandler = () => {
         storeProposalOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
+    });
+
+    const migrateCmd = program
+        .command('migrate')
+        .description('Migrate a contract to a new code ID')
+        .action((options) => mainProcessor(migrate, options));
+    addAmplifierOptions(migrateCmd, {
+        contractOptions: true,
+        migrateOptions: true,
+        codeId: true,
+        fetchCodeId: true,
     });
 
     // ==================== Emergency Operations Commands ====================
