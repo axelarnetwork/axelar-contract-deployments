@@ -87,10 +87,8 @@ const generateMultisigTx = async (
 ): Promise<void> => {
     const chainId = config.axelar.chainId;
 
-    // Use multisig account for accountNumber and sequence
     const { accountNumber, sequence } = await client.getSequence(multisigAddress);
 
-    // For multisig unsigned tx, we need a proper fee object (not 'auto' string)
     const txFee = isValidFeeObject(fee) ? fee : getDefaultFee(config);
 
     const unsignedTx = {
@@ -130,7 +128,6 @@ const executeCoreOperation = async (
         const eoaAddress = client.accounts[0].address;
 
         if (roleType === 'ROLE_CHAIN_MANAGEMENT') {
-            // EOA can directly execute ROLE_CHAIN_MANAGEMENT operations
             const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
                 const RequestType = getRequestTypeFromMessage(msg);
                 if (RequestType) {
@@ -145,7 +142,6 @@ const executeCoreOperation = async (
             });
             return executeDirectEOA(client, options, messagesWithSender, fee);
         } else {
-            // ROLE_ACCESS_CONTROL requires multisig
             const multisigAddress = options.multisigAddress;
             if (!multisigAddress) {
                 throw new Error(
@@ -157,7 +153,6 @@ const executeCoreOperation = async (
             printInfo('Multisig address (sender)', multisigAddress);
             printInfo('Your EOA (signer)', eoaAddress);
 
-            // Use multisig address as sender in messages
             const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
                 const RequestType = getRequestTypeFromMessage(msg);
                 if (RequestType) {
