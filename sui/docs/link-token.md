@@ -296,7 +296,7 @@ ts-node evm/its transfer-mintership $EVM_TOKEN_ADDRESS $TOKEN_MANAGER_ADDRESS -n
 ts-node sui/its interchain-transfer $SUI_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS $TRANSFER_AMOUNT
 
 # Test interchain transfer from EVM to Sui
-ts-node evm/its interchain-transfer sui $SUI_TOKEN_ID $SUI_WALLET_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN
+ts-node evm/its interchain-transfer --destinationChain sui --tokenId $SUI_TOKEN_ID --destinationAddress $SUI_WALLET_ADDRESS --amount $TRANSFER_AMOUNT -n $EVM_CHAIN
 ```
 
 ### Example 2: Link Token on Sui (Source - _MINT_BURN_) with EVM Token (Destination - _LOCK_UNLOCK_)
@@ -335,7 +335,7 @@ ts-node sui/its link-coin $SYMBOL $EVM_CHAIN $EVM_TOKEN_ADDRESS \
 SUI_TOKEN_ID="TOKEN_ID"
 
 # Test interchain transfer from EVM to Sui
-ts-node evm/its interchain-transfer sui $SUI_TOKEN_ID $SUI_WALLET_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN
+ts-node evm/its interchain-transfer --destinationChain sui --tokenId $SUI_TOKEN_ID --destinationAddress $SUI_WALLET_ADDRESS --amount $TRANSFER_AMOUNT -n $EVM_CHAIN
 
 # Test interchain transfer from Sui to EVM
 ts-node sui/its interchain-transfer $SUI_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS $TRANSFER_AMOUNT
@@ -406,7 +406,7 @@ TOKEN_MANAGER_ADDRESS="EVM_TOKEN_MANAGER"
 ts-node evm/its transfer-mintership $EVM_TOKEN_ADDRESS $TOKEN_MANAGER_ADDRESS -n $EVM_CHAIN
 
 # Test interchain transfer from EVM to Sui
-ts-node evm/its interchain-transfer sui $EVM_TOKEN_ID $SUI_WALLET_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN
+ts-node evm/its interchain-transfer --destinationChain sui --tokenId $EVM_TOKEN_ID --destinationAddress $SUI_WALLET_ADDRESS --amount $TRANSFER_AMOUNT -n $EVM_CHAIN
 
 # Test interchain transfer from Sui to EVM
 ts-node sui/its interchain-transfer $EVM_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS $TRANSFER_AMOUNT
@@ -471,7 +471,7 @@ ts-node evm/interchainTokenFactory --action linkToken \
 EVM_TOKEN_ID="TOKEN_ID"
 
 # Test interchain transfer from EVM to Sui
-ts-node evm/its interchain-transfer sui $EVM_TOKEN_ID $SUI_WALLET_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN
+ts-node evm/its interchain-transfer --destinationChain sui --tokenId $EVM_TOKEN_ID --destinationAddress $SUI_WALLET_ADDRESS --amount $TRANSFER_AMOUNT -n $EVM_CHAIN
 
 # Test interchain transfer from Sui to EVM
 ts-node sui/its interchain-transfer $EVM_TOKEN_ID $EVM_CHAIN $EVM_WALLET_ADDRESS $TRANSFER_AMOUNT
