@@ -104,7 +104,7 @@ const submitProposal = async (
     client: ClientManager,
     config: ConfigManager,
     options: ProposalOptions,
-    proposal: object[],
+    proposal: object | object[],
     fee?: string | StdFee,
 ): Promise<string> => {
     const deposit =
@@ -139,14 +139,16 @@ const submitMessagesAsProposal = async (
     client: ClientManager,
     config: ConfigManager,
     options: ProposalOptions,
-    messages: object[],
+    messages: object | object[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
-    if (!confirmProposalSubmission(options, messages)) {
+    const messagesArray = toArray(messages);
+
+    if (!confirmProposalSubmission(options, messagesArray)) {
         return;
     }
 
-    const proposalId = await submitProposal(client, config, options, messages, fee);
+    const proposalId = await submitProposal(client, config, options, messagesArray, fee);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
 };
@@ -202,7 +204,7 @@ const migrate = async (
         return;
     }
 
-    const proposalId = await submitProposal(client, config, options, [proposal], fee);
+    const proposalId = await submitProposal(client, config, options, proposal, fee);
     printInfo('Proposal submitted', proposalId);
     return proposalId;
 };

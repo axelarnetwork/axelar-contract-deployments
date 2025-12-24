@@ -249,7 +249,7 @@ async function coordinatorToVersion2_1_1(
                 await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
                 printInfo('Migration succeeded');
             } else {
-                await submitProposal(client, config, migrateOptions, [proposal], fee);
+                await submitProposal(client, config, migrateOptions, proposal, fee);
                 printInfo('Migration proposal successfully submitted');
             }
         } catch (e) {

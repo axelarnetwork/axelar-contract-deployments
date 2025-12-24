@@ -489,7 +489,7 @@ const instantiate = async (
 
         validateParameters({ isNonEmptyString: { title, description } });
 
-        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, [proposal], fee);
+        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, proposal, fee);
 
         if (proposalId) {
             contractConfig.instantiateProposalId = proposalId;
@@ -547,7 +547,7 @@ const storeInstantiate = async (
 
         validateParameters({ isNonEmptyString: { title, description } });
 
-        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, [proposal], fee);
+        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, proposal, fee);
 
         if (proposalId) {
             contractConfig.storeInstantiateProposalId = proposalId;
@@ -589,7 +589,7 @@ const migrate = async (
 
         validateParameters({ isNonEmptyString: { title, description } });
 
-        await submitMessagesAsProposal(client, config, { ...options, title, description }, [proposal], fee);
+        await submitMessagesAsProposal(client, config, { ...options, title, description }, proposal, fee);
         return;
     }
 
