@@ -36,12 +36,13 @@ to migrate the Multisig contracts on each network to the same version (from 2.3.
     | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
       -c Multisig \
       -t "Upload Multisig contract v2.3.2" \
       -d "Upload Multisig contract v2.3.2" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.3.2
+      --version 2.3.2 \
+      --governance
     ```
 
 2. Upgrade Multisig contract
@@ -49,12 +50,13 @@ to migrate the Multisig contracts on each network to the same version (from 2.3.
 There is no state migration needed during upgrade.
 
 ```bash
-ts-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/contract.ts migrate \
   -c Multisig \
   -t "Migrate Multisig to v2.3.2" \
   -d "Multisig to v2.3.2" \
   --msg '{}' \
-  --fetchCodeId
+  --fetchCodeId \
+  --governance
 ```
 
 ## Checklist
