@@ -90,14 +90,14 @@ ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --sy
 
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination_chain] --chainNames $CHAIN   --salt [same salt as above] -y
 
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
 ```
 
 - Sui Checklist
@@ -120,11 +120,11 @@ ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId 
 
 ```bash
 # Deploy token to Stellar from `Celo-Sepolia`
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain stellar-2025-q3 --chainNames $CHAIN   --salt [same salt as above] -y
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token stellar-2025-q3 --chainNames $CHAIN   --salt [same salt as above] -y
 
 
 # Transfer token to Stellar
-ts-node evm/its.js interchain-transfer stellar-2025-q3 [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer --destinationChain stellar-2025-q3 --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from Stellar
 ts-node stellar/its.js interchain-transfer [token-id] $CHAIN [destination-address] 1 --gas-amount [gas-amount]

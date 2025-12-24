@@ -1559,6 +1559,7 @@ module.exports = {
     submitProposal,
     submitCallContracts,
     payloadToHexBinary,
+    signAndBroadcastWithRetry,
     loadProtoDefinition,
     getNexusProtoType,
     isValidCosmosAddress,
