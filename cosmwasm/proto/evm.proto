@@ -1,0 +1,18 @@
+syntax = "proto3";
+package axelar.evm.v1beta1;
+
+option go_package = "github.com/axelarnetwork/axelar-core/x/evm/types";
+
+// SetGatewayRequest represents a message to set the gateway address for an EVM chain
+message SetGatewayRequest {
+  bytes sender = 1;
+  string chain = 2;
+  bytes address = 3;
+}
+
+// CreateTransferOperatorshipRequest represents a message to transfer operatorship for an EVM chain
+message CreateTransferOperatorshipRequest {
+  bytes sender = 1;
+  string chain = 2;
+  string key_id = 3;
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package axelar.permission.v1beta1;
+
+option go_package = "github.com/axelarnetwork/axelar-core/x/permission/types";
+
+// RegisterControllerRequest represents a message to register a controller account
+message RegisterControllerRequest {
+  bytes sender = 1;
+  bytes controller = 2;
+}
+
+// DeregisterControllerRequest represents a message to deregister a controller account
+message DeregisterControllerRequest {
+  bytes sender = 1;
+  bytes controller = 2;
+}

@@ -3,14 +3,51 @@ package axelar.nexus.v1beta1;
 
 option go_package = "github.com/axelarnetwork/axelar-core/x/nexus/types";
 
+// ActivateChainRequest represents a message to activate chains
 message ActivateChainRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+  bytes sender = 1;
   repeated string chains = 2;
-  string sender = 3;
 }
 
+// DeactivateChainRequest represents a message to deactivate chains
 message DeactivateChainRequest {
-  bytes sender_deprecated = 1;  // deprecated, don't use
+  bytes sender = 1;
   repeated string chains = 2;
-  string sender = 3;
+}
+
+// SetTransferRateLimitRequest represents a message to set transfer rate limit
+// Note: limit is cosmos.base.v1beta1.Coin, window is google.protobuf.Duration
+// For simplicity, we use string representations that the chain will parse
+message SetTransferRateLimitRequest {
+  bytes sender = 1;
+  string chain = 2;
+  Coin limit = 3;
+  Duration window = 4;
+}
+
+// Coin represents a token with denom and amount
+message Coin {
+  string denom = 1;
+  string amount = 2;
+}
+
+// Duration represents a time duration
+message Duration {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// RegisterAssetFeeRequest represents a message to register fees for an asset
+message RegisterAssetFeeRequest {
+  bytes sender = 1;
+  FeeInfo fee_info = 2;
+}
+
+// FeeInfo contains fee information for an asset on a chain
+message FeeInfo {
+  string chain = 1;
+  string asset = 2;
+  string fee_rate = 3;
+  string min_fee = 4;
+  string max_fee = 5;
 }

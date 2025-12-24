@@ -1,36 +1,318 @@
-import { StdFee } from '@cosmjs/stargate';
-import { Command, Option } from 'commander';
+import { toBech32 } from '@cosmjs/encoding';
+import { encodePubkey, makeAuthInfoBytes, makeSignDoc } from '@cosmjs/proto-signing';
+import { DeliverTxResponse, GasPrice, StdFee, calculateFee } from '@cosmjs/stargate';
+import { Command } from 'commander';
+import { SignMode } from 'cosmjs-types/cosmos/tx/signing/v1beta1/signing';
+import { TxBody, TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
+import { Any } from 'cosmjs-types/google/protobuf/any';
+import * as fs from 'fs';
 
-import { printInfo, validateParameters } from '../common';
+import { printInfo, printWarn, validateParameters } from '../common';
 import { ConfigManager } from '../common/config';
 import { addCoreOptions } from './cli-utils';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { confirmProposalSubmission, submitProposalAndPrint } from './proposal-utils';
-import { encodeChainStatusRequest } from './utils';
+import {
+    addressToBytes,
+    encodeChainStatusRequest,
+    encodeDeregisterControllerRequest,
+    encodeRegisterAssetFeeRequest,
+    encodeRegisterControllerRequest,
+    encodeRotateKeyRequest,
+    encodeSetGatewayRequest,
+    encodeSetTransferRateLimitRequest,
+    encodeStartKeygenRequest,
+    encodeTransferOperatorshipRequest,
+    getNexusProtoType,
+    getProtoType,
+    getUnitDenom,
+} from './utils';
+
+type RoleType = 'ROLE_ACCESS_CONTROL' | 'ROLE_CHAIN_MANAGEMENT';
 
 interface CoreCommandOptions extends Options {
     yes?: boolean;
     title?: string;
     description?: string;
     direct?: boolean;
+    output?: string;
+    multisigAddress?: string;
     [key: string]: unknown;
 }
+
+const signAndBroadcastRawMessages = async (
+    client: ClientManager,
+    config: ConfigManager,
+    signerAddress: string,
+    messages: { typeUrl: string; value: Uint8Array }[],
+    fee?: string | StdFee,
+    memo: string = '',
+): Promise<DeliverTxResponse> => {
+    const { accountNumber, sequence } = await client.getSequence(signerAddress);
+    const chainId = config.axelar.chainId;
+
+    const gasPrice = GasPrice.fromString(config.axelar.gasPrice);
+    const usedFee: StdFee = typeof fee === 'object' && fee ? fee : calculateFee(200000, gasPrice);
+
+    const anyMessages: Any[] = messages.map((msg) =>
+        Any.fromPartial({
+            typeUrl: msg.typeUrl,
+            value: msg.value,
+        }),
+    );
+
+    const txBody = TxBody.fromPartial({
+        messages: anyMessages,
+        memo,
+    });
+    const txBodyBytes = TxBody.encode(txBody).finish();
+
+    const account = client.accounts[0];
+    const pubkeyAny = encodePubkey({
+        type: 'tendermint/PubKeySecp256k1',
+        value: Buffer.from(account.pubkey).toString('base64'),
+    });
+    const authInfoBytes = makeAuthInfoBytes(
+        [{ pubkey: pubkeyAny, sequence }],
+        usedFee.amount,
+        parseInt(usedFee.gas, 10),
+        undefined,
+        undefined,
+        SignMode.SIGN_MODE_DIRECT,
+    );
+
+    const signDoc = makeSignDoc(txBodyBytes, authInfoBytes, chainId, accountNumber);
+    const signResponse = await client.wallet.signDirect(signerAddress, signDoc);
+
+    const txRaw = TxRaw.fromPartial({
+        bodyBytes: signResponse.signed.bodyBytes,
+        authInfoBytes: signResponse.signed.authInfoBytes,
+        signatures: [Uint8Array.from(Buffer.from(signResponse.signature.signature, 'base64'))],
+    });
+
+    const txBytes = TxRaw.encode(txRaw).finish();
+    return client.broadcastTx(txBytes);
+};
+
+const executeDirectEOA = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    messages: { typeUrl: string; value: Uint8Array }[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const signerAddress = client.accounts[0].address;
+    printInfo('Executing directly as EOA', signerAddress);
+
+    if (!options.yes) {
+        printWarn('Direct execution mode. Use -y to skip confirmation in non-interactive mode.');
+        const readline = await import('readline');
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+        const answer = await new Promise<string>((resolve) => {
+            rl.question('Proceed with direct execution? (y/N): ', resolve);
+        });
+        rl.close();
+
+        if (answer.toLowerCase() !== 'y') {
+            printInfo('Operation cancelled');
+            return;
+        }
+    }
+
+    const result = await signAndBroadcastRawMessages(client, config, signerAddress, messages, fee);
+    printInfo('Transaction hash', result.transactionHash);
+    printInfo('Result', JSON.stringify(result, null, 2));
+};
+
+const getDefaultFee = (config: ConfigManager): StdFee => {
+    const denom = getUnitDenom(config);
+    return { amount: [{ denom, amount: '500000' }], gas: '500000' };
+};
+
+const isValidFeeObject = (fee: string | StdFee | undefined): fee is StdFee => {
+    return typeof fee === 'object' && fee !== null && 'amount' in fee && 'gas' in fee;
+};
+
+const bytesToBech32 = (bytes: Uint8Array | Buffer, prefix: string = 'axelar'): string => {
+    return toBech32(prefix, bytes);
+};
+
+const bytesToHex = (bytes: Uint8Array | Buffer): string => {
+    return '0x' + Buffer.from(bytes).toString('hex');
+};
+
+const convertFieldValue = (key: string, value: unknown): unknown => {
+    if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
+        if (key === 'sender' || key === 'controller') {
+            return bytesToBech32(value);
+        }
+        if (key === 'address') {
+            return bytesToHex(value);
+        }
+        return Buffer.from(value).toString('base64');
+    }
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const converted: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(value)) {
+            converted[k] = convertFieldValue(k, v);
+        }
+        return converted;
+    }
+    if (Array.isArray(value)) {
+        return value.map((v, i) => convertFieldValue(String(i), v));
+    }
+    if (typeof value === 'bigint') {
+        return value.toString();
+    }
+    return value;
+};
+
+const decodeMessageToJson = (msg: { typeUrl?: string; value?: Uint8Array }): object => {
+    if (!msg.typeUrl || !msg.value) {
+        return { '@type': msg.typeUrl };
+    }
+
+    const RequestType = getRequestTypeFromMessage(msg as { typeUrl: string; value: Uint8Array });
+    if (!RequestType) {
+        return {
+            '@type': msg.typeUrl,
+            value: Buffer.from(msg.value).toString('base64'),
+        };
+    }
+
+    const decoded = RequestType.decode(msg.value);
+    const jsonObj = RequestType.toObject(decoded, {
+        longs: String,
+        enums: String,
+        bytes: Buffer,
+        defaults: false,
+    });
+
+    const result: Record<string, unknown> = { '@type': msg.typeUrl };
+    for (const [key, value] of Object.entries(jsonObj)) {
+        result[key] = convertFieldValue(key, value);
+    }
+
+    return result;
+};
+
+const generateMultisigTx = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    messages: object[],
+    multisigAddress: string,
+    fee?: string | StdFee,
+    defaultTitle?: string,
+): Promise<void> => {
+    const chainId = config.axelar.chainId;
+
+    const { accountNumber, sequence } = await client.getSequence(multisigAddress);
+
+    const txFee = isValidFeeObject(fee) ? fee : getDefaultFee(config);
+
+    const unsignedTx = {
+        body: {
+            messages: messages.map((msg: { typeUrl?: string; value?: Uint8Array }) => decodeMessageToJson(msg)),
+            memo: defaultTitle || 'Core operation',
+            timeout_height: '0',
+            extension_options: [],
+            non_critical_extension_options: [],
+        },
+        auth_info: {
+            signer_infos: [],
+            fee: {
+                amount: txFee.amount,
+                gas_limit: txFee.gas,
+                payer: '',
+                granter: '',
+            },
+            tip: null,
+        },
+        signatures: [],
+    };
+
+    const outputPath = options.output || `unsigned_tx_${Date.now()}.json`;
+    fs.writeFileSync(outputPath, JSON.stringify(unsignedTx, null, 2));
+    printInfo('Unsigned transaction saved to', outputPath);
+    printInfo('Multisig address', multisigAddress);
+    printInfo('Account number', String(accountNumber));
+    printInfo('Sequence', String(sequence));
+    printInfo('', '');
+    printInfo('Next steps for multisig signing:');
+    printInfo('1. Share this file with all multisig signers');
+    printInfo(
+        '2. Each signer signs with: axelard tx sign ' +
+            outputPath +
+            ' --from <key> --multisig ' +
+            multisigAddress +
+            ' --chain-id ' +
+            chainId +
+            ' --offline --account-number ' +
+            accountNumber +
+            ' --sequence ' +
+            sequence,
+    );
+    printInfo('3. Combine signatures: axelard tx multisign ' + outputPath + ' <multisig-name> <sig1> <sig2> ...');
+    printInfo('4. Broadcast: axelard tx broadcast <signed-file>');
+};
 
 const executeCoreOperation = async (
     client: ClientManager,
     config: ConfigManager,
     options: CoreCommandOptions,
     messages: object[],
+    roleType: RoleType,
     fee?: string | StdFee,
     defaultTitle?: string,
     defaultDescription?: string,
 ): Promise<void> => {
     if (options.direct) {
-        // TODO: Implement direct execution with custom registry
-        // Direct execution requires registering custom Axelar protobuf types
-        // (e.g., ActivateChainRequest, DeactivateChainRequest) in the client's registry.
-        throw new Error('Direct execution is not yet supported for core operations. Please submit as a governance proposal.');
+        const eoaAddress = client.accounts[0].address;
+
+        if (roleType === 'ROLE_CHAIN_MANAGEMENT') {
+            const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
+                const RequestType = getRequestTypeFromMessage(msg);
+                if (RequestType) {
+                    const decoded = RequestType.decode(msg.value);
+                    decoded.sender = addressToBytes(eoaAddress);
+                    return {
+                        typeUrl: msg.typeUrl,
+                        value: Uint8Array.from(RequestType.encode(decoded).finish()),
+                    };
+                }
+                return msg;
+            });
+            return executeDirectEOA(client, config, options, messagesWithSender, fee);
+        } else {
+            const multisigAddress = options.multisigAddress;
+            if (!multisigAddress) {
+                throw new Error(
+                    'ROLE_ACCESS_CONTROL operations require --multisig-address to specify the multisig account that holds the role',
+                );
+            }
+
+            printInfo('ROLE_ACCESS_CONTROL operation requires multisig signing');
+            printInfo('Multisig address (sender)', multisigAddress);
+            printInfo('Your EOA (signer)', eoaAddress);
+
+            const messagesWithSender = messages.map((msg: { typeUrl: string; value: Uint8Array }) => {
+                const RequestType = getRequestTypeFromMessage(msg);
+                if (RequestType) {
+                    const decoded = RequestType.decode(msg.value);
+                    decoded.sender = addressToBytes(multisigAddress);
+                    return {
+                        typeUrl: msg.typeUrl,
+                        value: Uint8Array.from(RequestType.encode(decoded).finish()),
+                    };
+                }
+                return msg;
+            });
+
+            return generateMultisigTx(client, config, options, messagesWithSender, multisigAddress, fee, defaultTitle);
+        }
     }
 
     const title = options.title || defaultTitle;
@@ -42,6 +324,36 @@ const executeCoreOperation = async (
     }
 
     await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
+};
+
+interface ProtoMessage {
+    typeUrl: string;
+    value: Uint8Array;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ProtoType = any;
+
+const getRequestTypeFromMessage = (msg: ProtoMessage): ProtoType | null => {
+    const typeUrlToProto: Record<string, () => ProtoType> = {
+        '/axelar.nexus.v1beta1.ActivateChainRequest': () => getNexusProtoType('ActivateChainRequest'),
+        '/axelar.nexus.v1beta1.DeactivateChainRequest': () => getNexusProtoType('DeactivateChainRequest'),
+        '/axelar.nexus.v1beta1.SetTransferRateLimitRequest': () => getNexusProtoType('SetTransferRateLimitRequest'),
+        '/axelar.nexus.v1beta1.RegisterAssetFeeRequest': () => getNexusProtoType('RegisterAssetFeeRequest'),
+        '/axelar.permission.v1beta1.RegisterControllerRequest': () =>
+            getProtoType('permission.proto', 'axelar.permission.v1beta1', 'RegisterControllerRequest'),
+        '/axelar.permission.v1beta1.DeregisterControllerRequest': () =>
+            getProtoType('permission.proto', 'axelar.permission.v1beta1', 'DeregisterControllerRequest'),
+        '/axelar.evm.v1beta1.SetGatewayRequest': () => getProtoType('evm.proto', 'axelar.evm.v1beta1', 'SetGatewayRequest'),
+        '/axelar.evm.v1beta1.CreateTransferOperatorshipRequest': () =>
+            getProtoType('evm.proto', 'axelar.evm.v1beta1', 'CreateTransferOperatorshipRequest'),
+        '/axelar.multisig.v1beta1.StartKeygenRequest': () =>
+            getProtoType('multisig.proto', 'axelar.multisig.v1beta1', 'StartKeygenRequest'),
+        '/axelar.multisig.v1beta1.RotateKeyRequest': () => getProtoType('multisig.proto', 'axelar.multisig.v1beta1', 'RotateKeyRequest'),
+    };
+
+    const getType = typeUrlToProto[msg.typeUrl];
+    return getType ? getType() : null;
 };
 
 const nexusChainState = async (
@@ -58,7 +370,7 @@ const nexusChainState = async (
     const actionText = action.charAt(0).toUpperCase() + action.slice(1);
     const defaultTitle = `${actionText} ${args.join(', ')} on Nexus`;
 
-    return executeCoreOperation(client, config, options, [message], fee, defaultTitle);
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
 };
 
 const activateChain = (client: ClientManager, config: ConfigManager, options: CoreCommandOptions, args: string[], fee?: string | StdFee) =>
@@ -72,26 +384,247 @@ const deactivateChain = (
     fee?: string | StdFee,
 ) => nexusChainState('deactivate', client, config, options, args, fee);
 
+const setTransferRateLimit = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chain, limit, window] = args;
+
+    if (!chain || !limit || !window) {
+        throw new Error('Usage: set-transfer-rate-limit <chain> <limit> <window>');
+    }
+
+    const message = encodeSetTransferRateLimitRequest(chain, limit, window);
+    const defaultTitle = `Set transfer rate limit for ${chain}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
+};
+
+const registerAssetFee = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chain, asset, feeRate, minFee, maxFee] = args;
+
+    if (!chain || !asset || !feeRate || !minFee || !maxFee) {
+        throw new Error('Usage: register-asset-fee <chain> <asset> <fee-rate> <min-fee> <max-fee>');
+    }
+
+    const message = encodeRegisterAssetFeeRequest(chain, asset, feeRate, minFee, maxFee);
+    const defaultTitle = `Register asset fee for ${asset} on ${chain}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
+};
+
+const registerController = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [controller] = args;
+
+    if (!controller) {
+        throw new Error('Usage: register-controller <controller-address>');
+    }
+
+    const message = encodeRegisterControllerRequest(controller);
+    const defaultTitle = `Register controller ${controller}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
+};
+
+const deregisterController = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [controller] = args;
+
+    if (!controller) {
+        throw new Error('Usage: deregister-controller <controller-address>');
+    }
+
+    const message = encodeDeregisterControllerRequest(controller);
+    const defaultTitle = `Deregister controller ${controller}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
+};
+
+const setGateway = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chain, address] = args;
+
+    if (!chain || !address) {
+        throw new Error('Usage: set-gateway <chain> <address>');
+    }
+
+    const message = encodeSetGatewayRequest(chain, address);
+    const defaultTitle = `Set gateway address for ${chain}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_ACCESS_CONTROL', fee, defaultTitle);
+};
+
+const transferOperatorship = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chain, keyId] = args;
+
+    if (!chain || !keyId) {
+        throw new Error('Usage: transfer-operatorship <chain> <keyID>');
+    }
+
+    const message = encodeTransferOperatorshipRequest(chain, keyId);
+    const defaultTitle = `Transfer operatorship for ${chain} to key ${keyId}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
+};
+
+const startKeygen = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [keyId] = args;
+
+    if (!keyId) {
+        throw new Error('Usage: start-keygen <keyID>');
+    }
+
+    const message = encodeStartKeygenRequest(keyId);
+    const defaultTitle = `Start keygen for key ${keyId}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
+};
+
+const rotateKey = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: CoreCommandOptions,
+    args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const [chain, keyId] = args;
+
+    if (!chain || !keyId) {
+        throw new Error('Usage: rotate-key <chain> <keyID>');
+    }
+
+    const message = encodeRotateKeyRequest(chain, keyId);
+    const defaultTitle = `Rotate key for ${chain} to ${keyId}`;
+
+    return executeCoreOperation(client, config, options, [message], 'ROLE_CHAIN_MANAGEMENT', fee, defaultTitle);
+};
+
+// ============================================
+// CLI Program Handler
+// ============================================
+
 const programHandler = () => {
     const program = new Command();
 
-    program.name('core').description('Execute core Axelar protocol operations');
+    program.name('core').description('Execute core Axelar protocol operations via governance proposals');
 
     const activateChainCmd = program
         .command('activate-chain')
-        .description('Activate chain(s) on Nexus module')
+        .description('Activate chain(s) on Nexus module (ROLE_ACCESS_CONTROL)')
         .argument('<chains...>', 'chain name(s) to activate')
         .action((chains, options) => mainProcessor(activateChain, options, chains));
-
     addCoreOptions(activateChainCmd);
 
     const deactivateChainCmd = program
         .command('deactivate-chain')
-        .description('Deactivate chain(s) on Nexus module')
+        .description('Deactivate chain(s) on Nexus module (ROLE_ACCESS_CONTROL)')
         .argument('<chains...>', 'chain name(s) to deactivate')
         .action((chains, options) => mainProcessor(deactivateChain, options, chains));
-
     addCoreOptions(deactivateChainCmd);
+
+    const setTransferRateLimitCmd = program
+        .command('set-transfer-rate-limit')
+        .description('Set transfer rate limit for an asset on a chain (ROLE_ACCESS_CONTROL)')
+        .argument('<chain>', 'chain name')
+        .argument('<limit>', 'rate limit amount with optional denom (e.g., "1000000uaxl" or "1000000")')
+        .argument('<window>', 'time window (e.g., "3600", "60m", "24h", "7d")')
+        .action((chain, limit, window, options) => mainProcessor(setTransferRateLimit, options, [chain, limit, window]));
+    addCoreOptions(setTransferRateLimitCmd);
+
+    const registerAssetFeeCmd = program
+        .command('register-asset-fee')
+        .description('Register fees for an asset on a chain (ROLE_CHAIN_MANAGEMENT)')
+        .argument('<chain>', 'chain name')
+        .argument('<asset>', 'asset name')
+        .argument('<fee-rate>', 'fee rate (decimal)')
+        .argument('<min-fee>', 'minimum fee')
+        .argument('<max-fee>', 'maximum fee')
+        .action((chain, asset, feeRate, minFee, maxFee, options) =>
+            mainProcessor(registerAssetFee, options, [chain, asset, feeRate, minFee, maxFee]),
+        );
+    addCoreOptions(registerAssetFeeCmd);
+
+    const registerControllerCmd = program
+        .command('register-controller')
+        .description('Register a controller account (ROLE_ACCESS_CONTROL)')
+        .argument('<controller>', 'controller address to register')
+        .action((controller, options) => mainProcessor(registerController, options, [controller]));
+    addCoreOptions(registerControllerCmd);
+
+    const deregisterControllerCmd = program
+        .command('deregister-controller')
+        .description('Deregister a controller account (ROLE_ACCESS_CONTROL)')
+        .argument('<controller>', 'controller address to deregister')
+        .action((controller, options) => mainProcessor(deregisterController, options, [controller]));
+    addCoreOptions(deregisterControllerCmd);
+
+    const setGatewayCmd = program
+        .command('set-gateway')
+        .description('Set the gateway address for an EVM chain (ROLE_ACCESS_CONTROL)')
+        .argument('<chain>', 'EVM chain name')
+        .argument('<address>', 'gateway contract address (0x...)')
+        .action((chain, address, options) => mainProcessor(setGateway, options, [chain, address]));
+    addCoreOptions(setGatewayCmd);
+
+    const transferOperatorshipCmd = program
+        .command('transfer-operatorship')
+        .description('Transfer operatorship for an EVM chain (ROLE_CHAIN_MANAGEMENT)')
+        .argument('<chain>', 'EVM chain name')
+        .argument('<keyID>', 'key ID to transfer operatorship to')
+        .action((chain, keyId, options) => mainProcessor(transferOperatorship, options, [chain, keyId]));
+    addCoreOptions(transferOperatorshipCmd);
+
+    const startKeygenCmd = program
+        .command('start-keygen')
+        .description('Start key generation protocol (ROLE_CHAIN_MANAGEMENT)')
+        .argument('<keyID>', 'unique ID for the new key')
+        .action((keyId, options) => mainProcessor(startKeygen, options, [keyId]));
+    addCoreOptions(startKeygenCmd);
+
+    const rotateKeyCmd = program
+        .command('rotate-key')
+        .description('Rotate a chain to a new key (ROLE_CHAIN_MANAGEMENT)')
+        .argument('<chain>', 'chain name')
+        .argument('<keyID>', 'key ID to rotate to')
+        .action((chain, keyId, options) => mainProcessor(rotateKey, options, [chain, keyId]));
+    addCoreOptions(rotateKeyCmd);
 
     program.parse();
 };
@@ -100,4 +633,15 @@ if (require.main === module) {
     programHandler();
 }
 
-export { activateChain, deactivateChain };
+export {
+    activateChain,
+    deactivateChain,
+    setTransferRateLimit,
+    registerAssetFee,
+    registerController,
+    deregisterController,
+    setGateway,
+    transferOperatorship,
+    startKeygen,
+    rotateKey,
+};
