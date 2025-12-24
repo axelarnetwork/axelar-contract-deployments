@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package axelar.axelarnet.v1beta1;
+
+option go_package = "github.com/axelarnetwork/axelar-core/x/axelarnet/types";
+
+enum KeyType {
+  KEY_TYPE_UNSPECIFIED = 0;
+  KEY_TYPE_NONE = 1;
+  KEY_TYPE_THRESHOLD = 2;
+  KEY_TYPE_MULTISIG = 3;
+}
+
+message Chain {
+  string name = 1;
+  string native_asset_deprecated = 2;
+  bool supports_foreign_assets = 3;
+  KeyType key_type = 4;
+  string module = 5;
+}
+
+message AddCosmosBasedChainRequest {
+  bytes sender_deprecated = 1;
+  Chain chain = 2;
+  string addr_prefix = 3;
+  bytes min_amount_deprecated = 4;
+  repeated string native_assets = 5;
+  string cosmos_chain = 6;
+  string ibc_path = 7;
+  string sender = 8;
+}

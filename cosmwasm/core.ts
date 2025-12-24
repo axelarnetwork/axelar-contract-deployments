@@ -7,7 +7,7 @@ import { addCoreOptions } from './cli-utils';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
 import { confirmProposalSubmission, submitProposalAndPrint } from './proposal-utils';
-import { encodeChainStatusRequest } from './utils';
+import { encodeAddIBCChain, encodeChainStatusRequest } from './utils';
 
 interface CoreCommandOptions extends Options {
     yes?: boolean;
@@ -72,6 +72,9 @@ const deactivateChain = (
     fee?: string | StdFee,
 ) => nexusChainState('deactivate', client, config, options, args, fee);
 
+const addIBCChain = (client: ClientManager, config: ConfigManager, options: CoreCommandOptions, args: string[], fee?: string | StdFee) =>
+    executeCoreOperation(client, config, options, [encodeAddIBCChain(args)], fee);
+
 const programHandler = () => {
     const program = new Command();
 
@@ -92,6 +95,16 @@ const programHandler = () => {
         .action((chains, options) => mainProcessor(deactivateChain, options, chains));
 
     addCoreOptions(deactivateChainCmd);
+
+    const addIBCChainCmd = program
+        .command('add-ibc-chain')
+        .description('Add an IBC chain')
+        .argument('<chainName>', 'chain name to add')
+        .argument('<chainPrefix>', 'chain prefix to add')
+        .argument('<ibcPath>', 'IBC path to add')
+        .action((cosmosChain, addrPrefix, ibcPath, options) => mainProcessor(addIBCChain, options, [cosmosChain, addrPrefix, ibcPath]));
+
+    addCoreOptions(addIBCChainCmd);
 
     program.parse();
 };
