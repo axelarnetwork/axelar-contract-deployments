@@ -50,9 +50,9 @@ TOKEN_ADDRESS=  # Token contract address on the native source chain
 TOKEN_DECIMALS= # Decimals of the token contract on the native source chain
 ENV= #mainnet || testnet || stagenet || devnet-amplifier
 
-ts-node evm/interchainTokenFactory.js register-canonical-interchain-token --tokenAddress $TOKEN_ADDRESS --chainNames $SOURCE_CHAIN --env $ENV
+ts-node evm/interchainTokenFactory.js register-canonical-interchain-token $TOKEN_ADDRESS --chainNames $SOURCE_CHAIN --env $ENV
 
-ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token --tokenAddress $TOKEN_ADDRESS --destinationChain $DESTINATION_CHAIN --chainNames $SOURCE_CHAIN --env $ENV
+ts-node evm/interchainTokenFactory.js deploy-remote-canonical-interchain-token $TOKEN_ADDRESS $DESTINATION_CHAIN --chainNames $SOURCE_CHAIN --env $ENV
 ```
 
 *Alternatively*, deploy a new interchain token:
@@ -70,7 +70,7 @@ SALT= # Random salt
 
 ts-node evm/interchainTokenFactory.js deploy-interchain-token --name $TOKEN_NAME --symbol $TOKEN_SYMBOL --decimals $TOKEN_DECIMALS --initialSupply $INITIAL_SUPPLY --minter $MINTER --chainNames $SOURCE_CHAIN --env $ENV  --salt $SALT
 
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain $DESTINATION_CHAIN --chainNames $SOURCE_CHAIN --env $ENV --salt $SALT
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token $DESTINATION_CHAIN --chainNames $SOURCE_CHAIN --env $ENV --salt $SALT
 ```
 
 Only the first leg of the remote token deployment (towards the ITS Hub) is required to succeed.

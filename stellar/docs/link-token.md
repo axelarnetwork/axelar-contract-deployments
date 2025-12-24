@@ -317,7 +317,7 @@ ts-node stellar/token-utils set-admin $STELLAR_TOKEN_ADDRESS $STELLAR_TOKEN_MANA
 # Interchain Token Transfer from EVM to Stellar
 STELLAR_DESTINATION_ADDRESS="STELLAR_DESTINATION_ADDRESS"
 TRANSFER_AMOUNT=1
-ts-node evm/its interchain-transfer stellar $TOKEN_ID $STELLAR_DESTINATION_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN_NAME --gasValue 10000000000000000000
+ts-node evm/its interchain-transfer --destinationChain stellar --tokenId $TOKEN_ID --destinationAddress $STELLAR_DESTINATION_ADDRESS --amount $TRANSFER_AMOUNT -n $EVM_CHAIN_NAME --gasValue 10000000000000000000
 
 # Interchain Token Transfer from Stellar to EVM
 EVM_DESTINATION_ADDRESS="EVM_DESTINATION_ADDRESS"
@@ -359,7 +359,7 @@ ts-node stellar/token-utils add-minter $STELLAR_TOKEN_ADDRESS $STELLAR_TOKEN_MAN
 # Interchain Token Transfer EVM to Stellar
 STELLAR_DESTINATION_ADDRESS="STELLAR_DESTINATION_ADDRESS"
 TRANSFER_AMOUNT=1
-ts-node evm/its interchain-transfer stellar $TOKEN_ID $STELLAR_DESTINATION_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN_NAME --gasValue 10000000000000000000
+ts-node evm/its interchain-transfer --destinationChain stellar --tokenId $TOKEN_ID --destinationAddress $STELLAR_DESTINATION_ADDRESS --amount $TRANSFER_AMOUNT -n $EVM_CHAIN_NAME --gasValue 10000000000000000000
 
 # Interchain Token Transfer from Stellar to EVM
 EVM_DESTINATION_ADDRESS="EVM_DESTINATION_ADDRESS"
