@@ -632,6 +632,7 @@ async function processCommand(axelar, chain, _chains, options) {
             const tx = {
                 to: gateway.address,
                 data: '0x' + status.completed.execute_data,
+                ...gasOptions,
             };
 
             await signTransaction(wallet, chain, tx, options);
