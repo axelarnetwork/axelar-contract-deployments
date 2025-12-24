@@ -29,7 +29,7 @@ const addAmplifierOptions = (program, options = {}) => {
         program.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
             const contractName = opts.contractName;
-            const contractNames = contractName;
+            const contractNames = Array.isArray(contractName) ? contractName : [contractName];
 
             const contractCodePaths = {};
             for (const name of contractNames) {
