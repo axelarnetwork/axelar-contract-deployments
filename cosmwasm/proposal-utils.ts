@@ -9,11 +9,10 @@ import {
     MsgUpdateInstantiateConfig,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 
-import { getChainConfig, printInfo, prompt } from '../common';
+import { printInfo, prompt } from '../common';
 import { ConfigManager } from '../common/config';
 import { ClientManager } from './processor';
 import {
-    GOVERNANCE_MODULE_ADDRESS,
     encodeExecuteContract,
     encodeMigrate,
     encodeSubmitProposal,
@@ -171,20 +170,7 @@ const executeByGovernance = async (
     });
 
     if (dryRun) {
-        const contractConfig = config.axelar.contracts[singleContractName];
-        const chainConfig = chainName ? getChainConfig(config.chains, chainName) : null;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const contractAddress = ((contractConfig as any)[chainConfig?.axelarId]?.address || contractConfig.address) as string;
-
-        const dryRunOutput = messages.map((message, index) => ({
-            '@type': '/cosmwasm.wasm.v1.MsgExecuteContract',
-            sender: GOVERNANCE_MODULE_ADDRESS,
-            contract: contractAddress,
-            msg: JSON.parse(msgs[index]),
-            funds: [],
-        }));
-
-        console.log(JSON.stringify(dryRunOutput, null, 2));
+        printProposal(messages);
         return;
     }
 
