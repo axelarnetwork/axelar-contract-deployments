@@ -605,6 +605,31 @@ const migrate = async (
     printInfo('Migration completed. Transaction hash', transactionHash);
 };
 
+const executeContractViaGovernance = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions & { msg?: string | string[] },
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const { contractName, msg } = options;
+
+    if (!contractName) {
+        throw new Error('Contract name is required (-c, --contractName)');
+    }
+
+    if (!msg) {
+        throw new Error('Message is required (--msg)');
+    }
+
+    const title = options.title || `Execute message on ${contractName}`;
+    const description = options.description || title;
+
+    validateParameters({ isNonEmptyString: { title, description } });
+
+    await executeByGovernance(client, config, { ...options, msg, title, description }, [], fee);
+};
+
 // ==================== Emergency Operations ====================
 
 // Router operations (Admin EOA only - cannot use governance)
@@ -760,31 +785,6 @@ const itsUnfreezeChain = async (
     const msg = [{ unfreeze_chain: { chain: chainConfig.axelarId } }];
     const defaultTitle = `Unfreeze chain ${chainName} on ITS Hub`;
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
-};
-
-const executeContractViaGovernance = async (
-    client: ClientManager,
-    config: ConfigManager,
-    options: ContractCommandOptions & { msg?: string | string[] },
-    _args: string[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    const { contractName, msg } = options;
-
-    if (!contractName) {
-        throw new Error('Contract name is required (-c, --contractName)');
-    }
-
-    if (!msg) {
-        throw new Error('Message is required (--msg)');
-    }
-
-    const title = options.title || `Execute message on ${contractName}`;
-    const description = options.description || title;
-
-    validateParameters({ isNonEmptyString: { title, description } });
-
-    await executeByGovernance(client, config, { ...options, msg, title, description }, [], fee);
 };
 
 // ==================== End Emergency Operations ====================
