@@ -333,7 +333,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 printWarn('Proposal does not exist.');
             }
 
-            if (existingProposalEta <= currTime) {
+            if (existingProposalEta.toNumber() <= currTime) {
                 printWarn('Proposal eta has already passed.');
             }
 
