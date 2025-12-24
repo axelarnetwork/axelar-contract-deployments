@@ -11,7 +11,7 @@ import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { executeByGovernance, getSingleContractName, submitMessagesAsProposal } from './proposal-utils';
+import { executeByGovernance, submitMessagesAsProposal } from './proposal-utils';
 import {
     CONTRACTS,
     encodeInstantiate,
@@ -449,7 +449,7 @@ const instantiate = async (
     _args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const contractName = getSingleContractName(options.contractName, 'instantiate');
+    const contractName = options.contractName as string;
     const instantiateOptions = { ...options, contractName };
     const { contractConfig } = getAmplifierContractConfig(config, instantiateOptions);
 
@@ -525,7 +525,7 @@ const storeInstantiate = async (
     _args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const contractName = getSingleContractName(options.contractName, 'store-instantiate');
+    const contractName = options.contractName as string;
 
     if (options.governance) {
         if (options.instantiate2) {
@@ -571,7 +571,7 @@ const migrate = async (
     _args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const contractName = getSingleContractName(options.contractName, 'migrate');
+    const contractName = options.contractName as string;
     const migrateOptions = { ...options, contractName };
     const { contractConfig } = getAmplifierContractConfig(config, migrateOptions);
 
@@ -855,7 +855,7 @@ const programHandler = () => {
         .description('Instantiate a contract')
         .action((options) => mainProcessor(instantiate, options));
     addAmplifierOptions(instantiateCmd, {
-        contractOptions: true,
+        singleContractOption: true,
         instantiateOptions: true,
         instantiate2Options: true,
         instantiateProposalOptions: true,
@@ -868,7 +868,7 @@ const programHandler = () => {
         .description('Upload and instantiate a contract in one step')
         .action((options) => mainProcessor(storeInstantiate, options));
     addAmplifierOptions(storeInstantiateCmd, {
-        contractOptions: true,
+        singleContractOption: true,
         storeOptions: true,
         storeProposalOptions: true,
         instantiateOptions: true,
@@ -880,7 +880,7 @@ const programHandler = () => {
         .description('Migrate a contract to a new code ID')
         .action((options) => mainProcessor(migrate, options));
     addAmplifierOptions(migrateCmd, {
-        contractOptions: true,
+        singleContractOption: true,
         migrateOptions: true,
         codeId: true,
         fetchCodeId: true,

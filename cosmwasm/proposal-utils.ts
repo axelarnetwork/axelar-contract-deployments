@@ -35,7 +35,7 @@ interface ProposalOptions {
     [key: string]: unknown;
 }
 
-export const getSingleContractName = (contractName: string | string[] | undefined, operation: string): string => {
+const getSingleContractName = (contractName: string | string[] | undefined, operation: string): string => {
     if (Array.isArray(contractName)) {
         if (contractName.length > 1) {
             throw new Error(`${operation} only supports single contract at a time`);

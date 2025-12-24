@@ -16,6 +16,10 @@ const addAmplifierOptions = (program, options = {}) => {
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
     program.addOption(new Option('--governance', 'submit a governance proposal instead of executing directly'));
 
+    if (options.singleContractOption) {
+        addSingleContractOption(program);
+    }
+
     if (options.contractOptions) {
         addContractOptions(program);
     }
@@ -124,6 +128,35 @@ const addAmplifierQueryContractOptions = (program) => {
     addContractOptions(program);
 };
 
+const validateContract = (contractName, chainName) => {
+    if (!CONTRACTS[contractName]) {
+        throw new Error(`contract ${contractName} is not supported`);
+    }
+    if (!CONTRACTS[contractName].makeInstantiateMsg) {
+        throw new Error(`makeInstantiateMsg function for contract ${contractName} is not defined`);
+    }
+    const scope = CONTRACTS[contractName].scope;
+    if (!scope) {
+        throw new Error(`scope of contract ${contractName} is not defined`);
+    }
+    if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
+        throw new Error(`${contractName} requires chainName option`);
+    }
+    if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
+        throw new Error(`${contractName} does not support chainName option`);
+    }
+};
+
+const addSingleContractOption = (program) => {
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    addChainNameOption(program);
+    program.hook('preAction', (command) => {
+        const chainName = command.opts().chainName;
+        const contractName = command.opts().contractName;
+        validateContract(contractName, chainName);
+    });
+};
+
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName...>', 'contract name(s)').makeOptionMandatory(true));
     addChainNameOption(program);
@@ -132,24 +165,7 @@ const addContractOptions = (program) => {
         const contractName = command.opts().contractName;
         const contractNames = contractName;
 
-        contractNames.forEach((name) => {
-            if (!CONTRACTS[name]) {
-                throw new Error(`contract ${name} is not supported`);
-            }
-            if (!CONTRACTS[name].makeInstantiateMsg) {
-                throw new Error(`makeInstantiateMsg function for contract ${name} is not defined`);
-            }
-            const scope = CONTRACTS[name].scope;
-            if (!scope) {
-                throw new Error(`scope of contract ${name} is not defined`);
-            }
-            if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
-                throw new Error(`${name} requires chainName option`);
-            }
-            if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
-                throw new Error(`${name} does not support chainName option`);
-            }
-        });
+        contractNames.forEach((name) => validateContract(name, chainName));
     });
 };
 
