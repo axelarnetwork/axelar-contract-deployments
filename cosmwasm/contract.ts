@@ -911,6 +911,13 @@ const programHandler = () => {
         fetchCodeId: true,
     });
 
+    const executeContractCmd = program
+        .command('execute-contract')
+        .description('Execute an arbitrary contract message via governance proposal')
+        .option('--msg <message>', 'contract message in JSON format')
+        .action((options) => mainProcessor(executeContractViaGovernance, options, []));
+    addAmplifierOptions(executeContractCmd, { proposalOptions: true });
+
     // ==================== Emergency Operations Commands ====================
 
     const routerFreezeChainCmd = program
@@ -978,13 +985,6 @@ const programHandler = () => {
     addAmplifierOptions(itsUnfreezeChainCmd);
 
     // ==================== End Emergency Operations Commands ====================
-
-    const executeContractCmd = program
-        .command('execute-contract')
-        .description('Execute an arbitrary contract message via governance proposal')
-        .option('--msg <message>', 'contract message in JSON format')
-        .action((options) => mainProcessor(executeContractViaGovernance, options, []));
-    addAmplifierOptions(executeContractCmd, { proposalOptions: true });
 
     program.parse();
 };
