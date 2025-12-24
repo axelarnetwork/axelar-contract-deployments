@@ -228,40 +228,48 @@ async function contractInfo(client: CosmWasmClient, config: ConfigManager, optio
     }
 }
 
-async function queryAllContractVersions(client: CosmWasmClient, config: ConfigManager, _options: Options, _args?: string[]): Promise<void> {
+async function queryAllContractVersions(
+    client: CosmWasmClient,
+    config: ConfigManager,
+    options: Options & { contracts?: string[] },
+    _args?: string[],
+): Promise<void> {
     const axelarContracts = config.axelar.contracts;
+    const contractsFilter = options.contracts as string[] | undefined;
 
     await Promise.all(
-        Object.entries(axelarContracts).map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
-            if (contractConfig.address) {
-                try {
-                    const contractInfo = await getContractInfo(client, contractConfig.address);
-                    contractConfig.version = contractInfo.version;
-                } catch (error) {
-                    printError(`Failed to get contract info for ${contractName}`, error);
-                }
-            }
-
-            const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
-            const versions = {} as Record<string, string[]>;
-            await Promise.all(
-                chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
+        Object.entries(axelarContracts)
+            .filter(([contractName]) => !contractsFilter || contractsFilter.includes(contractName))
+            .map(async ([contractName, contractConfig]: [string, ContractConfig]): Promise<void> => {
+                if (contractConfig.address) {
                     try {
-                        const contractInfo = await getContractInfo(client, chainContractConfig.address);
-                        chainContractConfig.version = contractInfo.version;
-                        if (!versions[contractInfo.version]) {
-                            versions[contractInfo.version] = [];
-                        }
-                        versions[contractInfo.version].push(chainName);
+                        const contractInfo = await getContractInfo(client, contractConfig.address);
+                        contractConfig.version = contractInfo.version;
                     } catch (error) {
-                        printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                        printError(`Failed to get contract info for ${contractName}`, error);
                     }
-                }),
-            );
-            if (Object.keys(versions).length > 1) {
-                printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
-            }
-        }),
+                }
+
+                const chainNames = Object.entries(contractConfig).filter(([key, value]) => value.address);
+                const versions = {} as Record<string, string[]>;
+                await Promise.all(
+                    chainNames.map(async ([chainName, chainContractConfig]: [string, ContractConfig]): Promise<void> => {
+                        try {
+                            const contractInfo = await getContractInfo(client, chainContractConfig.address);
+                            chainContractConfig.version = contractInfo.version;
+                            if (!versions[contractInfo.version]) {
+                                versions[contractInfo.version] = [];
+                            }
+                            versions[contractInfo.version].push(chainName);
+                        } catch (error) {
+                            printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                        }
+                    }),
+                );
+                if (Object.keys(versions).length > 1) {
+                    printWarn(`${contractName} has different versions on different chains`, JSON.stringify(versions, null, 2));
+                }
+            }),
     );
 }
 
@@ -562,6 +570,7 @@ const programHandler = () => {
     const contractsVersions = program
         .command('contract-versions')
         .description('Query all cosmwasm axelar contract versions per environment')
+        .option('-c, --contracts <contracts...>', 'Specific contract names to update (e.g., Router Multisig)')
         .action((options) => {
             mainQueryProcessor(queryAllContractVersions, options, []);
         });
