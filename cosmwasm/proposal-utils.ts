@@ -26,6 +26,12 @@ import {
 
 interface ProposalOptions {
     yes?: boolean;
+    contractName?: string | string[];
+    chainName?: string;
+    dryRun?: boolean;
+    msg?: string | string[];
+    title?: string;
+    description?: string;
     [key: string]: unknown;
 }
 
@@ -133,7 +139,7 @@ const submitProposal = async (
 const submitMessagesAsProposal = async (
     client: ClientManager,
     config: ConfigManager,
-    options: ProposalOptions & { title?: string; description?: string },
+    options: ProposalOptions,
     messages: object[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
@@ -149,7 +155,7 @@ const submitMessagesAsProposal = async (
 const executeByGovernance = async (
     client: ClientManager,
     config: ConfigManager,
-    options: ProposalOptions & { contractName?: string | string[]; msg?: string | string[]; chainName?: string; dryRun?: boolean },
+    options: ProposalOptions,
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
@@ -194,7 +200,7 @@ const executeByGovernance = async (
 const migrate = async (
     client: ClientManager,
     config: ConfigManager,
-    options: ProposalOptions & { contractName?: string | string[]; chainName?: string },
+    options: ProposalOptions,
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<string | undefined> => {
