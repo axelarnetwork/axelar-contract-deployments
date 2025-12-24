@@ -44,7 +44,7 @@ const addBaseOptions = (program, options = {}) => {
         program.addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'));
     }
 
-    if (options.allowCustomRpc) {
+    if (options.customRpc) {
         program.addOption(new Option('--rpc <rpc>', 'Sui rpc endpoint'));
     }
 
