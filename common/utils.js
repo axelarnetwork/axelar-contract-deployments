@@ -349,11 +349,6 @@ function isValidTimeFormat(timeString) {
 
     const trimmedInput = String(timeString).trim();
 
-    if (/^\d+$/.test(trimmedInput)) {
-        const seconds = parseInt(trimmedInput, 10);
-        return !isNaN(seconds) && seconds >= 0;
-    }
-
     const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
     return regex.test(trimmedInput);
 }
@@ -519,20 +514,13 @@ const dateToEta = (input) => {
     }
 
     if (/^\d+$/.test(trimmedInput)) {
-        const seconds = parseInt(trimmedInput, 10);
-        if (isNaN(seconds) || seconds < 0) {
-            throw new Error(`Invalid relative time in seconds: ${input}`);
-        }
-        const currentTime = getCurrentTimeInSeconds();
-        return currentTime + seconds;
+        throw new Error(`Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss)`);
     }
 
     const date = new Date(trimmedInput + 'Z');
 
     if (isNaN(date.getTime())) {
-        throw new Error(
-            `Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss) or relative seconds (numeric)`,
-        );
+        throw new Error(`Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss)`);
     }
 
     return Math.floor(date.getTime() / 1000);

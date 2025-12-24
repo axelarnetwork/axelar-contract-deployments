@@ -5,36 +5,36 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** |                                        |
 
-| **Environment**      | **Chain**          | **Deployment Status** | **Date** |
-| -------------------- | ------------------ | --------------------- | -------- |
-| **Devnet Amplifier** | `avalanche-fuji`   | -                     | TBD      |
-|                      | `berachain`        | -                     | TBD      |
-|                      | `eth-sepolia`      | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `optimism-sepolia` | -                     | TBD      |
-|                      | `plume-2`          | -                     | TBD      |
-|                      | `xrpl-evm-devnet`  | -                     | TBD      |
-| **Stagenet**         | `berachain`        | -                     | TBD      |
-|                      | `celo-sepolia`     | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `hedera`           | -                     | TBD      |
-|                      | `hyperliquid`      | -                     | TBD      |
-|                      | `plume`            | -                     | TBD      |
-|                      | `xrpl-evm`         | -                     | TBD      |
-| **Testnet**          | `berachain`        | -                     | TBD      |
-|                      | `celo-sepolia`     | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `hedera`           | -                     | TBD      |
-|                      | `hyperliquid`      | -                     | TBD      |
-|                      | `plume`            | -                     | TBD      |
-|                      | `xrpl-evm`         | -                     | TBD      |
-| **Mainnet**          | `berachain`        | -                     | TBD      |
-|                      | `flow`             | -                     | TBD      |
-|                      | `hedera`           | -                     | TBD      |
-|                      | `hyperliquid`      | -                     | TBD      |
-|                      | `monad`            | -                     | TBD      |
-|                      | `plume`            | -                     | TBD      |
-|                      | `xrpl-evm`         | -                     | TBD      |
+| **Environment**      | **Chain**          | **Deployment Status** | **Date**   |
+| -------------------- | ------------------ | --------------------- | ---------- |
+| **Devnet Amplifier** | `avalanche-fuji`   | Done                  | 22/12/2025 |
+|                      | `berachain`        | Done                  | 22/12/2025 |
+|                      | `eth-sepolia`      | Done                  | 22/12/2025 |
+|                      | `flow`             | Done                  | 23/12/2025 |
+|                      | `optimism-sepolia` | Done                  | 22/12/2025 |
+|                      | `plume-2`          | Done                  | 22/12/2025 |
+|                      | `xrpl-evm-devnet`  | -                  | - |
+| **Stagenet**         | `berachain`        | Done                  | 22/12/2025 |
+|                      | `celo-sepolia`     | Done                  | 22/12/2025 |
+|                      | `flow`             | Done                  | 23/12/2025 |
+|                      | `hedera`           | Done                  | 23/12/2025 |
+|                      | `hyperliquid`      | Done                  | 22/12/2025 |
+|                      | `plume`            | Done                  | 22/12/2025 |
+|                      | `xrpl-evm`         | Done                  | 22/12/2025 |
+| **Testnet**          | `berachain`        | -                     | TBD        |
+|                      | `celo-sepolia`     | -                     | TBD        |
+|                      | `flow`             | -                     | TBD        |
+|                      | `hedera`           | -                     | TBD        |
+|                      | `hyperliquid`      | -                     | TBD        |
+|                      | `plume`            | -                     | TBD        |
+|                      | `xrpl-evm`         | -                     | TBD        |
+| **Mainnet**          | `berachain`        | -                     | TBD        |
+|                      | `flow`             | -                     | TBD        |
+|                      | `hedera`           | -                     | TBD        |
+|                      | `hyperliquid`      | -                     | TBD        |
+|                      | `monad`            | -                     | TBD        |
+|                      | `plume`            | -                     | TBD        |
+|                      | `xrpl-evm`         | -                     | TBD        |
 
 ## Background
 
@@ -79,12 +79,12 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 
 #### Configuration
 
-| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `operatorAddress`                            |
-| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`             | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `deploymentMethod` | `operatorAddress`                            |
+| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | ------------------ | -------------------------------------------- |
+| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v6.0.4 devnet-amplifier` | `create2`          | `0xD3Ba43B92cED452D04B20710C4db627667476024` |
+| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v6.0.4`                  | `create2`          | `0x6BA4C187056BF592B29B206381606a2F4d0e9b7d` |
+| **Testnet**          | `300`              | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-`                                          |
+| **Mainnet**          | `259200`           | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `-`                                          |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -155,6 +155,36 @@ ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 
 ts-node evm/ownership.js -c AxelarGateway --action owner --parallel
 ```
 
+**For devnet-amplifier with specific chains (avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain):**
+
+```bash
+# Set environment
+ENV=devnet-amplifier
+CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
+
+# Loop through each chain and transfer ownership
+for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
+  echo "Processing chain: $CHAIN"
+
+  # Get the AxelarServiceGovernance contract address for this chain
+  AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+
+  echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
+
+  # Verify current owner
+  ts-node evm/ownership.js -c AxelarGateway --action owner -n $CHAIN
+
+  # Transfer ownership to AxelarServiceGovernance
+  ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
+
+  # Verify transfer completed successfully
+  ts-node evm/ownership.js -c AxelarGateway --action owner -n $CHAIN
+
+  echo "Completed transfer for $CHAIN"
+  echo "---"
+done
+```
+
 ### Step 3: Transfer AxelarAmplifierGateway Operator Role
 
 **New Operator**: Emergency Operator EOA
@@ -174,6 +204,7 @@ EMERGENCY_OPERATOR_EOA="<EMERGENCY_OPERATOR_EOA_ADDRESS>"
 ts-node evm/gateway.js -n $CHAIN --action transferOperatorship --newOperator $EMERGENCY_OPERATOR_EOA  --parallel
 
 # Verify transfer completed successfully
+#NOTE does not work on amplifier chains
 ts-node evm/gateway.js -n $CHAIN --action operator --parallel
 ```
 
@@ -200,6 +231,36 @@ ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwn
 
 # Verify transfer completed successfully
 ts-node evm/ownership.js -c AxelarGasService --action owner --parallel
+```
+
+**For devnet-amplifier with specific chains (avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain):**
+
+```bash
+# Set environment
+ENV=devnet-amplifier
+CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
+
+# Loop through each chain and transfer ownership
+for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
+  echo "Processing chain: $CHAIN"
+
+  # Get the AxelarServiceGovernance contract address for this chain
+  AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+
+  echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
+
+  # Verify current owner
+  ts-node evm/ownership.js -c AxelarGasService --action owner -n $CHAIN
+
+  # Transfer ownership to AxelarServiceGovernance
+  ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
+
+  # Verify transfer completed successfully
+  ts-node evm/ownership.js -c AxelarGasService --action owner -n $CHAIN
+
+  echo "Completed transfer for $CHAIN"
+  echo "---"
+done
 ```
 
 ### Step 5: Transfer Operators Owner Role
@@ -252,6 +313,36 @@ ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --
 ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
 ```
 
+**For devnet-amplifier with specific chains (avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain):**
+
+```bash
+# Set environment
+ENV=devnet-amplifier
+CHAINS="avalanche-fuji,eth-sepolia,optimism-sepolia,plume-2,berachain"
+
+# Loop through each chain and transfer ownership
+for CHAIN in avalanche-fuji eth-sepolia optimism-sepolia plume-2 berachain; do
+  echo "Processing chain: $CHAIN"
+
+  # Get the AxelarServiceGovernance contract address for this chain
+  AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
+
+  echo "AxelarServiceGovernance address for $CHAIN: $AXELAR_SERVICE_GOVERNANCE"
+
+  # Verify current owner
+  ts-node evm/ownership.js -c InterchainTokenService --action owner -n $CHAIN
+
+  # Transfer ownership to AxelarServiceGovernance
+  ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE -n $CHAIN
+
+  # Verify transfer completed successfully
+  ts-node evm/ownership.js -c InterchainTokenService --action owner -n $CHAIN
+
+  echo "Completed transfer for $CHAIN"
+  echo "---"
+done
+```
+
 ### Step 7: Transfer InterchainTokenService Operator Role
 
 **New Operator**: Rate Limiter EOA
@@ -270,13 +361,13 @@ ts-node evm/ownership.js -c InterchainTokenService --action owner --parallel
 RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
 
 # Verify current owner
-ts-node evm/its.js operator --parallel
+ts-node evm/its.js isOperator <address> --parallel
 
 # Transfer operatorship
 ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA --parallel
 
 # Verify transfer completed successfully
-ts-node evm/its.js operator --parallel
+ts-node evm/its.js isOperator <address> --parallel
 ```
 
 ## Verification Checklist
