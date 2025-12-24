@@ -10,8 +10,8 @@ import { ConfigManager } from '../../common/config';
 import { isConsensusChain } from '../../evm/utils';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
-import { confirmProposalSubmission } from '../submit-proposal';
-import { encodeMigrate, getCodeId, submitProposal } from '../utils';
+import { confirmProposalSubmission, submitProposal } from '../proposal-utils';
+import { encodeMigrate, getCodeId } from '../utils';
 import { MigrationOptions } from './types';
 
 const programHandler = () => {
