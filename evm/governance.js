@@ -67,7 +67,11 @@ async function getSetupParams(governance, targetContractName, target, contracts,
                 printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
             }
 
-            let newGovernance = options.newGovernance || contracts.AxelarServiceGovernance?.address || contracts.InterchainGovernance?.address || AddressZero;
+            let newGovernance =
+                options.newGovernance ||
+                contracts.AxelarServiceGovernance?.address ||
+                contracts.InterchainGovernance?.address ||
+                AddressZero;
             if (newGovernance === currGovernance) {
                 newGovernance = AddressZero;
             }
@@ -375,14 +379,11 @@ async function processCommand(axelar, chain, _chains, action, options) {
 
             const contracts = chain.contracts;
             const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
-            const governanceChain = contractConfig?.governanceChain || contracts.InterchainGovernance?.governanceChain || contracts.AxelarServiceGovernance?.governanceChain;
-            const tx = await governance.execute(
-                commandId,
-                governanceChain,
-                axelar.governanceAddress,
-                gmpPayload,
-                gasOptions,
-            );
+            const governanceChain =
+                contractConfig?.governanceChain ||
+                contracts.InterchainGovernance?.governanceChain ||
+                contracts.AxelarServiceGovernance?.governanceChain;
+            const tx = await governance.execute(commandId, governanceChain, axelar.governanceAddress, gmpPayload, gasOptions);
 
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'ProposalScheduled');
             printInfo('Proposal submitted.');
@@ -410,14 +411,11 @@ async function processCommand(axelar, chain, _chains, action, options) {
 
             const contracts = chain.contracts;
             const contractConfig = contracts[contractName] || contracts.AxelarServiceGovernance;
-            const governanceChain = contractConfig?.governanceChain || contracts.InterchainGovernance?.governanceChain || contracts.AxelarServiceGovernance?.governanceChain;
-            const tx = await governance.execute(
-                commandId,
-                governanceChain,
-                axelar.governanceAddress,
-                gmpPayload,
-                gasOptions,
-            );
+            const governanceChain =
+                contractConfig?.governanceChain ||
+                contracts.InterchainGovernance?.governanceChain ||
+                contracts.AxelarServiceGovernance?.governanceChain;
+            const tx = await governance.execute(commandId, governanceChain, axelar.governanceAddress, gmpPayload, gasOptions);
 
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal submission', 'OperatorProposalApproved');
             printInfo('Operator proposal submitted.');
