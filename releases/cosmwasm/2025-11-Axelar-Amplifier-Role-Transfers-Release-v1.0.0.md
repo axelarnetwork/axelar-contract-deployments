@@ -310,7 +310,7 @@ check_governance() {
     echo "[NEEDS TRANSFER] $contract: Needs transfer"
     echo "   Address: $address"
     echo "   Current: $current_gov"
-    echo "   Command: ts-node cosmwasm/submit-proposal.js executeByGovernance -e $ENV -c $contract -t \"Transfer $contract governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
+    echo "   Command: ts-node cosmwasm/contract.ts execute-contract -e $ENV -c $contract -t \"Transfer $contract governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
     echo ""
   fi
 }
@@ -334,7 +334,7 @@ check_chain_governance() {
     echo "[NEEDS TRANSFER] $contract[$chain]: Needs transfer"
     echo "   Address: $address"
     echo "   Current: $current_gov"
-    echo "   Command: ts-node cosmwasm/submit-proposal.js executeByGovernance -e $ENV -c $contract -n $chain -t \"Transfer $contract[$chain] governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
+    echo "   Command: ts-node cosmwasm/contract.ts execute-contract -e $ENV -c $contract -n $chain -t \"Transfer $contract[$chain] governance\" -d \"Transfer governance to Governance Module\" --msg '{\"update_governance\":{\"governance\":\"$GOVERNANCE_MODULE\"}}'"
     echo ""
   fi
 }
@@ -372,14 +372,14 @@ echo "=== Done ==="
 
 **Step 2b: Submit Governance Proposals**
 
-For each contract that needs governance transfer, use `submit-proposal.js executeByGovernance`:
+For each contract that needs governance transfer, use `contract.ts execute-contract`:
 
 ```bash
 # Set environment
 ENV=mainnet  # or testnet, stagenet, devnet-amplifier
 
 # For global contracts (e.g., Router, Multisig, InterchainTokenService)
-ts-node cosmwasm/submit-proposal.js executeByGovernance \
+ts-node cosmwasm/contract.ts execute-contract \
   -e $ENV \
   -c Router \
   -t "Transfer Router Governance to Governance Module" \
@@ -387,7 +387,7 @@ ts-node cosmwasm/submit-proposal.js executeByGovernance \
   --msg '{"update_governance":{"governance":"axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"}}'
 
 # For chain-specific contracts (e.g., MultisigProver, VotingVerifier)
-ts-node cosmwasm/submit-proposal.js executeByGovernance \
+ts-node cosmwasm/contract.ts execute-contract \
   -e $ENV \
   -c MultisigProver \
   -n flow \
@@ -396,7 +396,7 @@ ts-node cosmwasm/submit-proposal.js executeByGovernance \
   --msg '{"update_governance":{"governance":"axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"}}'
 
 # For ServiceRegistry (uses governanceAccount instead of governanceAddress)
-ts-node cosmwasm/submit-proposal.js executeByGovernance \
+ts-node cosmwasm/contract.ts execute-contract \
   -e $ENV \
   -c ServiceRegistry \
   -t "Transfer ServiceRegistry Governance to Governance Module" \
@@ -571,7 +571,7 @@ for CHAIN_NAME in flow sui stellar xrpl-evm plume hedera berachain hyperliquid m
     echo "  Adding MultisigProver[$CHAIN_NAME]: $MULTISIG_PROVER_CONTRACT"
 
     # Use --dry-run to get the message JSON without submitting
-    OUTPUT=$(ts-node cosmwasm/submit-proposal.js executeByGovernance \
+    OUTPUT=$(ts-node cosmwasm/contract.ts execute-contract \
       -e $ENV \
       -c MultisigProver \
       -n $CHAIN_NAME \
