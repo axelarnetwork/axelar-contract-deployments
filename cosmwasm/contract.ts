@@ -762,6 +762,31 @@ const itsUnfreezeChain = async (
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };
 
+const executeContractViaGovernance = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions & { msg?: string },
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const { contractName, msg } = options;
+
+    if (!contractName) {
+        throw new Error('Contract name is required (-c, --contractName)');
+    }
+
+    if (!msg) {
+        throw new Error('Message is required (--msg)');
+    }
+
+    const title = options.title || `Execute message on ${contractName}`;
+    const description = options.description || title;
+
+    validateParameters({ isNonEmptyString: { title, description } });
+
+    await executeByGovernance(client, config, { ...options, msg: [msg], title, description }, [], fee);
+};
+
 // ==================== End Emergency Operations ====================
 
 const programHandler = () => {
@@ -953,6 +978,13 @@ const programHandler = () => {
     addAmplifierOptions(itsUnfreezeChainCmd);
 
     // ==================== End Emergency Operations Commands ====================
+
+    const executeContractCmd = program
+        .command('execute-contract')
+        .description('Execute an arbitrary contract message via governance proposal')
+        .option('--msg <message>', 'contract message in JSON format')
+        .action((options) => mainProcessor(executeContractViaGovernance, options, []));
+    addAmplifierOptions(executeContractCmd, { proposalOptions: true });
 
     program.parse();
 };
