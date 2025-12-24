@@ -51,36 +51,40 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
 1. Upload new chain-codec contracts.
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-        -c ChainCodecSui ChainCodecStellar ChainCodecEvm \
+    ts-node cosmwasm/contract.ts store-code \
+        -c ChainCodecSui -c ChainCodecStellar -c ChainCodecEvm \
         -t "Stores chain-codec contracts" \
         -d "Stores chain-codec v1.0.0 for Sui, Stellar and EVM" \
-        --version 1.0.0
+        --version 1.0.0 \
+        --governance
     ```
 
 1. Instantiate the chain codec contracts using instantiate2 to predict the addresses:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js instantiate \
+    ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecSui  \
         -t "Stores chain-codec contract for Sui" \
         -d "Stores chain-codec v1.0.0 for Sui" \
         --fetchCodeId \
-        --instantiate2
+        --instantiate2 \
+        --governance
 
-    ts-node cosmwasm/submit-proposal.js instantiate \
+    ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecStellar  \
         -t "Stores chain-codec contract for Stellar" \
         -d "Stores chain-codec v1.0.0 for Stellar" \
         --fetchCodeId \
-        --instantiate2
+        --instantiate2 \
+        --governance
 
-    ts-node cosmwasm/submit-proposal.js instantiate \
+    ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecEvm  \
         -t "Stores chain-codec contract EVM" \
         -d "Stores chain-codec v1.0.0 for EVM" \
         --fetchCodeId \
-        --instantiate2
+        --instantiate2 \
+        --governance
     ```
 
 ### MultisigProver and VotingVerifier migration
@@ -92,23 +96,26 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
     ```
 
 2. Upload new MultisigProver and VotingVerifier contracts. You need to provide a chain name for some reason,
-    so just provide whatever amplifier chain name you want.
+   so just provide whatever amplifier chain name you want.
+
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -t "Upload MultisigProver v1.2.0 contract" \
         -d "Upload MultisigProver v1.2.0 contract" \
         -n stellar \
         -v 1.2.0 \
-        -c MultisigProver
+        -c MultisigProver \
+        --governance
     ```
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -t "Upload VotingVerifier v2.0.1 contract" \
         -d "Upload VotingVerifier v2.0.1 contract" \
         -n stellar \
         -v 2.0.1 \
-        -c VotingVerifier
+        -c VotingVerifier \
+        --governance
     ```
 
     Wait for the proposals to pass.
@@ -125,22 +132,23 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
 
 1. Store the new Coordinator contract.
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -c Coordinator \
         -t "Upload Coordinator contract v3.0.0" \
         -d "Upload Coordinator contract v3.0.0" \
-        -v 3.0.0
+        -v 3.0.0 \
+        --governance
     ```
 2. Migrate the Coordinator to the stored contract.
     ```bash
-    ts-node cosmwasm/submit-proposal.js migrate \
+    ts-node cosmwasm/contract.ts migrate \
         -c Coordinator \
         -t "Migrate Coordinator to v3.0.0" \
         -d "Migrate Coordinator to v3.0.0" \
         --msg '{}' \
-        --fetchCodeId
+        --fetchCodeId \
+        --governance
     ```
-
 
 ## Checklist
 
