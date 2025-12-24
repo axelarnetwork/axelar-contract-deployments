@@ -765,7 +765,7 @@ const itsUnfreezeChain = async (
 const executeContractViaGovernance = async (
     client: ClientManager,
     config: ConfigManager,
-    options: ContractCommandOptions & { msg?: string },
+    options: ContractCommandOptions & { msg?: string | string[] },
     _args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
@@ -784,7 +784,7 @@ const executeContractViaGovernance = async (
 
     validateParameters({ isNonEmptyString: { title, description } });
 
-    await executeByGovernance(client, config, { ...options, msg: [msg], title, description }, [], fee);
+    await executeByGovernance(client, config, { ...options, msg, title, description }, [], fee);
 };
 
 // ==================== End Emergency Operations ====================
@@ -914,9 +914,8 @@ const programHandler = () => {
     const executeContractCmd = program
         .command('execute-contract')
         .description('Execute an arbitrary contract message via governance proposal')
-        .option('--msg <message>', 'contract message in JSON format')
-        .action((options) => mainProcessor(executeContractViaGovernance, options, []));
-    addAmplifierOptions(executeContractCmd, { proposalOptions: true });
+        .action((options) => mainProcessor(executeContractViaGovernance, options));
+    addAmplifierOptions(executeContractCmd, { singleContractOption: true, executeProposalOptions: true, proposalOptions: true });
 
     // ==================== Emergency Operations Commands ====================
 
