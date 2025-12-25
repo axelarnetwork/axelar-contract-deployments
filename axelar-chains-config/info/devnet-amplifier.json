@@ -56,6 +56,18 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier(core)"
         },
+        "AxelarServiceGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 0,
+          "operator": "0xD3Ba43B92cED452D04B20710C4db627667476024",
+          "deploymentMethod": "create2",
+          "salt": "v6.0.4 devnet-amplifier",
+          "address": "0x8b133a2FEb035AC26E57797f7ADF2Dc1E4B9919D",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x3eb7c18c4968084ef12cc19d46193ad6c488d74cc29220096d6435a79e677592"
+        },
         "AxelarGasService": {
           "collector": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
           "salt": "AxelarGasService devnet-amplifier(core)",
@@ -143,6 +155,18 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier(core)"
         },
+        "AxelarServiceGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 0,
+          "operator": "0xD3Ba43B92cED452D04B20710C4db627667476024",
+          "deploymentMethod": "create2",
+          "salt": "v6.0.4 devnet-amplifier",
+          "address": "0x84e3949190762816071aB1cB93A45f5E7c4a219d",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xa868545fa6fe02dc3e65b84216e5fb06438d539a60e62208a681285a0b851b3b"
+        },
         "AxelarGasService": {
           "collector": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
           "salt": "AxelarGasService devnet-amplifier(core)",
@@ -229,6 +253,18 @@
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators devnet-amplifier(core)"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "Axelarnet",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 0,
+          "operator": "0xD3Ba43B92cED452D04B20710C4db627667476024",
+          "deploymentMethod": "create2",
+          "salt": "v6.0.4 devnet-amplifier",
+          "address": "0xC271274a4754f73632DFC65441a62445FB821529",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x9ff543792c33b2a23bbea0b467588eb7e306d134ae47218aa9da8e29c034f4c4"
         },
         "AxelarGasService": {
           "collector": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
