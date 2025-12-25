@@ -538,7 +538,7 @@ if (require.main === module) {
             testNewField(value, options);
         });
 
-    addOptionsToCommands(program, addBaseOptions, { offline: true });
+    addOptionsToCommands(program, addBaseOptions, { offline: true, customRpc: true });
 
     program.parse();
 }

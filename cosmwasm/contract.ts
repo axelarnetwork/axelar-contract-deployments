@@ -1,14 +1,38 @@
+import { instantiate2Address } from '@cosmjs/cosmwasm-stargate';
+import { fromHex } from '@cosmjs/encoding';
 import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
+import { AccessType } from 'cosmjs-types/cosmwasm/wasm/v1/types';
+import { createHash } from 'crypto';
 
-import { getChainConfig, printInfo, validateParameters } from '../common';
-import { ConfigManager, GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } from '../common/config';
+import { getChainConfig, printInfo, prompt, readContractCode, validateParameters } from '../common';
+import { ConfigManager } from '../common/config';
 import { addAmplifierOptions } from './cli-utils';
 import { CoordinatorManager } from './coordinator';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { executeByGovernance } from './submit-proposal';
-import { executeTransaction, getCodeId, itsHubChainParams, validateGovernanceMode, validateItsChainChange } from './utils';
+import { executeByGovernance, submitMessagesAsProposal } from './proposal-utils';
+import {
+    CONTRACTS,
+    encodeInstantiate,
+    encodeMigrate,
+    encodeStoreCode,
+    encodeStoreInstantiate,
+    encodeUpdateInstantiateConfigProposal,
+    executeTransaction,
+    getAmplifierContractConfig,
+    getCodeDetails,
+    getCodeId,
+    getSalt,
+    instantiateContract,
+    itsHubChainParams,
+    migrateContract,
+    predictAddress,
+    signAndBroadcastWithRetry,
+    uploadContract,
+    validateGovernanceMode,
+    validateItsChainChange,
+} from './utils';
 
 interface ContractCommandOptions extends Omit<Options, 'contractName'> {
     yes?: boolean;
@@ -228,6 +252,359 @@ const createRewardPools = async (
     return executeContractMessage(client, config, options, 'Rewards', messages, fee, defaultTitle, defaultDescription);
 };
 
+const instantiateChainContracts = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const { chainName, salt, admin } = options;
+
+    validateParameters({ isNonEmptyString: { admin, salt } });
+
+    const chainConfig = config.getChainConfig(chainName);
+    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
+    const gatewayContractName = config.getGatewayContractForChainType(chainConfig.chainType);
+    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+
+    config.initContractConfig(gatewayContractName, chainName);
+
+    const gatewayConfig = config.getGatewayContract(chainName);
+    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
+    const multisigProverConfig = config.getMultisigProverContract(chainName);
+
+    if (options.fetchCodeId) {
+        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: gatewayContractName });
+        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: verifierContractName });
+        multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
+    }
+
+    validateParameters({
+        isNumber: {
+            gatewayCodeId: gatewayConfig.codeId,
+            votingVerifierCodeId: votingVerifierConfig.codeId,
+            multisigProverCodeId: multisigProverConfig.codeId,
+        },
+    });
+
+    const coordinator = new CoordinatorManager(config);
+    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
+    const msg = [message];
+
+    const defaultTitle = `Instantiate chain contracts for ${chainName}`;
+    const defaultDescription = `Instantiate Gateway, VotingVerifier and MultisigProver contracts for ${chainName} via Coordinator`;
+
+    if (!config.axelar.contracts.Coordinator.deployments) {
+        config.axelar.contracts.Coordinator.deployments = {};
+    }
+    config.axelar.contracts.Coordinator.deployments[chainName] = {
+        deploymentName: message.instantiate_chain_contracts.deployment_name,
+        salt: salt,
+    };
+
+    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
+};
+
+const coordinatorInstantiatePermissions = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args?: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    if (!options.governance) {
+        throw new Error('coordinator-instantiate-permissions requires --governance flag');
+    }
+
+    const coordinatorAddress = config.axelar.contracts['Coordinator']?.address;
+
+    if (!coordinatorAddress) {
+        throw new Error('cannot find coordinator address in configuration');
+    }
+
+    const codeId = await getCodeId(client, config, { ...options, contractName: options.contractName });
+    const codeDetails = await getCodeDetails(config, codeId);
+    const permissions = codeDetails.instantiatePermission;
+
+    if (permissions?.permission === AccessType.ACCESS_TYPE_EVERYBODY) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const permittedAddresses = permissions?.addresses ?? [];
+    if (permittedAddresses.includes(coordinatorAddress) && permissions?.permission === AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES) {
+        throw new Error(`coordinator is already allowed to instantiate code id ${codeId}`);
+    }
+
+    const addresses = [...permittedAddresses, coordinatorAddress];
+
+    const updateMsg = JSON.stringify([
+        {
+            codeId: codeId,
+            instantiatePermission: {
+                permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES,
+                addresses: addresses,
+            },
+        },
+    ]);
+
+    const updateOptions = {
+        ...options,
+        msg: updateMsg,
+    };
+
+    const messages = [encodeUpdateInstantiateConfigProposal(updateOptions)];
+
+    const defaultTitle = `Grant Coordinator instantiate permissions for ${options.contractName}`;
+    const defaultDescription = `Allow Coordinator to instantiate ${options.contractName} contracts (code ID: ${codeId})`;
+    const title = options.title || defaultTitle;
+    const description = options.description || defaultDescription;
+
+    validateParameters({ isNonEmptyString: { title, description } });
+
+    await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
+};
+
+const saveStoreCodeProposalInfo = (config: ConfigManager, contractName: string, contractCodePath: string, proposalId: string) => {
+    const contractBaseConfig = config.getContractConfig(contractName);
+    contractBaseConfig.storeCodeProposalId = proposalId;
+
+    const contractOptions = { contractName, contractCodePath };
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(contractOptions)).digest().toString('hex');
+};
+
+const storeCode = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractNames: string[] = Array.isArray(options.contractName) ? options.contractName : [options.contractName!];
+
+    if (options.governance) {
+        const { contractCodePath, contractCodePaths } = options;
+
+        const proposals = contractNames.map((name) => {
+            validateGovernanceMode(config, name, options.chainName);
+            const contractOptions = {
+                ...options,
+                contractName: name,
+                contractCodePath: contractCodePaths ? contractCodePaths[name] : contractCodePath,
+            };
+            return encodeStoreCode(contractOptions);
+        });
+
+        const contractList = contractNames.join(', ');
+        const defaultTitle = `Store ${contractList} contract${contractNames.length > 1 ? 's' : ''}`;
+        const defaultDescription = `Store ${contractList} contract bytecode`;
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+
+        validateParameters({ isNonEmptyString: { title, description } });
+
+        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, proposals, fee);
+
+        if (proposalId) {
+            contractNames.forEach((name) => {
+                const codePath = contractCodePaths ? contractCodePaths[name] : contractCodePath;
+                if (codePath) {
+                    saveStoreCodeProposalInfo(config, name, codePath, proposalId);
+                }
+            });
+        }
+
+        return;
+    }
+
+    if (contractNames.length > 1) {
+        throw new Error('Direct execution only supports single contract at a time');
+    }
+
+    const [contractName] = contractNames;
+    const { instantiate2, salt, chainName } = options;
+    const storeOptions = { ...options, contractName };
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, storeOptions);
+
+    printInfo('Uploading contract binary');
+    const { checksum, codeId } = await uploadContract(client, storeOptions, fee);
+
+    printInfo('Uploaded contract binary with codeId', codeId);
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    if (instantiate2) {
+        const [account] = client.accounts;
+        const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
+
+        contractConfig.address = address;
+
+        printInfo('Expected contract address', address);
+    }
+};
+
+const instantiate = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractName = options.contractName as string;
+    const instantiateOptions = { ...options, contractName };
+    const { contractConfig } = getAmplifierContractConfig(config, instantiateOptions);
+
+    contractConfig.codeId = await getCodeId(client, config, instantiateOptions);
+
+    const { instantiate2, predictOnly } = options;
+
+    if (predictOnly) {
+        if (!instantiate2) {
+            throw new Error('--predictOnly requires --instantiate2 flag');
+        }
+        if (!options.governance) {
+            throw new Error('--predictOnly requires --governance flag');
+        }
+        const contractAddress = await predictAddress(client, contractConfig, instantiateOptions);
+        contractConfig.address = contractAddress;
+        return;
+    }
+
+    if (options.governance) {
+        validateGovernanceMode(config, contractName, options.chainName);
+
+        const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, instantiateOptions, contractConfig);
+        const proposal = encodeInstantiate(config, instantiateOptions, initMsg);
+
+        let contractAddress;
+        if (instantiate2) {
+            contractAddress = await predictAddress(client, contractConfig, instantiateOptions);
+        } else {
+            printInfo('Contract address cannot be predicted without using `--instantiate2` flag, address will not be saved in the config');
+        }
+
+        const defaultTitle = `Instantiate ${contractName} contract`;
+        const defaultDescription = `Instantiate ${contractName} contract${options.chainName ? ` for ${options.chainName}` : ''}`;
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+
+        validateParameters({ isNonEmptyString: { title, description } });
+
+        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, proposal, fee);
+
+        if (proposalId) {
+            contractConfig.instantiateProposalId = proposalId;
+
+            if (instantiate2 && contractAddress) {
+                contractConfig.address = contractAddress;
+            }
+        }
+
+        return;
+    }
+
+    const { yes, chainName } = options;
+
+    printInfo('Using code id', contractConfig.codeId);
+
+    if (prompt(`Proceed with instantiation on axelar?`, yes)) {
+        return;
+    }
+
+    const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, instantiateOptions, contractConfig);
+    const contractAddress = await instantiateContract(client, initMsg, config, instantiateOptions, fee);
+
+    contractConfig.address = contractAddress;
+
+    printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
+};
+
+const storeInstantiate = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractName = options.contractName as string;
+
+    if (options.governance) {
+        if (options.instantiate2) {
+            throw new Error('instantiate2 not supported for store-instantiate with governance');
+        }
+
+        validateGovernanceMode(config, contractName, options.chainName);
+
+        const storeInstantiateOptions = { ...options, contractName };
+        const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, storeInstantiateOptions);
+
+        const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, storeInstantiateOptions, contractConfig);
+        const proposal = encodeStoreInstantiate(storeInstantiateOptions, initMsg);
+
+        const defaultTitle = `Store and instantiate ${contractName} contract`;
+        const defaultDescription = `Upload and instantiate ${contractName} contract${options.chainName ? ` for ${options.chainName}` : ''}`;
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+
+        validateParameters({ isNonEmptyString: { title, description } });
+
+        const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, proposal, fee);
+
+        if (proposalId) {
+            contractConfig.storeInstantiateProposalId = proposalId;
+            contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+                .update(readContractCode(storeInstantiateOptions))
+                .digest()
+                .toString('hex');
+        }
+
+        return;
+    }
+
+    await storeCode(client, config, options, _args, fee);
+    await instantiate(client, config, options, _args, fee);
+};
+
+const migrate = async (
+    client: ClientManager,
+    config: ConfigManager,
+    options: ContractCommandOptions,
+    _args: string[],
+    fee?: string | StdFee,
+): Promise<void> => {
+    const contractName = options.contractName as string;
+    const migrateOptions = { ...options, contractName };
+    const { contractConfig } = getAmplifierContractConfig(config, migrateOptions);
+
+    contractConfig.codeId = await getCodeId(client, config, migrateOptions);
+
+    if (options.governance) {
+        validateGovernanceMode(config, contractName, options.chainName);
+
+        const proposal = encodeMigrate(config, migrateOptions);
+
+        const defaultTitle = `Migrate ${contractName} contract`;
+        const defaultDescription = `Migrate ${contractName} contract${options.chainName ? ` for ${options.chainName}` : ''} to code ID ${contractConfig.codeId}`;
+        const title = options.title || defaultTitle;
+        const description = options.description || defaultDescription;
+
+        validateParameters({ isNonEmptyString: { title, description } });
+
+        await submitMessagesAsProposal(client, config, { ...options, title, description }, proposal, fee);
+        return;
+    }
+
+    const { yes } = options;
+
+    printInfo('Using code id', contractConfig.codeId);
+
+    if (prompt(`Proceed with contract migration on axelar?`, yes)) {
+        return;
+    }
+
+    const { transactionHash } = await migrateContract(client, config, migrateOptions, fee);
+    printInfo('Migration completed. Transaction hash', transactionHash);
+};
+
 // ==================== Emergency Operations ====================
 
 // Router operations (Admin EOA only - cannot use governance)
@@ -387,60 +764,6 @@ const itsUnfreezeChain = async (
 
 // ==================== End Emergency Operations ====================
 
-const instantiateChainContracts = async (
-    client: ClientManager,
-    config: ConfigManager,
-    options: ContractCommandOptions,
-    _args?: string[],
-    fee?: string | StdFee,
-): Promise<void> => {
-    const { chainName, salt, admin } = options;
-
-    validateParameters({ isNonEmptyString: { admin, salt } });
-
-    const chainConfig = config.getChainConfig(chainName);
-    const multisigProverContractName = config.getMultisigProverContractForChainType(chainConfig.chainType);
-    const gatewayContractName = config.getGatewayContractForChainType(chainConfig.chainType);
-    const verifierContractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-
-    config.initContractConfig(gatewayContractName, chainName);
-
-    const gatewayConfig = config.getGatewayContract(chainName);
-    const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-    const multisigProverConfig = config.getMultisigProverContract(chainName);
-
-    if (options.fetchCodeId) {
-        gatewayConfig.codeId = await getCodeId(client, config, { ...options, contractName: gatewayContractName });
-        votingVerifierConfig.codeId = await getCodeId(client, config, { ...options, contractName: verifierContractName });
-        multisigProverConfig.codeId = await getCodeId(client, config, { ...options, contractName: multisigProverContractName });
-    }
-
-    validateParameters({
-        isNumber: {
-            gatewayCodeId: gatewayConfig.codeId,
-            votingVerifierCodeId: votingVerifierConfig.codeId,
-            multisigProverCodeId: multisigProverConfig.codeId,
-        },
-    });
-
-    const coordinator = new CoordinatorManager(config);
-    const message = coordinator.constructExecuteMessage(chainName, salt, admin);
-    const msg = [message];
-
-    const defaultTitle = `Instantiate chain contracts for ${chainName}`;
-    const defaultDescription = `Instantiate Gateway, VotingVerifier and MultisigProver contracts for ${chainName} via Coordinator`;
-
-    if (!config.axelar.contracts.Coordinator.deployments) {
-        config.axelar.contracts.Coordinator.deployments = {};
-    }
-    config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName: message.instantiate_chain_contracts.deployment_name,
-        salt: salt,
-    };
-
-    return executeContractMessage(client, config, options, 'Coordinator', msg, fee, defaultTitle, defaultDescription);
-};
-
 const programHandler = () => {
     const program = new Command();
 
@@ -499,6 +822,67 @@ const programHandler = () => {
         .requiredOption('--admin <admin>', 'admin address for the instantiated contracts')
         .action((options) => mainProcessor(instantiateChainContracts, options));
     addAmplifierOptions(instantiateChainContractsCmd, {
+        fetchCodeId: true,
+    });
+
+    const coordinatorInstantiatePermissionsCmd = program
+        .command('coordinator-instantiate-permissions')
+        .addOption(
+            new Option('--contractName <contractName>', 'coordinator will have instantiate permissions for this contract')
+                .makeOptionMandatory(true)
+                .choices(['Gateway', 'VotingVerifier', 'MultisigProver']),
+        )
+        .description('Give coordinator instantiate permissions for the given contract')
+        .action((options) => mainProcessor(coordinatorInstantiatePermissions, options));
+    addAmplifierOptions(coordinatorInstantiatePermissionsCmd, {
+        codeId: true,
+        fetchCodeId: true,
+    });
+
+    const storeCodeCmd = program
+        .command('store-code')
+        .description('Upload contract bytecode')
+        .action((options) => mainProcessor(storeCode, options));
+    addAmplifierOptions(storeCodeCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        storeProposalOptions: true,
+        instantiate2Options: true,
+    });
+
+    const instantiateCmd = program
+        .command('instantiate')
+        .description('Instantiate a contract')
+        .action((options) => mainProcessor(instantiate, options));
+    addAmplifierOptions(instantiateCmd, {
+        singleContractOption: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+        instantiateProposalOptions: true,
+        codeId: true,
+        fetchCodeId: true,
+    });
+
+    const storeInstantiateCmd = program
+        .command('store-instantiate')
+        .description('Upload and instantiate a contract in one step')
+        .action((options) => mainProcessor(storeInstantiate, options));
+    addAmplifierOptions(storeInstantiateCmd, {
+        singleContractOption: true,
+        storeOptions: true,
+        storeProposalOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+    });
+
+    const migrateCmd = program
+        .command('migrate')
+        .description('Migrate a contract to a new code ID')
+        .action((options) => mainProcessor(migrate, options));
+    addAmplifierOptions(migrateCmd, {
+        singleContractOption: true,
+        migrateOptions: true,
+        codeId: true,
         fetchCodeId: true,
     });
 

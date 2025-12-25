@@ -7,7 +7,7 @@ import { addOptionsToCommands, getAmplifierChains, printInfo, printWarn, prompt 
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor } from '../processor';
-import { executeByGovernance, migrate } from '../submit-proposal';
+import { executeByGovernance, migrate } from '../proposal-utils';
 
 interface MigrationOptions extends Options {
     title?: string;
