@@ -5,12 +5,12 @@
 | **Created By** | @chipshort <christoph@interoplabs.io> |
 | **Deployment** |                                       |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Deployed              | 2025-12-23 |
+| **Stagenet**         | Deployed              | 2025-12-23 |
+| **Testnet**          | Deployed              | 2025-12-24 |
+| **Mainnet**          | -                     | TBD        |
 
 [Release (TBD)](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/chain-codec-v1.0.0)
 
