@@ -17,14 +17,13 @@ pub(crate) fn get_artifact_url(program: &Programs, version: &str) -> Result<Stri
     let so_filename = program_to_so_filename(program);
 
     if is_semver(version) {
-        // GitHub releases: {package}-v{version}/{filename}.so
         Ok(format!(
             "{GITHUB_RELEASES_BASE_URL}/{package_name}-v{version}/{so_filename}.so"
         ))
     } else if is_commit_hash(version) {
-        // R2: {package}/{commit}/programs/{filename}.so
+        let version_lower = version.to_lowercase();
         Ok(format!(
-            "{AXELAR_R2_BASE_URL}/releases/solana/{package_name}/{version}/programs/{so_filename}.so"
+            "{AXELAR_R2_BASE_URL}/releases/solana/{package_name}/{version_lower}/programs/{so_filename}.so"
         ))
     } else {
         bail!(
@@ -52,11 +51,19 @@ pub(crate) async fn download_artifact(program: &Programs, version: &str) -> Resu
 
     let bytes = response.bytes().await?;
 
-    // Save to ./artifacts/{program}-{version}.so
     let artifacts_dir = PathBuf::from("./artifacts");
     std::fs::create_dir_all(&artifacts_dir)?;
 
-    let filename = format!("{}-{}.so", program_to_so_filename(program), version);
+    let normalized_version = if is_commit_hash(version) {
+        version.to_lowercase()
+    } else {
+        version.to_string()
+    };
+    let filename = format!(
+        "{}-{}.so",
+        program_to_so_filename(program),
+        normalized_version
+    );
     let path = artifacts_dir.join(&filename);
     std::fs::write(&path, &bytes)?;
 
@@ -99,9 +106,8 @@ fn is_semver(s: &str) -> bool {
         .is_match(s)
 }
 
-/// Check if string is a commit hash (7+ hex chars)
 fn is_commit_hash(s: &str) -> bool {
-    Regex::new("^[a-f0-9]{7,}$")
+    Regex::new("(?i)^[a-f0-9]{7,}$")
         .expect("valid regex")
         .is_match(s)
 }
@@ -152,13 +158,15 @@ mod tests {
     fn test_is_commit_hash() {
         assert!(is_commit_hash("12e6126"));
         assert!(is_commit_hash("abcdef1234567890"));
-        assert!(!is_commit_hash("12e612")); // too short
-        assert!(!is_commit_hash("12e612g")); // invalid char
+        assert!(is_commit_hash("12E6126"));
+        assert!(is_commit_hash("ABCDEF1234567890"));
+        assert!(is_commit_hash("AbCdEf1234567890"));
+        assert!(!is_commit_hash("12e612"));
+        assert!(!is_commit_hash("12e612g"));
     }
 
     #[test]
     fn test_get_artifact_url_semver() {
-        // Semver → GitHub releases
         let url = get_artifact_url(&Programs::Gateway, "0.1.7").unwrap();
         assert_eq!(
             url,
@@ -174,7 +182,6 @@ mod tests {
 
     #[test]
     fn test_get_artifact_url_commit_hash() {
-        // Commit hash → R2
         let url = get_artifact_url(&Programs::Gateway, "12e6126").unwrap();
         assert_eq!(
             url,
@@ -185,6 +192,21 @@ mod tests {
         assert_eq!(
             url,
             "https://static.axelar.network/releases/solana/solana-axelar-its/38e9135/programs/solana_axelar_its.so"
+        );
+    }
+
+    #[test]
+    fn test_get_artifact_url_uppercase_commit_hash_normalized() {
+        let url = get_artifact_url(&Programs::Gateway, "12E6126").unwrap();
+        assert_eq!(
+            url,
+            "https://static.axelar.network/releases/solana/solana-axelar-gateway/12e6126/programs/solana_axelar_gateway.so"
+        );
+
+        let url = get_artifact_url(&Programs::Its, "ABCDEF1").unwrap();
+        assert_eq!(
+            url,
+            "https://static.axelar.network/releases/solana/solana-axelar-its/abcdef1/programs/solana_axelar_its.so"
         );
     }
 
