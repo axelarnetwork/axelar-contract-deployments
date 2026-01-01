@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use eyre::{bail, Result};
+use eyre::{Result, bail};
 use regex::Regex;
 
 use crate::types::Programs;
@@ -19,14 +19,12 @@ pub(crate) fn get_artifact_url(program: &Programs, version: &str) -> Result<Stri
     if is_semver(version) {
         // GitHub releases: {package}-v{version}/{filename}.so
         Ok(format!(
-            "{}/{}-v{}/{}.so",
-            GITHUB_RELEASES_BASE_URL, package_name, version, so_filename
+            "{GITHUB_RELEASES_BASE_URL}/{package_name}-v{version}/{so_filename}.so"
         ))
     } else if is_commit_hash(version) {
         // R2: {package}/{commit}/programs/{filename}.so
         Ok(format!(
-            "{}/releases/solana/{}/{}/programs/{}.so",
-            AXELAR_R2_BASE_URL, package_name, version, so_filename
+            "{AXELAR_R2_BASE_URL}/releases/solana/{package_name}/{version}/programs/{so_filename}.so"
         ))
     } else {
         bail!(
@@ -39,11 +37,7 @@ pub(crate) fn get_artifact_url(program: &Programs, version: &str) -> Result<Stri
 /// Download a program artifact from GitHub releases or R2
 pub(crate) async fn download_artifact(program: &Programs, version: &str) -> Result<PathBuf> {
     let url = get_artifact_url(program, version)?;
-    let source = if is_semver(version) {
-        "GitHub"
-    } else {
-        "R2"
-    };
+    let source = if is_semver(version) { "GitHub" } else { "R2" };
     println!(
         "Downloading {} from {} ({})",
         program_to_so_filename(program),
@@ -107,7 +101,7 @@ fn is_semver(s: &str) -> bool {
 
 /// Check if string is a commit hash (7+ hex chars)
 fn is_commit_hash(s: &str) -> bool {
-    Regex::new(r"^[a-f0-9]{7,}$")
+    Regex::new("^[a-f0-9]{7,}$")
         .expect("valid regex")
         .is_match(s)
 }
@@ -121,7 +115,9 @@ fn program_to_package_name(program: &Programs) -> Result<&'static str> {
         Programs::Its => Ok("solana-axelar-its"),
         Programs::Operators => Ok("solana-axelar-operators"),
         Programs::Multicall => {
-            bail!("Multicall not available for download. Use --program-path or --artifact-dir instead.")
+            bail!(
+                "Multicall not available for download. Use --program-path or --artifact-dir instead."
+            )
         }
     }
 }
