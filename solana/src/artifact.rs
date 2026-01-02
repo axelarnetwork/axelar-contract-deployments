@@ -57,7 +57,7 @@ pub(crate) async fn download_artifact(program: &Programs, version: &str) -> Resu
     let normalized_version = if is_commit_hash(version) {
         version.to_lowercase()
     } else {
-        version.to_string()
+        version.to_owned()
     };
     let filename = format!(
         "{}-{}.so",
