@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "clean": "node scripts/clean.js",
+    "build": "npm run clean && tsc",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
     "test": "mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js'",
