@@ -5,7 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
 const JSZip = require('jszip');
-const { printInfo, printError, pascalToSnake, printWarn } = require('../common/utils');
+const { printInfo, printError, pascalToSnake, printWarn, findProjectRoot } = require('../common/utils');
 
 const { addBaseOptions } = require('./utils');
 
@@ -27,7 +27,8 @@ const CONTRACTS = [
 ];
 
 async function getContractAddress(env, contract) {
-    const configPath = path.join(__dirname, '../axelar-chains-config', 'info', `${env}.json`);
+    const projectRoot = findProjectRoot(__dirname);
+    const configPath = path.join(projectRoot, 'axelar-chains-config', 'info', `${env}.json`);
 
     try {
         const configData = await fs.readFile(configPath, 'utf-8');
