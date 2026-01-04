@@ -10,7 +10,7 @@ const {
 const path = require('path');
 const { LedgerSigner } = require('./LedgerSigner');
 
-const { printError, printInfo, printObj, isValidPrivateKey, isNumber, isValidNumber } = require('./utils');
+const { printError, printInfo, printObj, isValidPrivateKey, isNumber, isValidNumber, findProjectRoot } = require('./utils');
 
 /**
  * Get a wallet object from a private key or a ledger device
@@ -228,7 +228,8 @@ function isValidJSON(obj) {
 }
 
 const getNonceFileData = () => {
-    const filePath = `${__dirname}/nonces.json`;
+    const projectRoot = findProjectRoot(__dirname);
+    const filePath = path.join(projectRoot, 'axelar-chains-config', 'info', 'nonces.json');
     const emptyData = {};
     const data = getFileData(filePath);
 
@@ -260,7 +261,8 @@ function createFileIfNotExists(filePath) {
 }
 
 const updateNonceFileData = (nonceData) => {
-    const filePath = `${__dirname}/nonces.json`;
+    const projectRoot = findProjectRoot(__dirname);
+    const filePath = path.join(projectRoot, 'axelar-chains-config', 'info', 'nonces.json');
     createFileIfNotExists(filePath);
 
     // Write nonceData to the file
