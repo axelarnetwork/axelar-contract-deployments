@@ -1,3 +1,4 @@
+mod artifact;
 mod broadcast;
 mod combine;
 mod config;
@@ -36,7 +37,7 @@ use types::{AxelarNetwork, SerializableSolanaTransaction};
 use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
 use crate::config::Config;
-use crate::deploy::UpgradeArgs;
+use crate::deploy::{DeployArgs, UpgradeArgs};
 use crate::generate::generate_from_transactions;
 use crate::misc::do_misc;
 use crate::sign::sign_solana_transaction;
@@ -75,7 +76,10 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// Deploys a Solana program that is present in the environment JSON file
+    /// Deploy a new Solana program (initial deployment)
+    Deploy(DeployArgs),
+
+    /// Upgrade an existing Solana program (looks up program ID from env JSON)
     Upgrade(UpgradeArgs),
 
     /// Build and send a transaction to the Solana network.
@@ -271,8 +275,11 @@ async fn run() -> eyre::Result<()> {
     )?;
 
     match cli.command {
-        Command::Upgrade(deploy_args) => {
-            deploy::upgrade_program(deploy_args, config)?;
+        Command::Deploy(args) => {
+            deploy::deploy_program(args, config).await?;
+        }
+        Command::Upgrade(args) => {
+            deploy::upgrade_program(args, config).await?;
         }
 
         Command::Send(args) => {

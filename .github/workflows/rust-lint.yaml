@@ -32,12 +32,8 @@ jobs:
         working-directory: solana
     steps:
       - uses: actions/checkout@v4
-      # TODO: Remove pin once axelar-amplifier-solana is stable
       - name: Clone axelar-amplifier-solana
-        run: |
-          git clone https://github.com/axelarnetwork/axelar-amplifier-solana.git
-          cd axelar-amplifier-solana
-          git checkout 9f33615e51f0076f74597165a7049c1a0bb4a598
+        run: git clone https://github.com/axelarnetwork/axelar-amplifier-solana.git
         working-directory: solana
 
       - name: Install Rust toolchain
