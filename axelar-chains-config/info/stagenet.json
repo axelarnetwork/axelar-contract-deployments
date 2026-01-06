@@ -294,14 +294,6 @@
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators"
         },
-        "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 300,
-          "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
-          "deploymentMethod": "create2",
-          "salt": "v6.0.4"
-        },
         "Multisig": {
           "threshold": 2,
           "signers": [
@@ -1129,14 +1121,6 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.2",
           "connectionType": "consensus"
-        },
-        "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 300,
-          "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
-          "deploymentMethod": "create2",
-          "salt": "v6.0.4"
         },
         "Multisig": {
           "threshold": 2,
