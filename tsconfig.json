@@ -14,6 +14,6 @@
         "sourceMap": true,
         "allowJs": true // remove once all JS is removed
     },
-    "include": ["**/*.ts"],
-    "exclude": ["node_modules", "dist", "solana/axelar-amplifier*", "solana/target"],
+    "include": ["**/*.ts", "**/*.js"],
+    "exclude": ["node_modules", "dist", "solana/axelar-amplifier*", "solana/target", "axelar-chains-config"],
 }

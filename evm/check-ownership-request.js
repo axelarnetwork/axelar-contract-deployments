@@ -7,7 +7,7 @@ const { writeFile, createReadStream } = require('fs');
 const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider } = ethers;
 
-const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
+const { readJSON } = require('axelar-chains-config');
 const keys = readJSON(`${__dirname}/../keys.json`);
 const {
     validateParameters,

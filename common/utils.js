@@ -30,11 +30,13 @@ const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 const SVM_BASE58_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 function loadConfig(env) {
-    return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
+    const projectRoot = findProjectRoot(__dirname);
+    return require(path.join(projectRoot, 'axelar-chains-config', 'info', `${env}.json`));
 }
 
 function saveConfig(config, env) {
-    writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
+    const projectRoot = findProjectRoot(__dirname);
+    writeJSON(config, path.join(projectRoot, 'axelar-chains-config', 'info', `${env}.json`));
 }
 
 const writeJSON = (data, name) => {
