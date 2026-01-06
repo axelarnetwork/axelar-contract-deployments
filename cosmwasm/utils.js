@@ -81,10 +81,6 @@ const payloadToHexBinary = (payload) => {
         return Buffer.from(payload.slice(2), 'hex').toString('hex');
     }
 
-    if (/^[0-9a-fA-F]+$/.test(payload) && payload.length % 2 === 0) {
-        return Buffer.from(payload, 'hex').toString('hex');
-    }
-
     return Buffer.from(payload, 'base64').toString('hex');
 };
 
