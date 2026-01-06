@@ -59,7 +59,7 @@ const {
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const ITSPackage = require('@axelar-network/interchain-token-service/package.json');
-const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
+const { verifyContract } = require('axelar-chains-config');
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
