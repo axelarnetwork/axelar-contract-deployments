@@ -8,9 +8,9 @@ import { AxelarContractConfig, ConfigManager } from '../../common/config';
 import { getAmplifierChains, printError, printHighlight, printInfo, printWarn, prompt, validateParameters } from '../../common/utils';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
+import { confirmProposalSubmission, submitProposal } from '../proposal-utils';
 import { RewardsPoolResponse, queryRewardsPool } from '../query';
-import { confirmProposalSubmission } from '../submit-proposal';
-import { GOVERNANCE_MODULE_ADDRESS, encodeExecuteContract, submitProposal } from '../utils';
+import { GOVERNANCE_MODULE_ADDRESS, encodeExecuteContract } from '../utils';
 
 interface PoolParams {
     chainName: string;

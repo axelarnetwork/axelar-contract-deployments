@@ -6,7 +6,7 @@ import { ConfigManager } from '../common/config';
 import { addCoreOptions } from './cli-utils';
 import { ClientManager, Options } from './processor';
 import { mainProcessor } from './processor';
-import { confirmProposalSubmission, submitProposalAndPrint } from './proposal-utils';
+import { confirmProposalSubmission, submitProposal } from './proposal-utils';
 import { encodeChainStatusRequest } from './utils';
 
 interface CoreCommandOptions extends Options {
@@ -41,7 +41,8 @@ const executeCoreOperation = async (
         return;
     }
 
-    await submitProposalAndPrint(client, config, { ...options, title, description }, messages, fee);
+    const proposalId = await submitProposal(client, config, { ...options, title, description }, messages, fee);
+    printInfo('Proposal submitted', proposalId);
 };
 
 const nexusChainState = async (

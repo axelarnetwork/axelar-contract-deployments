@@ -36,12 +36,13 @@ Coordinator v2.1.3 adds support for Solana address format and encoder used in So
     | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
       -c Coordinator \
       -t "Upload Coordinator contract v2.1.3" \
       -d "Upload Coordinator contract v2.1.3" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.1.3
+      --version 2.1.3 \
+      --governance
     ```
 
 1. Migrate to Coordinator v2.1.3
@@ -49,12 +50,13 @@ Coordinator v2.1.3 adds support for Solana address format and encoder used in So
     There is no state migration needed during upgrade.
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js migrate \
+    ts-node cosmwasm/contract.ts migrate \
     -c Coordinator \
     -t "Migrate Coordinator to v2.1.3" \
     -d "Coordinator to v2.1.3" \
     --msg '{}' \
-    --fetchCodeId
+    --fetchCodeId \
+    --governance
     ```
 
 ## Checklist

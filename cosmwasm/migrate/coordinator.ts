@@ -2,7 +2,8 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StdFee } from '@cosmjs/stargate';
 
 import { printError, printInfo } from '../../common';
-import { encodeMigrate, getCodeId, submitProposal } from '../utils';
+import { submitProposal } from '../proposal-utils';
+import { encodeMigrate, getCodeId } from '../utils';
 import { MigrationOptions, ProtocolContracts } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports

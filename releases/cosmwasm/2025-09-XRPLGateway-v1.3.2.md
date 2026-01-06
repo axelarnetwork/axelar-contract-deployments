@@ -72,23 +72,25 @@ c38d24ee11f8f4ed86312e310ead065b3ad779b01352c2e98dcc192986cdac1a  wasm/xrpl_gate
 4. Store `XRPLGateway` contract.
 
 ```bash
-ts-node cosmwasm/submit-proposal.js store \
+ts-node cosmwasm/contract.ts store-code \
   -c XrplGateway \
   -t "Upload XRPLGateway contract v1.3.2" \
   -d "Upload XRPLGateway contract v1.3.2" \
   -a "$ARTIFACT_PATH" \
-  --instantiateAddresses $INIT_ADDRESSES
+  --instantiateAddresses $INIT_ADDRESSES \
+  --governance
 ```
 
 6. Migrate `XRPLGateway` contract.
 
 ```bash
-ts-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/contract.ts migrate \
   -c XrplGateway \
   -t "Migrate XRPLGateway to v1.3.2" \
   -d "Migrate XRPLGateway to v1.3.2" \
   --msg '{}' \
-  --fetchCodeId
+  --fetchCodeId \
+  --governance
 ```
 
 ## Checklist

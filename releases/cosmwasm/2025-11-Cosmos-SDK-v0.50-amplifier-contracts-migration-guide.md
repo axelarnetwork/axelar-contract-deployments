@@ -44,12 +44,13 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 1. Store Voting Verifier code
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
       -c VotingVerifier \
       -t "Store VotingVerifier contract v2.0.0" \
       -d "Store VotingVerifier contract v2.0.0" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.0.0
+      --version 2.0.0 \
+      --governance
     ```
 
 1. Store and migrate XRPL Voting Verifier code
@@ -58,12 +59,13 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 1. Store Multisig code
 
     ```bash
-        ts-node cosmwasm/submit-proposal.js store \
+        ts-node cosmwasm/contract.ts store-code \
         -c Multisig \
         -t "Upload Multisig contract v2.4.0" \
         -d "Upload Multisig contract v2.4.0" \
         --instantiateAddresses $INIT_ADDRESSES \
-        --version 2.4.0
+        --version 2.4.0 \
+        --governance
     ```
 
 1. Update `blockExpiry` on Multisig and all Voting Verifier contracts in chain config
@@ -84,12 +86,13 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 1. Migrate Multisig contract
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js migrate \
+    ts-node cosmwasm/contract.ts migrate \
     -c Multisig \
     -t "Migrate Multisig to v2.4.0" \
     -d "Multisig to v2.4.0" \
     --msg '{}' \
-    --fetchCodeId
+    --fetchCodeId \
+    --governance
     ```
 
 1. Verify Voting Verifier & Multisig contract version
