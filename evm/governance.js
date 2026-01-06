@@ -33,7 +33,7 @@ const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
 const { submitCallContracts, payloadToHexBinary, GOVERNANCE_MODULE_ADDRESS } = require('../cosmwasm/utils');
 const { mainProcessor: cosmwasmMainProcessor } = require('../cosmwasm/processor');
-const { submitAxelarnetGatewayMessagesByGovernance } = require('../cosmwasm/submit-proposal');
+const { executeByGovernance } = require('../cosmwasm/proposal-utils');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
@@ -706,7 +706,31 @@ async function main(action, args, options) {
             writeJSON(amplifierPreview, options.generateOnly);
             printInfo('Amplifier proposal written to file', options.generateOnly);
         } else if (!prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
-            await submitAxelarnetGatewayMessagesByGovernance(amplifierAxelarnetMsgs, options, { title, description });
+            const submitFn = async (client, config, submitOptions, _args, fee) => {
+                // For these governance submissions we default to the standard deposit amount.
+                submitOptions.deposit = config.proposalDepositAmount();
+
+                const msgs = amplifierAxelarnetMsgs.map((msg) => JSON.stringify(msg));
+                await executeByGovernance(
+                    client,
+                    config,
+                    { ...submitOptions, contractName: 'AxelarnetGateway', msg: msgs, title, description },
+                    undefined,
+                    fee,
+                );
+            };
+
+            const submitOptions = {
+                env: options.env,
+                mnemonic: options.mnemonic,
+                contractName: 'AxelarnetGateway',
+                title,
+                description,
+                yes: options.yes,
+                rpc: options.rpc,
+            };
+
+            await cosmwasmMainProcessor(submitFn, submitOptions);
         }
     }
 }

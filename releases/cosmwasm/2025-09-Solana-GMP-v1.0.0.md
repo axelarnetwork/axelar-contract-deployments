@@ -77,40 +77,43 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
 1. Store VotingVerifier:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
         -v "2.0.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
-        --instantiateAddresses $INIT_ADDRESSES
+        --instantiateAddresses $INIT_ADDRESSES \
+        --governance
     ```
 
 1. Store Gateway:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -c Gateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
         -v "1.1.1" \
         --chainName $CHAIN \
         -m $MNEMONIC \
-        --instantiateAddresses $INIT_ADDRESSES
+        --instantiateAddresses $INIT_ADDRESSES \
+        --governance
     ```
 
 1. Store SolanaMultisigProver:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -c SolanaMultisigProver \
         -t "Upload SolanaMultisigProver contract for Solana" \
         -d "Upload SolanaMultisigProver contract for Solana integration" \
         -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
-        --instantiateAddresses $INIT_ADDRESSES
+        --instantiateAddresses $INIT_ADDRESSES \
+        --governance
     ```
 
 ## Deployment

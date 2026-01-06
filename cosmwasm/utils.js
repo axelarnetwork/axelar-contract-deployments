@@ -41,6 +41,7 @@ const {
     SHORT_COMMIT_HASH_REGEX,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const { GATEWAY_CONTRACT_NAME, VERIFIER_CONTRACT_NAME } = require('../common/config');
 const XRPLClient = require('../xrpl/xrpl-client');
@@ -80,10 +81,6 @@ const payloadToHexBinary = (payload) => {
         return Buffer.from(payload.slice(2), 'hex').toString('hex');
     }
 
-    if (/^[0-9a-fA-F]+$/.test(payload) && payload.length % 2 === 0) {
-        return Buffer.from(payload, 'hex').toString('hex');
-    }
-
     return Buffer.from(payload, 'base64').toString('hex');
 };
 
@@ -117,12 +114,10 @@ const getUnitDenom = (config) => {
 const validateGovernanceMode = (config, contractName, chainName) => {
     const governanceAddress = config.axelar.governanceAddress;
     const env = config?.environment || config?.env;
-
     // skip for devnet-amplifier, as we use different governance module address
     if (env === 'devnet-amplifier') {
         return;
     }
-
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
             `Contract ${contractName}${chainName ? ` (${chainName})` : ''} governanceAddress is not set to governance module address. ` +
@@ -163,6 +158,22 @@ const uploadContract = async (client, options, uploadFee) => {
 
     // uploading through stargate doesn't support defining instantiate permissions
     return client.upload(account.address, wasm, uploadFee);
+};
+
+const predictAddress = async (client, contractConfig, options) => {
+    const { contractName, salt, chainName } = options;
+
+    const { checksum } = await client.getCodeDetails(contractConfig.codeId);
+    const contractAddress = instantiate2Address(
+        fromHex(checksum),
+        GOVERNANCE_MODULE_ADDRESS,
+        getSalt(salt, contractName, chainName),
+        'axelar',
+    );
+
+    printInfo(`Predicted address for ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
+
+    return contractAddress;
 };
 
 const instantiateContract = async (client, initMsg, config, options, initFee) => {
@@ -1273,35 +1284,6 @@ const encodeChainStatusRequest = (chains, requestType) => {
     };
 };
 
-const submitProposal = async (client, config, options, proposal, fee) => {
-    const deposit =
-        options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
-    const proposalOptions = { ...options, deposit };
-
-    const [account] = await client.signer.getAccounts();
-
-    printInfo('Proposer address', account.address);
-
-    const messages = toArray(proposal);
-
-    const submitProposalMsg = encodeSubmitProposal(messages, config, proposalOptions, account.address);
-
-    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
-    const { events } = result;
-
-    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
-    if (!proposalEvent) {
-        throw new Error('Proposal submission event not found');
-    }
-
-    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
-    if (!proposalId) {
-        throw new Error('Proposal ID not found in events');
-    }
-
-    return proposalId;
-};
-
 const submitCallContracts = async (client, config, options, proposalData, fee) => {
     if (!proposalData.title || !proposalData.description || !proposalData.contract_calls) {
         throw new Error('Invalid proposal data: must have title, description, and contract_calls');
@@ -1541,6 +1523,7 @@ module.exports = {
     getCodeDetails,
     executeTransaction,
     uploadContract,
+    predictAddress,
     instantiateContract,
     migrateContract,
     fetchCodeIdFromCodeHash,
@@ -1556,7 +1539,6 @@ module.exports = {
     encodeCallContracts,
     encodeSubmitProposal,
     encodeChainStatusRequest,
-    submitProposal,
     submitCallContracts,
     payloadToHexBinary,
     signAndBroadcastWithRetry,

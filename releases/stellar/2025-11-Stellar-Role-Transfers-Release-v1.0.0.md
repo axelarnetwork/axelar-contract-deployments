@@ -81,18 +81,18 @@ Before executing the role transfers, confirm the target addresses for each envir
 
 | Role Target               | Network          | Address    |
 | ------------------------- | ---------------- | ---------- |
-| Contract Owner EOA (interim) | Stagenet         | TBD        |
-| Contract Owner EOA (interim) | Testnet          | TBD        |
-| Contract Owner EOA (interim) | Mainnet          | TBD        |
-| Emergency Operator EOA    | Stagenet         | TBD        |
-| Emergency Operator EOA    | Testnet          | TBD        |
-| Emergency Operator EOA    | Mainnet          | TBD        |
-| Relayer Operators EOA     | Stagenet         | TBD        |
-| Relayer Operators EOA     | Testnet          | TBD        |
-| Relayer Operators EOA     | Mainnet          | TBD        |
-| Rate Limiter EOA          | Stagenet         | TBD        |
-| Rate Limiter EOA          | Testnet          | TBD        |
-| Rate Limiter EOA          | Mainnet          | TBD        |
+| Contract Owner EOA (interim) | Stagenet         | GCYQEKUIMIYDN3CSXAG55STYOLMIFPYRIAZSCETGQCFTHIL4GSBXB6MV        |
+| Contract Owner EOA (interim) | Testnet          | GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L        |
+| Contract Owner EOA (interim) | Mainnet          | GBSXKMKLLR64BGH4FEM5NUM3PFKFSZRLPO4IKEQMMDO3HJZ6S4IXVLGW        |
+| Emergency Operator EOA    | Stagenet         | GDI5IGNH2ZZBKNCHGSZOFHHVBZ43DA5HYIPFSZPRWFCC26RCKCW43LTM        |
+| Emergency Operator EOA    | Testnet          | GCFIA4R5PKXTT4HLITMDP3EL2WVGHY4MRVRXTY2V7PYZPMEQPHXGNBXJ        |
+| Emergency Operator EOA    | Mainnet          | GBAXW7XRI46CSGN5H5TOIFZ7QX6GZ6E25MR27ZORD4BLT23SWL7EMWGO        |
+| Relayer Operators EOA     | Stagenet         | GBCZGOI2RXXVJOKFK5UMG44UEBW4ZXFKMND4MM5ZWVIYC33V22CUR2GB        |
+| Relayer Operators EOA     | Testnet          | GA7EDY6FTB6RD7ZIYDPG2QE6JBEQBNJDRIGV73LB6VPVHQSIKG6A4GYM        |
+| Relayer Operators EOA     | Mainnet          | GAKNHAKQE72PRS42ULLM4QWRBPD6WMTC3VLOKGHG56VDR4HT2EJLC26G        |
+| Rate Limiter EOA          | Stagenet         | GACMGDXOPYJU2RBWS7FVIQIHSVGKJCKPB7PJB74NXI47DMVB5WH5R7G2        |
+| Rate Limiter EOA          | Testnet          | GD23HL5GNM24MK5I24UZLILXKDFVBUEY7OT536KWIXUC2UUXBYVHYOQM        |
+| Rate Limiter EOA          | Mainnet          | GCK6BKJRM427ZC6U7UP6YEVTCFCOLOPJBEUFC6XRQYFBPFCQICPT3KHB        |
 
 ## Deployment Steps
 

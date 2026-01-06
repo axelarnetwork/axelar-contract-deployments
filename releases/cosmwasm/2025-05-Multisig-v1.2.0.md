@@ -35,7 +35,7 @@ Changes in this release:
 |     mainnet      | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
 ```bash
-ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" --instantiateAddresses $INIT_ADDRESSES --version 1.2.0
+ts-node cosmwasm/contract.ts store-code -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" --instantiateAddresses $INIT_ADDRESSES --version 1.2.0 --governance
 ```
 
 2. Upgrade Multisig contract
@@ -43,12 +43,13 @@ ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contra
 There is no state migration needed during upgrade.
 
 ```bash
-ts-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/contract.ts migrate \
   -c Multisig \
   -t "Migrate Multisig to v1.2.0" \
   -d "Multisig to v1.2.0" \
   --msg '{}' \
-  --fetchCodeId
+  --fetchCodeId \
+  --governance
 ```
 
 ## Checklist
