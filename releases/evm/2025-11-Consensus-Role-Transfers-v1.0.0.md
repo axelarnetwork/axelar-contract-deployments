@@ -34,7 +34,6 @@
 |                      | `immutable`         | -                     | TBD      |
 |                      | `arbitrum-sepolia`  | -                     | TBD      |
 |                      | `centrifuge-2`      | -                     | TBD      |
-|                      | `fraxtal`           | -                     | TBD      |
 |                      | `optimism-sepolia`  | -                     | TBD      |
 |                      | `base-sepolia`      | -                     | TBD      |
 |                      | `blast-sepolia`     | -                     | TBD      |
@@ -86,8 +85,8 @@ Rotate non‑critical roles to appropriate operational addresses, and assign cri
 | Network              | Chains                                                                                                                                                                                                                                                           |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Devnet Amplifier** | `core-avalanche,core-ethereum,core-optimism`                                                                                                                                                                                                                     |
-| **Stagenet**         | `avalanche,fantom,moonbeam,kava,ethereum-sepolia,arbitrum-sepolia,linea-sepolia,polygon-sepolia,base-sepolia,blast-sepolia,fraxtal,mantle-sepolia,optimism-sepolia`                                                                                              |
-| **Testnet**          | `ethereum-sepolia,avalanche,fantom,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,centrifuge-2,fraxtal,optimism-sepolia,base-sepolia,blast-sepolia,mantle-sepolia,polygon-sepolia,linea-sepolia`                                             |
+| **Stagenet**         | `avalanche,fantom,moonbeam,kava,ethereum-sepolia,arbitrum-sepolia,linea-sepolia,polygon-sepolia,base-sepolia,blast-sepolia,mantle-sepolia,optimism-sepolia`                                                                                              |
+| **Testnet**          | `ethereum-sepolia,avalanche,fantom,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,centrifuge-2,optimism-sepolia,base-sepolia,blast-sepolia,mantle-sepolia,polygon-sepolia,linea-sepolia`                                             |
 | **Mainnet**          | `celo,ethereum,avalanche,fantom,polygon,moonbeam,binance,arbitrum,kava,filecoin,optimism,linea,base,mantle,scroll,centrifuge,immutable,fraxtal,blast`                                                                                                            |
 
 1. Update npm dependencies

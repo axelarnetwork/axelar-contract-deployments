@@ -2537,7 +2537,9 @@
         "api": "https://evm.flowscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 5000000,
+        "maxFeePerGas": 20000000000,
+        "maxPriorityFeePerGas": 2000000000
       },
       "confirmations": 1,
       "finality": "finalized",
