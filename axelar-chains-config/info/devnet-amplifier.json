@@ -484,7 +484,7 @@
           "owner": "0xBCd0E8c0E2D12a606c4434Bcd538FE5b451f0a4C"
         },
         "Operators": {
-          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
+          "owner": "0xBCd0E8c0E2D12a606c4434Bcd538FE5b451f0a4C",
           "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
