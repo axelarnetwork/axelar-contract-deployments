@@ -14,21 +14,19 @@ Setting a flow limit to the minimum value (1) effectively freezes transfers for 
 
 ## Routine Operations
 
-Use flow limits for:
-- **Rate Limiting**: Setting appropriate transfer caps for tokens based on operational requirements
-- **Volume Management**: Controlling transfer volumes during high-traffic periods
-- **Operational Adjustments**: Gradually increasing or decreasing limits based on usage patterns
-- **Monitoring**: Tracking flow metrics to understand token movement patterns
+- **Baseline Rate Limiting**: Establish standard transfer caps per token/chain for normal operations
+- **Capacity Planning**: Adjust limits based on expected traffic patterns and usage forecasts
+- **Gradual Scaling**: Incrementally raise or lower limits as part of operational optimization
+- **Performance Monitoring**: Track flow metrics to inform capacity decisions
 
 ## Emergency Scenarios
 
-Use this action when:
 - **Abnormal Transfer Volume**: Unusual transfer activity detected (e.g., volume > 3x average of past 5 hours)
-- **Token Exploit Risk**: Specific token is at risk of being exploited, need to rate limit transfers immediately
-- **Security Incident**: Security team identifies token-related security issues
+- **Token Exploit Risk**: Specific token is at risk of being exploited, requiring immediate rate limiting
+- **Security Incident**: Security team identifies active token-related security issues
 - **Partner Notification**: Partner or security researcher reports token compromise
-- **Chain-Specific Issues**: Issues on a specific chain affecting token transfers
-- **Preventive Measure**: Proactive rate limiting to prevent potential exploits
+- **Chain-Specific Issues**: Critical issues on a specific chain affecting token transfers
+- **Immediate Containment**: Freeze tokens (set limit to 1) to stop all transfers during active threats
 
 ## Execution
 
@@ -154,14 +152,13 @@ ts-node sui/its.js set-flow-limits \
   0
 ```
 
-## Check Current Flow Status
+## Verification
 
-Before setting limits, check current flow metrics:
+After execution, verify the flow limit was set:
 
 **EVM:**
 ```bash
 ts-node evm/its.js flow-limit <tokenId>
-
 ```
 
 **Stellar:**
@@ -169,4 +166,4 @@ ts-node evm/its.js flow-limit <tokenId>
 ts-node stellar/its.js flow-limit <tokenId>
 ```
 
-**Sui:** Check the updated flow limit via script or block explorer.
+**Sui:** Check the updated flow limit via cli or block explorer.

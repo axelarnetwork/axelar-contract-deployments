@@ -8,7 +8,6 @@ The migration process moves the token's state and functionality to a new contrac
 
 ## Routine Operations
 
-Token migration is used for planned operational activities:
 - **Planned Contract Upgrades**: Move tokens to improved implementations as part of scheduled upgrades
 - **Token Standard Adoption**: Adopt updated token standards through planned migration processes
 - **Feature Enhancements**: Migrate to managers with better features as part of operational improvements
@@ -16,7 +15,6 @@ Token migration is used for planned operational activities:
 
 ## Emergency Scenarios
 
-Token migration is critical for emergency response:
 - **Token Compromise**: Token contract has been compromised and requires immediate migration to a secure contract
 - **Active Security Incident**: Active security issues require urgent migration to a secure contract
 - **Critical Vulnerability**: Critical bugs in token contract require emergency migration to patched version
