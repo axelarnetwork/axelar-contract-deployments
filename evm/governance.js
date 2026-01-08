@@ -215,8 +215,7 @@ function decodeProposalPayload(proposal) {
 function ensureNonZeroActivationTime(commandName, activationTime) {
     if (String(activationTime).trim() === '0') {
         throw new Error(
-            `${commandName} does not support activationTime=0. Use an explicit UTC timestamp (YYYY-MM-DDTHH:mm:ss). ` +
-                `If you scheduled with 0, record the resolved timestamp (e.g. from the script output / destination-chain ETA) and reuse it.`,
+            `${commandName} does not support activationTime=0. Use an explicit UTC timestamp (YYYY-MM-DDTHH:mm:ss). `
         );
     }
 }
