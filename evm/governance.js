@@ -702,7 +702,6 @@ async function main(action, args, options) {
             printInfo('Amplifier proposal written to file', options.generateOnly);
         } else if (!prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
             const submitFn = async (client, config, submitOptions, _args, fee) => {
-                // For these governance submissions we default to the standard deposit amount.
                 submitOptions.deposit = config.proposalDepositAmount();
 
                 const msgs = amplifierAxelarnetMsgs.map((msg) => JSON.stringify(msg));
