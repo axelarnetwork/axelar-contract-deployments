@@ -80,7 +80,7 @@ echo "$KEYRING_PASSWORD" | axelard tx wasm execute "$DST_MULTISIG_PROVER" \
   -y
 ```
 
-Open the tx on explorer and serach for `multisig_session_id` from events, and save it
+Open the tx on explorer and search for `multisig_session_id` from events, and save it
 
 - Example tx: `https://devnet-amplifier.axelarscan.io/tx/256A48A63A860F0C2C2B4AB192E5CA891FE84A01DDE413A5DF04CE872A435353` # skip-check
 
