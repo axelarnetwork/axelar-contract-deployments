@@ -53,38 +53,27 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
     ```bash
     ts-node cosmwasm/contract.ts store-code \
         -c ChainCodecSui -c ChainCodecStellar -c ChainCodecEvm \
-        -t "Stores chain-codec contracts" \
-        -d "Stores chain-codec v1.0.0 for Sui, Stellar and EVM" \
         --version 1.0.0 \
         --governance
     ```
 
-1. Instantiate the chain codec contracts using instantiate2 to predict the addresses:
+1. Instantiate the chain codec contracts using instantiate2 to predict the addresses. To avoid sending proposals, use the wasm deployer key.
 
     ```bash
     ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecSui  \
-        -t "Stores chain-codec contract for Sui" \
-        -d "Stores chain-codec v1.0.0 for Sui" \
         --fetchCodeId \
-        --instantiate2 \
-        --governance
+        --instantiate2
 
     ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecStellar  \
-        -t "Stores chain-codec contract for Stellar" \
-        -d "Stores chain-codec v1.0.0 for Stellar" \
         --fetchCodeId \
-        --instantiate2 \
-        --governance
+        --instantiate2
 
     ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecEvm  \
-        -t "Stores chain-codec contract EVM" \
-        -d "Stores chain-codec v1.0.0 for EVM" \
         --fetchCodeId \
-        --instantiate2 \
-        --governance
+        --instantiate2
     ```
 
 ### MultisigProver and VotingVerifier migration
@@ -100,8 +89,6 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
-        -t "Upload MultisigProver v1.2.0 contract" \
-        -d "Upload MultisigProver v1.2.0 contract" \
         -n stellar \
         -v 1.2.0 \
         -c MultisigProver \
@@ -110,8 +97,6 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
-        -t "Upload VotingVerifier v2.0.1 contract" \
-        -d "Upload VotingVerifier v2.0.1 contract" \
         -n stellar \
         -v 2.0.1 \
         -c VotingVerifier \
@@ -134,8 +119,6 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
     ```bash
     ts-node cosmwasm/contract.ts store-code \
         -c Coordinator \
-        -t "Upload Coordinator contract v3.0.0" \
-        -d "Upload Coordinator contract v3.0.0" \
         -v 3.0.0 \
         --governance
     ```
@@ -143,8 +126,6 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
     ```bash
     ts-node cosmwasm/contract.ts migrate \
         -c Coordinator \
-        -t "Migrate Coordinator to v3.0.0" \
-        -d "Migrate Coordinator to v3.0.0" \
         --msg '{}' \
         --fetchCodeId \
         --governance
