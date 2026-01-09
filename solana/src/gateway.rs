@@ -475,6 +475,7 @@ fn append_verification_flow_instructions(
     instructions: &mut Vec<Instruction>,
     execute_data: &ExecuteData,
     gateway_config_pda: &Pubkey,
+    payload_type: PayloadType,
 ) -> eyre::Result<Pubkey> {
     let (verifier_set_tracker_pda, _bump) = solana_axelar_gateway::VerifierSetTracker::find_pda(
         &execute_data.signing_verifier_set_merkle_root,
@@ -701,6 +702,7 @@ fn approve(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
+        PayloadType::ApproveMessages,
     )?;
     let MerklizedPayload::NewMessages { mut messages } = execute_data.payload_items else {
         eyre::bail!("Expected Messages payload");
@@ -797,6 +799,7 @@ async fn rotate(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
+        PayloadType::RotateSigners,
     )?;
 
     let (event_authority_pda, _) =
@@ -865,6 +868,7 @@ async fn submit_proof(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
+        PayloadType::ApproveMessages,
     )?;
 
     match execute_data.payload_items {
