@@ -214,9 +214,7 @@ function decodeProposalPayload(proposal) {
 
 function ensureNonZeroActivationTime(commandName, activationTime) {
     if (String(activationTime).trim() === '0') {
-        throw new Error(
-            `${commandName} does not support activationTime=0. Use an explicit UTC timestamp (YYYY-MM-DDTHH:mm:ss). `
-        );
+        throw new Error(`${commandName} does not support activationTime=0. Use an explicit UTC timestamp (YYYY-MM-DDTHH:mm:ss). `);
     }
 }
 
@@ -622,7 +620,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
 
 async function submitProposalToAxelar(proposal, options) {
     const submitFn = async (client, config, submitOptions, _args, fee) => {
-        submitOptions.deposit = config.proposalDepositAmount();
+        if (!submitOptions.deposit) {
+            submitOptions.deposit = options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount();
+        }
         printInfo('Proposal details:');
         printInfo('Proposal title', proposal.title);
         printInfo('Proposal description', proposal.description);
@@ -643,6 +643,7 @@ async function submitProposalToAxelar(proposal, options) {
         title: proposal.title,
         description: proposal.description,
         yes: options.yes,
+        standardProposal: options.standardProposal,
     };
 
     await cosmwasmMainProcessor(submitFn, submitOptions);
@@ -702,8 +703,6 @@ async function main(action, args, options) {
             printInfo('Amplifier proposal written to file', options.generateOnly);
         } else if (!prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
             const submitFn = async (client, config, submitOptions, _args, fee) => {
-                submitOptions.deposit = config.proposalDepositAmount();
-
                 const msgs = amplifierAxelarnetMsgs.map((msg) => JSON.stringify(msg));
                 await executeByGovernance(
                     client,
@@ -722,6 +721,7 @@ async function main(action, args, options) {
                 description,
                 yes: options.yes,
                 rpc: options.rpc,
+                standardProposal: options.standardProposal,
             };
 
             await cosmwasmMainProcessor(submitFn, submitOptions);
