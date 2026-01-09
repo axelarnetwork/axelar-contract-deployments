@@ -1143,6 +1143,8 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
     verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
 };
 
+const isEvmChain = (chain) => chain?.chainType === 'evm';
+
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
 const isHyperliquidChain = (chain) => chain.axelarId.toLowerCase().includes('hyperliquid');
@@ -1242,6 +1244,7 @@ module.exports = {
     getWeightedSigners,
     getQualifiedContractName,
     verifyContractByName,
+    isEvmChain,
     isConsensusChain,
     isHyperliquidChain,
     isHederaChain,

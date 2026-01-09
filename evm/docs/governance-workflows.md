@@ -60,10 +60,22 @@ If relayers didn't execute the GMP call automatically, manually submit it:
 
 ```bash
 # Get the commandId from Axelarscan (see Step 4)
-ts-node evm/governance.js submit upgrade <commandId> <activationTime> \
+ts-node evm/governance.js submit schedule upgrade <commandId> <activationTime> \
   --targetContractName AxelarGateway \
   --implementation 0xNewImplementationAddress
 ```
+
+If you are **cancelling** a scheduled proposal and relayers fail, submit the cancellation similarly:
+
+```bash
+ts-node evm/governance.js submit cancel upgrade <commandId> <activationTime> \
+  --targetContractName AxelarGateway \
+  --implementation 0xNewImplementationAddress
+```
+
+**Amplifier note (no relayers):** For Amplifier-style proposals where there is **no relayer setup**, the “manual” steps also require
+constructing proof on `MultisigProver` and submitting it to the destination EVM gateway. Follow:
+[Amplifier governance (no relayers / manual proof)](amplifier-governance.md).
 
 6. Check Proposal ETA and Verify It Has Passed
 
@@ -102,10 +114,12 @@ If you need to cancel a scheduled proposal before execution:
 
 ```bash
 # Cancel before ETA passes
-ts-node evm/governance.js cancel upgrade \
+ts-node evm/governance.js cancel upgrade <activationTime> \
   --targetContractName AxelarGateway \
   --implementation 0xNewImplementationAddress
 ```
+
+If relayers fail to execute the cancellation GMP, use the `submit cancel ...` command shown above.
 
 **Note:** You can only cancel proposals that haven't reached their ETA yet.
 
@@ -143,7 +157,7 @@ The `raw` action allows you to execute any function on any contract through gove
 5. **Manual Submit (if relayers failed):**
 
     ```bash
-    ts-node evm/governance.js submit raw <commandId> <activationTime> \
+    ts-node evm/governance.js submit schedule raw <commandId> <activationTime> \
       --target <contractAddress> \
       --calldata <generatedCalldata>
     ```
@@ -218,7 +232,7 @@ ts-node evm/gateway.js \
 ```bash
 ts-node evm/its.js set-trusted-chains ethereum avalanche \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 #### Remove Trusted Chains via ITS
@@ -226,7 +240,7 @@ ts-node evm/its.js set-trusted-chains ethereum avalanche \
 ```bash
 ts-node evm/its.js remove-trusted-chains ethereum avalanche \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 #### Pause / Unpause ITS
@@ -235,14 +249,14 @@ ts-node evm/its.js remove-trusted-chains ethereum avalanche \
 # Pause ITS
 ts-node evm/its.js set-pause-status true \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 ```bash
 # Unpause ITS
 ts-node evm/its.js set-pause-status false \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 #### Migrate Interchain Token via ITS
@@ -250,7 +264,7 @@ ts-node evm/its.js set-pause-status false \
 ```bash
 ts-node evm/its.js migrate-interchain-token 0x0000...0000 \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 ### Gateway Governance Actions
@@ -262,7 +276,7 @@ ts-node evm/gateway.js \
   --action transferGovernance \
   --destination 0xNewGovernorAddress \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 #### Transfer Gateway Operatorship via Governance (Amplifier)
@@ -272,7 +286,7 @@ ts-node evm/gateway.js \
   --action transferOperatorship \
   --newOperator 0xNewOperatorAddress \
   --governance \
-  --activationTime <activationTime> # UTC timestamp or relative seconds
+  --activationTime <activationTime> # UTC timestamp (YYYY-MM-DDTHH:mm:ss) or 0
 ```
 
 - Only supported when `AxelarGateway` is configured with `connectionType: "amplifier"`.
@@ -295,11 +309,12 @@ are executed via the governance contract’s timelock.
 2. **If relayers failed, manually submit the GMP call (optional)**
     - Use the `submit` command from `evm/governance.js`:
         ```bash
-        ts-node evm/governance.js submit raw <commandId> <activationTime> [options]
+        ts-node evm/governance.js submit <proposaltype> raw <commandId> <activationTime> [options]
         ```
     - **Where:**
         - `<commandId>` is the GMP `commandId` from Axelarscan (see the "Submit Proposal" section in `governance.md` for how to find it).
-        - `<activationTime>` is the same activation time you used when scheduling (UTC timestamp or relative seconds).
+        - `<activationTime>` is the same activation time you used when scheduling (UTC timestamp or `0`).
+        - `<proposaltype>` is `schedule` for submitting a scheduled timelock proposal, or `cancel` for submitting a cancellation.
 
 3. **Inspect ETA on the destination chain**
     - Once the GMP has executed and the timelock is created on the destination chain, compute the ETA with:
@@ -330,9 +345,11 @@ EVM‑side operator must then approve and execute the proposal.
 2. **(Optional) Manually submit the operator proposal if relayers fail**
     - Use the `submit-operator` command:
         ```bash
-        ts-node evm/governance.js submit-operator <action> <commandId> <activationTime> [options]
+        ts-node evm/governance.js submit-operator <proposaltype> <action> <commandId> <activationTime> [options]
         ```
+    - `proposaltype` must be one of: `schedule-operator`, `cancel-operator`.
     - Use the same `action` and options as when scheduling the proposal.
+    - This command submits the underlying GMP message by calling `governance.execute(commandId, sourceChain, sourceAddress, payload)` on the destination governance contract.
 
 3. **Check whether the operator proposal has been approved**
     - Use the `is-operator-approved` command:

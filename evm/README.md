@@ -245,7 +245,7 @@ Full docs can be found [here](./docs/contract-ownership.md).
 #### Migrate interchain token
 `ts-node evm/its.js migrate-interchain-token <tokenId> --yes`
 
-*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+*Note: add the following flags for operating via governance: `--governance --activationTime 2025-12-31T12:00:00 [--generate-only proposal.json]` and then submit the proposal
 
 ### Gateway operator commands (evm/gateway.js)
 
@@ -293,63 +293,17 @@ Note: For upgrades, continue to use governance flows; operational actions run vi
 #### Propose operatorship
 `ts-node evm/its.js propose-operatorship <operator> --yes`
 
-*Note: add the following flags for operating via governance:  `--governance --governanceEta 2025-12-31T12:00:00 --file proposal.json` and then submit the proposal
+*Note: add the following flags for operating via governance: `--governance --activationTime 2025-12-31T12:00:00 [--generate-only proposal.json]` and then submit the proposal
 
 ### AxelarServiceGovernance (operator) extensions
 
-`AxelarServiceGovernance` extends `InterchainGovernance` with operator approval functionality that bypasses timelock. The CLI includes convenience commands for operator-style proposals:
+`AxelarServiceGovernance` extends `InterchainGovernance` with operator approval functionality that can bypass timelock.
 
-1. Schedule operator approval proposal
+- Full CLI + examples: [docs/governance.md](./docs/governance.md)
+- End-to-end workflows: [docs/governance-workflows.md](./docs/governance-workflows.md)
+- Amplifier (no relayers / manual proof): [docs/amplifier-governance.md](./docs/amplifier-governance.md)
 
-```bash
-ts-node evm/governance.js schedule-operator <target> <calldata> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
-```
-
-Note: Defaults to `AxelarServiceGovernance` .
-
-2. Cancel operator approval proposal
-
-```bash
-# Generate proposal JSON only
-ts-node evm/governance.js cancel-operator <target> <calldata> --file proposal.json
-```
-
-If `--file` is not supplied, the script will prompt for confirmation and then submit the proposal to the Axelar network using `MNEMONIC`.
-
-3. Submit operator approval via GMP (if relayers failed)
-
-```bash
-ts-node evm/governance.js submit-operator <target> <calldata> <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds>
-```
-
-4. Execute an approved operator proposal
-
-```bash
-# Note: Operator EOA must call this after approval
-ts-node evm/governance.js execute-operator-proposal <target> <calldata>
-```
-
-5. Check operator proposal approval status
-
-```bash
-ts-node evm/governance.js is-operator-approved <target> <calldata>
-```
-
-Transfers of operatorship can be scheduled/cancelled/submitted like any other action:
-
-```bash
-# schedule
-ts-node evm/governance.js schedule transferOperatorship <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --newOperator 0xNewOperator
-
-# cancel
-ts-node evm/governance.js cancel transferOperatorship \
-  --calldata <calldata> 
-
-# submit after vote
-ts-node evm/governance.js submit transferOperatorship <commandId> <YYYY-MM-DDTHH:mm:ss|relative-seconds> \
-  --calldata <calldata>
-```
+**Activation time:** use `YYYY-MM-DDTHH:mm:ss` (UTC) or `0` (immediate; min delay is enforced on-chain).
 
 ## Utilities
 

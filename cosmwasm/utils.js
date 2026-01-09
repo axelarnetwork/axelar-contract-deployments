@@ -1,7 +1,6 @@
 'use strict';
 
 const zlib = require('zlib');
-const { createHash } = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const protobuf = require('protobufjs');
@@ -73,6 +72,18 @@ const toArray = (value) => {
     return Array.isArray(value) ? value : [value];
 };
 
+const payloadToHexBinary = (payload) => {
+    if (!payload) {
+        return '';
+    }
+
+    if (payload.startsWith('0x')) {
+        return Buffer.from(payload.slice(2), 'hex').toString('hex');
+    }
+
+    return Buffer.from(payload, 'base64').toString('hex');
+};
+
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
@@ -102,7 +113,6 @@ const getUnitDenom = (config) => {
 
 const validateGovernanceMode = (config, contractName, chainName) => {
     const governanceAddress = config.axelar.governanceAddress;
-
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
             `Contract ${contractName}${chainName ? ` (${chainName})` : ''} governanceAddress is not set to governance module address. ` +
@@ -1525,6 +1535,7 @@ module.exports = {
     encodeSubmitProposal,
     encodeChainStatusRequest,
     submitCallContracts,
+    payloadToHexBinary,
     signAndBroadcastWithRetry,
     loadProtoDefinition,
     getNexusProtoType,

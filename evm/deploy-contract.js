@@ -73,15 +73,15 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const governanceAddress = axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-            const multisig = contractConfig.multisig;
+            const operator = contractConfig.operator;
 
             validateParameters({
-                isAddress: { gateway, multisig },
+                isAddress: { gateway, operator },
                 isNonEmptyString: { governanceChain, governanceAddress },
                 isNumber: { minimumTimeDelay },
             });
 
-            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
+            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, operator];
         }
 
         case 'InterchainProposalSender': {
