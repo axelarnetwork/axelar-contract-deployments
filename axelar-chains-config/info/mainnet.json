@@ -3740,7 +3740,7 @@
         },
         "storeCodeProposalId": "433",
         "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
-        "codeId": 16,
+        "codeId": 55,
         "lastUploadedCodeId": 55
       },
       "Gateway": {
@@ -3922,7 +3922,7 @@
         },
         "storeCodeProposalId": "434",
         "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
-        "codeId": 49,
+        "codeId": 56,
         "lastUploadedCodeId": 56
       },
       "InterchainTokenService": {
