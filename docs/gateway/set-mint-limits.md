@@ -2,7 +2,7 @@
 
 ## Overview
 
-Set mint limits controls how much of a token can be minted on the Gateway over time. This is a per-token rate limiting mechanism that helps prevent unlimited minting and provides protection against exploits.
+Set mint limits controls how much of a token can be minted on the Gateway tokens over time. This is a per-token rate limiting mechanism that helps prevent unlimited minting and provides protection against exploits.
 
 **Key Concepts:**
 - **Mint Limit**: Maximum amount of a token that can be minted. Setting `limit = 1` effectively freezes mints for that token.
@@ -20,7 +20,6 @@ Setting a mint limit to the minimum value (1) effectively freezes mints for that
 
 ## Emergency Scenarios
 
-- **Abnormal Minting Activity**: Unusual minting activity detected (e.g., volume > 3x average)
 - **Token Exploit Risk**: Specific token is at risk of being exploited, requiring immediate mint limiting
 - **Security Incident**: Security team identifies active token-related security issues
 - **Partner Notification**: Partner or security researcher reports token compromise

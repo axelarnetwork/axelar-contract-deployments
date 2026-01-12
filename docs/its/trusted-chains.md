@@ -25,7 +25,7 @@ This is a critical security control that allows operators to quickly isolate pro
 
 ### EVM
 
-**Required Role:** ITS Owner
+**Required Role:** ITS Owner or Operator
 
 **Set Trusted Chains (add/replace):**
 ```bash

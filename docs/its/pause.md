@@ -70,5 +70,3 @@ After execution, verify pause status:
 ```bash
 ts-node stellar/contract.js paused InterchainTokenService
 ```
-
-**Sui:** Check via cli or block explorer.

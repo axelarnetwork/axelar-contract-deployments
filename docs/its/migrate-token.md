@@ -2,23 +2,15 @@
 
 ## Overview
 
-Token migration allows you to move an interchain token to a new token manager contract while preserving its interchain functionality. This is useful when a token contract needs to be upgraded or replaced, or when migrating to a more secure implementation.
+The migrate interchain token operation transfers the minter role from ITS to the token manager for native interchain tokens. This operation is specifically for tokens that were deployed through ITS (native interchain tokens), not custom tokens that were linked.
 
-The migration process moves the token's state and functionality to a new contract, ensuring continuity of interchain transfers.
+**Key Concepts:**
+- **Native Interchain Tokens**: Tokens deployed through ITS using `deployInterchainToken`
+- **Minter Role Migration**: Transfers mintership from ITS to the token manager
+- **EVM Only**: This operation is only available on EVM chains
 
-## Routine Operations
+The migration process transfers the minter role to the token manager, allowing the token manager to directly control minting operations for the token.
 
-- **Planned Contract Upgrades**: Move tokens to improved implementations as part of scheduled upgrades
-- **Token Standard Adoption**: Adopt updated token standards through planned migration processes
-- **Feature Enhancements**: Migrate to managers with better features as part of operational improvements
-- **Migration Testing**: Practice migrations on testnet before mainnet deployment
-
-## Emergency Scenarios
-
-- **Token Compromise**: Token contract has been compromised and requires immediate migration to a secure contract
-- **Active Security Incident**: Active security issues require urgent migration to a secure contract
-- **Critical Vulnerability**: Critical bugs in token contract require emergency migration to patched version
-- **Incident Recovery**: Recovering from a compromised or vulnerable token implementation
 
 ## Execution
 
@@ -51,9 +43,13 @@ ts-node evm/its.js migrate-interchain-token 0x1234567890abcdef1234567890abcdef12
 
 ## Verification
 
-After execution, verify migration was successful:
+After execution, verify the minter role was transferred:
 
 **EVM:**
 ```bash
+# Get the token manager address
 ts-node evm/its.js token-manager-address <tokenId>
+
+# Verify the token manager is now the minter (check token contract directly)
+# The token manager should be the minter, not ITS
 ```

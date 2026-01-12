@@ -21,7 +21,7 @@ Setting a flow limit to the minimum value (1) effectively freezes transfers for 
 
 ## Emergency Scenarios
 
-- **Abnormal Transfer Volume**: Unusual transfer activity detected (e.g., volume > 3x average of past 5 hours)
+- **Abnormal Transfer Volume**: Unusual transfer activity detected
 - **Token Exploit Risk**: Specific token is at risk of being exploited, requiring immediate rate limiting
 - **Security Incident**: Security team identifies active token-related security issues
 - **Partner Notification**: Partner or security researcher reports token compromise
