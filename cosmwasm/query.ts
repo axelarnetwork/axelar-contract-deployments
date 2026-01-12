@@ -246,7 +246,7 @@ async function queryAllContractVersions(
                         const contractInfo = await getContractInfo(client, contractConfig.address);
                         contractConfig.version = contractInfo.version;
                     } catch (error) {
-                        printError(`Failed to get contract info for ${contractName}`, error);
+                        printError(`Failed to get contract info for ${contractName}`, error?.message || String(error));
                     }
                 }
 
@@ -262,7 +262,7 @@ async function queryAllContractVersions(
                             }
                             versions[contractInfo.version].push(chainName);
                         } catch (error) {
-                            printError(`Failed to get contract info for ${contractName} on ${chainName}`, error);
+                            printError(`Failed to get contract info for ${contractName} on ${chainName}`, error?.message || String(error));
                         }
                     }),
                 );
