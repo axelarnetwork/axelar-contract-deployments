@@ -3608,7 +3608,7 @@
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "executeProposalId": "245",
         "lastUploadedCodeId": 57,
-        "version": "2.1.3"
+        "version": "3.0.0"
       },
       "Multisig": {
         "blockExpiry": 50,
