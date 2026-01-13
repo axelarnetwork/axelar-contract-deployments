@@ -12,12 +12,16 @@ export interface FullConfig {
 }
 
 export interface AxelarConfig {
+    governanceAddress: string;
+    adminAddress: string;
+    multisigProverAdminAddress: string;
     contracts: Record<string, AxelarContractConfig>;
     rpc: string;
     gasPrice: string;
     gasLimit: string | number;
     govProposalInstantiateAddresses: string[];
     govProposalDepositAmount: string;
+    govProposalExpeditedDepositAmount?: string;
     chainId: string;
 }
 
@@ -33,6 +37,7 @@ export interface NonEVMChainConfig {
     finality: string;
     approxFinalityWaitTime: number;
     contracts: Record<string, ContractConfig>;
+    deprecated?: boolean;
 }
 
 export type ChainConfig = NonEVMChainConfig | EVMChainConfig;
@@ -60,18 +65,22 @@ export interface ContractConfig {
     address?: string;
     codeId?: number;
     storeCodeProposalCodeHash?: string;
+    storeInstantiateProposalId?: string;
     storeCodeProposalId?: string;
     lastUploadedCodeId?: number;
 }
 
+export interface ContractsChainInfo {
+    address: string;
+    codeId: number;
+}
+
 export interface AxelarContractConfig extends ContractConfig {
-    governanceAddress?: string;
     governanceAccount?: string;
-    [chainName: string]: unknown;
+    [chainName: string]: ContractsChainInfo | unknown;
 }
 
 export interface VotingVerifierChainConfig {
-    governanceAddress: string;
     serviceName: string;
     sourceGatewayAddress?: string;
     votingThreshold: [string, string];
@@ -85,16 +94,29 @@ export interface VotingVerifierChainConfig {
 }
 
 export interface MultisigProverChainConfig {
-    governanceAddress: string;
     encoder?: string;
     keyType?: string;
-    adminAddress: string;
+    adminAddress?: string;
     verifierSetDiffThreshold: number;
     signingThreshold: [string | number, string | number];
     codeId?: number;
     contractAdmin?: string;
     address?: string;
     domainSeparator?: string;
+    /** Whether the MultisigProver notifies the ChainCodec about the signing session. Defaults to false. */
+    notifySigningSession?: boolean;
+    /**
+     * Whether the MultisigProver expects full message payloads.
+     * This changes the message the relayer needs to send.
+     * Defaults to false.
+     */
+    expectFullMessagePayloads?: boolean;
+    /** The address of the SigVerifier contract. Defaults to null. */
+    sigVerifierAddress?: string | null;
+}
+
+export interface ChainCodecConfig {
+    address?: string;
 }
 
 export interface GatewayChainConfig {
@@ -158,6 +180,9 @@ export class ConfigManager implements FullConfig {
         }
 
         const requiredFields = [
+            'governanceAddress',
+            'adminAddress',
+            'multisigProverAdminAddress',
             'contracts',
             'rpc',
             'gasPrice',
@@ -233,6 +258,10 @@ export class ConfigManager implements FullConfig {
                 errors.push(`Chain '${chainName}': Missing required field '${field}'`);
             }
         });
+
+        if (chainConfig.axelarId?.toLowerCase() !== chainName.toLowerCase()) {
+            errors.push(`Chain '${chainName}': axelarId '${chainConfig.axelarId}' does not match chain name '${chainName}'`);
+        }
 
         if (chainConfig.chainType === 'evm') {
             const evmConfig = chainConfig as EVMChainConfig;
@@ -355,12 +384,22 @@ export class ConfigManager implements FullConfig {
         saveConfig({ chains: this.chains, axelar: this.axelar }, this.environment);
     }
 
-    public getProposalInstantiateAddresses(): string[] {
+    public proposalInstantiateAddresses(): string[] {
         return this.axelar.govProposalInstantiateAddresses;
     }
 
-    public getProposalDepositAmount(): string {
+    public proposalDepositAmount(): string {
         return this.axelar.govProposalDepositAmount;
+    }
+
+    public proposalExpeditedDepositAmount(): string {
+        const expeditedAmount = this.axelar.govProposalExpeditedDepositAmount;
+        if (!expeditedAmount) {
+            throw new Error(
+                `Expedited deposit amount not configured for ${this.environment}. Use --standardProposal flag to submit a standard proposal.`,
+            );
+        }
+        return expeditedAmount;
     }
 
     public getChainConfig(chainName: string): ChainConfig {
@@ -453,7 +492,6 @@ export class ConfigManager implements FullConfig {
 
     public getMultisigProverContractForChainType(chainType: string): string {
         const chainProverMapping: Record<string, string> = {
-            svm: 'SolanaMultisigProver',
             xrpl: 'XrplMultisigProver',
         };
         return chainProverMapping[chainType] || MULTISIG_PROVER_CONTRACT_NAME;
@@ -464,18 +502,12 @@ export class ConfigManager implements FullConfig {
         const multisigProverContractName = this.getMultisigProverContractForChainType(chainConfig.chainType);
         const multisigProverConfig = this.getContractConfigByChain(multisigProverContractName, chainName) as MultisigProverChainConfig;
 
-        this.validateRequired(multisigProverConfig.adminAddress, `${multisigProverContractName}[${chainName}].adminAddress`, 'string');
         this.validateRequired(
             multisigProverConfig.verifierSetDiffThreshold,
             `${multisigProverContractName}[${chainName}].verifierSetDiffThreshold`,
             'number',
         );
         this.validateThreshold(multisigProverConfig.signingThreshold, `${multisigProverContractName}[${chainName}].signingThreshold`);
-        this.validateRequired(
-            multisigProverConfig.governanceAddress,
-            `${multisigProverContractName}[${chainName}].governanceAddress`,
-            'string',
-        );
 
         return multisigProverConfig;
     }
@@ -487,12 +519,32 @@ export class ConfigManager implements FullConfig {
         return chainVerifierMapping[chainType] || VERIFIER_CONTRACT_NAME;
     }
 
+    public getChainCodecContractForChainType(chainType: string): string {
+        const mapping: Record<string, string> = {
+            evm: 'ChainCodecEvm',
+            sui: 'ChainCodecSui',
+            stellar: 'ChainCodecStellar',
+            svm: 'ChainCodecSolana',
+        };
+
+        const result = mapping[chainType];
+        if (!result) {
+            throw new Error(`Unsupported or unknown chain type '${chainType}' when resolving ChainCodec`);
+        }
+        return result;
+    }
+
+    public getChainCodecAddress(chainType: string): string {
+        const chainCodec = this.getChainCodecContractForChainType(chainType);
+        const chainCodecConfig = this.getContractConfig(chainCodec);
+        return this.validateRequired(chainCodecConfig.address, `${chainCodec}.address`);
+    }
+
     public getVotingVerifierContract(chainName: string): VotingVerifierChainConfig {
         const chainConfig = this.getChainConfig(chainName);
         const verifierContractName = this.getVotingVerifierContractForChainType(chainConfig.chainType);
         const votingVerifierConfig = this.getContractConfigByChain(verifierContractName, chainName) as VotingVerifierChainConfig;
 
-        this.validateRequired(votingVerifierConfig.governanceAddress, `${verifierContractName}[${chainName}].governanceAddress`, 'string');
         this.validateRequired(votingVerifierConfig.serviceName, `${verifierContractName}[${chainName}].serviceName`, 'string');
         this.validateThreshold(votingVerifierConfig.votingThreshold, `${verifierContractName}[${chainName}].votingThreshold`);
         this.validateRequired(votingVerifierConfig.blockExpiry, `${verifierContractName}[${chainName}].blockExpiry`, 'number');

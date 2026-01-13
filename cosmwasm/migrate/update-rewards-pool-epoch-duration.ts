@@ -5,12 +5,12 @@ import { StdFee } from '@cosmjs/stargate';
 import { Command, Option } from 'commander';
 
 import { AxelarContractConfig, ConfigManager } from '../../common/config';
-import { getAmplifierChains, printError, printHighlight, printInfo, printWarn, prompt } from '../../common/utils';
+import { getAmplifierChains, printError, printHighlight, printInfo, printWarn, prompt, validateParameters } from '../../common/utils';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor, mainQueryProcessor } from '../processor';
+import { confirmProposalSubmission, submitProposal } from '../proposal-utils';
 import { RewardsPoolResponse, queryRewardsPool } from '../query';
-import { confirmProposalSubmission } from '../submit-proposal';
-import { GOVERNANCE_MODULE_ADDRESS, encodeExecuteContract, submitProposal } from '../utils';
+import { GOVERNANCE_MODULE_ADDRESS, encodeExecuteContract } from '../utils';
 
 interface PoolParams {
     chainName: string;
@@ -123,12 +123,12 @@ function printPoolParams(poolParams: PoolParams[], env: string): void {
     });
 }
 
-function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string): UpdatePoolParamsMessage[] {
+function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string, newRewardsPerEpoch?: string): UpdatePoolParamsMessage[] {
     return poolParams.map((pool) => ({
         update_pool_params: {
             params: {
                 epoch_duration: newEpochDuration,
-                rewards_per_epoch: pool.rewards_per_epoch,
+                rewards_per_epoch: newRewardsPerEpoch ?? pool.rewards_per_epoch,
                 participation_threshold: pool.participation_threshold,
             },
             pool_id: {
@@ -140,8 +140,7 @@ function buildUpdateMessages(poolParams: PoolParams[], newEpochDuration: string)
 }
 
 function isGovernanceRequired(configManager: ConfigManager): boolean {
-    const rewardsConfig = configManager.getContractConfig('Rewards') as AxelarContractConfig;
-    const rewardsGovernanceAddress = configManager.validateRequired(rewardsConfig.governanceAddress, 'Rewards.governanceAddress');
+    const rewardsGovernanceAddress = configManager.validateRequired(configManager.axelar.governanceAddress, 'axelar.governanceAddress');
 
     return rewardsGovernanceAddress === GOVERNANCE_MODULE_ADDRESS;
 }
@@ -150,7 +149,7 @@ async function submitAsGovernanceProposal(
     client: ClientManager,
     config: ConfigManager,
     messages: UpdatePoolParamsMessage[],
-    options: { title: string; description: string; deposit?: string; yes?: boolean },
+    options: { title: string; description: string; deposit?: string; standardProposal?: boolean; yes?: boolean },
     fee: string | StdFee,
 ): Promise<string> {
     const [account] = client.accounts;
@@ -167,7 +166,8 @@ async function submitAsGovernanceProposal(
     const proposalOptions = {
         title: options.title,
         description: options.description,
-        deposit: options.deposit || config.getProposalDepositAmount(),
+        deposit: options.deposit,
+        standardProposal: options.standardProposal,
     };
 
     if (!confirmProposalSubmission(options, encodedMessages)) {
@@ -221,20 +221,24 @@ async function executeDirectly(
 async function updateRewardsPoolEpochDuration(
     client: ClientManager,
     configManager: ConfigManager,
-    options: Options & { epochDuration: string; title?: string; description?: string; yes?: boolean },
+    options: Options & {
+        epochDuration: string;
+        rewardsPerEpoch?: string;
+        title?: string;
+        description?: string;
+        yes?: boolean;
+    },
     _args: string[],
     fee: string | StdFee,
 ): Promise<void> {
-    const epochDurationNum = Number(options.epochDuration);
-    if (isNaN(epochDurationNum) || epochDurationNum <= 0 || !Number.isInteger(epochDurationNum)) {
-        throw new Error('--epoch-duration must be a positive integer');
+    validateParameters({ isPositiveInteger: { epochDuration: options.epochDuration } });
+
+    if (options.rewardsPerEpoch !== undefined) {
+        validateParameters({ isPositiveInteger: { rewardsPerEpoch: options.rewardsPerEpoch } });
     }
 
     const poolParams = await queryAllRewardsPools(client, configManager);
-
-    if (poolParams.length === 0) {
-        throw new Error('No rewards pools found. Cannot proceed with update.');
-    }
+    validateParameters({ isPositiveInteger: { poolParamsLength: poolParams.length } });
 
     const amplifierChains = getAmplifierChains(configManager.chains);
     const expectedPoolCount = amplifierChains.length * 2;
@@ -243,17 +247,21 @@ async function updateRewardsPoolEpochDuration(
         printWarn(`Expected ${expectedPoolCount} pools but only found ${poolParams.length}. Some pools may be missing.`);
     }
 
-    const messages = buildUpdateMessages(poolParams, options.epochDuration);
+    if (options.rewardsPerEpoch) {
+        printInfo('Rewards per epoch', `Updating to ${options.rewardsPerEpoch} for all pools`);
+    } else {
+        printInfo('Rewards per epoch', 'Using existing values per pool');
+    }
+
+    const messages = buildUpdateMessages(poolParams, options.epochDuration, options.rewardsPerEpoch);
 
     const requiresGovernance = isGovernanceRequired(configManager);
     const executionMethod = requiresGovernance ? 'governance proposal' : 'direct execution (admin bypass)';
     printInfo('Execution method', executionMethod);
 
     if (requiresGovernance) {
-        const title = options.title || `Update rewards pool epoch_duration to ${options.epochDuration}`;
-        const description =
-            options.description ||
-            `Update epoch_duration from current values to ${options.epochDuration} blocks for ${messages.length} rewards pools across ${new Set(poolParams.map((p) => p.chainName)).size} amplifier chains.`;
+        const title = options.title || 'Update rewards pools';
+        const description = options.description || 'Update rewards pool parameters';
 
         await submitAsGovernanceProposal(
             client,
@@ -282,7 +290,7 @@ addAmplifierOptions(
         .description('Query and display current rewards pool parameters')
         .action(async (options) => {
             await mainQueryProcessor(
-                async (client, configManager, options, _args, _fee) => {
+                async (client, configManager, options, _args) => {
                     const poolParams = await queryAllRewardsPools(client, configManager);
                     printPoolParams(poolParams, options.env);
                 },
@@ -299,8 +307,9 @@ addAmplifierOptions(
 addAmplifierOptions(
     program
         .command('update')
-        .description('Update rewards pool epoch_duration for amplifier chains')
+        .description('Update rewards pool parameters for amplifier chains')
         .addOption(new Option('--epoch-duration <epochDuration>', 'new epoch_duration value (in blocks)').makeOptionMandatory(true))
+        .addOption(new Option('--rewards-per-epoch <rewardsPerEpoch>', 'update the rewards_per_epoch to new value'))
         .addOption(new Option('-t, --title <title>', 'governance proposal title (optional, auto-generated if not provided)'))
         .addOption(
             new Option('-d, --description <description>', 'governance proposal description (optional, auto-generated if not provided)'),

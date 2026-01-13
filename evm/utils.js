@@ -59,7 +59,7 @@ const {
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const ITSPackage = require('@axelar-network/interchain-token-service/package.json');
-const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
+const { verifyContract } = require('axelar-chains-config');
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
@@ -244,6 +244,62 @@ function getGovernanceAddress(chain, contractName, address) {
     }
 
     return contractConfig.address;
+}
+
+function getGovernanceContract(chain, options = {}) {
+    const governanceContract = options.governanceContract;
+
+    if (options.operatorProposal && governanceContract !== 'AxelarServiceGovernance') {
+        throw new Error('Operator proposals require --governanceContract AxelarServiceGovernance or unset --operatorProposal.');
+    }
+
+    const governanceAddress = getGovernanceAddress(chain, governanceContract);
+
+    if (!governanceAddress) {
+        throw new Error(
+            `${governanceContract} contract is not configured on ${chain.name}. Please provide --governanceContract or ensure the contract is deployed.`,
+        );
+    }
+
+    return { governanceContract, governanceAddress };
+}
+
+function getScheduleProposalType(options, ProposalType, action) {
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+
+    if (options.operatorProposal) {
+        const actionLabel = action ? ` for action ${action}` : '';
+        printInfo(`Using operator-based proposal${actionLabel}`, 'ApproveOperator');
+    }
+
+    return proposalType;
+}
+
+function createGovernanceProposal({
+    chain,
+    options,
+    targetAddress,
+    calldata,
+    nativeValue = '0',
+    ProposalType,
+    encodeGovernanceProposal,
+    createGMPProposalJSON,
+    dateToEta,
+}) {
+    const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
+    printInfo('Governance contract', governanceContract);
+    const eta = dateToEta(options.activationTime || '0');
+
+    const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+    if (options.operatorProposal) {
+        printInfo('Using operator-based proposal', 'ApproveOperator');
+    }
+    const gmpPayload = encodeGovernanceProposal(proposalType, targetAddress, calldata, nativeValue, eta);
+
+    printInfo('Governance target', targetAddress);
+    printInfo('Governance calldata', calldata);
+
+    return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
 }
 
 // Validate if the input privateKey is correct
@@ -1087,6 +1143,8 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
     verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
 };
 
+const isEvmChain = (chain) => chain?.chainType === 'evm';
+
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
 const isHyperliquidChain = (chain) => chain.axelarId.toLowerCase().includes('hyperliquid');
@@ -1166,7 +1224,10 @@ module.exports = {
     handleTransactionWithEvent,
     isContract,
     isValidAddress,
+    getGovernanceContract,
     getGovernanceAddress,
+    getScheduleProposalType,
+    createGovernanceProposal,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
@@ -1183,6 +1244,7 @@ module.exports = {
     getWeightedSigners,
     getQualifiedContractName,
     verifyContractByName,
+    isEvmChain,
     isConsensusChain,
     isHyperliquidChain,
     isHederaChain,

@@ -113,9 +113,9 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
 Contract wasm binary can be passed by specifiying the path to the directory containing contract artifact files or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-- `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-dir [contract wasm dir] -c [contract name] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract.ts [store-code|instantiate|store-instantiate] -c [contract name] --artifact-dir [contract wasm dir] -e [environment] -n <chain name>`
 
-- `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
+- `ts-node cosmwasm/contract.ts [store-code|instantiate|store-instantiate] -c [contract name] -v [contract version] -e [environment] -n <chain name>`
 
 **Common options:**
 
@@ -123,39 +123,53 @@ Contract wasm binary can be passed by specifiying the path to the directory cont
 
 Available subcommands:
 
-- `upload`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
+- `store-code`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
 
 - `instantiate`: Instantiates a contract, it gets the codeId by order of priority from:
     1. Value of `--codeId` option
     2. From the network when using `--fetchCodeId` option by comparing previously uploaded bytecode's code hash with config `storeCodeProposalCodeHash`
     3. Value of previously saved `lastUploadedCodeId` in config
+    - Use `--predictOnly` with `--instantiate2` to predict and save the address without instantiating
 
-- `upload-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+- `store-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+    - Note: `instantiate2` is not supported with `--governance` flag for this command
 
 - `migrate`: Migrates a contract using a new codeId, which is retrieved the same way as `instantiate` subcommand. The migrate message must be provided using the `--msg` option.
+
+Example:
+
+```
+ts-node cosmwasm/contract.ts migrate -c ServiceRegistry --codeId 123 --msg '{}' -e devnet
+```
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
 Example deployments with order dependency:
 
-1.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-dir [contract wasm dir] -c "AxelarnetGateway" --instantiate2 -e devnet`
-2.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-dir [contract wasm dir] -c "Router" --instantiate2 -e devnet`
-3.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
-4.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
-5.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "ServiceRegistry" -e devnet`
-6.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Rewards" -e devnet`
-7.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Coordinator" -e devnet`
-8.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Multisig" -e devnet`
-9.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "InterchainTokenService" -e devnet`
-10. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "VotingVerifier" -e devnet -n "avalanche"`
-11. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Gateway" -e devnet -n "avalanche"`
-12. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "MultisigProver" -e devnet -n "avalanche"`
+1.  `ts-node cosmwasm/contract.ts store-code -c AxelarnetGateway --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+2.  `ts-node cosmwasm/contract.ts store-code -c Router --artifact-dir [contract wasm dir] --instantiate2 -e devnet`
+3.  `ts-node cosmwasm/contract.ts instantiate -c AxelarnetGateway --instantiate2 -e devnet`
+4.  `ts-node cosmwasm/contract.ts instantiate -c Router --instantiate2 -e devnet`
+5.  `ts-node cosmwasm/contract.ts store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet`
+6.  `ts-node cosmwasm/contract.ts store-instantiate -c Rewards --artifact-dir [contract wasm dir] -e devnet`
+7.  `ts-node cosmwasm/contract.ts store-instantiate -c Coordinator --artifact-dir [contract wasm dir] -e devnet`
+8.  `ts-node cosmwasm/contract.ts store-instantiate -c Multisig --artifact-dir [contract wasm dir] -e devnet`
+9.  `ts-node cosmwasm/contract.ts store-instantiate -c InterchainTokenService --artifact-dir [contract wasm dir] -e devnet`
+10. `ts-node cosmwasm/contract.ts store-instantiate -c VotingVerifier --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+11. `ts-node cosmwasm/contract.ts store-instantiate -c Gateway --artifact-dir [contract wasm dir] -e devnet -n avalanche`
+12. `ts-node cosmwasm/contract.ts store-instantiate -c MultisigProver --artifact-dir [contract wasm dir] -e devnet -n avalanche`
 
 ### Constant Address Deployment
 
 To deploy with a constant address using instantiate2, pass the `--instantiate2` flag.
-To upload the contract and compute the expected address without instantiating, pass `--instantiate2` while using the `upload` subcommand. This will write the contract address and the code id to the config file.
+To upload the contract and compute the expected address without instantiating, pass `--instantiate2` while using the `store-code` command. This will write the contract address and the code id to the config file.
 A salt can be passed with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used as a salt.
+
+Example:
+
+```
+ts-node cosmwasm/contract.ts store-code -c Gateway --instantiate2 -s my-salt
+```
 
 ### Deploying through governance proposals
 
@@ -168,13 +182,30 @@ ts-node submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal
 **Common options:**
 
 - `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
+- `--standardProposal`: Submit as a standard proposal instead of expedited (default is expedited). Use this flag if you want to use the standard proposal deposit amount and voting period.
+
+**Expedited Proposals:**
+
+By default, all governance proposals are submitted as expedited proposals, which have:
+
+- A higher deposit requirement (configured via `govProposalExpeditedDepositAmount` in the config)
+- A shorter voting period
+- Faster execution after passing
+
+The deposit amount is automatically set from the config based on whether the proposal is expedited (default) or standard (when `--standardProposal` flag is used). You can override the deposit amount by explicitly providing the `--deposit` option.
 
 ### Uploading bytecode through governance
 
 Example usage:
 
 ```
-ts-node cosmwasm/submit-proposal.js store -c ServiceRegistry
+ts-node cosmwasm/contract.ts store-code -c ServiceRegistry --governance
+```
+
+For multiple contracts in a single proposal:
+
+```
+ts-node cosmwasm/contract.ts store-code -c Gateway -c VotingVerifier -c MultisigProver --governance
 ```
 
 By default, only governance will be able to instantiate the bytecode. To allow other addresses to instantiate the bytecode, pass `--instantiateAddresses [address1],[address2],[addressN]`.
@@ -195,7 +226,7 @@ Prerequisites: Submit a proposal to upload the bytecode as described in the prev
 Example usage:
 
 ```
-ts-node cosmwasm/submit-proposal.js instantiate -c ServiceRegistry --fetchCodeId
+ts-node cosmwasm/contract.ts instantiate -c ServiceRegistry --fetchCodeId --governance
 ```
 
 Use the option `--fetchCodeId` to retrieve and update the code id from the network by comparing the code hash of the uploaded bytecode with the code hash submitted through the store code proposal mentioned in the previous section.
@@ -243,16 +274,24 @@ ts-node cosmwasm/query.js save-deployed-contracts avalanche
 
 ### Uploading and instantiating in one step
 
-The command `storeInstantiate` from the `submit-proposal` script, allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
+The command `store-instantiate` allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of when using with governance:
 
-1. There is no support for `instantiate2` using this proposal type. This means that the contract address will not be known until the proposal is executed and therefore it cannot be saved in the config.
+1. There is no support for `instantiate2` using this proposal type with `--governance`. This means that the contract address will not be known until the proposal is executed and therefore it cannot be saved in the config.
 
 2. Since governance proposals are executed asynchronously, both the codeId and contract address are not immediately available. Querying the network for the correct values could be tricky if multiple proposals are executed together.
 
 Example usage:
 
+Direct execution:
+
 ```
-ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+ts-node cosmwasm/contract.ts store-instantiate -c ServiceRegistry --artifact-dir [contract wasm dir] -e devnet
+```
+
+Governance proposal:
+
+```
+ts-node cosmwasm/contract.ts store-instantiate -c ServiceRegistry --governance
 ```
 
 ### Execute a contract through governance proposal
@@ -320,27 +359,6 @@ ts-node cosmwasm/contract.ts its-hub-register-chains avalanche-fuji sui-test2 -t
 
 # Update existing chain registration (e.g., to change translator contract)
 ts-node cosmwasm/contract.ts its-hub-update-chains aleo-2 -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000
-```
-
-### Submit a proposal to change a parameter
-
-To submit a governance proposal to change a parameter, use the `submit-proposal` script with the `paramChange` command. The `--changes` option should be used to pass a JSON string representing an array of parameter changes.
-
-Note: `-t` & `-d` is still required for `paramChange` & `execute` command
-
-Example usage:
-
-```
-ts-node cosmwasm/submit-proposal.js paramChange \
-	-t "Set Gateway at Nexus Module" \
-	-d "Proposal to update nexus param gateway address." \
-	--changes '[
-  {
-    "subspace": "nexus",
-    "key": "gateway",
-    "value": "'$GATEWAY_ADDRESS'"
-  }
-]'
 ```
 
 ### Submit a proposal to migrate a contract

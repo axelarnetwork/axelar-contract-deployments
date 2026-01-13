@@ -9,8 +9,8 @@ export type Options = {
     contractName: string;
     chainName: string;
     mnemonic: string;
-    runAs?: string;
     deposit?: string;
+    standardProposal?: boolean;
     instantiateAddresses?: string[];
     rpc?: string;
 };
@@ -22,28 +22,29 @@ type ProcessorFn = (
     args?: string[],
     fee?: string | StdFee,
 ) => Promise<void>;
-type ProcessorQueryFn = (
-    client: CosmWasmClient,
-    config: ConfigManager,
-    options: Options,
-    args?: string[],
-    fee?: string | StdFee,
-) => Promise<void>;
+type ProcessorQueryFn = (client: CosmWasmClient, config: ConfigManager, options: Options, args?: string[]) => Promise<void>;
 
 export interface ClientManager extends SigningCosmWasmClient {
     accounts: readonly AccountData[];
 }
 
+function prepareQueryProcessor(options: Options): { configManager: ConfigManager } {
+    const { env, contractName, chainName } = options;
+    const configManager = new ConfigManager(env);
+
+    if (contractName) {
+        configManager.initContractConfig(contractName, chainName);
+    }
+
+    return { configManager };
+}
+
 function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
-    const { runAs, deposit, instantiateAddresses, env } = options;
+    const { instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
     const fee = configManager.getFee();
 
-    options.runAs =
-        runAs ||
-        (env === 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj');
-    options.deposit = deposit || configManager.getProposalDepositAmount();
-    options.instantiateAddresses = instantiateAddresses || configManager.getProposalInstantiateAddresses();
+    options.instantiateAddresses = instantiateAddresses || configManager.proposalInstantiateAddresses();
 
     configManager.initContractConfig(options.contractName, options.chainName);
 
@@ -74,7 +75,7 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
 
 export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, options: Options, args?: string[]) {
     const { rpc: axelarNode } = options;
-    const { configManager, fee } = prepareProcessor(options);
+    const { configManager } = prepareQueryProcessor(options);
     const axelarNodeFromConfig = configManager.axelar.rpc;
 
     if (axelarNode) {
@@ -82,10 +83,12 @@ export async function mainQueryProcessor(processorQueryFn: ProcessorQueryFn, opt
     }
 
     const client = await CosmWasmClient.connect(configManager.axelar.rpc);
-    await processorQueryFn(client, configManager, options, args, fee);
+    const res = await processorQueryFn(client, configManager, options, args);
 
     configManager.axelar.rpc = axelarNodeFromConfig;
     configManager.saveConfig();
+
+    return res;
 }
 
 async function prepareClient(mnemonic: string, rpc: string, gasPrice: GasPrice): Promise<ClientManager> {

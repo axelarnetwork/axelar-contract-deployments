@@ -1,7 +1,7 @@
 # &lt; ChainName &gt; GMP vX.X.X
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                                |
+| -------------- | ---------------------------------------- |
 | **Created By** | @[github-username] <user@interoplabs.io> |
 | **Deployment** | @[github-username] <user@interoplabs.io> |
 
@@ -32,7 +32,7 @@ Create an `.env` config
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAINS=<chain name>
 ```
 
 | Network              | `deployer address`                           |
@@ -96,17 +96,17 @@ ts-node evm/its.js checks -n $CHAIN -y
 
 ```bash
 # Create a token on `<ChainName>`
-ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial_supply] --minter [minter] --salt [some salt] -n $CHAIN 
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial_supply] --minter [minter] --salt [some salt] -n $CHAIN
 
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token --destinationChain [destination_chain] --salt [same salt as above] -n $CHAIN
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination_chain] --salt [same salt as above] -n $CHAIN
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
 ```
 
 ## Ownership and Operator Roles Checklist
@@ -118,22 +118,22 @@ The following steps should be performed for role transfers after deploying contr
 
     ```bash
     AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
-    ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE 
-    ts-node evm/ownership.js -c InterchainTokenService --action owner 
+    ts-node evm/ownership.js -c InterchainTokenService --action transferOwnership --newOwner $AXELAR_SERVICE_GOVERNANCE
+    ts-node evm/ownership.js -c InterchainTokenService --action owner
     ```
 
 2. **Transfer InterchainTokenService operator role to Rate Limiter EOA**  
    (only if ITS exists; set operator first if zero address)
 
-    | Network              | `RATE_LIMITER_EOA_ADDRESS`              |
-    | -------------------- | --------------------------------------- |
-    | **Devnet-amplifier** | `<RATE_LIMITER_EOA_ADDRESS>`            |
-    | **Stagenet**         | `<RATE_LIMITER_EOA_ADDRESS>`            |
-    | **Testnet**          | `<RATE_LIMITER_EOA_ADDRESS>`            |
-    | **Mainnet**          | `<RATE_LIMITER_EOA_ADDRESS>`            |
+    | Network              | `RATE_LIMITER_EOA_ADDRESS`   |
+    | -------------------- | ---------------------------- |
+    | **Devnet-amplifier** | `<RATE_LIMITER_EOA_ADDRESS>` |
+    | **Stagenet**         | `<RATE_LIMITER_EOA_ADDRESS>` |
+    | **Testnet**          | `<RATE_LIMITER_EOA_ADDRESS>` |
+    | **Mainnet**          | `<RATE_LIMITER_EOA_ADDRESS>` |
 
     ```bash
     RATE_LIMITER_EOA="<RATE_LIMITER_EOA_ADDRESS>"
-    ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA 
+    ts-node evm/its.js transferOperatorship $RATE_LIMITER_EOA
     ts-node evm/its.js operator
     ```

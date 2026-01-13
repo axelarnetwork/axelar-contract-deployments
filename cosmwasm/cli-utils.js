@@ -16,6 +16,10 @@ const addAmplifierOptions = (program, options = {}) => {
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
     program.addOption(new Option('--governance', 'submit a governance proposal instead of executing directly'));
 
+    if (options.singleContractOption) {
+        addSingleContractOption(program);
+    }
+
     if (options.contractOptions) {
         addContractOptions(program);
     }
@@ -25,7 +29,7 @@ const addAmplifierOptions = (program, options = {}) => {
         program.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
             const contractName = opts.contractName;
-            const contractNames = contractName;
+            const contractNames = Array.isArray(contractName) ? contractName : [contractName];
 
             const contractCodePaths = {};
             for (const name of contractNames) {
@@ -88,10 +92,6 @@ const addAmplifierOptions = (program, options = {}) => {
     if (options.fetchCodeId) {
         program.addOption(new Option('--fetchCodeId', 'fetch code id from the chain by comparing to the uploaded code hash'));
     }
-
-    if (options.runAs) {
-        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
-    }
 };
 
 const addChainNameOption = (program) => {
@@ -108,11 +108,53 @@ const addAxelarNodeOption = (program) => {
     program.addOption(new Option('-u, --rpc <axelarNode>', 'axelar RPC url').env('AXELAR_RPC'));
 };
 
+const addCoreOptions = (program) => {
+    addEnvOption(program);
+    addAxelarNodeOption(program);
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(
+        new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
+    );
+    program.addOption(new Option('-t, --title <title>', 'Proposal title (optional, auto-generated if not provided)'));
+    program.addOption(new Option('-d, --description <description>', 'Proposal description (optional, defaults to title)'));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
+};
+
 const addAmplifierQueryContractOptions = (program) => {
     addEnvOption(program);
     addAxelarNodeOption(program);
 
     addContractOptions(program);
+};
+
+const validateContract = (contractName, chainName) => {
+    if (!CONTRACTS[contractName]) {
+        throw new Error(`contract ${contractName} is not supported`);
+    }
+    if (!CONTRACTS[contractName].makeInstantiateMsg) {
+        throw new Error(`makeInstantiateMsg function for contract ${contractName} is not defined`);
+    }
+    const scope = CONTRACTS[contractName].scope;
+    if (!scope) {
+        throw new Error(`scope of contract ${contractName} is not defined`);
+    }
+    if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
+        throw new Error(`${contractName} requires chainName option`);
+    }
+    if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
+        throw new Error(`${contractName} does not support chainName option`);
+    }
+};
+
+const addSingleContractOption = (program) => {
+    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
+    addChainNameOption(program);
+    program.hook('preAction', (command) => {
+        const chainName = command.opts().chainName;
+        const contractName = command.opts().contractName;
+        validateContract(contractName, chainName);
+    });
 };
 
 const addContractOptions = (program) => {
@@ -123,24 +165,7 @@ const addContractOptions = (program) => {
         const contractName = command.opts().contractName;
         const contractNames = contractName;
 
-        contractNames.forEach((name) => {
-            if (!CONTRACTS[name]) {
-                throw new Error(`contract ${name} is not supported`);
-            }
-            if (!CONTRACTS[name].makeInstantiateMsg) {
-                throw new Error(`makeInstantiateMsg function for contract ${name} is not defined`);
-            }
-            const scope = CONTRACTS[name].scope;
-            if (!scope) {
-                throw new Error(`scope of contract ${name} is not defined`);
-            }
-            if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
-                throw new Error(`${name} requires chainName option`);
-            }
-            if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
-                throw new Error(`${name} does not support chainName option`);
-            }
-        });
+        contractNames.forEach((name) => validateContract(name, chainName));
     });
 };
 
@@ -182,6 +207,9 @@ const addExecuteProposalOptions = (program) => {
             'json encoded execute message(s). Can be specified multiple times for multiple messages in one proposal',
         ).makeOptionMandatory(true),
     );
+    program.addOption(
+        new Option('--dry-run', 'print the proposal JSON for combining multiple proposals manually, then exit without submitting'),
+    );
 };
 
 const addParamChangeProposalOptions = (program) => {
@@ -199,6 +227,7 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 
 module.exports = {
@@ -206,4 +235,5 @@ module.exports = {
     addAmplifierQueryOptions,
     addAmplifierQueryContractOptions,
     addChainNameOption,
+    addCoreOptions,
 };

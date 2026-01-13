@@ -1,16 +1,16 @@
 # Memento GMP v6.0.6
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
+|                | **Owner**                          |
+| -------------- | ---------------------------------- |
 | **Created By** | @nbayindirli <noah@interoplabs.io> |
 | **Deployment** | @nbayindirli <noah@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Network**          | **Deployment Status** | **Date** |
+| -------------------- | --------------------- | -------- |
+| **Devnet Amplifier** | -                     | TBD      |
+| **Stagenet**         | -                     | TBD      |
+| **Testnet**          | -                     | TBD      |
+| **Mainnet**          | -                     | TBD      |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -127,22 +127,28 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+    ts-node cosmwasm/contract.ts instantiate-chain-contracts \
     -n $CHAIN \
     -s "$SALT" \
+    --admin $CONTRACT_ADMIN \
     --fetchCodeId \
-    -t "Instantiate contracts for $CHAIN" \
-    -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
+    --governance # omit on devnet-amplifier
     ```
 
 1. Wait for proposal to pass and query deployed contract addresses
 
     ```bash
-    ts-node cosmwasm/query.js save-deployed-contracts -n $CHAIN
+    ts-node cosmwasm/query.ts save-deployed-contracts $CHAIN
+    ```
+
+1. Register deployment
+
+    ```bash
+    ts-node cosmwasm/contract.ts register-deployment $CHAIN \
+    --governance # omit on devnet-amplifier
     ```
 
 1. Set environment variables
-
     - These variables are network-specific
 
     ```bash
@@ -169,7 +175,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     EPOCH_DURATION=[epoch duration according to the environment]
     ```
 
-    - Add a community post for the mainnet proposal. i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>
+    - Add a community post for the mainnet proposal (i.e: <https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227>) and share on `mainnet-announcements` channel on Discord.
 
     - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/2025-09-Memento-ITS-v2.2.0.md) should also be submitted at this time if possible.
 
@@ -185,45 +191,11 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for $CHAIN in $CHAIN voting verifier" \
-    -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-    --msg "{
-        \"create_pool\": {
-            \"params\": {
-                \"epoch_duration\": \"$EPOCH_DURATION\",
-                \"participation_threshold\": [participation threshold],
-                \"rewards_per_epoch\": \"[rewards per epoch]\"
-            },
-            \"pool_id\": {
-                \"chain_name\": \"$CHAIN\",
-                \"contract\": \"$VOTING_VERIFIER\"
-            }
-        }
-    }"
-    ```
-
-1. Create reward pool for multisig
-
-    ```bash
-    ts-node cosmwasm/submit-proposal.js execute \
-    -c Rewards \
-    -t "Create pool for $CHAIN in axelar multisig" \
-    -d "Create pool for $CHAIN in axelar multisig" \
-    --msg "{
-        \"create_pool\": {
-            \"params\": {
-                \"epoch_duration\": \"$EPOCH_DURATION\",
-                \"participation_threshold\": [participation threshold],
-                \"rewards_per_epoch\": \"[rewards per epoch]\"
-            },
-            \"pool_id\": {
-                \"chain_name\": \"$CHAIN\",
-                \"contract\": \"$MULTISIG\"
-            }
-        }
-    }"
+    ts-node cosmwasm/contract.ts create-reward-pools $CHAIN \
+        --epochDuration "[epoch_duration]" \
+        --participationThreshold "[participation_threshold]" \
+        --rewardsPerEpoch "[rewards_per_epoch]" \
+        --governance # omit on devnet-amplifier
     ```
 
 1. Register ITS edge contract on ITS Hub
@@ -246,10 +218,8 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js \
-        its-hub-register-chains $CHAIN \
-        -t "Register $CHAIN on ITS Hub" \
-        -d "Register $CHAIN on ITS Hub"
+    ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+        --governance # omit on devnet-amplifier
     ```
 
     - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
@@ -263,11 +233,10 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     ```
 
 1. Confirm proposals have passed
-
     - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
     - "Instantiate contracts for Memento"
-    - "Create pool for Memento in Memento voting verifier"
-    - "Create pool for Memento in axelar multisig"
+    - "Register deployment for Memento"
+    - "Create reward pools for Memento"
     - (optional) "Register Memento on ITS Hub"
 
     - Check Gateway registered at Router
@@ -300,7 +269,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     - Check reward pool to confirm funding worked:
 
     ```bash
-    ts-node cosmwasm/query.js rewards $CHAIN
+    ts-node cosmwasm/query.ts rewards $CHAIN
     ```
 
 1. Update `ampd` with the Memento chain configuration. Verifiers should use their own Memento RPC node for the `http_url` in production.

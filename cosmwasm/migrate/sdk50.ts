@@ -7,7 +7,7 @@ import { addOptionsToCommands, getAmplifierChains, printInfo, printWarn, prompt 
 import { ConfigManager } from '../../common/config';
 import { addAmplifierOptions } from '../cli-utils';
 import { ClientManager, Options, mainProcessor } from '../processor';
-import { executeByGovernance, migrate } from '../submit-proposal';
+import { executeByGovernance, migrate } from '../proposal-utils';
 
 interface MigrationOptions extends Options {
     title?: string;
@@ -16,7 +16,7 @@ interface MigrationOptions extends Options {
     yes?: boolean;
     fetchCodeId?: boolean;
     codeId?: number;
-    runAs?: string;
+    [key: string]: unknown;
 }
 
 async function migrateAllVotingVerifiers(
@@ -209,7 +209,7 @@ const programHandler = () => {
             mainProcessor(updateSigningParametersForMultisig, options);
         });
 
-    addOptionsToCommands(program, addAmplifierOptions, { runAs: true });
+    addOptionsToCommands(program, addAmplifierOptions, {});
 
     program.parse();
 };
