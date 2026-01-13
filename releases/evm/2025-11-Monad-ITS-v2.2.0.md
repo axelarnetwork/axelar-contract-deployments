@@ -37,7 +37,7 @@ CHAINS=xyz
 | Network      | `deployer address`                           |
 | ------------ | -------------------------------------------- |
 | **Stagenet** | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**  | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
 | **Mainnet**  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ### Stagenet / Testnet / Mainnet
