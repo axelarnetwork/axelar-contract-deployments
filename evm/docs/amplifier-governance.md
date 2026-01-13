@@ -14,6 +14,7 @@ When submitting **Amplifier-style governance proposals** (i.e. a Cosmos “Axela
 - `axelard` installed and configured for the right environment / keyring.
 - A funded EVM key for the destination chain(s): `PRIVATE_KEY`.
 - A funded Axelar key (mnemonic) for proposal submission (unless you use `--generate-only`): `MNEMONIC`.
+- Set either `PRIVATE_KEY` or `MNEMONIC` in your `.env` file.
 
 ### 1) Create + submit the proposal (Amplifier -> destination EVM chain)
 
@@ -22,11 +23,6 @@ Run `evm/governance.js` over the **destination chain** you want to affect (not `
 Example: schedule an **operator proposal** to upgrade a contract:
 
 ```bash
-export ENV=devnet-amplifier
-export CHAINS=avalanche-fuji
-export PRIVATE_KEY=...
-export MNEMONIC="..."
-
 # Choose an activation time in UTC: YYYY-MM-DDTHH:mm:ss
 export ACTIVATION_TIME="2025-12-31T00:00:00"
 export NEW_IMPL="0xdB7d6A5B8d37a4f34BC1e7ce0d0B8a9DDA124871"
@@ -80,7 +76,7 @@ echo "$KEYRING_PASSWORD" | axelard tx wasm execute "$DST_MULTISIG_PROVER" \
   -y
 ```
 
-Open the tx on explorer and serach for `multisig_session_id` from events, and save it
+Open the tx on explorer and search for `multisig_session_id` from events, and save it
 
 - Example tx: `https://devnet-amplifier.axelarscan.io/tx/256A48A63A860F0C2C2B4AB192E5CA891FE84A01DDE413A5DF04CE872A435353` # skip-check
 

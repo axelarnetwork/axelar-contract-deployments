@@ -113,11 +113,6 @@ const getUnitDenom = (config) => {
 
 const validateGovernanceMode = (config, contractName, chainName) => {
     const governanceAddress = config.axelar.governanceAddress;
-    const env = config?.environment || config?.env;
-    // skip for devnet-amplifier, as we use different governance module address
-    if (env === 'devnet-amplifier') {
-        return;
-    }
     if (governanceAddress !== GOVERNANCE_MODULE_ADDRESS) {
         throw new Error(
             `Contract ${contractName}${chainName ? ` (${chainName})` : ''} governanceAddress is not set to governance module address. ` +
