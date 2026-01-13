@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "clean": "node scripts/clean.js",
+    "build": "npm run clean && tsc",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
     "test": "mocha -r ts-node/register 'test/**/*.ts' 'evm/test/**/*.js'",
@@ -30,6 +31,7 @@
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
+    "axelar-chains-config": "file:axelar-chains-config",
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
     "@axelar-network/axelar-cgp-sui": "1.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
