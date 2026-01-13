@@ -10,19 +10,19 @@
 | **Devnet Amplifier** | `core-avalanche`    | -                     | TBD      |
 |                      | `core-ethereum`     | -                     | TBD      |
 |                      | `core-optimism`     | -                     | TBD      |
-| **Stagenet**         | `avalanche`         | -                     | TBD      |
-|                      | `fantom`            | -                     | TBD      |
+| **Stagenet**         | `avalanche`         | Completed             | 19/12/2025      |
+|                      | `fantom`            | Completed             | 19/12/2025      |
 |                      | `moonbeam`          | -                     | TBD      |
-|                      | `kava`              | -                     | TBD      |
-|                      | `ethereum-sepolia`  | -                     | TBD      |
-|                      | `arbitrum-sepolia`  | -                     | TBD      |
-|                      | `linea-sepolia`     | -                     | TBD      |
-|                      | `polygon-sepolia`   | -                     | TBD      |
-|                      | `base-sepolia`      | -                     | TBD      |
+|                      | `kava`              | Completed             | 19/12/2025      |
+|                      | `ethereum-sepolia`  | Completed             | 19/12/2025      |
+|                      | `arbitrum-sepolia`  | Completed             | 19/12/2025      |
+|                      | `linea-sepolia`     | Completed             | 19/12/2025      |
+|                      | `polygon-sepolia`   | Completed             | 19/12/2025      |
+|                      | `base-sepolia`      | Completed             | 19/12/2025      |
 |                      | `blast-sepolia`     | -                     | TBD      |
 |                      | `fraxtal`           | -                     | TBD      |
-|                      | `mantle-sepolia`    | -                     | TBD      |
-|                      | `optimism-sepolia`  | -                     | TBD      |
+|                      | `mantle-sepolia`    | Completed             | 19/12/2025      |
+|                      | `optimism-sepolia`  | Completed             | 19/12/2025      |
 | **Testnet**          | `ethereum-sepolia`  | -                     | TBD      |
 |                      | `avalanche`         | -                     | TBD      |
 |                      | `fantom`            | -                     | TBD      |
@@ -117,12 +117,12 @@ Key checks:
 
 #### Configuration (if not deployed)
 
-| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `operatorAddress`                            |
-| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | -------------------------------------------- |
-| **Devnet-amplifier** |  `0`               | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v1.0.0 devnet-amplifier` | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v1.0.0`                  | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`             | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | `86400`            | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v1.0.0`                  | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `minimumTimeDelay` | `deployer`                                   | `salt`                    | `deploymentMethod` | `operatorAddress (AxelarServiceGovernance Operator EOA)` |
+| -------------------- | ------------------ | -------------------------------------------- | ------------------------- | ------------------ | -------------------------------------------------------- |
+| **Devnet-amplifier** | `0`                | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `v6.0.4 devnet-amplifier` | `create2`          | `0xD3Ba43B92cED452D04B20710C4db627667476024`             |           
+| **Stagenet**         | `300`              | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `v6.0.4`                  | `create2`          | `0x466548FaD128a4A7e1B4D51322061F270bb756DF`             |
+| **Testnet**          | `300`              | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` | `v6.0.4`                  | `create3`          | `TBD`                                                    |
+| **Mainnet**          | `259200`           | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `v6.0.4`                  | `create3`          | `TBD`                                                    |
 
 #### Add AxelarServiceGovernance config to `${ENV}.json`
 
@@ -135,7 +135,7 @@ For each consensus chain where AxelarServiceGovernance is not deployed, add the 
     "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
     "minimumTimeDelay": [minimumTimeDelay],
     "operator": "[operatorAddress]",
-    "deploymentMethod": "create2",
+    "deploymentMethod": "[deploymentMethod]",
     "salt": "[salt]"
   }
 }
@@ -175,7 +175,7 @@ ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-
 | Network              | Current Governance                                                                         | Axelar Service Governance |
 | -------------------- | ------------------------------------------------------------------------------------------ | ------------------------- |
 | **Devnet-Amplifier** | `0xfB71a4d90c37C9BCE7cD4Cb692cE26EA3AC0A319`, `0x677c130e0f17F91F7361AcC15b8d7e6A3D6ECeeb` | TBD                       |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                               | `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550` |
 | **Testnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD                       |
 | **Mainnet**          | `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`                                               | TBD                       |
 
@@ -183,7 +183,12 @@ ts-node evm/verify-contract.js -c AxelarServiceGovernance --dir /path/to/axelar-
 # Get the AxelarServiceGovernance contract address for this environment
 AXELAR_SERVICE_GOVERNANCE=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.AxelarServiceGovernance.address" | tr -d '"')
 
+# Stagenet/devnet
+ts-node evm/gateway.js --action transferGovernance --destination $AXELAR_SERVICE_GOVERNANCE
+
 - Note: Specify all the chain names on -n flag where we want proposal to run
+
+# Mainnet/Testnet
 
 # Transfer governance to AxelarServiceGovernance
 ts-node evm/gateway.js \
@@ -240,7 +245,7 @@ New owner: AxelarServiceGovernance.
 | **Network**          | Current Owner                                | Axelar Service Governance |
 | -------------------- | -------------------------------------------- | ------------------------- |
 | **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD                       |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 
@@ -290,7 +295,7 @@ New owner: AxelarServiceGovernance.
 | Network              | Current Owner                                | Axelar Service Governance |
 | -------------------- | -------------------------------------------- | ------------------------- |
 | **Devnet-Amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | TBD                       |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | TBD                       |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | TBD                       |
 
