@@ -14,7 +14,7 @@
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-    - SolanaMultisigProver: `8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068`
+    - SolanaMultisigProver: `9066612ae064702946322327eb6b3e7d450f45d0567ba7e35fb42ab4cded2349`
 
 ## Background
 
@@ -116,6 +116,8 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --governance
     ```
 
+TODO: ITS translator
+
 ## Deployment
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
@@ -189,6 +191,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -s $SALT \
         --fetchCodeId \
         --admin $CONTRACT_ADMIN \
+        -m $MNEMONIC \
         --governance # omit on devnet-amplifier
     ```
 
