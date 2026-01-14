@@ -3159,6 +3159,76 @@
           "implementation": "0x9d712a17416d2aa69e042743b7AA60BCF717602E"
         }
       }
+    },
+    "stellar-2025-q4": {
+      "name": "Stellar",
+      "axelarId": "stellar-2025-q4",
+      "rpc": "https://soroban-testnet.stellar.org",
+      "horizonRpc": "https://horizon-testnet.stellar.org",
+      "networkType": "testnet",
+      "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "XLM",
+      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "explorer": {
+        "name": "Stellar Expert",
+        "url": "https://stellar.expert/explorer/testnet"
+      },
+      "contracts": {
+        "AxelarOperators": {
+          "address": "CDERNWJXXOGPFGNCEWTMNZEVYW7GA6HXSQOIWEFIJB7UZMHUATKRWDDZ",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "bb0b653d32134aa5f68607f33d38e4f173a3fe5f10d3227f7bf655ee02ad7ca8",
+          "version": "1.1.2",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L"
+          }
+        },
+        "AxelarGasService": {
+          "address": "CA6IS6LIH4RBJNSQLOZDK2IH6FJN64BEDAVV3EH3GR7QFF5KIFXUVYKC",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "99f9a082d1ac65e4499cb462f7f92912a4715c84fc4e488802126d6c684c7f34",
+          "version": "1.1.2",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "operator": "CDERNWJXXOGPFGNCEWTMNZEVYW7GA6HXSQOIWEFIJB7UZMHUATKRWDDZ"
+          }
+        },
+        "Upgrader": {
+          "address": "CAPXAPT7F7K6Z7P3V3DDIIAFWS3MPWCUPZGHIM4C2WZ6KGOM6V7B63A3",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
+          "version": "1.1.2",
+          "initializeArgs": {}
+        },
+        "AxelarGateway": {
+          "address": "CAVWB6EL4OYRFD22AZAQJ4R3KZ3AWLSR7BRAZJWM25PPLDNESNF7YYGM",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "715eb94b616c7271bc1aeaf131f92f3ace830d93c3975e871db9a66951c5de92",
+          "version": "1.1.2",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "operator": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "domainSeparator": "febd05daa75a870ec2db81dc88661e97141814e7a6d75023e556035f063686d7",
+            "minimumRotationDelay": "3600",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "0b47ed3b66a0da4320e65dfe710611caa63858bc74986a90b7ba8558dd70ab3b",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        }
+      }
     }
   },
   "axelar": {
