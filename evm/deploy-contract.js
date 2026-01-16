@@ -70,7 +70,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = axelar.governanceAddress;
+            const governanceAddress = contractConfig.governanceAddress ? contractConfig.governanceAddress : axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
             const operator = contractConfig.operator;
@@ -99,7 +99,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = axelar.governanceAddress;
+            const governanceAddress = contractConfig.governanceAddress ? contractConfig.governanceAddress : axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
