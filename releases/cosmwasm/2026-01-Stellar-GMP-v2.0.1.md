@@ -35,14 +35,6 @@ ENV=xyz
 CHAIN=xyz
 ```
 
-- Confirm `VotingVerifier(v1.1.0)`, `Gateway(v1.1.1)` and `MultisigProver(v1.1.1)` contracts are already stored in `$ENV.json`
-
-```bash
-VotingVerifier(v1.1.0) -> "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
-Gateway(v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
-MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
-```
-
 - Add config in `$ENV.json` to deploy Amplifier contracts.
 
 | Network              | `governanceAddress`                             | `adminAddress`                                  |
@@ -304,4 +296,4 @@ bash -c '
 
 ## Checklist
 
-The [Stellar GMP checklist](../stellar/2025-01-GMP-v1.0.0.md) will test GMP call.
+The [Stellar GMP checklist](../stellar/2026-01-GMP-1.1.2.md) will test GMP call.

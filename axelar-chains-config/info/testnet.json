@@ -3445,11 +3445,13 @@
           ],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
+          "encoder": "stellar_xdr",
           "keyType": "ed25519",
           "codeId": 77,
           "domainSeparator": "0x82def54979df98408c35de3609bf460dabf064a4f7c193a5c9f34e0070887458",
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
-          "address": "axelar14xy6t4gnl26jxe3z2lqk24nnu3q0f7khlrpns9d00q9dvaqjzqmqp93ahp"
+          "address": "axelar14xy6t4gnl26jxe3z2lqk24nnu3q0f7khlrpns9d00q9dvaqjzqmqp93ahp",
+          "version": "1.2.0"
         },
         "celo-sepolia": {
           "signingThreshold": [
@@ -3538,7 +3540,8 @@
         "stellar-2026-q1-2": {
           "codeId": 24,
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
-          "address": "axelar19wr3vf0rk0jl0h8s2tcramn0wmnmv8gx7kp7j5rd5jjdypsjxkhqgufvzn"
+          "address": "axelar19wr3vf0rk0jl0h8s2tcramn0wmnmv8gx7kp7j5rd5jjdypsjxkhqgufvzn",
+          "version": "1.1.1"
         }
       },
       "VotingVerifier": {
@@ -3681,7 +3684,8 @@
           "addressFormat": "stellar",
           "codeId": 78,
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
-          "address": "axelar1wmwnuj0609q5sd6xfl9xvptcprsas6vr95z2kxjsnanc7suchntqgk3flu"
+          "address": "axelar1wmwnuj0609q5sd6xfl9xvptcprsas6vr95z2kxjsnanc7suchntqgk3flu",
+          "version": "2.0.1"
         },
         "celo-sepolia": {
           "serviceName": "amplifier",
