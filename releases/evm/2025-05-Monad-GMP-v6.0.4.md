@@ -87,7 +87,7 @@ npm ci
 |----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                                                                                                                           |
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
+| **Testnet**          | `0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0`, `0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4`, `0x02920e4b26a7C1e95c00F613d9E43Ff1d07D0124`, `0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF` |
 | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 2. Deploy `ConstAddrDeployer`:
@@ -98,7 +98,7 @@ npm ci
 |----------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
-| **Testnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
+| **Testnet**          | `0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF` |
 | **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 ```bash
@@ -113,7 +113,7 @@ ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath 
 |----------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**          | `0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
@@ -135,7 +135,7 @@ Note that since we only get one chance with the official deployer key nonce, the
 |----------------------|------------------------|------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Testnet**          | `3600`                 | `create`         | `0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -148,7 +148,7 @@ ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDel
 |----------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Testnet**          | `0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
@@ -174,7 +174,7 @@ ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 |----------------------|----------------------------------------------|----------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `create2`      |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `create2`      |
-| **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` | `create`       |
+| **Testnet**          | `0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4` | `create`       |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
 ```bash
@@ -189,7 +189,7 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{
 |----------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
 | **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**          | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
 
 ```bash
 ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
@@ -199,7 +199,7 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPE
 
 | Network     | `NEW_GATEWAY_OWNER_ADDRESS`                  |
 |-------------|----------------------------------------------|
-| **Testnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet** | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
 | **Mainnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
