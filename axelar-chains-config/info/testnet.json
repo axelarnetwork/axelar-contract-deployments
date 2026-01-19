@@ -3222,14 +3222,14 @@
           }
         },
         "AxelarExample": {
-          "address": "CDMBTRKTFP4KZ5Q663M2GFDCA5RQNHBQTODXS65C6354RVF36D6UJNTI",
+          "address": "CDKTN7AK35HIMJVL6MP2TRWDW75W32RB7MRGPSIZDUXXEXICO4GHT2G7",
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
           "wasmHash": "5593f0dbc9841b84cf9c8bcfaee3a5251350d749091a9bb60932fe6b030eefa6",
           "version": "1.0.7",
           "initializeArgs": {
             "gatewayAddress": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
             "gasServiceAddress": "CCLZOCGHHC6F6JCZHEUP53LDQHRBPPCNRYXOVFZFS3O63OGRC47CKCGV",
-            "itsAddress": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3"
+            "itsAddress": "CC7LAC4S7KAPIM26WKWFSOXWLNLSG7EXTC2EVY2H2UPKSTX3Z2A7M5YP"
           }
         },
         "Upgrader": {
@@ -3237,6 +3237,37 @@
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
           "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
           "version": "1.1.2",
+          "initializeArgs": {}
+        },
+        "InterchainTokenService": {
+          "address": "CC7LAC4S7KAPIM26WKWFSOXWLNLSG7EXTC2EVY2H2UPKSTX3Z2A7M5YP",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
+          "version": "1.4.1",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "operator": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "gatewayAddress": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
+            "gasServiceAddress": "CCLZOCGHHC6F6JCZHEUP53LDQHRBPPCNRYXOVFZFS3O63OGRC47CKCGV",
+            "itsHubAddress": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+            "chainName": "stellar-2026-q1-2",
+            "nativeTokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+            "interchainTokenWasmHash": "6cc453f7c1a0e7c2a153a11d7d7218a76ebeb41785239000bc5c428e02749cc8",
+            "tokenManagerWasmHash": "e29417a07222fe6ce5644ab9848757758bdb12ce973c5298f018384e27eecab9"
+          }
+        },
+        "Multicall": {
+          "address": "CARFOYY2QIXHFD2DX5PWIA7L5W4SP4UDCZK2WY4MA4JSTU2VKQ62TK3U",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
+          "version": "1.0.2",
+          "initializeArgs": {}
+        },
+        "TokenUtils": {
+          "address": "CCEXYZX2POWV5OINRWRQNLIVR5JPPIHWF3SHPPEYQ72JAZ22VHPMCQ7O",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
+          "version": "1.0.0",
           "initializeArgs": {}
         }
       }
@@ -3731,6 +3762,10 @@
         },
         "xrpl": {
           "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "stellar-2026-q1-2": {
+          "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
         },
         "hedera": {
