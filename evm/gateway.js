@@ -373,6 +373,17 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error('Invalid new governor address');
             }
 
+            const currGovernance = await gateway.governance();
+            printInfo('Current governance', currGovernance);
+
+            if (!options.governance) {
+                const isCurrentGovernor = currGovernance.toLowerCase() === walletAddress.toLowerCase();
+
+                if (!isCurrentGovernor) {
+                    throw new Error(`Caller ${walletAddress} is not the current governor (${currGovernance})`);
+                }
+            }
+
             await executeDirectlyOrSubmitProposal(chain, gateway, 'transferGovernance', [newGovernance], options, '0', [
                 'GovernanceTransferred',
             ]);
@@ -518,9 +529,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
                 if (!isCurrentOperator && !isOwner) {
-                    throw new Error(
-                        `Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`,
-                    );
+                    throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
                 }
             }
 

@@ -1254,10 +1254,10 @@ async function executeDirectlyOrSubmitProposal(chain, contract, method, args, op
         const events = [].concat(expectedEvents).filter(Boolean);
 
         if (events.length > 0) {
-            const missingEvents = events.filter((eventName) => !wasEventEmitted(receipt, contract, eventName));
+            const anyExpectedEventEmitted = events.some((eventName) => wasEventEmitted(receipt, contract, eventName));
 
-            if (missingEvents.length > 0) {
-                printWarn(`Missing expected event(s) in receipt: ${missingEvents.join(', ')}`);
+            if (!anyExpectedEventEmitted) {
+                printWarn(`Missing expected event(s) in receipt: ${events.join(', ')}`);
             }
         }
     }
