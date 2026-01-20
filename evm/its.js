@@ -512,11 +512,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'remove-trusted-chains': {
             const trustedChains = args;
-            const label = Array.from(trustedChains).join(', ');
-            const promptLabel = options.governance
-                ? `creating governance proposal to remove trusted chain(s): ${label}`
-                : `removing trusted chain(s): ${label}`;
-            if (prompt(`Proceed with ${promptLabel}?`, yes)) {
+            if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
