@@ -50,11 +50,7 @@ function addGovernanceOptions(program) {
     program.addOption(
         new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
     );
-    program.addOption(
-        new Option('--proposal-type <type>', 'proposal type')
-            .choices(['create', 'cancel'])
-            .default('create'),
-    );
+    program.addOption(new Option('--proposal-type <type>', 'proposal type').choices(['create', 'cancel']).default('create'));
 
     return program;
 }

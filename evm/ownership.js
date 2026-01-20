@@ -9,14 +9,7 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const {
-    printInfo,
-    printWarn,
-    printWalletInfo,
-    mainProcessor,
-    getGasOptions,
-    executeDirectlyOrSubmitProposal,
-} = require('./utils');
+const { printInfo, printWarn, printWalletInfo, mainProcessor, getGasOptions, executeDirectlyOrSubmitProposal } = require('./utils');
 const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
@@ -88,7 +81,9 @@ async function processCommand(_axelar, chain, _chains, options) {
                 throw new Error(`Caller ${wallet.address} is not the contract owner but ${currentOwner} is.`);
             }
 
-            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'transferOwnership', [newOwner], options, '0', ['OwnershipTransferred']);
+            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'transferOwnership', [newOwner], options, '0', [
+                'OwnershipTransferred',
+            ]);
 
             owner = await ownershipContract.owner();
 
@@ -113,7 +108,9 @@ async function processCommand(_axelar, chain, _chains, options) {
                 throw new Error(`Caller ${wallet.address} is not the contract owner.`);
             }
 
-            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'proposeOwnership', [newOwner], options, '0', ['OwnershipTransferStarted']);
+            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'proposeOwnership', [newOwner], options, '0', [
+                'OwnershipTransferStarted',
+            ]);
 
             const pendingOwner = await ownershipContract.pendingOwner();
 

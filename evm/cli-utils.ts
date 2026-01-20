@@ -85,10 +85,7 @@ interface GovernanceOptions {
 const addGovernanceOptions = (program: Command): Command => {
     program.addOption(new Option('--governance', 'Submit this change via interchain governance'));
     program.addOption(
-        new Option(
-            '--governanceContract <governanceContract>',
-            'Governance contract to target',
-        )
+        new Option('--governanceContract <governanceContract>', 'Governance contract to target')
             .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
             .default('AxelarServiceGovernance'),
     );
@@ -104,11 +101,7 @@ const addGovernanceOptions = (program: Command): Command => {
         new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
     );
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
-    program.addOption(
-        new Option('--proposal-type <type>', 'proposal type')
-            .choices(['create', 'cancel'])
-            .default('create'),
-    );
+    program.addOption(new Option('--proposal-type <type>', 'proposal type').choices(['create', 'cancel']).default('create'));
 
     return program;
 };

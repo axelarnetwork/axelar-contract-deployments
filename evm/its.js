@@ -26,13 +26,7 @@ const {
     mainProcessor,
     executeDirectlyOrSubmitProposal,
 } = require('./utils');
-const {
-    getChainConfigByAxelarId,
-    validateChain,
-    tokenManagerTypes,
-    validateLinkType,
-    estimateITSFee,
-} = require('../common/utils');
+const { getChainConfigByAxelarId, validateChain, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');

@@ -373,7 +373,9 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error('Invalid new governor address');
             }
 
-            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferGovernance', [newGovernance], options, '0', ['GovernanceTransferred']);
+            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferGovernance', [newGovernance], options, '0', [
+                'GovernanceTransferred',
+            ]);
 
             chain.contracts.AxelarGateway.governance = newGovernance;
 
@@ -505,7 +507,9 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
             }
 
-            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferOperatorship', [newOperator], options, '0', ['OperatorshipTransferred']);
+            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferOperatorship', [newOperator], options, '0', [
+                'OperatorshipTransferred',
+            ]);
 
             const updatedOperator = await gateway.operator();
             printInfo('New operator', updatedOperator);
