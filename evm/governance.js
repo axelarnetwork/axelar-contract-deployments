@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { defaultAbiCoder, keccak256, parseEther },
+    utils: { defaultAbiCoder, parseEther },
     Contract,
     BigNumber,
     constants: { AddressZero },
@@ -27,7 +27,6 @@ const {
     validateParameters,
     isConsensusChain,
     isEvmChain,
-    isValidAddress,
 } = require('./utils.js');
 const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
@@ -50,6 +49,11 @@ function addGovernanceOptions(program) {
     program.addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'));
     program.addOption(
         new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
+    );
+    program.addOption(
+        new Option('--proposal-type <type>', 'proposal type')
+            .choices(['create', 'cancel'])
+            .default('create'),
     );
 
     return program;
@@ -195,10 +199,6 @@ function encodeGovernanceProposal(commandType, target, calldata, nativeValue, et
     const types = ['uint256', 'address', 'bytes', 'uint256', 'uint256'];
     const values = [commandType, target, calldata, nativeValue, eta];
     return defaultAbiCoder.encode(types, values);
-}
-
-function getProposalHash(target, calldata, nativeValue) {
-    return keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
 }
 
 function decodeProposalPayload(proposal) {
@@ -649,30 +649,9 @@ async function submitProposalToAxelar(proposal, options) {
     await cosmwasmMainProcessor(submitFn, submitOptions);
 }
 
-async function main(action, args, options) {
-    options.args = args;
-    const consensusProposals = [];
-    const amplifierAxelarnetMsgs = [];
-
-    await mainProcessor(options, async (axelar, chain, chains, options) => {
-        const proposal = await processCommand(axelar, chain, chains, action, options);
-        if (proposal) {
-            if (isConsensusChain(chain)) {
-                consensusProposals.push(proposal);
-            } else {
-                amplifierAxelarnetMsgs.push({
-                    call_contract: {
-                        destination_chain: proposal.chain,
-                        destination_address: proposal.contract_address,
-                        payload: payloadToHexBinary(proposal.payload),
-                    },
-                });
-            }
-        }
-    });
-
-    const title = 'Interchain Governance Proposal';
-    const description = 'Interchain Governance Proposal';
+async function submitGovernanceProposals(consensusProposals, amplifierAxelarnetMsgs, title, description, options) {
+    const proposalType = options.proposalType;
+    const action = proposalType === 'cancel' ? 'cancelling' : 'submitting';
 
     const hasConsensus = consensusProposals.length > 0;
     const hasAmplifier = amplifierAxelarnetMsgs.length > 0;
@@ -684,7 +663,7 @@ async function main(action, args, options) {
         if (options.generateOnly) {
             writeJSON(proposal, options.generateOnly);
             printInfo('Consensus proposal written to file', options.generateOnly);
-        } else if (!prompt('Proceed with submitting this consensus-chain proposal to Axelar?', options.yes)) {
+        } else if (!prompt(`Proceed with ${action} this consensus-chain proposal to Axelar?`, options.yes)) {
             await submitProposalToAxelar(proposal, options);
         }
     }
@@ -701,7 +680,7 @@ async function main(action, args, options) {
         if (options.generateOnly) {
             writeJSON(amplifierPreview, options.generateOnly);
             printInfo('Amplifier proposal written to file', options.generateOnly);
-        } else if (!prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
+        } else if (!prompt(`Proceed with ${action} this amplifier-chain proposal to Axelar?`, options.yes)) {
             const submitFn = async (client, config, submitOptions, _args, fee) => {
                 const msgs = amplifierAxelarnetMsgs.map((msg) => JSON.stringify(msg));
                 await executeByGovernance(
@@ -727,6 +706,43 @@ async function main(action, args, options) {
             await cosmwasmMainProcessor(submitFn, submitOptions);
         }
     }
+}
+
+async function processGovernanceProposals(action, args, options, title, description, processCommandFn) {
+    options.args = args;
+
+    if (!options.governance) {
+        return mainProcessor(options, (axelar, chain, chains, opts) => processCommandFn(axelar, chain, chains, action, opts));
+    }
+
+    const consensusProposals = [];
+    const amplifierAxelarnetMsgs = [];
+
+    await mainProcessor(options, async (axelar, chain, chains, options) => {
+        const proposal = await processCommandFn(axelar, chain, chains, action, options);
+        if (proposal) {
+            if (isConsensusChain(chain)) {
+                consensusProposals.push(proposal);
+            } else {
+                amplifierAxelarnetMsgs.push({
+                    call_contract: {
+                        destination_chain: proposal.chain,
+                        destination_address: proposal.contract_address,
+                        payload: payloadToHexBinary(proposal.payload),
+                    },
+                });
+            }
+        }
+    });
+
+    await submitGovernanceProposals(consensusProposals, amplifierAxelarnetMsgs, title, description, options);
+}
+
+async function main(action, args, options) {
+    const title = 'Interchain Governance Proposal';
+    const description = 'Interchain Governance Proposal';
+
+    await processGovernanceProposals(action, args, options, title, description, processCommand);
 }
 
 if (require.main === module) {
@@ -937,11 +953,9 @@ if (require.main === module) {
 module.exports = {
     governance: main,
     processCommand,
-    getProposalCalldata,
     encodeGovernanceProposal,
-    getProposalHash,
-    getSetupParams,
     ProposalType,
-    submitProposalToAxelar,
+    submitGovernanceProposals,
+    processGovernanceProposals,
     decodeProposalPayload,
 };

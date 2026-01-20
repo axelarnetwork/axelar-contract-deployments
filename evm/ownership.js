@@ -14,32 +14,12 @@ const {
     printWarn,
     printWalletInfo,
     mainProcessor,
-    prompt,
     getGasOptions,
-    dateToEta,
-    createGMPProposalJSON,
-    getGovernanceContract,
-    getScheduleProposalType,
-    writeJSON,
+    executeDirectlyOrSubmitProposal,
 } = require('./utils');
 const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
-const { encodeGovernanceProposal, ProposalType, submitProposalToAxelar } = require('./governance');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
-
-async function buildGovernanceProposal(chain, options, ownershipAddress, action, calldata) {
-    const { governanceContract, governanceAddress } = getGovernanceContract(chain, options);
-    printInfo('Governance contract', governanceContract);
-    const eta = dateToEta(options.activationTime || '0');
-    const nativeValue = '0';
-    const proposalType = getScheduleProposalType(options, ProposalType, action);
-    const gmpPayload = encodeGovernanceProposal(proposalType, ownershipAddress, calldata, nativeValue, eta);
-
-    printInfo('Governance target', ownershipAddress);
-    printInfo('Governance calldata', calldata);
-
-    return createGMPProposalJSON(chain, governanceAddress, gmpPayload);
-}
 
 async function processCommand(_axelar, chain, _chains, options) {
     const { contractName, address, action, privateKey, newOwner, yes } = options;
@@ -99,29 +79,16 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'transferOwnership': {
-            if (options.governance) {
-                if (!isAddress(newOwner) || newOwner === AddressZero) {
-                    throw new Error(`Invalid new owner address: ${newOwner}`);
-                }
-                const { data: calldata } = await ownershipContract.populateTransaction.transferOwnership(newOwner, gasOptions);
-                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
+            validateParameters({
+                isAddress: { newOwner },
+            });
+
+            const currentOwner = await ownershipContract.owner();
+            if (currentOwner.toLowerCase() !== wallet.address.toLowerCase()) {
+                throw new Error(`Caller ${wallet.address} is not the contract owner but ${currentOwner} is.`);
             }
 
-            let owner = await ownershipContract.owner();
-
-            if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
-                throw new Error(`Caller ${wallet.address} is not the contract owner but ${owner} is.`);
-            }
-
-            if (!isAddress(newOwner) || newOwner === AddressZero) {
-                throw new Error(`Invalid new owner address: ${newOwner}`);
-            }
-
-            try {
-                await ownershipContract.transferOwnership(newOwner, gasOptions).then((tx) => tx.wait());
-            } catch (error) {
-                throw new Error(error);
-            }
+            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'transferOwnership', [newOwner], options, '0', ['OwnershipTransferred']);
 
             owner = await ownershipContract.owner();
 
@@ -137,29 +104,16 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'proposeOwnership': {
-            if (options.governance) {
-                if (!isAddress(newOwner) || newOwner === AddressZero) {
-                    throw new Error(`Invalid new owner address: ${newOwner}`);
-                }
-                const { data: calldata } = await ownershipContract.populateTransaction.proposeOwnership(newOwner, gasOptions);
-                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
-            }
+            validateParameters({
+                isAddress: { newOwner },
+            });
 
-            const owner = await ownershipContract.owner();
-
-            if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
+            const currentOwner = await ownershipContract.owner();
+            if (currentOwner.toLowerCase() !== wallet.address.toLowerCase()) {
                 throw new Error(`Caller ${wallet.address} is not the contract owner.`);
             }
 
-            if (!isAddress(newOwner) || newOwner === AddressZero) {
-                throw new Error(`Invalid new owner address: ${newOwner}`);
-            }
-
-            try {
-                await ownershipContract.proposeOwnership(newOwner, gasOptions).then((tx) => tx.wait());
-            } catch (error) {
-                throw new Error(error);
-            }
+            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'proposeOwnership', [newOwner], options, '0', ['OwnershipTransferStarted']);
 
             const pendingOwner = await ownershipContract.pendingOwner();
 
@@ -173,29 +127,21 @@ async function processCommand(_axelar, chain, _chains, options) {
         }
 
         case 'acceptOwnership': {
-            if (options.governance) {
-                if (newOwner) {
-                    printWarn('--newOwner is ignored for acceptOwnership action.');
-                }
-                const { data: calldata } = await ownershipContract.populateTransaction.acceptOwnership(gasOptions);
-                return buildGovernanceProposal(chain, options, ownershipAddress, action, calldata);
+            if (newOwner) {
+                printWarn('--newOwner is ignored for acceptOwnership action.');
             }
 
             const pendingOwner = await ownershipContract.pendingOwner();
 
             if (pendingOwner === AddressZero) {
-                throw new Error('This is no pending owner.');
+                throw new Error('There is no pending owner.');
             }
 
             if (pendingOwner.toLowerCase() !== wallet.address.toLowerCase()) {
                 throw new Error(`Caller ${wallet.address} is not the pending owner.`);
             }
 
-            try {
-                await ownershipContract.acceptOwnership(gasOptions).then((tx) => tx.wait());
-            } catch (error) {
-                throw new Error(error);
-            }
+            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'acceptOwnership', [], options, '0', ['OwnershipTransferred']);
 
             const newOwner = await ownershipContract.owner();
 
@@ -217,47 +163,7 @@ async function processCommand(_axelar, chain, _chains, options) {
 }
 
 async function main(options) {
-    if (!options.governance) {
-        await mainProcessor(options, processCommand);
-        return;
-    }
-
-    const proposals = [];
-
-    await mainProcessor(options, (axelar, chain, chains, opts) =>
-        processCommand(axelar, chain, chains, opts).then((proposal) => {
-            if (proposal) {
-                proposals.push(proposal);
-            }
-        }),
-    );
-
-    if (proposals.length > 0) {
-        const proposal = {
-            title: 'Ownership Governance Proposal',
-            description: 'Ownership Governance Proposal',
-            contract_calls: proposals,
-        };
-
-        const proposalJSON = JSON.stringify(proposal, null, 2);
-
-        printInfo('Proposal', proposalJSON);
-
-        if (options.generateOnly) {
-            writeJSON(proposal, options.generateOnly);
-            printInfo('Proposal written to file', options.generateOnly);
-        } else if (!options.mnemonic) {
-            printInfo('Re-run with --generate-only to write proposal to a file, or provide --mnemonic to submit it.');
-        } else {
-            if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
-                try {
-                    await submitProposalToAxelar(proposal, options);
-                } catch (error) {
-                    throw new Error(`Failed to submit proposal to Axelar: ${error instanceof Error ? error.message : String(error)}`);
-                }
-            }
-        }
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

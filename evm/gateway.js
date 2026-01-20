@@ -18,21 +18,17 @@ const {
     getEVMAddresses,
     isValidAddress,
     validateParameters,
-    wasEventEmitted,
     mainProcessor,
+    wasEventEmitted,
     printError,
     getGasOptions,
     httpGet,
     getContractJSON,
     getMultisigProof,
-    getGovernanceContract,
-    createGovernanceProposal,
-    writeJSON,
+    executeDirectlyOrSubmitProposal,
 } = require('./utils');
 const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
 const { getWallet, signTransaction } = require('./sign-utils');
-const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar } = require('./governance');
-const { createGMPProposalJSON, dateToEta } = require('../common/utils');
 
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IAxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarAmplifierGateway.json');
@@ -377,42 +373,7 @@ async function processCommand(axelar, chain, _chains, options) {
                 throw new Error('Invalid new governor address');
             }
 
-            const currGovernance = await gateway.governance();
-            printInfo('Current governance', currGovernance);
-
-            if (options.governance) {
-                const { data: calldata } = await gateway.populateTransaction.transferGovernance(newGovernance, gasOptions);
-
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: gatewayAddress,
-                    calldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
-            }
-
-            if (!(currGovernance === walletAddress)) {
-                throw new Error('Wallet address is not the governor');
-            }
-
-            if (prompt(`Proceed with governance transfer to ${chalk.cyan(newGovernance)}`, yes)) {
-                return;
-            }
-
-            const tx = await gateway.transferGovernance(newGovernance, gasOptions);
-            printInfo('Transfer governance tx', tx.hash);
-
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, gateway, 'GovernanceTransferred');
-
-            if (!eventEmitted) {
-                throw new Error('Event not emitted in receipt.');
-            }
+            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferGovernance', [newGovernance], options, '0', ['GovernanceTransferred']);
 
             chain.contracts.AxelarGateway.governance = newGovernance;
 
@@ -540,39 +501,11 @@ async function processCommand(axelar, chain, _chains, options) {
             const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
             const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-            if (options.governance) {
-                const { data: calldata } = await gateway.populateTransaction.transferOperatorship(newOperator, gasOptions);
-
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: gatewayAddress,
-                    calldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
-            }
-
             if (!isCurrentOperator && !isOwner) {
                 throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
             }
 
-            if (prompt(`Proceed with operatorship transfer to ${chalk.cyan(newOperator)}`, yes)) {
-                return;
-            }
-
-            const tx = await gateway.transferOperatorship(newOperator, gasOptions);
-            printInfo('Transfer operatorship tx', tx.hash);
-
-            const receipt = await tx.wait(chain.confirmations);
-
-            const eventEmitted = wasEventEmitted(receipt, gateway, 'OperatorshipTransferred');
-
-            if (!eventEmitted) {
-                throw new Error('Event not emitted in receipt.');
-            }
+            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferOperatorship', [newOperator], options, '0', ['OperatorshipTransferred']);
 
             const updatedOperator = await gateway.operator();
             printInfo('New operator', updatedOperator);
@@ -647,41 +580,7 @@ async function processCommand(axelar, chain, _chains, options) {
 }
 
 async function main(options) {
-    if (!options.governance) {
-        await mainProcessor(options, processCommand);
-        return;
-    }
-
-    const proposals = [];
-
-    await mainProcessor(options, (axelar, chain, chains, opts) =>
-        processCommand(axelar, chain, chains, opts).then((proposal) => {
-            if (proposal) {
-                proposals.push(proposal);
-            }
-        }),
-    );
-
-    if (proposals.length > 0) {
-        const proposal = {
-            title: 'Gateway Governance Proposal',
-            description: 'Gateway Governance Proposal',
-            contract_calls: proposals,
-        };
-
-        const proposalJSON = JSON.stringify(proposal, null, 2);
-
-        printInfo('Proposal', proposalJSON);
-
-        if (options.generateOnly) {
-            writeJSON(proposal, options.generateOnly);
-            printInfo('Proposal written to file', options.generateOnly);
-        } else {
-            if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
-                await submitProposalToAxelar(proposal, options);
-            }
-        }
-    }
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
