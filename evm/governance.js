@@ -707,10 +707,6 @@ async function submitGovernanceProposals(consensusProposals, amplifierAxelarnetM
 async function processGovernanceProposals(action, args, options, title, description, processCommandFn) {
     options.args = args;
 
-    if (!options.governance) {
-        return mainProcessor(options, (axelar, chain, chains, opts) => processCommandFn(axelar, chain, chains, action, opts));
-    }
-
     const consensusProposals = [];
     const amplifierAxelarnetMsgs = [];
 

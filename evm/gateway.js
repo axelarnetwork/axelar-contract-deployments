@@ -500,16 +500,24 @@ async function processCommand(axelar, chain, _chains, options) {
             printInfo('Current operator', currOperator);
 
             const owner = await gateway.owner();
-            const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
-            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-            if (!isCurrentOperator && !isOwner) {
-                throw new Error(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
+            if (!options.governance) {
+                const isCurrentOperator = currOperator.toLowerCase() === walletAddress.toLowerCase();
+                const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+                if (!isCurrentOperator && !isOwner) {
+                    printError(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
+                }
             }
 
             await executeDirectlyOrSubmitProposal(chain, gateway, 'transferOperatorship', [newOperator], options, '0', [
                 'OperatorshipTransferred',
             ]);
+
+            if (options.governance) {
+                printInfo('Governance proposal submitted');
+                break;
+            }
 
             const updatedOperator = await gateway.operator();
             printInfo('New operator', updatedOperator);

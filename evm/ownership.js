@@ -9,7 +9,16 @@ const {
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, printWarn, printWalletInfo, mainProcessor, getGasOptions, executeDirectlyOrSubmitProposal } = require('./utils');
+const {
+    printInfo,
+    printWarn,
+    prompt,
+    validateParameters,
+    printWalletInfo,
+    mainProcessor,
+    getGasOptions,
+    executeDirectlyOrSubmitProposal,
+} = require('./utils');
 const { addBaseOptions, addGovernanceOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
@@ -76,16 +85,23 @@ async function processCommand(_axelar, chain, _chains, options) {
                 isAddress: { newOwner },
             });
 
-            const currentOwner = await ownershipContract.owner();
-            if (currentOwner.toLowerCase() !== wallet.address.toLowerCase()) {
-                throw new Error(`Caller ${wallet.address} is not the contract owner but ${currentOwner} is.`);
+            if (!options.governance) {
+                const currentOwner = await ownershipContract.owner();
+                if (currentOwner.toLowerCase() !== wallet.address.toLowerCase()) {
+                    throw new Error(`Caller ${wallet.address} is not the contract owner but ${currentOwner} is.`);
+                }
             }
 
             await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'transferOwnership', [newOwner], options, '0', [
                 'OwnershipTransferred',
             ]);
 
-            owner = await ownershipContract.owner();
+            if (options.governance) {
+                printInfo('Governance proposal submitted');
+                break;
+            }
+
+            const owner = await ownershipContract.owner();
 
             if (owner.toLowerCase() !== newOwner.toLowerCase()) {
                 throw new Error('Ownership transfer failed.');
@@ -103,14 +119,21 @@ async function processCommand(_axelar, chain, _chains, options) {
                 isAddress: { newOwner },
             });
 
-            const currentOwner = await ownershipContract.owner();
-            if (currentOwner.toLowerCase() !== wallet.address.toLowerCase()) {
-                throw new Error(`Caller ${wallet.address} is not the contract owner.`);
+            if (!options.governance) {
+                const currentOwner = await ownershipContract.owner();
+                if (currentOwner.toLowerCase() !== wallet.address.toLowerCase()) {
+                    throw new Error(`Caller ${wallet.address} is not the contract owner.`);
+                }
             }
 
             await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'proposeOwnership', [newOwner], options, '0', [
                 'OwnershipTransferStarted',
             ]);
+
+            if (options.governance) {
+                printInfo('Governance proposal submitted');
+                break;
+            }
 
             const pendingOwner = await ownershipContract.pendingOwner();
 
@@ -128,17 +151,23 @@ async function processCommand(_axelar, chain, _chains, options) {
                 printWarn('--newOwner is ignored for acceptOwnership action.');
             }
 
-            const pendingOwner = await ownershipContract.pendingOwner();
+            if (!options.governance) {
+                const pendingOwner = await ownershipContract.pendingOwner();
+                if (pendingOwner === AddressZero) {
+                    throw new Error('There is no pending owner.');
+                }
 
-            if (pendingOwner === AddressZero) {
-                throw new Error('There is no pending owner.');
-            }
-
-            if (pendingOwner.toLowerCase() !== wallet.address.toLowerCase()) {
-                throw new Error(`Caller ${wallet.address} is not the pending owner.`);
+                if (pendingOwner.toLowerCase() !== wallet.address.toLowerCase()) {
+                    throw new Error(`Caller ${wallet.address} is not the pending owner.`);
+                }
             }
 
             await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'acceptOwnership', [], options, '0', ['OwnershipTransferred']);
+
+            if (options.governance) {
+                printInfo('Governance proposal submitted');
+                break;
+            }
 
             const newOwner = await ownershipContract.owner();
 
