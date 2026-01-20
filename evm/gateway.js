@@ -377,7 +377,19 @@ async function processCommand(axelar, chain, _chains, options) {
                 'GovernanceTransferred',
             ]);
 
-            chain.contracts.AxelarGateway.governance = newGovernance;
+            if (options.governance) {
+                printInfo('Governance proposal submitted');
+                break;
+            }
+
+            const updatedGovernance = await gateway.governance();
+            printInfo('New governance', updatedGovernance);
+
+            if (updatedGovernance.toLowerCase() !== newGovernance.toLowerCase()) {
+                throw new Error('Governance transfer failed.');
+            }
+
+            chain.contracts.AxelarGateway.governance = updatedGovernance;
 
             break;
         }
@@ -506,7 +518,9 @@ async function processCommand(axelar, chain, _chains, options) {
                 const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
                 if (!isCurrentOperator && !isOwner) {
-                    printError(`Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`);
+                    throw new Error(
+                        `Caller ${walletAddress} is neither the current operator (${currOperator}) nor the owner (${owner})`,
+                    );
                 }
             }
 

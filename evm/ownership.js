@@ -82,7 +82,7 @@ async function processCommand(_axelar, chain, _chains, options) {
 
         case 'transferOwnership': {
             validateParameters({
-                isAddress: { newOwner },
+                isValidAddress: { newOwner },
             });
 
             if (!options.governance) {
@@ -116,7 +116,7 @@ async function processCommand(_axelar, chain, _chains, options) {
 
         case 'proposeOwnership': {
             validateParameters({
-                isAddress: { newOwner },
+                isValidAddress: { newOwner },
             });
 
             if (!options.governance) {
@@ -151,8 +151,10 @@ async function processCommand(_axelar, chain, _chains, options) {
                 printWarn('--newOwner is ignored for acceptOwnership action.');
             }
 
+            let pendingOwner;
+
             if (!options.governance) {
-                const pendingOwner = await ownershipContract.pendingOwner();
+                pendingOwner = await ownershipContract.pendingOwner();
                 if (pendingOwner === AddressZero) {
                     throw new Error('There is no pending owner.');
                 }
