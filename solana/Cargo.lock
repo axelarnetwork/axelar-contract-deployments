@@ -176,7 +176,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -192,7 +192,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
  "syn-solidity",
  "tiny-keccak",
 ]
@@ -208,7 +208,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
  "syn-solidity",
 ]
 
@@ -552,7 +552,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62945a2f7e6de02a31fe400aa489f0e0f5b2502e69f95f853adb82a96c7a6b60"
 dependencies = [
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -590,7 +590,7 @@ dependencies = [
  "num-traits",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -758,9 +758,9 @@ dependencies = [
 
 [[package]]
 name = "async-lock"
-version = "3.4.1"
+version = "3.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fd03604047cee9b6ce9de9f70c6cd540a0520c813cbd49bae61f33ab80ed1dc"
+checksum = "290f7f2596bd5b78a9fec8088ccd89180d7f9f55b94b0576823bbbdc72ee8311"
 dependencies = [
  "event-listener 5.4.1",
  "event-listener-strategy",
@@ -786,7 +786,7 @@ checksum = "c7c24de15d275a1ecfd47a380fb4d5ec9bfe0933f309ed5e705b775596a3574d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -797,7 +797,7 @@ checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -825,7 +825,7 @@ checksum = "ffdcb70bdbc4d478427380519163274ac86e52916e10f0a8889adf0f96d3fee7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1151,7 +1151,7 @@ dependencies = [
  "proc-macro-crate 3.4.0",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1209,9 +1209,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.19.0"
+version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
+checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
 
 [[package]]
 name = "bv"
@@ -1246,7 +1246,7 @@ checksum = "f9abbd1bc6865053c427f7198e6af43bfdedc55ab791faed4fbd361d789575ff"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1275,9 +1275,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.49"
+version = "1.2.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90583009037521a116abf44494efecd645ba48b6622457080f080b85544e2215"
+checksum = "7a0aeaff4ff1a90589618835a598e545176939b97874f7abc7851caa0618f203"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -1311,7 +1311,7 @@ checksum = "45565fc9416b9896014f5732ac776f810ee53a66730c17e4020c3ec064a8f88f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1413,16 +1413,16 @@ dependencies = [
  "k256",
  "lazy_static",
  "regex",
- "reqwest 0.12.26",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "solana-axelar-gas-service 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gateway 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gas-service 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gateway 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-axelar-governance",
- "solana-axelar-its 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-its 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-axelar-memo",
- "solana-axelar-operators 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-operators 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-axelar-std 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-clap-v3-utils",
  "solana-cli-config",
@@ -1831,7 +1831,7 @@ checksum = "f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1904,7 +1904,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim 0.11.1",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1915,7 +1915,7 @@ checksum = "d38308df82d1080de0afee5d069fa14b0326a88c14f15c5ccda35b4a6c414c81"
 dependencies = [
  "darling_core",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -1999,7 +1999,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustc_version 0.4.1",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2064,7 +2064,7 @@ checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2087,7 +2087,7 @@ checksum = "a6cbae11b3de8fce2a456e8ea3dada226b35fe791f0dc1d360c0941f0bb681f3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2207,7 +2207,7 @@ dependencies = [
  "enum-ordinalize",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2268,7 +2268,7 @@ checksum = "8ca9601fb2d62598ee17836250842873a413586e5d7ed88b356e38ddbb0ec631"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2418,9 +2418,9 @@ checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
 
 [[package]]
 name = "find-msvc-tools"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a3076410a55c90011c298b04d0cfa770b00fa04e1e3c97d3f6c9de105a03844"
+checksum = "645cbb3a84e60b7531617d5ae4e57f7e27308f6445f5abf653209ea76dec8dff"
 
 [[package]]
 name = "five8"
@@ -2606,7 +2606,7 @@ checksum = "162ee34ebcb7c64a8abebc059ce0fee27c2262618d7b60ed8faf72fef13c3650"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2889,9 +2889,9 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hidapi"
-version = "2.6.3"
+version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b876ecf37e86b359573c16c8366bc3eba52b689884a0fc42ba3f67203d2a8b"
+checksum = "565dd4c730b8f8b2c0fb36df6be12e5470ae10895ddcc4e9dcfbfb495de202b0"
 dependencies = [
  "cc",
  "cfg-if",
@@ -3289,7 +3289,7 @@ checksum = "a0eb5a3343abf848c0984fe4604b2b105da9539376e24fc0a3b0007411ae4fd9"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -3344,27 +3344,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "interchain-token-transfer-gmp"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "232253feded97b6b6afa81892a0a8de68dc86d990e91ddbc4117865aebc23770"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "hex",
-]
-
-[[package]]
-name = "interchain-token-transfer-gmp"
-version = "0.1.3"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "hex",
-]
-
-[[package]]
 name = "into-inner-derive"
 version = "1.0.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier.git?rev=voting-verifier-v1.1.0#17792515ed9953ce6bd6ceabe59d2febe5eab2e7"
@@ -3372,7 +3351,7 @@ dependencies = [
  "error-stack",
  "quote",
  "report",
- "syn 2.0.111",
+ "syn 2.0.112",
  "thiserror 1.0.69",
 ]
 
@@ -3384,9 +3363,9 @@ checksum = "469fb0b9cefa57e3ef31275ee7cacb78f2fdca44e4765491884a2b119d4eb130"
 
 [[package]]
 name = "iri-string"
-version = "0.7.9"
+version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f867b9d1d896b67beb18518eda36fdb77a32ea590de864f1325b294a6d14397"
+checksum = "c91338f0783edbd6195decb37bae672fd3b165faffb89bf7b9e6942f8b1a731a"
 dependencies = [
  "memchr",
  "serde",
@@ -3430,9 +3409,9 @@ dependencies = [
 
 [[package]]
 name = "itoa"
-version = "1.0.15"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
+checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
 name = "jni"
@@ -3554,9 +3533,9 @@ checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
 name = "libredox"
-version = "0.1.10"
+version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "416f7e718bdb06000964960ffa43b4335ad4012ae8b99060261aa4a8088d5ccb"
+checksum = "3d0b95e02c851351f877147b7deea7b1afb1df71b63aa5f8270716e0c5720616"
 dependencies = [
  "bitflags 2.10.0",
  "libc",
@@ -3740,7 +3719,7 @@ dependencies = [
  "libc",
  "log",
  "openssl",
- "openssl-probe",
+ "openssl-probe 0.1.6",
  "openssl-sys",
  "schannel",
  "security-framework 2.11.1",
@@ -3853,7 +3832,7 @@ checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -3927,7 +3906,7 @@ dependencies = [
  "proc-macro-crate 3.4.0",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -3980,7 +3959,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -3988,6 +3967,12 @@ name = "openssl-probe"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
+
+[[package]]
+name = "openssl-probe"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f50d9b3dabb09ecd771ad0aa242ca6894994c130308ca3d7684634df8037391"
 
 [[package]]
 name = "openssl-sys"
@@ -4032,7 +4017,7 @@ dependencies = [
  "proc-macro-crate 3.4.0",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -4175,7 +4160,7 @@ checksum = "6e918e4ff8c4549eb882f14b3a4bc8c8bc93de829416eacf579f1207a8fbf861"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -4220,9 +4205,9 @@ dependencies = [
 
 [[package]]
 name = "portable-atomic"
-version = "1.11.1"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
+checksum = "f89776e4d69bb58bc6993e99ffa1d11f228b839984854c7daeb5d37f87cbe950"
 
 [[package]]
 name = "potential_utf"
@@ -4274,7 +4259,7 @@ version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "219cb19e96be00ab2e37d6e299658a0cfa83e52429179969b0f0121b4ac46983"
 dependencies = [
- "toml_edit 0.23.9",
+ "toml_edit 0.23.10+spec-1.0.0",
 ]
 
 [[package]]
@@ -4303,9 +4288,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.103"
+version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ee95bc4ef87b8d5ba32e8b7714ccc834865276eab0aed5c9958d00ec45f49e8"
+checksum = "9695f8df41bb4f3d222c95a67532365f569318332d03d5f3f67f37b20e6ebdf0"
 dependencies = [
  "unicode-ident",
 ]
@@ -4325,7 +4310,7 @@ dependencies = [
 [[package]]
 name = "program-utils"
 version = "0.1.4"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
  "mpl-token-metadata",
  "solana-program",
@@ -4372,7 +4357,7 @@ dependencies = [
  "itertools 0.12.1",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -4667,7 +4652,7 @@ checksum = "b7186006dcb21920990093f30e3dea63b7d6e977bf1256be20c3563a5db070da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -4754,9 +4739,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.26"
+version = "0.12.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b4c14b2d9afca6a60277086b0cc6a6ae0b568f6f7916c943a8cdc79f8be240f"
+checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -4807,7 +4792,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "http 1.4.0",
- "reqwest 0.12.26",
+ "reqwest 0.12.28",
  "serde",
  "thiserror 1.0.69",
  "tower-service",
@@ -4888,9 +4873,9 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "1.17.0"
+version = "1.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a68df0380e5c9d20ce49534f292a36a7514ae21350726efe1865bdb1fa91d278"
+checksum = "c141e807189ad38a07276942c6623032d3753c8859c146104ac2e4d68865945a"
 dependencies = [
  "alloy-rlp",
  "ark-ff 0.3.0",
@@ -4967,9 +4952,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd15f8a2c5551a84d56efdc1cd049089e409ac19a3072d5037a17fd70719ff3e"
+checksum = "146c9e247ccc180c1f61615433868c99f3de3ae256a30a43b49f67c2d9171f34"
 dependencies = [
  "bitflags 2.10.0",
  "errno",
@@ -5010,7 +4995,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9aace74cb666635c918e9c12bc0d348266037aa8eb599b5cba565709a8dff00"
 dependencies = [
- "openssl-probe",
+ "openssl-probe 0.1.6",
  "rustls-pemfile",
  "schannel",
  "security-framework 2.11.1",
@@ -5018,11 +5003,11 @@ dependencies = [
 
 [[package]]
 name = "rustls-native-certs"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9980d917ebb0c0536119ba501e90834767bffc3d60641457fd84a1f3fd337923"
+checksum = "612460d5f7bea540c490b2b6395d8e34a953e52b491accd6c86c8164c5932a63"
 dependencies = [
- "openssl-probe",
+ "openssl-probe 0.2.0",
  "rustls-pki-types",
  "schannel",
  "security-framework 3.5.1",
@@ -5039,9 +5024,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-pki-types"
-version = "1.13.1"
+version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "708c0f9d5f54ba0272468c1d306a52c495b31fa155e91bc25371e6df7996908c"
+checksum = "21e6f2ab2928ca4291b86736a8bd920a277a399bba1589409d72154ff87c1282"
 dependencies = [
  "web-time",
  "zeroize",
@@ -5059,7 +5044,7 @@ dependencies = [
  "log",
  "once_cell",
  "rustls 0.23.35",
- "rustls-native-certs 0.8.2",
+ "rustls-native-certs 0.8.3",
  "rustls-platform-verifier-android",
  "rustls-webpki 0.103.8",
  "security-framework 3.5.1",
@@ -5115,9 +5100,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.20"
+version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
+checksum = "a50f4cf475b65d88e057964e0e9bb1f0aa9bbb2036dc65c64596b42932536984"
 
 [[package]]
 name = "same-file"
@@ -5163,9 +5148,9 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9558e172d4e8533736ba97870c4b2cd63f84b382a3d6eb063da41b91cce17289"
+checksum = "54e910108742c57a770f492731f99be216a52fadd361b06c8fb59d74ccc267d2"
 dependencies = [
  "dyn-clone",
  "ref-cast",
@@ -5182,7 +5167,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_derive_internals",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -5348,7 +5333,7 @@ checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -5359,21 +5344,21 @@ checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.145"
+version = "1.0.148"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "402a6f66d8c709116cf22f558eab210f5a50187f702eb4d7e5ef38d9a7f1c79c"
+checksum = "3084b546a1dd6289475996f182a22aba973866ea8e8b02c51d9f46b1336a22da"
 dependencies = [
  "indexmap 2.12.1",
  "itoa",
  "memchr",
- "ryu",
  "serde",
  "serde_core",
+ "zmij",
 ]
 
 [[package]]
@@ -5384,7 +5369,7 @@ checksum = "175ee3e80ae9982737ca543e96133087cbd9a485eecc3bc4de9c1a37b47ea59c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -5420,7 +5405,7 @@ dependencies = [
  "indexmap 1.9.3",
  "indexmap 2.12.1",
  "schemars 0.9.0",
- "schemars 1.1.0",
+ "schemars 1.2.0",
  "serde_core",
  "serde_json",
  "serde_with_macros",
@@ -5436,7 +5421,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -5531,10 +5516,11 @@ dependencies = [
 
 [[package]]
 name = "signal-hook-registry"
-version = "1.4.7"
+version = "1.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7664a098b8e616bdfcc2dc0e9ac44eb231eedf41db4e9fe95d8d32ec728dedad"
+checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
 dependencies = [
+ "errno",
  "libc",
 ]
 
@@ -5722,32 +5708,32 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gas-service"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44879c55c8b10bade08848a9af6c2621344b536112865459f0837090ae862f05"
+checksum = "54948ca0b11cc9ac788e3e749068441fccc84b2ea73beec96a735dba265f4300"
 dependencies = [
  "anchor-lang",
  "bytemuck",
  "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-operators 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-operators 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-axelar-gas-service"
-version = "0.1.6"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+version = "0.1.7"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
  "anchor-lang",
  "bytemuck",
  "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-operators 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-operators 0.1.7 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
 ]
 
 [[package]]
 name = "solana-axelar-gateway"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65ffecc055d0a03cf8f81246861f1ef0d023044b202e64de8ecd3856771470ba"
+checksum = "b14229524ddfac7de5482c19967afbb427e5154989103f5599741fbb987185bd"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -5763,8 +5749,8 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-gateway"
-version = "0.1.6"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+version = "0.1.7"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -5780,73 +5766,69 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-governance"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0139cfc8a9c660056b5c5aa2d714cedbc6c07f14d3d7f1f82438e6798420dfa4"
+checksum = "0932a66ef24b0ebd3f2553e05d1538d9d37b820e2315319c62e50a2cbfbd48ae"
 dependencies = [
  "alloy-sol-types",
  "anchor-lang",
  "governance-gmp",
  "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gateway 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gateway 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "solana-axelar-its"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c155b9f7cb7b754f8ea78cd4fd68f97f2753b084917e6f9bfeb5a5da4570e882"
+checksum = "6a0a25f3a31cb99a9b6cc3b6d370c2c923b0477f148f319ff4d03df8c0f2eae8"
 dependencies = [
- "alloy-primitives",
  "anchor-lang",
  "anchor-spl",
  "bitflags 2.10.0",
  "bytemuck",
- "interchain-token-transfer-gmp 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "mpl-token-metadata",
  "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gas-service 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-gateway 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-axelar-operators 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gas-service 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-gateway 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "solana-axelar-operators 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-token-metadata-interface 0.6.0",
 ]
 
 [[package]]
 name = "solana-axelar-its"
-version = "0.1.6"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+version = "0.1.7"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
- "alloy-primitives",
  "anchor-lang",
  "anchor-spl",
  "bitflags 2.10.0",
  "bytemuck",
- "interchain-token-transfer-gmp 0.1.3 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
  "mpl-token-metadata",
  "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-gas-service 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-gateway 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-operators 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-gas-service 0.1.7 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-gateway 0.1.7 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-operators 0.1.7 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
  "spl-token-metadata-interface 0.6.0",
 ]
 
 [[package]]
 name = "solana-axelar-memo"
-version = "0.1.6"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+version = "0.1.7"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-gateway 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
- "solana-axelar-its 0.1.6 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-gateway 0.1.7 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
+ "solana-axelar-its 0.1.7 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
 ]
 
 [[package]]
 name = "solana-axelar-operators"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6b0552a823dfbe7a25571eb9678fbf04b2aa4a16d85ed94e71b008f6c8ff208"
+checksum = "f5443069d0e73e5dcb9ef3e21a1f4f79a7da9ed085ccb3cb5a710379ac54e690"
 dependencies = [
  "anchor-lang",
  "program-utils 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -5854,8 +5836,8 @@ dependencies = [
 
 [[package]]
 name = "solana-axelar-operators"
-version = "0.1.6"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+version = "0.1.7"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
  "anchor-lang",
  "program-utils 0.1.4 (git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main)",
@@ -5883,7 +5865,7 @@ dependencies = [
 [[package]]
 name = "solana-axelar-std"
 version = "0.1.4"
-source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#710818a65c08ef20cf2d00d58393f0dc07ba77ec"
+source = "git+https://github.com/axelarnetwork/axelar-amplifier-solana.git?branch=main#e735faa152f5d6414bdabdc64ff11f8633d4a465"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
@@ -6645,7 +6627,7 @@ dependencies = [
  "crossbeam-channel",
  "gethostname",
  "log",
- "reqwest 0.12.26",
+ "reqwest 0.12.28",
  "solana-cluster-type",
  "solana-sha256-hasher",
  "solana-time-utils",
@@ -7157,7 +7139,7 @@ dependencies = [
  "futures",
  "indicatif",
  "log",
- "reqwest 0.12.26",
+ "reqwest 0.12.28",
  "reqwest-middleware",
  "semver 1.0.27",
  "serde",
@@ -7192,7 +7174,7 @@ checksum = "2dbc138685c79d88a766a8fd825057a74ea7a21e1dd7f8de275ada899540fff7"
 dependencies = [
  "anyhow",
  "jsonrpc-core",
- "reqwest 0.12.26",
+ "reqwest 0.12.28",
  "reqwest-middleware",
  "serde",
  "serde_derive",
@@ -7344,7 +7326,7 @@ dependencies = [
  "bs58",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8129,7 +8111,7 @@ checksum = "d9e8418ea6269dcfb01c712f0444d2c75542c04448b480e87de59d2865edc750"
 dependencies = [
  "quote",
  "spl-discriminator-syn",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8141,7 +8123,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "sha2 0.10.9",
- "syn 2.0.111",
+ "syn 2.0.112",
  "thiserror 1.0.69",
 ]
 
@@ -8262,7 +8244,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "sha2 0.10.9",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8274,7 +8256,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "sha2 0.10.9",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8769,7 +8751,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustversion",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8817,9 +8799,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.111"
+version = "2.0.112"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "390cc9a294ab71bdb1aa2e99d13be9c753cd2d7bd6560c77118597410c4d2e87"
+checksum = "21f182278bf2d2bcb3c88b1b08a37df029d71ce3d3ae26168e3c653b213b99d4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8835,7 +8817,7 @@ dependencies = [
  "paste",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8873,7 +8855,7 @@ checksum = "728a70f3dbaf5bab7f0c4b1ac8d7ae5ea60a4b5549c8a5914361c99147a709d2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -8926,9 +8908,9 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "tempfile"
-version = "3.23.0"
+version = "3.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d31c77bdf42a745371d260a26ca7163f1e0924b64afa0b688e61b5a9fa02f16"
+checksum = "655da9c7eb6305c55742045d5a8d2037996d61d8de95806335c7c86ce0f82e9c"
 dependencies = [
  "fastrand",
  "getrandom 0.3.4",
@@ -9083,7 +9065,7 @@ checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -9094,7 +9076,7 @@ checksum = "3ff15c8ecd7de3849db632e14d18d2571fa09dfc5ed93479bc4485c7a517c913"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -9216,7 +9198,7 @@ checksum = "af407857209536a95c8e56f8231ef2c2e2aff839b22e07a1ffcbc617e9db9fa5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -9320,9 +9302,9 @@ dependencies = [
 
 [[package]]
 name = "toml_datetime"
-version = "0.7.3"
+version = "0.7.5+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2cdb639ebbc97961c51720f858597f7f24c4fc295327923af55b74c3c724533"
+checksum = "92e1cfed4a3038bc5a127e35a2d360f145e1f4b971b551a2ba5fd7aedf7e1347"
 dependencies = [
  "serde_core",
 ]
@@ -9343,21 +9325,21 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.23.9"
+version = "0.23.10+spec-1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d7cbc3b4b49633d57a0509303158ca50de80ae32c265093b24c414705807832"
+checksum = "84c8b9f757e028cee9fa244aea147aab2a9ec09d5325a9b01e0a49730c2b5269"
 dependencies = [
  "indexmap 2.12.1",
- "toml_datetime 0.7.3",
+ "toml_datetime 0.7.5+spec-1.1.0",
  "toml_parser",
  "winnow",
 ]
 
 [[package]]
 name = "toml_parser"
-version = "1.0.4"
+version = "1.0.6+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0cbe268d35bdb4bb5a56a2de88d0ad0eb70af5384a99d648cd4b3d04039800e"
+checksum = "a3198b4b0a8e11f09dd03e133c0280504d0801269e9afa46362ffde1cbeebf44"
 dependencies = [
  "winnow",
 ]
@@ -9467,9 +9449,9 @@ checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
 
 [[package]]
 name = "tracing"
-version = "0.1.43"
+version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d15d90a0b5c19378952d479dc858407149d7bb45a14de0142f6c534b16fc647"
+checksum = "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100"
 dependencies = [
  "log",
  "pin-project-lite",
@@ -9485,14 +9467,14 @@ checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
 name = "tracing-core"
-version = "0.1.35"
+version = "0.1.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a04e24fab5c89c6a36eb8558c9656f30d81de51dfa4d3b45f26b21d61fa0a6c"
+checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
 ]
@@ -9554,7 +9536,7 @@ checksum = "ee6296c12e792dbc59565a58920d8d1842997ad5a72ddf2a51f70d70bd7af2ba"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -9699,7 +9681,7 @@ checksum = "4e3a32a9bcc0f6c6ccfd5b27bcf298c58e753bcc9eeff268157a303393183a6d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -9820,7 +9802,7 @@ dependencies = [
  "bumpalo",
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
  "wasm-bindgen-shared",
 ]
 
@@ -9938,7 +9920,7 @@ checksum = "053e2e040ab57b9dc951b72c264860db7eb3b0200ba345b4e4c3b14f67855ddf"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -9949,7 +9931,7 @@ checksum = "3f316c4a2570ba26bbec722032c4099d8c8bc095efccdc15688708623367e358"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -10361,7 +10343,7 @@ checksum = "b659052874eb698efe5b9e8cf382204678a0086ebf46982b79d6ca3182927e5d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
  "synstructure 0.13.2",
 ]
 
@@ -10382,7 +10364,7 @@ checksum = "d8a8d209fdf45cf5138cbb5a506f6b52522a25afccc534d1475dad8e31105c6a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -10402,7 +10384,7 @@ checksum = "d71e5d6e06ab090c67b5e44993ec16b72dcbaabc526db883a360057678b48502"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
  "synstructure 0.13.2",
 ]
 
@@ -10417,13 +10399,13 @@ dependencies = [
 
 [[package]]
 name = "zeroize_derive"
-version = "1.4.2"
+version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
+checksum = "85a5b4158499876c763cb03bc4e49185d3cccbabb15b33c627f7884f43db852e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -10456,8 +10438,14 @@ checksum = "eadce39539ca5cb3985590102671f2567e659fca9666581ad3411d59207951f3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.111",
+ "syn 2.0.112",
 ]
+
+[[package]]
+name = "zmij"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aac060176f7020d62c3bcc1cdbcec619d54f48b07ad1963a3f80ce7a0c17755f"
 
 [[package]]
 name = "zstd"
