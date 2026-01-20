@@ -103,6 +103,8 @@ async function processCommand(axelar, chain, chains, options) {
         }
 
         case 'InterchainGovernance': {
+            const governanceAddress = contractConfig.governanceAddress;
+
             await verifyContract(
                 env,
                 chain.axelarId,
@@ -110,7 +112,7 @@ async function processCommand(axelar, chain, chains, options) {
                 [
                     chain.contracts.AxelarGateway.address,
                     contractConfig.governanceChain,
-                    axelar.governanceAddress,
+                    governanceAddress,
                     contractConfig.minimumTimeDelay,
                 ],
                 verifyOptions,
