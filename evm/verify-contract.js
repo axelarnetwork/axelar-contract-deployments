@@ -110,7 +110,7 @@ async function processCommand(axelar, chain, chains, options) {
                 [
                     chain.contracts.AxelarGateway.address,
                     contractConfig.governanceChain,
-                    axelar.governanceAddress,
+                    contractConfig.governanceAddress,
                     contractConfig.minimumTimeDelay,
                 ],
                 verifyOptions,
@@ -128,7 +128,7 @@ async function processCommand(axelar, chain, chains, options) {
                     contractConfig.governanceChain,
                     contractConfig.governanceAddress,
                     contractConfig.minimumTimeDelay,
-                    contractConfig.multisig,
+                    contractConfig.operator,
                 ],
                 verifyOptions,
             );
