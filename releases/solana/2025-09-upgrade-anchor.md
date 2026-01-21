@@ -35,38 +35,6 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
     ```bash
     ENV=<devnet-custom|devnet-amplifier|stagenet|testnet|mainnet>
     CLUSTER=<devnet|mainnet-beta>
-    ```
-
-1. Clone the [`axelar-amplifier-solana`](https://github.com/axelarnetwork/axelar-amplifier-solana) repo.
-
-1. Ensure the branch you would like to upgrade to is checked out and cd to the new repo.
-
-1. Compile the Solana programs:
-
-    ```sh
-    # Go to the solana directory within the cloned repo
-    cd axelar-amplifier-solana
-
-    # Compile the Solana programs
-    cargo build-sbf --manifest-path programs/solana-axelar-gateway/Cargo.toml
-    cargo build-sbf --manifest-path programs/solana-axelar-gas-service/Cargo.toml
-    cargo build-sbf --manifest-path programs/solana-axelar-governance/Cargo.toml
-    cargo build-sbf --manifest-path programs/solana-axelar-multicall/Cargo.toml
-    cargo build-sbf --manifest-path programs/solana-axelar-operators/Cargo.toml
-    cargo build-sbf --manifest-path programs/solana-axelar-memo/Cargo.toml
-    cargo build-sbf --manifest-path programs/solana-axelar-its/Cargo.toml
-
-    # Go back
-    cd ..
-    ```
-
-1. Reassign the follow environment variables for the programs you are upgrading:
-
-    ```sh
-    PROGRAM_KEYPAIR_PATH="<path/to/program_keypair.json>"
-    PROGRAM_PATH="axelar-amplifier-solana/target/deploy/<program_name>.so"
-    PROGRAM_PDA="[program-pda]"
-
     UPGRADE_AUTHORITY_KEYPAIR_PATH="<path/to/upgrade_authority_keypair.json>"
     ```
 
@@ -80,20 +48,37 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
    solana config set --url $CLUSTER
    ```
 
-1. Upgrade the programs:
+1. Upgrade the programs using the new version:
 
     ```sh
-    anchor upgrade --provider.wallet $UPGRADE_AUTHORITY_KEYPAIR_PATH --provider.cluster $CLUSTER -p $PROGRAM_PDA $PROGRAM_PATH -- --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
-    ```
+    solana/cli upgrade \
+        --program gateway \
+        --version <VERSION> \
+        --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-1. Verify the programs:
+    solana/cli upgrade \
+        --program gas-service \
+        --version <VERSION> \
+        --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+
+    solana/cli upgrade \
+        --program governance \
+        --version <VERSION> \
+        --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+
+    solana/cli upgrade \
+        --program operators \
+        --version <VERSION> \
+        --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+
+    solana/cli upgrade \
+        --program its \
+        --version <VERSION> \
+        --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
+    ```
 
     > [!NOTE]
-    > Verification is **only possible in mainnet**. If deploying for test environments you can skip this step.
-
-    ```bash
-    anchor verify -p [solana_axelar_program_name] --provider.cluster $CLUSTER $(solana address -k $PROGRAM_KEYPAIR_PATH) -- --no-default-features --features $ENV
-    ```
+    > Replace `<VERSION>` with either a semver (e.g., `0.1.7`) to download from GitHub releases, or a commit hash (e.g., `12e6126`) to download from R2.
 
 ## Checklist
 

@@ -325,4 +325,5 @@ pub(crate) enum Programs {
     Governance,
     Its,
     Multicall,
+    Operators,
 }

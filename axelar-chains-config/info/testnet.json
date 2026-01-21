@@ -2882,6 +2882,95 @@
         }
       }
     },
+    "monad-3": {
+      "name": "Monad",
+      "axelarId": "monad-3",
+      "chainId": 10143,
+      "rpc": "https://testnet-rpc.monad.xyz",
+      "tokenSymbol": "MON",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "MonVision",
+        "url": "https://testnet.monadexplorer.com"
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0xBdcBf13fdc75f8b01d83dedBC4475fc96f72B551",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "deployer": "0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x73822c28BA78491b331a989cd5164c817ECeC394",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "deployer": "0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "salt": "v1.0.0"
+        },
+        "AxelarGateway": {
+          "deployer": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "operator": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "proxyDeploymentArgs": [
+            "0x7e59a3583c9704D6e7b46a6c0d3251C5102054Fe",
+            "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+            "0x00000000000000000000000092ae7f0b761ac8cfabe4b94d53d1cd343df8e3c00000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000172d4bd00000000000000000000000000000000000000000000000000000000000000160000000000000000000000000e3c1ac746bd5d47fa44f77a6e3a700eadd9e1bc00000000000000000000000000000000000000000000000000000000000000010000000000000000000000001f2eb0420e6aac6e25154639a37587bbc4b256d6000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020aecd082d8788639f2a4afb8563f62aee2183f2000000000000000000000000000000000000000000000000000000000000000100000000000000000000000024449d80a8c616cff227b37a1461ebd059529d140000000000000000000000000000000000000000000000000000000000000001000000000000000000000000380dda1ce71d1922b37db6079ca6e26b2b65da4b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000414b06d536092988aa828a3209a0331be53a126f00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004acc331501a4cde2bea4a3703ccf328f2833182500000000000000000000000000000000000000000000000000000000000000010000000000000000000000005cdf30e201017cb3aaab487949af41e7225e2d1600000000000000000000000000000000000000000000000000000000000000010000000000000000000000006ff6e6fb7f3804fee29aa2ff75dd889c8e09eb7e000000000000000000000000000000000000000000000000000000000000000100000000000000000000000070a97c7328a22e012d6e7c7f0615a19f6761b617000000000000000000000000000000000000000000000000000000000000000100000000000000000000000083313ac5d1e023cbca79a18b9ec5ab7875746335000000000000000000000000000000000000000000000000000000000000000100000000000000000000000092ec015a988cf083c6ad0627f37df05937687e7900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009ce4f02aab880308bc8db8cc6e4ec9a2a8cded5b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a8f56991b33b07ccac084be1d2a246d1c82fa73e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b00e4c94faa6698ad2c3b64af7c94071d5eeb2d00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b9f5ea2331ef8224b56576db506afc88f8b070480000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c4db1d3fcf418d4baf61f173eef18c6fb40132fb0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c89566ef25f70cbf3507d5b3c6605129ef9d508c0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cbfa786fbdbb8779063fd7580a22da8f306eb8240000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cee3d5699cbfd940b7ee9ac71518120d5f8f67570000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e19404210888776d57780666d0a435298da6d7cf0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e6a16d54e432883da61ce9130b1cd0240025ce620000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "e964f303a1b1fa41b617d3b731d529052f1c2e5446088a356f10a6c5c53bb68d",
+          "address": "0x1dd10E8909E248e554AA614e7b86fABE1d8f9E77",
+          "implementation": "0x7e59a3583c9704D6e7b46a6c0d3251C5102054Fe",
+          "implementationCodehash": "0x4d5ca02ade1353d44a3155e229b5c91399c737d02b306cffd4ca30a5e833f8fe",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x9903a97600bdc37ccc45b129ac9a68d1735f459892ccd23818cce785eb481775",
+          "minimumRotationDelay": 3600,
+          "connectionType": "amplifier",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        },
+        "Operators": {
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "address": "0xCbbC1113a9d56AFBf8eB9B344D1D3eeFF9Bf210b",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "deployer": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "v1.0.1"
+        },
+        "AxelarGasService": {
+          "collector": "0xCbbC1113a9d56AFBf8eB9B344D1D3eeFF9Bf210b",
+          "address": "0x5030D144E845e862B35B50E9C0610E2CD77F70D7",
+          "implementation": "0x470f7C5986956D0a6356bd74cC57984665c8497E",
+          "deployer": "0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.2.0",
+          "proxySalt": "ITS v1.0.0",
+          "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "address": "0xF9c962bE1366cD9518D6BCCDcfC9CDFCa7a1EFE5",
+          "version": "2.2.0",
+          "tokenManagerDeployer": "0xa5B87B11C158be09bcC48469239ED77F0545E5e7",
+          "interchainToken": "0x9006Ce04f84cE32f431cF2A80253893C34760bc2",
+          "interchainTokenDeployer": "0xC136549b4A5c73e737e886D2eB5B858b5A0012ce",
+          "tokenManager": "0xFB710b9588f3aDafD91BBae25BFEd9c269ebFb76",
+          "tokenHandler": "0x3F8a341205fc7875D3f1578BDe60915D29B39331",
+          "implementation": "0x853e58182e1a5F83Ac820fb10f55eA879376e825",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "salt": "ITS Factory v1.0.0",
+          "address": "0x578d62784cd79de8cdEC994DF8f8844fC4cf90D8",
+          "version": "2.2.0",
+          "implementation": "0xFCd9E5C814A7A8F1681bEc38817A91A4DC452c2e"
+        }
+      }
+    },
     "hyperliquid": {
       "name": "Hyperliquid",
       "axelarId": "hyperliquid",
@@ -3329,10 +3418,15 @@
         "flow": {
           "executeProposalId": "147"
         },
+        "version": "3.0.0",
         "deployments": {
           "stellar-2026-q1-2": {
             "deploymentName": "stellar-2026-q1-2-24-78-77",
             "salt": "v1.0.0-3"
+          },
+          "monad-3": {
+            "deploymentName": "monad-3-24-78-77",
+            "salt": "v1.0.1"
           }
         }
       },
@@ -3428,7 +3522,7 @@
           "address": "axelar1k483q898t5w0acqzxhdjlsmnpgcxxa49ye8m46757n8mtk70ugtsu927xw",
           "version": "1.2.0"
         },
-        "monad": {
+        "monad-3": {
           "signingThreshold": [
             "51",
             "100"
@@ -3436,9 +3530,11 @@
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "keyType": "ecdsa",
+          "adminAddress": "axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
           "codeId": 77,
-          "domainSeparator": "0xacbbb6b1e3bd382ab5f2da2aa9bca626d70a66ec7a6c301c612c01061f4c9278",
-          "address": "axelar1dt6apz0m2lkuls3ah2h7zw277r0v50668fxytqtdxv83yzs4n69qlutnpk",
+          "domainSeparator": "0x9903a97600bdc37ccc45b129ac9a68d1735f459892ccd23818cce785eb481775",
+          "address": "axelar162vcvdwa4ga6aq90juclh8ssaus5dq4kw6jz89wugr0gkczr6wussc47th",
           "version": "1.2.0"
         },
         "hyperliquid": {
@@ -3573,6 +3669,11 @@
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
           "address": "axelar19wr3vf0rk0jl0h8s2tcramn0wmnmv8gx7kp7j5rd5jjdypsjxkhqgufvzn",
           "version": "1.1.1"
+        },
+        "monad-3": {
+          "codeId": 24,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1nfe5lknq2z7f80dp3j60jjxa0k084hcgfl7hv9smx0ws5h7s4d0s2dkppr"
         }
       },
       "VotingVerifier": {
@@ -3660,9 +3761,9 @@
           "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal",
           "version": "2.0.1"
         },
-        "monad": {
+        "monad-3": {
           "serviceName": "amplifier",
-          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "sourceGatewayAddress": "0x1dd10E8909E248e554AA614e7b86fABE1d8f9E77",
           "votingThreshold": [
             "51",
             "100"
@@ -3671,8 +3772,9 @@
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "codeId": 78,
-          "address": "axelar1u080xgqqu9zhl4e9hf2ktdny4pq6kc2pmh6u6mlv8nw5zjvcetvqqjzeu0",
-          "version": "2.0.1"
+          "address": "axelar12ruanxwnzfymj52gr93lg70g2pe3yxvzy7g0yrhj66vtdrg7snsqhzwq0r",
+          "version": "2.0.1",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp"
         },
         "hyperliquid": {
           "serviceName": "amplifier",
