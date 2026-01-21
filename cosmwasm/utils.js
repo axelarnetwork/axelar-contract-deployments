@@ -1374,6 +1374,10 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
+const makeItsSolanaTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
+    return {};
+};
+
 const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
     const chainConfig = getChainConfig(config.chains, chainName);
 
@@ -1501,6 +1505,10 @@ const CONTRACTS = {
     ItsAbiTranslator: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
+    },
+    ItsSolanaTranslator: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeItsSolanaTranslatorInstantiateMsg,
     },
 };
 
