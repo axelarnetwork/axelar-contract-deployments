@@ -3271,6 +3271,7 @@
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
           "wasmHash": "715eb94b616c7271bc1aeaf131f92f3ace830d93c3975e871db9a66951c5de92",
           "version": "1.1.2",
+          "connectionType": "amplifier",
           "initializeArgs": {
             "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
             "operator": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
