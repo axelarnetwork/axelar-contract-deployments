@@ -1201,7 +1201,7 @@ function detectITSVersion() {
 }
 
 async function executeDirectlyOrSubmitProposal(chain, contract, method, args, options, value = '0', expectedEvents = []) {
-    const gasOptions = await getGasOptions(chain, options, options.contractName || 'Unknown');
+    const gasOptions = await getGasOptions(chain, options, options.contractName);
 
     if (options.governance) {
         const { encodeGovernanceProposal, submitGovernanceProposals, ProposalType } = require('./governance');
