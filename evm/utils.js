@@ -1245,6 +1245,7 @@ async function executeDirectlyOrSubmitProposal(chain, contract, method, args, op
         }
 
         await submitGovernanceProposals(consensusProposals, amplifierAxelarnetMsgs, title, description, options);
+        return true;
     } else {
         // Execute directly
         const tx = await contract[method](...args, { value, ...gasOptions });
@@ -1260,6 +1261,7 @@ async function executeDirectlyOrSubmitProposal(chain, contract, method, args, op
                 printWarn(`Missing expected event(s) in receipt: ${events.join(', ')}`);
             }
         }
+        return false;
     }
 }
 

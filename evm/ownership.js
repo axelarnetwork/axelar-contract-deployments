@@ -92,12 +92,17 @@ async function processCommand(_axelar, chain, _chains, options) {
                 }
             }
 
-            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'transferOwnership', [newOwner], options, '0', [
-                'OwnershipTransferred',
-            ]);
+            const governanceProposalSubmitted = await executeDirectlyOrSubmitProposal(
+                chain,
+                ownershipContract,
+                'transferOwnership',
+                [newOwner],
+                options,
+                '0',
+                ['OwnershipTransferred'],
+            );
 
-            if (options.governance) {
-                printInfo('Governance proposal submitted');
+            if (governanceProposalSubmitted) {
                 break;
             }
 
@@ -126,12 +131,17 @@ async function processCommand(_axelar, chain, _chains, options) {
                 }
             }
 
-            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'proposeOwnership', [newOwner], options, '0', [
-                'OwnershipTransferStarted',
-            ]);
+            const governanceProposalSubmitted = await executeDirectlyOrSubmitProposal(
+                chain,
+                ownershipContract,
+                'proposeOwnership',
+                [newOwner],
+                options,
+                '0',
+                ['OwnershipTransferStarted'],
+            );
 
-            if (options.governance) {
-                printInfo('Governance proposal submitted');
+            if (governanceProposalSubmitted) {
                 break;
             }
 
@@ -164,10 +174,17 @@ async function processCommand(_axelar, chain, _chains, options) {
                 }
             }
 
-            await executeDirectlyOrSubmitProposal(chain, ownershipContract, 'acceptOwnership', [], options, '0', ['OwnershipTransferred']);
+            const governanceProposalSubmitted = await executeDirectlyOrSubmitProposal(
+                chain,
+                ownershipContract,
+                'acceptOwnership',
+                [],
+                options,
+                '0',
+                ['OwnershipTransferred'],
+            );
 
-            if (options.governance) {
-                printInfo('Governance proposal submitted');
+            if (governanceProposalSubmitted) {
                 break;
             }
 

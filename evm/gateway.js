@@ -384,12 +384,17 @@ async function processCommand(axelar, chain, _chains, options) {
                 }
             }
 
-            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferGovernance', [newGovernance], options, '0', [
-                'GovernanceTransferred',
-            ]);
+            const governanceProposalSubmitted = await executeDirectlyOrSubmitProposal(
+                chain,
+                gateway,
+                'transferGovernance',
+                [newGovernance],
+                options,
+                '0',
+                ['GovernanceTransferred'],
+            );
 
-            if (options.governance) {
-                printInfo('Governance proposal submitted');
+            if (governanceProposalSubmitted) {
                 break;
             }
 
@@ -533,12 +538,17 @@ async function processCommand(axelar, chain, _chains, options) {
                 }
             }
 
-            await executeDirectlyOrSubmitProposal(chain, gateway, 'transferOperatorship', [newOperator], options, '0', [
-                'OperatorshipTransferred',
-            ]);
+            const governanceProposalSubmitted = await executeDirectlyOrSubmitProposal(
+                chain,
+                gateway,
+                'transferOperatorship',
+                [newOperator],
+                options,
+                '0',
+                ['OperatorshipTransferred'],
+            );
 
-            if (options.governance) {
-                printInfo('Governance proposal submitted');
+            if (governanceProposalSubmitted) {
                 break;
             }
 
