@@ -102,13 +102,13 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --governance
     ```
 
-1. Store SolanaMultisigProver:
+1. Store MultisigProver:
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
-        -c SolanaMultisigProver \
-        -t "Upload SolanaMultisigProver contract for Solana" \
-        -d "Upload SolanaMultisigProver contract for Solana integration" \
+        -c MultisigProver \
+        -t "Upload MultisigProver contract for Solana" \
+        -d "Upload MultisigProver contract for Solana integration" \
         -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
@@ -207,6 +207,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     ts-node cosmwasm/contract.ts register-deployment $CHAIN \
+        -m $MNEMONIC \
         --governance # omit on devnet-amplifier
     ```
 
@@ -311,10 +312,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         chain_name: $CHAIN
         cosmwasm_contract: $VOTING_VERIFIER
         rpc_url: [rpc_url]
+        gateway_address: $GATEWAY
       - type: SolanaVerifierSetVerifier
         chain_name: $CHAIN
         cosmwasm_contract: $VOTING_VERIFIER
         rpc_url: [rpc_url]
+        gateway_address: $GATEWAY
     ```
 
 1. Update ampd with the Solana chain configuration.
