@@ -121,8 +121,8 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
     ```bash
     ts-node cosmwasm/contract.ts store-code \
         -c ItsSolanaTranslator \
-        # -t "Upload ItsSolanaTranslator contract v1.0.0" \
-        # -d "Upload ItsSolanaTranslator contract v1.0.0" \
+        -t "Upload ItsSolanaTranslator contract v1.0.0" \
+        -d "Upload ItsSolanaTranslator contract v1.0.0" \
         -a ../axelar-amplifier/artifacts \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES \
@@ -140,7 +140,17 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --governance
     ```
 
-TODO: ITS translator
+6. After proposal passes, find the ItsSolanaTranslator contract address and update config if not auto-filled:
+
+    ```bash
+    # Get the code ID from the config
+    CODE_ID=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.ItsSolanaTranslator.codeId")
+
+    # List contracts instantiated from that code ID
+    axelard q wasm list-contract-by-code $CODE_ID --node $NODE --output json | jq .
+
+    # Update axelar.contracts.ItsSolanaTranslator.address in $ENV.json if not auto-filled
+    ```
 
 ## Deployment
 

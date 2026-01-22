@@ -1609,7 +1609,8 @@
         },
         "solana-18": {
           "maxUintBits": 64,
-          "maxDecimalsWhenTruncating": 6
+          "maxDecimalsWhenTruncating": 6,
+          "msgTranslator": "axelar1yc2dln6ujwj5jqfr2j7pt3gj3ex3eprgz899qdttds40d039u9psgxh9tw"
         },
         "storeCodeProposalId": "989",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
@@ -2051,6 +2052,14 @@
         "codeId": 1638,
         "instantiateProposalId": "1558",
         "address": "axelar1erapwwp6crvkq3u6780u93huwtjam80vhac9wvxw8dl0fm3zcp5szyfemq"
+      },
+      "ItsSolanaTranslator": {
+        "storeCodeProposalId": "1580",
+        "storeCodeProposalCodeHash": "63195b80b58a2a2f1a1149326906eb611b5fb8fa10127208c19154cad6b0c5a6",
+        "lastUploadedCodeId": 1643,
+        "codeId": 1643,
+        "instantiateProposalId": "1581",
+        "address": "axelar1yc2dln6ujwj5jqfr2j7pt3gj3ex3eprgz899qdttds40d039u9psgxh9tw"
       }
     },
     "axelarId": "axelar",
