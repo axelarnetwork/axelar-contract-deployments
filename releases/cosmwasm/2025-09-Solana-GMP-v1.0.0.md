@@ -88,7 +88,7 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --governance
     ```
 
-1. Store Gateway:
+2. Store Gateway:
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
@@ -102,7 +102,7 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --governance
     ```
 
-1. Store SolanaMultisigProver:
+3. Store SolanaMultisigProver:
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
@@ -113,6 +113,30 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --chainName $CHAIN \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES \
+        --governance
+    ```
+
+4. Store ItsSolanaTranslator:
+
+    ```bash
+    ts-node cosmwasm/contract.ts store-code \
+        -c ItsSolanaTranslator \
+        # -t "Upload ItsSolanaTranslator contract v1.0.0" \
+        # -d "Upload ItsSolanaTranslator contract v1.0.0" \
+        -a ../axelar-amplifier/artifacts \
+        -m $MNEMONIC \
+        --instantiateAddresses $INIT_ADDRESSES \
+        --version 1.0.0 \
+        --governance
+    ```
+
+5. Instantiate ItsSolanaTranslator:
+
+    ```bash
+    ts-node cosmwasm/contract.ts instantiate \
+        -c ItsSolanaTranslator \
+        -m $MNEMONIC \
+        --fetchCodeId \
         --governance
     ```
 
