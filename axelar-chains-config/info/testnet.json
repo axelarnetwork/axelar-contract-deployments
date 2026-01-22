@@ -3248,6 +3248,119 @@
           "implementation": "0x9d712a17416d2aa69e042743b7AA60BCF717602E"
         }
       }
+    },
+    "stellar-2026-q1-2": {
+      "name": "Stellar",
+      "axelarId": "stellar-2026-q1-2",
+      "rpc": "https://soroban-testnet.stellar.org",
+      "horizonRpc": "https://horizon-testnet.stellar.org",
+      "networkType": "testnet",
+      "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "XLM",
+      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "explorer": {
+        "name": "Stellar Expert",
+        "url": "https://stellar.expert/explorer/testnet"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "715eb94b616c7271bc1aeaf131f92f3ace830d93c3975e871db9a66951c5de92",
+          "version": "1.1.2",
+          "connectionType": "amplifier",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "operator": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "domainSeparator": "82def54979df98408c35de3609bf460dabf064a4f7c193a5c9f34e0070887458",
+            "minimumRotationDelay": "3600",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "0b47ed3b66a0da4320e65dfe710611caa63858bc74986a90b7ba8558dd70ab3b",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        },
+        "AxelarOperators": {
+          "address": "CBFT33DV6VHT5QQYZWMCIYD6WBCGVN27HAXJ64VWWFXK2MDUSZN4MJPO",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "bb0b653d32134aa5f68607f33d38e4f173a3fe5f10d3227f7bf655ee02ad7ca8",
+          "version": "1.1.2",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L"
+          }
+        },
+        "AxelarGasService": {
+          "address": "CCLZOCGHHC6F6JCZHEUP53LDQHRBPPCNRYXOVFZFS3O63OGRC47CKCGV",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "99f9a082d1ac65e4499cb462f7f92912a4715c84fc4e488802126d6c684c7f34",
+          "version": "1.1.2",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "operator": "CBFT33DV6VHT5QQYZWMCIYD6WBCGVN27HAXJ64VWWFXK2MDUSZN4MJPO"
+          }
+        },
+        "AxelarExample": {
+          "address": "CDKTN7AK35HIMJVL6MP2TRWDW75W32RB7MRGPSIZDUXXEXICO4GHT2G7",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "5593f0dbc9841b84cf9c8bcfaee3a5251350d749091a9bb60932fe6b030eefa6",
+          "version": "1.0.7",
+          "initializeArgs": {
+            "gatewayAddress": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
+            "gasServiceAddress": "CCLZOCGHHC6F6JCZHEUP53LDQHRBPPCNRYXOVFZFS3O63OGRC47CKCGV",
+            "itsAddress": "CC7LAC4S7KAPIM26WKWFSOXWLNLSG7EXTC2EVY2H2UPKSTX3Z2A7M5YP"
+          }
+        },
+        "Upgrader": {
+          "address": "CCUFM7SEKCVWJUMDI5UH7XXMBYKI2C5YXRMUG7R3EXKUTMJ3CN6NOWAA",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
+          "version": "1.1.2",
+          "initializeArgs": {}
+        },
+        "InterchainTokenService": {
+          "address": "CC7LAC4S7KAPIM26WKWFSOXWLNLSG7EXTC2EVY2H2UPKSTX3Z2A7M5YP",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
+          "version": "1.4.1",
+          "initializeArgs": {
+            "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "operator": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+            "gatewayAddress": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
+            "gasServiceAddress": "CCLZOCGHHC6F6JCZHEUP53LDQHRBPPCNRYXOVFZFS3O63OGRC47CKCGV",
+            "itsHubAddress": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+            "chainName": "stellar-2026-q1-2",
+            "nativeTokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+            "interchainTokenWasmHash": "6cc453f7c1a0e7c2a153a11d7d7218a76ebeb41785239000bc5c428e02749cc8",
+            "tokenManagerWasmHash": "e29417a07222fe6ce5644ab9848757758bdb12ce973c5298f018384e27eecab9"
+          }
+        },
+        "Multicall": {
+          "address": "CARFOYY2QIXHFD2DX5PWIA7L5W4SP4UDCZK2WY4MA4JSTU2VKQ62TK3U",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
+          "version": "1.0.2",
+          "initializeArgs": {}
+        },
+        "TokenUtils": {
+          "address": "CCEXYZX2POWV5OINRWRQNLIVR5JPPIHWF3SHPPEYQ72JAZ22VHPMCQ7O",
+          "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
+          "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
+          "version": "1.0.0",
+          "initializeArgs": {}
+        }
+      }
     }
   },
   "axelar": {
@@ -3308,6 +3421,10 @@
         },
         "version": "3.0.0",
         "deployments": {
+          "stellar-2026-q1-2": {
+            "deploymentName": "stellar-2026-q1-2-24-78-77",
+            "salt": "v1.0.0-3"
+          },
           "monad-3": {
             "deploymentName": "monad-3-24-78-77",
             "salt": "v1.0.1"
@@ -3447,6 +3564,23 @@
           "address": "axelar1aux2l6er84m6gtayqdwqhz4rl0txqdlj3v7szr72j7etve3jmpks7x4euy",
           "version": "1.2.0"
         },
+        "stellar-2026-q1-2": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "stellar_xdr",
+          "keyType": "ed25519",
+          "codeId": 77,
+          "domainSeparator": "0x82def54979df98408c35de3609bf460dabf064a4f7c193a5c9f34e0070887458",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar14xy6t4gnl26jxe3z2lqk24nnu3q0f7khlrpns9d00q9dvaqjzqmqp93ahp",
+          "version": "1.2.0"
+        },
         "celo-sepolia": {
           "signingThreshold": [
             "51",
@@ -3529,6 +3663,12 @@
         "memento-demo": {
           "codeId": 24,
           "address": "axelar126qyawsymtngnt4squm9l5j6myjy84ckyw93mgllughzckp22tcsc37cep",
+          "version": "1.1.1"
+        },
+        "stellar-2026-q1-2": {
+          "codeId": 24,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar19wr3vf0rk0jl0h8s2tcramn0wmnmv8gx7kp7j5rd5jjdypsjxkhqgufvzn",
           "version": "1.1.1"
         },
         "monad-3": {
@@ -3665,6 +3805,22 @@
           "address": "axelar18y8p7dxesmxttvdzp5sqjksqrnh9xg32gtfqnkkucvv9de38f69qfn6ph3",
           "version": "2.0.1"
         },
+        "stellar-2026-q1-2": {
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 50,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stellar",
+          "codeId": 78,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1wmwnuj0609q5sd6xfl9xvptcprsas6vr95z2kxjsnanc7suchntqgk3flu",
+          "version": "2.0.1"
+        },
         "celo-sepolia": {
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -3709,6 +3865,10 @@
         },
         "xrpl": {
           "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "stellar-2026-q1-2": {
+          "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
         },
         "hedera": {
