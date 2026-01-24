@@ -3314,7 +3314,10 @@
           "address": "0x781Fd1dc56610F622bc5ea10e3fc87d116a2f1c0",
           "implementation": "0xEBBe2aB984Fb6eEfAF962AA29A751c9245885aF0",
           "deployer": "0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4"
-        },
+        }
+      }
+    },
+
     "stellar-2026-q1-2": {
       "name": "Stellar",
       "axelarId": "stellar-2026-q1-2",
