@@ -3282,7 +3282,7 @@
           "domainSeparator": "0x32f1cd9fc7fa27ae3f579059cdd152d7e35017733e6af8c3fc7e06c527c439c8",
           "minimumRotationDelay": 300,
           "connectionType": "amplifier",
-          "owner": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0"
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
         },
         "ConstAddressDeployer": {
           "address": "0xBcF370ee2bD447f32Dcff5C48dc63168d960150a",
@@ -3312,7 +3312,8 @@
           "collector": "0x00424238167e3680BD4F99e3A8a9444cdBEA8c29",
           "address": "0x781Fd1dc56610F622bc5ea10e3fc87d116a2f1c0",
           "implementation": "0xEBBe2aB984Fb6eEfAF962AA29A751c9245885aF0",
-          "deployer": "0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4"
+          "deployer": "0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
         }
       }
     },
