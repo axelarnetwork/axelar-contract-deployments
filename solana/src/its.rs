@@ -1,4 +1,4 @@
-use anchor_lang::InstructionData;
+use anchor_lang::{InstructionData, ToAccountMetas};
 use clap::{Args, Parser, Subcommand};
 use eyre::eyre;
 use solana_client::rpc_client::RpcClient;
@@ -821,6 +821,7 @@ fn set_pause_status(
     }])
 }
 
+#[allow(clippy::too_many_lines)]
 fn set_trusted_chain(
     fee_payer: &Pubkey,
     set_trusted_chain_args: TrustedChainArgs,
@@ -831,6 +832,7 @@ fn set_trusted_chain(
     }
 
     let authority = set_trusted_chain_args.authority.unwrap_or(*fee_payer);
+    println!("Authority: {authority}");
     let mut instructions = Vec::new();
 
     let rpc_client = RpcClient::new(config.url.clone());
@@ -841,11 +843,16 @@ fn set_trusted_chain(
         &solana_axelar_its::id(),
     );
 
-    let user_roles_account = if rpc_client.get_account(&user_roles_pda).is_ok() {
-        user_roles_pda
+    let user_roles = rpc_client
+        .get_account(&user_roles_pda)
+        .is_ok()
+        .then_some(user_roles_pda);
+
+    if user_roles.is_some() {
+        println!("Using operator user roles authorization.");
     } else {
-        solana_axelar_its::id()
-    };
+        println!("Using upgrade_authority authorization.");
+    }
 
     if set_trusted_chain_args.chain_name == "all" {
         use borsh::BorshDeserialize;
@@ -880,24 +887,28 @@ fn set_trusted_chain(
                 }
                 .data();
 
-                let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(
-                    &solana_axelar_its::id(),
-                );
+                let program_data = user_roles.is_none().then(|| {
+                    solana_sdk::bpf_loader_upgradeable::get_program_data_address(
+                        &solana_axelar_its::id(),
+                    )
+                });
 
                 let (event_authority, _) =
                     Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
+                let accounts = solana_axelar_its::accounts::SetTrustedChain {
+                    payer: authority,
+                    user_roles,
+                    program_data,
+                    its_root_pda,
+                    system_program: solana_sdk::system_program::id(),
+                    event_authority,
+                    program: solana_axelar_its::id(),
+                };
+
                 instructions.push(Instruction {
                     program_id: solana_axelar_its::id(),
-                    accounts: vec![
-                        AccountMeta::new(authority, true),
-                        AccountMeta::new_readonly(user_roles_account, false),
-                        AccountMeta::new_readonly(program_data, false),
-                        AccountMeta::new(its_root_pda, false),
-                        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-                        AccountMeta::new_readonly(event_authority, false),
-                        AccountMeta::new_readonly(solana_axelar_its::id(), false),
-                    ],
+                    accounts: accounts.to_account_metas(None),
                     data: ix_data,
                 });
             }
@@ -919,23 +930,26 @@ fn set_trusted_chain(
         }
         .data();
 
-        let program_data =
-            solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
+        let program_data = user_roles.is_none().then(|| {
+            solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id())
+        });
 
         let (event_authority, _) =
             Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
+        let accounts = solana_axelar_its::accounts::SetTrustedChain {
+            payer: authority,
+            user_roles,
+            program_data,
+            its_root_pda,
+            system_program: solana_sdk::system_program::id(),
+            event_authority,
+            program: solana_axelar_its::id(),
+        };
+
         instructions.push(Instruction {
             program_id: solana_axelar_its::id(),
-            accounts: vec![
-                AccountMeta::new(authority, true),
-                AccountMeta::new_readonly(user_roles_account, false),
-                AccountMeta::new_readonly(program_data, false),
-                AccountMeta::new(its_root_pda, false),
-                AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
-                AccountMeta::new_readonly(event_authority, false),
-                AccountMeta::new_readonly(solana_axelar_its::id(), false),
-            ],
+            accounts: accounts.to_account_metas(None),
             data: ix_data,
         });
     }

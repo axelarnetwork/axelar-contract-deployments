@@ -42,9 +42,9 @@ pub(crate) struct DeployArgs {
 pub(crate) async fn deploy_program(args: DeployArgs, _config: crate::Config) -> Result<()> {
     let program_path = artifact::resolve_program_path(
         &args.program,
-        &args.program_path,
-        &args.version,
-        &args.artifact_dir,
+        args.program_path.as_deref(),
+        args.version.as_deref(),
+        args.artifact_dir.as_deref(),
     )
     .await?;
 
@@ -97,9 +97,9 @@ pub(crate) struct UpgradeArgs {
 pub(crate) async fn upgrade_program(args: UpgradeArgs, config: crate::Config) -> Result<()> {
     let program_path = artifact::resolve_program_path(
         &args.program,
-        &args.program_path,
-        &args.version,
-        &args.artifact_dir,
+        args.program_path.as_deref(),
+        args.version.as_deref(),
+        args.artifact_dir.as_deref(),
     )
     .await?;
 
