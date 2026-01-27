@@ -3249,6 +3249,74 @@
         }
       }
     },
+    "arc-8": {
+      "name": "Arc",
+      "axelarId": "arc-8",
+      "chainId": 5042002,
+      "rpc": "https://rpc.testnet.arc.network",
+      "tokenSymbol": "USDC",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Arc Testnet Explorer",
+        "url": "https://testnet.arcscan.app/"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "0xAfde45488D741a946E2376aDf5cf94F6a2918F48",
+          "deployer": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "operator": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "proxyDeploymentArgs": [
+            "0x69eB21bD39bD29C94a6156f87B0Aee27976B577d",
+            "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+            "0x00000000000000000000000092ae7f0b761ac8cfabe4b94d53d1cd343df8e3c00000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000017b77d400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000e3c1ac746bd5d47fa44f77a6e3a700eadd9e1bc00000000000000000000000000000000000000000000000000000000000000010000000000000000000000001f2eb0420e6aac6e25154639a37587bbc4b256d6000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020aecd082d8788639f2a4afb8563f62aee2183f2000000000000000000000000000000000000000000000000000000000000000100000000000000000000000024449d80a8c616cff227b37a1461ebd059529d140000000000000000000000000000000000000000000000000000000000000001000000000000000000000000380dda1ce71d1922b37db6079ca6e26b2b65da4b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000414b06d536092988aa828a3209a0331be53a126f00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004acc331501a4cde2bea4a3703ccf328f2833182500000000000000000000000000000000000000000000000000000000000000010000000000000000000000005cdf30e201017cb3aaab487949af41e7225e2d1600000000000000000000000000000000000000000000000000000000000000010000000000000000000000006ff6e6fb7f3804fee29aa2ff75dd889c8e09eb7e000000000000000000000000000000000000000000000000000000000000000100000000000000000000000070a97c7328a22e012d6e7c7f0615a19f6761b617000000000000000000000000000000000000000000000000000000000000000100000000000000000000000083313ac5d1e023cbca79a18b9ec5ab7875746335000000000000000000000000000000000000000000000000000000000000000100000000000000000000000092ec015a988cf083c6ad0627f37df05937687e7900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009ce4f02aab880308bc8db8cc6e4ec9a2a8cded5b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a8f56991b33b07ccac084be1d2a246d1c82fa73e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b00e4c94faa6698ad2c3b64af7c94071d5eeb2d00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b9f5ea2331ef8224b56576db506afc88f8b070480000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c4db1d3fcf418d4baf61f173eef18c6fb40132fb0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c89566ef25f70cbf3507d5b3c6605129ef9d508c0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cbfa786fbdbb8779063fd7580a22da8f306eb8240000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cee3d5699cbfd940b7ee9ac71518120d5f8f67570000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e19404210888776d57780666d0a435298da6d7cf0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e6a16d54e432883da61ce9130b1cd0240025ce620000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "c968a53c4d4e3b0c1e452a9a6753349bf2cc213115db61e9ec9e62d7254f91c2",
+          "implementation": "0x69eB21bD39bD29C94a6156f87B0Aee27976B577d",
+          "implementationCodehash": "0x262ebe6dc832ab1519cef4bacf3dedf8cc4a4bcf84c1bcd356491ca2104060fe",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x6de3ad7ca6aaab56abd84a49a594b48a50386b2661db4136357848779fb8bcbe",
+          "minimumRotationDelay": 3600,
+          "connectionType": "amplifier",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x034d961A7Bf25538135D90aDAaE33cdd60a48b9E",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "deployer": "0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0xedc69F7537eB000c83031D2bFbdb23814FFb9bD0",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "deployer": "0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "salt": "v1.0.10"
+        },
+        "Operators": {
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "address": "0x00424238167e3680BD4F99e3A8a9444cdBEA8c29",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "deployer": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "v1.0.7"
+        },
+        "AxelarGasService": {
+          "collector": "0x00424238167e3680BD4F99e3A8a9444cdBEA8c29",
+          "address": "0xB2C575226fa1828F5101a42CaA5ba4Ce9140c108",
+          "implementation": "0x1DC6C2C6C379B6D01CD9EA99CA04B308D85b1aB0",
+          "deployer": "0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        }
+      }
+    },
     "stellar-2026-q1-2": {
       "name": "Stellar",
       "axelarId": "stellar-2026-q1-2",
@@ -3428,6 +3496,10 @@
           "monad-3": {
             "deploymentName": "monad-3-24-78-77",
             "salt": "v1.0.1"
+          },
+          "arc-8": {
+            "deploymentName": "arc-8-24-78-77",
+            "salt": "v1.0.10"
           }
         }
       },
@@ -3607,6 +3679,23 @@
           "address": "axelar13s3xyvcjpetwdfyc9q2hh9nc3hdvf7cvtkh33qk0g8adjjjgrk6qeacv67",
           "version": "1.2.0"
         },
+        "arc-8": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 77,
+          "domainSeparator": "0x6de3ad7ca6aaab56abd84a49a594b48a50386b2661db4136357848779fb8bcbe",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1nsjl6hldse4agnjf9pm29hjetyvaxgwm2638z3qd27d32hsqygyqtsluqj",
+          "version": "1.2.0"
+        },
         "storeCodeProposalId": "462",
         "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
         "lastUploadedCodeId": 77
@@ -3675,6 +3764,11 @@
           "codeId": 24,
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
           "address": "axelar1nfe5lknq2z7f80dp3j60jjxa0k084hcgfl7hv9smx0ws5h7s4d0s2dkppr"
+        },
+        "arc-8": {
+          "codeId": 24,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar15g2gf3n8exglrc2vmv8jm64ydetxtc754fhq7942qxgdww8wzyfqpk5628"
         }
       },
       "VotingVerifier": {
@@ -3847,6 +3941,23 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "codeId": 78,
           "address": "axelar1uekdelqqxxuq5e6jxttlaxrhq3aq2ksn45h9lvtljc6hayeqe95qss5s6v",
+          "version": "2.0.1"
+        },
+        "arc-8": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xAfde45488D741a946E2376aDf5cf94F6a2918F48",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 50,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 78,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1qxyyfs4jynsmtu2ajjh4lmz2a9drzr6e7gzf2wcz4nc8qt96mlyqk9f6s4",
           "version": "2.0.1"
         },
         "storeCodeProposalId": "463",
