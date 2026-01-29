@@ -1395,25 +1395,29 @@
           "minimumRotationDelay": 0,
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "previousSignersRetention": 15,
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
+          "version": "0.1.9"
         },
         "AxelarOperators": {
           "address": "oprVNGMBsXzJJBTDQasNWqQ8nZqNhJP2ZXvrC7b5xXd",
           "configAccount": "DSaMLBWjwYwgeTq3K6EJwhev7jdFnmgBtDBs51rn6UzL",
           "owner": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
+          "version": "0.1.9"
         },
         "AxelarGasService": {
           "address": "gasUBnVr9GZon2cp8X5gyFrUsQFhzrprjy734Ci6Bmn",
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
           "configAccount": "D4kaxAQXuyrcgjH11KYtAHnfkWPBpFUJS9s6kTYyfjS8",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
+          "version": "0.1.9"
         },
         "InterchainTokenService": {
           "address": "itsYxmqAxNKUL5zaj3fD1K1whuVhqpxKVoiLGie1reF",
           "configAccount": "2wvQUpTH9VDQPNBoCTVSgLpedxkd2Kshth4Jvgxo2jKR",
           "operator": "gopEFNgirbVNK29RA5DK8mZTDhN2whzcbhCWXkVEc18",
-          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx"
+          "upgradeAuthority": "upa8CAJAvxU32TZfVT6mcHQawRLzx3N4c65GQjL8Vfx",
+          "version": "0.1.9"
         }
       }
     },

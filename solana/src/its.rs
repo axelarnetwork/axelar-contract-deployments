@@ -634,8 +634,8 @@ fn get_token_decimals(mint: &Pubkey, config: &Config) -> eyre::Result<u8> {
     let mint_account = rpc_client.get_account(mint)?;
 
     // Verify owner is a known token program
-    match mint_account.owner.to_string().as_str() {
-        crate::utils::TOKEN_2022_PROGRAM_ID | crate::utils::SPL_TOKEN_PROGRAM_ID => {}
+    match mint_account.owner {
+        anchor_spl::token_2022::ID | anchor_spl::token::ID => {}
         _ => return Err(eyre!("Unsupported token program: {}", mint_account.owner)),
     }
 

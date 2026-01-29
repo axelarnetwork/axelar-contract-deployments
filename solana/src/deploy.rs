@@ -12,7 +12,8 @@ use crate::artifact;
 use crate::types::Programs;
 use crate::utils::{
     GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, MULTICALL_KEY, OPERATORS_KEY,
-    read_json_file_from_path, try_infer_program_id_from_env,
+    get_program_version, read_json_file_from_path, set_program_version, try_infer_program_id_from_env,
+    write_json_to_file_path,
 };
 
 #[derive(Args, Debug)]
@@ -64,6 +65,9 @@ pub(crate) async fn deploy_program(args: DeployArgs, config: crate::Config) -> R
 
     print_fee_payer_info(&fee_payer_path, &config.url)?;
     println!("Upgrade authority: {upgrade_authority_pubkey}");
+    if let Some(version) = &args.version {
+        println!("Version: {version}");
+    }
     println!(
         "Deploying program {:?} using keypair {}",
         args.program, args.program_keypair
@@ -88,6 +92,15 @@ pub(crate) async fn deploy_program(args: DeployArgs, config: crate::Config) -> R
 
     if !status.success() {
         return Err(eyre::eyre!("solana program deploy failed"));
+    }
+
+    // Update version in chains info file if version was provided
+    if let Some(version) = &args.version {
+        let mut env: Value = read_json_file_from_path(&config.chains_info_file)?;
+        let program_key = program_key_from_program(&args.program);
+        set_program_version(&mut env, &config.chain, program_key, version)?;
+        write_json_to_file_path(&env, &config.chains_info_file)?;
+        println!("Set version to {version} in chains info file.");
     }
 
     println!("Program {:?} deployed successfully.", args.program);
@@ -134,25 +147,40 @@ pub(crate) async fn upgrade_program(args: UpgradeArgs, config: crate::Config) ->
     )
     .await?;
 
-    let env: Value = read_json_file_from_path(&config.chains_info_file)?;
+    let mut env: Value = read_json_file_from_path(&config.chains_info_file)?;
     let chain = &config.chain;
-
-    let program_key = match args.program {
-        Programs::Gateway => GATEWAY_KEY,
-        Programs::GasService => GAS_SERVICE_KEY,
-        Programs::Governance => GOVERNANCE_KEY,
-        Programs::Its => ITS_KEY,
-        Programs::Multicall => MULTICALL_KEY,
-        Programs::Operators => OPERATORS_KEY,
-    };
+    let program_key = program_key_from_program(&args.program);
 
     let program_id = try_infer_program_id_from_env(&env, chain, program_key)?;
+
+    // Check if version matches the current deployed version
+    let current_version = get_program_version(&env, chain, program_key);
+    let new_version = args.version.as_deref();
+
+    if let (Some(current), Some(new)) = (&current_version, new_version) {
+        if current == new {
+            eprintln!(
+                "WARNING: Program {:?} is already at version {}",
+                args.program, current
+            );
+            if !args.yes && !confirm_action_with_message("Are you sure you want to redeploy the same version?")? {
+                println!("Aborted.");
+                return Ok(());
+            }
+        }
+    }
 
     let fee_payer_path = get_fee_payer_path(args.fee_payer.as_deref())?;
     let upgrade_authority_pubkey = get_pubkey_from_keypair(&args.upgrade_authority)?;
 
     print_fee_payer_info(&fee_payer_path, &config.url)?;
     println!("Upgrade authority: {upgrade_authority_pubkey}");
+    if let Some(current) = &current_version {
+        println!("Current version: {current}");
+    }
+    if let Some(new) = new_version {
+        println!("New version: {new}");
+    }
     println!(
         "Upgrading program {:?} with ID {}",
         args.program, program_id
@@ -180,8 +208,27 @@ pub(crate) async fn upgrade_program(args: UpgradeArgs, config: crate::Config) ->
         return Err(eyre::eyre!("solana program upgrade failed"));
     }
 
+    // Update version in chains info file if version was provided
+    if let Some(version) = new_version {
+        set_program_version(&mut env, chain, program_key, version)?;
+        write_json_to_file_path(&env, &config.chains_info_file)?;
+        println!("Updated version to {version} in chains info file.");
+    }
+
     println!("Program {:?} upgraded successfully.", args.program);
     Ok(())
+}
+
+/// Get the JSON key for a program.
+fn program_key_from_program(program: &Programs) -> &'static str {
+    match program {
+        Programs::Gateway => GATEWAY_KEY,
+        Programs::GasService => GAS_SERVICE_KEY,
+        Programs::Governance => GOVERNANCE_KEY,
+        Programs::Its => ITS_KEY,
+        Programs::Multicall => MULTICALL_KEY,
+        Programs::Operators => OPERATORS_KEY,
+    }
 }
 
 /// Get fee payer keypair path. If not provided, uses the default Solana CLI keypair.
@@ -242,7 +289,12 @@ fn print_fee_payer_info(fee_payer_path: &str, rpc_url: &str) -> Result<()> {
 
 /// Prompt the user for confirmation. Returns true if they confirm.
 fn confirm_action() -> Result<bool> {
-    print!("\nProceed? [y/N] ");
+    confirm_action_with_message("Proceed?")
+}
+
+/// Prompt the user for confirmation with a custom message. Returns true if they confirm.
+fn confirm_action_with_message(message: &str) -> Result<bool> {
+    print!("\n{message} [y/N] ");
     io::stdout().flush()?;
 
     let mut input = String::new();

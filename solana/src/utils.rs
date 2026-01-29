@@ -51,26 +51,25 @@ pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
 pub(crate) const CONNECTION_TYPE_KEY: &str = "connectionType";
 pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
-pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
-pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
 pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
 pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
-pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
-pub(crate) const MULTICALL_KEY: &str = "Multicall";
 pub(crate) const GRPC_KEY: &str = "grpc";
-pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
-pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
-pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
 pub(crate) const OWNER_KEY: &str = "owner";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
+pub(crate) const VERSION_KEY: &str = "version";
 
-// TODO use addresses from packages
-pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
-pub(crate) const SPL_TOKEN_PROGRAM_ID: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+// Programs
+pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
+pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
+pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
+pub(crate) const MULTICALL_KEY: &str = "Multicall";
+pub(crate) const ITS_KEY: &str = "InterchainTokenService";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
+pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
     let reader = std::io::BufReader::new(file);
@@ -353,6 +352,38 @@ pub(crate) fn try_infer_program_id_from_env(
         })?;
 
     Ok(id)
+}
+
+/// Get the version of a program from the chains info JSON file.
+/// Returns None if the version is not set.
+pub(crate) fn get_program_version(env: &Value, chain: &str, program_key: &str) -> Option<String> {
+    let path = format!("/{CHAINS_KEY}/{chain}/{CONTRACTS_KEY}/{program_key}/{VERSION_KEY}");
+    let v = env.pointer(&path)?;
+    String::deserialize(v).ok()
+}
+
+/// Set the version of a program in the chains info JSON file.
+pub(crate) fn set_program_version(
+    env: &mut Value,
+    chain: &str,
+    program_key: &str,
+    version: &str,
+) -> eyre::Result<()> {
+    let contracts = env
+        .get_mut(CHAINS_KEY)
+        .and_then(|v| v.get_mut(chain))
+        .and_then(|v| v.get_mut(CONTRACTS_KEY))
+        .and_then(|v| v.get_mut(program_key))
+        .ok_or_else(|| {
+            eyre!(
+                "Could not find contract {} for chain {} in chains info file",
+                program_key,
+                chain
+            )
+        })?;
+
+    contracts[VERSION_KEY] = serde_json::Value::String(version.to_owned());
+    Ok(())
 }
 
 pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
