@@ -24,6 +24,7 @@ const PREFIX_CUSTOM_TOKEN_SALT: &[u8] = b"solana-custom-token-salt";
 
 #[derive(Debug, Clone, Copy, borsh::BorshDeserialize)]
 #[repr(u8)]
+#[borsh(use_discriminant = false)]
 enum TokenManagerType {
     NativeInterchainToken = 0,
     MintBurnFrom = 1,
@@ -79,11 +80,11 @@ fn interchain_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32
         deployer.as_ref(),
         salt,
     ])
-    .0
+    .to_bytes()
 }
 
 fn interchain_token_id_internal(salt: &[u8; 32]) -> [u8; 32] {
-    solana_sdk::keccak::hashv(&[PREFIX_INTERCHAIN_TOKEN_ID, salt]).0
+    solana_sdk::keccak::hashv(&[PREFIX_INTERCHAIN_TOKEN_ID, salt]).to_bytes()
 }
 
 fn interchain_token_id(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
@@ -97,7 +98,7 @@ fn canonical_interchain_token_deploy_salt(mint: &Pubkey) -> [u8; 32] {
         &get_chain_name_hash(),
         mint.as_ref(),
     ])
-    .0
+    .to_bytes()
 }
 
 fn canonical_interchain_token_id(token_address: &Pubkey) -> [u8; 32] {
@@ -112,7 +113,7 @@ fn linked_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
         deployer.as_ref(),
         salt,
     ])
-    .0
+    .to_bytes()
 }
 
 fn linked_token_id(sender: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
@@ -595,7 +596,7 @@ pub(crate) struct TransferOperatorshipArgs {
 }
 
 fn hash_salt(s: &str) -> eyre::Result<[u8; 32]> {
-    Ok(solana_sdk::keccak::hash(s.as_bytes()).0)
+    Ok(solana_sdk::keccak::hash(s.as_bytes()).to_bytes())
 }
 
 fn parse_hex_bytes32(s: &str) -> eyre::Result<[u8; 32]> {
@@ -626,26 +627,22 @@ fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<P
 }
 
 fn get_token_decimals(mint: &Pubkey, config: &Config) -> eyre::Result<u8> {
-    use solana_sdk::program_pack::Pack;
-    use spl_token::state::Mint as TokenMint;
-    use spl_token_2022::state::Mint as Token2022Mint;
+    use anchor_lang::AccountDeserialize;
+    use anchor_spl::token_interface::Mint;
 
     let rpc_client = RpcClient::new(config.url.clone());
     let mint_account = rpc_client.get_account(mint)?;
 
+    // Verify owner is a known token program
     match mint_account.owner.to_string().as_str() {
-        crate::utils::TOKEN_2022_PROGRAM_ID => {
-            let mint_data = Token2022Mint::unpack(&mint_account.data)
-                .map_err(|_| eyre!("Failed to parse Token-2022 mint data"))?;
-            Ok(mint_data.decimals)
-        }
-        crate::utils::SPL_TOKEN_PROGRAM_ID => {
-            let mint_data = TokenMint::unpack(&mint_account.data)
-                .map_err(|_| eyre!("Failed to parse SPL Token mint data"))?;
-            Ok(mint_data.decimals)
-        }
-        _ => Err(eyre!("Unsupported token program: {}", mint_account.owner)),
+        crate::utils::TOKEN_2022_PROGRAM_ID | crate::utils::SPL_TOKEN_PROGRAM_ID => {}
+        _ => return Err(eyre!("Unsupported token program: {}", mint_account.owner)),
     }
+
+    // token_interface::Mint works for both SPL Token and Token-2022
+    let mint_data = Mint::try_deserialize_unchecked(&mut mint_account.data.as_slice())
+        .map_err(|_| eyre!("Failed to parse mint data"))?;
+    Ok(mint_data.decimals)
 }
 
 fn get_mint_from_token_manager(token_id: &[u8; 32], config: &Config) -> eyre::Result<Pubkey> {
@@ -758,7 +755,7 @@ fn init(
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let (its_root_pda, _) = find_its_root_pda();
     let program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id());
 
     let (user_roles_pda, _) = Pubkey::find_program_address(
         &[
@@ -789,7 +786,7 @@ fn init(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(program_data, false),
             AccountMeta::new(its_root_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new_readonly(init_args.operator, true),
             AccountMeta::new(user_roles_pda, false),
         ],
@@ -803,7 +800,7 @@ fn set_pause_status(
 ) -> eyre::Result<Vec<Instruction>> {
     let (its_root_pda, _) = find_its_root_pda();
     let program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id());
 
     let ix_data = solana_axelar_its::instruction::SetPauseStatus {
         paused: set_pause_args.paused,
@@ -888,9 +885,7 @@ fn set_trusted_chain(
                 .data();
 
                 let program_data = user_roles.is_none().then(|| {
-                    solana_sdk::bpf_loader_upgradeable::get_program_data_address(
-                        &solana_axelar_its::id(),
-                    )
+                    solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id())
                 });
 
                 let (event_authority, _) =
@@ -901,7 +896,7 @@ fn set_trusted_chain(
                     user_roles,
                     program_data,
                     its_root_pda,
-                    system_program: solana_sdk::system_program::id(),
+                    system_program: solana_sdk_ids::system_program::ID,
                     event_authority,
                     program: solana_axelar_its::id(),
                 };
@@ -931,7 +926,7 @@ fn set_trusted_chain(
         .data();
 
         let program_data = user_roles.is_none().then(|| {
-            solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id())
+            solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id())
         });
 
         let (event_authority, _) =
@@ -942,7 +937,7 @@ fn set_trusted_chain(
             user_roles,
             program_data,
             its_root_pda,
-            system_program: solana_sdk::system_program::id(),
+            system_program: solana_sdk_ids::system_program::ID,
             event_authority,
             program: solana_axelar_its::id(),
         };
@@ -983,7 +978,7 @@ fn remove_trusted_chain(
     .data();
 
     let program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_its::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id());
 
     let (event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
@@ -995,7 +990,7 @@ fn remove_trusted_chain(
             AccountMeta::new_readonly(user_roles_account, false),
             AccountMeta::new_readonly(program_data, false),
             AccountMeta::new(its_root_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new_readonly(event_authority, false),
             AccountMeta::new_readonly(solana_axelar_its::id(), false),
         ],
@@ -1043,7 +1038,7 @@ fn register_canonical_interchain_token(
     let accounts = vec![
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(metadata_account, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(args.mint, false),
@@ -1116,7 +1111,7 @@ fn deploy_remote_canonical_interchain_token(
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_program, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -1163,7 +1158,7 @@ fn deploy_interchain_token(
     println!("- Decimals: {}", args.decimals);
     println!("------------------------------------------");
 
-    let token_program = spl_token_2022::id();
+    let token_program = anchor_spl::token_2022::ID;
     let associated_token_program = spl_associated_token_account_program_id();
     let mpl_token_metadata_program = mpl_token_metadata_program_id();
 
@@ -1186,7 +1181,7 @@ fn deploy_interchain_token(
     let mut accounts = vec![
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(deployer, true),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new(mint, false),
@@ -1290,7 +1285,7 @@ fn deploy_remote_interchain_token(
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_program, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -1353,7 +1348,7 @@ fn register_token_metadata(
         AccountMeta::new_readonly(args.mint, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_program, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
@@ -1407,7 +1402,7 @@ fn register_custom_token(
     let mut accounts = vec![
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(deployer, true),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(args.mint, false),
@@ -1507,7 +1502,7 @@ fn link_token(fee_payer: &Pubkey, args: LinkTokenArgs) -> eyre::Result<Vec<Instr
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(gateway_program, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
         AccountMeta::new_readonly(gateway_event_authority, false),
         AccountMeta::new(gas_treasury, false),
@@ -1612,7 +1607,7 @@ fn interchain_transfer(
         AccountMeta::new(mint, false),
         AccountMeta::new(args.source_account, false),
         AccountMeta::new(token_manager_ata, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(event_authority, false),
         AccountMeta::new_readonly(solana_axelar_its::id(), false),
     ];
@@ -1668,7 +1663,7 @@ fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Ve
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(its_roles_pda, false),
         AccountMeta::new(token_manager_pda, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(event_authority, false),
         AccountMeta::new_readonly(solana_axelar_its::id(), false),
     ];
@@ -1709,7 +1704,7 @@ fn transfer_operatorship(
     println!("------------------------------------------");
 
     let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(args.sender, true),
         AccountMeta::new(origin_roles_pda, false),
@@ -1761,7 +1756,7 @@ fn token_manager_set_flow_limit(
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(flow_limiter_roles_pda, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(event_authority, false),
         AccountMeta::new_readonly(solana_axelar_its::id(), false),
     ];
@@ -1812,7 +1807,7 @@ fn token_manager_add_flow_limiter(
     println!("------------------------------------------");
 
     let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(args.adder, true),
         AccountMeta::new_readonly(authority_roles_pda, false),
@@ -1865,7 +1860,7 @@ fn token_manager_remove_flow_limiter(
     println!("------------------------------------------");
 
     let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(args.remover, true),
         AccountMeta::new_readonly(authority_roles_pda, false),
@@ -1914,7 +1909,7 @@ fn token_manager_transfer_operatorship(
     println!("------------------------------------------");
 
     let accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(*fee_payer, true),
         AccountMeta::new_readonly(args.sender, true),
         AccountMeta::new(origin_roles_pda, false),

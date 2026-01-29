@@ -95,7 +95,7 @@ fn init(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(init_args.owner, false),
             AccountMeta::new(registry_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: ix_data,
     }])
@@ -125,7 +125,7 @@ fn add_operator(
             AccountMeta::new_readonly(add_operator_args.operator, false),
             AccountMeta::new(registry_pda, false),
             AccountMeta::new(operator_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: ix_data,
     }])

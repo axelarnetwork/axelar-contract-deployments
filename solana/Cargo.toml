@@ -4,13 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anchor-lang = { version = "0.31.1", features = ["event-cpi"] }
-axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
-
 base64 = "0.22.1"
-bincode = { version = "2.0.1", features = ["serde"] }
 bip39 = "2.2"
-borsh = "0.10.4"
 clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
@@ -26,31 +21,47 @@ reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
 sha2 = "0.10"
-solana-axelar-gas-service = { version = "0.1.7", features = [
+tokio = { version = "1", features = ["full"] }
+
+# axelar dependencies
+axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v2.0.0" }
+
+# solana dependencies
+anchor-lang = { version = "1.0.0-rc.1", features = ["event-cpi"] }
+anchor-spl = { version = "1.0.0-rc.1" }
+borsh = { version = "1.6", features = ["derive"] }
+bincode = { version = "2.0.1", features = ["serde"] }
+solana-sdk = "~3.0.0"
+solana-clap-v3-utils= "~3.0.0"
+solana-cli-config = "~3.0.0"
+solana-client = "~3.0.0"
+solana-sdk-ids = "~3.0.0"
+solana-transaction-status = "~3.0.0"
+solana-commitment-config = "~3.0.0"
+solana-compute-budget-interface = "~3.0.0"
+solana-nonce = "~3.0.0"
+solana-loader-v3-interface = "~6.1.0"
+solana-system-interface = { version = "~2.0.0", features = ["bincode"] }
+mpl-token-metadata = { version = "5.1.2-alpha.2" }
+
+# solana axelar dependencies
+solana-axelar-gas-service = { version = "0.1.9", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-gateway = { version = "0.1.7", features = [
+solana-axelar-gateway = { version = "0.1.9", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-governance = { version = "0.1.7", features = [
+solana-axelar-governance = { version = "0.1.9", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-its = { version = "0.1.7", features = [
+solana-axelar-its = { version = "0.1.9", features = [
     "no-entrypoint",
 ], default-features = false }
 solana-axelar-memo = { git = "https://github.com/axelarnetwork/axelar-amplifier-solana.git", branch = "main", default-features = false }
-solana-axelar-operators = { version = "0.1.7", features = [
+solana-axelar-operators = { version = "0.1.9", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-std = { version = "0.1.4" }
-solana-clap-v3-utils = "2"
-solana-cli-config = "2"
-solana-client = "2"
-solana-sdk = "2"
-solana-transaction-status = "2"
-spl-token = { version = "6", features = ["no-entrypoint"] }
-spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
-tokio = { version = "1", features = ["full"] }
+solana-axelar-std = { version = "0.1.6" }
 
 [lints.clippy]
 cargo = { priority = -1, level = "deny" }

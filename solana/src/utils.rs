@@ -11,11 +11,11 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use solana_client::rpc_client::RpcClient;
+use solana_compute_budget_interface::ComputeBudgetInstruction;
+use solana_nonce::versions::Versions;
 use solana_sdk::account_utils::StateMut;
-use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction;
-use solana_sdk::nonce::state::Versions;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 
@@ -67,6 +67,8 @@ pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
 pub(crate) const OWNER_KEY: &str = "owner";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
+
+// TODO use addresses from packages
 pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 pub(crate) const SPL_TOKEN_PROGRAM_ID: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
@@ -256,21 +258,21 @@ pub(crate) fn fetch_nonce_data_and_verify(
     let rpc_client = RpcClient::new(rpc_url.to_owned());
     let nonce_account = rpc_client.get_account(nonce_account_pubkey)?;
 
-    if !solana_sdk::system_program::check_id(&nonce_account.owner) {
+    if nonce_account.owner != solana_sdk_ids::system_program::ID {
         eyre::bail!(
             "Nonce account {} is not owned by the system program ({}), owner is {}",
             nonce_account_pubkey,
-            solana_sdk::system_program::id(),
+            solana_sdk_ids::system_program::ID,
             nonce_account.owner
         );
     }
 
-    let nonce_state: solana_sdk::nonce::state::State = StateMut::<Versions>::state(&nonce_account)
+    let nonce_state: solana_nonce::state::State = StateMut::<Versions>::state(&nonce_account)
         .map_err(|_| eyre!("Failed to deserialize nonce account {nonce_account_pubkey}"))?
         .into();
 
     match nonce_state {
-        solana_sdk::nonce::state::State::Initialized(data) => {
+        solana_nonce::state::State::Initialized(data) => {
             println!("Nonce account is initialized.");
             println!(" -> Stored Nonce (Blockhash): {}", data.blockhash());
             println!(" -> Authority: {}", data.authority);
@@ -285,7 +287,7 @@ pub(crate) fn fetch_nonce_data_and_verify(
 
             Ok(data.blockhash())
         }
-        solana_sdk::nonce::state::State::Uninitialized => Err(eyre!(
+        solana_nonce::state::State::Uninitialized => Err(eyre!(
             "Nonce account {nonce_account_pubkey} is uninitialized"
         )),
     }
