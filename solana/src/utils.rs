@@ -336,14 +336,21 @@ pub(crate) fn try_infer_program_id_from_env(
     chain: &str,
     program_key: &str,
 ) -> eyre::Result<Pubkey> {
-    let id = Pubkey::from_str(&String::deserialize(
-        &env[CHAINS_KEY][chain][CONTRACTS_KEY][program_key][ADDRESS_KEY],
-    )?)
-    .map_err(|_| {
-        eyre!(
-            "Could not get the program id ({}) from the chains info JSON file. Is it already deployed?", program_key
-        )
-    })?;
+    let path = format!("/{CHAINS_KEY}/{chain}/{CONTRACTS_KEY}/{program_key}/{ADDRESS_KEY}");
+    let id = env
+        .pointer(&path)
+        .ok_or_else(|| {
+            eyre!(
+                "Could not get the program id ({}) from the chains info JSON file (chain {}). Is it already deployed?",
+                program_key, chain
+            )
+        })
+        .and_then(|v| {
+            String::deserialize(v).map_err(|e| eyre!("Failed to deserialize address: {}", e))
+        })
+        .and_then(|s| {
+            Pubkey::from_str(&s).map_err(|_| eyre!("Invalid program id format for {}", program_key))
+        })?;
 
     Ok(id)
 }

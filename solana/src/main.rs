@@ -274,6 +274,8 @@ async fn run() -> eyre::Result<()> {
         cli.chain.clone(),
     )?;
 
+    println!("{config}");
+
     match cli.command {
         Command::Deploy(args) => {
             deploy::deploy_program(args, config).await?;
