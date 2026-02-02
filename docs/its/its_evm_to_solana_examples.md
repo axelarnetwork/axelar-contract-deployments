@@ -26,6 +26,21 @@ ts-node evm/its.js interchain-transfer --destinationChain solana-18 --tokenId 0x
 
 Note that the token needs to first be deployed to the remote chain as well using `deploy-remote-interchain-token`
 
+## Interchain Transfer with data (extra contract call)
+
+For an existing tokenId, we send to the memo program some tokens, and also call it with metadata. Here is the analysis of the encoding:
+  - 2f000000 = 47 bytes (length of data field, little-endian)                                           
+  - 00 = Encoding scheme (Borsh)                                                                        
+  - 05000000 = Payload length (5)                                                                       
+  - 68656c6c6f = "hello" ✓                                                                              
+  - 01000000 = Account count (1)                                                                        
+  - 68d061fba856d5c9cb67193fe52c8a600cd2869fd8769d9b9fe8f6b806d4a96f = counter PDA                      
+  - 02 = Flags (writable, not signer)  
+
+```bash
+ts-node evm/its.js interchain-transfer --destinationChain solana-18 --tokenId 0xccdcf769724f6678525c247deb55bb79fdf2fed461742415fdfc83048cfef506 --destinationAddress memKnP9ex71TveNFpsFNVqAYGEe1v9uHVsHNdFPW6FY --amount 100 --metadata 0x00000000000500000068656c6c6f0100000068d061fba856d5c9cb67193fe52c8a600cd2869fd8769d9b9fe8f6b806d4a96f02 --gasValue 500000 -n avalanche-fuji --env devnet-amplifier
+```
+
 ## Link Custom Token
 
 This is used to link two custom tokens, one manually deployed in the source chain (e.g. EVM, could be deployed using remix etc), and one manually deployed in the destination chain (e.g. Solana)
