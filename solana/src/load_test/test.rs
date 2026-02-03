@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use eyre::eyre;
 use futures::future::join_all;
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
+use solana_commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signature;
 use solana_sdk::signer::Signer;
 use solana_transaction_status::UiTransactionEncoding;

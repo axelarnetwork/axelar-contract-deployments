@@ -1,4 +1,5 @@
 use eyre::eyre;
+use std::fmt;
 use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -48,5 +49,16 @@ impl Config {
             chains_info_file,
             chain,
         })
+    }
+}
+
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Configuration:")?;
+        writeln!(f, "  Chain: {}", self.chain)?;
+        writeln!(f, "  Network: {:?}", self.network_type)?;
+        writeln!(f, "  RPC URL: {}", self.url)?;
+        writeln!(f, "  Chains info file: {}", self.chains_info_file.display())?;
+        write!(f, "  Output directory: {}", self.output_dir.display())
     }
 }

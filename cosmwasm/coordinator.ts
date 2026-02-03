@@ -29,6 +29,7 @@ export interface VerifierParams {
         rewards_address: string;
         msg_id_format: string;
         chain_codec_address: string;
+        address_format: string;
     };
     contract_admin: string;
 }
@@ -152,6 +153,7 @@ export class CoordinatorManager {
                                     rewards_address: rewardsAddress,
                                     msg_id_format: votingVerifierConfig.msgIdFormat,
                                     chain_codec_address: chainCodecAddress,
+                                    address_format: votingVerifierConfig.addressFormat,
                                 },
                                 contract_admin: votingVerifierConfig.contractAdmin,
                             },

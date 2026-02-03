@@ -51,29 +51,29 @@ This is the Solana GMP upgrade doc for anchor TO anchor programs.
 1. Upgrade the programs using the new version:
 
     ```sh
-    solana/cli upgrade \
+    solana/cli -c $CHAIN upgrade \
         --program gateway \
-        --version <VERSION> \
+        --version $VERSION \
         --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana/cli upgrade \
+    solana/cli -c $CHAIN upgrade \
         --program gas-service \
-        --version <VERSION> \
+        --version $VERSION \
         --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana/cli upgrade \
+    solana/cli -c $CHAIN upgrade \
         --program governance \
-        --version <VERSION> \
+        --version $VERSION \
         --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana/cli upgrade \
+    solana/cli -c $CHAIN upgrade \
         --program operators \
-        --version <VERSION> \
+        --version $VERSION \
         --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
 
-    solana/cli upgrade \
+    solana/cli -c $CHAIN upgrade \
         --program its \
-        --version <VERSION> \
+        --version $VERSION \
         --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH
     ```
 

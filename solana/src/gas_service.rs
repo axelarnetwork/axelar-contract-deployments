@@ -120,7 +120,7 @@ fn init(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(init_args.operator, true),
             AccountMeta::new_readonly(operator_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new(treasury_pda, false),
         ],
         data: ix_data,
@@ -140,7 +140,7 @@ fn add_gas(fee_payer: &Pubkey, add_gas_args: AddGasArgs) -> eyre::Result<Vec<Ins
     let accounts = solana_axelar_gas_service::accounts::AddGas {
         sender: *fee_payer,
         treasury: treasury_pda,
-        system_program: solana_sdk::system_program::id(),
+        system_program: solana_sdk_ids::system_program::ID,
         program: solana_axelar_gas_service::id(),
         event_authority: event_authority_pda,
     }

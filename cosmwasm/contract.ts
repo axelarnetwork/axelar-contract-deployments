@@ -848,6 +848,7 @@ const programHandler = () => {
         storeOptions: true,
         storeProposalOptions: true,
         instantiate2Options: true,
+        proposalOptions: true,
     });
 
     const instantiateCmd = program
