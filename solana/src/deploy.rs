@@ -12,8 +12,8 @@ use crate::artifact;
 use crate::types::Programs;
 use crate::utils::{
     GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, MULTICALL_KEY, OPERATORS_KEY,
-    get_program_version, read_json_file_from_path, set_program_version, try_infer_program_id_from_env,
-    write_json_to_file_path,
+    get_program_version, read_json_file_from_path, set_program_version,
+    try_infer_program_id_from_env, write_json_to_file_path,
 };
 
 #[derive(Args, Debug)]
@@ -163,7 +163,11 @@ pub(crate) async fn upgrade_program(args: UpgradeArgs, config: crate::Config) ->
                 "WARNING: Program {:?} is already at version {}",
                 args.program, current
             );
-            if !args.yes && !confirm_action_with_message("Are you sure you want to redeploy the same version?")? {
+            if !args.yes
+                && !confirm_action_with_message(
+                    "Are you sure you want to redeploy the same version?",
+                )?
+            {
                 println!("Aborted.");
                 return Ok(());
             }
