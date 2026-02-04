@@ -11,11 +11,11 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use solana_client::rpc_client::RpcClient;
+use solana_compute_budget_interface::ComputeBudgetInstruction;
+use solana_nonce::versions::Versions;
 use solana_sdk::account_utils::StateMut;
-use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction;
-use solana_sdk::nonce::state::Versions;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 
@@ -51,24 +51,25 @@ pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
 pub(crate) const CONNECTION_TYPE_KEY: &str = "connectionType";
 pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
-pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
-pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
 pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
 pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
-pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
-pub(crate) const MULTICALL_KEY: &str = "Multicall";
 pub(crate) const GRPC_KEY: &str = "grpc";
-pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
-pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
-pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
 pub(crate) const OWNER_KEY: &str = "owner";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
-pub(crate) const TOKEN_2022_PROGRAM_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
-pub(crate) const SPL_TOKEN_PROGRAM_ID: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+pub(crate) const VERSION_KEY: &str = "version";
+
+// Programs
+pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
+pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
+pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
+pub(crate) const MULTICALL_KEY: &str = "Multicall";
+pub(crate) const ITS_KEY: &str = "InterchainTokenService";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
+pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
     let reader = std::io::BufReader::new(file);
@@ -256,21 +257,21 @@ pub(crate) fn fetch_nonce_data_and_verify(
     let rpc_client = RpcClient::new(rpc_url.to_owned());
     let nonce_account = rpc_client.get_account(nonce_account_pubkey)?;
 
-    if !solana_sdk::system_program::check_id(&nonce_account.owner) {
+    if nonce_account.owner != solana_sdk_ids::system_program::ID {
         eyre::bail!(
             "Nonce account {} is not owned by the system program ({}), owner is {}",
             nonce_account_pubkey,
-            solana_sdk::system_program::id(),
+            solana_sdk_ids::system_program::ID,
             nonce_account.owner
         );
     }
 
-    let nonce_state: solana_sdk::nonce::state::State = StateMut::<Versions>::state(&nonce_account)
+    let nonce_state: solana_nonce::state::State = StateMut::<Versions>::state(&nonce_account)
         .map_err(|_| eyre!("Failed to deserialize nonce account {nonce_account_pubkey}"))?
         .into();
 
     match nonce_state {
-        solana_sdk::nonce::state::State::Initialized(data) => {
+        solana_nonce::state::State::Initialized(data) => {
             println!("Nonce account is initialized.");
             println!(" -> Stored Nonce (Blockhash): {}", data.blockhash());
             println!(" -> Authority: {}", data.authority);
@@ -285,7 +286,7 @@ pub(crate) fn fetch_nonce_data_and_verify(
 
             Ok(data.blockhash())
         }
-        solana_sdk::nonce::state::State::Uninitialized => Err(eyre!(
+        solana_nonce::state::State::Uninitialized => Err(eyre!(
             "Nonce account {nonce_account_pubkey} is uninitialized"
         )),
     }
@@ -334,16 +335,55 @@ pub(crate) fn try_infer_program_id_from_env(
     chain: &str,
     program_key: &str,
 ) -> eyre::Result<Pubkey> {
-    let id = Pubkey::from_str(&String::deserialize(
-        &env[CHAINS_KEY][chain][CONTRACTS_KEY][program_key][ADDRESS_KEY],
-    )?)
-    .map_err(|_| {
-        eyre!(
-            "Could not get the program id ({}) from the chains info JSON file. Is it already deployed?", program_key
-        )
-    })?;
+    let path = format!("/{CHAINS_KEY}/{chain}/{CONTRACTS_KEY}/{program_key}/{ADDRESS_KEY}");
+    let id = env
+        .pointer(&path)
+        .ok_or_else(|| {
+            eyre!(
+                "Could not get the program id ({}) from the chains info JSON file (chain {}). Is it already deployed?",
+                program_key, chain
+            )
+        })
+        .and_then(|v| {
+            String::deserialize(v).map_err(|e| eyre!("Failed to deserialize address: {}", e))
+        })
+        .and_then(|s| {
+            Pubkey::from_str(&s).map_err(|_| eyre!("Invalid program id format for {}", program_key))
+        })?;
 
     Ok(id)
+}
+
+/// Get the version of a program from the chains info JSON file.
+/// Returns None if the version is not set.
+pub(crate) fn get_program_version(env: &Value, chain: &str, program_key: &str) -> Option<String> {
+    let path = format!("/{CHAINS_KEY}/{chain}/{CONTRACTS_KEY}/{program_key}/{VERSION_KEY}");
+    let v = env.pointer(&path)?;
+    String::deserialize(v).ok()
+}
+
+/// Set the version of a program in the chains info JSON file.
+pub(crate) fn set_program_version(
+    env: &mut Value,
+    chain: &str,
+    program_key: &str,
+    version: &str,
+) -> eyre::Result<()> {
+    let contracts = env
+        .get_mut(CHAINS_KEY)
+        .and_then(|v| v.get_mut(chain))
+        .and_then(|v| v.get_mut(CONTRACTS_KEY))
+        .and_then(|v| v.get_mut(program_key))
+        .ok_or_else(|| {
+            eyre!(
+                "Could not find contract {} for chain {} in chains info file",
+                program_key,
+                chain
+            )
+        })?;
+
+    contracts[VERSION_KEY] = serde_json::Value::String(version.to_owned());
+    Ok(())
 }
 
 pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {

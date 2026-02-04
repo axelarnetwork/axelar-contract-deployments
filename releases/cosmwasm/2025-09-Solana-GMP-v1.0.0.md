@@ -14,7 +14,7 @@
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
 - Contract Checksums:
-    - SolanaMultisigProver: `8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068`
+    - SolanaMultisigProver: `9066612ae064702946322327eb6b3e7d450f45d0567ba7e35fb42ab4cded2349`
 
 ## Background
 
@@ -102,13 +102,13 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         --governance
     ```
 
-3. Store SolanaMultisigProver:
+3. Store MultisigProver:
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
-        -c SolanaMultisigProver \
-        -t "Upload SolanaMultisigProver contract for Solana" \
-        -d "Upload SolanaMultisigProver contract for Solana integration" \
+        -c MultisigProver \
+        -t "Upload MultisigProver contract for Solana" \
+        -d "Upload MultisigProver contract for Solana integration" \
         -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
@@ -121,8 +121,8 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
     ```bash
     ts-node cosmwasm/contract.ts store-code \
         -c ItsSolanaTranslator \
-        # -t "Upload ItsSolanaTranslator contract v1.0.0" \
-        # -d "Upload ItsSolanaTranslator contract v1.0.0" \
+        -t "Upload ItsSolanaTranslator contract v1.0.0" \
+        -d "Upload ItsSolanaTranslator contract v1.0.0" \
         -a ../axelar-amplifier/artifacts \
         -m $MNEMONIC \
         --instantiateAddresses $INIT_ADDRESSES \
@@ -138,6 +138,18 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
         -m $MNEMONIC \
         --fetchCodeId \
         --governance
+    ```
+
+6. After proposal passes, find the ItsSolanaTranslator contract address and update config if not auto-filled:
+
+    ```bash
+    # Get the code ID from the config
+    CODE_ID=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.ItsSolanaTranslator.codeId")
+
+    # List contracts instantiated from that code ID
+    axelard q wasm list-contract-by-code $CODE_ID --node $NODE --output json | jq .
+
+    # Update axelar.contracts.ItsSolanaTranslator.address in $ENV.json if not auto-filled
     ```
 
 ## Deployment
@@ -213,6 +225,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -s $SALT \
         --fetchCodeId \
         --admin $CONTRACT_ADMIN \
+        -m $MNEMONIC \
         --governance # omit on devnet-amplifier
     ```
 
@@ -228,6 +241,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     ts-node cosmwasm/contract.ts register-deployment $CHAIN \
+        -m $MNEMONIC \
         --governance # omit on devnet-amplifier
     ```
 
@@ -332,10 +346,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         chain_name: $CHAIN
         cosmwasm_contract: $VOTING_VERIFIER
         rpc_url: [rpc_url]
+        gateway_address: $GATEWAY
       - type: SolanaVerifierSetVerifier
         chain_name: $CHAIN
         cosmwasm_contract: $VOTING_VERIFIER
         rpc_url: [rpc_url]
+        gateway_address: $GATEWAY
     ```
 
 1. Update ampd with the Solana chain configuration.

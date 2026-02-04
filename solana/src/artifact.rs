@@ -84,9 +84,9 @@ pub(crate) fn resolve_from_artifact_dir(program: &Programs, dir: &Path) -> Resul
 /// Resolve program path from one of three sources
 pub(crate) async fn resolve_program_path(
     program: &Programs,
-    program_path: &Option<String>,
-    version: &Option<String>,
-    artifact_dir: &Option<PathBuf>,
+    program_path: Option<&str>,
+    version: Option<&str>,
+    artifact_dir: Option<&Path>,
 ) -> Result<PathBuf> {
     match (program_path, version, artifact_dir) {
         (Some(path), None, None) => Ok(PathBuf::from(path)),
@@ -95,7 +95,7 @@ pub(crate) async fn resolve_program_path(
         (None, None, None) => {
             bail!("One of --program-path, --version, or --artifact-dir is required")
         }
-        _ => unreachable!("clap ensures mutual exclusivity"),
+        _ => bail!("Only one of --program-path, --version, or --artifact-dir can be specified"),
     }
 }
 

@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use anchor_lang::InstructionData;
 use base64::Engine as _;
-use borsh::BorshDeserialize;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
@@ -46,7 +45,7 @@ use crate::utils::{
 const SOLANA_GATEWAY_CONNECTION_TYPE: &str = "amplifier";
 
 fn command_id(source_chain: &str, message_id: &str) -> [u8; 32] {
-    solana_sdk::keccak::hashv(&[source_chain.as_bytes(), b"-", message_id.as_bytes()]).0
+    solana_sdk::keccak::hashv(&[source_chain.as_bytes(), b"-", message_id.as_bytes()]).to_bytes()
 }
 
 #[derive(Debug)]
@@ -456,7 +455,7 @@ fn construct_execute_data(
         domain_separator,
         payload,
     )?;
-    let execute_data: ExecuteData = ExecuteData::try_from_slice(&execute_data_bytes)?;
+    let execute_data: ExecuteData = borsh::from_slice(&execute_data_bytes)?;
 
     Ok(execute_data)
 }
@@ -506,7 +505,7 @@ fn append_verification_flow_instructions(
             AccountMeta::new_readonly(*gateway_config_pda, false),
             AccountMeta::new(verification_session_pda, false),
             AccountMeta::new_readonly(verifier_set_tracker_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: init_session_ix_data,
     });
@@ -570,7 +569,7 @@ async fn init(
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
     let gateway_program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_gateway::id());
 
     let params = InitializeConfigParams {
         domain_separator,
@@ -591,7 +590,7 @@ async fn init(
         AccountMeta::new_readonly(upgrade_authority, true),
         AccountMeta::new_readonly(gateway_program_data, false),
         AccountMeta::new(gateway_config_pda, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(verifier_set_tracker_pda, false),
     ];
 
@@ -647,7 +646,7 @@ fn transfer_operatorship(
 ) -> eyre::Result<Vec<Instruction>> {
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let gateway_program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_gateway::id());
     let (event_authority_pda, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
@@ -755,7 +754,7 @@ fn approve(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(verification_session_pda, false),
             AccountMeta::new(incoming_message_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new_readonly(event_authority_pda, false),
             AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
@@ -815,7 +814,7 @@ async fn rotate(
             AccountMeta::new_readonly(verifier_set_tracker_pda, false),
             AccountMeta::new(new_verifier_set_tracker_pda, false),
             AccountMeta::new(*fee_payer, true),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new_readonly(event_authority_pda, false),
             AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
@@ -854,9 +853,7 @@ async fn submit_proof(
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let execute_data: ExecuteData = match multisig_prover_response.status {
         ProofStatus::Pending => eyre::bail!("Proof is not completed yet"),
-        ProofStatus::Completed { execute_data } => {
-            ExecuteData::try_from_slice(execute_data.as_slice())?
-        }
+        ProofStatus::Completed { execute_data } => borsh::from_slice(execute_data.as_slice())?,
     };
 
     let mut instructions = Vec::new();
@@ -894,7 +891,7 @@ async fn submit_proof(
                     AccountMeta::new_readonly(verifier_set_tracker_pda, false),
                     AccountMeta::new(new_verifier_set_tracker_pda, false),
                     AccountMeta::new(*fee_payer, true),
-                    AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+                    AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
                     AccountMeta::new_readonly(event_authority_pda, false),
                     AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
                 ],
@@ -951,7 +948,7 @@ async fn submit_proof(
                         AccountMeta::new(*fee_payer, true),
                         AccountMeta::new_readonly(verification_session_pda, false),
                         AccountMeta::new(incoming_message_pda, false),
-                        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+                        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
                         AccountMeta::new_readonly(event_authority_pda, false),
                         AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
                     ],
@@ -1283,7 +1280,7 @@ fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> 
         b"-",
         args.message_id.as_bytes(),
     ])
-    .0;
+    .to_bytes();
     let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
     let raw_incoming_message =
         rpc_client
