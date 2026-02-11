@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 # Load .env if present
 if [ -f "$(dirname "$0")/../.env" ]; then
@@ -20,6 +20,11 @@ fi
 
 if [ -z "${STELLAR_PRIVATE_KEY:-}" ]; then
     echo "Error: STELLAR_PRIVATE_KEY is not set."
+    exit 1
+fi
+
+if [ -z "${SUI_PRIVATE_KEY:-}" ]; then
+    echo "Error: SUI_PRIVATE_KEY is not set."
     exit 1
 fi
 

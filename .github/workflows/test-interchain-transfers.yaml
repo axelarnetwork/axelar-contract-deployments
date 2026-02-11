@@ -22,8 +22,14 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
+      - name: Add node_modules/.bin to PATH
+        run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Build
+        run: npm run build
 
       - name: Run interchain transfers
         env:
