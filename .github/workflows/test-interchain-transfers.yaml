@@ -1,9 +1,6 @@
 name: Mainnet Interchain Transfer Test
 
 on:
-  pull_request:
-    branches:
-      - main
   schedule:
     # Runs every 12 hours (midnight and noon UTC)
     - cron: '0 */12 * * *'
