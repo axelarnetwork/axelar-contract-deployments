@@ -11,8 +11,9 @@ use solana_sdk::signature::{Signer, read_keypair_file};
 use crate::artifact;
 use crate::types::Programs;
 use crate::utils::{
-    GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, MULTICALL_KEY, OPERATORS_KEY,
-    get_program_version, read_json_file_from_path, set_program_version,
+    ADDRESS_KEY, CHAINS_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY,
+    MEMO_KEY, MULTICALL_KEY, OPERATORS_KEY, UPGRADE_AUTHORITY_KEY, VERSION_KEY,
+    ensure_contract_entry, get_program_version, read_json_file_from_path, set_program_version,
     try_infer_program_id_from_env, write_json_to_file_path,
 };
 
@@ -94,14 +95,37 @@ pub(crate) async fn deploy_program(args: DeployArgs, config: crate::Config) -> R
         return Err(eyre::eyre!("solana program deploy failed"));
     }
 
-    // Update version in chains info file if version was provided
-    if let Some(version) = &args.version {
+    // Update chains info file with program address, upgrade authority, and version
+    {
         let mut env: Value = read_json_file_from_path(&config.chains_info_file)?;
         let program_key = program_key_from_program(&args.program);
-        set_program_version(&mut env, &config.chain, program_key, version)?;
+        let program_pubkey = get_pubkey_from_keypair(&args.program_keypair)?;
+
+        ensure_contract_entry(&mut env, &config.chain, program_key);
+
+        let contracts = env
+            .pointer_mut(&format!(
+                "/{CHAINS_KEY}/{}/{CONTRACTS_KEY}/{program_key}",
+                config.chain
+            ))
+            .expect("contract entry was just created");
+
+        contracts[ADDRESS_KEY] = Value::String(program_pubkey.to_string());
+        contracts[UPGRADE_AUTHORITY_KEY] = Value::String(upgrade_authority_pubkey.to_string());
+
+        if let Some(version) = &args.version {
+            contracts[VERSION_KEY] = Value::String(version.clone());
+        }
+
         write_json_to_file_path(&env, &config.chains_info_file)?;
-        println!("Set version to {version} in chains info file.");
-    }
+        println!(
+            "Updated chains info: {program_key} address={program_pubkey}, upgradeAuthority={upgrade_authority_pubkey}{}",
+            args.version
+                .as_ref()
+                .map(|v| format!(", version={v}"))
+                .unwrap_or_default()
+        );
+    };
 
     println!("Program {:?} deployed successfully.", args.program);
     Ok(())
@@ -232,6 +256,7 @@ fn program_key_from_program(program: &Programs) -> &'static str {
         Programs::Its => ITS_KEY,
         Programs::Multicall => MULTICALL_KEY,
         Programs::Operators => OPERATORS_KEY,
+        Programs::Memo => MEMO_KEY,
     }
 }
 

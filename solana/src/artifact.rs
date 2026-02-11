@@ -120,6 +120,7 @@ fn program_to_package_name(program: &Programs) -> Result<&'static str> {
         Programs::Governance => Ok("solana-axelar-governance"),
         Programs::Its => Ok("solana-axelar-its"),
         Programs::Operators => Ok("solana-axelar-operators"),
+        Programs::Memo => Ok("solana-axelar-memo"),
         Programs::Multicall => {
             bail!(
                 "Multicall not available for download. Use --program-path or --artifact-dir instead."
@@ -137,6 +138,7 @@ pub(crate) fn program_to_so_filename(program: &Programs) -> &'static str {
         Programs::Its => "solana_axelar_its",
         Programs::Operators => "solana_axelar_operators",
         Programs::Multicall => "solana_axelar_multicall",
+        Programs::Memo => "solana_axelar_memo",
     }
 }
 

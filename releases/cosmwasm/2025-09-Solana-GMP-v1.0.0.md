@@ -12,10 +12,6 @@
 | **Testnet**          | Pending               | TBD        |
 | **Mainnet**          | Pending               | TBD        |
 
-- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
-- Contract Checksums:
-    - SolanaMultisigProver: `9066612ae064702946322327eb6b3e7d450f45d0567ba7e35fb42ab4cded2349`
-
 ## Background
 
 These are the instructions for deploying Amplifier contracts for Solana GMP connection.
@@ -31,8 +27,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
-    cd axelar-amplifier-eiger
+    git clone --recurse-submodules https://github.com/axelar-amplifier/axelar-amplifier.git
     git checkout main
     ```
 
@@ -57,7 +52,6 @@ Create an .env config:
 MNEMONIC=xyz
 ENV=xyz
 CHAIN=<solana-custom|solana>
-EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
 NODE=[Axelar RPC URL]
 ```
 
