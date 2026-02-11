@@ -2453,6 +2453,46 @@
             "ItsSingleton": "0x9926aca1bc1fcaf38db6b5570dd16e7ad265c1d7f621dbb0efdc49d61b6471dd",
             "ItsChannelId": "0xeadff6a48792bdb8ca1216bab78c502244152fc3632abac5f67e150da5e09315"
           }
+        },
+        "ETS": {
+          "address": "0xe2b43356829d92e5898d0c4f8af374749b7ce26a32ef8ab8f63ce2a0afcb17c1",
+          "typeArgument": "0xe2b43356829d92e5898d0c4f8af374749b7ce26a32ef8ab8f63ce2a0afcb17c1::ets::ETS",
+          "decimals": "9",
+          "objects": {
+            "TokenId": "0x19a93459be169138c6259b71e6b1d4e7e11493844a532678f63f02a857b20f0d",
+            "TreasuryCap": "0x74e9350a64f588a5447c7bf4109ee987fe9a9abeb645d21714fad7f8e59848ab",
+            "Metadata": "0xda6c98706959fe5ccb8dec58cab4ab935e3dc3df43af3294e7ad66fbe01a3a9c"
+          },
+          "linkedTokens": [
+            {
+              "destinationChain": "flow",
+              "destinationAddress": "0x87906229a8FF7F83c191d463078A4a53DEBf6F23"
+            }
+          ],
+          "saltAddress": "0x0000000000000000000000000000000000000000000000000000000000000439",
+          "tokenManagerType": "mint_burn"
+        },
+        "HBSS": {
+          "address": "0xd4875d235ab601e8349c0bfe5e4f1b7ad8e47bcf5b38a23e23d33da5bd3ca5e8",
+          "typeArgument": "0xd4875d235ab601e8349c0bfe5e4f1b7ad8e47bcf5b38a23e23d33da5bd3ca5e8::hbss::HBSS",
+          "decimals": "7",
+          "objects": {
+            "TokenId": "0x7f39fbef9bbbbf915356577fff8d57bcf03f61348818969fc5e86d145c355acc",
+            "TreasuryCap": "0x20a707340b9875e4ed7d1478d040f67173a7e01c793637a301960512c511e82a",
+            "Metadata": "0x4f4fd40fbe70503c1db4cb4bb938ee7928cc9cd6e2d40b10faf80463b41247f1"
+          },
+          "saltAddress": "0x0000000000000000000000000000000000000000000000000000000048425353"
+        },
+        "HBSS2": {
+          "address": "0x6a0747d6614779aa250b8cc079abf5f636c3db17bb6049b289f7c3ef3ca255dd",
+          "typeArgument": "0x6a0747d6614779aa250b8cc079abf5f636c3db17bb6049b289f7c3ef3ca255dd::hbss2::HBSS2",
+          "decimals": "7",
+          "objects": {
+            "TokenId": "0x26284f3b8cd518c2c125f7476f05fab70404acee61d0fca1e1955c6d54c65ad2",
+            "TreasuryCap": "0x09f487c48a18d4904d4631340a5ab2ad42cc25d461332ad4c0d533f2f4fc6183",
+            "Metadata": "0xfc6778ee900c50f8c4a30e1423474ae65ddd86f1555dc9b128bf41efb7e344d0"
+          },
+          "saltAddress": "0x0000000000000000000000000000000000000000000000000000000048425354"
         }
       }
     },

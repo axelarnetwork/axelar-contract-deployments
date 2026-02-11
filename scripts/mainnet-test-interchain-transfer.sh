@@ -28,6 +28,10 @@ if [ -z "${SUI_PRIVATE_KEY:-}" ]; then
     exit 1
 fi
 
+echo "=== Checking wallet balances ==="
+node scripts/check-wallet-balances.js --env mainnet
+echo ""
+
 echo "=== Transfer 1: monad -> berachain (token 0xdae7, origin: monad) ==="
 PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain berachain \
@@ -100,9 +104,20 @@ PRIVATE_KEY="$STELLAR_PRIVATE_KEY" ts-node stellar/its.js interchain-transfer \
     -y
 
 echo ""
-echo "=== Transfer 8: sui -> flow (HTBT) ==="
+echo "=== Transfer 8: flow -> sui (HBTFS) ==="
+PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
+    --destinationChain sui \
+    --tokenId 0xe95c18fed6bf606826413a42de8b299857bf5700a5375f7565d66a9433c0a20c \
+    --destinationAddress 0x9b8b3a3e2d0bbee851424e84ac84211dfb02f72dd4d8bc136639d6e2e7773d2f \
+    --amount 1 \
+    -n flow \
+    --env mainnet \
+    -y
+
+echo ""
+echo "=== Transfer 9: sui -> flow (HBTFS) ==="
 PRIVATE_KEY="$SUI_PRIVATE_KEY" ts-node sui/its.js interchain-transfer \
-    0x21fa2f538115b93307b955cc134ca49c9f1829cc11c517e9908a7898edec7934 \
+    0xe95c18fed6bf606826413a42de8b299857bf5700a5375f7565d66a9433c0a20c \
     flow 0xba76c6980428A0b10CFC5d8ccb61949677A61233 1 \
     -e mainnet -n sui \
     -y

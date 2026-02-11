@@ -2814,6 +2814,24 @@
             "ItsSingleton": "0x790b6f1cd1cd21e373ac2550f20b5a58d1bb39adeec4500197dac5ec597e76fa",
             "ItsChannelId": "0x8dbbd3fc6fa2c541cb94847a9eba81dd991c16a6701354c142875bd267059c14"
           }
+        },
+        "HTBS": {
+          "address": "0x88da564a00972b30c7f87676fbbee8c701e52da4c6ace15c0cfe1e3d5f73a505",
+          "typeArgument": "0x88da564a00972b30c7f87676fbbee8c701e52da4c6ace15c0cfe1e3d5f73a505::htbs::HTBS",
+          "decimals": "7",
+          "objects": {
+            "TokenId": "0x69a558b4d47f430ca50f80e2e29d928e032248df30cb601a4d5e6c5050315f37",
+            "TreasuryCap": "0x6e6efc1c4ad71f4e58fad351247590752fb09f8cbd244b190bf8c15c4b796610",
+            "Metadata": "0x46eb463daebc11eb7c2b1e15953cedb47e3860388bf85bd3cbcf34138cdc90e4"
+          },
+          "linkedTokens": [
+            {
+              "destinationChain": "stellar",
+              "destinationAddress": "CCTSGMAQIBECSURX356IEXZ6SVKH3HSMV3ZSMP3HSV3KNW62XOXBZWWJ"
+            }
+          ],
+          "saltAddress": "0x0000000000000000000000000000000000000000000000000000000048544253",
+          "tokenManagerType": "lock_unlock"
         }
       }
     },
