@@ -88,7 +88,14 @@ async function checkEvmBalances(privateKey, chains, config) {
             results.push({ chain: chainName, symbol: chain.tokenSymbol || 'ETH', address, balance, threshold: THRESHOLDS.evm });
         } catch (err) {
             console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
-            results.push({ chain: chainName, symbol: chain.tokenSymbol || 'ETH', address, balance: 0, threshold: THRESHOLDS.evm, error: err.message });
+            results.push({
+                chain: chainName,
+                symbol: chain.tokenSymbol || 'ETH',
+                address,
+                balance: 0,
+                threshold: THRESHOLDS.evm,
+                error: err.message,
+            });
         }
     }
 
