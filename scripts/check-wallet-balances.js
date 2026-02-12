@@ -14,8 +14,8 @@ const { Secp256k1Keypair } = require('@mysten/sui/keypairs/secp256k1');
 // ---------------------------------------------------------------------------
 
 const EVM_CHAINS = {
-    mainnet: ['monad', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm'],
-    testnet: ['monad-3', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm'],
+    mainnet: ['monad', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm', 'flow'],
+    testnet: ['monad-3', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm', 'flow'],
 };
 
 const STELLAR_CHAIN = {
@@ -173,10 +173,11 @@ async function checkSuiBalance(privateKey, config) {
         return [];
     }
 
+    const { secretKey } = decodeSuiPrivateKey(privateKey);
+    const keypair = Secp256k1Keypair.fromSecretKey(secretKey);
+    const address = keypair.toSuiAddress();
+
     try {
-        const { secretKey } = decodeSuiPrivateKey(privateKey);
-        const keypair = Secp256k1Keypair.fromSecretKey(secretKey);
-        const address = keypair.toSuiAddress();
         const client = new SuiClient({ url: chain.rpc });
         const { totalBalance } = await client.getBalance({ owner: address });
         // SUI balance is in MIST (1 SUI = 1e9 MIST)

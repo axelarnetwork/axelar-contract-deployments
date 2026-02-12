@@ -96,7 +96,18 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     -y
 
 echo ""
-echo "=== Transfer 7: stellar -> flow (HBT) ==="
+echo "=== Transfer 7: berachain -> stellar (token 0xe94d, origin: berachain) ==="
+PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
+    --destinationChain stellar \
+    --tokenId 0xe94d11413d745305775b6666376fda16b8a6b0b3c001d373e03b4a957862395c \
+    --destinationAddress GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S \
+    --amount 100 \
+    -n berachain \
+    --env mainnet \
+    -y
+
+echo ""
+echo "=== Transfer 8: stellar -> flow (HBT) ==="
 PRIVATE_KEY="$STELLAR_PRIVATE_KEY" ts-node stellar/its.js interchain-transfer \
     0x0537682982e84d36a2d707ed7708c5928d7238ab4edda550994339332f342e1f \
     flow 0xba76c6980428A0b10CFC5d8ccb61949677A61233 100 \
@@ -104,7 +115,7 @@ PRIVATE_KEY="$STELLAR_PRIVATE_KEY" ts-node stellar/its.js interchain-transfer \
     -y
 
 echo ""
-echo "=== Transfer 8: flow -> sui (HBTFS) ==="
+echo "=== Transfer 9: flow -> sui (HBTFS) ==="
 PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain sui \
     --tokenId 0xe95c18fed6bf606826413a42de8b299857bf5700a5375f7565d66a9433c0a20c \
@@ -115,7 +126,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     -y
 
 echo ""
-echo "=== Transfer 9: sui -> flow (HBTFS) ==="
+echo "=== Transfer 10: sui -> flow (HBTFS) ==="
 PRIVATE_KEY="$SUI_PRIVATE_KEY" ts-node sui/its.js interchain-transfer \
     0xe95c18fed6bf606826413a42de8b299857bf5700a5375f7565d66a9433c0a20c \
     flow 0xba76c6980428A0b10CFC5d8ccb61949677A61233 1 \
