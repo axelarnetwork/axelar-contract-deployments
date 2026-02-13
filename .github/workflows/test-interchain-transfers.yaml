@@ -44,6 +44,8 @@ jobs:
           STELLAR_PRIVATE_KEY: ${{ secrets.STELLAR_PRIVATE_KEY }}
           SUI_PRIVATE_KEY: ${{ secrets.SUI_PRIVATE_KEY }}
           SUI_RPC: ${{ secrets.SUI_RPC }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_OPTIONS: '--require ./scripts/sentry-instrument.js'
 
         run: |
           chmod +x scripts/mainnet-test-interchain-transfer.sh
