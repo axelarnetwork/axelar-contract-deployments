@@ -134,4 +134,15 @@ PRIVATE_KEY="$SUI_PRIVATE_KEY" ts-node sui/its.js interchain-transfer \
     -y
 
 echo ""
+echo "=== Transfer 11: hedera -> monad (HBT, origin: hedera) ==="
+PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
+    --destinationChain monad \
+    --tokenId 0x8f1e3862a011d03887d41f6de445f15d1476c89d0e7d489045a55bd73bd11c3d \
+    --destinationAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
+    --amount 100 \
+    -n hedera \
+    --env mainnet \
+    -y
+
+echo ""
 echo "=== Done ==="

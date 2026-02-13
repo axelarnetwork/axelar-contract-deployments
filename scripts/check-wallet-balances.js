@@ -102,8 +102,9 @@ async function checkXrplBalance(privateKey, config) {
     const wallet = xrpl.Wallet.fromSeed(privateKey, { algorithm: xrpl.ECDSA.secp256k1 });
     const address = wallet.address;
 
+    const client = new xrpl.Client(chain.wssRpc);
+
     try {
-        const client = new xrpl.Client(chain.wssRpc);
         await client.connect();
 
         const response = await client.request({
@@ -111,8 +112,6 @@ async function checkXrplBalance(privateKey, config) {
             account: address,
             ledger_index: 'validated',
         });
-
-        await client.disconnect();
 
         const balanceDrops = response.result.account_data.Balance;
         const balance = parseFloat(xrpl.dropsToXrp(balanceDrops));
@@ -127,6 +126,8 @@ async function checkXrplBalance(privateKey, config) {
 
         console.error(`  ${XRPL_CHAIN}: failed to fetch balance - ${err.message}`);
         return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance: 0, threshold: THRESHOLDS.xrpl, error: err.message }];
+    } finally {
+        await client.disconnect();
     }
 }
 
