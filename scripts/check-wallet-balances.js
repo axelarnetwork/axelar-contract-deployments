@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const fetch = require('node-fetch');
 const { ethers } = require('ethers');
 const xrpl = require('xrpl');
 const { Keypair, Horizon } = require('@stellar/stellar-sdk');
@@ -34,10 +33,6 @@ const THRESHOLDS = {
     sui: 0.2,
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function loadConfig(env) {
     const configPath = path.resolve(__dirname, '..', 'axelar-chains-config', 'info', `${env}.json`);
     return require(configPath);
@@ -48,23 +43,17 @@ function parseArgs() {
     const envIdx = args.indexOf('--env');
 
     if (envIdx === -1 || !args[envIdx + 1]) {
-        console.error('Usage: node scripts/check-wallet-balances.js --env <mainnet|testnet>');
-        process.exit(1);
+        throw new Error('Usage: node scripts/check-wallet-balances.js --env <mainnet|testnet>');
     }
 
     const env = args[envIdx + 1];
 
     if (!['mainnet', 'testnet'].includes(env)) {
-        console.error('Error: --env must be "mainnet" or "testnet"');
-        process.exit(1);
+        throw new Error('--env must be "mainnet" or "testnet"');
     }
 
     return env;
 }
-
-// ---------------------------------------------------------------------------
-// Balance checks
-// ---------------------------------------------------------------------------
 
 async function checkEvmBalances(privateKey, chains, config) {
     const wallet = new ethers.Wallet(privateKey);
@@ -198,56 +187,6 @@ async function checkSuiBalance(privateKey, config) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Discord alert
-// ---------------------------------------------------------------------------
-
-async function sendDiscordAlert(lowBalances, env) {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-
-    if (!webhookUrl) {
-        return;
-    }
-
-    const fields = lowBalances.map((entry) => ({
-        name: `${entry.chain} (${entry.symbol})`,
-        value: `Address: \`${entry.address}\`\nBalance: **${entry.balance} ${entry.symbol}**\nThreshold: ${entry.threshold} ${entry.symbol}`,
-        inline: false,
-    }));
-
-    const payload = {
-        embeds: [
-            {
-                title: `Low Wallet Balance Alert (${env})`,
-                description: `${lowBalances.length} wallet(s) below minimum threshold. Interchain transfer test aborted.`,
-                color: 0xff0000,
-                fields,
-                timestamp: new Date().toISOString(),
-            },
-        ],
-    };
-
-    try {
-        const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-            console.error(`  Discord webhook failed: ${response.status} ${response.statusText}`);
-        } else {
-            console.log('  Discord alert sent successfully');
-        }
-    } catch (err) {
-        console.error(`  Failed to send Discord alert: ${err.message}`);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
 async function main() {
     const env = parseArgs();
     const config = loadConfig(env);
@@ -274,20 +213,11 @@ async function main() {
     const lowBalances = allResults.filter((r) => r.balance < r.threshold);
 
     if (lowBalances.length > 0) {
-        console.error('\nWallet(s) below minimum balance threshold:');
-
-        for (const entry of lowBalances) {
-            console.error(`  ${entry.chain} (${entry.symbol}): ${entry.balance} < ${entry.threshold}`);
-        }
-
-        await sendDiscordAlert(lowBalances, env);
-        process.exit(1);
+        const details = lowBalances.map((e) => `${e.chain} (${e.symbol}): ${e.balance} < ${e.threshold}`).join(', ');
+        throw new Error(`Wallet(s) below minimum balance threshold: ${details}`);
     }
 
     console.log('\nAll wallet balances are above minimum thresholds.');
 }
 
-main().catch((err) => {
-    console.error('Balance check failed:', err.message);
-    process.exit(1);
-});
+main();
