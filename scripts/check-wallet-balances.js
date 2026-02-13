@@ -13,8 +13,8 @@ const { Secp256k1Keypair } = require('@mysten/sui/keypairs/secp256k1');
 // ---------------------------------------------------------------------------
 
 const EVM_CHAINS = {
-    mainnet: ['monad', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm', 'flow'],
-    testnet: ['monad-3', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm', 'flow'],
+    mainnet: ['monad', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm', 'flow', 'hedera'],
+    testnet: ['monad-3', 'berachain', 'plume', 'hyperliquid', 'xrpl-evm', 'flow', 'hedera'],
 };
 
 const STELLAR_CHAIN = {

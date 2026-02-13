@@ -37,7 +37,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain berachain \
     --tokenId 0x6376f5575369ec755e8405f6d55cb66ede86c6b3e8f953037b4069ae234ceeed \
     --destinationAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
-    --amount 100 \
+    --amount 1 \
     -n monad \
     --env mainnet \
     -y
@@ -48,7 +48,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain monad \
     --tokenId 0xe94d11413d745305775b6666376fda16b8a6b0b3c001d373e03b4a957862395c \
     --destinationAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
-    --amount 100 \
+    --amount 1 \
     -n berachain \
     --env mainnet \
     -y
@@ -59,7 +59,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain hyperliquid \
     --tokenId 0xabfc59828fa9d3b828b014be70917cd683becba3f5e0f0d4a7f7560882f74bbc \
     --destinationAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
-    --amount 100 \
+    --amount 1 \
     -n plume \
     --env mainnet \
     -y
@@ -70,7 +70,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain plume \
     --tokenId 0xfaff57ede4145c94f34a2dbb32edb94136a7323af86d6d0d0d8413af8a73ebff \
     --destinationAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
-    --amount 100 \
+    --amount 1 \
     -n hyperliquid \
     --env mainnet \
     -y
@@ -101,7 +101,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain stellar \
     --tokenId 0xe94d11413d745305775b6666376fda16b8a6b0b3c001d373e03b4a957862395c \
     --destinationAddress GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S \
-    --amount 100 \
+    --amount 1 \
     -n berachain \
     --env mainnet \
     -y
@@ -110,7 +110,7 @@ echo ""
 echo "=== Transfer 8: stellar -> flow (HBT) ==="
 PRIVATE_KEY="$STELLAR_PRIVATE_KEY" ts-node stellar/its.js interchain-transfer \
     0x0537682982e84d36a2d707ed7708c5928d7238ab4edda550994339332f342e1f \
-    flow 0xba76c6980428A0b10CFC5d8ccb61949677A61233 100 \
+    flow 0xba76c6980428A0b10CFC5d8ccb61949677A61233 1 \
     -e mainnet --chain-name stellar \
     -y
 
@@ -139,7 +139,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain monad \
     --tokenId 0x8f1e3862a011d03887d41f6de445f15d1476c89d0e7d489045a55bd73bd11c3d \
     --destinationAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
-    --amount 100 \
+    --amount 1 \
     -n hedera \
     --env mainnet \
     -y
