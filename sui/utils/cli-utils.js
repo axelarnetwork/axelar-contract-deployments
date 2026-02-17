@@ -45,7 +45,7 @@ const addBaseOptions = (program, options = {}) => {
     }
 
     if (options.customRpc) {
-        program.addOption(new Option('--rpc <rpc>', 'Sui rpc endpoint'));
+        program.addOption(new Option('--rpc <rpc>', 'Sui rpc endpoint').env('SUI_RPC'));
     }
 
     return program;
