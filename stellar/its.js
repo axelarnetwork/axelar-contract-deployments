@@ -301,6 +301,64 @@ async function removeFlowLimit(wallet, _config, chain, contract, args, options) 
     printInfo('Successfully removed flow limit');
 }
 
+async function canonicalInterchainTokenId(wallet, _config, chain, contract, args, options) {
+    const [tokenAddress] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress },
+    });
+
+    const operation = contract.call('canonical_interchain_token_id', nativeToScVal(tokenAddress, { type: 'address' }));
+    const returnValue = await broadcast(operation, wallet, chain, 'Get canonical interchain token id', options);
+    const tokenId = serializeValue(returnValue.value());
+
+    printInfo('Canonical Interchain Token ID', tokenId);
+
+    return tokenId;
+}
+
+async function interchainTokenId(wallet, _config, chain, contract, args, options) {
+    const [deployer, salt] = args;
+    const saltBytes32 = saltToBytes32(salt);
+
+    validateParameters({
+        isValidStellarAddress: { deployer },
+        isNonEmptyString: { salt },
+    });
+
+    printInfo('Salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
+
+    const operation = contract.call('interchain_token_id', addressToScVal(deployer), hexToScVal(saltBytes32));
+    const returnValue = await broadcast(operation, wallet, chain, 'Get interchain token id', options);
+    const tokenId = serializeValue(returnValue.value());
+
+    printInfo('Interchain Token ID', tokenId);
+
+    return tokenId;
+}
+
+async function linkedTokenId(wallet, _config, chain, contract, args, options) {
+    const [deployer, salt] = args;
+    const saltBytes32 = saltToBytes32(salt);
+
+    validateParameters({
+        isValidStellarAddress: { deployer },
+        isNonEmptyString: { salt },
+    });
+
+    printInfo('Salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
+
+    const operation = contract.call('linked_token_id', addressToScVal(deployer), hexToScVal(saltBytes32));
+    const returnValue = await broadcast(operation, wallet, chain, 'Get linked token id', options);
+    const tokenId = serializeValue(returnValue.value());
+
+    printInfo('Linked Token ID', tokenId);
+
+    return tokenId;
+}
+
 async function interchainTokenAddress(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
@@ -640,6 +698,27 @@ if (require.main === module) {
         .description('Remove the flow limit for a token')
         .action((tokenId, options) => {
             mainProcessor(removeFlowLimit, [tokenId], options);
+        });
+
+    program
+        .command('canonical-interchain-token-id <tokenAddress>')
+        .description('Get the canonical interchain token id for a token address')
+        .action((tokenAddress, options) => {
+            mainProcessor(canonicalInterchainTokenId, [tokenAddress], options);
+        });
+
+    program
+        .command('interchain-token-id <deployer> <salt>')
+        .description('Get the interchain token id for a deployer and salt')
+        .action((deployer, salt, options) => {
+            mainProcessor(interchainTokenId, [deployer, salt], options);
+        });
+
+    program
+        .command('linked-token-id <deployer> <salt>')
+        .description('Get the linked token id for a deployer and salt')
+        .action((deployer, salt, options) => {
+            mainProcessor(linkedTokenId, [deployer, salt], options);
         });
 
     program
