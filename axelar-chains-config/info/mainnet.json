@@ -2532,7 +2532,7 @@
         },
         "HBTFS": {
           "tokenId": "0xe95c18fed6bf606826413a42de8b299857bf5700a5375f7565d66a9433c0a20c",
-          "tokenAddress": "0x82b4AFaA26f1741C3b4854cB0523A156a0261c47",
+          "address": "0x82b4AFaA26f1741C3b4854cB0523A156a0261c47",
           "tokenManagerAddress": "0x998FDc5adBbB27F48905712Ca6A55F69aD3E6Cc8",
           "tokenManagerType": "mint_burn",
           "decimals": 18
@@ -2825,7 +2825,7 @@
         "HBTFS": {
           "address": "0x72f4ecfb8ad64d0a305eabde4ddcce82bd8bfcbd65668b3fbfc11de6aa644937",
           "typeArgument": "0x72f4ecfb8ad64d0a305eabde4ddcce82bd8bfcbd65668b3fbfc11de6aa644937::hbtfs::HBTFS",
-          "decimals": "6",
+          "decimals": 6,
           "objects": {
             "TokenId": "0xe95c18fed6bf606826413a42de8b299857bf5700a5375f7565d66a9433c0a20c",
             "TreasuryCap": "0x2b8fb6ba40140ed5bc8cdc84f93857fe2b053eb1a374fb28515d220c0a1c994d",
@@ -2949,7 +2949,7 @@
         },
         "HBT": {
           "tokenId": "0x0537682982e84d36a2d707ed7708c5928d7238ab4edda550994339332f342e1f",
-          "tokenAddress": "CDUU54HB4BZMCVGXML57Z7CM4ORTLBAPJDMPI2OIGXLHDY6YHQ3TAK2N",
+          "address": "CDUU54HB4BZMCVGXML57Z7CM4ORTLBAPJDMPI2OIGXLHDY6YHQ3TAK2N",
           "tokenManagerAddress": "CAFGB2Q3T2VKZQN2CWR6YHXCHWIUFMEUCVNTIOX7ZSQPLXC7M4H7PWI6",
           "tokenManagerType": "mint_burn",
           "decimals": 18
@@ -3052,7 +3052,7 @@
         },
         "XRP": {
           "tokenId": "0xba5a21ca88ef6bba2bfff5088994f90e1077e2a1cc3dcc38bd261f00fce2824f",
-          "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+          "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
           "tokenManagerAddress": "0xdb0a778c57Bd31E401D52ba6cf936D06E1324aE8",
           "tokenManagerType": "mint_burn",
           "decimals": 18
@@ -3188,7 +3188,7 @@
         },
         "HBT": {
           "tokenId": "0xabfc59828fa9d3b828b014be70917cd683becba3f5e0f0d4a7f7560882f74bbc",
-          "tokenAddress": "0x0FeEf5495B3277b74dF4ef5727e2B1F0E727F1a6",
+          "address": "0x0FeEf5495B3277b74dF4ef5727e2B1F0E727F1a6",
           "tokenManagerAddress": "0x4290144e59CBCb7bA9C23B578967c2599b4927Fa",
           "tokenManagerType": "mint_burn",
           "decimals": 18
@@ -3287,7 +3287,7 @@
         },
         "HBT": {
           "tokenId": "0x8f1e3862a011d03887d41f6de445f15d1476c89d0e7d489045a55bd73bd11c3d",
-          "tokenAddress": "0x00000000000000000000000000000000009CD158",
+          "address": "0x00000000000000000000000000000000009CD158",
           "tokenManagerAddress": "0x9F0b6857009E73746DcBb4A0DBf0e0a46219e3c4",
           "tokenManagerType": "mint_burn",
           "decimals": 8
@@ -3385,7 +3385,7 @@
         },
         "HBT": {
           "tokenId": "0xe94d11413d745305775b6666376fda16b8a6b0b3c001d373e03b4a957862395c",
-          "tokenAddress": "0x9E6FF64bc4DE73a5339Cf0586515E213b10453d3",
+          "address": "0x9E6FF64bc4DE73a5339Cf0586515E213b10453d3",
           "tokenManagerAddress": "0x9853e88B074E7c3aB61457323d7aE13122ed8877",
           "tokenManagerType": "mint_burn",
           "decimals": 18
@@ -3492,7 +3492,7 @@
         },
         "HBT": {
           "tokenId": "0xfaff57ede4145c94f34a2dbb32edb94136a7323af86d6d0d0d8413af8a73ebff",
-          "tokenAddress": "0x968fdEAfBEB2673F8cEbf657Fe9bF4aaDd3BfB42",
+          "address": "0x968fdEAfBEB2673F8cEbf657Fe9bF4aaDd3BfB42",
           "tokenManagerAddress": "0xc55569d816c7734Bb88d23F242A69DA994Ab9566",
           "tokenManagerType": "mint_burn",
           "decimals": 18
@@ -3601,7 +3601,7 @@
         },
         "HBT": {
           "tokenId": "0x6376f5575369ec755e8405f6d55cb66ede86c6b3e8f953037b4069ae234ceeed",
-          "tokenAddress": "0xd5bA6C2289a892B71CfEd1638B72E2b357BE7A86",
+          "address": "0xd5bA6C2289a892B71CfEd1638B72E2b357BE7A86",
           "tokenManagerAddress": "0xfdA07e1b359e18484211aF722Dc81c3edb0Ec54C",
           "tokenManagerType": "mint_burn",
           "decimals": 18
