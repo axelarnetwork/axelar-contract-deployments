@@ -79,10 +79,12 @@ async function main() {
 
     // Step 1: construct_proof
     const msg = {
-        construct_proof: [{
-            source_chain: SOURCE_CHAIN,
-            message_id: MESSAGE_ID,
-        }],
+        construct_proof: [
+            {
+                source_chain: SOURCE_CHAIN,
+                message_id: MESSAGE_ID,
+            },
+        ],
     };
 
     console.log('Executing construct_proof...');

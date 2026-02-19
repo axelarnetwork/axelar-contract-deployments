@@ -9,13 +9,13 @@ This guide covers the full flow for messages routed through the Axelar hub to an
 1. **Funded Axelar wallet** — needs a small amount of AXL for gas (~0.1 AXL)
 2. **Funded EVM wallet** — for submitting proof to the destination chain gateway
 3. **Message details** — from Axelarscan:
-   - `SOURCE_CHAIN`: the source chain of the stuck message (often `axelar` for hub-routed messages)
-   - `MESSAGE_ID`: the full message ID (e.g. `0xabc...def-123456`)
-   - `DST_CHAIN`: the destination chain name as it appears in `testnet.json` / `mainnet.json`
+    - `SOURCE_CHAIN`: the source chain of the stuck message (often `axelar` for hub-routed messages)
+    - `MESSAGE_ID`: the full message ID (e.g. `0xabc...def-123456`)
+    - `DST_CHAIN`: the destination chain name as it appears in `testnet.json` / `mainnet.json`
 
 ### Step 1: Identify the stuck message
 
-Find the message on Axelarscan. For ITS hub-routed messages, there's a parent message (source → axelar) and a child message (axelar → destination). 
+Find the message on Axelarscan. For ITS hub-routed messages, there's a parent message (source → axelar) and a child message (axelar → destination).
 
 ```bash
 # Check message status via API
@@ -25,6 +25,7 @@ curl -s "https://testnet.api.axelarscan.io/gmp/searchGMP" \
 ```
 
 Look for:
+
 - `simplified_status: "sent"` or `status: "called"` = stuck before verification
 - No `confirm`, `approved`, or `executed` fields = needs manual proof
 
@@ -70,10 +71,12 @@ async function main() {
     console.log('MultisigProver:', multisigProverAddress);
 
     const msg = {
-        construct_proof: [{
-            source_chain: SOURCE_CHAIN,
-            message_id: MESSAGE_ID,
-        }],
+        construct_proof: [
+            {
+                source_chain: SOURCE_CHAIN,
+                message_id: MESSAGE_ID,
+            },
+        ],
     };
 
     const tx = await client.execute(accounts[0].address, multisigProverAddress, msg, 'auto', '');
@@ -82,7 +85,7 @@ async function main() {
     // Extract multisig_session_id from events
     for (const ev of tx.events) {
         if (ev.type === 'wasm-proof_under_construction' || ev.type === 'wasm-signing_started') {
-            const attr = ev.attributes.find(a => a.key === 'multisig_session_id');
+            const attr = ev.attributes.find((a) => a.key === 'multisig_session_id');
             if (attr) {
                 console.log('MULTISIG_SESSION_ID:', attr.value);
                 return attr.value;
@@ -115,7 +118,7 @@ async function poll() {
     const prover = config.axelar.contracts.MultisigProver['<DST_CHAIN>'].address;
 
     const result = await client.queryContractSmart(prover, {
-        proof: { multisig_session_id: '<SESSION_ID>' },  // plain string, not quoted
+        proof: { multisig_session_id: '<SESSION_ID>' }, // plain string, not quoted
     });
 
     if (result.status.completed) {
@@ -176,6 +179,7 @@ cast receipt <SUBMIT_PROOF_TX> --rpc-url <DST_RPC> --json
 ```
 
 From the `MessageApproved` event (topic `0xcda53a26...`):
+
 - `topics[1]` = `commandId`
 - `topics[2]` = destination contract (ITS address, left-padded)
 - `topics[3]` = `payloadHash`
@@ -229,24 +233,25 @@ The TX logs should show `InterchainTokenDeployed` and `TokenManagerDeployed` eve
 ### Concrete example: Hedera testnet (Feb 2026)
 
 **Stuck message:** `0xf5e570dd157fb4aeeba3415bbfa12219b3f45b8be8bbaf65b005cfa97b4d2c4f-335418567`
+
 - Parent: ethereum-sepolia → axelar (deploy aUSDC canonical interchain token to hedera)
 - Child: axelar → hedera (the ITS hub forwarded the deployment)
 - Stuck at `called` status for days — verifiers never voted
 
 **Resolution:**
 
-| Step | Detail |
-|------|--------|
-| Wallet | Generated fresh Axelar wallet, funded with 5 AXL from faucet |
-| Address | `axelar12cgl3zmld540xrz8jes95tcfmjqchgtdeuau27` |
-| MultisigProver | `axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj` |
-| construct_proof TX | `4E432C029A596ED53308C0F24D06985886AD0825D5FFB3D8C09F557A456D31F9` |
-| Session ID | `1907448` |
-| Proof status | Completed (35 verifier signatures, execute_data: 11912 chars) |
-| submitProof TX | `0xf9c2508956bcd66be7a2398bd61b8d24d4257d78bc32d275fb2b1ff8975cbf0d` |
-| Gateway | `0xe432150cce91c13a887f7D836923d5597adD8E31` (Hedera testnet) |
-| MessageApproved | Confirmed in TX logs |
-| Token ID | `0x7cdcd2fb2a5937353930d06c0b4826bb88d5d0a278c791ec8211824f6efdbe48` |
+| Step               | Detail                                                               |
+| ------------------ | -------------------------------------------------------------------- |
+| Wallet             | Generated fresh Axelar wallet, funded with 5 AXL from faucet         |
+| Address            | `axelar12cgl3zmld540xrz8jes95tcfmjqchgtdeuau27`                      |
+| MultisigProver     | `axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj`  |
+| construct_proof TX | `4E432C029A596ED53308C0F24D06985886AD0825D5FFB3D8C09F557A456D31F9`   |
+| Session ID         | `1907448`                                                            |
+| Proof status       | Completed (35 verifier signatures, execute_data: 11912 chars)        |
+| submitProof TX     | `0xf9c2508956bcd66be7a2398bd61b8d24d4257d78bc32d275fb2b1ff8975cbf0d` |
+| Gateway            | `0xe432150cce91c13a887f7D836923d5597adD8E31` (Hedera testnet)        |
+| MessageApproved    | Confirmed in TX logs                                                 |
+| Token ID           | `0x7cdcd2fb2a5937353930d06c0b4826bb88d5d0a278c791ec8211824f6efdbe48` |
 
 **Commands used:**
 
@@ -288,10 +293,18 @@ The `multisig_session_id` from construct_proof events may come back as a JSON-qu
 
 ```javascript
 // Correct
-{ proof: { multisig_session_id: '1907448' } }
+{
+    proof: {
+        multisig_session_id: '1907448';
+    }
+}
 
 // Wrong — will fail with "invalid digit found in string"
-{ proof: { multisig_session_id: '"1907448"' } }
+{
+    proof: {
+        multisig_session_id: '"1907448"';
+    }
+}
 ```
 
 ### Related scripts
