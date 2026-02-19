@@ -14,7 +14,6 @@ const {
     printError,
     printWalletInfo,
     wasEventEmitted,
-    mainProcessor,
     validateParameters,
     getContractJSON,
     getGasOptions,
@@ -24,21 +23,11 @@ const {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     isTrustedChain,
     loadConfig,
-    getGovernanceContract,
-    createGovernanceProposal,
-    writeJSON,
+    mainProcessor,
+    executeDirectlyOrSubmitProposal,
 } = require('./utils');
-const {
-    getChainConfigByAxelarId,
-    validateChain,
-    tokenManagerTypes,
-    validateLinkType,
-    estimateITSFee,
-    createGMPProposalJSON,
-    dateToEta,
-} = require('../common/utils');
+const { getChainConfigByAxelarId, validateChain, tokenManagerTypes, validateLinkType, estimateITSFee } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
-const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar } = require('./governance');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
@@ -494,45 +483,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'set-trusted-chains': {
             const trustedChains = args;
 
-            if (options.governance) {
-                if (
-                    prompt(
-                        `Proceed with creating governance proposal to set trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
-                        yes,
-                    )
-                ) {
-                    return;
-                }
-
-                const data = [];
-                for (const trustedChain of trustedChains) {
-                    if (itsVersion === '2.1.1') {
-                        const tx = await interchainTokenService.populateTransaction.setTrustedAddress(trustedChain, 'hub', gasOptions);
-                        data.push(tx.data);
-                    } else {
-                        const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
-                        data.push(tx.data);
-                    }
-                }
-
-                const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
-
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: interchainTokenServiceAddress,
-                    calldata: multicallCalldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
-            }
-
-            await validateOwner(interchainTokenService, walletAddress, action);
-
             if (prompt(`Proceed with setting trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
+            }
+
+            if (!options.governance) {
+                await validateOwner(interchainTokenService, walletAddress, action);
             }
 
             const data = [];
@@ -546,54 +502,22 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 }
             }
 
-            const multicall = await interchainTokenService.multicall(data, gasOptions);
-            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressSet', 'TrustedChainSet');
+            await executeDirectlyOrSubmitProposal(chain, interchainTokenService, 'multicall', [data], options, '0', [
+                'TrustedAddressSet',
+                'TrustedChainSet',
+            ]);
 
             break;
         }
 
         case 'remove-trusted-chains': {
             const trustedChains = args;
-
-            if (options.governance) {
-                if (
-                    prompt(
-                        `Proceed with creating governance proposal to remove trusted chain(s): ${Array.from(trustedChains).join(', ')}?`,
-                        yes,
-                    )
-                ) {
-                    return;
-                }
-
-                const data = [];
-                for (const trustedChain of trustedChains) {
-                    if (itsVersion === '2.1.1') {
-                        const tx = await interchainTokenService.populateTransaction.removeTrustedAddress(trustedChain, gasOptions);
-                        data.push(tx.data);
-                    } else {
-                        const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
-                        data.push(tx.data);
-                    }
-                }
-
-                const multicallCalldata = interchainTokenService.interface.encodeFunctionData('multicall', [data]);
-
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: interchainTokenServiceAddress,
-                    calldata: multicallCalldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
-            }
-
-            await validateOwner(interchainTokenService, walletAddress, action);
-
             if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
+            }
+
+            if (!options.governance) {
+                await validateOwner(interchainTokenService, walletAddress, action);
             }
 
             const data = [];
@@ -607,8 +531,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 }
             }
 
-            const multicall = await interchainTokenService.multicall(data, gasOptions);
-            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressRemoved', 'TrustedChainRemoved');
+            await executeDirectlyOrSubmitProposal(chain, interchainTokenService, 'multicall', [data], options, '0', [
+                'TrustedAddressRemoved',
+                'TrustedChainRemoved',
+            ]);
 
             break;
         }
@@ -616,31 +542,19 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'set-pause-status': {
             const [pauseStatus] = args;
 
-            if (options.governance) {
-                const pauseStatusBool = pauseStatus === 'true';
-                if (prompt(`Proceed with creating governance proposal to set pause status to ${pauseStatus}?`, yes)) {
-                    return;
-                }
-
-                const calldata = interchainTokenService.interface.encodeFunctionData('setPauseStatus', [pauseStatusBool]);
-
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: interchainTokenServiceAddress,
-                    calldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
+            if (!options.governance) {
+                await validateOwner(interchainTokenService, walletAddress, action);
             }
 
-            await validateOwner(interchainTokenService, walletAddress, action);
-
-            const tx = await interchainTokenService.setPauseStatus(pauseStatus === 'true', gasOptions);
-
-            await handleTx(tx, chain, interchainTokenService, action, 'Paused', 'Unpaused');
+            await executeDirectlyOrSubmitProposal(
+                chain,
+                interchainTokenService,
+                'setPauseStatus',
+                [pauseStatus === 'true'],
+                options,
+                '0',
+                pauseStatus === 'true' ? 'Paused' : 'Unpaused',
+            );
 
             break;
         }
@@ -733,28 +647,15 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId] = args;
             validateParameters({ isKeccak256Hash: { tokenId } });
 
-            if (options.governance) {
-                if (prompt(`Proceed with creating governance proposal to migrate interchain token ${tokenId}?`, yes)) {
-                    return;
-                }
-
-                const calldata = interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [tokenId]);
-
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: interchainTokenServiceAddress,
-                    calldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
-            }
-
-            const tx = await interchainTokenService.migrateInterchainToken(tokenId, gasOptions);
-
-            await handleTx(tx, chain, interchainTokenService, action);
+            await executeDirectlyOrSubmitProposal(
+                chain,
+                interchainTokenService,
+                'migrateInterchainToken',
+                [tokenId],
+                options,
+                '0',
+                'RolesAdded',
+            );
 
             break;
         }
@@ -885,43 +786,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-
-    if (options.governance) {
-        const proposals = [];
-
-        await mainProcessor(options, (axelar, chain, chains, options) =>
-            processCommand(axelar, chain, chains, action, options).then((proposal) => {
-                if (proposal) {
-                    proposals.push(proposal);
-                }
-            }),
-        );
-
-        if (proposals.length > 0) {
-            const proposal = {
-                title: 'Interchain Token Service Governance Proposal',
-                description: 'Interchain Token Service Governance Proposal',
-                contract_calls: proposals,
-            };
-
-            const proposalJSON = JSON.stringify(proposal, null, 2);
-
-            printInfo('Proposal', proposalJSON);
-
-            if (options.generateOnly) {
-                writeJSON(proposal, options.generateOnly);
-                printInfo('Proposal written to file', options.generateOnly);
-            } else {
-                if (!prompt('Proceed with submitting this proposal to Axelar?', options.yes)) {
-                    await submitProposalToAxelar(proposal, options);
-                }
-            }
-        }
-
-        return;
-    }
-
-    return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
+    await mainProcessor(options, (axelar, chain, chains, opts) => processCommand(axelar, chain, chains, action, opts));
 }
 
 if (require.main === module) {

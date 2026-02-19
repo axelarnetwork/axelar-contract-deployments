@@ -85,22 +85,23 @@ interface GovernanceOptions {
 const addGovernanceOptions = (program: Command): Command => {
     program.addOption(new Option('--governance', 'Submit this change via interchain governance'));
     program.addOption(
-        new Option(
-            '--governanceContract <governanceContract>',
-            'Governance contract to target (InterchainGovernance or AxelarServiceGovernance)',
-        )
+        new Option('--governanceContract <governanceContract>', 'Governance contract to target')
             .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
             .default('AxelarServiceGovernance'),
     );
-    program.addOption(new Option('--operatorProposal', 'Generate an operator-style proposal (ApproveOperator)').default(false));
+    program.addOption(new Option('--operatorProposal', 'Generate an operator-style proposal').default(false));
     program.addOption(
         new Option(
             '--activationTime <activationTime>',
-            'Governance Activation Time (YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
+            'Governance Activation Time (format: YYYY-MM-DDTHH:mm:ss UTC) or 0 for immediate scheduling (subject to min timelock)',
         ).default('0'),
     );
-    program.addOption(new Option('--generate-only <file>', 'Generate Axelar proposal JSON to the given file instead of submitting'));
+    program.addOption(new Option('--generate-only <file>', 'Generate Axelar proposal JSON to the given file with path'));
+    program.addOption(
+        new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
+    );
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
+    program.addOption(new Option('--proposal-type <type>', 'proposal type').choices(['create', 'cancel']).default('create'));
 
     return program;
 };

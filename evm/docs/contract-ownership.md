@@ -63,12 +63,14 @@ ts-node evm/ownership.js --governance --operatorProposal \
 - `--governanceContract <InterchainGovernance|AxelarServiceGovernance>`: Governance contract to target (default: `AxelarServiceGovernance`)
 - `--operatorProposal`: Generate operator-style proposal (bypasses timelock; requires `AxelarServiceGovernance`)
 - `--activationTime <time>`: ETA as `YYYY-MM-DDTHH:mm:ss` UTC or `0`
-- `--generate-only <file>`: Write proposal JSON to file instead of submitting
+- `--generate-only <file>`: Write proposal JSON to file instead of submitting (provide a path)
+- `--standardProposal`: Submit as standard proposal instead of expedited (default is expedited)
+- `--proposal-type <create|cancel>`: Explicitly set proposal type (default: `create`)
 - `--mnemonic`: Mnemonic for submitting to Axelar (uses `MNEMONIC` environment variable if set)
 
 ## Notes
 
-- In proposal mode, calldata is generated via the ABI using `populateTransaction` for safety.
 - Multi-chain execution is supported via `-n chainA,chainB` (use `--parallel` for concurrency).
+- If you use `--generate-only` with multiple chains, use a unique filename per chain (otherwise parallel runs can overwrite the same file).
 - If `--operatorProposal` is set with `InterchainGovernance`, the command will fail because operator approvals require `AxelarServiceGovernance`.
 - Use `--address <address>` to override the contract address from chain configuration.
