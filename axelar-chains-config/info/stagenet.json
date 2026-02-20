@@ -3173,6 +3173,14 @@
         "codeId": 87,
         "instantiateProposalId": "395",
         "address": "axelar1erapwwp6crvkq3u6780u93huwtjam80vhac9wvxw8dl0fm3zcp5szyfemq"
+      },
+      "ItsSolanaTranslator": {
+        "storeCodeProposalId": "399",
+        "storeCodeProposalCodeHash": "63195b80b58a2a2f1a1149326906eb611b5fb8fa10127208c19154cad6b0c5a6",
+        "lastUploadedCodeId": 91,
+        "codeId": 91,
+        "instantiateProposalId": "400",
+        "address": "axelar1efxpe9q9ceejafqa0y4xfj20vmufje9g2229p68q7ypq9cnkvexsnhz32g"
       }
     },
     "axelarId": "axelar",
