@@ -11,11 +11,12 @@ set -euo pipefail
 # Fetches keypairs from 1Password on-demand and cleans them up on exit.
 #
 # Usage:
-#   ./solana/checklist.sh
+#   ./solana/scripts/checklist.sh
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEPLOYMENTS_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SOLANA_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DEPLOYMENTS_DIR="$(cd "${SOLANA_DIR}/.." && pwd)"
 
 # --- Logging ---
 log_step()  { echo -e "\n\033[1;34m==> $1\033[0m"; }
@@ -30,7 +31,7 @@ confirm() {
 }
 
 # --- Source solana/.env ---
-if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
+if [[ ! -f "${SOLANA_DIR}/.env" ]]; then
     log_error "solana/.env not found. Please create it with ENV and CHAIN."
     echo "Example:"
     echo "  ENV=stagenet"
@@ -39,7 +40,7 @@ if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
 fi
 
 # shellcheck source=/dev/null
-source "${SCRIPT_DIR}/.env"
+source "${SOLANA_DIR}/.env"
 
 # --- Validate ENV ---
 case "${ENV:-}" in
@@ -100,12 +101,16 @@ trap cleanup EXIT
 # =============================================================================
 
 run_solana_cli() {
-    "${SCRIPT_DIR}/cli" "$@"
+    "${SOLANA_DIR}/cli" "$@"
 }
 
 fetch_keypair_from_op() {
     local title="$1"
-    local output_path="${SCRIPT_DIR}/.tmp-${title//[^a-zA-Z0-9]/_}.json"
+    mkdir -p "${SOLANA_DIR}/deployments"
+    # [Stagenet] Gas Service: Solana → stagenet-gas-service-solana.json
+    local sanitized
+    sanitized=$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed 's/[][]//g; s/://g; s/  */-/g; s/^-//; s/-$//')
+    local output_path="${SOLANA_DIR}/deployments/${sanitized}.json"
 
     log_info "Fetching '${title}' from 1Password..." >&2
     op document get "$title" --vault "$OP_VAULT" --out-file "$output_path" --force >/dev/null 2>&1 || {
@@ -174,9 +179,7 @@ main() {
     fi
 
     log_step "Remaining steps"
-    echo "    [ ] Deploy governance program (not yet supported)"
     echo "    [ ] Verify cross-chain memo on Axelarscan"
-    echo "    [ ] Commit updated ${ENV}.json"
     echo ""
 
     log_step "Done!"

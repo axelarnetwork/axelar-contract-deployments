@@ -7,7 +7,7 @@ set -euo pipefail
 # Deploys CosmWasm Amplifier contracts for Solana GMP connection.
 # Automates the steps in releases/cosmwasm/2025-09-Solana-GMP-v1.0.0.md.
 #
-# Run this script AFTER solana/deploy.sh deploys Solana programs.
+# Run this script AFTER solana/scripts/deploy.sh deploys Solana programs.
 # It deploys the CosmWasm side (VotingVerifier, Gateway, MultisigProver, etc.)
 # then returns control to the user for Solana gateway initialization.
 #
@@ -23,15 +23,16 @@ set -euo pipefail
 #   - 1Password CLI (op) authenticated, or MNEMONIC env var set
 #
 # Usage:
-#   ENV=stagenet CHAIN=solana ./solana/deploy-axelar.sh
-#   ./solana/deploy-axelar.sh --reset                    # start fresh
-#   ./solana/deploy-axelar.sh --version-vv 2.1.0         # override version
+#   ENV=stagenet CHAIN=solana ./solana/scripts/deploy-axelar.sh
+#   ./solana/scripts/deploy-axelar.sh --reset                    # start fresh
+#   ./solana/scripts/deploy-axelar.sh --version-vv 2.1.0         # override version
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEPLOYMENTS_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SOLANA_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DEPLOYMENTS_DIR="$(cd "${SOLANA_DIR}/.." && pwd)"
 
-# --- Logging (same as solana/deploy.sh) ---
+# --- Logging (same as solana/scripts/deploy.sh) ---
 log_step()  { echo -e "\n\033[1;34m==> $1\033[0m"; }
 log_info()  { echo "    $1"; }
 log_warn()  { echo -e "    \033[1;33mWARNING: $1\033[0m"; }
@@ -44,9 +45,9 @@ confirm() {
 }
 
 # --- Source solana/.env if it exists (for ENV, CHAIN) ---
-if [[ -f "${SCRIPT_DIR}/.env" ]]; then
+if [[ -f "${SOLANA_DIR}/.env" ]]; then
     # shellcheck source=/dev/null
-    source "${SCRIPT_DIR}/.env"
+    source "${SOLANA_DIR}/.env"
 fi
 
 # --- Validate ENV ---
@@ -107,7 +108,7 @@ get_signing_threshold() {
 }
 
 get_salt() {
-    echo "v1.0.0"
+    echo "${SALT:-$CHAIN}"
 }
 
 get_epoch_duration() {
@@ -160,10 +161,11 @@ usage() {
     echo ""
     echo "Options:"
     echo "  --reset                  Clear state file and start from scratch"
-    echo "  --version-vv <ver>       VotingVerifier version   (default: 2.0.0)"
+    echo "  --version-vv <ver>       VotingVerifier version   (default: 2.0.1)"
     echo "  --version-gw <ver>       Gateway version          (default: 1.1.1)"
-    echo "  --version-mp <ver>       MultisigProver version   (default: 2.0.0)"
+    echo "  --version-mp <ver>       MultisigProver version   (default: 1.2.0)"
     echo "  --version-its <ver>      ItsSolanaTranslator ver  (default: 1.0.0)"
+    echo "  --salt <salt>            Salt for instantiate2   (default: \$CHAIN)"
     echo "  -h, --help               Show this help"
     echo ""
     echo "Environment variables:"
@@ -171,13 +173,13 @@ usage() {
     echo "  CHAIN            Required: solana chain name (e.g. solana)"
     echo "  MNEMONIC         Fallback if 1Password unavailable"
     echo "  NODE             Axelar RPC URL (reads from config if unset)"
-    echo "  REWARDS_WALLET   axelard keyring name for funding reward pools"
 }
 
-VOTING_VERIFIER_VERSION="2.0.0"
+VOTING_VERIFIER_VERSION="2.0.1"
 GATEWAY_VERSION="1.1.1"
-MULTISIG_PROVER_VERSION="2.0.0"
+MULTISIG_PROVER_VERSION="1.2.0"
 ITS_TRANSLATOR_VERSION="1.0.0"
+SALT=""
 RESET=false
 
 while [[ $# -gt 0 ]]; do
@@ -202,6 +204,10 @@ while [[ $# -gt 0 ]]; do
             ITS_TRANSLATOR_VERSION="$2"
             shift 2
             ;;
+        --salt)
+            SALT="$2"
+            shift 2
+            ;;
         -h|--help)
             usage
             exit 0
@@ -218,7 +224,8 @@ done
 # State management (resume support)
 # =============================================================================
 
-STATE_FILE="${DEPLOYMENTS_DIR}/.deploy-axelar-state-${ENV}-${CHAIN}"
+mkdir -p "${SOLANA_DIR}/deployments"
+STATE_FILE="${SOLANA_DIR}/deployments/.deploy-axelar-state-${ENV}-${CHAIN}"
 
 if [[ "$RESET" == "true" ]]; then
     rm -f "$STATE_FILE"
@@ -309,12 +316,40 @@ jq_config() {
     jq -r "$1" "$CHAINS_INFO_FILE"
 }
 
+# Find an existing code ID for a contract+version by checking other chains.
+# Usage: find_existing_code_id "VotingVerifier" "2.0.1"
+# Prints the code ID if found, empty string otherwise.
+find_existing_code_id() {
+    local contract="$1"
+    local version="$2"
+    jq -r --arg v "$version" \
+        ".axelar.contracts.${contract} | to_entries[] | select(.value | type == \"object\" and .version == \$v and .codeId) | .value.codeId" \
+        "$CHAINS_INFO_FILE" | head -1
+}
+
+# Ensure the code ID for a chain-scoped contract matches the expected value.
+# If it differs, overwrite it in the config.
+ensure_code_id() {
+    local contract="$1"
+    local chain="$2"
+    local expected_code_id="$3"
+    local current
+    current=$(jq_config ".axelar.contracts.${contract}[\"${chain}\"].codeId // empty")
+    if [[ "$current" != "$expected_code_id" ]]; then
+        log_info "Updating ${contract}[${chain}].codeId: ${current:-<empty>} -> $expected_code_id"
+        local tmp_file="${CHAINS_INFO_FILE}.tmp"
+        jq --arg chain "$chain" --argjson cid "$expected_code_id" \
+            ".axelar.contracts.${contract}[\$chain].codeId = \$cid" \
+            "$CHAINS_INFO_FILE" > "$tmp_file" && mv "$tmp_file" "$CHAINS_INFO_FILE"
+    fi
+}
+
 load_config_values() {
     log_step "Loading configuration from ${ENV}.json"
 
     GOVERNANCE_ADDRESS=$(jq_config '.axelar.governanceAddress')
-    ADMIN_ADDRESS=$(jq_config '.axelar.adminAddress // empty')
     COORDINATOR_ADDRESS=$(jq_config '.axelar.contracts.Coordinator.address // empty')
+    CHAIN_ID=$(jq_config '.axelar.chainId // empty')
 
     NODE="${NODE:-$(jq_config '.axelar.rpc // empty')}"
     if [[ -z "$NODE" ]]; then
@@ -323,8 +358,8 @@ load_config_values() {
     fi
 
     log_info "Governance:  $GOVERNANCE_ADDRESS"
-    log_info "Admin:       ${ADMIN_ADDRESS:-<not set>}"
     log_info "Coordinator: ${COORDINATOR_ADDRESS:-<not set>}"
+    log_info "Chain ID:    $CHAIN_ID"
     log_info "Node:        $NODE"
 }
 
@@ -432,7 +467,7 @@ check_prerequisites() {
     chain_entry=$(jq_config ".chains[\"${CHAIN}\"] // empty")
     if [[ -z "$chain_entry" ]]; then
         log_error "Chain '${CHAIN}' not found in ${ENV}.json"
-        log_info "Run solana/deploy.sh first to create the chain entry."
+        log_info "Run solana/scripts/deploy.sh first to create the chain entry."
         exit 1
     fi
 
@@ -473,6 +508,17 @@ step_store_voting_verifier() {
 
     log_step "Step 1: Store VotingVerifier (v${VOTING_VERIFIER_VERSION})"
 
+    local existing_code_id
+    existing_code_id=$(find_existing_code_id "VotingVerifier" "$VOTING_VERIFIER_VERSION")
+    if [[ -n "$existing_code_id" ]]; then
+        log_info "Found existing codeId=$existing_code_id for VotingVerifier v${VOTING_VERIFIER_VERSION}"
+        if confirm "Reuse this code ID? (n to store fresh code)"; then
+            ensure_code_id "VotingVerifier" "$CHAIN" "$existing_code_id"
+            mark_step_done "$STEP_NAME"
+            return
+        fi
+    fi
+
     if ! confirm "Submit store-code for VotingVerifier?"; then
         log_info "Skipping."
         return
@@ -489,8 +535,8 @@ step_store_voting_verifier() {
         --instantiateAddresses "$INIT_ADDRESSES" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "VotingVerifier store-code"
+    mark_step_done "$STEP_NAME"
 }
 
 step_store_gateway() {
@@ -501,6 +547,17 @@ step_store_gateway() {
     fi
 
     log_step "Step 2: Store Gateway (v${GATEWAY_VERSION})"
+
+    local existing_code_id
+    existing_code_id=$(find_existing_code_id "Gateway" "$GATEWAY_VERSION")
+    if [[ -n "$existing_code_id" ]]; then
+        log_info "Found existing codeId=$existing_code_id for Gateway v${GATEWAY_VERSION}"
+        if confirm "Reuse this code ID? (n to store fresh code)"; then
+            ensure_code_id "Gateway" "$CHAIN" "$existing_code_id"
+            mark_step_done "$STEP_NAME"
+            return
+        fi
+    fi
 
     if ! confirm "Submit store-code for Gateway?"; then
         log_info "Skipping."
@@ -518,8 +575,8 @@ step_store_gateway() {
         --instantiateAddresses "$INIT_ADDRESSES" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "Gateway store-code"
+    mark_step_done "$STEP_NAME"
 }
 
 step_store_multisig_prover() {
@@ -530,6 +587,17 @@ step_store_multisig_prover() {
     fi
 
     log_step "Step 3: Store MultisigProver (v${MULTISIG_PROVER_VERSION})"
+
+    local existing_code_id
+    existing_code_id=$(find_existing_code_id "MultisigProver" "$MULTISIG_PROVER_VERSION")
+    if [[ -n "$existing_code_id" ]]; then
+        log_info "Found existing codeId=$existing_code_id for MultisigProver v${MULTISIG_PROVER_VERSION}"
+        if confirm "Reuse this code ID? (n to store fresh code)"; then
+            ensure_code_id "MultisigProver" "$CHAIN" "$existing_code_id"
+            mark_step_done "$STEP_NAME"
+            return
+        fi
+    fi
 
     if ! confirm "Submit store-code for MultisigProver?"; then
         log_info "Skipping."
@@ -547,8 +615,8 @@ step_store_multisig_prover() {
         --instantiateAddresses "$INIT_ADDRESSES" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "MultisigProver store-code"
+    mark_step_done "$STEP_NAME"
 }
 
 step_store_its_solana_translator() {
@@ -564,7 +632,7 @@ step_store_its_solana_translator() {
     existing_addr=$(jq_config '.axelar.contracts.ItsSolanaTranslator.address // empty')
     if [[ -n "$existing_addr" ]]; then
         log_info "ItsSolanaTranslator already deployed at: $existing_addr"
-        if ! confirm "Store new code anyway?"; then
+        if confirm "Use this already deployed contract? (n to store fresh code)"; then
             mark_step_done "$STEP_NAME"
             return
         fi
@@ -586,8 +654,8 @@ step_store_its_solana_translator() {
         --instantiateAddresses "$INIT_ADDRESSES" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "ItsSolanaTranslator store-code"
+    mark_step_done "$STEP_NAME"
 }
 
 step_instantiate_its_translator() {
@@ -613,14 +681,14 @@ step_instantiate_its_translator() {
     fi
 
     # shellcheck disable=SC2086
-    run_ts_node cosmwasm/contract.ts instantiate \
+    CHAIN= run_ts_node cosmwasm/contract.ts instantiate \
         -c ItsSolanaTranslator \
         -m "$MNEMONIC" \
         --fetchCodeId \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "ItsSolanaTranslator instantiate"
+    mark_step_done "$STEP_NAME"
 }
 
 step_verify_its_translator_address() {
@@ -641,21 +709,44 @@ step_verify_its_translator_address() {
         return
     fi
 
-    # Query on-chain to find the address
+    # Query on-chain to find the address by code ID
     local code_id
     code_id=$(jq_config '.axelar.contracts.ItsSolanaTranslator.codeId // empty')
-    if [[ -n "$code_id" ]]; then
-        log_info "Querying contracts for code ID: $code_id"
-        run_axelard q wasm list-contract-by-code "$code_id" --node "$NODE" --output json | jq . || true
+    if [[ -z "$code_id" ]]; then
+        log_warn "ItsSolanaTranslator codeId not found in config. Cannot query on-chain."
+        log_info "Update axelar.contracts.ItsSolanaTranslator.codeId in ${ENV}.json and re-run."
+        if ! confirm "Has the codeId been updated in the config?"; then
+            log_warn "Script paused. Update the config and re-run."
+            exit 0
+        fi
+        code_id=$(jq_config '.axelar.contracts.ItsSolanaTranslator.codeId // empty')
     fi
 
-    echo ""
-    log_warn "ItsSolanaTranslator address not found in config."
-    log_info "If the proposal has passed, update axelar.contracts.ItsSolanaTranslator.address in ${ENV}.json"
+    if [[ -n "$code_id" ]]; then
+        log_info "Querying contracts for code ID: $code_id"
+        local query_result
+        query_result=$(axelard q wasm list-contract-by-code "$code_id" --node "$NODE" --output json 2>/dev/null) || true
 
-    if ! confirm "Has the address been updated in the config?"; then
-        log_warn "Script paused. Update the config and re-run."
-        exit 0
+        local contract_addr
+        contract_addr=$(echo "$query_result" | jq -r '.contracts[-1] // empty' 2>/dev/null)
+
+        if [[ -n "$contract_addr" ]]; then
+            log_info "Found ItsSolanaTranslator address: $contract_addr"
+
+            if confirm "Save this address to ${ENV}.json?"; then
+                local tmp_file="${CHAINS_INFO_FILE}.tmp"
+                jq --arg addr "$contract_addr" \
+                    '.axelar.contracts.ItsSolanaTranslator.address = $addr' \
+                    "$CHAINS_INFO_FILE" > "$tmp_file" && mv "$tmp_file" "$CHAINS_INFO_FILE"
+                log_info "Updated ItsSolanaTranslator address in config."
+            fi
+        else
+            log_warn "No contracts found for code ID $code_id. Has the proposal passed?"
+            if ! confirm "Continue anyway?"; then
+                log_warn "Script paused. Re-run after the proposal has passed."
+                exit 0
+            fi
+        fi
     fi
 
     mark_step_done "$STEP_NAME"
@@ -674,10 +765,10 @@ step_add_voting_verifier_config() {
 
     log_step "Step 7: Add VotingVerifier config for $CHAIN"
 
-    local existing
-    existing=$(jq_config ".axelar.contracts.VotingVerifier[\"${CHAIN}\"] // empty")
-    if [[ -n "$existing" ]]; then
-        log_info "VotingVerifier[$CHAIN] already exists in config. Skipping."
+    local existing_svc
+    existing_svc=$(jq_config ".axelar.contracts.VotingVerifier[\"${CHAIN}\"].serviceName // empty")
+    if [[ -n "$existing_svc" ]]; then
+        log_info "VotingVerifier[$CHAIN] already configured (serviceName=$existing_svc). Skipping."
         mark_step_done "$STEP_NAME"
         return
     fi
@@ -709,7 +800,7 @@ step_add_voting_verifier_config() {
        --arg svc "$service_name" \
        --arg gw "$source_gw_addr" \
        --argjson thresh "$voting_threshold" \
-    '.axelar.contracts.VotingVerifier[$chain] = {
+    '.axelar.contracts.VotingVerifier[$chain] += {
         "governanceAddress": $gov,
         "serviceName": $svc,
         "sourceGatewayAddress": $gw,
@@ -733,10 +824,10 @@ step_add_multisig_prover_config() {
 
     log_step "Step 8: Add MultisigProver config for $CHAIN"
 
-    local existing
-    existing=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"] // empty")
-    if [[ -n "$existing" ]]; then
-        log_info "MultisigProver[$CHAIN] already exists in config. Skipping."
+    local existing_svc
+    existing_svc=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].serviceName // empty")
+    if [[ -n "$existing_svc" ]]; then
+        log_info "MultisigProver[$CHAIN] already configured (serviceName=$existing_svc). Skipping."
         mark_step_done "$STEP_NAME"
         return
     fi
@@ -746,7 +837,7 @@ step_add_multisig_prover_config() {
     signing_threshold=$(get_signing_threshold)
 
     log_info "governanceAddress:  $GOVERNANCE_ADDRESS"
-    log_info "adminAddress:       ${ADMIN_ADDRESS:-$GOVERNANCE_ADDRESS}"
+    log_info "adminAddress:       $PROVER_ADMIN"
     log_info "signingThreshold:   $signing_threshold"
     log_info "serviceName:        $service_name"
 
@@ -755,14 +846,13 @@ step_add_multisig_prover_config() {
         return
     fi
 
-    local admin_addr="${ADMIN_ADDRESS:-$GOVERNANCE_ADDRESS}"
     local tmp_file="${CHAINS_INFO_FILE}.tmp"
     jq --arg chain "$CHAIN" \
        --arg gov "$GOVERNANCE_ADDRESS" \
-       --arg admin "$admin_addr" \
+       --arg admin "$PROVER_ADMIN" \
        --argjson thresh "$signing_threshold" \
        --arg svc "$service_name" \
-    '.axelar.contracts.MultisigProver[$chain] = {
+    '.axelar.contracts.MultisigProver[$chain] += {
         "governanceAddress": $gov,
         "adminAddress": $admin,
         "signingThreshold": $thresh,
@@ -788,9 +878,20 @@ step_instantiate_chain_contracts() {
     local salt
     salt=$(get_salt)
 
+    local vv_code_id gw_code_id mp_code_id
+    vv_code_id=$(jq_config ".axelar.contracts.VotingVerifier[\"${CHAIN}\"].codeId // empty")
+    gw_code_id=$(jq_config ".axelar.contracts.Gateway[\"${CHAIN}\"].codeId // empty")
+    mp_code_id=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].codeId // empty")
+
     log_info "Chain:          $CHAIN"
     log_info "Salt:           $salt"
     log_info "Contract Admin: $CONTRACT_ADMIN"
+    log_info "Code IDs:       VV=$vv_code_id  GW=$gw_code_id  MP=$mp_code_id"
+
+    if [[ -z "$vv_code_id" || -z "$gw_code_id" || -z "$mp_code_id" ]]; then
+        log_error "Missing code IDs in config. Ensure store-code steps completed successfully."
+        return
+    fi
 
     if ! confirm "Submit instantiate-chain-contracts?"; then
         log_info "Skipping."
@@ -801,13 +902,12 @@ step_instantiate_chain_contracts() {
     run_ts_node cosmwasm/contract.ts instantiate-chain-contracts \
         -n "$CHAIN" \
         -s "$salt" \
-        --fetchCodeId \
         --admin "$CONTRACT_ADMIN" \
         -m "$MNEMONIC" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "instantiate-chain-contracts"
+    mark_step_done "$STEP_NAME"
 }
 
 step_save_deployed_contracts() {
@@ -856,8 +956,8 @@ step_register_deployment() {
         -m "$MNEMONIC" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "register-deployment"
+    mark_step_done "$STEP_NAME"
 }
 
 # =============================================================================
@@ -882,8 +982,8 @@ step_verify_gateway_registration() {
     fi
 
     log_info "Querying Router for chain info..."
-    run_axelard q wasm contract-state smart "$ROUTER" \
-        "{\"chain_info\": \"$CHAIN\"}" \
+    axelard q wasm contract-state smart "$ROUTER" \
+        '{"chain_info":"'"$CHAIN"'"}' \
         --output json --node "$NODE" | jq . || {
         log_warn "Query failed. You may need to verify manually."
     }
@@ -909,8 +1009,8 @@ step_verify_prover_authorized() {
     fi
 
     log_info "Querying Multisig for caller authorization..."
-    run_axelard q wasm contract-state smart "$MULTISIG" \
-        "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" \
+    axelard q wasm contract-state smart "$MULTISIG" \
+        '{"is_caller_authorized":{"contract_address":"'"$MULTISIG_PROVER"'","chain_name":"'"$CHAIN"'"}}' \
         --output json --node "$NODE" | jq . || {
         log_warn "Query failed. You may need to verify manually."
     }
@@ -948,8 +1048,8 @@ step_create_reward_pools() {
         --rewardsPerEpoch "$rewards_per_epoch" \
         $GOVERNANCE_FLAG
 
-    mark_step_done "$STEP_NAME"
     wait_for_proposal "create-reward-pools"
+    mark_step_done "$STEP_NAME"
 }
 
 step_ampd_update_pause() {
@@ -967,6 +1067,9 @@ step_ampd_update_pause() {
     service_name=$(get_service_name)
 
     echo ""
+    local domain_separator
+    domain_separator=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].domainSeparator // empty")
+
     echo "    Verifiers should add the following handlers to their ampd config:"
     echo ""
     echo "    [[handlers]]"
@@ -978,11 +1081,13 @@ step_ampd_update_pause() {
     echo "        cosmwasm_contract: $VOTING_VERIFIER"
     echo "        rpc_url: <SOLANA_RPC_URL>"
     echo "        gateway_address: $GATEWAY_CW"
+    echo "        domain_separator: $domain_separator"
     echo "      - type: SolanaVerifierSetVerifier"
     echo "        chain_name: $CHAIN"
     echo "        cosmwasm_contract: $VOTING_VERIFIER"
     echo "        rpc_url: <SOLANA_RPC_URL>"
     echo "        gateway_address: $GATEWAY_CW"
+    echo "        domain_separator: $domain_separator"
     echo ""
     echo "    Then register:"
     echo "      ampd register-public-key ed25519"
@@ -1011,53 +1116,64 @@ step_add_funds_to_reward_pools() {
     local reward_amount
     reward_amount=$(get_reward_amount)
 
-    if [[ -z "${REWARDS_WALLET:-}" ]]; then
-        log_warn "REWARDS_WALLET not set. Printing commands for manual execution."
-        echo ""
-        echo "    A wallet with at least 2x ${reward_amount} is needed."
-        echo "    Set REWARDS_WALLET to your axelard keyring name and re-run, or run manually:"
-        echo ""
-        echo "    axelard tx wasm execute $REWARDS \\"
-        echo "      '{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }' \\"
-        echo "      --amount $reward_amount --from <WALLET> --node $NODE"
-        echo ""
-        echo "    axelard tx wasm execute $REWARDS \\"
-        echo "      '{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }' \\"
-        echo "      --amount $reward_amount --from <WALLET> --node $NODE"
-        echo ""
-        echo "    Then verify: ts-node cosmwasm/query.ts rewards $CHAIN"
-        echo ""
+    log_info "Reward amount: $reward_amount (per pool, 2 pools total)"
+    log_info "Any funded wallet can perform this step."
+    echo ""
+    echo "    Run the following commands (replace <FROM> and <KEYRING_BACKEND>):"
+    echo ""
+    echo "    # Fund Multisig reward pool"
+    echo "    axelard tx wasm execute $REWARDS \\"
+    echo "      '{\"add_rewards\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}' \\"
+    echo "      --amount $reward_amount --from <FROM> --keyring-backend <KEYRING_BACKEND> \\"
+    echo "      --chain-id $CHAIN_ID --node $NODE --gas auto --gas-adjustment 1.5 -y"
+    echo ""
+    echo "    # Fund VotingVerifier reward pool"
+    echo "    axelard tx wasm execute $REWARDS \\"
+    echo "      '{\"add_rewards\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}' \\"
+    echo "      --amount $reward_amount --from <FROM> --keyring-backend <KEYRING_BACKEND> \\"
+    echo "      --chain-id $CHAIN_ID --node $NODE --gas auto --gas-adjustment 1.5 -y"
+    echo ""
 
-        if confirm "Have you funded the reward pools manually?"; then
-            mark_step_done "$STEP_NAME"
-        else
-            log_warn "Script paused. Fund reward pools and re-run."
-            exit 0
-        fi
-        return
+    if ! confirm "Have the reward pools been funded?"; then
+        log_warn "Script paused. Re-run to resume."
+        exit 0
     fi
 
-    log_info "Reward amount: $reward_amount (per pool)"
-    log_info "Wallet:        $REWARDS_WALLET"
-
-    if ! confirm "Fund reward pools from $REWARDS_WALLET?"; then
-        log_info "Skipping."
-        return
-    fi
-
-    run_axelard tx wasm execute "$REWARDS" \
-        "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" \
-        --amount "$reward_amount" --from "$REWARDS_WALLET" --node "$NODE" \
-        --gas auto --gas-adjustment 1.2 -y
-
-    run_axelard tx wasm execute "$REWARDS" \
-        "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" \
-        --amount "$reward_amount" --from "$REWARDS_WALLET" --node "$NODE" \
-        --gas auto --gas-adjustment 1.2 -y
+    # Extract expected amount (numeric part only, e.g. "1000000" from "1000000uaxl")
+    local expected_amount
+    expected_amount=$(echo "$reward_amount" | sed 's/[^0-9]//g')
 
     log_info "Verifying reward pools..."
-    run_ts_node cosmwasm/query.ts rewards "$CHAIN" || true
+    local verified=true
 
+    for pool_name in "Multisig:$MULTISIG" "VotingVerifier:$VOTING_VERIFIER"; do
+        local label="${pool_name%%:*}"
+        local contract="${pool_name#*:}"
+
+        log_info "$label reward pool:"
+        local result
+        result=$(axelard q wasm contract-state smart "$REWARDS" \
+            '{"rewards_pool":{"pool_id":{"chain_name":"'"$CHAIN"'","contract":"'"$contract"'"}}}' \
+            --node "$NODE" --output json 2>/dev/null) || result="{}"
+
+        echo "$result" | jq '.data' 2>/dev/null || echo "$result"
+
+        local balance
+        balance=$(echo "$result" | jq -r '.data.balance // "0"' 2>/dev/null) || balance="0"
+
+        if [[ "$balance" -lt "$expected_amount" ]]; then
+            log_error "$label reward pool balance ($balance) is less than expected ($expected_amount)"
+            verified=false
+        fi
+    done
+
+    if [[ "$verified" != "true" ]]; then
+        log_error "Reward pool verification failed. Not marking step as done."
+        log_info "Fund the pools and re-run the script."
+        exit 0
+    fi
+
+    log_info "Reward pools verified successfully."
     mark_step_done "$STEP_NAME"
 }
 
@@ -1081,8 +1197,8 @@ step_query_active_verifiers() {
         return
     fi
 
-    run_axelard q wasm contract-state smart "$SERVICE_REGISTRY" \
-        "{ \"active_verifiers\": { \"service_name\": \"$service_name\", \"chain_name\": \"$CHAIN\"} }" \
+    axelard q wasm contract-state smart "$SERVICE_REGISTRY" \
+        '{"active_verifiers":{"service_name":"'"$service_name"'","chain_name":"'"$CHAIN"'"}}' \
         --node "$NODE" --output json | jq . || {
         log_warn "Query failed."
     }
@@ -1106,18 +1222,30 @@ step_create_genesis_verifier_set() {
         exit 1
     fi
 
-    log_warn "This step can only run once sufficient verifiers have registered."
+    local mp_admin mp_governance
+    mp_admin=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].adminAddress // empty")
+    mp_governance=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].governanceAddress // empty")
 
-    if ! confirm "Create genesis verifier set?"; then
-        log_info "Skipping."
-        return
+    log_warn "This step can only run once sufficient verifiers have registered."
+    echo ""
+    echo "    This step requires the MultisigProver admin or governance address:"
+    echo "      admin:      ${mp_admin:-<not set>}"
+    echo "      governance:  ${mp_governance:-<not set>}"
+    echo ""
+    echo "    Run the following command (replace <FROM> and <KEYRING_BACKEND>):"
+    echo ""
+    echo "    axelard tx wasm execute $MULTISIG_PROVER '\"update_verifier_set\"' \\"
+    echo "      --from <FROM> --keyring-backend <KEYRING_BACKEND> \\"
+    echo "      --chain-id $CHAIN_ID --gas auto --gas-adjustment 1.5 --node $NODE -y"
+    echo ""
+
+    if ! confirm "Has the genesis verifier set been created?"; then
+        log_warn "Script paused. Re-run to resume."
+        exit 0
     fi
 
-    run_axelard tx wasm execute "$MULTISIG_PROVER" '"update_verifier_set"' \
-        --from "$PROVER_ADMIN" --gas auto --gas-adjustment 1.2 --node "$NODE" -y
-
     log_info "Querying current verifier set..."
-    run_axelard q wasm contract-state smart "$MULTISIG_PROVER" \
+    axelard q wasm contract-state smart "$MULTISIG_PROVER" \
         '"current_verifier_set"' --node "$NODE" --output json | jq . || true
 
     mark_step_done "$STEP_NAME"
@@ -1148,7 +1276,7 @@ print_summary() {
     echo "      Rewards:               ${REWARDS:-<not found>}"
     echo "      ServiceRegistry:       ${SERVICE_REGISTRY:-<not found>}"
     echo ""
-    echo "    Next: Return to solana/deploy.sh for Solana gateway initialization."
+    echo "    Next: Return to solana/scripts/deploy.sh for Solana gateway initialization."
     echo "    See: releases/solana/2025-09-GMP-v1.0.0.md"
     echo ""
 }
@@ -1210,7 +1338,6 @@ show_config_summary() {
     echo "    Contract Admin:  $CONTRACT_ADMIN"
     echo "    Prover Admin:    $PROVER_ADMIN"
     echo "    Governance:      $GOVERNANCE_ADDRESS"
-    echo "    Admin:           ${ADMIN_ADDRESS:-$GOVERNANCE_ADDRESS}"
     echo "    Coordinator:     ${COORDINATOR_ADDRESS:-<not set>}"
     echo "    Node:            $NODE"
     echo "    Governance mode: ${REQUIRES_GOVERNANCE}"

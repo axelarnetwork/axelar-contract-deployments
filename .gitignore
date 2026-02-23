@@ -132,5 +132,3 @@ target/
 
 solana/axelar-amplifier*
 
-# deploy-axelar.sh state files
-.deploy-axelar-state-*

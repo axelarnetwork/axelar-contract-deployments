@@ -16,11 +16,12 @@ set -euo pipefail
 #   - 1Password CLI (op) must be authenticated
 #
 # Usage:
-#   ./solana/deploy.sh --version 0.1.9
+#   ./solana/scripts/deploy.sh --version 0.1.9
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEPLOYMENTS_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SOLANA_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DEPLOYMENTS_DIR="$(cd "${SOLANA_DIR}/.." && pwd)"
 
 # --- Logging ---
 log_step()  { echo -e "\n\033[1;34m==> $1\033[0m"; }
@@ -35,7 +36,7 @@ confirm() {
 }
 
 # --- Source solana/.env ---
-if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
+if [[ ! -f "${SOLANA_DIR}/.env" ]]; then
     log_error "solana/.env not found. Please create it with ENV and CHAIN."
     echo "Example:"
     echo "  ENV=stagenet"
@@ -44,7 +45,7 @@ if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
 fi
 
 # shellcheck source=/dev/null
-source "${SCRIPT_DIR}/.env"
+source "${SOLANA_DIR}/.env"
 
 # --- Validate ENV ---
 case "${ENV:-}" in
@@ -208,7 +209,7 @@ fi
 # =============================================================================
 
 run_solana_cli() {
-    "${SCRIPT_DIR}/cli" "$@"
+    "${SOLANA_DIR}/cli" "$@"
 }
 
 # =============================================================================
@@ -242,7 +243,11 @@ check_prerequisites() {
 # The file is tracked for cleanup on exit.
 fetch_keypair_from_op() {
     local title="$1"
-    local output_path="${SCRIPT_DIR}/.tmp-${title//[^a-zA-Z0-9]/_}.json"
+    mkdir -p "${SOLANA_DIR}/deployments"
+    # [Stagenet] Gas Service: Solana → stagenet-gas-service-solana.json
+    local sanitized
+    sanitized=$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed 's/[][]//g; s/://g; s/  */-/g; s/^-//; s/-$//')
+    local output_path="${SOLANA_DIR}/deployments/${sanitized}.json"
 
     log_info "Fetching '${title}' from 1Password..." >&2
     op document get "$title" --vault "$OP_VAULT" --out-file "$output_path" --force >/dev/null 2>&1 || {
@@ -402,18 +407,16 @@ cosmwasm_pause() {
     log_step "CosmWasm Deployment Required"
     echo ""
     echo "    All Solana programs have been deployed."
-    echo "    Please deploy the CosmWasm Solana GMP Amplifier contracts now:"
-    echo "      - VotingVerifier"
-    echo "      - MultisigProver"
-    echo "      - Gateway (CosmWasm)"
+    echo "    Deploy the CosmWasm Amplifier contracts before continuing."
     echo ""
-    echo "    See: releases/cosmwasm/2025-09-Solana-GMP-v1.0.0.md"
+    echo "    Run:  ./solana/scripts/deploy-axelar.sh"
     echo ""
-    echo "    These must be deployed before gateway initialization can proceed."
+    echo "    This deploys VotingVerifier, Gateway, MultisigProver, and"
+    echo "    ItsSolanaTranslator via the Coordinator contract."
     echo ""
 
     if ! confirm "Have you deployed the CosmWasm contracts? Press y to continue."; then
-        log_error "Aborting. Deploy CosmWasm contracts and re-run."
+        log_error "Aborting. Run ./solana/scripts/deploy-axelar.sh and then re-run this script."
         exit 1
     fi
 }
@@ -514,7 +517,7 @@ print_summary() {
     echo "    Upgrade Authority: ${UPGRADE_AUTHORITY_PUBKEY}"
     echo "    Operator:          ${OPERATOR_PUBKEY}"
     echo ""
-    echo "    Next: run ./solana/checklist.sh for post-deployment verification"
+    echo "    Next: run ./solana/scripts/checklist.sh for post-deployment verification"
     echo ""
 }
 

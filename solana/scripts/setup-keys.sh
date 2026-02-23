@@ -12,13 +12,14 @@ set -euo pipefail
 # Reads ENV from solana/.env (same file used by solana/cli).
 #
 # Usage:
-#   ./solana/setup-keys.sh --generate-program-ids
-#   ./solana/setup-keys.sh --generate-keypairs
-#   ./solana/setup-keys.sh --generate-program-ids --generate-keypairs
+#   ./solana/scripts/setup-keys.sh --generate-program-ids
+#   ./solana/scripts/setup-keys.sh --generate-keypairs
+#   ./solana/scripts/setup-keys.sh --generate-program-ids --generate-keypairs
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEPLOYMENTS_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SOLANA_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DEPLOYMENTS_DIR="$(cd "${SOLANA_DIR}/.." && pwd)"
 
 # --- Logging ---
 log_step()  { echo -e "\n\033[1;34m==> $1\033[0m"; }
@@ -33,7 +34,7 @@ confirm() {
 }
 
 # --- Source solana/.env ---
-if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
+if [[ ! -f "${SOLANA_DIR}/.env" ]]; then
     log_error "solana/.env not found. Please create it with ENV and CHAIN."
     echo "Example:"
     echo "  ENV=stagenet"
@@ -42,7 +43,7 @@ if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
 fi
 
 # shellcheck source=/dev/null
-source "${SCRIPT_DIR}/.env"
+source "${SOLANA_DIR}/.env"
 
 # --- Validate ENV ---
 case "${ENV:-}" in
@@ -97,7 +98,7 @@ usage() {
     echo "After running with --generate-program-ids:"
     echo "  1. Commit the updated program IDs in solana-axelar"
     echo "  2. Create a release (publish to crates.io)"
-    echo "  3. Use the released version with deploy.sh --version <ver>"
+    echo "  3. Use the released version with ./solana/scripts/deploy.sh --version <ver>"
 }
 
 FLAG_GENERATE_PROGRAM_IDS=false
@@ -195,7 +196,7 @@ check_prerequisites() {
 update_env_var() {
     local key="$1"
     local value="$2"
-    local env_file="${SCRIPT_DIR}/.env"
+    local env_file="${SOLANA_DIR}/.env"
 
     if grep -q "^${key}=" "$env_file" 2>/dev/null; then
         # Update existing line
@@ -216,10 +217,12 @@ generate_keypairs() {
         return
     fi
 
-    # Generate into solana/ directory so deploy.sh can find them
+    # Generate into solana/deployments/ directory
+    mkdir -p "${SOLANA_DIR}/deployments"
+
     # Generate upgrade authority
     log_info "Generating upgrade authority keypair (prefix: upa)..."
-    pushd "$SCRIPT_DIR" > /dev/null
+    pushd "${SOLANA_DIR}/deployments" > /dev/null
     solana-keygen grind --starts-with upa:1
     local upa_file
     upa_file=$(ls -t upa*.json 2>/dev/null | head -1)
@@ -229,7 +232,7 @@ generate_keypairs() {
         log_error "Failed to find generated upgrade authority keypair"
         exit 1
     fi
-    local upa_path="${SCRIPT_DIR}/${upa_file}"
+    local upa_path="${SOLANA_DIR}/deployments/${upa_file}"
     local upa_pubkey
     upa_pubkey=$(pubkey_from_path "$upa_path")
     log_info "Generated upgrade authority: $upa_pubkey"
@@ -237,7 +240,7 @@ generate_keypairs() {
 
     # Generate operator
     log_info "Generating operator keypair (prefix: gop)..."
-    pushd "$SCRIPT_DIR" > /dev/null
+    pushd "${SOLANA_DIR}/deployments" > /dev/null
     solana-keygen grind --starts-with gop:1
     local gop_file
     gop_file=$(ls -t gop*.json 2>/dev/null | head -1)
@@ -247,7 +250,7 @@ generate_keypairs() {
         log_error "Failed to find generated operator keypair"
         exit 1
     fi
-    local gop_path="${SCRIPT_DIR}/${gop_file}"
+    local gop_path="${SOLANA_DIR}/deployments/${gop_file}"
     local gop_pubkey
     gop_pubkey=$(pubkey_from_path "$gop_path")
     log_info "Generated operator: $gop_pubkey"
@@ -255,10 +258,10 @@ generate_keypairs() {
 
     # Update solana/.env with paths
     log_info "Updating solana/.env with keypair paths..."
-    update_env_var "UPGRADE_AUTHORITY_KEYPAIR_PATH" "./${upa_file}"
-    update_env_var "OPERATOR_KEYPAIR_PATH" "./${gop_file}"
-    log_info "Updated UPGRADE_AUTHORITY_KEYPAIR_PATH=./${upa_file}"
-    log_info "Updated OPERATOR_KEYPAIR_PATH=./${gop_file}"
+    update_env_var "UPGRADE_AUTHORITY_KEYPAIR_PATH" "./deployments/${upa_file}"
+    update_env_var "OPERATOR_KEYPAIR_PATH" "./deployments/${gop_file}"
+    log_info "Updated UPGRADE_AUTHORITY_KEYPAIR_PATH=./deployments/${upa_file}"
+    log_info "Updated OPERATOR_KEYPAIR_PATH=./deployments/${gop_file}"
 
     # Import to 1Password
     log_step "Importing authority/operator keypairs to 1Password"
@@ -331,7 +334,7 @@ generate_program_ids() {
     echo "    2. Update Anchor.toml [programs.${ENV}] section (xtask printed the block above)"
     echo "    3. Commit and push the changes"
     echo "    4. Create a release and publish to crates.io"
-    echo "    5. Use the released version: ./solana/deploy.sh --version <VERSION>"
+    echo "    5. Use the released version: ./solana/scripts/deploy.sh --version <VERSION>"
 }
 
 # =============================================================================
