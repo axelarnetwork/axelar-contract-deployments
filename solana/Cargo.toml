@@ -57,7 +57,9 @@ solana-axelar-governance = { version = "0.1.11", features = [
 solana-axelar-its = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-memo = { git = "https://github.com/axelarnetwork/axelar-amplifier-solana.git", branch = "main", default-features = false }
+solana-axelar-memo = { version = "0.1.11", features = [
+    "no-entrypoint",
+], default-features = false }
 solana-axelar-operators = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
