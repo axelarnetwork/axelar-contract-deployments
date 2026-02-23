@@ -31,7 +31,6 @@
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
-    "axelar-chains-config": "file:axelar-chains-config",
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
     "@axelar-network/axelar-cgp-sui": "1.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
@@ -45,6 +44,7 @@
     "@mysten/sui": "^1.3.0",
     "@stellar/stellar-sdk": "v14.2.0",
     "abort-controller": "^3.0.0",
+    "axelar-chains-config": "file:axelar-chains-config",
     "axios": "^1.7.2",
     "bech32": "2.0.0",
     "bs58": "^6.0.0",
@@ -56,6 +56,7 @@
   },
   "devDependencies": {
     "@aikidosec/safe-chain": "1.0.18",
+    "@sentry/node": "9.47.1",
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
@@ -80,11 +81,11 @@
     "jszip": "^3.10.1",
     "mocha": "^10.2.0",
     "prettier": "^3.6.1",
+    "protobufjs": "7.5.4",
     "readline-sync": "^1.4.10",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
-    "typescript": "^5.8.3",
-    "protobufjs": "7.5.4"
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=18"

@@ -1,0 +1,43 @@
+name: Mainnet Interchain Transfer Test
+
+on:
+  schedule:
+    # Runs every 12 hours (midnight and noon UTC)
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  interchain-transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Add node_modules/.bin to PATH
+        run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run interchain transfers
+        env:
+          EVM_PRIVATE_KEY: ${{ secrets.EVM_PRIVATE_KEY }}
+          XRPL_PRIVATE_KEY: ${{ secrets.XRPL_PRIVATE_KEY }}
+          STELLAR_PRIVATE_KEY: ${{ secrets.STELLAR_PRIVATE_KEY }}
+          SUI_PRIVATE_KEY: ${{ secrets.SUI_PRIVATE_KEY }}
+          SUI_RPC: ${{ secrets.SUI_RPC }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_OPTIONS: '--require ./scripts/sentry-instrument.js'
+
+        run: |
+          chmod +x scripts/mainnet-test-interchain-transfer.sh
+          bash scripts/mainnet-test-interchain-transfer.sh
