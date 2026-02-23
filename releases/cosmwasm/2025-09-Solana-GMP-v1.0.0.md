@@ -5,12 +5,12 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-12-04 |
-| **Stagenet**         | Pending               | TBD        |
-| **Testnet**          | Pending               | TBD        |
-| **Mainnet**          | Pending               | TBD        |
+| **Axelar Env**       | **Deployment Status** | **Date**   | **Deployed By** |
+| -------------------- | --------------------- | ---------- | --------------- |
+| **Devnet Amplifier** | Completed             | 2025-12-04 | @nbayindirli    |
+| **Stagenet**         | Completed             | 2026-02-23 | @rista404       |
+| **Testnet**          | Pending               | TBD        |                 |
+| **Mainnet**          | Pending               | TBD        |                 |
 
 ## Background
 
