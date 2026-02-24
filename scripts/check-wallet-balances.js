@@ -25,7 +25,25 @@ const STELLAR_CHAIN = {
 const XRPL_CHAIN = 'xrpl';
 const SUI_CHAIN = 'sui';
 
-// Minimum native-token balance thresholds (~5× actual cross-chain transfer cost including Axelar gas payment)
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 3000;
+
+async function withRetry(fn, label) {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            if (attempt < MAX_RETRIES) {
+                console.warn(`  ${label}: attempt ${attempt + 1} failed (${err.message}), retrying in ${RETRY_DELAY_MS / 1000}s...`);
+                await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+            } else {
+                throw err;
+            }
+        }
+    }
+}
+
+// Minimum native-token balance thresholds (~5 transactions worth of gas)
 const THRESHOLDS = {
     monad: 3,
     'monad-3': 1.5,
@@ -84,9 +102,11 @@ async function checkEvmBalances(privateKey, chains, config) {
         }
 
         try {
-            const provider = new ethers.providers.JsonRpcProvider(chain.rpc);
-            const balanceWei = await provider.getBalance(address);
-            const balance = parseFloat(ethers.utils.formatEther(balanceWei));
+            const balance = await withRetry(async () => {
+                const provider = new ethers.providers.JsonRpcProvider(chain.rpc);
+                const balanceWei = await provider.getBalance(address);
+                return parseFloat(ethers.utils.formatEther(balanceWei));
+            }, chainName);
 
             console.log(`  ${chainName} (${chain.tokenSymbol}): ${balance}`);
             results.push({ chain: chainName, symbol: chain.tokenSymbol, address, balance, threshold });
@@ -117,19 +137,25 @@ async function checkXrplBalance(privateKey, config) {
     const wallet = xrpl.Wallet.fromSeed(privateKey, { algorithm: xrpl.ECDSA.secp256k1 });
     const address = wallet.address;
 
-    const client = new xrpl.Client(chain.wssRpc);
-
     try {
-        await client.connect();
+        const balance = await withRetry(async () => {
+            const c = new xrpl.Client(chain.wssRpc);
 
-        const response = await client.request({
-            command: 'account_info',
-            account: address,
-            ledger_index: 'validated',
-        });
+            try {
+                await c.connect();
 
-        const balanceDrops = response.result.account_data.Balance;
-        const balance = parseFloat(xrpl.dropsToXrp(balanceDrops));
+                const response = await c.request({
+                    command: 'account_info',
+                    account: address,
+                    ledger_index: 'validated',
+                });
+
+                const balanceDrops = response.result.account_data.Balance;
+                return parseFloat(xrpl.dropsToXrp(balanceDrops));
+            } finally {
+                await c.disconnect();
+            }
+        }, XRPL_CHAIN);
 
         console.log(`  ${XRPL_CHAIN} (XRP): ${balance}`);
         return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance, threshold: THRESHOLDS.xrpl }];
@@ -141,8 +167,6 @@ async function checkXrplBalance(privateKey, config) {
 
         console.error(`  ${XRPL_CHAIN}: failed to fetch balance - ${err.message}`);
         return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance: 0, threshold: THRESHOLDS.xrpl, error: err.message }];
-    } finally {
-        await client.disconnect();
     }
 }
 
@@ -159,10 +183,12 @@ async function checkStellarBalance(privateKey, config, env) {
     const address = keypair.publicKey();
 
     try {
-        const server = new Horizon.Server(chain.horizonRpc);
-        const account = await server.accounts().accountId(address).call();
-        const native = account.balances.find((b) => b.asset_type === 'native');
-        const balance = native ? parseFloat(native.balance) : 0;
+        const balance = await withRetry(async () => {
+            const server = new Horizon.Server(chain.horizonRpc);
+            const account = await server.accounts().accountId(address).call();
+            const native = account.balances.find((b) => b.asset_type === 'native');
+            return native ? parseFloat(native.balance) : 0;
+        }, chainName);
 
         console.log(`  ${chainName} (XLM): ${balance}`);
         return [{ chain: chainName, symbol: 'XLM', address, balance, threshold: THRESHOLDS.stellar }];
@@ -190,10 +216,12 @@ async function checkSuiBalance(privateKey, config) {
     const address = keypair.toSuiAddress();
 
     try {
-        const client = new SuiClient({ url: chain.rpc });
-        const { totalBalance } = await client.getBalance({ owner: address });
-        // SUI balance is in MIST (1 SUI = 1e9 MIST)
-        const balance = parseFloat(totalBalance) / 1e9;
+        const balance = await withRetry(async () => {
+            const client = new SuiClient({ url: chain.rpc });
+            const { totalBalance } = await client.getBalance({ owner: address });
+            // SUI balance is in MIST (1 SUI = 1e9 MIST)
+            return parseFloat(totalBalance) / 1e9;
+        }, SUI_CHAIN);
 
         console.log(`  ${SUI_CHAIN} (SUI): ${balance}`);
         return [{ chain: SUI_CHAIN, symbol: 'SUI', address, balance, threshold: THRESHOLDS.sui }];
