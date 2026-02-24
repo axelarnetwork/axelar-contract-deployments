@@ -36,8 +36,15 @@ if (require.main === module) {
     addBaseOptions(program);
     addSkipPromptOption(program);
 
-    program.parseAsync().then(() => process.exit(0)).catch(async (err) => {
-        try { const Sentry = require('@sentry/node'); Sentry.captureException(err); await Sentry.flush(2000); } catch (_) {}
-        process.exit(1);
-    });
+    program
+        .parseAsync()
+        .then(() => process.exit(0))
+        .catch(async (err) => {
+            try {
+                const Sentry = require('@sentry/node');
+                Sentry.captureException(err);
+                await Sentry.flush(2000);
+            } catch (_) {}
+            process.exit(1);
+        });
 }
