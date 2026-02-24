@@ -264,7 +264,10 @@ async function main() {
     console.log('\nAll wallet balances are above minimum thresholds.');
 }
 
-main().catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-});
+main()
+    .then(() => process.exit(0))
+    .catch(async (err) => {
+        console.error(err.message);
+        try { const Sentry = require('@sentry/node'); Sentry.captureException(err); await Sentry.flush(2000); } catch (_) {}
+        process.exit(1);
+    });

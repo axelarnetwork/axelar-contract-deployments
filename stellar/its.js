@@ -527,28 +527,28 @@ if (require.main === module) {
         .command('add-trusted-chains <trusted-chains...>')
         .description(`Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
         .action((trustedChains, options) => {
-            mainProcessor(addTrustedChains, trustedChains, options);
+            return mainProcessor(addTrustedChains, trustedChains, options);
         });
 
     program
         .command('remove-trusted-chains <trusted-chains...>')
         .description(`Remove trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
         .action((trustedChains, options) => {
-            mainProcessor(removeTrustedChains, trustedChains, options);
+            return mainProcessor(removeTrustedChains, trustedChains, options);
         });
 
     program
         .command('is-trusted-chain <trusted-chain>')
         .description('Check if a chain is trusted')
         .action((trustedChain, options) => {
-            mainProcessor(isTrustedChain, [trustedChain], options);
+            return mainProcessor(isTrustedChain, [trustedChain], options);
         });
 
     program
         .command('deploy-interchain-token <symbol> <name> <decimals> <salt> <initialSupply>')
         .description('deploy interchain token')
         .action((symbol, name, decimal, salt, initialSupply, options) => {
-            mainProcessor(deployInterchainToken, [symbol, name, decimal, salt, initialSupply], options);
+            return mainProcessor(deployInterchainToken, [symbol, name, decimal, salt, initialSupply], options);
         });
 
     program
@@ -557,14 +557,14 @@ if (require.main === module) {
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((salt, destinationChain, options) => {
-            mainProcessor(deployRemoteInterchainToken, [salt, destinationChain], options);
+            return mainProcessor(deployRemoteInterchainToken, [salt, destinationChain], options);
         });
 
     program
         .command('register-canonical-token <tokenAddress>')
         .description('register canonical token')
         .action((tokenAddress, options) => {
-            mainProcessor(registerCanonicalToken, [tokenAddress], options);
+            return mainProcessor(registerCanonicalToken, [tokenAddress], options);
         });
 
     program
@@ -573,7 +573,7 @@ if (require.main === module) {
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((tokenAddress, destinationChain, options) => {
-            mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
+            return mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
         });
 
     program
@@ -582,7 +582,7 @@ if (require.main === module) {
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((tokenAddress, options) => {
-            mainProcessor(registerTokenMetadata, [tokenAddress], options);
+            return mainProcessor(registerTokenMetadata, [tokenAddress], options);
         });
 
     program
@@ -590,7 +590,7 @@ if (require.main === module) {
         .description('register custom token')
         .addArgument(new Argument('<type>', 'token manager type').choices(Object.keys(tokenManagerTypes)))
         .action((salt, tokenAddress, type, options) => {
-            mainProcessor(registerCustomToken, [salt, tokenAddress, type], options);
+            return mainProcessor(registerCustomToken, [salt, tokenAddress, type], options);
         });
 
     program
@@ -601,7 +601,7 @@ if (require.main === module) {
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .addOption(new Option('--operator <operator>', 'operator for the token id on the destination chain'))
         .action((salt, destinationChain, destinationTokenAddress, type, options) => {
-            mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, type], options);
+            return mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, type], options);
         });
 
     program
@@ -611,74 +611,77 @@ if (require.main === module) {
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
         .action((tokenId, destinationChain, destinationAddress, amount, options) => {
-            mainProcessor(interchainTransfer, [tokenId, destinationChain, destinationAddress, amount], options);
+            return mainProcessor(interchainTransfer, [tokenId, destinationChain, destinationAddress, amount], options);
         });
 
     program
         .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
         .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
-            mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
+            return mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
         });
 
     program
         .command('flow-limit <tokenId>')
         .description('Get the flow limit for a token')
         .action((tokenId, options) => {
-            mainProcessor(flowLimit, [tokenId], options);
+            return mainProcessor(flowLimit, [tokenId], options);
         });
 
     program
         .command('set-flow-limit <tokenId> <flowLimit>')
         .description('Set the flow limit for a token')
         .action((tokenId, flowLimit, options) => {
-            mainProcessor(setFlowLimit, [tokenId, flowLimit], options);
+            return mainProcessor(setFlowLimit, [tokenId, flowLimit], options);
         });
 
     program
         .command('remove-flow-limit <tokenId>')
         .description('Remove the flow limit for a token')
         .action((tokenId, options) => {
-            mainProcessor(removeFlowLimit, [tokenId], options);
+            return mainProcessor(removeFlowLimit, [tokenId], options);
         });
 
     program
         .command('interchain-token-address <tokenId>')
         .description('Get the interchain token address with the given token id')
         .action((tokenId, options) => {
-            mainProcessor(interchainTokenAddress, [tokenId], options);
+            return mainProcessor(interchainTokenAddress, [tokenId], options);
         });
 
     program
         .command('registered-token-address <tokenId>')
         .description('Get the registered token address for the given token id')
         .action((tokenId, options) => {
-            mainProcessor(registeredTokenAddress, [tokenId], options);
+            return mainProcessor(registeredTokenAddress, [tokenId], options);
         });
 
     program
         .command('token-admin <tokenId>')
         .description('Get the admin address for a token with the given token id')
         .action((tokenId, options) => {
-            mainProcessor(tokenAdmin, [tokenId], options);
+            return mainProcessor(tokenAdmin, [tokenId], options);
         });
 
     program
         .command('deployed-token-manager <tokenId>')
         .description('Get the deployed token manager address with the given token id')
         .action((tokenId, options) => {
-            mainProcessor(deployedTokenManager, [tokenId], options);
+            return mainProcessor(deployedTokenManager, [tokenId], options);
         });
 
     program
         .command('transfer-token-admin <tokenId> <newAdmin>')
         .description('Transfer admin of a token contract from token id')
         .action((tokenId, newAdmin, options) => {
-            mainProcessor(transferTokenAdmin, [tokenId, newAdmin], options);
+            return mainProcessor(transferTokenAdmin, [tokenId, newAdmin], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
 
-    program.parse();
+    program.parseAsync().then(() => process.exit(0)).catch(async (err) => {
+        try { const Sentry = require('@sentry/node'); Sentry.captureException(err); await Sentry.flush(2000); } catch (_) {}
+        process.exit(1);
+    });
 }
 module.exports = { addTrustedChains, removeTrustedChains, manageTrustedChains };
