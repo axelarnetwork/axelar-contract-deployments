@@ -267,11 +267,13 @@ async function main() {
 main()
     .then(() => process.exit(0))
     .catch(async (err) => {
-        console.error(err.message);
+        console.error(err);
+
         try {
             const Sentry = require('@sentry/node');
             Sentry.captureException(err);
-            await Sentry.flush(2000);
+            await Sentry.close(2000);
         } catch (_) {}
+
         process.exit(1);
     });
