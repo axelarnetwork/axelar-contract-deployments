@@ -236,4 +236,7 @@ async function main() {
     console.log('\nAll wallet balances are above minimum thresholds.');
 }
 
-main();
+main().catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+});
