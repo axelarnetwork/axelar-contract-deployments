@@ -57,6 +57,7 @@ pub(crate) async fn deploy_program(args: DeployArgs, config: crate::Config) -> R
         args.program_path.as_deref(),
         args.version.as_deref(),
         args.artifact_dir.as_deref(),
+        config.axelar_network,
     )
     .await?;
 
@@ -144,6 +145,7 @@ pub(crate) async fn upgrade_program(args: UpgradeArgs, config: crate::Config) ->
         args.program_path.as_deref(),
         args.version.as_deref(),
         args.artifact_dir.as_deref(),
+        config.axelar_network,
     )
     .await?;
 
