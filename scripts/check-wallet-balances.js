@@ -7,6 +7,7 @@ const { Keypair, Horizon } = require('@stellar/stellar-sdk');
 const { SuiClient } = require('@mysten/sui/client');
 const { decodeSuiPrivateKey } = require('@mysten/sui/cryptography');
 const { Secp256k1Keypair } = require('@mysten/sui/keypairs/secp256k1');
+const Sentry = require('@sentry/node');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -111,6 +112,7 @@ async function checkEvmBalances(privateKey, chains, config) {
             console.log(`  ${chainName} (${chain.tokenSymbol}): ${balance}`);
             results.push({ chain: chainName, symbol: chain.tokenSymbol, address, balance, threshold });
         } catch (err) {
+            Sentry.captureException(err);
             console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
             results.push({
                 chain: chainName,
@@ -139,12 +141,12 @@ async function checkXrplBalance(privateKey, config) {
 
     try {
         const balance = await withRetry(async () => {
-            const c = new xrpl.Client(chain.wssRpc);
+            const client = new xrpl.Client(chain.wssRpc);
 
             try {
-                await c.connect();
+                await client.connect();
 
-                const response = await c.request({
+                const response = await client.request({
                     command: 'account_info',
                     account: address,
                     ledger_index: 'validated',
@@ -153,7 +155,7 @@ async function checkXrplBalance(privateKey, config) {
                 const balanceDrops = response.result.account_data.Balance;
                 return parseFloat(xrpl.dropsToXrp(balanceDrops));
             } finally {
-                await c.disconnect();
+                await client.disconnect();
             }
         }, XRPL_CHAIN);
 
@@ -165,6 +167,7 @@ async function checkXrplBalance(privateKey, config) {
             return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance: 0, threshold: THRESHOLDS.xrpl }];
         }
 
+        Sentry.captureException(err);
         console.error(`  ${XRPL_CHAIN}: failed to fetch balance - ${err.message}`);
         return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance: 0, threshold: THRESHOLDS.xrpl, error: err.message }];
     }
@@ -198,6 +201,7 @@ async function checkStellarBalance(privateKey, config, env) {
             return [{ chain: chainName, symbol: 'XLM', address, balance: 0, threshold: THRESHOLDS.stellar }];
         }
 
+        Sentry.captureException(err);
         console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
         return [{ chain: chainName, symbol: 'XLM', address, balance: 0, threshold: THRESHOLDS.stellar, error: err.message }];
     }
@@ -226,6 +230,7 @@ async function checkSuiBalance(privateKey, config) {
         console.log(`  ${SUI_CHAIN} (SUI): ${balance}`);
         return [{ chain: SUI_CHAIN, symbol: 'SUI', address, balance, threshold: THRESHOLDS.sui }];
     } catch (err) {
+        Sentry.captureException(err);
         console.error(`  ${SUI_CHAIN}: failed to fetch balance - ${err.message}`);
         return [{ chain: SUI_CHAIN, symbol: 'SUI', address, balance: 0, threshold: THRESHOLDS.sui, error: err.message }];
     }
@@ -268,12 +273,7 @@ main()
     .then(() => process.exit(0))
     .catch(async (err) => {
         console.error(err);
-
-        try {
-            const Sentry = require('@sentry/node');
-            Sentry.captureException(err);
-            await Sentry.close(2000);
-        } catch (_) {}
-
+        Sentry.captureException(err);
+        await Sentry.close(2000);
         process.exit(1);
     });
