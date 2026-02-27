@@ -27,18 +27,18 @@ const SUI_CHAIN = 'sui';
 
 // Minimum native-token balance thresholds (~5× actual cross-chain transfer cost including Axelar gas payment)
 const THRESHOLDS = {
-    monad: 3, 
+    monad: 3,
     'monad-3': 1.5,
-    berachain: 0.2, 
+    berachain: 0.2,
     plume: 8,
-    hyperliquid: 0.01, 
+    hyperliquid: 0.01,
     'xrpl-evm': 2,
-    flow: 2, 
-    hedera: 2, 
+    flow: 2,
+    hedera: 2,
     // Non-EVM chains
     xrpl: 3,
     stellar: 0.5,
-    sui: 0.05, 
+    sui: 0.05,
 };
 const DEFAULT_THRESHOLD = 1;
 
