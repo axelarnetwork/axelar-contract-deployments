@@ -78,18 +78,23 @@ async function checkEvmBalances(privateKey, chains, config) {
             continue;
         }
 
+        if (!chain.tokenSymbol) {
+            console.error(`  ${chainName}: missing tokenSymbol in config, skipping`);
+            continue;
+        }
+
         try {
             const provider = new ethers.providers.JsonRpcProvider(chain.rpc);
             const balanceWei = await provider.getBalance(address);
             const balance = parseFloat(ethers.utils.formatEther(balanceWei));
 
-            console.log(`  ${chainName} (${chain.tokenSymbol || 'ETH'}): ${balance}`);
-            results.push({ chain: chainName, symbol: chain.tokenSymbol || 'ETH', address, balance, threshold });
+            console.log(`  ${chainName} (${chain.tokenSymbol}): ${balance}`);
+            results.push({ chain: chainName, symbol: chain.tokenSymbol, address, balance, threshold });
         } catch (err) {
             console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
             results.push({
                 chain: chainName,
-                symbol: chain.tokenSymbol || 'ETH',
+                symbol: chain.tokenSymbol,
                 address,
                 balance: 0,
                 threshold,
