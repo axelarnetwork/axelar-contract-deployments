@@ -40,7 +40,7 @@ const THRESHOLDS = {
     stellar: 0.5,
     sui: 0.05, 
 };
-const DEFAULT_EVM_THRESHOLD = 1;
+const DEFAULT_THRESHOLD = 1;
 
 function loadConfig(env) {
     const configPath = path.resolve(__dirname, '..', 'axelar-chains-config', 'info', `${env}.json`);
@@ -71,6 +71,7 @@ async function checkEvmBalances(privateKey, chains, config) {
 
     for (const chainName of chains) {
         const chain = config.chains[chainName];
+        const threshold = THRESHOLDS[chainName] || DEFAULT_THRESHOLD;
 
         if (!chain) {
             console.warn(`  Warning: chain "${chainName}" not found in config, skipping`);
@@ -82,11 +83,9 @@ async function checkEvmBalances(privateKey, chains, config) {
             const balanceWei = await provider.getBalance(address);
             const balance = parseFloat(ethers.utils.formatEther(balanceWei));
 
-            const threshold = THRESHOLDS[chainName] || DEFAULT_EVM_THRESHOLD;
             console.log(`  ${chainName} (${chain.tokenSymbol || 'ETH'}): ${balance}`);
             results.push({ chain: chainName, symbol: chain.tokenSymbol || 'ETH', address, balance, threshold });
         } catch (err) {
-            const threshold = THRESHOLDS[chainName] || DEFAULT_EVM_THRESHOLD;
             console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
             results.push({
                 chain: chainName,
