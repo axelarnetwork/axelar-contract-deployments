@@ -25,13 +25,22 @@ const STELLAR_CHAIN = {
 const XRPL_CHAIN = 'xrpl';
 const SUI_CHAIN = 'sui';
 
-// Minimum native-token balance thresholds (~10 transactions worth of gas)
+// Minimum native-token balance thresholds (~5× actual cross-chain transfer cost including Axelar gas payment)
 const THRESHOLDS = {
-    evm: 0.5,
-    xrpl: 10,
-    stellar: 2,
-    sui: 0.2,
+    monad: 3,
+    'monad-3': 1.5,
+    berachain: 0.2,
+    plume: 8,
+    hyperliquid: 0.01,
+    'xrpl-evm': 2,
+    flow: 2,
+    hedera: 2,
+    // Non-EVM chains
+    xrpl: 3,
+    stellar: 0.5,
+    sui: 0.05,
 };
+const DEFAULT_THRESHOLD = 1;
 
 function loadConfig(env) {
     const configPath = path.resolve(__dirname, '..', 'axelar-chains-config', 'info', `${env}.json`);
@@ -62,9 +71,15 @@ async function checkEvmBalances(privateKey, chains, config) {
 
     for (const chainName of chains) {
         const chain = config.chains[chainName];
+        const threshold = THRESHOLDS[chainName] || DEFAULT_THRESHOLD;
 
         if (!chain) {
             console.warn(`  Warning: chain "${chainName}" not found in config, skipping`);
+            continue;
+        }
+
+        if (!chain.tokenSymbol) {
+            console.error(`  ${chainName}: missing tokenSymbol in config, skipping`);
             continue;
         }
 
@@ -73,16 +88,16 @@ async function checkEvmBalances(privateKey, chains, config) {
             const balanceWei = await provider.getBalance(address);
             const balance = parseFloat(ethers.utils.formatEther(balanceWei));
 
-            console.log(`  ${chainName} (${chain.tokenSymbol || 'ETH'}): ${balance}`);
-            results.push({ chain: chainName, symbol: chain.tokenSymbol || 'ETH', address, balance, threshold: THRESHOLDS.evm });
+            console.log(`  ${chainName} (${chain.tokenSymbol}): ${balance}`);
+            results.push({ chain: chainName, symbol: chain.tokenSymbol, address, balance, threshold });
         } catch (err) {
             console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
             results.push({
                 chain: chainName,
-                symbol: chain.tokenSymbol || 'ETH',
+                symbol: chain.tokenSymbol,
                 address,
                 balance: 0,
-                threshold: THRESHOLDS.evm,
+                threshold,
                 error: err.message,
             });
         }
