@@ -1,4 +1,5 @@
 const { Option, Command } = require('commander');
+const Sentry = require('@sentry/node');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const {
     loadConfig,
@@ -1335,13 +1336,8 @@ if (require.main === module) {
         .then(() => process.exit(0))
         .catch(async (err) => {
             console.error(err);
-
-            try {
-                const Sentry = require('@sentry/node');
-                Sentry.captureException(err);
-                await Sentry.close(2000);
-            } catch (_) {}
-
+            Sentry.captureException(err);
+            await Sentry.close(2000);
             process.exit(1);
         });
 }
