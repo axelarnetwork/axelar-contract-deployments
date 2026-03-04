@@ -13,6 +13,7 @@ pub(crate) struct Config {
     pub(crate) url: String,
     pub(crate) output_dir: PathBuf,
     pub(crate) network_type: NetworkType,
+    pub(crate) axelar_network: AxelarNetwork,
     pub(crate) chains_info_file: PathBuf,
     pub(crate) chain: String,
 }
@@ -46,6 +47,7 @@ impl Config {
             url,
             output_dir,
             network_type,
+            axelar_network,
             chains_info_file,
             chain,
         })

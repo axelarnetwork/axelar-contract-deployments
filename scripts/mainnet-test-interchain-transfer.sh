@@ -80,7 +80,7 @@ echo "=== Transfer 5: xrpl -> xrpl-evm (XRP) ==="
 PRIVATE_KEY="$XRPL_PRIVATE_KEY" ts-node xrpl/interchain-transfer.js \
     -e mainnet \
     -n xrpl \
-    XRP 1 xrpl-evm 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
+    XRP 0.1 xrpl-evm 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
     --gasFeeAmount 500000 \
     -y
 
@@ -90,7 +90,7 @@ PRIVATE_KEY="$EVM_PRIVATE_KEY" ts-node evm/its.js interchain-transfer \
     --destinationChain xrpl \
     --tokenId 0xba5a21ca88ef6bba2bfff5088994f90e1077e2a1cc3dcc38bd261f00fce2824f \
     --destinationAddress rPgTwjrZtcZKNyMaEH82NddRUBNkcX1kz7 \
-    --amount 0.5 \
+    --amount 0.1 \
     -n xrpl-evm \
     --env mainnet \
     -y
