@@ -180,6 +180,7 @@ main() {
 
     log_step "Remaining steps"
     echo "    [ ] Verify cross-chain memo on Axelarscan"
+    echo "    [ ] Run ./solana/scripts/its-checklist.sh for ITS verification"
     echo ""
 
     log_step "Done!"

@@ -2644,6 +2644,12 @@
           "address": "mem4E22pPgkbHAvoUYHa7HybBgUKn6jFjvj1YnPdkaq",
           "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
           "version": "0.1.11"
+        },
+        "InterchainTokenService": {
+          "address": "itsm3zZhp2oGgEfq7XBu9ojRCYZJnhzecbAEPCrvx2B",
+          "configAccount": "BUhMWrB72CHg3gizWgPFxCjj6cnm1MRT2Jc9jYH8AQTS",
+          "operator": "gopuMNntD2aFtuVnwskU7jYpmdBdLXJMBpZWZjYE1sj",
+          "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK"
         }
       }
     }
@@ -3124,7 +3130,12 @@
           "maxDecimalsWhenTruncating": 6
         },
         "lastUploadedCodeId": 61,
-        "version": "1.3.0"
+        "version": "1.3.0",
+        "solana-stagenet-3": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6,
+          "msgTranslator": "axelar1efxpe9q9ceejafqa0y4xfj20vmufje9g2229p68q7ypq9cnkvexsnhz32g"
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "68",

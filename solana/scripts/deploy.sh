@@ -148,6 +148,7 @@ DEPLOY_PROGRAMS=(
     "Gas Service|gas-service|gas|AxelarGasService"
     "Operators|operators|opr|AxelarOperators"
     "Memo|memo|mem|AxelarMemo"
+    "ITS|its|its|InterchainTokenService"
 )
 
 # =============================================================================
@@ -275,8 +276,8 @@ resolve_keypairs() {
     log_info "Operator: $OPERATOR_PUBKEY"
 
     # Fetch program keypairs
-    local program_names=("Gateway" "Gas Service" "Operators" "Memo")
-    local program_prefixes=("gtw" "gas" "opr" "mem")
+    local program_names=("Gateway" "Gas Service" "Operators" "Memo" "ITS")
+    local program_prefixes=("gtw" "gas" "opr" "mem" "its")
 
     for i in "${!program_names[@]}"; do
         local name="${program_names[$i]}"
@@ -458,40 +459,80 @@ initialize_programs() {
     log_info "previous-signers-retention: ${PREVIOUS_SIGNERS_RETENTION}"
     log_info "operator:                   ${OPERATOR_PUBKEY}"
 
-    run_solana_cli send gateway init \
-        --previous-signers-retention "$PREVIOUS_SIGNERS_RETENTION" \
-        --minimum-rotation-delay "$MINIMUM_ROTATION_DELAY" \
-        --operator "$OPERATOR_PUBKEY"
+    if confirm "Initialize Gateway?"; then
+        run_solana_cli send gateway init \
+            --previous-signers-retention "$PREVIOUS_SIGNERS_RETENTION" \
+            --minimum-rotation-delay "$MINIMUM_ROTATION_DELAY" \
+            --operator "$OPERATOR_PUBKEY"
 
-    log_info "Gateway initialized"
+        log_info "Gateway initialized"
+    else
+        log_info "Skipping Gateway"
+    fi
 
     # 2. Initialize Operators
     log_step "Initializing Operators"
     log_info "owner: ${UPGRADE_AUTHORITY_PUBKEY}"
 
-    run_solana_cli send operators init \
-        --owner "$UPGRADE_AUTHORITY_PUBKEY"
+    if confirm "Initialize Operators?"; then
+        run_solana_cli send operators init \
+            --owner "$UPGRADE_AUTHORITY_PUBKEY"
 
-    log_info "Operators initialized"
+        log_info "Operators initialized"
+    else
+        log_info "Skipping Operators"
+    fi
 
     # 3. Add Operator
     log_step "Adding operator"
     log_info "operator: ${OPERATOR_PUBKEY}"
 
-    run_solana_cli send operators add-operator \
-        --operator "$OPERATOR_PUBKEY"
+    if confirm "Add operator?"; then
+        run_solana_cli send operators add-operator \
+            --operator "$OPERATOR_PUBKEY"
 
-    log_info "Operator added"
+        log_info "Operator added"
+    else
+        log_info "Skipping add operator"
+    fi
 
     # 4. Initialize Gas Service
     log_step "Initializing Gas Service"
     log_info "operator: ${OPERATOR_PUBKEY}"
     log_info "signer:   ${OPERATOR_KEYPAIR_PATH}"
 
-    run_solana_cli send --signer-keys "$OPERATOR_KEYPAIR_PATH" gas-service init \
-        --operator "$OPERATOR_PUBKEY"
+    if confirm "Initialize Gas Service?"; then
+        run_solana_cli send --signer-keys "$OPERATOR_KEYPAIR_PATH" gas-service init \
+            --operator "$OPERATOR_PUBKEY"
 
-    log_info "Gas Service initialized"
+        log_info "Gas Service initialized"
+    else
+        log_info "Skipping Gas Service"
+    fi
+
+    # 5. Initialize ITS
+    log_step "Initializing ITS"
+    local its_hub_address
+    its_hub_address=$(jq -r '.axelar.contracts.InterchainTokenService.address // empty' "$CHAINS_INFO_FILE")
+    if [[ -z "$its_hub_address" ]]; then
+        log_error "InterchainTokenService address not found in config."
+        log_info "Ensure the ITS Hub contract is deployed before initializing ITS."
+        exit 1
+    fi
+    log_info "operator:         ${OPERATOR_PUBKEY}"
+    log_info "chain-name:       ${CHAIN}"
+    log_info "its-hub-address:  ${its_hub_address}"
+
+    if confirm "Initialize ITS?"; then
+        run_solana_cli send -s "$OPERATOR_KEYPAIR_PATH" its init \
+            --operator "$OPERATOR_PUBKEY" \
+            --chain-name "$CHAIN" \
+            --its-hub-address "$its_hub_address"
+
+        log_info "ITS initialized"
+    else
+        log_info "Skipping ITS"
+    fi
 }
 
 print_summary() {
@@ -517,7 +558,8 @@ print_summary() {
     echo "    Upgrade Authority: ${UPGRADE_AUTHORITY_PUBKEY}"
     echo "    Operator:          ${OPERATOR_PUBKEY}"
     echo ""
-    echo "    Next: run ./solana/scripts/checklist.sh for post-deployment verification"
+    echo "    Next: run ./solana/scripts/setup-its.sh to register ITS on the hub"
+    echo "    Then: run ./solana/scripts/checklist.sh for post-deployment verification"
     echo ""
 }
 
