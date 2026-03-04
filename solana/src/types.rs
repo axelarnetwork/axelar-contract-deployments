@@ -28,6 +28,18 @@ pub(crate) enum AxelarNetwork {
     None,
 }
 
+impl AxelarNetwork {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            AxelarNetwork::DevnetAmplifier => "devnet-amplifier",
+            AxelarNetwork::Stagenet => "stagenet",
+            AxelarNetwork::Testnet => "testnet",
+            AxelarNetwork::Mainnet => "mainnet",
+            AxelarNetwork::None => "local",
+        }
+    }
+}
+
 impl FromStr for AxelarNetwork {
     type Err = eyre::Error;
 

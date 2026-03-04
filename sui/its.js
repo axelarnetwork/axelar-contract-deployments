@@ -1329,7 +1329,7 @@ if (require.main === module) {
     program.addCommand(setFlowLimitsProgram);
 
     // finalize program
-    addOptionsToCommands(program, addBaseOptions, { offline: true });
+    addOptionsToCommands(program, addBaseOptions, { offline: true, customRpc: true });
     program.parse();
 }
 
