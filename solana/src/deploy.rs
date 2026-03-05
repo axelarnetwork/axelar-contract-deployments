@@ -55,9 +55,9 @@ pub(crate) struct DeployArgs {
 pub(crate) async fn deploy_program(args: DeployArgs, config: crate::Config) -> Result<()> {
     let program_path = artifact::resolve_program_path(
         &args.program,
-        Some("/Users/rista/Projects/commonprefix/axelar/solana-axelar/target/deploy/stagenet/solana_axelar_its.so"),
-        None,
-        None,
+        args.program_path.as_deref(),
+        args.version.as_deref(),
+        args.artifact_dir.as_deref(),
         config.axelar_network,
     )
     .await?;
