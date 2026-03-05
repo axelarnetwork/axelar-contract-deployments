@@ -1128,7 +1128,7 @@ if (require.main === module) {
             `Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains.`,
         )
         .action((trustedChains, options) => {
-            mainProcessor(addTrustedChains, options, trustedChains, processCommand);
+            return mainProcessor(addTrustedChains, options, trustedChains, processCommand);
         });
 
     const removeTrustedChainsProgram = new Command()
@@ -1136,7 +1136,7 @@ if (require.main === module) {
         .description('Remove trusted chains.')
         .command('remove-trusted-chains <trusted-chains...>')
         .action((trustedChains, options) => {
-            mainProcessor(removeTrustedChains, options, trustedChains, processCommand);
+            return mainProcessor(removeTrustedChains, options, trustedChains, processCommand);
         });
 
     const setFlowLimitsProgram = new Command()
@@ -1144,7 +1144,7 @@ if (require.main === module) {
         .command('set-flow-limits <token-ids> <flow-limits>')
         .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists.`)
         .action((tokenIds, flowLimits, options) => {
-            mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
+            return mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
     const registerCoinFromInfoProgram = new Command()
@@ -1152,7 +1152,7 @@ if (require.main === module) {
         .command('register-coin-from-info <symbol> <name> <decimals>')
         .description(`Deploy a coin on SUI and register it in ITS using token name, symbol and decimals.`)
         .action((symbol, name, decimals, options) => {
-            mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
+            return mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
         });
 
     const registerCoinFromMetadataProgram = new Command()
@@ -1160,7 +1160,7 @@ if (require.main === module) {
         .command('register-coin-from-metadata <symbol> <name> <decimals>')
         .description(`Deploy a coin on SUI and register it in ITS using its coin metadata.`)
         .action((symbol, name, decimals, options) => {
-            mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
+            return mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
         });
 
     const registerCustomCoinProgram = new Command()
@@ -1175,7 +1175,7 @@ if (require.main === module) {
         .addOption(new Option('--mintAmount <amount>', 'Amount of pre-registration tokens to mint to the deployer').default('1000'))
         .addOption(new Option('--published', 'Skip token deployment and only do coin registration'))
         .action((symbol, name, decimals, options) => {
-            mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
+            return mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
 
     const migrateCoinMetadataProgram = new Command()
@@ -1183,7 +1183,7 @@ if (require.main === module) {
         .command('migrate-coin-metadata <symbol>')
         .description(`Release metadata for a single token saved in the chain config and migrate it to a publicly shared object.`)
         .action((symbol, options) => {
-            mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
+            return mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
         });
 
     const migrateAllCoinMetadataProgram = new Command()
@@ -1203,7 +1203,7 @@ if (require.main === module) {
             ),
         )
         .action((options) => {
-            mainProcessor(migrateAllCoinMetadata, options, null, processCommand);
+            return mainProcessor(migrateAllCoinMetadata, options, null, processCommand);
         });
 
     const giveUnlinkedCoinProgram = new Command()
@@ -1212,7 +1212,7 @@ if (require.main === module) {
         .description(`Call give unlinked coin and give its treasury capability to ITS.`)
         .addOption(new Option('--treasuryCapReclaimer', 'Pass this flag to retain the ability to reclaim the treasury capability'))
         .action((symbol, tokenId, options) => {
-            mainProcessor(giveUnlinkedCoin, options, [symbol, tokenId], processCommand);
+            return mainProcessor(giveUnlinkedCoin, options, [symbol, tokenId], processCommand);
         });
 
     const removeUnlinkedCoinProgram = new Command()
@@ -1220,7 +1220,7 @@ if (require.main === module) {
         .command('remove-unlinked-coin <symbol>')
         .description(`Remove a coin from ITS and return its TreasuryCap to its deployer.`)
         .action((symbol, options) => {
-            mainProcessor(removeUnlinkedCoin, options, symbol, processCommand);
+            return mainProcessor(removeUnlinkedCoin, options, symbol, processCommand);
         });
 
     const registerCoinMetadataProgram = new Command()
@@ -1230,7 +1230,7 @@ if (require.main === module) {
         .addOption(new Option('--coinName <name>', 'Optional coin name (mandatory if coin not saved in config)'))
         .addOption(new Option('--coinDecimals <decimals>', 'Optional coin decimals (mandatory if coin not saved in config)'))
         .action((symbol, options) => {
-            mainProcessor(registerCoinMetadata, options, [symbol], processCommand);
+            return mainProcessor(registerCoinMetadata, options, [symbol], processCommand);
         });
 
     const linkCoinProgram = new Command()
@@ -1257,7 +1257,7 @@ if (require.main === module) {
         .addOption(new Option('--salt <salt>', 'An address in hexidecimal to be used as salt in the Token ID'))
         .addOption(new Option('--registered', 'Skip token registration and only do coin linking'))
         .action((symbol, destinationChain, destinationAddress, options) => {
-            mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
+            return mainProcessor(linkCoin, options, [symbol, destinationChain, destinationAddress], processCommand);
         });
 
     const deployRemoteCoinProgram = new Command()
@@ -1265,7 +1265,7 @@ if (require.main === module) {
         .command('deploy-remote-coin <tokenId> <destinationChain>')
         .description(`Deploy an interchain token on a remote chain`)
         .action((tokenId, destinationChain, options) => {
-            mainProcessor(deployRemoteCoin, options, [tokenId, destinationChain], processCommand);
+            return mainProcessor(deployRemoteCoin, options, [tokenId, destinationChain], processCommand);
         });
 
     const removeTreasuryCapProgram = new Command()
@@ -1273,7 +1273,7 @@ if (require.main === module) {
         .command('remove-treasury-cap <symbol>')
         .description(`Transfer a coin's TreasuryCap to the deployer to reclaim mint/burn permission from ITS.`)
         .action((symbol, options) => {
-            mainProcessor(removeTreasuryCap, options, symbol, processCommand);
+            return mainProcessor(removeTreasuryCap, options, symbol, processCommand);
         });
 
     const restoreTreasuryCapProgram = new Command()
@@ -1281,7 +1281,7 @@ if (require.main === module) {
         .command('restore-treasury-cap <symbol>')
         .description(`Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mint/burn permission back to ITS.`)
         .action((symbol, options) => {
-            mainProcessor(restoreTreasuryCap, options, symbol, processCommand);
+            return mainProcessor(restoreTreasuryCap, options, symbol, processCommand);
         });
 
     const checkVersionControlProgram = new Command()
@@ -1289,7 +1289,7 @@ if (require.main === module) {
         .command('check-version-control <version>')
         .description('Check if version control works on a certain version.')
         .action((version, options) => {
-            mainProcessor(checkVersionControl, options, version, processCommand);
+            return mainProcessor(checkVersionControl, options, version, processCommand);
         });
 
     const interchainTransferProgram = new Command()
@@ -1298,7 +1298,7 @@ if (require.main === module) {
         .description('Send interchain transfer from sui to a chain where token is linked')
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((tokenId, destinationChain, destinationAddress, amount, options) => {
-            mainProcessor(interchainTransfer, options, [tokenId, destinationChain, destinationAddress, amount], processCommand);
+            return mainProcessor(interchainTransfer, options, [tokenId, destinationChain, destinationAddress, amount], processCommand);
         });
 
     const listTrustedChainsProgram = new Command()
@@ -1306,7 +1306,7 @@ if (require.main === module) {
         .command('list-trusted-chains')
         .description('List the trusted chains configured in InterchainTokenService')
         .action((options) => {
-            mainProcessor(listTrustedChains, options, null, processCommand);
+            return mainProcessor(listTrustedChains, options, null, processCommand);
         });
 
     program.addCommand(addTrustedChainsProgram);
@@ -1330,7 +1330,7 @@ if (require.main === module) {
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true, customRpc: true });
-    program.parse();
+    program.parseAsync().then(() => process.exit(0));
 }
 
 module.exports = { addTrustedChains, removeTrustedChains, setFlowLimits };

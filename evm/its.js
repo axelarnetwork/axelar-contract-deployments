@@ -932,7 +932,7 @@ if (require.main === module) {
         .command('contract-id')
         .description('Get contract ID')
         .action((options, cmd) => {
-            main(cmd.name(), [], options);
+            return main(cmd.name(), [], options);
         });
 
     program
@@ -940,7 +940,7 @@ if (require.main === module) {
         .description('Get token manager address')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
-            main(cmd.name(), [tokenId], options);
+            return main(cmd.name(), [tokenId], options);
         });
 
     program
@@ -948,7 +948,7 @@ if (require.main === module) {
         .description('Get interchain token address')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
-            main(cmd.name(), [tokenId], options);
+            return main(cmd.name(), [tokenId], options);
         });
 
     program
@@ -956,14 +956,14 @@ if (require.main === module) {
         .description('Get interchain token ID')
         .argument('<sender>', 'Sender address')
         .action((sender, options, cmd) => {
-            main(cmd.name(), [sender], options);
+            return main(cmd.name(), [sender], options);
         });
 
     program
         .command('token-manager-implementation')
         .description('Get token manager implementation address')
         .action((options, cmd) => {
-            main(cmd.name(), [], options);
+            return main(cmd.name(), [], options);
         });
 
     program
@@ -971,7 +971,7 @@ if (require.main === module) {
         .description('Get flow limit for token')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
-            main(cmd.name(), [tokenId], options);
+            return main(cmd.name(), [tokenId], options);
         });
 
     program
@@ -979,7 +979,7 @@ if (require.main === module) {
         .description('Get flow out amount for token')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
-            main(cmd.name(), [tokenId], options);
+            return main(cmd.name(), [tokenId], options);
         });
 
     program
@@ -987,7 +987,7 @@ if (require.main === module) {
         .description('Get flow in amount for token')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
-            main(cmd.name(), [tokenId], options);
+            return main(cmd.name(), [tokenId], options);
         });
 
     program
@@ -997,7 +997,7 @@ if (require.main === module) {
         .argument('<source-address>', 'Source address')
         .argument('<payload>', 'Payload')
         .action((sourceChain, sourceAddress, payload, options, cmd) => {
-            main(cmd.name(), [sourceChain, sourceAddress, payload], options);
+            return main(cmd.name(), [sourceChain, sourceAddress, payload], options);
         });
 
     program
@@ -1008,7 +1008,7 @@ if (require.main === module) {
         .argument('<source-address>', 'Source address')
         .argument('<payload>', 'Payload')
         .action((commandID, sourceChain, sourceAddress, payload, options, cmd) => {
-            main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
+            return main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
         });
 
     program
@@ -1022,7 +1022,7 @@ if (require.main === module) {
         .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((options, cmd) => {
-            main(cmd.name(), [], options);
+            return main(cmd.name(), [], options);
         });
 
     program
@@ -1031,7 +1031,7 @@ if (require.main === module) {
         .argument('<token-address>', 'Token address')
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((tokenAddress, options, cmd) => {
-            main(cmd.name(), [tokenAddress], options);
+            return main(cmd.name(), [tokenAddress], options);
         });
 
     program
@@ -1040,7 +1040,7 @@ if (require.main === module) {
         .argument('<token-id>', 'Token ID')
         .argument('<flow-limit>', 'Flow limit')
         .action((tokenId, flowLimit, options, cmd) => {
-            main(cmd.name(), [tokenId, flowLimit], options);
+            return main(cmd.name(), [tokenId, flowLimit], options);
         });
 
     program
@@ -1048,7 +1048,7 @@ if (require.main === module) {
         .description('Freeze transfers for ITS tokens on the current chain (i.e. set flow limit to 1)')
         .argument('<token-ids...>', 'Token IDs')
         .action((tokenIds, options, cmd) => {
-            main(cmd.name(), [tokenIds], options);
+            return main(cmd.name(), [tokenIds], options);
         });
 
     program
@@ -1056,7 +1056,7 @@ if (require.main === module) {
         .description('Unfreeze transfers for ITS tokens on the current chain (i.e. set flow limit to 0)')
         .argument('<token-ids...>', 'Token IDs')
         .action((tokenIds, options, cmd) => {
-            main(cmd.name(), [tokenIds], options);
+            return main(cmd.name(), [tokenIds], options);
         });
 
     program
@@ -1064,7 +1064,7 @@ if (require.main === module) {
         .description('Check if address is InterchainTokenService operator')
         .argument('<address>', 'Address to check')
         .action((address, options, cmd) => {
-            main(cmd.name(), [address], options);
+            return main(cmd.name(), [address], options);
         });
 
     program
@@ -1072,7 +1072,7 @@ if (require.main === module) {
         .description('Transfer InterchainTokenService operatorship')
         .argument('<new-operator>', 'New operator address')
         .action((newOperator, options, cmd) => {
-            main(cmd.name(), [newOperator], options);
+            return main(cmd.name(), [newOperator], options);
         });
 
     program
@@ -1080,7 +1080,7 @@ if (require.main === module) {
         .description('Is trusted chain')
         .argument('<its-chain>', 'ITS chain')
         .action((itsChain, options, cmd) => {
-            main(cmd.name(), [itsChain], options);
+            return main(cmd.name(), [itsChain], options);
         });
 
     const setTrustedChainsCommand = program
@@ -1088,7 +1088,7 @@ if (require.main === module) {
         .description('Set trusted chains')
         .argument('<chains...>', 'Chains to trust')
         .action((chains, options, cmd) => {
-            main(cmd.name(), chains, options);
+            return main(cmd.name(), chains, options);
         });
     addGovernanceOptions(setTrustedChainsCommand);
 
@@ -1097,7 +1097,7 @@ if (require.main === module) {
         .description('Remove trusted chains')
         .argument('<chains...>', 'Chains to not trust')
         .action((chains, options, cmd) => {
-            main(cmd.name(), chains, options);
+            return main(cmd.name(), chains, options);
         });
     addGovernanceOptions(removeTrustedChainsCommand);
 
@@ -1106,7 +1106,7 @@ if (require.main === module) {
         .description('Set pause status')
         .argument(new Argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false']))
         .action((pauseStatus, options, cmd) => {
-            main(cmd.name(), [pauseStatus], options);
+            return main(cmd.name(), [pauseStatus], options);
         });
     addGovernanceOptions(setPauseStatusCommand);
 
@@ -1118,14 +1118,14 @@ if (require.main === module) {
         .argument('<source-address>', 'Source address')
         .argument('<payload>', 'Payload')
         .action((commandID, sourceChain, sourceAddress, payload, options, cmd) => {
-            main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
+            return main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
         });
 
     program
         .command('checks')
         .description('Perform contract checks')
         .action((options, cmd) => {
-            main(cmd.name(), [], options);
+            return main(cmd.name(), [], options);
         });
 
     const migrateInterchainTokenCommand = program
@@ -1133,7 +1133,7 @@ if (require.main === module) {
         .description('Migrate interchain token')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
-            main(cmd.name(), [tokenId], options);
+            return main(cmd.name(), [tokenId], options);
         });
     addGovernanceOptions(migrateInterchainTokenCommand);
 
@@ -1144,7 +1144,7 @@ if (require.main === module) {
         .argument('<to>', 'Recipient address')
         .argument('<amount>', 'Amount to mint')
         .action((tokenId, to, amount, options, cmd) => {
-            main(cmd.name(), [tokenId, to, amount], options);
+            return main(cmd.name(), [tokenId, to, amount], options);
         });
 
     program
@@ -1154,7 +1154,7 @@ if (require.main === module) {
         .argument('<spender>', 'Spender address')
         .argument('<amount>', 'Amount to approve (in wei)')
         .action((tokenId, spender, amount, options, cmd) => {
-            main(cmd.name(), [tokenId, spender, amount], options);
+            return main(cmd.name(), [tokenId, spender, amount], options);
         });
 
     program
@@ -1163,7 +1163,7 @@ if (require.main === module) {
         .argument('<token-address>', 'Token address')
         .argument('<minter>', 'Minter address')
         .action((tokenAddress, minter, options, cmd) => {
-            main(cmd.name(), [tokenAddress, minter], options);
+            return main(cmd.name(), [tokenAddress, minter], options);
         });
 
     program
@@ -1177,12 +1177,12 @@ if (require.main === module) {
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
-            main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
+            return main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
 
-    program.parse();
+    program.parseAsync().then(() => process.exit(0));
 }
 
 module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, processCommand };
