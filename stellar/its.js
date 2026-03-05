@@ -2,7 +2,6 @@
 
 const { Contract, nativeToScVal, Operation, Address, authorizeInvocation, rpc, xdr } = require('@stellar/stellar-sdk');
 const { Command, Option, Argument } = require('commander');
-const Sentry = require('@sentry/node');
 const {
     saveConfig,
     loadConfig,
@@ -685,8 +684,13 @@ if (require.main === module) {
         .then(() => process.exit(0))
         .catch(async (err) => {
             console.error(err);
-            Sentry.captureException(err);
-            await Sentry.close(2000);
+
+            try {
+                const Sentry = require('@sentry/node');
+                Sentry.captureException(err);
+                await Sentry.close(2000);
+            } catch (_) {}
+
             process.exit(1);
         });
 }

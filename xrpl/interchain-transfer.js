@@ -1,5 +1,4 @@
 const { Command, Option } = require('commander');
-const Sentry = require('@sentry/node');
 const { mainProcessor, hex, parseTokenAmount } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
@@ -42,8 +41,13 @@ if (require.main === module) {
         .then(() => process.exit(0))
         .catch(async (err) => {
             console.error(err);
-            Sentry.captureException(err);
-            await Sentry.close(2000);
+
+            try {
+                const Sentry = require('@sentry/node');
+                Sentry.captureException(err);
+                await Sentry.close(2000);
+            } catch (_) {}
+
             process.exit(1);
         });
 }
