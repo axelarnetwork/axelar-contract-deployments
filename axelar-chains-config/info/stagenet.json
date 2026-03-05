@@ -2649,7 +2649,8 @@
           "address": "itsm3zZhp2oGgEfq7XBu9ojRCYZJnhzecbAEPCrvx2B",
           "configAccount": "BUhMWrB72CHg3gizWgPFxCjj6cnm1MRT2Jc9jYH8AQTS",
           "operator": "gopuMNntD2aFtuVnwskU7jYpmdBdLXJMBpZWZjYE1sj",
-          "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK"
+          "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
+          "version": "0.1.11"
         }
       }
     }
