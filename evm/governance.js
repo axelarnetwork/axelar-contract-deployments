@@ -437,13 +437,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Proposal submission cancelled.');
             }
 
-            const tx = await governance.execute(
-                commandId,
-                isConsensusChain(chain) ? 'Axelarnet' : 'axelar',
-                GOVERNANCE_MODULE_ADDRESS,
-                gmpPayload,
-                gasOptions,
-            );
+            const tx = await governance.execute(commandId, 'axelar', GOVERNANCE_MODULE_ADDRESS, gmpPayload, gasOptions);
 
             await handleTransactionWithEvent(
                 tx,
@@ -489,13 +483,7 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Proposal submission cancelled.');
             }
 
-            const tx = await governance.execute(
-                commandId,
-                isConsensusChain(chain) ? 'Axelarnet' : 'axelar',
-                GOVERNANCE_MODULE_ADDRESS,
-                gmpPayload,
-                gasOptions,
-            );
+            const tx = await governance.execute(commandId, 'axelar', GOVERNANCE_MODULE_ADDRESS, gmpPayload, gasOptions);
 
             await handleTransactionWithEvent(
                 tx,
