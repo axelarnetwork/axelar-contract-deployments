@@ -7,7 +7,6 @@ const { Keypair, Horizon } = require('@stellar/stellar-sdk');
 const { SuiClient } = require('@mysten/sui/client');
 const { decodeSuiPrivateKey } = require('@mysten/sui/cryptography');
 const { Secp256k1Keypair } = require('@mysten/sui/keypairs/secp256k1');
-const Sentry = require('@sentry/node');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -112,7 +111,6 @@ async function checkEvmBalances(privateKey, chains, config) {
             console.log(`  ${chainName} (${chain.tokenSymbol}): ${balance}`);
             results.push({ chain: chainName, symbol: chain.tokenSymbol, address, balance, threshold });
         } catch (err) {
-            Sentry.captureException(err);
             console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
             results.push({
                 chain: chainName,
@@ -167,7 +165,6 @@ async function checkXrplBalance(privateKey, config) {
             return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance: 0, threshold: THRESHOLDS.xrpl }];
         }
 
-        Sentry.captureException(err);
         console.error(`  ${XRPL_CHAIN}: failed to fetch balance - ${err.message}`);
         return [{ chain: XRPL_CHAIN, symbol: 'XRP', address, balance: 0, threshold: THRESHOLDS.xrpl, error: err.message }];
     }
@@ -201,7 +198,6 @@ async function checkStellarBalance(privateKey, config, env) {
             return [{ chain: chainName, symbol: 'XLM', address, balance: 0, threshold: THRESHOLDS.stellar }];
         }
 
-        Sentry.captureException(err);
         console.error(`  ${chainName}: failed to fetch balance - ${err.message}`);
         return [{ chain: chainName, symbol: 'XLM', address, balance: 0, threshold: THRESHOLDS.stellar, error: err.message }];
     }
@@ -230,13 +226,13 @@ async function checkSuiBalance(privateKey, config) {
         console.log(`  ${SUI_CHAIN} (SUI): ${balance}`);
         return [{ chain: SUI_CHAIN, symbol: 'SUI', address, balance, threshold: THRESHOLDS.sui }];
     } catch (err) {
-        Sentry.captureException(err);
         console.error(`  ${SUI_CHAIN}: failed to fetch balance - ${err.message}`);
         return [{ chain: SUI_CHAIN, symbol: 'SUI', address, balance: 0, threshold: THRESHOLDS.sui, error: err.message }];
     }
 }
 
 async function main() {
+    throw new Error('Test error for Sentry integration');
     const env = parseArgs();
     const config = loadConfig(env);
 
@@ -269,11 +265,4 @@ async function main() {
     console.log('\nAll wallet balances are above minimum thresholds.');
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch(async (err) => {
-        console.error(err);
-        Sentry.captureException(err);
-        await Sentry.close(2000);
-        process.exit(1);
-    });
+main().then(() => process.exit(0));
