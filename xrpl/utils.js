@@ -116,6 +116,26 @@ async function printWalletInfo(client, wallet, chain) {
     printInfo('Wallet IOU balances', lines.map((line) => `${line.balance} ${line.currency}.${line.account}`).join('  '));
 }
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 3000;
+
+async function withRetry(fn, label) {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            const isTimeout = err.name === 'TimeoutError' || /timeout/i.test(err.message);
+
+            if (isTimeout && attempt < MAX_RETRIES) {
+                printWarn(`${label}: attempt ${attempt + 1} failed (${err.message}), retrying in ${RETRY_DELAY_MS / 1000}s...`);
+                await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+            } else {
+                throw err;
+            }
+        }
+    }
+}
+
 async function mainProcessor(processor, options, args, save = true, catchErr = false) {
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -146,19 +166,23 @@ async function mainProcessor(processor, options, args, save = true, catchErr = f
 
     const wallet = getWallet(options);
 
-    const client = new XRPLClient(chain.wssRpc);
-    await client.connect();
-
     try {
-        await processor(config, wallet, client, chain, options, args);
+        await withRetry(async () => {
+            const client = new XRPLClient(chain.wssRpc);
+            await client.connect();
+
+            try {
+                await processor(config, wallet, client, chain, options, args);
+            } finally {
+                await client.disconnect();
+            }
+        }, chainName);
     } catch (error) {
         printError(`Failed with error on ${chainName}`, error.message);
 
         if (!catchErr && !options.ignoreError) {
             throw error;
         }
-    } finally {
-        await client.disconnect();
     }
 
     if (save) {
