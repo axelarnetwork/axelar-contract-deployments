@@ -28,6 +28,7 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 
     ```bash
     git clone --recurse-submodules https://github.com/axelar-amplifier/axelar-amplifier.git
+    cd axelar-amplifier
     git checkout main
     ```
 

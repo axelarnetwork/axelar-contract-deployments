@@ -4,11 +4,8 @@ set -euo pipefail
 # =============================================================================
 # Solana Post-Deployment Checklist
 #
-# Runs post-deployment verification steps (memo init, test cross-chain message).
+# Runs post-deployment verification steps (test cross-chain memo message).
 # Run this AFTER deploy.sh has completed deployment and initialization.
-#
-# Reads ENV and CHAIN from solana/.env (same file used by solana/cli).
-# Fetches keypairs from 1Password on-demand and cleans them up on exit.
 #
 # Usage:
 #   ./solana/scripts/checklist.sh
@@ -60,41 +57,7 @@ fi
 # Environment-dependent configuration
 # =============================================================================
 
-get_op_vault() {
-    case "$ENV" in
-        devnet-amplifier) echo "Devnet - Axelar Externally Owned Accounts" ;;
-        stagenet)         echo "Stagenet - Axelar Externally Owned Accounts" ;;
-        testnet)          echo "Testnet - Axelar Externally Owned Accounts" ;;
-        mainnet)          log_error "1Password vault for mainnet not configured yet"; exit 1 ;;
-    esac
-}
-
-get_env_display() {
-    case "$ENV" in
-        devnet-amplifier) echo "Devnet" ;;
-        stagenet)         echo "Stagenet" ;;
-        testnet)          echo "Testnet" ;;
-        mainnet)          echo "Mainnet" ;;
-    esac
-}
-
-OP_VAULT=$(get_op_vault)
-ENV_DISPLAY=$(get_env_display)
-
-# Track temporary files for cleanup
-TEMP_KEYPAIR_FILES=()
-
-cleanup() {
-    if [[ ${#TEMP_KEYPAIR_FILES[@]} -gt 0 ]]; then
-        log_info "Cleaning up temporary keypair files..."
-        for f in "${TEMP_KEYPAIR_FILES[@]}"; do
-            if [[ -f "$f" ]]; then
-                rm -f "$f"
-            fi
-        done
-    fi
-}
-trap cleanup EXIT
+CHAINS_INFO_FILE="${DEPLOYMENTS_DIR}/axelar-chains-config/info/${ENV}.json"
 
 # =============================================================================
 # Utility functions
@@ -104,26 +67,6 @@ run_solana_cli() {
     "${SOLANA_DIR}/cli" "$@"
 }
 
-fetch_keypair_from_op() {
-    local title="$1"
-    mkdir -p "${SOLANA_DIR}/deployments"
-    # [Stagenet] Gas Service: Solana → stagenet-gas-service-solana.json
-    local sanitized
-    sanitized=$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed 's/[][]//g; s/://g; s/  */-/g; s/^-//; s/-$//')
-    local output_path="${SOLANA_DIR}/deployments/${sanitized}.json"
-
-    log_info "Fetching '${title}' from 1Password..." >&2
-    op document get "$title" --vault "$OP_VAULT" --out-file "$output_path" --force >/dev/null 2>&1 || {
-        log_error "Failed to fetch '${title}' from 1Password vault '${OP_VAULT}'"
-        log_info "Ensure the document exists and you are authenticated (op signin)."
-        log_info "The item must be a Document type, not a Secure Note."
-        exit 1
-    }
-
-    TEMP_KEYPAIR_FILES+=("$output_path")
-    echo "$output_path"
-}
-
 # =============================================================================
 # Checklist steps
 # =============================================================================
@@ -131,14 +74,13 @@ fetch_keypair_from_op() {
 run_memo_checklist() {
     log_step "Memo Program Checklist"
 
-    # Initialize Memo
-    log_step "Initializing Memo program"
-    run_solana_cli send memo init
-
-    local memo_keypair_path
-    memo_keypair_path=$(fetch_keypair_from_op "[${ENV_DISPLAY}] Memo: Solana")
     local memo_pda
-    memo_pda=$(solana-keygen pubkey "$memo_keypair_path")
+    memo_pda=$(jq -r ".chains[\"${CHAIN}\"].contracts.AxelarMemo.address // empty" "$CHAINS_INFO_FILE")
+    if [[ -z "$memo_pda" ]]; then
+        log_error "AxelarMemo address not found for '${CHAIN}' in config."
+        log_info "Run deploy.sh first to deploy the Memo program."
+        return
+    fi
 
     # Send test memo
     log_step "Sending test memo cross-chain"
@@ -146,12 +88,67 @@ run_memo_checklist() {
     log_info "destination-address: ${memo_pda}"
     log_info "memo:                Hello"
 
-    run_solana_cli send memo send-memo \
+    local memo_output
+    memo_output=$(run_solana_cli send memo send-memo \
         --destination-chain "$CHAIN" \
         --destination-address "$memo_pda" \
-        --memo "Hello"
+        --memo "Hello" 2>&1) || true
+    echo "$memo_output"
 
-    log_info "Test memo sent. Please verify on Axelarscan."
+    local tx_sig
+    tx_sig=$(echo "$memo_output" | sed -n 's/.*Transaction Signature (ID): \([^ ]*\).*/\1/p' | head -1)
+
+    if [[ -z "$tx_sig" ]]; then
+        log_warn "Could not parse transaction signature from output."
+        read -r -p "    Enter the transaction signature manually: " tx_sig
+        if [[ -z "$tx_sig" ]]; then
+            log_error "Transaction signature is required to pay gas."
+            return
+        fi
+    fi
+
+    log_info "Test memo sent. TX: ${tx_sig}"
+
+    # Pay gas for the memo message
+    log_step "Paying gas for memo message"
+
+    local message_id="${tx_sig}-1.2"
+    log_info "message-id:     ${message_id}"
+
+    local gas_amount
+    read -r -p "    Gas amount in lamports [500000]: " gas_amount
+    gas_amount="${gas_amount:-500000}"
+
+    local refund_address
+    refund_address=$(solana address 2>/dev/null || echo "")
+    read -r -p "    Refund address [${refund_address}]: " input_refund
+    refund_address="${input_refund:-$refund_address}"
+
+    log_info "amount:          ${gas_amount}"
+    log_info "refund-address:  ${refund_address}"
+
+    run_solana_cli send gas-service add-gas \
+        --message-id "$message_id" \
+        --amount "$gas_amount" \
+        --refund-address "$refund_address"
+
+    local axelarscan_subdomain
+    case "$ENV" in
+        devnet-amplifier) axelarscan_subdomain="devnet-amplifier" ;;
+        stagenet)         axelarscan_subdomain="stagenet" ;;
+        testnet)          axelarscan_subdomain="testnet" ;;
+        mainnet)          axelarscan_subdomain="" ;;
+    esac
+
+    local axelarscan_url
+    if [[ -n "$axelarscan_subdomain" ]]; then
+        axelarscan_url="https://${axelarscan_subdomain}.axelarscan.io/gmp/${message_id}"
+    else
+        axelarscan_url="https://axelarscan.io/gmp/${message_id}"
+    fi
+
+    log_info "Gas added. Verify on Axelarscan:"
+    log_info "$axelarscan_url"
 }
 
 # =============================================================================
@@ -164,13 +161,8 @@ main() {
     log_info "Chain:       ${CHAIN}"
     echo ""
 
-    local missing=()
-    command -v solana-keygen >/dev/null 2>&1 || missing+=("solana-keygen")
-    command -v cargo >/dev/null 2>&1 || missing+=("cargo")
-    command -v op >/dev/null 2>&1 || missing+=("op (1Password CLI)")
-
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        log_error "Missing required tools: ${missing[*]}"
+    if [[ ! -f "$CHAINS_INFO_FILE" ]]; then
+        log_error "Chains info file not found: $CHAINS_INFO_FILE"
         exit 1
     fi
 

@@ -510,7 +510,18 @@ initialize_programs() {
         log_info "Skipping Gas Service"
     fi
 
-    # 5. Initialize ITS
+    # 5. Initialize Memo
+    log_step "Initializing Memo"
+
+    if confirm "Initialize Memo?"; then
+        run_solana_cli send memo init
+
+        log_info "Memo initialized"
+    else
+        log_info "Skipping Memo"
+    fi
+
+    # 6. Initialize ITS
     log_step "Initializing ITS"
     local its_hub_address
     its_hub_address=$(jq -r '.axelar.contracts.InterchainTokenService.address // empty' "$CHAINS_INFO_FILE")
