@@ -232,7 +232,6 @@ async function checkSuiBalance(privateKey, config) {
 }
 
 async function main() {
-    throw new Error('Test error for Sentry integration');
     const env = parseArgs();
     const config = loadConfig(env);
 
