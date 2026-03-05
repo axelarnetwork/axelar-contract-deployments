@@ -264,8 +264,18 @@ resolve_mnemonic() {
         log_warn "Could not fetch mnemonic from 1Password, falling back to \$MNEMONIC"
     fi
 
+    # Try root .env file
+    if [[ -z "${MNEMONIC:-}" ]] && [[ -f "${DEPLOYMENTS_DIR}/.env" ]]; then
+        # shellcheck source=/dev/null
+        source "${DEPLOYMENTS_DIR}/.env"
+        if [[ -n "${MNEMONIC:-}" ]]; then
+            log_info "Mnemonic loaded from root .env"
+            return
+        fi
+    fi
+
     if [[ -z "${MNEMONIC:-}" ]]; then
-        log_error "MNEMONIC not set. Set it via environment or configure 1Password."
+        log_error "MNEMONIC not set. Set it via environment, root .env, or configure 1Password."
         log_info "1Password item: [${ENV_DISPLAY}] Deployer EOA: Axelar (field: Mnemonic)"
         exit 1
     fi
