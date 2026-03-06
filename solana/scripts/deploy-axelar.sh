@@ -1053,6 +1053,7 @@ step_create_reward_pools() {
 
     # shellcheck disable=SC2086
     run_ts_node cosmwasm/contract.ts create-reward-pools "$CHAIN" \
+        -m "$MNEMONIC" \
         --epochDuration "$epoch_duration" \
         --participationThreshold "$participation_threshold" \
         --rewardsPerEpoch "$rewards_per_epoch" \
