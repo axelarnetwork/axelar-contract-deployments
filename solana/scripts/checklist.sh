@@ -112,7 +112,7 @@ run_memo_checklist() {
     # Pay gas for the memo message
     log_step "Paying gas for memo message"
 
-    local message_id="${tx_sig}-1.2"
+    local message_id="${tx_sig}-1"
     log_info "message-id:     ${message_id}"
 
     local gas_amount
