@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
     Contract,
 } = ethers;
 const { Command, Option, Argument } = require('commander');
@@ -93,6 +93,17 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     if (!eventEmitted) {
         printWarn('Event not emitted in receipt.');
     }
+}
+
+async function tokenManagerAndMetadata(interchainTokenService, tokenId, wallet) {
+    const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+    const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+    const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+    const token = new Contract(tokenAddress, getContractJSON('ERC20').abi, wallet);
+    const [symbol, decimals] = await Promise.all([token.symbol(), token.decimals()]);
+
+    return { tokenManager, tokenManagerAddress, tokenAddress, symbol, decimals };
 }
 
 async function getTrustedChains(chains, interchainTokenService, version) {
@@ -260,37 +271,36 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
-            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
-
+            const { tokenManager, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
             const flowLimit = await tokenManager.flowLimit();
-            printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
+
+            printInfo(`Flow limit for tokenId ${tokenId}`, `${formatUnits(flowLimit, decimals)} ${symbol}`);
 
             break;
         }
 
         case 'flow-out-amount': {
             const [tokenId] = args;
+
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
-            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
-
+            const { tokenManager, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
             const flowOutAmount = await tokenManager.flowOutAmount();
-            printInfo(`Flow out amount for tokenId ${tokenId}`, flowOutAmount);
+
+            printInfo(`Flow out amount for tokenId ${tokenId}`, `${formatUnits(flowOutAmount, decimals)} ${symbol}`);
 
             break;
         }
 
         case 'flow-in-amount': {
             const [tokenId] = args;
+
             validateTokenIds(interchainTokenService, [tokenId]);
 
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
-            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
-
+            const { tokenManager, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
             const flowInAmount = await tokenManager.flowInAmount();
-            printInfo(`Flow in amount for tokenId ${tokenId}`, flowInAmount);
+
+            printInfo(`Flow in amount for tokenId ${tokenId}`, `${formatUnits(flowInAmount, decimals)} ${symbol}`);
 
             break;
         }
@@ -344,28 +354,21 @@ async function processCommand(_axelar, chain, chains, action, options) {
             });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            const tokenManager = new Contract(
-                await interchainTokenService.deployedTokenManager(tokenIdBytes32),
-                getContractJSON('ITokenManager').abi,
-                wallet,
-            );
-            const token = new Contract(
-                await interchainTokenService.registeredTokenAddress(tokenIdBytes32),
-                getContractJSON('InterchainToken').abi,
-                wallet,
-            );
-
-            await printTokenInfo(await interchainTokenService.registeredTokenAddress(tokenIdBytes32), provider);
+            const { tokenManager, tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenIdBytes32, wallet);
+            const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, wallet);
 
             const implementationType = (await tokenManager.implementationType()).toNumber();
-            const decimals = await token.decimals();
             const amountInUnits = parseUnits(amount, decimals);
             const balance = await token.balanceOf(wallet.address);
 
             if (balance.lt(amountInUnits)) {
-                throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
+                throw new Error(
+                    `Insufficient balance. Balance: ${formatUnits(balance, decimals)} ${symbol}, required: ${amount} ${symbol}`,
+                );
             }
+
+            printInfo(`Token address`, tokenAddress);
+            printInfo(`Transfer amount`, `${amount} ${symbol}`);
 
             if (implementationType !== tokenManagerTypes.MINT_BURN && implementationType !== tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN) {
                 printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
@@ -414,9 +417,14 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId, flowLimit] = args;
 
             validateTokenIds(interchainTokenService, [tokenId]);
-            validateParameters({ isValidNumber: { flowLimit } });
+            validateParameters({ isValidDecimal: { flowLimit } });
 
-            const tx = await interchainTokenService.setFlowLimits([tokenId], [flowLimit], gasOptions);
+            const { tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
+            await printTokenInfo(tokenAddress, provider);
+            const flowLimitInUnits = parseUnits(flowLimit, decimals);
+            printInfo(`Setting flow limit for tokenId ${tokenId}`, `${flowLimit} ${symbol}`);
+
+            const tx = await interchainTokenService.setFlowLimits([tokenId], [flowLimitInUnits], gasOptions);
             await handleTx(tx, chain, interchainTokenService, action);
             break;
         }
@@ -483,9 +491,9 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isNonEmptyString: { itsChain } });
 
             if (await isTrustedChain(itsChain, interchainTokenService, itsVersion)) {
-                printInfo(`${itsChain} is a trusted chain`);
+                printInfo(`${itsChain}`, 'Trusted');
             } else {
-                printInfo(`${itsChain} is not a trusted chain`);
+                printWarn(`${itsChain}`, 'Not trusted');
             }
 
             break;
@@ -764,20 +772,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { to }, isValidNumber: { amount } });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            // Get token manager address
-            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            const { tokenManager, tokenManagerAddress, tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenIdBytes32, wallet);
             printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
-
-            // Get token address
-            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
             printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
-
-            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const amountInUnits = ethers.BigNumber.from(amount.toString());
 
-            if (prompt(`Proceed with minting ${amount} to ${to}?`, yes)) {
+            if (prompt(`Proceed with minting ${formatUnits(amountInUnits, decimals)} ${symbol} to ${to}?`, yes)) {
                 return;
             }
 
@@ -793,22 +794,19 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { spender }, isValidNumber: { amount } });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            // Get token address
-            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+            const { tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenIdBytes32, wallet);
             printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
 
-            // Create token contract instance
             const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, wallet);
-
             const amountInUnits = ethers.BigNumber.from(amount.toString());
-            printInfo(`Approving ${spender} to spend ${amount} of token ${tokenId}`);
+            const formattedAmount = `${formatUnits(amountInUnits, decimals)} ${symbol}`;
 
-            if (prompt(`Proceed with approving ${spender} to spend ${amount}?`, yes)) {
+            printInfo(`Approving ${spender} to spend`, formattedAmount);
+
+            if (prompt(`Proceed with approving ${spender} to spend ${formattedAmount}?`, yes)) {
                 return;
             }
 
-            // Execute approval
             const tx = await token.approve(spender, amountInUnits, gasOptions);
             await handleTx(tx, chain, token, action, 'Approval');
 
@@ -1038,7 +1036,7 @@ if (require.main === module) {
         .command('set-flow-limit')
         .description('Set flow limit for a token')
         .argument('<token-id>', 'Token ID')
-        .argument('<flow-limit>', 'Flow limit')
+        .argument('<flow-limit>', 'Flow limit in token units (e.g. 100.5)')
         .action((tokenId, flowLimit, options, cmd) => {
             return main(cmd.name(), [tokenId, flowLimit], options);
         });
@@ -1083,32 +1081,29 @@ if (require.main === module) {
             return main(cmd.name(), [itsChain], options);
         });
 
-    const setTrustedChainsCommand = program
+    program
         .command('set-trusted-chains')
         .description('Set trusted chains')
         .argument('<chains...>', 'Chains to trust')
         .action((chains, options, cmd) => {
             return main(cmd.name(), chains, options);
         });
-    addGovernanceOptions(setTrustedChainsCommand);
 
-    const removeTrustedChainsCommand = program
+    program
         .command('remove-trusted-chains')
         .description('Remove trusted chains')
         .argument('<chains...>', 'Chains to not trust')
         .action((chains, options, cmd) => {
             return main(cmd.name(), chains, options);
         });
-    addGovernanceOptions(removeTrustedChainsCommand);
 
-    const setPauseStatusCommand = program
+    program
         .command('set-pause-status')
         .description('Set pause status')
         .argument(new Argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false']))
         .action((pauseStatus, options, cmd) => {
             return main(cmd.name(), [pauseStatus], options);
         });
-    addGovernanceOptions(setPauseStatusCommand);
 
     program
         .command('execute')
@@ -1128,14 +1123,13 @@ if (require.main === module) {
             return main(cmd.name(), [], options);
         });
 
-    const migrateInterchainTokenCommand = program
+    program
         .command('migrate-interchain-token')
         .description('Migrate interchain token')
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
             return main(cmd.name(), [tokenId], options);
         });
-    addGovernanceOptions(migrateInterchainTokenCommand);
 
     program
         .command('mint-token')
@@ -1181,6 +1175,7 @@ if (require.main === module) {
         });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
+    addOptionsToCommands(program, addGovernanceOptions);
 
     program.parseAsync().then(() => process.exit(0));
 }
