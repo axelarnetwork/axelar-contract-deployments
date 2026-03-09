@@ -1089,7 +1089,7 @@ if (require.main === module) {
             return main(cmd.name(), [itsChain], options);
         });
 
-    program
+    const setTrustedChainsCmd = program
         .command('set-trusted-chains')
         .description('Set trusted chains')
         .argument('<chains...>', 'Chains to trust')
@@ -1097,7 +1097,7 @@ if (require.main === module) {
             return main(cmd.name(), chains, options);
         });
 
-    program
+    const removeTrustedChainsCmd = program
         .command('remove-trusted-chains')
         .description('Remove trusted chains')
         .argument('<chains...>', 'Chains to not trust')
@@ -1105,7 +1105,7 @@ if (require.main === module) {
             return main(cmd.name(), chains, options);
         });
 
-    program
+    const setPauseStatusCmd = program
         .command('set-pause-status')
         .description('Set pause status')
         .argument(new Argument('<pause-status>', 'Pause status (true/false)').choices(['true', 'false']))
@@ -1131,7 +1131,7 @@ if (require.main === module) {
             return main(cmd.name(), [], options);
         });
 
-    program
+    const migrateInterchainTokenCmd = program
         .command('migrate-interchain-token')
         .description('Migrate interchain token')
         .argument('<token-id>', 'Token ID')
@@ -1183,7 +1183,12 @@ if (require.main === module) {
         });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
-    addOptionsToCommands(program, addGovernanceOptions);
+
+    // Add governance options only to commands that handle them
+    addGovernanceOptions(setTrustedChainsCmd);
+    addGovernanceOptions(removeTrustedChainsCmd);
+    addGovernanceOptions(setPauseStatusCmd);
+    addGovernanceOptions(migrateInterchainTokenCmd);
 
     program.parseAsync().then(() => process.exit(0));
 }
