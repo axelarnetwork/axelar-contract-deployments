@@ -354,7 +354,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-            const { tokenManager, tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenIdBytes32, wallet);
+            const { tokenManager, tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(
+                interchainTokenService,
+                tokenIdBytes32,
+                wallet,
+            );
             const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, wallet);
 
             const implementationType = (await tokenManager.implementationType()).toNumber();
@@ -772,7 +776,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { to }, isValidNumber: { amount } });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-            const { tokenManager, tokenManagerAddress, tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenIdBytes32, wallet);
+            const { tokenManager, tokenManagerAddress, tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(
+                interchainTokenService,
+                tokenIdBytes32,
+                wallet,
+            );
             printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
             printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
 
