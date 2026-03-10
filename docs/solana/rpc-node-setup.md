@@ -163,7 +163,6 @@ echo '    --enable-rpc-transaction-history \'
 echo '    --full-rpc-api \'
 echo '    --no-os-network-limits-test \'
 echo '    --no-snapshot-fetch \'
-echo '    --account-index program-id \'
 echo '    --maximum-full-snapshots-to-retain 2 \'
 echo '    --maximum-incremental-snapshots-to-retain 4'
 } > $SOLANA_DIR/validator.sh
