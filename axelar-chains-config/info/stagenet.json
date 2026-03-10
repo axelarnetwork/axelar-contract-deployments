@@ -3114,7 +3114,6 @@
           "blockExpiry": 10,
           "confirmationHeight": 1000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-          "addressFormat": "solana",
           "contractAdmin": "axelar12qndugv2dnu2pklygpwjx9vza0u4t86r3y9qym",
           "address": "axelar10hnv3yfzn5fxrefqa0rmw6n37n3vpgfceh0z24y2yzdqumvrch6qhvwfyq",
           "version": "2.0.1"

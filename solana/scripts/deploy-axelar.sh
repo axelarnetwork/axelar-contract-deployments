@@ -817,8 +817,7 @@ step_add_voting_verifier_config() {
         "votingThreshold": $thresh,
         "blockExpiry": 10,
         "confirmationHeight": 1000000,
-        "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-        "addressFormat": "solana"
+        "msgIdFormat": "base58_solana_tx_signature_and_event_index"
     }' "$CHAINS_INFO_FILE" > "$tmp_file" && mv "$tmp_file" "$CHAINS_INFO_FILE"
 
     log_info "VotingVerifier[$CHAIN] config added to ${ENV}.json"
