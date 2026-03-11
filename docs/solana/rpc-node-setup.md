@@ -71,6 +71,7 @@ solana-keygen new --outfile /home/makis/solana/keys/validator-keypair.json --no-
 ```
 
 ## Run RPC node
+
 ```bash
 agave-validator \
   --identity /home/makis/solana/keys/validator-keypair.json \
@@ -89,24 +90,93 @@ agave-validator \
   --known-validator GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ \
   --known-validator DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ \
   --known-validator CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S \
-  --only-known-rpc \
   --rpc-port 8899 \
   --rpc-bind-address 0.0.0.0 \
   --private-rpc \
   --dynamic-port-range 8000-8025 \
   --wal-recovery-mode skip_any_corrupted_record \
   --limit-ledger-size \
-  --enable-rpc-transaction-history \
   --full-rpc-api \
   --no-os-network-limits-test \
   --maximum-full-snapshots-to-retain 2 \
-  --maximum-incremental-snapshots-to-retain 4
+  --maximum-incremental-snapshots-to-retain 4 \
+  --minimal-snapshot-download-speed 100000000
 ```
 
 **Optional**
-Set `--minimal-snapshot-download-speed 50000000` to pick a faster peer for downloading snapshots.
+Set `--minimal-snapshot-download-speed 100000000` to pick a faster peer for downloading snapshots.
+
+## Setup systemd service
+
+Paste the following in `/etc/systemd/system/agave-validator.service`
+
+```
+[Unit]
+Description=Agave Validator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sol
+Group=sol
+LimitNOFILE=2000000
+LimitNPROC=2000000
+LimitMEMLOCK=infinity
+Restart=always
+RestartSec=5
+Environment=RUST_BACKTRACE=1
+ExecStart=/usr/local/bin/agave-validator \
+  --identity /home/makis/solana/keys/validator-keypair.json \
+  --no-voting \
+  --ledger /mnt/ledger \
+  --accounts /mnt/accounts \
+  --snapshots /mnt/snapshots \
+  --log /var/log/solana/validator.log \
+  --entrypoint entrypoint.mainnet-beta.solana.com:8001 \
+  --entrypoint entrypoint2.mainnet-beta.solana.com:8001 \
+  --entrypoint entrypoint3.mainnet-beta.solana.com:8001 \
+  --entrypoint entrypoint4.mainnet-beta.solana.com:8001 \
+  --entrypoint entrypoint5.mainnet-beta.solana.com:8001 \
+  --expected-genesis-hash 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d \
+  --known-validator 7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2 \
+  --known-validator GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ \
+  --known-validator DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ \
+  --known-validator CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S \
+  --rpc-port 8899 \
+  --rpc-bind-address 0.0.0.0 \
+  --private-rpc \
+  --dynamic-port-range 8000-8025 \
+  --wal-recovery-mode skip_any_corrupted_record \
+  --limit-ledger-size \
+  --full-rpc-api \
+  --no-os-network-limits-test \
+  --maximum-full-snapshots-to-retain 2 \
+  --maximum-incremental-snapshots-to-retain 4 \
+  --minimal-snapshot-download-speed 100000000
+ExecStop=/bin/kill -s INT $MAINPID
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Reload service
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable agave-validator
+sudo systemctl start agave-validator
+```
+
+
 
 ## Check progress
 ```bash
 solana catchup $(solana-keygen pubkey solana/keys/validator-keypair.json) --our-localhost 8899
+```
+
+## Check logs
+
+```bash
+tail -f /var/log/solana/validator.log | grep -E "Downloading|downloaded|snapshot|RPC node root slot|Loading bank|Processing ledger|caught up"
 ```
