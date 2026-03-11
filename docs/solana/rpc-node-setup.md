@@ -100,7 +100,8 @@ agave-validator \
   --no-os-network-limits-test \
   --maximum-full-snapshots-to-retain 2 \
   --maximum-incremental-snapshots-to-retain 4 \
-  --minimal-snapshot-download-speed 100000000
+  --minimal-snapshot-download-speed 100000000 \
+  --enable-rpc-transaction-history
 ```
 
 **Optional**
@@ -153,7 +154,8 @@ ExecStart=/usr/local/bin/agave-validator \
   --no-os-network-limits-test \
   --maximum-full-snapshots-to-retain 2 \
   --maximum-incremental-snapshots-to-retain 4 \
-  --minimal-snapshot-download-speed 100000000
+  --minimal-snapshot-download-speed 100000000 \
+  --enable-rpc-transaction-history
 ExecStop=/bin/kill -s INT $MAINPID
 TimeoutStopSec=300
 
