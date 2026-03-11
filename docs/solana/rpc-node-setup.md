@@ -1,6 +1,58 @@
-# Solana Mainnet RPC Node Setup
+# Solana RPC Node Setup
 
-## Assumptions
+This guide covers setting up a Solana RPC node on **devnet**, **testnet**, or **mainnet-beta**.
+
+## Cluster Reference
+
+| | Devnet | Testnet | Mainnet-Beta |
+|--------------------|--------------------------------------------|--------------------------------------------|-----------------------------------------------------|
+| **Genesis Hash** | `EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG` | `4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY` | `5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d` |
+| **Entrypoints** | `entrypoint{,2,3,4}.devnet.solana.com:8001` | `entrypoint{,2,3}.testnet.solana.com:8001` | `entrypoint{,2,3,4,5}.mainnet-beta.solana.com:8001` |
+| **CPU** | 16+ cores | 16+ cores | 32+ cores |
+| **RAM** | 64 GB+ | 64 GB+ | 128 GB+ (256 GB ideal) |
+| **Disk** | 2 TB+ NVMe | 2 TB+ NVMe | 4 TB+ NVMe |
+| **Network** | 1 Gbps | 1 Gbps | 1 Gbps min, 10 Gbps recommended |
+| **Ledger limit** | 200000000 | 200000000 | 400000000 |
+
+All clusters need Ubuntu 22.04+/Debian 12+, a dedicated NVMe (not shared with OS), and UDP ports 8000-8030 open for gossip/turbine.
+
+### Known Validators
+
+<details>
+<summary>Devnet</summary>
+
+```
+dv1ZAGvdsz5hHLwWXsVnM94hWf1pjbKVau1QVkaMJ92
+dv2eQHeP4RFrJZ6UeiZWoc3XTtmtZCUKEUFr7GMkKHb
+dv3qDFk1DTF36Z62bNvrCXe9sKATA6xvVy6A798xxAS
+dv4ACNkpYPcE3aKmYDqZm9G5EB3J4MRoeE7WNDRBVJB
+```
+</details>
+
+<details>
+<summary>Testnet</summary>
+
+```
+5D1fNXzvv5NjV1ysLjirC4WY92RNsVH18vjmcszZd8on
+dv1ZAGvdsz5hHLwWXsVnM94hWf1pjbKVau1QVkaMJ92
+dv2eQHeP4RFrJZ6UeiZWoc3XTtmtZCUKEUFr7GMkKHb
+dv4ACNkpYPcE3aKmYDqZm9G5EB3J4MRoeE7WNDRBVJB
+```
+</details>
+
+<details>
+<summary>Mainnet-Beta</summary>
+
+```
+7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2
+GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ
+DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ
+CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S
+```
+</details>
+
+## Storage Layout
+
 This setup assumes the node has dedicated storage mounted at:
 
 - `/mnt/ledger`
@@ -17,7 +69,6 @@ Notes:
 - A separate OS disk is preferred but not strictly required.
 - The OS may share the ledger disk, but performance is generally better when ledger has its own disk.
 - Accounts and ledger can share a disk, but this is not recommended due to high IOPS pressure.
-
 
 ## System Tuning
 ```bash
@@ -70,7 +121,9 @@ chmod 700 /home/sol/solana/keys
 solana-keygen new --outfile /home/sol/solana/keys/validator-keypair.json --no-bip39-passphrase
 ```
 
-## Run RPC node
+## Run RPC Node
+
+Replace the `<CLUSTER-SPECIFIC>` lines below with the entrypoints, genesis hash, and known validators for your cluster from the [Cluster Reference](#cluster-reference) table above.
 
 ```bash
 agave-validator \
@@ -80,16 +133,14 @@ agave-validator \
   --accounts /mnt/accounts \
   --snapshots /mnt/snapshots \
   --log /var/log/solana/validator.log \
-  --entrypoint entrypoint.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint2.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint3.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint4.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint5.mainnet-beta.solana.com:8001 \
-  --expected-genesis-hash 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d \
-  --known-validator 7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2 \
-  --known-validator GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ \
-  --known-validator DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ \
-  --known-validator CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S \
+  --entrypoint <ENTRYPOINT_1> \
+  --entrypoint <ENTRYPOINT_2> \
+  --entrypoint <ENTRYPOINT_3> \
+  ... \
+  --expected-genesis-hash <GENESIS_HASH> \
+  --known-validator <VALIDATOR_1> \
+  --known-validator <VALIDATOR_2> \
+  ... \
   --rpc-port 8899 \
   --rpc-bind-address 0.0.0.0 \
   --private-rpc \
@@ -104,14 +155,13 @@ agave-validator \
   --enable-rpc-transaction-history
 ```
 
-**Optional**
-Set `--minimal-snapshot-download-speed 100000000` to pick a faster peer for downloading snapshots.
+**Optional:** `--minimal-snapshot-download-speed 100000000` picks a faster peer for downloading snapshots.
 
-## Setup systemd service
+## Setup systemd Service
 
-Paste the following in `/etc/systemd/system/agave-validator.service`
+Create `/etc/systemd/system/agave-validator.service`, replacing the `<CLUSTER-SPECIFIC>` lines the same way as above:
 
-```
+```ini
 [Unit]
 Description=Agave Validator
 After=network-online.target
@@ -134,16 +184,14 @@ ExecStart=/usr/local/bin/agave-validator \
   --accounts /mnt/accounts \
   --snapshots /mnt/snapshots \
   --log /var/log/solana/validator.log \
-  --entrypoint entrypoint.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint2.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint3.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint4.mainnet-beta.solana.com:8001 \
-  --entrypoint entrypoint5.mainnet-beta.solana.com:8001 \
-  --expected-genesis-hash 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d \
-  --known-validator 7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2 \
-  --known-validator GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ \
-  --known-validator DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ \
-  --known-validator CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S \
+  --entrypoint <ENTRYPOINT_1> \
+  --entrypoint <ENTRYPOINT_2> \
+  --entrypoint <ENTRYPOINT_3> \
+  ... \
+  --expected-genesis-hash <GENESIS_HASH> \
+  --known-validator <VALIDATOR_1> \
+  --known-validator <VALIDATOR_2> \
+  ... \
   --rpc-port 8899 \
   --rpc-bind-address 0.0.0.0 \
   --private-rpc \
@@ -163,21 +211,19 @@ TimeoutStopSec=300
 WantedBy=multi-user.target
 ```
 
-Reload service
+Reload and start:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable agave-validator
 sudo systemctl start agave-validator
 ```
 
-
-
-## Check progress
+## Check Progress
 ```bash
-solana catchup $(solana-keygen pubkey solana/keys/validator-keypair.json) --our-localhost 8899
+solana catchup $(solana-keygen pubkey /home/sol/solana/keys/validator-keypair.json) --our-localhost 8899
 ```
 
-## Check logs
+## Check Logs
 
 ```bash
 tail -f /var/log/solana/validator.log | grep -E "Downloading|downloaded|snapshot|RPC node root slot|Loading bank|Processing ledger|caught up"
