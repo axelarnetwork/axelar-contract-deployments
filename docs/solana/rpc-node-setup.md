@@ -59,22 +59,22 @@ agave-validator --version
 ```
 
 ```bash
-sudo mkdir -p /home/makis/solana/keys
+sudo mkdir -p /home/sol/solana/keys
 sudo mkdir -p /var/log/solana
-sudo chown -R makis:makis /home/makis/solana
-sudo chown -R makis:makis /var/log/solana
-chmod 700 /home/makis/solana/keys
+sudo chown -R sol:sol /home/sol/solana
+sudo chown -R sol:sol /var/log/solana
+chmod 700 /home/sol/solana/keys
 ```
 
 ```bash
-solana-keygen new --outfile /home/makis/solana/keys/validator-keypair.json --no-bip39-passphrase
+solana-keygen new --outfile /home/sol/solana/keys/validator-keypair.json --no-bip39-passphrase
 ```
 
 ## Run RPC node
 
 ```bash
 agave-validator \
-  --identity /home/makis/solana/keys/validator-keypair.json \
+  --identity /home/sol/solana/keys/validator-keypair.json \
   --no-voting \
   --ledger /mnt/ledger \
   --accounts /mnt/accounts \
@@ -127,7 +127,7 @@ Restart=always
 RestartSec=5
 Environment=RUST_BACKTRACE=1
 ExecStart=/usr/local/bin/agave-validator \
-  --identity /home/makis/solana/keys/validator-keypair.json \
+  --identity /home/sol/solana/keys/validator-keypair.json \
   --no-voting \
   --ledger /mnt/ledger \
   --accounts /mnt/accounts \
