@@ -71,23 +71,42 @@ Notes:
 - Accounts and ledger can share a disk, but this is not recommended due to high IOPS pressure.
 
 ## System Tuning
+
+### File descriptor limits
 ```bash
-# Increase file descriptor limits
 sudo bash -c 'cat >> /etc/security/limits.conf <<EOF
 * soft nofile 1000000
 * hard nofile 1000000
 EOF'
+```
 
-# Kernel parameters
-sudo bash -c 'cat >> /etc/sysctl.conf <<EOF
-vm.max_map_count=1000000
-net.core.rmem_default=134217728
+### Kernel parameters
+
+Create a dedicated Solana tuning file:
+
+```bash
+sudo bash -c 'cat >/etc/sysctl.d/21-agave-validator.conf <<EOF
 net.core.rmem_max=134217728
-net.core.wmem_default=134217728
 net.core.wmem_max=134217728
+net.core.rmem_default=134217728
+net.core.wmem_default=134217728
+net.core.netdev_max_backlog=250000
+net.ipv4.udp_rmem_min=16384
+vm.max_map_count=1000000
+fs.nr_open=1000000
 EOF'
+```
 
-sudo sysctl -p
+Apply the settings:
+
+```bash
+sudo sysctl --system
+```
+
+Verify:
+
+```bash
+sysctl net.core.rmem_max net.core.wmem_max net.core.netdev_max_backlog vm.max_map_count
 ```
 
 ## Install Agave
@@ -151,7 +170,8 @@ agave-validator \
   --maximum-full-snapshots-to-retain 2 \
   --maximum-incremental-snapshots-to-retain 4 \
   --minimal-snapshot-download-speed 100000000 \
-  --enable-rpc-transaction-history
+  --enable-rpc-transaction-history \
+  --full-rpc-api
 ```
 
 **Optional:** `--minimal-snapshot-download-speed 100000000` picks a faster peer for downloading snapshots.
@@ -201,7 +221,8 @@ ExecStart=/usr/local/bin/agave-validator \
   --maximum-full-snapshots-to-retain 2 \
   --maximum-incremental-snapshots-to-retain 4 \
   --minimal-snapshot-download-speed 100000000 \
-  --enable-rpc-transaction-history
+  --enable-rpc-transaction-history \
+  --full-rpc-api
 ExecStop=/bin/kill -s INT $MAINPID
 TimeoutStopSec=300
 
