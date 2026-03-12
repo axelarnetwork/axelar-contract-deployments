@@ -147,7 +147,6 @@ agave-validator \
   --dynamic-port-range 8000-8025 \
   --wal-recovery-mode skip_any_corrupted_record \
   --limit-ledger-size \
-  --full-rpc-api \
   --no-os-network-limits-test \
   --maximum-full-snapshots-to-retain 2 \
   --maximum-incremental-snapshots-to-retain 4 \
@@ -198,7 +197,6 @@ ExecStart=/usr/local/bin/agave-validator \
   --dynamic-port-range 8000-8025 \
   --wal-recovery-mode skip_any_corrupted_record \
   --limit-ledger-size \
-  --full-rpc-api \
   --no-os-network-limits-test \
   --maximum-full-snapshots-to-retain 2 \
   --maximum-incremental-snapshots-to-retain 4 \
