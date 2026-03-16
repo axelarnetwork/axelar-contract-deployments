@@ -274,7 +274,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { tokenManager, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
             const flowLimit = await tokenManager.flowLimit();
 
-            printInfo(`Flow limit for tokenId ${tokenId}`, `${formatUnits(flowLimit, decimals)} ${symbol}`);
+            if (flowLimit.isZero()) {
+                printInfo(`Flow limit for tokenId ${tokenId}`, 'No limit set');
+            } else {
+                printInfo(`Flow limit for tokenId ${tokenId}`, `${formatUnits(flowLimit, decimals)} ${symbol}`);
+            }
 
             break;
         }
@@ -422,6 +426,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
             validateParameters({ isValidDecimal: { flowLimit } });
+
+            if (parseFloat(flowLimit) <= 0) {
+                throw new Error('Flow limit must be a positive value greater than 0');
+            }
 
             const { tokenAddress, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
             await printTokenInfo(tokenAddress, provider);
