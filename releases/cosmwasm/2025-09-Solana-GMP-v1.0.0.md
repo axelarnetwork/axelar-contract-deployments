@@ -5,16 +5,12 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-12-04 |
-| **Stagenet**         | Pending               | TBD        |
-| **Testnet**          | Pending               | TBD        |
-| **Mainnet**          | Pending               | TBD        |
-
-- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
-- Contract Checksums:
-    - SolanaMultisigProver: `9066612ae064702946322327eb6b3e7d450f45d0567ba7e35fb42ab4cded2349`
+| **Axelar Env**       | **Deployment Status** | **Date**   | **Deployed By** |
+| -------------------- | --------------------- | ---------- | --------------- |
+| **Devnet Amplifier** | Completed             | 2025-12-04 | @nbayindirli    |
+| **Stagenet**         | Completed             | 2026-02-23 | @rista404       |
+| **Testnet**          | Pending               | TBD        |                 |
+| **Mainnet**          | Pending               | TBD        |                 |
 
 ## Background
 
@@ -31,8 +27,8 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
-    cd axelar-amplifier-eiger
+    git clone --recurse-submodules https://github.com/axelar-amplifier/axelar-amplifier.git
+    cd axelar-amplifier
     git checkout main
     ```
 
@@ -57,7 +53,6 @@ Create an .env config:
 MNEMONIC=xyz
 ENV=xyz
 CHAIN=<solana-custom|solana>
-EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
 NODE=[Axelar RPC URL]
 ```
 
