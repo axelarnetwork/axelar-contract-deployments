@@ -62,7 +62,9 @@ async function tokenMetadataFromId(wallet, chain, itsContract, tokenId, options)
 function formatTokenAmount(amount, decimals) {
     const str = amount.toString();
 
-    if (decimals === 0) {return str;}
+    if (decimals === 0) {
+        return str;
+    }
 
     const padded = str.padStart(decimals + 1, '0');
     const intPart = padded.slice(0, padded.length - decimals);
