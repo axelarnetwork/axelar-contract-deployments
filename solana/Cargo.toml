@@ -45,20 +45,22 @@ solana-system-interface = { version = "~2.0.0", features = ["bincode"] }
 mpl-token-metadata = { version = "5.1.2-alpha.2" }
 
 # solana axelar dependencies
-solana-axelar-gas-service = { version = "0.1.9", features = [
+solana-axelar-gas-service = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-gateway = { version = "0.1.9", features = [
+solana-axelar-gateway = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-governance = { version = "0.1.9", features = [
+solana-axelar-governance = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-its = { version = "0.1.9", features = [
+solana-axelar-its = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-memo = { git = "https://github.com/axelarnetwork/axelar-amplifier-solana.git", branch = "main", default-features = false }
-solana-axelar-operators = { version = "0.1.9", features = [
+solana-axelar-memo = { version = "0.1.11", features = [
+    "no-entrypoint",
+], default-features = false }
+solana-axelar-operators = { version = "0.1.11", features = [
     "no-entrypoint",
 ], default-features = false }
 solana-axelar-std = { version = "0.1.6" }
