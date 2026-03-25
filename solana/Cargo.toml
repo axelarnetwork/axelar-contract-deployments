@@ -27,15 +27,15 @@ tokio = { version = "1", features = ["full"] }
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v2.0.0" }
 
 # solana dependencies
-anchor-lang = { version = "1.0.0-rc.1", features = ["event-cpi"] }
-anchor-spl = { version = "1.0.0-rc.1" }
+anchor-lang = { version = "1.0.0-rc.5", features = ["event-cpi"] }
+anchor-spl = { version = "1.0.0-rc.5" }
 borsh = { version = "1.6", features = ["derive"] }
 bincode = { version = "2.0.1", features = ["serde"] }
 solana-sdk = "~3.0.0"
 solana-clap-v3-utils= "~3.0.0"
 solana-cli-config = "~3.0.0"
 solana-client = "~3.0.0"
-solana-sdk-ids = "~3.0.0"
+solana-sdk-ids = "~3.1.0"
 solana-transaction-status = "~3.0.0"
 solana-commitment-config = "~3.0.0"
 solana-compute-budget-interface = "~3.0.0"
@@ -45,25 +45,25 @@ solana-system-interface = { version = "~2.0.0", features = ["bincode"] }
 mpl-token-metadata = { version = "5.1.2-alpha.2" }
 
 # solana axelar dependencies
-solana-axelar-gas-service = { version = "0.1.11", features = [
+solana-axelar-gas-service = { version = "1.0.0", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-gateway = { version = "0.1.11", features = [
+solana-axelar-gateway = { version = "1.0.0", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-governance = { version = "0.1.11", features = [
+solana-axelar-governance = { version = "1.0.0", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-its = { version = "0.1.11", features = [
+solana-axelar-its = { version = "1.0.0", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-memo = { version = "0.1.11", features = [
+solana-axelar-memo = { version = "1.0.0", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-operators = { version = "0.1.11", features = [
+solana-axelar-operators = { version = "1.0.0", features = [
     "no-entrypoint",
 ], default-features = false }
-solana-axelar-std = { version = "0.1.6" }
+solana-axelar-std = { version = "1.0.0" }
 
 [lints.clippy]
 cargo = { priority = -1, level = "deny" }
