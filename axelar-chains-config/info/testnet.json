@@ -3477,11 +3477,15 @@
         },
         "AxelarGasService": {
           "address": "gasq7KHHv9Rs8C82hu3dgoBD9wk5LTKpWqbdf5o5juu",
+          "operator": "gopdSWQFLKvxPz1SiP2W8CumFBtd2FF1ddDgNVkLmdG",
+          "configAccount": "FnMi7boHKiDLjubdoLtr2Nen5XBxT9HCVSabC2bQU9sf",
           "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
           "version": "1.0.0"
         },
         "AxelarOperators": {
           "address": "opriTiaaV7Ew1kma71TjKbrwQ2RWKJ3wbiWEAp3hUZc",
+          "configAccount": "CAbbFCJV9eVuF47UiuurbiJwNroSovhpTzusdmbLcxYN",
+          "owner": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
           "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
           "version": "1.0.0"
         },
@@ -3492,6 +3496,8 @@
         },
         "InterchainTokenService": {
           "address": "itsJo4kNJ3mdh3requwbtTTt7vyYTudp1pxhn2KiHMc",
+          "configAccount": "Ctehm9EVDZDYetXCxVrHgaJpLgw7gHNo184rKFpJMb7Y",
+          "operator": "gopdSWQFLKvxPz1SiP2W8CumFBtd2FF1ddDgNVkLmdG",
           "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
           "version": "1.0.0"
         }
@@ -4093,7 +4099,12 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
-        "version": "1.3.0"
+        "version": "1.3.0",
+        "solana": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6,
+          "msgTranslator": "axelar16gznt8y3rpt3vg2geng4s25c2evrd3syafsven5ha05uqm9xkyhq8a0jwy"
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
