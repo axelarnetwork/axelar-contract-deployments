@@ -4104,6 +4104,14 @@
         "instantiateProposalId": "466",
         "address": "axelar1p6meh9pxkrf3qc8uu0kllcg7wl9dfukcrjklrf4e3w4jd947agsqxjpudh",
         "version": "1.0.0"
+      },
+      "ChainCodecSolana": {
+        "storeCodeProposalId": "554",
+        "storeCodeProposalCodeHash": "3722a0c2bc0184d333524be1d79dc31f02ac2dfc6f38133f82c6c0352b7ee6dd",
+        "lastUploadedCodeId": 82,
+        "codeId": 82,
+        "instantiateProposalId": "555",
+        "address": "axelar1erapwwp6crvkq3u6780u93huwtjam80vhac9wvxw8dl0fm3zcp5szyfemq"
       }
     },
     "axelarId": "axelar",
