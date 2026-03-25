@@ -95,6 +95,9 @@ CHAINS_INFO_FILE="${DEPLOYMENTS_DIR}/axelar-chains-config/info/${ENV}.json"
 OP_VAULT=$(get_op_vault)
 ENV_DISPLAY=$(get_env_display)
 
+# Export so child processes (cli wrapper → cargo run → CLI binary) pick up CLUSTER via clap env
+export CLUSTER
+
 # Track temporary files for cleanup
 TEMP_KEYPAIR_FILES=()
 
