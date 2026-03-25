@@ -2624,33 +2624,33 @@
           "operator": "gopuMNntD2aFtuVnwskU7jYpmdBdLXJMBpZWZjYE1sj",
           "previousSignersRetention": 15,
           "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
-          "version": "0.1.11"
+          "version": "1.0.0"
         },
         "AxelarGasService": {
           "address": "gasgy6jz24wrfZL98uMy8QFUFziVPZ3bNLGXqnyTstW",
           "operator": "gopuMNntD2aFtuVnwskU7jYpmdBdLXJMBpZWZjYE1sj",
           "configAccount": "F7D4uerW7MZYu8RRSMiKfzA7oA1b2wcAyQJaStqmmda8",
           "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
-          "version": "0.1.11"
+          "version": "1.0.0"
         },
         "AxelarOperators": {
           "address": "oprNyqaxdvxs9s3Ngyi1gHqXeM2QLTv8skVPCcqmekx",
           "configAccount": "JoYjgayBfRX4aAz1gp9ULMC3tdyKBe1w6qNqXJRGivp",
           "owner": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
           "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
-          "version": "0.1.11"
+          "version": "1.0.0"
         },
         "AxelarMemo": {
           "address": "mem4E22pPgkbHAvoUYHa7HybBgUKn6jFjvj1YnPdkaq",
           "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
-          "version": "0.1.11"
+          "version": "1.0.0"
         },
         "InterchainTokenService": {
           "address": "itsm3zZhp2oGgEfq7XBu9ojRCYZJnhzecbAEPCrvx2B",
           "configAccount": "BUhMWrB72CHg3gizWgPFxCjj6cnm1MRT2Jc9jYH8AQTS",
           "operator": "gopuMNntD2aFtuVnwskU7jYpmdBdLXJMBpZWZjYE1sj",
           "upgradeAuthority": "upaYdfY8H5dKa3wCV2pnfxEVNP1yT6mJycoZo3BJFFK",
-          "version": "0.1.11"
+          "version": "1.0.0"
         }
       }
     }
