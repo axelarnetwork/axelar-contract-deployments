@@ -573,7 +573,7 @@ const getContractR2Url = (contractName, version) => {
 
 const getContractArtifactPath = (artifactDir, contractName) => {
     const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
-    const fileName = `stellar_${pascalToKebab(contractName).replace(/-/g, '_')}.optimized.wasm`;
+    const fileName = `stellar_${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
     return basePath + fileName;
 };
 
