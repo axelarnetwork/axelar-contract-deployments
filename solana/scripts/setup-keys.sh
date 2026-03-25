@@ -272,7 +272,7 @@ generate_keypairs() {
         --title "[${ENV_DISPLAY}] Upgrade Authority: Solana" \
         --vault "$OP_VAULT" \
         --tags "solana,upgrade-authority,${ENV}" \
-        --format json | jq -r '.uuid')
+        --format json | jq -r '.id')
     op item edit "$upa_item_id" --vault "$OP_VAULT" \
         "notesPlain=Pubkey: ${upa_pubkey}" > /dev/null
     log_info "Imported: [${ENV_DISPLAY}] Upgrade Authority: Solana (${upa_pubkey})"
@@ -282,7 +282,7 @@ generate_keypairs() {
         --title "[${ENV_DISPLAY}] Operator: Solana" \
         --vault "$OP_VAULT" \
         --tags "solana,operator,${ENV}" \
-        --format json | jq -r '.uuid')
+        --format json | jq -r '.id')
     op item edit "$gop_item_id" --vault "$OP_VAULT" \
         "notesPlain=Pubkey: ${gop_pubkey}" > /dev/null
     log_info "Imported: [${ENV_DISPLAY}] Operator: Solana (${gop_pubkey})"

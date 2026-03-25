@@ -66,8 +66,8 @@ fi
 
 get_cluster() {
     case "$ENV" in
-        devnet-amplifier|testnet) echo "devnet" ;;
-        stagenet)                 echo "testnet" ;;
+        devnet-amplifier)         echo "devnet" ;;
+        stagenet|testnet)         echo "testnet" ;;
         mainnet)                  echo "mainnet-beta" ;;
     esac
 }
