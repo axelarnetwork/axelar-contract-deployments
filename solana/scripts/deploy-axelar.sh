@@ -1076,28 +1076,20 @@ step_ampd_update_pause() {
     local service_name
     service_name=$(get_service_name)
 
-    echo ""
-    local domain_separator
-    domain_separator=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].domainSeparator // empty")
+    local rpc_url domain_separator gateway_address
+    rpc_url=$(jq_config ".chains[\"${CHAIN}\"].rpc // empty")
+    gateway_address=$(jq_config ".chains[\"${CHAIN}\"].contracts.AxelarGateway.address // empty")
+    domain_separator=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].domainSeparator // empty" | sed 's/^0x//')
 
-    echo "    Verifiers should add the following handlers to their ampd config:"
     echo ""
-    echo "    [[handlers]]"
-    echo "      - type: MultisigSigner"
-    echo "        cosmwasm_contract: $MULTISIG"
-    echo "        chain_name: $CHAIN"
-    echo "      - type: SolanaMsgVerifier"
-    echo "        chain_name: $CHAIN"
-    echo "        cosmwasm_contract: $VOTING_VERIFIER"
-    echo "        rpc_url: <SOLANA_RPC_URL>"
-    echo "        gateway_address: $GATEWAY_CW"
-    echo "        domain_separator: $domain_separator"
-    echo "      - type: SolanaVerifierSetVerifier"
-    echo "        chain_name: $CHAIN"
-    echo "        cosmwasm_contract: $VOTING_VERIFIER"
-    echo "        rpc_url: <SOLANA_RPC_URL>"
-    echo "        gateway_address: $GATEWAY_CW"
-    echo "        domain_separator: $domain_separator"
+    echo "    Verifiers should update their Solana ampd handler with the following params:"
+    echo ""
+    echo "    rpc_url           = \"${rpc_url}\""
+    echo "    gateway_address   = \"${gateway_address}\""
+    echo "    domain_separator  = \"${domain_separator}\""
+    echo ""
+    echo "    voting_verifier   = \"${VOTING_VERIFIER}\""
+    echo "    multisig_prover   = \"${MULTISIG_PROVER}\""
     echo ""
     echo "    Then register:"
     echo "      ampd register-public-key ed25519"
