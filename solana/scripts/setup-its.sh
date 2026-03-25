@@ -65,6 +65,14 @@ fi
 # Environment-dependent configuration
 # =============================================================================
 
+get_cluster() {
+    case "$ENV" in
+        devnet-amplifier|testnet) echo "devnet" ;;
+        stagenet)                 echo "testnet" ;;
+        mainnet)                  echo "mainnet-beta" ;;
+    esac
+}
+
 get_op_vault() {
     case "$ENV" in
         devnet-amplifier) echo "Devnet - Axelar Externally Owned Accounts" ;;
@@ -83,9 +91,14 @@ get_env_display() {
     esac
 }
 
+CLUSTER=$(get_cluster)
 OP_VAULT=$(get_op_vault)
 ENV_DISPLAY=$(get_env_display)
 CHAINS_INFO_FILE="${DEPLOYMENTS_DIR}/axelar-chains-config/info/${ENV}.json"
+
+# Export so child processes (cli wrapper → cargo run → CLI binary) pick them up via clap env
+export CLUSTER
+export CHAIN
 
 # Governance flag: empty on devnet (direct execution), --governance elsewhere
 if [[ "$ENV" == "devnet-amplifier" ]]; then
