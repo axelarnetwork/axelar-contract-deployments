@@ -18,12 +18,9 @@ async function processCommand(_axelar, chain, _chains, options) {
     const signers = [wallet.address];
     const threshold = 1;
     const minimumTimeDelay = 300;
-    const wrappedSymbol = `W${chain.tokenSymbol}`;
-    const refundIssuer = wallet.address;
     const argsAxelarGasService = JSON.stringify({ collector });
     const argsMultisig = JSON.stringify({ signers, threshold });
     const argsInterchainGovernance = JSON.stringify({ minimumTimeDelay });
-    const argsAxelarDepositService = JSON.stringify({ wrappedSymbol, refundIssuer });
 
     const cmds = [
         `ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,
@@ -38,13 +35,6 @@ async function processCommand(_axelar, chain, _chains, options) {
         `ts-node evm/gateway.js --action transferMintLimiter`,
         `ts-node evm/gateway.js --action transferGovernance`,
     ];
-
-    if (options.deployDepositService) {
-        cmds.push(
-            `ts-node evm/deploy-test-gateway-token.js`,
-            `ts-node evm/deploy-upgradable.js -c AxelarDepositService -m create --salt 'testSalt' --args '${argsAxelarDepositService}'`,
-        );
-    }
 
     for (let i = 0; i < cmds.length; i++) {
         execSync(`${cmds[i]} -n ${options.chainNames} -p ${options.privateKey} ${options.yes ? '-y' : ''}`, {
@@ -62,11 +52,6 @@ if (require.main === module) {
 
     program.name('contracts-deployment-test').description('Deploy contracts to test deployment on chain');
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(
-        new Option('--deployDepositService', 'include AxelarDepositService in deployment tests')
-            .makeOptionMandatory(true)
-            .env('DEPLOY_DEPOSIT_SERVICE'),
-    );
     addBaseOptions(program);
 
     program.action((options) => {
