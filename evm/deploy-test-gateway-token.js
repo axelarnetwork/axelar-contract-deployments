@@ -50,7 +50,7 @@ if (require.main === module) {
 
     program
         .name('deploy-test-gateway-token')
-        .description('Deploy a native wrapped token and integrate with AxelarGateway in order to test AxelarDepositService deployment');
+        .description('Deploy a native wrapped token and integrate with AxelarGateway for testing');
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     addBaseOptions(program);
 
