@@ -357,7 +357,7 @@ ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c3412
 Create a Stellar classic asset with trustline
 
 ```bash
-ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer] [limit]
+ts-node stellar/token-utils.js change-trust [asset-code] [issuer] [limit]
 ```
 
 **Parameters:**
