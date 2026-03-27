@@ -68,7 +68,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
     switch (contractName) {
         case 'AxelarServiceGovernance': {
             const gateway = contracts.AxelarGateway?.address;
-            const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            const governanceChain = contractConfig.governanceChain || 'axelar';
             contractConfig.governanceChain = governanceChain;
             const governanceAddress = contractConfig.governanceAddress ? contractConfig.governanceAddress : axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
@@ -97,7 +97,7 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
 
         case 'InterchainGovernance': {
             const gateway = contracts.AxelarGateway?.address;
-            const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            const governanceChain = contractConfig.governanceChain || 'axelar';
             contractConfig.governanceChain = governanceChain;
             const governanceAddress = contractConfig.governanceAddress ? contractConfig.governanceAddress : axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
