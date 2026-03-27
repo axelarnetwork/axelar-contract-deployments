@@ -7,10 +7,10 @@
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Devnet Amplifier** | Completed             | 2026-03-27 |
+| **Stagenet**         | Completed             | 2026-03-27 |
+| **Testnet**          | Completed             | 2026-03-27 |
+| **Mainnet**          | -                     | TBD        |
 
 
 [Router Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/router-v1.4.2)
@@ -59,7 +59,7 @@ ts-node cosmwasm/submit-proposal.js migrate -c InterchainTokenService -t "Migrat
 
 ## Checklist
 
-- [ ] Verify router contract version
+- [x] Verify router contract version
 
   ```bash
   axelard query wasm contract-state raw $ROUTER_ADDRESS 636F6E74726163745F696E666F -o json | jq -r '.data' | base64 -d
@@ -69,7 +69,7 @@ ts-node cosmwasm/submit-proposal.js migrate -c InterchainTokenService -t "Migrat
   ```bash
   {"contract":"router","version":"1.4.2"}
   ```
-- [ ] Verify multisig contract version
+- [x] Verify multisig contract version
   ```bash
   axelard query wasm contract-state raw $MULTISIG_ADDRESS 636F6E74726163745F696E666F -o json | jq -r '.data' | base64 -d
   ```
@@ -78,7 +78,7 @@ ts-node cosmwasm/submit-proposal.js migrate -c InterchainTokenService -t "Migrat
   ```bash
   {"contract":"multisig","version":"2.4.2"}
   ```
-- [ ] Verify interchain token service contract version
+- [x] Verify interchain token service contract version
 
   ```bash
   axelard query wasm contract-state raw $INTERCHAIN_TOKEN_SERVICE_ADDRESS 636F6E74726163745F696E666F -o json | jq -r '.data' | base64 -d
