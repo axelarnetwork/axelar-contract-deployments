@@ -3450,6 +3450,90 @@
           "initializeArgs": {}
         }
       }
+    },
+    "kaia-1": {
+      "name": "Kaia Kairos Testnet",
+      "axelarId": "kaia-1",
+      "chainId": 1001,
+      "rpc": "https://kaia-kairos.blockpi.network/v1/rpc/public",
+      "tokenSymbol": "KAIA",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x814DF277591978A8f1C2515EB84E0D0E41EaA161",
+          "deployer": "0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0xf8f8e7e1c56b53041f3f5e6a8ecd55e3058a9b628ef8ccec480e5f91a360830c"
+        },
+        "Create3Deployer": {
+          "address": "0xcd090f449dBb2d3b004587eF0a1e8b8405fd2C41",
+          "deployer": "0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0xc67870e42bf359ea299318f3e3e78c16eb53da6e60224848e393de9ae872a220",
+          "salt": "v1.0.15"
+        },
+        "AxelarGateway": {
+          "address": "0x8dde0f5EAb07Bc606acEA04a52c45Fb578ac6EAd",
+          "implementation": "0x7F61350e266fB9d2FFA6831Dc701ba244faBD6d6",
+          "deployer": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "deploymentMethod": "create",
+          "implementationCodehash": "0xcc21dc7dd8fdf8e6b628ec09a7626dc3a7c46365666c858dbce029f67b8fbca5",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x45cfc4e81217cdef87006e2995ce30c2e507c202066cdc79880fe57cb173ad68",
+          "minimumRotationDelay": 3600,
+          "operator": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "connectionType": "amplifier",
+          "initialVerifierSetId": "76f96721503283673a3ca0eeaf1396bbf9707068e3359f998631e58eee5012cb"
+        },
+        "Operators": {
+          "address": "0x543a4B1Fd0149CdF8d4C621ae21faAf226f0cb65",
+          "deployer": "0x92ae7f0b761aC8CFAbe4B94D53d1CD343dF8E3C0",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0x954c98b4794e9bf727a5c63d9ffb6ab51555b5347207e18cea23fd2d8bb81dbf",
+          "salt": "v1.0.15",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        },
+        "AxelarGasService": {
+          "address": "0x5030D144E845e862B35B50E9C0610E2CD77F70D7",
+          "implementation": "0x470f7C5986956D0a6356bd74cC57984665c8497E",
+          "deployer": "0x3b7E3351689b0fba2cE9f1F8d14Ae38e270d9eD4",
+          "deploymentMethod": "create",
+          "collector": "0x543a4B1Fd0149CdF8d4C621ae21faAf226f0cb65",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.2.0",
+          "proxySalt": "ITS v1.0.0",
+          "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "tokenManagerDeployer": "0x5a339bAD0aDCd3862B2741c30F8e945cbE6567c3",
+          "interchainToken": "0xf524e53D8A4eC76D4576Dc03FA56C85db3dBE5F1",
+          "interchainTokenDeployer": "0xD49C0dbce611fe6Aa805C741BE3312B341e8e0F9",
+          "tokenManager": "0x633e84E63094583B8708aE00Dc5529da69bB6873",
+          "tokenHandler": "0x506F799FdFcEDb6453f6578eA34BdE6039f37850",
+          "implementation": "0xCE473EeCe2D9315BD273ED92544561DFC3d7BE5b",
+          "address": "0x61e527a0E24E14D795d761475C9700A89A961AA2",
+          "predeployCodehash": "0xa464b47f01859a54bdec84fe6eab3dc18cc63448eb3e90d187ef49becbae8ab0",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+        },
+        "InterchainTokenFactory": {
+          "salt": "ITS Factory v1.0.0",
+          "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "implementation": "0x132654602310318c8a58B832bf45F40a89Def1a4",
+          "address": "0xa353033C7D1DA86104A365070D951cF928CB5640"
+        }
+      },
+      "explorer": {
+        "name": "KaiaScan",
+        "url": "https://kairos.kaiascan.io"
+      }
     }
   },
   "axelar": {
@@ -3521,6 +3605,10 @@
           "arc-8": {
             "deploymentName": "arc-8-24-78-77",
             "salt": "v1.0.10"
+          },
+          "kaia-1": {
+            "deploymentName": "kaia-1-24-78-77",
+            "salt": "v1.0.15"
           }
         }
       },
@@ -3719,7 +3807,23 @@
         },
         "storeCodeProposalId": "462",
         "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
-        "lastUploadedCodeId": 77
+        "lastUploadedCodeId": 77,
+        "kaia-1": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 77,
+          "domainSeparator": "0x45cfc4e81217cdef87006e2995ce30c2e507c202066cdc79880fe57cb173ad68",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1hpzaj2awsszswnv0tfz47veam05zyttpaugs4h5z5xmntzznn82qmm2y7p"
+        }
       },
       "Gateway": {
         "flow": {
@@ -3790,6 +3894,11 @@
           "codeId": 24,
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
           "address": "axelar15g2gf3n8exglrc2vmv8jm64ydetxtc754fhq7942qxgdww8wzyfqpk5628"
+        },
+        "kaia-1": {
+          "codeId": 24,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1eyh0q964wdu6g0d3tgc5we2uea3c4nfmh0kfcr5g5muykthhmqws0ymhdy"
         }
       },
       "VotingVerifier": {
@@ -3983,7 +4092,23 @@
         },
         "storeCodeProposalId": "463",
         "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
-        "lastUploadedCodeId": 78
+        "lastUploadedCodeId": 78,
+        "kaia-1": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x8dde0f5EAb07Bc606acEA04a52c45Fb578ac6EAd",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 50,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 78,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar19j9sxvnpfccerqkcd5vzmqddhvh46egxrlh5vxy5wvx68smeuv2spu7w0l"
+        }
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "341",
