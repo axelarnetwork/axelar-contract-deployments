@@ -37,7 +37,7 @@ CHAIN=xyz
 
 | `Network`   | `deployer address`                           | `ITS_OWNER`                                  |
 |-------------|----------------------------------------------|----------------------------------------------|
-| **Testnet** | `0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet** | `0x156372Cb2F8939d9705fdaa6C70e25825Ea9CAaF` | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
 | **Mainnet** | `0xf21b824434d93F659aCe9dA3ED3F66480a94E2Fe` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ## MonadAxelarTransceiver and ERC1967 Proxy Deployment
