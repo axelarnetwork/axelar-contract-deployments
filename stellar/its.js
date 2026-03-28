@@ -39,6 +39,51 @@ const {
     estimateITSFee,
 } = require('../common/utils');
 
+async function tokenMetadataFromId(wallet, chain, itsContract, tokenId, options) {
+    const tokenAddressResult = await broadcast(
+        itsContract.call('registered_token_address', hexToScVal(tokenId)),
+        wallet,
+        chain,
+        'Get registered token address',
+        options,
+    );
+    const tokenAddress = serializeValue(tokenAddressResult.value());
+    const tokenContract = new Contract(tokenAddress);
+
+    const symbolResult = await broadcast(tokenContract.call('symbol'), wallet, chain, 'Get token symbol', options);
+    const decimalsResult = await broadcast(tokenContract.call('decimals'), wallet, chain, 'Get token decimals', options);
+
+    const symbol = serializeValue(symbolResult.value());
+    const decimals = decimalsResult.value();
+
+    return { tokenAddress, symbol, decimals };
+}
+
+function formatTokenAmount(amount, decimals) {
+    const str = amount.toString();
+
+    if (decimals === 0) {
+        return str;
+    }
+
+    const padded = str.padStart(decimals + 1, '0');
+    const intPart = padded.slice(0, padded.length - decimals);
+    const fracPart = padded.slice(padded.length - decimals).replace(/0+$/, '');
+
+    return fracPart ? `${intPart}.${fracPart}` : intPart;
+}
+
+function parseTokenAmount(amount, decimals) {
+    const [intPart = '0', fracPart = ''] = amount.split('.');
+
+    if (fracPart.length > decimals) {
+        throw new Error(`Too many decimal places for amount ${amount} (max ${decimals})`);
+    }
+
+    const raw = intPart + fracPart.padEnd(decimals, '0');
+    return raw.replace(/^0+/, '') || '0';
+}
+
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config.chains, args);
 
@@ -107,21 +152,25 @@ async function deployInterchainToken(wallet, _config, chain, contract, args, opt
     const minter = caller;
     const [symbol, name, decimal, salt, initialSupply] = args;
     const saltBytes32 = saltToBytes32(salt);
+    const initialSupplyInUnits = parseTokenAmount(initialSupply, Number(decimal));
 
     validateParameters({
         isNonEmptyString: { symbol, name },
-        isValidNumber: { decimal, initialSupply },
+        isValidNumber: { decimal },
+        isNonEmptyString: { initialSupply },
     });
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
+    printInfo('Initial supply', `${initialSupply} ${symbol}`);
+    printInfo('Initial supply (units)', initialSupplyInUnits);
 
     const operation = contract.call(
         'deploy_interchain_token',
         caller,
         hexToScVal(saltBytes32),
         tokenMetadataToScVal(decimal, name, symbol),
-        nativeToScVal(initialSupply, { type: 'i128' }),
+        nativeToScVal(initialSupplyInUnits, { type: 'i128' }),
         minter,
     );
 
@@ -215,6 +264,9 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         isValidStellarAddress: { gasTokenAddress },
     });
 
+    const { symbol, decimals } = await tokenMetadataFromId(wallet, chain, contract, tokenId, options);
+    const amountInUnits = parseTokenAmount(amount, decimals);
+
     const { gasFeeValue } = await estimateITSFee(
         chain,
         destinationChain,
@@ -226,6 +278,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
 
     const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
+    printInfo('Transfer amount', `${amount} ${symbol}`);
     printInfo('Gas fee value', gasFeeValue);
 
     const operation = contract.call(
@@ -234,7 +287,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         hexToScVal(tokenId),
         nativeToScVal(destinationChain, { type: 'string' }),
         hexToScVal(itsDestinationAddress),
-        nativeToScVal(amount, { type: 'i128' }),
+        nativeToScVal(amountInUnits, { type: 'i128' }),
         data,
         tokenToScVal(gasTokenAddress, gasFeeValue),
     );
@@ -265,25 +318,70 @@ async function flowLimit(wallet, _config, chain, contract, args, options) {
 
     const operation = contract.call('flow_limit', hexToScVal(tokenId));
     const response = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
-    const flowLimit = response.value();
+    const flowLimitValue = response.value();
 
-    printInfo('Flow Limit', flowLimit || 'No limit set');
+    if (flowLimitValue === undefined || flowLimitValue === null) {
+        printInfo('Flow Limit', 'No limit set');
+        return;
+    }
+
+    const { symbol, decimals } = await tokenMetadataFromId(wallet, chain, contract, tokenId, options);
+    printInfo('Flow Limit', `${formatTokenAmount(flowLimitValue, decimals)} ${symbol}`);
 }
 
 async function setFlowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId, flowLimit] = args;
 
     validateParameters({
-        isNonEmptyString: { tokenId },
-        isValidNumber: { flowLimit },
+        isNonEmptyString: { tokenId, flowLimit },
     });
 
-    const flowLimitScVal = nativeToScVal(flowLimit, { type: 'i128' });
+    const { symbol, decimals } = await tokenMetadataFromId(wallet, chain, contract, tokenId, options);
+    const flowLimitInUnits = parseTokenAmount(flowLimit, decimals);
 
+    printInfo(`Setting flow limit for tokenId ${tokenId}`, `${flowLimit} ${symbol}`);
+
+    const flowLimitScVal = nativeToScVal(flowLimitInUnits, { type: 'i128' });
     const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
 
     await broadcast(operation, wallet, chain, 'Set Flow Limit', options);
-    printInfo('Successfully set flow limit', flowLimit);
+    printInfo('Successfully set flow limit', `${flowLimit} ${symbol}`);
+}
+
+async function freezeToken(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const { symbol } = await tokenMetadataFromId(wallet, chain, contract, tokenId, options);
+
+    printInfo(`Freezing token ${symbol} (tokenId: ${tokenId})`);
+
+    const flowLimitScVal = nativeToScVal('0', { type: 'i128' });
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Freeze Token', options);
+    printInfo('Successfully froze token', symbol);
+}
+
+async function unfreezeToken(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const { symbol } = await tokenMetadataFromId(wallet, chain, contract, tokenId, options);
+
+    printInfo(`Unfreezing token ${symbol} (tokenId: ${tokenId})`);
+
+    const flowLimitScVal = nativeToScVal(null, { type: 'void' });
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Unfreeze Token', options);
+    printInfo('Successfully unfroze token', symbol);
 }
 
 async function removeFlowLimit(wallet, _config, chain, contract, args, options) {
@@ -606,7 +704,7 @@ if (require.main === module) {
 
     program
         .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount>')
-        .description('interchain transfer')
+        .description('interchain transfer (amount in token units, e.g. 100.5)')
         .addOption(new Option('--data <data>', 'data').default(''))
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default('auto'))
@@ -630,7 +728,7 @@ if (require.main === module) {
 
     program
         .command('set-flow-limit <tokenId> <flowLimit>')
-        .description('Set the flow limit for a token')
+        .description('Set the flow limit for a token (flowLimit in token units, e.g. 100.5)')
         .action((tokenId, flowLimit, options) => {
             return mainProcessor(setFlowLimit, [tokenId, flowLimit], options);
         });
@@ -640,6 +738,20 @@ if (require.main === module) {
         .description('Remove the flow limit for a token')
         .action((tokenId, options) => {
             return mainProcessor(removeFlowLimit, [tokenId], options);
+        });
+
+    program
+        .command('freeze-token <tokenId>')
+        .description('Freeze a token by setting flow limit to 0')
+        .action((tokenId, options) => {
+            return mainProcessor(freezeToken, [tokenId], options);
+        });
+
+    program
+        .command('unfreeze-token <tokenId>')
+        .description('Unfreeze a token by removing the flow limit')
+        .action((tokenId, options) => {
+            return mainProcessor(unfreezeToken, [tokenId], options);
         });
 
     program

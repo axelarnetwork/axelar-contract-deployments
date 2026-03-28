@@ -257,6 +257,12 @@ jobs:
       - name: ITS Flow Limit Remove
         run: ts-node stellar/its.js remove-flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
+      - name: ITS Freeze Token
+        run: ts-node stellar/its.js freeze-token ${{ steps.env_vars.outputs.tokenId }}
+
+      - name: ITS Unfreeze Token
+        run: ts-node stellar/its.js unfreeze-token ${{ steps.env_vars.outputs.tokenId }}
+
       ###### Command: Operators ######
 
       - name: Operator
