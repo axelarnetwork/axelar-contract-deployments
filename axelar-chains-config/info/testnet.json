@@ -3450,6 +3450,58 @@
           "initializeArgs": {}
         }
       }
+    },
+    "solana": {
+      "name": "Solana",
+      "axelarId": "solana",
+      "rpc": "https://api.devnet.solana.com",
+      "chainType": "svm",
+      "decimals": 9,
+      "finality": "31",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "SOL",
+      "explorer": {
+        "name": "Solana Devnet Explorer",
+        "url": "https://explorer.solana.com/?cluster=devnet"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "gtwJ8LWDRWZpbvCqp8sDeTgy3GSyuoEsiaKC8wSXJqq",
+          "connectionType": "amplifier",
+          "domainSeparator": "0x2ba3d447b55ebd352d941bad2be996868560897c257f063c9c3bcee72f82234f",
+          "minimumRotationDelay": 3600,
+          "operator": "gopdSWQFLKvxPz1SiP2W8CumFBtd2FF1ddDgNVkLmdG",
+          "previousSignersRetention": 15,
+          "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
+          "version": "1.0.0"
+        },
+        "AxelarGasService": {
+          "address": "gasq7KHHv9Rs8C82hu3dgoBD9wk5LTKpWqbdf5o5juu",
+          "operator": "gopdSWQFLKvxPz1SiP2W8CumFBtd2FF1ddDgNVkLmdG",
+          "configAccount": "FnMi7boHKiDLjubdoLtr2Nen5XBxT9HCVSabC2bQU9sf",
+          "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
+          "version": "1.0.0"
+        },
+        "AxelarOperators": {
+          "address": "opriTiaaV7Ew1kma71TjKbrwQ2RWKJ3wbiWEAp3hUZc",
+          "configAccount": "CAbbFCJV9eVuF47UiuurbiJwNroSovhpTzusdmbLcxYN",
+          "owner": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
+          "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
+          "version": "1.0.0"
+        },
+        "AxelarMemo": {
+          "address": "mem7UJouaeyTgySvXhQSxWtGFrWPQ89jywjc8YvQFRT",
+          "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
+          "version": "1.0.0"
+        },
+        "InterchainTokenService": {
+          "address": "itsJo4kNJ3mdh3requwbtTTt7vyYTudp1pxhn2KiHMc",
+          "configAccount": "Ctehm9EVDZDYetXCxVrHgaJpLgw7gHNo184rKFpJMb7Y",
+          "operator": "gopdSWQFLKvxPz1SiP2W8CumFBtd2FF1ddDgNVkLmdG",
+          "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
+          "version": "1.0.0"
+        }
+      }
     }
   },
   "axelar": {
@@ -3521,6 +3573,10 @@
           "arc-8": {
             "deploymentName": "arc-8-24-78-77",
             "salt": "v1.0.10"
+          },
+          "solana": {
+            "deploymentName": "solana-24-78-77",
+            "salt": "solana"
           }
         }
       },
@@ -3719,7 +3775,23 @@
         },
         "storeCodeProposalId": "462",
         "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
-        "lastUploadedCodeId": 77
+        "lastUploadedCodeId": 77,
+        "solana": {
+          "codeId": 77,
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "solana",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x2ba3d447b55ebd352d941bad2be996868560897c257f063c9c3bcee72f82234f",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1xdtjwhenmy80wckuntd2npd3zeqayy0q0l5dfy48g6wmu3p48pgqknnc9g"
+        }
       },
       "Gateway": {
         "flow": {
@@ -3790,6 +3862,11 @@
           "codeId": 24,
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
           "address": "axelar15g2gf3n8exglrc2vmv8jm64ydetxtc754fhq7942qxgdww8wzyfqpk5628"
+        },
+        "solana": {
+          "codeId": 24,
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar1f258jksatcwdkcp8awnvx7p78m7ycszcnpd3ufq4yps4f77dah6q7xskv6"
         }
       },
       "VotingVerifier": {
@@ -3983,7 +4060,22 @@
         },
         "storeCodeProposalId": "463",
         "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
-        "lastUploadedCodeId": 78
+        "lastUploadedCodeId": 78,
+        "solana": {
+          "codeId": 78,
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "gtwJ8LWDRWZpbvCqp8sDeTgy3GSyuoEsiaKC8wSXJqq",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
+          "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
+          "address": "axelar19gut3kvqf57gnu5ylq474qfgk4gg5ly89cs5kk4mde688lc5adsq6qyz4h"
+        }
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "341",
@@ -4007,7 +4099,12 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
-        "version": "1.3.0"
+        "version": "1.3.0",
+        "solana": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6,
+          "msgTranslator": "axelar16gznt8y3rpt3vg2geng4s25c2evrd3syafsven5ha05uqm9xkyhq8a0jwy"
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
@@ -4104,6 +4201,22 @@
         "instantiateProposalId": "466",
         "address": "axelar1p6meh9pxkrf3qc8uu0kllcg7wl9dfukcrjklrf4e3w4jd947agsqxjpudh",
         "version": "1.0.0"
+      },
+      "ChainCodecSolana": {
+        "storeCodeProposalId": "554",
+        "storeCodeProposalCodeHash": "3722a0c2bc0184d333524be1d79dc31f02ac2dfc6f38133f82c6c0352b7ee6dd",
+        "lastUploadedCodeId": 82,
+        "codeId": 82,
+        "instantiateProposalId": "555",
+        "address": "axelar1erapwwp6crvkq3u6780u93huwtjam80vhac9wvxw8dl0fm3zcp5szyfemq"
+      },
+      "ItsSolanaTranslator": {
+        "storeCodeProposalId": "556",
+        "storeCodeProposalCodeHash": "63195b80b58a2a2f1a1149326906eb611b5fb8fa10127208c19154cad6b0c5a6",
+        "lastUploadedCodeId": 83,
+        "codeId": 83,
+        "instantiateProposalId": "557",
+        "address": "axelar16gznt8y3rpt3vg2geng4s25c2evrd3syafsven5ha05uqm9xkyhq8a0jwy"
       }
     },
     "axelarId": "axelar",

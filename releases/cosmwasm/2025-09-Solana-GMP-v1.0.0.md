@@ -9,7 +9,7 @@
 | -------------------- | --------------------- | ---------- | --------------- |
 | **Devnet Amplifier** | Completed             | 2025-12-04 | @nbayindirli    |
 | **Stagenet**         | Completed             | 2026-02-23 | @rista404       |
-| **Testnet**          | Pending               | TBD        |                 |
+| **Testnet**          | Completed             | 2026-03-25 | @rista404       |
 | **Mainnet**          | Pending               | TBD        |                 |
 
 ## Background
