@@ -67,7 +67,6 @@ async function getImplementationArgs(contractConfig, contractName, options) {
 
             return [collector];
         }
-
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -81,7 +80,6 @@ function getInitArgs(contractName) {
         case 'AxelarGasService': {
             return '0x';
         }
-
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -118,10 +116,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     const wallet = new Wallet(privateKey, provider);
     await printWalletInfo(wallet);
 
-    const artifactPath =
-        options.artifactPath ||
-        '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' +
-            'gas-service/';
+    const artifactPath = options.artifactPath || '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' + 'gas-service/';
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
