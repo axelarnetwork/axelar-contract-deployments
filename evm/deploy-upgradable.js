@@ -46,7 +46,7 @@ function getProxy(wallet, proxyAddress) {
 /**
  * Generates implementation constructor arguments for a given contract based on its configuration and options.
  */
-async function getImplementationArgs(contractConfig, contractName, gatewayAddress, options) {
+async function getImplementationArgs(contractConfig, contractName, options) {
     let args;
 
     try {
@@ -135,7 +135,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     }
 
     const contractConfig = contracts[contractName];
-    const implArgs = await getImplementationArgs(contractConfig, contractName, contracts.AxelarGateway?.address, options);
+    const implArgs = await getImplementationArgs(contractConfig, contractName, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
