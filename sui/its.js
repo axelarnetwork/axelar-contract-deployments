@@ -38,7 +38,7 @@ const chalk = require('chalk');
 const {
     utils: { arrayify, parseUnits },
 } = require('hardhat').ethers;
-const { checkIfCoinExists, senderHasSufficientBalance } = require('./utils/token-utils');
+const { checkIfCoinExists, tokenMetadata, senderHasSufficientBalance } = require('./utils/token-utils');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -56,6 +56,8 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
         throw new Error('<token-ids> and <flow-limits> have to have the same length.');
     }
 
+    const prettyFlowLimits = [];
+
     for (let i = 0; i < tokenIds.length; i++) {
         const coinTypeTxBuilder = new TxBuilder(client);
         let tokenId = await coinTypeTxBuilder.moveCall({
@@ -70,6 +72,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
 
         const resp = await coinTypeTxBuilder.devInspect(keypair.toSuiAddress());
         const coinType = bcs.String.parse(new Uint8Array(resp.results[1].returnValues[0][0]));
+        const { symbol, decimals } = await tokenMetadata(client, tokenIds[i], coinType);
 
         tokenId = await txBuilder.moveCall({
             target: `${itsConfig.address}::token_id::from_address`,
@@ -92,6 +95,10 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
             });
         }
 
+        const prettyFlowLimit = flowLimits[i] === 'none' ? 'none' : `${getFormattedAmount(flowLimits[i], decimals)} ${symbol}`;
+        prettyFlowLimits.push(`${tokenIds[i]}=${prettyFlowLimit}`);
+        printInfo(`Setting flow limit for tokenId ${tokenIds[i]}`, prettyFlowLimit);
+
         await txBuilder.moveCall({
             target: `${itsConfig.address}::interchain_token_service::set_flow_limit`,
             arguments: [InterchainTokenService, OperatorCap, tokenId, flowLimit],
@@ -103,7 +110,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Set flow limits for ${tokenIds} to ${flowLimits}`, client, options);
+        await saveGeneratedTx(tx, `Set flow limits for ${prettyFlowLimits.join(', ')}`, client, options);
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Set flow limits', options);
     }
@@ -176,6 +183,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const resolvedTokenDecimals = decimals;
 
     // New CoinManagement<T>
     const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
@@ -183,7 +191,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     // Register deployed token (from info)
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
-        arguments: [InterchainTokenService, name, symbol, decimals, coinManagement],
+        arguments: [InterchainTokenService, name, symbol, resolvedTokenDecimals, coinManagement],
         typeArguments: [tokenType],
     });
 
@@ -200,7 +208,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     const tokenId = result.events[0].parsedJson.token_id.id;
 
     // Save the deployed token
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, resolvedTokenDecimals, tokenId, treasuryCap, metadata);
 }
 
 async function registerCoinFromMetadata(keypair, client, config, contracts, args, options) {
@@ -213,6 +221,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const resolvedTokenDecimals = decimals;
 
     // New CoinManagement<T>
     const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
@@ -236,7 +245,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     const tokenId = result.events[0].parsedJson.token_id.id;
 
     // Save the deployed token
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, resolvedTokenDecimals, tokenId, treasuryCap, metadata);
 }
 
 async function registerCustomCoin(keypair, client, config, contracts, args, options) {
@@ -260,13 +269,12 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [metadata, packageId, tokenType, treasuryCap] = options.published
         ? [coin.objects.Metadata, coin.address, coin.typeArgument, coin.objects.TreasuryCap]
         : await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const resolvedTokenDecimals = options.published ? (await coinMetadataByType(client, tokenType)).decimals : decimals;
 
     // Mint pre-registration coins
     const amount = Number.isFinite(Number(options.mintAmount)) ? parseInt(options.mintAmount) : 0;
     if (amount) {
-        const unitAmount = options.published
-            ? getUnitAmount(options.mintAmount, coin.decimals)
-            : getUnitAmount(options.mintAmount, decimals);
+        const unitAmount = getUnitAmount(options.mintAmount, resolvedTokenDecimals);
 
         const mintTxBuilder = new TxBuilder(client);
 
@@ -297,7 +305,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     }
 
     // Save the deployed token
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata, [], saltAddress);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, resolvedTokenDecimals, tokenId, treasuryCap, metadata, [], saltAddress);
 
     // Save TreasuryCapReclaimer to coin config (if exists)
     if (options.treasuryCap && contracts[symbol.toUpperCase()]) {
@@ -472,11 +480,11 @@ async function giveUnlinkedCoin(keypair, client, _, contracts, args, options) {
         throw new Error(`Cannot find coin with symbol ${symbol} in config`);
     }
 
-    const decimals = coin.decimals;
     const metadata = coin.objects.Metadata;
     const packageId = coin.address;
     const tokenType = coin.typeArgument;
     const treasuryCap = coin.objects.TreasuryCap;
+    const { decimals } = await tokenMetadata(client, tokenId, tokenType);
 
     // TokenId
     const tokenIdObject = await txBuilder.moveCall({
@@ -602,7 +610,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
         );
     }
 
-    let metadata, packageId, tokenType, treasuryCap;
+    let metadata, packageId, tokenType, treasuryCap, decimals;
     if (!savedCoin) {
         // Deploy source token on Sui
         [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(
@@ -611,12 +619,14 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
             options.coinName,
             options.coinDecimals,
         );
+        decimals = options.coinDecimals;
     } else {
         // Load saved coin params
         metadata = savedCoin.objects.Metadata;
         packageId = savedCoin.address;
         tokenType = savedCoin.typeArgument;
         treasuryCap = savedCoin.objects.TreasuryCap;
+        ({ decimals } = await tokenMetadata(client, savedCoin.objects.TokenId, tokenType));
     }
 
     // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to
@@ -661,7 +671,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
             tokenType,
             contracts,
             symbol,
-            options.coinDecimals,
+            decimals,
             null, // TokenId does not yet exist (pre-registration)
             treasuryCap,
             metadata,
@@ -693,11 +703,11 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // Coin params
     const coin = contracts[symbol.toUpperCase()];
-    const decimals = coin.decimals;
     const metadata = coin.objects.Metadata;
     const packageId = coin.address;
     const tokenType = coin.typeArgument;
     const treasuryCap = coin.objects.TreasuryCap;
+    const { decimals } = await tokenMetadata(client, coin.objects.TokenId, tokenType);
 
     // Token Manager settings
     const tokenManager = options.tokenManagerMode;
@@ -964,10 +974,9 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     // Fetch CoinType from on-chain TokenID
     const coinType = await tokenIdToCoinType(client, walletAddress, itsConfig, tokenId);
 
-    let coinPackageId, coinDecimals;
+    let coinPackageId, symbol, coinDecimals;
     try {
-        const coinMetadata = await client.getCoinMetadata({ coinType });
-        coinDecimals = coinMetadata.decimals;
+        ({ symbol, decimals: coinDecimals } = await tokenMetadata(client, tokenId, coinType));
         coinPackageId = coinType.split('::')[0];
     } catch {
         throw new Error(`Error parsing coin metadata for coin ${coinType}`);
@@ -993,6 +1002,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     // Convert human readable coin amount to send value
     const unitAmount = getUnitAmount(amount, coinDecimals);
+    printInfo(`Interchain transfer for tokenId ${tokenId}`, `${amount} ${symbol}`);
 
     // Check balance and load valid coin id
     const { coinObjectId, balance } = await senderHasSufficientBalance(client, keypair, options, coinType, unitAmount);
@@ -1052,9 +1062,9 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Interchain transfer for ${tokenId}`, client, options);
+        await saveGeneratedTx(tx, `Interchain transfer for ${tokenId} (${amount} ${symbol})`, client, options);
     } else {
-        await broadcastFromTxBuilder(txBuilder, keypair, 'Interchain Transfer', options);
+        await broadcastFromTxBuilder(txBuilder, keypair, `Interchain Transfer (${symbol})`, options);
     }
 }
 

@@ -155,9 +155,8 @@ async function deployInterchainToken(wallet, _config, chain, contract, args, opt
     const initialSupplyInUnits = parseTokenAmount(initialSupply, Number(decimal));
 
     validateParameters({
-        isNonEmptyString: { symbol, name },
+        isNonEmptyString: { symbol, name, initialSupply },
         isValidNumber: { decimal },
-        isNonEmptyString: { initialSupply },
     });
 
     printInfo('Salt', salt);
