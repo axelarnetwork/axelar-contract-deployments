@@ -97,6 +97,7 @@ ENV_DISPLAY=$(get_env_display)
 
 # Export so child processes (cli wrapper → cargo run → CLI binary) pick up CLUSTER via clap env
 export CLUSTER
+export CHAIN
 
 # Track temporary files for cleanup
 TEMP_KEYPAIR_FILES=()

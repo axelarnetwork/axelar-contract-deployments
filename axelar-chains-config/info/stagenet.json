@@ -2880,11 +2880,11 @@
           "address": "axelar1x8jqrc49pqrn7arxxsyaa57egpwllu3kes4576y7djrlyygp7dqsdnalyc",
           "version": "1.2.0"
         },
-        "storeCodeProposalId": "398",
-        "storeCodeProposalCodeHash": "6ebfb6a047e9c94ba18b7f420896534ff49ade50c9eb012df29725b19de7f72c",
+        "storeCodeProposalId": "441",
+        "storeCodeProposalCodeHash": "f531539dca9654d5b3932245bc0e5a45f7aab4f63f206d540c2386b8717a76e6",
         "lastUploadedCodeId": 84,
         "solana-stagenet-3": {
-          "codeId": 84,
+          "codeId": 97,
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1q69jvtca46pxc9yypyr2p5jmdd6nx9z8zh9tzj",
           "signingThreshold": [
@@ -2898,7 +2898,7 @@
           "domainSeparator": "0x8fbb0122ee958b1e30bce31c080cabbda75c12c1e053775662d1f69b318cf804",
           "contractAdmin": "axelar12qndugv2dnu2pklygpwjx9vza0u4t86r3y9qym",
           "address": "axelar1swvhlmhh4ken5sja0upjmrttzl20ptuppyk4k8gx73qpqqu5dqvslqvcje",
-          "version": "1.2.0"
+          "version": "1.2.1"
         }
       },
       "Gateway": {
@@ -3231,11 +3231,13 @@
         "version": "1.0.0"
       },
       "ChainCodecSolana": {
-        "storeCodeProposalId": "394",
-        "storeCodeProposalCodeHash": "3722a0c2bc0184d333524be1d79dc31f02ac2dfc6f38133f82c6c0352b7ee6dd",
-        "codeId": 87,
-        "instantiateProposalId": "395",
-        "address": "axelar1erapwwp6crvkq3u6780u93huwtjam80vhac9wvxw8dl0fm3zcp5szyfemq"
+        "storeCodeProposalId": "439",
+        "storeCodeProposalCodeHash": "2f8e98c1ab8eb92d017155a01b4d9d6158a2286bd35897d117c3da085364c1f4",
+        "codeId": 96,
+        "instantiateProposalId": "440",
+        "address": "axelar1d2ecnmd77stp50wyqp5l827hjtld9utvweaw0zwyk57fysv3ez9stnxrk4",
+        "lastUploadedCodeId": 96,
+        "version": "1.0.1"
       },
       "ItsSolanaTranslator": {
         "storeCodeProposalId": "399",
