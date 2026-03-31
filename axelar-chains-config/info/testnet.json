@@ -3773,11 +3773,11 @@
           "address": "axelar1nsjl6hldse4agnjf9pm29hjetyvaxgwm2638z3qd27d32hsqygyqtsluqj",
           "version": "1.2.0"
         },
-        "storeCodeProposalId": "462",
-        "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
+        "storeCodeProposalId": "564",
+        "storeCodeProposalCodeHash": "f531539dca9654d5b3932245bc0e5a45f7aab4f63f206d540c2386b8717a76e6",
         "lastUploadedCodeId": 77,
         "solana": {
-          "codeId": 77,
+          "codeId": 85,
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf",
           "signingThreshold": [
@@ -3790,7 +3790,8 @@
           "keyType": "ecdsa",
           "domainSeparator": "0x2ba3d447b55ebd352d941bad2be996868560897c257f063c9c3bcee72f82234f",
           "contractAdmin": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
-          "address": "axelar1xdtjwhenmy80wckuntd2npd3zeqayy0q0l5dfy48g6wmu3p48pgqknnc9g"
+          "address": "axelar1xdtjwhenmy80wckuntd2npd3zeqayy0q0l5dfy48g6wmu3p48pgqknnc9g",
+          "version": "1.2.1"
         }
       },
       "Gateway": {
@@ -4203,12 +4204,13 @@
         "version": "1.0.0"
       },
       "ChainCodecSolana": {
-        "storeCodeProposalId": "554",
-        "storeCodeProposalCodeHash": "3722a0c2bc0184d333524be1d79dc31f02ac2dfc6f38133f82c6c0352b7ee6dd",
-        "lastUploadedCodeId": 82,
-        "codeId": 82,
-        "instantiateProposalId": "555",
-        "address": "axelar1erapwwp6crvkq3u6780u93huwtjam80vhac9wvxw8dl0fm3zcp5szyfemq"
+        "storeCodeProposalId": "562",
+        "storeCodeProposalCodeHash": "2f8e98c1ab8eb92d017155a01b4d9d6158a2286bd35897d117c3da085364c1f4",
+        "lastUploadedCodeId": 84,
+        "codeId": 84,
+        "instantiateProposalId": "563",
+        "address": "axelar1d2ecnmd77stp50wyqp5l827hjtld9utvweaw0zwyk57fysv3ez9stnxrk4",
+        "version": "1.0.1"
       },
       "ItsSolanaTranslator": {
         "storeCodeProposalId": "556",
