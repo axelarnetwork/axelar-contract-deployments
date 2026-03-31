@@ -152,12 +152,13 @@ async function deployInterchainToken(wallet, _config, chain, contract, args, opt
     const minter = caller;
     const [symbol, name, decimal, salt, initialSupply] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const initialSupplyInUnits = parseTokenAmount(initialSupply, Number(decimal));
 
     validateParameters({
         isNonEmptyString: { symbol, name, initialSupply },
         isValidNumber: { decimal },
     });
+
+    const initialSupplyInUnits = parseTokenAmount(initialSupply, Number(decimal));
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
