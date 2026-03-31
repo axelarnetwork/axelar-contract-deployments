@@ -207,7 +207,7 @@ jobs:
 
       - name: Deploy Remote Interchain Tokens
         run: |
-          ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
+          ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
           ts-node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
       ###### Command: ITS - Create a Custom Token ######
