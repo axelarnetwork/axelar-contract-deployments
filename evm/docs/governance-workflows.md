@@ -192,6 +192,10 @@ governance proposals directly by passing `--governance`. These scripts share a c
     - Treats the generated proposal as an **operator-based proposal** (uses `ApproveOperator` under the hood).
     - Only valid when `--governanceContract AxelarServiceGovernance` is used.
     - If omitted, a standard timelock proposal (`ScheduleTimelock`) is generated instead.
+- **`--proposal-type <create|cancel>`**:
+    - `create` (default): create a new timelock / operator proposal
+    - `cancel`: create a cancellation for an existing scheduled proposal
+    - **Important**: cancellation must use the **same inputs** as the original proposal (target, calldata, nativeValue, and activation time / ETA parameters that affect the payload).
 
 **Example (gateway – timelock style via InterchainGovernance):**
 
@@ -223,6 +227,90 @@ ts-node evm/gateway.js \
   --governance \
   --operatorProposal \
   --activationTime <activationTime>
+```
+
+### Cancelling proposals created by helper scripts (Gateway / ITS / Ownership)
+
+To cancel a previously scheduled helper‑script proposal, rerun the **same** command with:
+
+- `--proposal-type cancel`
+- the **same** `--activationTime`
+- the same action arguments (e.g. `--destination`, `--newOperator`, token id, etc.)
+- the same governance mode flags (`--governanceContract`, `--operatorProposal`, and `--nativeValue` if used)
+
+#### Cancel a Gateway transferGovernance proposal
+
+```bash
+ts-node evm/gateway.js \
+  --action transferGovernance \
+  --destination 0xNewGovernorAddress \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+```
+
+#### Cancel a Gateway transferOperatorship proposal (Amplifier)
+
+```bash
+ts-node evm/gateway.js \
+  --action transferOperatorship \
+  --newOperator 0xNewOperatorAddress \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+```
+
+#### Cancel ITS pause/unpause or migrate proposals
+
+```bash
+# Cancel Pause ITS
+ts-node evm/its.js set-pause-status true \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+
+# Cancel Unpause ITS
+ts-node evm/its.js set-pause-status false \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+
+# Cancel migrate interchain token
+ts-node evm/its.js migrate-interchain-token 0x0000...0000 \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+```
+
+#### Cancel ITS trusted chains changes (multicall-based)
+
+```bash
+# Cancel set trusted chains
+ts-node evm/its.js set-trusted-chains ethereum avalanche \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+
+# Cancel remove trusted chains
+ts-node evm/its.js remove-trusted-chains ethereum avalanche \
+  --governance \
+  --activationTime <activationTime> \
+  --proposal-type cancel
+```
+
+#### Ownership proposals (IOwnable)
+
+```bash
+# Create transferOwnership proposal
+ts-node evm/ownership.js --governance \
+  -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress \
+  --activationTime <activationTime>
+
+# Cancel transferOwnership proposal
+ts-node evm/ownership.js --governance \
+  -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress \
+  --activationTime <activationTime> \
+  --proposal-type cancel
 ```
 
 ### InterchainTokenService Governance Actions

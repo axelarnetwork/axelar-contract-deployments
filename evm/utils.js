@@ -1200,6 +1200,71 @@ function detectITSVersion() {
     return ITSPackage.version;
 }
 
+async function executeDirectlyOrSubmitProposal(chain, contract, method, args, options, value = '0', expectedEvents = []) {
+    const gasOptions = await getGasOptions(chain, options, options.contractName);
+
+    if (options.governance) {
+        const { encodeGovernanceProposal, submitGovernanceProposals, ProposalType } = require('./governance');
+        const { dateToEta, etaToDate, createGMPProposalJSON } = require('../common/utils');
+
+        const { governanceAddress } = getGovernanceContract(chain, options);
+        const eta = dateToEta(options.activationTime);
+        printInfo('ETA', etaToDate(eta));
+        const isCancel = options.proposalType === 'cancel';
+        const proposalType = options.operatorProposal
+            ? isCancel
+                ? ProposalType.CancelOperator
+                : ProposalType.ApproveOperator
+            : isCancel
+              ? ProposalType.CancelTimelock
+              : ProposalType.ScheduleTimelock;
+
+        const callData = contract.interface.encodeFunctionData(method, args);
+        printInfo('callData', callData);
+        const governanceCallData = encodeGovernanceProposal(proposalType, contract.address, callData, value, eta);
+
+        const proposal = createGMPProposalJSON(chain, governanceAddress, governanceCallData);
+        printInfo('Proposal', proposal);
+        const title = `Execute ${method} via Governance`;
+        const description = `Execute ${method} via Governance`;
+
+        const consensusProposals = [];
+        const amplifierAxelarnetMsgs = [];
+
+        if (isConsensusChain(chain)) {
+            consensusProposals.push(proposal);
+        } else {
+            const { payloadToHexBinary } = require('../cosmwasm/utils');
+            amplifierAxelarnetMsgs.push({
+                call_contract: {
+                    destination_chain: proposal.chain,
+                    destination_address: proposal.contract_address,
+                    payload: payloadToHexBinary(proposal.payload),
+                },
+            });
+        }
+
+        await submitGovernanceProposals(consensusProposals, amplifierAxelarnetMsgs, title, description, options);
+        return true;
+    } else {
+        // Execute directly
+        const tx = await contract[method](...args, { value, ...gasOptions });
+        printInfo('Execution tx', tx.hash);
+        const receipt = await tx.wait(chain.confirmations);
+
+        const events = [].concat(expectedEvents).filter(Boolean);
+
+        if (events.length > 0) {
+            const anyExpectedEventEmitted = events.some((eventName) => wasEventEmitted(receipt, contract, eventName));
+
+            if (!anyExpectedEventEmitted) {
+                printWarn(`Missing expected event(s) in receipt: ${events.join(', ')}`);
+            }
+        }
+        return false;
+    }
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1255,4 +1320,5 @@ module.exports = {
     isTrustedChain,
     detectITSVersion,
     getChains,
+    executeDirectlyOrSubmitProposal,
 };
