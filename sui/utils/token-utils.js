@@ -85,6 +85,31 @@ async function checkIfCoinExists(client, coinPackageId, coinType) {
     }
 }
 
+async function coinMetadataByType(client, coinType) {
+    const coinMetadata = await client.getCoinMetadata({ coinType });
+
+    if (!coinMetadata) {
+        throw new Error(`Coin metadata not found for coin type ${coinType}`);
+    }
+
+    return coinMetadata;
+}
+
+async function tokenMetadata(client, tokenId, tokenType) {
+    if (!tokenId || !tokenType) {
+        throw new Error(`Token id and token type are required to resolve token metadata for ${tokenId || 'token'}`);
+    }
+
+    const chainMetadata = await coinMetadataByType(client, tokenType);
+
+    return {
+        symbol: chainMetadata.symbol,
+        decimals: chainMetadata.decimals,
+        tokenType,
+        tokenId,
+    };
+}
+
 /**
  * Get a coin object id for a coin held by the user and meeting a given threshold.
  * Returns `undefined` if balance threshold criteria are not met.
@@ -146,5 +171,7 @@ module.exports = {
     createLockedCoinManagement,
     saveTokenDeployment,
     checkIfCoinExists,
+    coinMetadataByType,
+    tokenMetadata,
     senderHasSufficientBalance,
 };
