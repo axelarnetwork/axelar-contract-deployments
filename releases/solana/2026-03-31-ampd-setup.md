@@ -47,7 +47,7 @@ chain_name = "solana"
 #### Testnet
 
 ```toml
-rpc_url = "https://api.devnet.solana.com"
+rpc_url = "your-rpc-url"
 domain_separator = "2ba3d447b55ebd352d941bad2be996868560897c257f063c9c3bcee72f82234f"
 ```
 
