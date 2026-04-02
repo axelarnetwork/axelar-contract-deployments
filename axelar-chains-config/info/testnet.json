@@ -2968,6 +2968,17 @@
           "address": "0x578d62784cd79de8cdEC994DF8f8844fC4cf90D8",
           "version": "2.2.0",
           "implementation": "0xFCd9E5C814A7A8F1681bEc38817A91A4DC452c2e"
+        },
+        "MonadAxelarTransceiver": {
+          "gmpManager": "0x641a6608e2959c0D7Fe2a5F267DFDA519ED43d98",
+          "TransceiverStructs": "0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6",
+          "implementation": "0x6adf16a746ab8Ef53faB6CD12781fEe7c003E23f",
+          "gateway": "0x1dd10E8909E248e554AA614e7b86fABE1d8f9E77",
+          "gasService": "0x5030D144E845e862B35B50E9C0610E2CD77F70D7",
+          "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "deploymentMethod": "create",
+          "codehash": "0xf56edc38ef64b6736b2f122c3d1e20b275fc081fb71689a7ec47ddb31eab07c4",
+          "address": "0x65C8Fb0D8A324B164670Dd96E1186B332cfc5898"
         }
       }
     },
