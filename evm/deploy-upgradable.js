@@ -9,7 +9,6 @@
  *
  * Supported upgradable contract types:
  * - AxelarGasService: Gas service contract with upgrade capability
- * - AxelarDepositService: Deposit service contract with upgrade capability
  */
 
 const chalk = require('chalk');
@@ -47,7 +46,7 @@ function getProxy(wallet, proxyAddress) {
 /**
  * Generates implementation constructor arguments for a given contract based on its configuration and options.
  */
-async function getImplementationArgs(contractConfig, contractName, gatewayAddress, options) {
+async function getImplementationArgs(contractConfig, contractName, options) {
     let args;
 
     try {
@@ -68,28 +67,6 @@ async function getImplementationArgs(contractConfig, contractName, gatewayAddres
 
             return [collector];
         }
-
-        case 'AxelarDepositService': {
-            const symbol = contractConfig.wrappedSymbol;
-
-            if (symbol === undefined) {
-                throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
-            } else if (symbol === '') {
-                console.log(`AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
-            }
-
-            const refundIssuer = contractConfig.refundIssuer;
-
-            if (!isAddress(refundIssuer)) {
-                throw new Error(`Missing AxelarDepositService.refundIssuer in the chain info.`);
-            }
-
-            if (!isAddress(gatewayAddress)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
-            return [gatewayAddress, symbol, refundIssuer];
-        }
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -101,10 +78,6 @@ async function getImplementationArgs(contractConfig, contractName, gatewayAddres
 function getInitArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
-            return '0x';
-        }
-
-        case 'AxelarDepositService': {
             return '0x';
         }
     }
@@ -120,10 +93,6 @@ function getUpgradeArgs(contractName) {
         case 'AxelarGasService': {
             return '0x';
         }
-
-        case 'AxelarDepositService': {
-            return '0x';
-        }
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -137,7 +106,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly, reuseProxy } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 
-    if (deployMethod === 'create3' && (contractName === 'AxelarGasService' || contractName === 'AxelarDepositService')) {
+    if (deployMethod === 'create3' && contractName === 'AxelarGasService') {
         printError(`${deployMethod} not supported for ${contractName}`);
         return;
     }
@@ -147,10 +116,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     const wallet = new Wallet(privateKey, provider);
     await printWalletInfo(wallet);
 
-    const artifactPath =
-        options.artifactPath ||
-        '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' +
-            (contractName === 'AxelarGasService' ? 'gas-service/' : 'deposit-service/');
+    const artifactPath = options.artifactPath || '@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/';
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
@@ -164,7 +130,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     }
 
     const contractConfig = contracts[contractName];
-    const implArgs = await getImplementationArgs(contractConfig, contractName, contracts.AxelarGateway?.address, options);
+    const implArgs = await getImplementationArgs(contractConfig, contractName, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
