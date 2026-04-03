@@ -116,7 +116,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     const wallet = new Wallet(privateKey, provider);
     await printWalletInfo(wallet);
 
-    const artifactPath = options.artifactPath || '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' + 'gas-service/';
+    const artifactPath = options.artifactPath || '@axelar-network/axelar-cgp-solidity/artifacts/contracts/gas-service/';
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
