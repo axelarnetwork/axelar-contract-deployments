@@ -696,11 +696,22 @@ fn call_contract(
     let mut instructions = Vec::new();
 
     if let Some(amount) = gas_value {
+        use anchor_lang::ToAccountMetas as _;
+
         let payload_hash: [u8; 32] = solana_sdk::keccak::hashv(&[&payload]).to_bytes();
         let gas_service_program = solana_axelar_gas_service::id();
         let (treasury_pda, _) = solana_axelar_gas_service::Treasury::find_pda();
         let (gas_event_authority, _) =
             Pubkey::find_program_address(&[b"__event_authority"], &gas_service_program);
+
+        let gas_accounts = solana_axelar_gas_service::accounts::PayGas {
+            sender: *fee_payer,
+            treasury: treasury_pda,
+            system_program: solana_sdk_ids::system_program::ID,
+            program: gas_service_program,
+            event_authority: gas_event_authority,
+        }
+        .to_account_metas(None);
 
         let gas_ix_data = solana_axelar_gas_service::instruction::PayGas {
             destination_chain: destination_chain.clone(),
@@ -713,13 +724,7 @@ fn call_contract(
 
         instructions.push(Instruction {
             program_id: gas_service_program,
-            accounts: vec![
-                AccountMeta::new(*fee_payer, true),
-                AccountMeta::new(treasury_pda, false),
-                AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
-                AccountMeta::new_readonly(gas_event_authority, false),
-                AccountMeta::new_readonly(gas_service_program, false),
-            ],
+            accounts: gas_accounts,
             data: gas_ix_data,
         });
 
