@@ -75,7 +75,7 @@ get_op_vault() {
         devnet-amplifier) echo "Devnet - Axelar Externally Owned Accounts" ;;
         stagenet)         echo "Stagenet - Axelar Externally Owned Accounts" ;;
         testnet)          echo "Testnet - Axelar Externally Owned Accounts" ;;
-        mainnet)          log_error "1Password vault for mainnet not configured yet"; exit 1 ;;
+        mainnet)          echo "Mainnet - Axelar Externally Owned Accounts" ;;
     esac
 }
 
