@@ -3607,6 +3607,47 @@
           "decimals": 18
         }
       }
+    },
+    "solana": {
+      "name": "Solana",
+      "axelarId": "solana",
+      "rpc": "https://api.mainnet-beta.solana.com",
+      "chainType": "svm",
+      "decimals": 9,
+      "finality": "31",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "SOL",
+      "explorer": {
+        "name": "Solana Mainnet Explorer",
+        "url": "https://explorer.solana.com/?cluster=mainnet-beta"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "gtwqvLL93XK7pC2eMvfGamqokvs19AytzaVhrL2iKiz",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "AxelarGasService": {
+          "address": "gaszjG8797GGm8oACCzH2KLLifGp2nugKkLwaecwBjT",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "AxelarOperators": {
+          "address": "opre2VP8uvjq3YS15NRhRagsWvsY5DybitvCeLPAwbK",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "AxelarMemo": {
+          "address": "memtaCuA26EANM26matPAhiQGPnvsrYdJYrYcK8wcon",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "InterchainTokenService": {
+          "address": "itsAUdHnV2K99ppbM6d6WUDac8MD54RAE7dUKHnw1Eg",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        }
+      }
     }
   },
   "axelar": {
