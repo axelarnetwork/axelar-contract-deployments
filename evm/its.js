@@ -264,7 +264,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowLimit = await tokenManager.flowLimit();
-            printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
+
+            if (flowLimit.isZero()) {
+                printInfo(`Flow limit for tokenId ${tokenId} 0 (= unlimited)`, flowLimit);
+            } else {
+                printInfo(`Flow limit for tokenId ${tokenId}`, flowLimit);
+            }
 
             break;
         }
@@ -415,6 +420,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateTokenIds(interchainTokenService, [tokenId]);
             validateParameters({ isValidNumber: { flowLimit } });
+
+            if (Number(flowLimit) === 0) {
+                throw new Error('Flow limit of 0 is not allowed as it disables rate limiting. Use `unfreeze-tokens` instead.');
+            }
 
             const tx = await interchainTokenService.setFlowLimits([tokenId], [flowLimit], gasOptions);
             await handleTx(tx, chain, interchainTokenService, action);
