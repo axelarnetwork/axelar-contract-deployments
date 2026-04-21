@@ -4154,11 +4154,19 @@
       },
       "ChainCodecSolana": {
         "storeCodeProposalId": "452",
-        "storeCodeProposalCodeHash": "2f8e98c1ab8eb92d017155a01b4d9d6158a2286bd35897d117c3da085364c1f4"
+        "storeCodeProposalCodeHash": "2f8e98c1ab8eb92d017155a01b4d9d6158a2286bd35897d117c3da085364c1f4",
+        "lastUploadedCodeId": 61,
+        "codeId": 61,
+        "instantiateProposalId": "456",
+        "address": "axelar1d2ecnmd77stp50wyqp5l827hjtld9utvweaw0zwyk57fysv3ez9stnxrk4"
       },
       "ItsSolanaTranslator": {
         "storeCodeProposalId": "453",
-        "storeCodeProposalCodeHash": "63195b80b58a2a2f1a1149326906eb611b5fb8fa10127208c19154cad6b0c5a6"
+        "storeCodeProposalCodeHash": "63195b80b58a2a2f1a1149326906eb611b5fb8fa10127208c19154cad6b0c5a6",
+        "lastUploadedCodeId": 62,
+        "codeId": 62,
+        "instantiateProposalId": "457",
+        "address": "axelar1l4w6pgl4h2gguu82ue9wgfzsj8xgqfugtvrhv0s6zzr0hjwc654quydjqx"
       }
     }
   }
