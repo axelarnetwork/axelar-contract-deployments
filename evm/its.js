@@ -422,7 +422,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidNumber: { flowLimit } });
 
             if (Number(flowLimit) === 0) {
-                throw new Error('Flow limit of 0 is not allowed as it disables rate limiting. Use `unfreeze-tokens` instead.');
+                throw new Error('Flow limit of 0 is not allowed as it disables rate limiting. Use 1 to disable flow or use `unfreeze-tokens` to disable rate limiting.');
             }
 
             const tx = await interchainTokenService.setFlowLimits([tokenId], [flowLimit], gasOptions);
