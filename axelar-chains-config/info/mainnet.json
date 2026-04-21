@@ -3724,7 +3724,13 @@
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "executeProposalId": "245",
         "lastUploadedCodeId": 57,
-        "version": "3.0.0"
+        "version": "3.0.0",
+        "deployments": {
+          "solana": {
+            "deploymentName": "solana-17-56-55",
+            "salt": "solana"
+          }
+        }
       },
       "Multisig": {
         "blockExpiry": 50,
@@ -3857,7 +3863,22 @@
         "storeCodeProposalId": "433",
         "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
         "codeId": 55,
-        "lastUploadedCodeId": 55
+        "lastUploadedCodeId": 55,
+        "solana": {
+          "codeId": 55,
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1w2ey0ek9e8q2dfmeznz6ah49zdywpdme0z0kly",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "solana",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x1b9a227b534dd9345b548a26811b4ff8cee835ee8cf3cf6d093a512e0dd0128c",
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m"
+        }
       },
       "Gateway": {
         "flow": {
@@ -3906,6 +3927,11 @@
         "monad": {
           "codeId": 17,
           "address": "axelar1pwjjvn9cqtk8f5furw26szn7pl2x547cyc8qrsjk542c9gpyfs0spuetwl",
+          "version": "1.1.1"
+        },
+        "solana": {
+          "codeId": 17,
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
           "version": "1.1.1"
         }
       },
@@ -4039,7 +4065,21 @@
         "storeCodeProposalId": "434",
         "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
         "codeId": 56,
-        "lastUploadedCodeId": 56
+        "lastUploadedCodeId": 56,
+        "solana": {
+          "codeId": 56,
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "gtwqvLL93XK7pC2eMvfGamqokvs19AytzaVhrL2iKiz",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m"
+        }
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "364",
