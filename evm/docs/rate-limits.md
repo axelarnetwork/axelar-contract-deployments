@@ -10,7 +10,7 @@ These limits are controlled by an address whitelisted with the ITS `operator` ro
 
 - **Epoch**: 6 hours (hardcoded). Flow counters reset at the start of each epoch.
 - **Net Flow**: `|flowOut - flowIn|` - bidirectional transfers offset each other
-- **Flow Limit**: Maximum allowed net flow per epoch. Setting `flowLimit = 0` disables rate limiting.
+- **Flow Limit**: Maximum allowed net flow per epoch. A `flowLimit` of `0` disables rate limiting.
 - **Per-chain, per-token**: Each TokenManager on each chain has independent flow limits
 - **NOT per-chain-pair**: destination chains or source chains interacting with a specific chain share same flow limit for a given token
 - Flow limits protect against exploits by capping potential losses per epoch
@@ -93,11 +93,11 @@ ts-node evm/its.js set-flow-limit <token-id> <flow-limit>
 ```
 
 - **`token-id`**: ITS token identifier.
-- **`flow-limit`**: New flow limit for this token on the current chain.
+- **`flow-limit`**: New flow limit for this token on the current chain. Must be greater than `0`.
 
 Notes:
 - Requires **ITS operator** privileges.
-- `flow-limit = 0` effectively **removes** the limit (no rate limiting for that token on this chain). Use minimum integer number according to  token decimals to disable flows.
+- `flow-limit = 0` is **not allowed** via this command: on-chain it would disable rate limiting (unlimited flow). To remove the limit intentionally, use `unfreeze-tokens`. To disable flows, pass the minimum integer value according to the token decimals.
 
 ---
 
