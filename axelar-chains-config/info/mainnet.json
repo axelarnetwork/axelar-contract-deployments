@@ -3877,7 +3877,8 @@
           "encoder": "solana",
           "keyType": "ecdsa",
           "domainSeparator": "0x1b9a227b534dd9345b548a26811b4ff8cee835ee8cf3cf6d093a512e0dd0128c",
-          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m"
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
+          "address": "axelar1xdtjwhenmy80wckuntd2npd3zeqayy0q0l5dfy48g6wmu3p48pgqknnc9g"
         }
       },
       "Gateway": {
@@ -3932,7 +3933,8 @@
         "solana": {
           "codeId": 17,
           "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
-          "version": "1.1.1"
+          "version": "1.1.1",
+          "address": "axelar1f258jksatcwdkcp8awnvx7p78m7ycszcnpd3ufq4yps4f77dah6q7xskv6"
         }
       },
       "VotingVerifier": {
@@ -4078,7 +4080,8 @@
           "blockExpiry": 10,
           "confirmationHeight": 1000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m"
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
+          "address": "axelar19gut3kvqf57gnu5ylq474qfgk4gg5ly89cs5kk4mde688lc5adsq6qyz4h"
         }
       },
       "InterchainTokenService": {
