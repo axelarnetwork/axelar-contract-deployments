@@ -645,7 +645,15 @@ async function main(action, args, options) {
     await mainProcessor(options, async (axelar, chain, chains, options) => {
         const proposal = await processCommand(axelar, chain, chains, action, options);
         if (proposal) {
-            if (isConsensusChain(chain)) {
+            // Legacy consensus-gateway governance path. Deprecated in favor of the
+            // amplifier-only path (AxelarnetGateway.call_contract). Envs migrated so far:
+            // - devnet-amplifier (2026-04-23)
+            // Still using the legacy path:
+            // - stagenet, testnet, mainnet
+            // TODO: remove this branch once all envs have migrated.
+            const useLegacyConsensusPath = isConsensusChain(chain) && !['devnet-amplifier'].includes(options.env);
+
+            if (useLegacyConsensusPath) {
                 consensusProposals.push(proposal);
             } else {
                 amplifierAxelarnetMsgs.push({
