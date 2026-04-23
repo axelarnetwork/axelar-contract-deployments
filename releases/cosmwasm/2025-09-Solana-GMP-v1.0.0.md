@@ -313,7 +313,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
     | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
     | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
     | **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | `100`               |
-    | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | TBD                 |
+    | **Mainnet**          | `47250`          | `[\"8\", \"10\"]`         | `5553500000`        |
 
     ```bash
     ts-node cosmwasm/contract.ts create-reward-pools $CHAIN \

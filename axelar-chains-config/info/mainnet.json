@@ -3607,6 +3607,47 @@
           "decimals": 18
         }
       }
+    },
+    "solana": {
+      "name": "Solana",
+      "axelarId": "solana",
+      "rpc": "https://api.mainnet-beta.solana.com",
+      "chainType": "svm",
+      "decimals": 9,
+      "finality": "31",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "SOL",
+      "explorer": {
+        "name": "Solana Mainnet Explorer",
+        "url": "https://explorer.solana.com/?cluster=mainnet-beta"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "gtwqvLL93XK7pC2eMvfGamqokvs19AytzaVhrL2iKiz",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "AxelarGasService": {
+          "address": "gaszjG8797GGm8oACCzH2KLLifGp2nugKkLwaecwBjT",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "AxelarOperators": {
+          "address": "opre2VP8uvjq3YS15NRhRagsWvsY5DybitvCeLPAwbK",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "AxelarMemo": {
+          "address": "memtaCuA26EANM26matPAhiQGPnvsrYdJYrYcK8wcon",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        },
+        "InterchainTokenService": {
+          "address": "itsAUdHnV2K99ppbM6d6WUDac8MD54RAE7dUKHnw1Eg",
+          "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
+          "version": "1.1.0"
+        }
+      }
     }
   },
   "axelar": {
@@ -3615,9 +3656,9 @@
     "multisigProverAdminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
     "axelarId": "axelar",
     "chainId": "axelar-dojo-1",
-    "rpc": "https://rpc-axelar.imperator.co:443",
-    "lcd": "https://lcd-axelar.imperator.co",
-    "grpc": "grpc-axelar.imperator.co:443",
+    "rpc": "https://axelar-rpc.qubelabs.io:443",
+    "lcd": "https://axelar-lcd.qubelabs.io",
+    "grpc": "axelar-grpc.qubelabs.io:9092",
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://api.axelarscan.io",
     "gasPrice": "0.007uaxl",
@@ -3683,7 +3724,13 @@
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "executeProposalId": "245",
         "lastUploadedCodeId": 57,
-        "version": "3.0.0"
+        "version": "3.0.0",
+        "deployments": {
+          "solana": {
+            "deploymentName": "solana-17-56-55",
+            "salt": "solana"
+          }
+        }
       },
       "Multisig": {
         "blockExpiry": 50,
@@ -3816,7 +3863,23 @@
         "storeCodeProposalId": "433",
         "storeCodeProposalCodeHash": "77efc51252040e9ccf25b964ec032e5b7c24f5db2d454ba7c152e9db51deffeb",
         "codeId": 55,
-        "lastUploadedCodeId": 55
+        "lastUploadedCodeId": 55,
+        "solana": {
+          "codeId": 55,
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1w2ey0ek9e8q2dfmeznz6ah49zdywpdme0z0kly",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "solana",
+          "keyType": "ecdsa",
+          "domainSeparator": "0x1b9a227b534dd9345b548a26811b4ff8cee835ee8cf3cf6d093a512e0dd0128c",
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
+          "address": "axelar1xdtjwhenmy80wckuntd2npd3zeqayy0q0l5dfy48g6wmu3p48pgqknnc9g"
+        }
       },
       "Gateway": {
         "flow": {
@@ -3866,6 +3929,12 @@
           "codeId": 17,
           "address": "axelar1pwjjvn9cqtk8f5furw26szn7pl2x547cyc8qrsjk542c9gpyfs0spuetwl",
           "version": "1.1.1"
+        },
+        "solana": {
+          "codeId": 17,
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
+          "version": "1.1.1",
+          "address": "axelar1f258jksatcwdkcp8awnvx7p78m7ycszcnpd3ufq4yps4f77dah6q7xskv6"
         }
       },
       "VotingVerifier": {
@@ -3998,7 +4067,22 @@
         "storeCodeProposalId": "434",
         "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
         "codeId": 56,
-        "lastUploadedCodeId": 56
+        "lastUploadedCodeId": 56,
+        "solana": {
+          "codeId": 56,
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "gtwqvLL93XK7pC2eMvfGamqokvs19AytzaVhrL2iKiz",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
+          "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
+          "address": "axelar19gut3kvqf57gnu5ylq474qfgk4gg5ly89cs5kk4mde688lc5adsq6qyz4h"
+        }
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "364",
@@ -4110,6 +4194,22 @@
         "instantiateProposalId": "438",
         "address": "axelar1nxq3kk04glzaqx3dq79ry5eygdtxwdc0520fs5ycgtnnsw4c2s4qy8n723",
         "version": "1.0.0"
+      },
+      "ChainCodecSolana": {
+        "storeCodeProposalId": "452",
+        "storeCodeProposalCodeHash": "2f8e98c1ab8eb92d017155a01b4d9d6158a2286bd35897d117c3da085364c1f4",
+        "lastUploadedCodeId": 61,
+        "codeId": 61,
+        "instantiateProposalId": "456",
+        "address": "axelar1d2ecnmd77stp50wyqp5l827hjtld9utvweaw0zwyk57fysv3ez9stnxrk4"
+      },
+      "ItsSolanaTranslator": {
+        "storeCodeProposalId": "453",
+        "storeCodeProposalCodeHash": "63195b80b58a2a2f1a1149326906eb611b5fb8fa10127208c19154cad6b0c5a6",
+        "lastUploadedCodeId": 62,
+        "codeId": 62,
+        "instantiateProposalId": "457",
+        "address": "axelar1l4w6pgl4h2gguu82ue9wgfzsj8xgqfugtvrhv0s6zzr0hjwc654quydjqx"
       }
     }
   }

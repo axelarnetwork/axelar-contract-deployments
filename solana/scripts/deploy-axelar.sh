@@ -75,7 +75,7 @@ get_op_vault() {
         devnet-amplifier) echo "Devnet - Axelar Externally Owned Accounts" ;;
         stagenet)         echo "Stagenet - Axelar Externally Owned Accounts" ;;
         testnet)          echo "Testnet - Axelar Externally Owned Accounts" ;;
-        mainnet)          log_error "1Password vault for mainnet not configured yet"; exit 1 ;;
+        mainnet)          echo "Mainnet - Axelar Externally Owned Accounts" ;;
     esac
 }
 
@@ -115,7 +115,8 @@ get_epoch_duration() {
     case "$ENV" in
         devnet-amplifier) echo "100" ;;
         stagenet)         echo "600" ;;
-        testnet|mainnet)  echo "14845" ;;
+        testnet)          echo "14845" ;;
+        mainnet)          echo "47250" ;;
     esac
 }
 
@@ -127,7 +128,10 @@ get_participation_threshold() {
 }
 
 get_rewards_per_epoch() {
-    echo "100"
+    case "$ENV" in
+        mainnet) echo "5553500000" ;;
+        *)       echo "100" ;;
+    esac
 }
 
 get_reward_amount() {
