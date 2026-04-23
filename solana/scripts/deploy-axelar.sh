@@ -115,7 +115,8 @@ get_epoch_duration() {
     case "$ENV" in
         devnet-amplifier) echo "100" ;;
         stagenet)         echo "600" ;;
-        testnet|mainnet)  echo "14845" ;;
+        testnet)          echo "14845" ;;
+        mainnet)          echo "47250" ;;
     esac
 }
 
@@ -127,7 +128,10 @@ get_participation_threshold() {
 }
 
 get_rewards_per_epoch() {
-    echo "100"
+    case "$ENV" in
+        mainnet) echo "5553500000" ;;
+        *)       echo "100" ;;
+    esac
 }
 
 get_reward_amount() {
