@@ -1089,7 +1089,6 @@ step_ampd_update_pause() {
     echo "    Verifiers should update their Solana ampd handler with the following params:"
     echo ""
     echo "    rpc_url           = \"${rpc_url}\""
-    echo "    gateway_address   = \"${gateway_address}\""
     echo "    domain_separator  = \"${domain_separator}\""
     echo ""
     echo "    voting_verifier   = \"${VOTING_VERIFIER}\""

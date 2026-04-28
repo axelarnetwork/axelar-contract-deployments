@@ -4102,7 +4102,12 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
-        "version": "1.3.0"
+        "version": "1.3.0",
+        "solana": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6,
+          "msgTranslator": "axelar1l4w6pgl4h2gguu82ue9wgfzsj8xgqfugtvrhv0s6zzr0hjwc654quydjqx"
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "269",
