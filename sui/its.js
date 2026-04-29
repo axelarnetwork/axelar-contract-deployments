@@ -40,6 +40,67 @@ const {
 } = require('hardhat').ethers;
 const { checkIfCoinExists, tokenMetadata, senderHasSufficientBalance } = require('./utils/token-utils');
 
+async function registeredCoinData(client, itsConfig, tokenId) {
+    const itsObject = await client.getObject({
+        id: itsConfig.objects.InterchainTokenServicev0,
+        options: { showContent: true },
+    });
+
+    const registeredCoinsId = itsObject?.data?.content?.fields?.value?.fields?.registered_coins?.fields?.id?.id;
+    if (!registeredCoinsId) {
+        throw new Error(`Unable to query registered coins bag for ITS object ${itsConfig.objects.InterchainTokenServicev0}`);
+    }
+
+    let cursor = null;
+    do {
+        const page = await client.getDynamicFields({ parentId: registeredCoinsId, cursor });
+        const entry = (page.data || []).find((coin) => coin.name?.value === tokenId || coin.name?.fields?.id === tokenId);
+        if (entry) {
+            const coinObject = await client.getObject({
+                id: entry.objectId,
+                options: { showContent: true },
+            });
+
+            return coinObject?.data?.content?.fields?.value?.fields || null;
+        }
+
+        cursor = page.hasNextPage ? page.nextCursor : null;
+    } while (cursor);
+
+    throw new Error(`Registered coin data not found for tokenId ${tokenId}`);
+}
+
+function optionValue(option) {
+    if (!option) {
+        return null;
+    }
+
+    if (Array.isArray(option.vec)) {
+        return option.vec.length ? option.vec[0] : null;
+    }
+
+    if (option.fields && Array.isArray(option.fields.vec)) {
+        return option.fields.vec.length ? option.fields.vec[0] : null;
+    }
+
+    return null;
+}
+
+async function flowAmount(client, itsConfig, tokenId) {
+    const coinData = await registeredCoinData(client, itsConfig, tokenId);
+    const flowLimitData = coinData?.coin_management?.fields?.flow_limit?.fields;
+
+    if (!flowLimitData) {
+        throw new Error(`Flow limit data not found for tokenId ${tokenId}`);
+    }
+
+    return {
+        flowLimit: optionValue(flowLimitData.flow_limit),
+        flowInAmount: flowLimitData.flow_in,
+        flowOutAmount: flowLimitData.flow_out,
+    };
+}
+
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
 
@@ -114,6 +175,56 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Set flow limits', options);
     }
+}
+
+async function flowLimit(keypair, client, _config, contracts, args, _options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const [tokenId] = args;
+
+    validateParameters({
+        isHexString: { tokenId },
+    });
+
+    const coinType = await tokenIdToCoinType(client, keypair.toSuiAddress(), itsConfig, tokenId);
+    const { symbol, decimals } = await tokenMetadata(client, tokenId, coinType);
+    const { flowLimit } = await flowAmount(client, itsConfig, tokenId);
+
+    if (flowLimit === null) {
+        printInfo(`Flow limit for tokenId ${tokenId}`, 'No limit set');
+        return;
+    }
+
+    printInfo(`Flow limit for tokenId ${tokenId}`, `${getFormattedAmount(flowLimit, decimals)} ${symbol}`);
+}
+
+async function flowOutAmount(keypair, client, _config, contracts, args, _options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const [tokenId] = args;
+
+    validateParameters({
+        isHexString: { tokenId },
+    });
+
+    const coinType = await tokenIdToCoinType(client, keypair.toSuiAddress(), itsConfig, tokenId);
+    const { symbol, decimals } = await tokenMetadata(client, tokenId, coinType);
+    const { flowOutAmount } = await flowAmount(client, itsConfig, tokenId);
+
+    printInfo(`Flow out amount for tokenId ${tokenId}`, `${getFormattedAmount(flowOutAmount, decimals)} ${symbol}`);
+}
+
+async function flowInAmount(keypair, client, _config, contracts, args, _options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const [tokenId] = args;
+
+    validateParameters({
+        isHexString: { tokenId },
+    });
+
+    const coinType = await tokenIdToCoinType(client, keypair.toSuiAddress(), itsConfig, tokenId);
+    const { symbol, decimals } = await tokenMetadata(client, tokenId, coinType);
+    const { flowInAmount } = await flowAmount(client, itsConfig, tokenId);
+
+    printInfo(`Flow in amount for tokenId ${tokenId}`, `${getFormattedAmount(flowInAmount, decimals)} ${symbol}`);
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
@@ -1157,6 +1268,30 @@ if (require.main === module) {
             return mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
+    const flowLimitProgram = new Command()
+        .name('flow-limit')
+        .command('flow-limit <tokenId>')
+        .description('Get flow limit for token')
+        .action((tokenId, options) => {
+            return mainProcessor(flowLimit, options, [tokenId], processCommand);
+        });
+
+    const flowOutAmountProgram = new Command()
+        .name('flow-out-amount')
+        .command('flow-out-amount <tokenId>')
+        .description('Get flow out amount for token')
+        .action((tokenId, options) => {
+            return mainProcessor(flowOutAmount, options, [tokenId], processCommand);
+        });
+
+    const flowInAmountProgram = new Command()
+        .name('flow-in-amount')
+        .command('flow-in-amount <tokenId>')
+        .description('Get flow in amount for token')
+        .action((tokenId, options) => {
+            return mainProcessor(flowInAmount, options, [tokenId], processCommand);
+        });
+
     const registerCoinFromInfoProgram = new Command()
         .name('register-coin-from-info')
         .command('register-coin-from-info <symbol> <name> <decimals>')
@@ -1322,6 +1457,9 @@ if (require.main === module) {
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(checkVersionControlProgram);
     program.addCommand(deployRemoteCoinProgram);
+    program.addCommand(flowInAmountProgram);
+    program.addCommand(flowLimitProgram);
+    program.addCommand(flowOutAmountProgram);
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(interchainTransferProgram);
     program.addCommand(linkCoinProgram);
@@ -1343,4 +1481,4 @@ if (require.main === module) {
     program.parseAsync().then(() => process.exit(0));
 }
 
-module.exports = { addTrustedChains, removeTrustedChains, setFlowLimits };
+module.exports = { addTrustedChains, flowInAmount, flowLimit, flowOutAmount, removeTrustedChains, setFlowLimits };

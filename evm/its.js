@@ -274,7 +274,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { tokenManager, symbol, decimals } = await tokenManagerAndMetadata(interchainTokenService, tokenId, wallet);
             const flowLimit = await tokenManager.flowLimit();
 
-            printInfo(`Flow limit for tokenId ${tokenId}`, `${formatUnits(flowLimit, decimals)} ${symbol}`);
+            if (flowLimit.isZero()) {
+                printInfo(`Flow limit for tokenId ${tokenId}`, 'No limit set');
+            } else {
+                printInfo(`Flow limit for tokenId ${tokenId}`, `${formatUnits(flowLimit, decimals)} ${symbol}`);
+            }
 
             break;
         }
