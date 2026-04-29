@@ -10,6 +10,7 @@ import {
     authorizeInvocation,
     nativeToScVal,
     rpc,
+    scValToNative,
     xdr,
 } from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
@@ -98,7 +99,7 @@ async function getAuthValidUntilLedger(chain) {
 const addBaseOptions = (command: Command, options: Options = {}) => {
     addEnvOption(command);
     command.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    command.addOption(new Option('--chain-name <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
+    command.addOption(new Option('-n, --chain-name <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
     command.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     command.addOption(new Option('--estimate-cost', 'estimate on-chain resources').default(false));
 
@@ -223,7 +224,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
 }
 
 function parseSimulatedResponse(response) {
-    return response.result.retval._value;
+    return scValToNative(response.result.retval);
 }
 
 function isReadOnly(response: rpc.Api.SimulateTransactionResponse, action?: string): boolean {
