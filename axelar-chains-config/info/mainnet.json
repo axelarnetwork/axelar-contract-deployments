@@ -3624,16 +3624,25 @@
       "contracts": {
         "AxelarGateway": {
           "address": "gtwqvLL93XK7pC2eMvfGamqokvs19AytzaVhrL2iKiz",
+          "connectionType": "amplifier",
+          "domainSeparator": "0x1b9a227b534dd9345b548a26811b4ff8cee835ee8cf3cf6d093a512e0dd0128c",
+          "minimumRotationDelay": 86400,
+          "operator": "gopXXoSxFC2DXi5fhQ9ojxwHj37t6AJwj9NfY2P4GBa",
+          "previousSignersRetention": 15,
           "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
           "version": "1.1.0"
         },
         "AxelarGasService": {
           "address": "gaszjG8797GGm8oACCzH2KLLifGp2nugKkLwaecwBjT",
+          "operator": "gopXXoSxFC2DXi5fhQ9ojxwHj37t6AJwj9NfY2P4GBa",
+          "configAccount": "7aTgGApBqk9Ww1d7voWvGMYu6Km5R15XPmXyjZKTxf9r",
           "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
           "version": "1.1.0"
         },
         "AxelarOperators": {
           "address": "opre2VP8uvjq3YS15NRhRagsWvsY5DybitvCeLPAwbK",
+          "configAccount": "BGGxenyB58yQ9KjcaDfM6yfnoWjWxAuri3CcgKoKoXb5",
+          "owner": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
           "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
           "version": "1.1.0"
         },
@@ -3644,6 +3653,8 @@
         },
         "InterchainTokenService": {
           "address": "itsAUdHnV2K99ppbM6d6WUDac8MD54RAE7dUKHnw1Eg",
+          "configAccount": "4aF3gSZCYE2Nt92c1Ba7TTag8ob79xbWydUzwk3HjprL",
+          "operator": "gopXXoSxFC2DXi5fhQ9ojxwHj37t6AJwj9NfY2P4GBa",
           "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
           "version": "1.1.0"
         }
