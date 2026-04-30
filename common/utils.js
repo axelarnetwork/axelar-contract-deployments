@@ -706,10 +706,13 @@ const getMultisigProof = async (axelar, chain, multisigSessionId, proverContract
 
 const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
     const client = await getCosmWasmClient(axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        axelar.contracts[contract][chain].address,
-        'current_verifier_set',
-    );
+    const result = await client.queryContractSmart(axelar.contracts[contract][chain].address, 'current_verifier_set');
+
+    if (!result) {
+        return null;
+    }
+
+    const { id: verifierSetId, verifier_set: verifierSet } = result;
 
     return {
         verifierSetId,

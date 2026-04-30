@@ -24,7 +24,7 @@ const getVerifierSetStatus = async (config, chain, client, verifierStatus) => {
 
 const updateVerifierSet = async (client, config, _options, [chain], fee) => {
     const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain);
-    printInfo('Current verifier set', currentVerifierSet);
+    printInfo('Current verifier set', currentVerifierSet ?? '(none — genesis)');
 
     const { transactionHash, events } = await executeTransaction(
         client,
@@ -33,10 +33,13 @@ const updateVerifierSet = async (client, config, _options, [chain], fee) => {
         fee,
     );
     printInfo('Update Verifier set', transactionHash);
-    const multisigSessionId = events
-        .find((e) => e.type === 'wasm-proof_under_construction')
-        .attributes.find((a) => a.key === 'multisig_session_id').value;
-    printInfo('Mutisig session ID', multisigSessionId);
+    const proofEvent = events.find((e) => e.type === 'wasm-proof_under_construction');
+    if (proofEvent) {
+        const multisigSessionId = proofEvent.attributes.find((a) => a.key === 'multisig_session_id').value;
+        printInfo('Mutisig session ID', multisigSessionId);
+    } else {
+        printInfo('No multisig session (genesis verifier set — no rotation proof needed)');
+    }
 };
 
 const confirmVerifierRotation = async (client, config, _options, [chain, txHash], fee) => {
