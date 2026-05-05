@@ -30,11 +30,11 @@ if (require.main === module) {
         .addOption(new Option('--payload <payload>', 'payload to call contract at destination address with'))
         .addOption(new Option('--gasFeeAmount <gasFeeAmount>', 'gas fee amount').makeOptionMandatory(true))
         .action((token, amount, destinationChain, destinationAddress, options) => {
-            mainProcessor(interchainTransfer, options, { token, amount, destinationChain, destinationAddress });
+            return mainProcessor(interchainTransfer, options, { token, amount, destinationChain, destinationAddress });
         });
 
     addBaseOptions(program);
     addSkipPromptOption(program);
 
-    program.parse();
+    program.parseAsync().then(() => process.exit(0));
 }

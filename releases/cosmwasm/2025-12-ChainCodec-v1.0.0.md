@@ -52,7 +52,9 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
-        -c ChainCodecSui -c ChainCodecStellar -c ChainCodecEvm \
+        -c ChainCodecSui -c ChainCodecStellar -c ChainCodecEvm -c ChainCodecSolana \
+        -t "Upload ChainCodec contracts" \
+        -d "Upload ChainCodec contracts" \
         --version 1.0.0 \
         --governance
     ```
@@ -63,17 +65,26 @@ The [ChainCodec deployment](#chaincodec-deployment) and [MultisigProver and Voti
     ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecSui  \
         --fetchCodeId \
-        --instantiate2
+        --instantiate2 \
+        --governance
 
     ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecStellar  \
         --fetchCodeId \
-        --instantiate2
+        --instantiate2 \
+        --governance
 
     ts-node cosmwasm/contract.ts instantiate \
         -c ChainCodecEvm  \
         --fetchCodeId \
-        --instantiate2
+        --instantiate2 \
+        --governance
+
+    ts-node cosmwasm/contract.ts instantiate \
+        -c ChainCodecSolana  \
+        --fetchCodeId \
+        --instantiate2 \
+        --governance
     ```
 
 ### MultisigProver and VotingVerifier migration

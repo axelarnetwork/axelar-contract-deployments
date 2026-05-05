@@ -70,6 +70,7 @@ pub(crate) const MULTICALL_KEY: &str = "Multicall";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 pub(crate) const OPERATORS_KEY: &str = "AxelarOperators";
+pub(crate) const MEMO_KEY: &str = "AxelarMemo";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
     let reader = std::io::BufReader::new(file);
@@ -196,6 +197,7 @@ pub(crate) fn print_transaction_result(
             let cluster_param = match config.network_type {
                 NetworkType::Local => "?cluster=custom",
                 NetworkType::Devnet => "?cluster=devnet",
+                NetworkType::Testnet => "?cluster=testnet",
                 NetworkType::Mainnet => "?cluster=mainnet-beta",
             };
             println!("   Explorer Link: {explorer_base_url}{tx_signature}{cluster_param}");
@@ -384,6 +386,30 @@ pub(crate) fn set_program_version(
 
     contracts[VERSION_KEY] = serde_json::Value::String(version.to_owned());
     Ok(())
+}
+
+/// Ensure the contract entry exists in the chains info JSON, creating it if absent.
+pub(crate) fn ensure_contract_entry(env: &mut Value, chain: &str, program_key: &str) {
+    let chains = env
+        .as_object_mut()
+        .unwrap()
+        .entry(CHAINS_KEY)
+        .or_insert_with(|| Value::Object(serde_json::Map::new()));
+    let chain_obj = chains
+        .as_object_mut()
+        .unwrap()
+        .entry(chain)
+        .or_insert_with(|| Value::Object(serde_json::Map::new()));
+    let contracts = chain_obj
+        .as_object_mut()
+        .unwrap()
+        .entry(CONTRACTS_KEY)
+        .or_insert_with(|| Value::Object(serde_json::Map::new()));
+    contracts
+        .as_object_mut()
+        .unwrap()
+        .entry(program_key)
+        .or_insert_with(|| Value::Object(serde_json::Map::new()));
 }
 
 pub(crate) fn parse_decimal_string_to_raw_units(s: &str, decimals: u8) -> eyre::Result<u64> {
