@@ -1106,9 +1106,8 @@ step_ampd_update_pause() {
     local service_name
     service_name=$(get_service_name)
 
-    local rpc_url domain_separator gateway_address
+    local rpc_url domain_separator
     rpc_url=$(jq_config ".chains[\"${CHAIN}\"].rpc // empty")
-    gateway_address=$(jq_config ".chains[\"${CHAIN}\"].contracts.AxelarGateway.address // empty")
     domain_separator=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].domainSeparator // empty" | sed 's/^0x//')
 
     echo ""
