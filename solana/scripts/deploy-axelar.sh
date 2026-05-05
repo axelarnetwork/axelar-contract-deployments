@@ -427,7 +427,21 @@ load_deployed_addresses() {
 # =============================================================================
 
 run_ts_node() {
-    log_info "Running: ts-node $*"
+    # Redact values of secret-bearing flags before logging
+    local redacted_args=()
+    local redact_next=false
+    for arg in "$@"; do
+        if [[ "$redact_next" == "true" ]]; then
+            redacted_args+=("<redacted>")
+            redact_next=false
+        elif [[ "$arg" == "-m" || "$arg" == "--mnemonic" ]]; then
+            redacted_args+=("$arg")
+            redact_next=true
+        else
+            redacted_args+=("$arg")
+        fi
+    done
+    log_info "Running: ts-node ${redacted_args[*]}"
     (cd "$DEPLOYMENTS_DIR" && ts-node "$@")
 }
 
