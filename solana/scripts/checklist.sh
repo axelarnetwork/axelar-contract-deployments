@@ -57,7 +57,18 @@ fi
 # Environment-dependent configuration
 # =============================================================================
 
+get_cluster() {
+    case "$ENV" in
+        devnet-amplifier|testnet) echo "devnet" ;;
+        stagenet)                 echo "testnet" ;;
+        mainnet)                  echo "mainnet-beta" ;;
+    esac
+}
+
+CLUSTER=$(get_cluster)
 CHAINS_INFO_FILE="${DEPLOYMENTS_DIR}/axelar-chains-config/info/${ENV}.json"
+export CLUSTER
+export CHAIN
 
 # =============================================================================
 # Utility functions

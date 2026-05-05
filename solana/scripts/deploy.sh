@@ -67,9 +67,9 @@ fi
 
 get_cluster() {
     case "$ENV" in
-        devnet-amplifier) echo "devnet" ;;
-        stagenet|testnet) echo "testnet" ;;
-        mainnet)          echo "mainnet-beta" ;;
+        devnet-amplifier|testnet) echo "devnet" ;;
+        stagenet)                 echo "testnet" ;;
+        mainnet)                  echo "mainnet-beta" ;;
     esac
 }
 
@@ -126,6 +126,10 @@ PREVIOUS_SIGNERS_RETENTION=15
 CHAINS_INFO_FILE="${DEPLOYMENTS_DIR}/axelar-chains-config/info/${ENV}.json"
 OP_VAULT=$(get_op_vault)
 ENV_DISPLAY=$(get_env_display)
+
+# Export so child processes (cli wrapper → cargo run → CLI binary) pick them up via clap env
+export CLUSTER
+export CHAIN
 
 # Track temporary files for cleanup
 TEMP_KEYPAIR_FILES=()

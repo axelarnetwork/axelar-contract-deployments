@@ -63,7 +63,7 @@ get_op_vault() {
         devnet-amplifier) echo "Devnet - Axelar Externally Owned Accounts" ;;
         stagenet)         echo "Stagenet - Axelar Externally Owned Accounts" ;;
         testnet)          echo "Testnet - Axelar Externally Owned Accounts" ;;
-        mainnet)          log_error "1Password vault for mainnet not configured yet"; exit 1 ;;
+        mainnet)          echo "Mainnet - Axelar Externally Owned Accounts" ;;
     esac
 }
 
@@ -272,7 +272,7 @@ generate_keypairs() {
         --title "[${ENV_DISPLAY}] Upgrade Authority: Solana" \
         --vault "$OP_VAULT" \
         --tags "solana,upgrade-authority,${ENV}" \
-        --format json | jq -r '.id')
+        --format json | jq -r '.uuid')
     op item edit "$upa_item_id" --vault "$OP_VAULT" \
         "notesPlain=Pubkey: ${upa_pubkey}" > /dev/null
     log_info "Imported: [${ENV_DISPLAY}] Upgrade Authority: Solana (${upa_pubkey})"
@@ -282,7 +282,7 @@ generate_keypairs() {
         --title "[${ENV_DISPLAY}] Operator: Solana" \
         --vault "$OP_VAULT" \
         --tags "solana,operator,${ENV}" \
-        --format json | jq -r '.id')
+        --format json | jq -r '.uuid')
     op item edit "$gop_item_id" --vault "$OP_VAULT" \
         "notesPlain=Pubkey: ${gop_pubkey}" > /dev/null
     log_info "Imported: [${ENV_DISPLAY}] Operator: Solana (${gop_pubkey})"
