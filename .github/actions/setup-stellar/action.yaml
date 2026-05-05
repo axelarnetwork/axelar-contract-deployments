@@ -4,12 +4,8 @@ description: Install Stellar CLI and start a local Stellar network
 runs:
   using: 'composite'
   steps:
-    - name: Install stable Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-
     - name: Install Stellar CLI
-      shell: bash
-      run: cargo +stable install --locked stellar-cli --version 25.2.0 --features opt
+      uses: stellar/stellar-cli@v25.2.0
 
     - name: Set environment variables
       id: env
