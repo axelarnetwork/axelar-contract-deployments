@@ -432,7 +432,11 @@ async function estimateCost(tx, server) {
 }
 
 const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain);
+    const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain);
+    if (!currentVerifierSet) {
+        throw new Error(`No verifier set found for chain '${chain}'. Has the genesis verifier set been created?`);
+    }
+    const { verifierSetId, verifierSet, signers } = currentVerifierSet;
 
     // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers

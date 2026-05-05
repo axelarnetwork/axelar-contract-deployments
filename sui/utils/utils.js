@@ -29,7 +29,11 @@ const suiCoinId = '0x2::sui::SUI';
 const moveDir = `${__dirname}/../move`;
 
 const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain);
+    const currentVerifierSet = await getCurrentVerifierSet(config.axelar, chain);
+    if (!currentVerifierSet) {
+        throw new Error(`No verifier set found for chain '${chain}'. Has the genesis verifier set been created?`);
+    }
+    const { verifierSetId, verifierSet, signers } = currentVerifierSet;
 
     const weightedSigners = signers
         .map((signer) => ({
