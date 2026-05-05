@@ -521,9 +521,10 @@ pub(crate) struct LinkTokenArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTransferArgs {
-    /// The token account from which tokens should transferred
+    /// The token account from which tokens should be transferred. Defaults to the
+    /// authority's associated token account for the mint.
     #[clap(long)]
-    pub(crate) source_account: Pubkey,
+    pub(crate) source_account: Option<Pubkey>,
 
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
@@ -1573,6 +1574,9 @@ fn interchain_transfer(
 
     let token_program = get_token_program_from_mint(&mint, config)?;
     let token_manager_ata = get_associated_token_address(&token_manager_pda, &mint, &token_program);
+    let source_account = args
+        .source_account
+        .unwrap_or_else(|| get_associated_token_address(&authority, &mint, &token_program));
 
     let gateway_program = solana_axelar_gateway::id();
     let (gateway_root_pda, _) = Pubkey::find_program_address(&[b"gateway"], &gateway_program);
@@ -1599,6 +1603,7 @@ fn interchain_transfer(
     println!("- Decimals: {decimals}");
     println!("- Destination Chain: {}", args.destination_chain);
     println!("- Destination Address: {}", args.destination_address);
+    println!("- Source Account: {source_account}");
     println!("------------------------------------------");
 
     let (event_authority, _) =
@@ -1618,7 +1623,7 @@ fn interchain_transfer(
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new(mint, false),
-        AccountMeta::new(args.source_account, false),
+        AccountMeta::new(source_account, false),
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new_readonly(event_authority, false),

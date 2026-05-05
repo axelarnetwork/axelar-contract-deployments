@@ -317,7 +317,7 @@ async fn execute_transfer_with_metrics(
     let data = generate_payload(args.payload.as_ref(), args.vary_payload);
 
     let interchain_transfer_args = its::InterchainTransferArgs {
-        source_account,
+        source_account: Some(source_account),
         token_id: args.token_id,
         destination_chain: args.destination_chain.clone(),
         destination_address: args.destination_address.clone(),
