@@ -38,8 +38,8 @@ use crate::types::{
 use crate::utils::{
     self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONNECTION_TYPE_KEY, CONTRACTS_KEY,
     DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
-    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, VERSION_KEY,
+    domain_separator, fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
 
 const SOLANA_GATEWAY_CONNECTION_TYPE: &str = "amplifier";
@@ -556,8 +556,20 @@ async fn init(
     let payer = *fee_payer;
     let upgrade_authority = payer;
 
-    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY] = json!({
-        ADDRESS_KEY: solana_axelar_gateway::id().to_string(),
+    // Preserve the deployed address and version from the config rather than
+    // overwriting with the crate's hardcoded declare_id!.
+    let existing_address = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY]
+        [ADDRESS_KEY]
+        .as_str()
+        .unwrap_or(&solana_axelar_gateway::id().to_string())
+        .to_owned();
+    let existing_version = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY]
+        [VERSION_KEY]
+        .as_str()
+        .map(str::to_owned);
+
+    let mut gateway_entry = json!({
+        ADDRESS_KEY: existing_address,
         CONNECTION_TYPE_KEY: SOLANA_GATEWAY_CONNECTION_TYPE.to_owned(),
         DOMAIN_SEPARATOR_KEY: format!("0x{}", hex::encode(domain_separator)),
         MINIMUM_ROTATION_DELAY_KEY: init_args.minimum_rotation_delay,
@@ -565,6 +577,10 @@ async fn init(
         PREVIOUS_SIGNERS_RETENTION_KEY: init_args.previous_signers_retention,
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
+    if let Some(version) = existing_version {
+        gateway_entry[VERSION_KEY] = serde_json::Value::String(version);
+    }
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY] = gateway_entry;
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 

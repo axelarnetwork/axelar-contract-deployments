@@ -10,7 +10,7 @@ use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, ITS_KEY, OPERATOR_KEY,
-    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, read_json_file_from_path,
+    UPGRADE_AUTHORITY_KEY, VERSION_KEY, fetch_latest_blockhash, read_json_file_from_path,
     write_json_to_file_path,
 };
 
@@ -766,12 +766,25 @@ fn init(
         &solana_axelar_its::id(),
     );
 
-    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
-        ADDRESS_KEY: solana_axelar_its::id().to_string(),
+    let existing_address = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY]
+        [ADDRESS_KEY]
+        .as_str()
+        .unwrap_or(&solana_axelar_its::id().to_string())
+        .to_owned();
+    let existing_version = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY]
+        [VERSION_KEY]
+        .as_str()
+        .map(str::to_owned);
+    let mut entry = serde_json::json!({
+        ADDRESS_KEY: existing_address,
         CONFIG_ACCOUNT_KEY: its_root_pda.to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
+    if let Some(version) = existing_version {
+        entry[VERSION_KEY] = serde_json::Value::String(version);
+    }
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][ITS_KEY] = entry;
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
     let ix_data = solana_axelar_its::instruction::Initialize {
