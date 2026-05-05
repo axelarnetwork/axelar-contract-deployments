@@ -9,7 +9,6 @@ use eyre::eyre;
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde_json::json;
-use solana_axelar_gateway::state::config::RotationDelaySecs;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
 use solana_axelar_std::PayloadType;
 use solana_axelar_std::U256;
@@ -147,7 +146,7 @@ pub(crate) struct InitArgs {
 
     /// Minimum delay between SignerSet rotations
     #[clap(long)]
-    minimum_rotation_delay: RotationDelaySecs,
+    minimum_rotation_delay: u64,
 
     /// Optional hex string with secp256k1 compressed public key used to create the initial SignerSet
     #[clap(long)]
