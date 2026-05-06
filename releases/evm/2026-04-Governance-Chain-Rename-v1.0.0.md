@@ -15,11 +15,11 @@
 |                      | `kava`              | Completed             | 04/05/2026 |
 |                      | `ethereum-sepolia`  | Completed             | 04/05/2026 |
 |                      | `arbitrum-sepolia`  | Completed             | 04/05/2026 |
-|                      | `linea-sepolia`     | -                     | TBD      |
-|                      | `polygon-sepolia`   | -                     | TBD      |
-|                      | `base-sepolia`      | -                     | TBD      |
-|                      | `mantle-sepolia`    | -                     | TBD      |
-|                      | `optimism-sepolia`  | -                     | TBD      |
+|                      | `linea-sepolia`     | Completed             | 06/05/2026 |
+|                      | `polygon-sepolia`   | Completed             | 06/05/2026 |
+|                      | `base-sepolia`      | Completed             | 06/05/2026 |
+|                      | `mantle-sepolia`    | Completed             | 06/05/2026 |
+|                      | `optimism-sepolia`  | Completed             | 06/05/2026 |
 | **Testnet**          | `ethereum-sepolia`  | -                     | TBD      |
 |                      | `avalanche`         | -                     | TBD      |
 |                      | `fantom`            | -                     | TBD      |
@@ -124,7 +124,7 @@ ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create2 --parallel
 
 Salt used: `v6.0.4-axelar devnet-amplifier` (CREATE2).
 
-#### Stagenet (in progress)
+#### Stagenet (completed 2026-05-06)
 
 | Chain               | New AxelarServiceGovernance                  | Completed   |
 | ------------------- | -------------------------------------------- | ----------- |
@@ -132,6 +132,11 @@ Salt used: `v6.0.4-axelar devnet-amplifier` (CREATE2).
 | `kava`              | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
 | `ethereum-sepolia`  | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
 | `arbitrum-sepolia`  | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
+| `linea-sepolia`     | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `polygon-sepolia`   | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `base-sepolia`      | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `mantle-sepolia`    | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `optimism-sepolia`  | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
 
 Salt used: `v6.0.4-axelar` (CREATE2). Same deployer + salt + bytecode across all chains, hence the same deployed address. Roles transferred (gateway governance, gas service owner, ITS owner) all verified on-chain per chain.
 
@@ -159,7 +164,7 @@ ts-node evm/governance.js schedule raw <activationTime> \
   -n <chain>
 ```
 
-Then, once the timelock elapses (`minimumTimeDelay` per env), anyone can finalize with the same args but `execute-proposal` in place of `schedule`.
+Then, once the timelock elapses (`minimumTimeDelay` per env), anyone can finalize by running `evm/governance.js execute` with the same `--address`, `--target`, `--calldata`, `-n` arguments.
 
 `--address` pins the legacy governance contract explicitly and bypasses the JSON lookup (which we've overwritten with the new address in Step 1). `--target` is the contract being reconfigured (gateway / gas service / ITS). `--calldata` is the `transferGovernance(newGov)` or `transferOwnership(newGov)` payload.
 
