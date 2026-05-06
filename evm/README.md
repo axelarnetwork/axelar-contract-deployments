@@ -59,9 +59,9 @@ Deploy the original Axelar gateway contract for legacy consensus-based connectio
 6. Upgrade to the new implementation contract
    `ts-node evm/deploy-gateway-v6.2.x.js --upgrade`
 
-## AxelarGasService and AxelarDepositService
+## AxelarGasService
 
-1. Run the following depending on the service,  
+1. Run the following to deploy the gas service,
    `ts-node evm/deploy-upgradable.js -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
 3. To reuse the existing proxy, you can:
@@ -449,12 +449,12 @@ For example, to deploy contracts on the Famtom chain in the testnet environment:
 ts-node evm/contracts-deployment-test.js -e testnet -n fantom
 ```
 
-The script also supports optional flag parameters -y and --deployDepositService, which can also be specified in a .env file under the variables YES and DEPLOY_DEPOSIT_SERVICE.
+The script also supports the optional flag parameter -y, which can also be specified in a .env file under the variable YES.
 
 Example with optional flags
 
 ```bash
-ts-node evm/contracts-deployment-test.js -e testnet -n fantom -y --deployDepositService
+ts-node evm/contracts-deployment-test.js -e testnet -n fantom -y
 ```
 
 ## Contract Verification
