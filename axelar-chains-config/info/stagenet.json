@@ -1310,7 +1310,6 @@
         }
       },
       "finality": "finalized",
-      "gasOptions": null,
       "approxFinalityWaitTime": 60
     },
     "optimism-sepolia": {
