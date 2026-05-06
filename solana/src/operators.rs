@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use solana_axelar_operators::{OperatorAccount, OperatorRegistry};
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
@@ -15,6 +16,7 @@ use crate::utils::{
 pub(crate) enum Commands {
     Init(InitArgs),
     AddOperator(AddOperatorArgs),
+    RemoveOperator(RemoveOperatorArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -29,6 +31,12 @@ pub(crate) struct AddOperatorArgs {
     operator: Pubkey,
 }
 
+#[derive(Parser, Debug)]
+pub(crate) struct RemoveOperatorArgs {
+    #[clap(short, long)]
+    operator: Pubkey,
+}
+
 pub(crate) fn build_transaction(
     fee_payer: &Pubkey,
     command: Commands,
@@ -37,6 +45,9 @@ pub(crate) fn build_transaction(
     let instructions = match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config)?,
         Commands::AddOperator(add_operator_args) => add_operator(fee_payer, add_operator_args)?,
+        Commands::RemoveOperator(remove_operator_args) => {
+            remove_operator(fee_payer, remove_operator_args)?
+        }
     };
 
     let blockhash = fetch_latest_blockhash(&config.url)?;
@@ -71,8 +82,7 @@ fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (registry_pda, _) =
-        Pubkey::find_program_address(&[b"operator_registry"], &solana_axelar_operators::ID);
+    let (registry_pda, _) = OperatorRegistry::find_pda();
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let existing_address = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][OPERATORS_KEY]
@@ -118,13 +128,8 @@ fn add_operator(
     fee_payer: &Pubkey,
     add_operator_args: AddOperatorArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (registry_pda, _) =
-        Pubkey::find_program_address(&[b"operator_registry"], &solana_axelar_operators::ID);
-
-    let (operator_pda, _) = Pubkey::find_program_address(
-        &[b"operator", add_operator_args.operator.as_ref()],
-        &solana_axelar_operators::ID,
-    );
+    let (registry_pda, _) = OperatorRegistry::find_pda();
+    let (operator_pda, _) = OperatorAccount::find_pda(&add_operator_args.operator);
 
     let ix_data = {
         use anchor_lang::InstructionData;
@@ -139,6 +144,30 @@ fn add_operator(
             AccountMeta::new(registry_pda, false),
             AccountMeta::new(operator_pda, false),
             AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
+        ],
+        data: ix_data,
+    }])
+}
+
+fn remove_operator(
+    fee_payer: &Pubkey,
+    remove_operator_args: RemoveOperatorArgs,
+) -> eyre::Result<Vec<Instruction>> {
+    let (registry_pda, _) = OperatorRegistry::find_pda();
+    let (operator_pda, _) = OperatorAccount::find_pda(&remove_operator_args.operator);
+
+    let ix_data = {
+        use anchor_lang::InstructionData;
+        solana_axelar_operators::instruction::RemoveOperator {}.data()
+    };
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_operators::id(),
+        accounts: vec![
+            AccountMeta::new(*fee_payer, true),
+            AccountMeta::new_readonly(remove_operator_args.operator, false),
+            AccountMeta::new(registry_pda, false),
+            AccountMeta::new(operator_pda, false),
         ],
         data: ix_data,
     }])
