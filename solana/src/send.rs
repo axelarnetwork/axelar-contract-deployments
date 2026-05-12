@@ -3,7 +3,7 @@ use std::rc::Rc;
 use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
+use solana_commitment_config::CommitmentConfig;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::Transaction;
 
@@ -56,7 +56,7 @@ fn optimize_transaction(
 
     let has_compute_budget = transaction.message.instructions.iter().any(|ix| {
         let program_id = transaction.message.account_keys[ix.program_id_index as usize];
-        program_id == solana_sdk::compute_budget::id()
+        program_id == solana_compute_budget_interface::id()
     });
 
     if has_compute_budget {

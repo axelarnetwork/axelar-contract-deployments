@@ -7,7 +7,7 @@ use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, OPERATORS_KEY, OWNER_KEY,
-    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, read_json_file_from_path,
+    UPGRADE_AUTHORITY_KEY, VERSION_KEY, fetch_latest_blockhash, read_json_file_from_path,
     write_json_to_file_path,
 };
 
@@ -75,12 +75,25 @@ fn init(
         Pubkey::find_program_address(&[b"operator_registry"], &solana_axelar_operators::ID);
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][OPERATORS_KEY] = serde_json::json!({
-        ADDRESS_KEY: solana_axelar_operators::id().to_string(),
+    let existing_address = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][OPERATORS_KEY]
+        [ADDRESS_KEY]
+        .as_str()
+        .unwrap_or(&solana_axelar_operators::id().to_string())
+        .to_owned();
+    let existing_version = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][OPERATORS_KEY]
+        [VERSION_KEY]
+        .as_str()
+        .map(str::to_owned);
+    let mut entry = serde_json::json!({
+        ADDRESS_KEY: existing_address,
         CONFIG_ACCOUNT_KEY: registry_pda.to_string(),
         OWNER_KEY: init_args.owner.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
+    if let Some(version) = existing_version {
+        entry[VERSION_KEY] = serde_json::Value::String(version);
+    }
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][OPERATORS_KEY] = entry;
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
@@ -95,7 +108,7 @@ fn init(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(init_args.owner, false),
             AccountMeta::new(registry_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: ix_data,
     }])
@@ -125,7 +138,7 @@ fn add_operator(
             AccountMeta::new_readonly(add_operator_args.operator, false),
             AccountMeta::new(registry_pda, false),
             AccountMeta::new(operator_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: ix_data,
     }])

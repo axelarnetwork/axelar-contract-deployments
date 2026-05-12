@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use eyre::eyre;
 use futures::future::join_all;
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
+use solana_commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signature;
 use solana_sdk::signer::Signer;
 use solana_transaction_status::UiTransactionEncoding;
@@ -317,7 +317,7 @@ async fn execute_transfer_with_metrics(
     let data = generate_payload(args.payload.as_ref(), args.vary_payload);
 
     let interchain_transfer_args = its::InterchainTransferArgs {
-        source_account,
+        source_account: Some(source_account),
         token_id: args.token_id,
         destination_chain: args.destination_chain.clone(),
         destination_address: args.destination_address.clone(),

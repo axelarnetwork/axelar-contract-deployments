@@ -36,7 +36,7 @@ pub(crate) fn generate_from_transactions(
         tx.params.blockhash_for_message = blockhash.to_string();
         tx.params.recent_blockhash = None;
 
-        let advance_nonce_ix = solana_sdk::system_instruction::advance_nonce_account(
+        let advance_nonce_ix = solana_system_interface::instruction::advance_nonce_account(
             &args.nonce_account,
             &args.nonce_authority,
         );

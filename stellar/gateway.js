@@ -111,7 +111,7 @@ async function rotate(wallet, config, chain, contractConfig, args, options) {
 
     const dataHash = encodeDataHash('RotateSigners', newSigners);
     const proof = getProof(dataHash, wallet, chain, options);
-    const bypassRotationDelay = nativeToScVal(false); // only operator can bypass rotation delay.
+    const bypassRotationDelay = nativeToScVal(options.bypassRotationDelay || false);
 
     const operation = contract.call('rotate_signers', newSigners, proof, bypassRotationDelay);
 
@@ -216,6 +216,7 @@ if (require.main === module) {
         .addOption(new Option('--signers <signers>', 'Either use `wallet` or provide a JSON with the new signer set'))
         .addOption(new Option('--current-nonce <currentNonce>', 'nonce of the existing signers'))
         .addOption(new Option('--new-nonce <newNonce>', 'nonce of the new signers (useful for test rotations)'))
+        .addOption(new Option('--bypass-rotation-delay', 'bypass the rotation delay (only operator can do this)'))
         .action((options) => {
             mainProcessor(rotate, [], options);
         });

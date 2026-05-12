@@ -35,17 +35,17 @@ ts-node evm/ownership.js -n <chain> -c AxelarGateway --action acceptOwnership
 # Generate proposal JSON (no mnemonic required)
 ts-node evm/ownership.js --governance -n <chain> -c AxelarGateway \
   --action transferOwnership --newOwner 0xNewOwnerAddress \
-  --activationTime <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+  --activationTime <YYYY-MM-DDTHH:mm:ss|0>
 
 # Generate to file
 ts-node evm/ownership.js --governance --generate-only ownership-proposal.json \
   -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress \
-  --activationTime <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+  --activationTime <YYYY-MM-DDTHH:mm:ss|0>
 
 # Submit (requires MNEMONIC)
 ts-node evm/ownership.js --governance \
   -n <chain> -c AxelarGateway --action transferOwnership --newOwner 0xNewOwnerAddress \
-  --activationTime <YYYY-MM-DDTHH:mm:ss|relative-seconds>
+  --activationTime <YYYY-MM-DDTHH:mm:ss|0>
 ```
 
 ### Operator-based (bypass timelock)
@@ -62,7 +62,7 @@ ts-node evm/ownership.js --governance --operatorProposal \
 - `--governance`: Enable proposal mode (no on-chain transaction from your EOA)
 - `--governanceContract <InterchainGovernance|AxelarServiceGovernance>`: Governance contract to target (default: `AxelarServiceGovernance`)
 - `--operatorProposal`: Generate operator-style proposal (bypasses timelock; requires `AxelarServiceGovernance`)
-- `--activationTime <time>`: ETA as `YYYY-MM-DDTHH:mm:ss` UTC or relative seconds (e.g., `3600` for 1 hour from now)
+- `--activationTime <time>`: ETA as `YYYY-MM-DDTHH:mm:ss` UTC or `0`
 - `--generate-only <file>`: Write proposal JSON to file instead of submitting
 - `--mnemonic`: Mnemonic for submitting to Axelar (uses `MNEMONIC` environment variable if set)
 

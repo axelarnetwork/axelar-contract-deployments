@@ -8,7 +8,7 @@ use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, OPERATOR_KEY,
-    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, read_json_file_from_path,
+    UPGRADE_AUTHORITY_KEY, VERSION_KEY, fetch_latest_blockhash, read_json_file_from_path,
     write_json_to_file_path,
 };
 
@@ -100,12 +100,25 @@ fn init(
     );
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
-        ADDRESS_KEY: solana_axelar_gas_service::id().to_string(),
+    let existing_address = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY]
+        [ADDRESS_KEY]
+        .as_str()
+        .unwrap_or(&solana_axelar_gas_service::id().to_string())
+        .to_owned();
+    let existing_version = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY]
+        [VERSION_KEY]
+        .as_str()
+        .map(str::to_owned);
+    let mut entry = serde_json::json!({
+        ADDRESS_KEY: existing_address,
         OPERATOR_KEY: init_args.operator.to_string(),
         CONFIG_ACCOUNT_KEY: treasury_pda.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
+    if let Some(version) = existing_version {
+        entry[VERSION_KEY] = serde_json::Value::String(version);
+    }
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GAS_SERVICE_KEY] = entry;
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
@@ -120,7 +133,7 @@ fn init(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(init_args.operator, true),
             AccountMeta::new_readonly(operator_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new(treasury_pda, false),
         ],
         data: ix_data,
@@ -140,7 +153,7 @@ fn add_gas(fee_payer: &Pubkey, add_gas_args: AddGasArgs) -> eyre::Result<Vec<Ins
     let accounts = solana_axelar_gas_service::accounts::AddGas {
         sender: *fee_payer,
         treasury: treasury_pda,
-        system_program: solana_sdk::system_program::id(),
+        system_program: solana_sdk_ids::system_program::ID,
         program: solana_axelar_gas_service::id(),
         event_authority: event_authority_pda,
     }

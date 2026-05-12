@@ -64,7 +64,7 @@ Actions that require governance proposal submission, voting period, and timelock
 
 **Upgrade**
 
-- **Before upgrading**: Deploy new implementation with `--reuseProxy` flag. See [AxelarGasService and AxelarDepositService](../README.md#axelargasservice-and-axelardepositservice).
+- **Before upgrading**: Deploy new implementation with `--reuseProxy` flag. See [AxelarGasService](../README.md#axelargasservice).
 - Replace `schedule` with `schedule-operator` to skip timelock.
 - Documentation: [Upgrade Workflow](./governance-workflows.md#upgrade-workflow)
 
@@ -166,5 +166,5 @@ For complete governance workflow details, see [Governance Workflows](./governanc
 
 **Notes**
 - `--nativeValue` must match the value used when scheduling (hash includes it).
-- Use `--file proposal.json` to inspect calldata/payload before submit.
+- Use `--generate-only proposal.json` to inspect calldata/payload before submitting.
 - Operator proposals bypass timelock via operator approval on `AxelarServiceGovernance`.

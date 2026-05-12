@@ -3,14 +3,12 @@ use std::str::FromStr;
 
 use anchor_lang::InstructionData;
 use base64::Engine as _;
-use borsh::BorshDeserialize;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde_json::json;
-use solana_axelar_gateway::state::config::RotationDelaySecs;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
 use solana_axelar_std::PayloadType;
 use solana_axelar_std::U256;
@@ -39,14 +37,14 @@ use crate::types::{
 use crate::utils::{
     self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONNECTION_TYPE_KEY, CONTRACTS_KEY,
     DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
-    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, VERSION_KEY,
+    domain_separator, fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
 
 const SOLANA_GATEWAY_CONNECTION_TYPE: &str = "amplifier";
 
 fn command_id(source_chain: &str, message_id: &str) -> [u8; 32] {
-    solana_sdk::keccak::hashv(&[source_chain.as_bytes(), b"-", message_id.as_bytes()]).0
+    solana_sdk::keccak::hashv(&[source_chain.as_bytes(), b"-", message_id.as_bytes()]).to_bytes()
 }
 
 #[derive(Debug)]
@@ -148,7 +146,7 @@ pub(crate) struct InitArgs {
 
     /// Minimum delay between SignerSet rotations
     #[clap(long)]
-    minimum_rotation_delay: RotationDelaySecs,
+    minimum_rotation_delay: u64,
 
     /// Optional hex string with secp256k1 compressed public key used to create the initial SignerSet
     #[clap(long)]
@@ -456,7 +454,7 @@ fn construct_execute_data(
         domain_separator,
         payload,
     )?;
-    let execute_data: ExecuteData = ExecuteData::try_from_slice(&execute_data_bytes)?;
+    let execute_data: ExecuteData = borsh::from_slice(&execute_data_bytes)?;
 
     Ok(execute_data)
 }
@@ -506,7 +504,7 @@ fn append_verification_flow_instructions(
             AccountMeta::new_readonly(*gateway_config_pda, false),
             AccountMeta::new(verification_session_pda, false),
             AccountMeta::new_readonly(verifier_set_tracker_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: init_session_ix_data,
     });
@@ -557,8 +555,20 @@ async fn init(
     let payer = *fee_payer;
     let upgrade_authority = payer;
 
-    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY] = json!({
-        ADDRESS_KEY: solana_axelar_gateway::id().to_string(),
+    // Preserve the deployed address and version from the config rather than
+    // overwriting with the crate's hardcoded declare_id!.
+    let existing_address = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY]
+        [ADDRESS_KEY]
+        .as_str()
+        .unwrap_or(&solana_axelar_gateway::id().to_string())
+        .to_owned();
+    let existing_version = chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY]
+        [VERSION_KEY]
+        .as_str()
+        .map(str::to_owned);
+
+    let mut gateway_entry = json!({
+        ADDRESS_KEY: existing_address,
         CONNECTION_TYPE_KEY: SOLANA_GATEWAY_CONNECTION_TYPE.to_owned(),
         DOMAIN_SEPARATOR_KEY: format!("0x{}", hex::encode(domain_separator)),
         MINIMUM_ROTATION_DELAY_KEY: init_args.minimum_rotation_delay,
@@ -566,11 +576,15 @@ async fn init(
         PREVIOUS_SIGNERS_RETENTION_KEY: init_args.previous_signers_retention,
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
+    if let Some(version) = existing_version {
+        gateway_entry[VERSION_KEY] = serde_json::Value::String(version);
+    }
+    chains_info[CHAINS_KEY][&config.chain][CONTRACTS_KEY][GATEWAY_KEY] = gateway_entry;
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
     let gateway_program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_gateway::id());
 
     let params = InitializeConfigParams {
         domain_separator,
@@ -591,7 +605,7 @@ async fn init(
         AccountMeta::new_readonly(upgrade_authority, true),
         AccountMeta::new_readonly(gateway_program_data, false),
         AccountMeta::new(gateway_config_pda, false),
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(verifier_set_tracker_pda, false),
     ];
 
@@ -647,7 +661,7 @@ fn transfer_operatorship(
 ) -> eyre::Result<Vec<Instruction>> {
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let gateway_program_data =
-        solana_sdk::bpf_loader_upgradeable::get_program_data_address(&solana_axelar_gateway::id());
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_gateway::id());
     let (event_authority_pda, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
@@ -755,7 +769,7 @@ fn approve(
             AccountMeta::new(*fee_payer, true),
             AccountMeta::new_readonly(verification_session_pda, false),
             AccountMeta::new(incoming_message_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new_readonly(event_authority_pda, false),
             AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
@@ -815,7 +829,7 @@ async fn rotate(
             AccountMeta::new_readonly(verifier_set_tracker_pda, false),
             AccountMeta::new(new_verifier_set_tracker_pda, false),
             AccountMeta::new(*fee_payer, true),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
             AccountMeta::new_readonly(event_authority_pda, false),
             AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
         ],
@@ -854,9 +868,7 @@ async fn submit_proof(
     let gateway_config_pda = solana_axelar_gateway::GatewayConfig::find_pda().0;
     let execute_data: ExecuteData = match multisig_prover_response.status {
         ProofStatus::Pending => eyre::bail!("Proof is not completed yet"),
-        ProofStatus::Completed { execute_data } => {
-            ExecuteData::try_from_slice(execute_data.as_slice())?
-        }
+        ProofStatus::Completed { execute_data } => borsh::from_slice(execute_data.as_slice())?,
     };
 
     let mut instructions = Vec::new();
@@ -894,7 +906,7 @@ async fn submit_proof(
                     AccountMeta::new_readonly(verifier_set_tracker_pda, false),
                     AccountMeta::new(new_verifier_set_tracker_pda, false),
                     AccountMeta::new(*fee_payer, true),
-                    AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+                    AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
                     AccountMeta::new_readonly(event_authority_pda, false),
                     AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
                 ],
@@ -951,7 +963,7 @@ async fn submit_proof(
                         AccountMeta::new(*fee_payer, true),
                         AccountMeta::new_readonly(verification_session_pda, false),
                         AccountMeta::new(incoming_message_pda, false),
-                        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+                        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
                         AccountMeta::new_readonly(event_authority_pda, false),
                         AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
                     ],
@@ -1283,7 +1295,7 @@ fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> 
         b"-",
         args.message_id.as_bytes(),
     ])
-    .0;
+    .to_bytes();
     let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&command_id);
     let raw_incoming_message =
         rpc_client

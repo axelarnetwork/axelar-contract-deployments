@@ -50,7 +50,7 @@ CHAIN=<chain name>
 | -------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` |
-| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
+| **Testnet**          | `axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp` |
 | **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
 
 - Confirm `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
@@ -67,7 +67,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | -------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
-| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
+| **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf` |
 | **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 
 | Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
@@ -80,24 +80,20 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
 "$CHAIN" : {
-  "governanceAddress": "[governance address]",
   "serviceName": "[service name]",
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
   "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
-  "msgIdFormat": "hex_tx_hash_and_event_index",
-  "addressFormat": "eip55"
+  "msgIdFormat": "hex_tx_hash_and_event_index"
 }
 
 # Add under `config.axelar.contracts.MultisigProver` based on Network
 "$CHAIN" : {
-  "governanceAddress": "[governance address]",
-  "adminAddress": "[admin address]",
   "signingThreshold": "[signing threshold]",
   "serviceName": "[service name]",
+  "adminAddress": "[admin address]",
   "verifierSetDiffThreshold": 0,
-  "encoder": "abi",
   "keyType": "ecdsa"
 }
 ```
@@ -108,7 +104,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | -------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
-| **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
+| **Testnet**          | `axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp` |
 | **Mainnet**          | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
 `CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
@@ -166,7 +162,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
     | -------------------- | ----------------------------------------------- | ------------------- |
     | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `1000000uamplifier` |
     | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `1000000uaxl`       |
-    | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
+    | **Testnet**          | `axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf` | `1000000uaxl`       |
     | **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `1000000uaxl`       |
 
     ```bash

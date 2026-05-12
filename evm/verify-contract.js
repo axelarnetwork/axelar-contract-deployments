@@ -110,7 +110,7 @@ async function processCommand(axelar, chain, chains, options) {
                 [
                     chain.contracts.AxelarGateway.address,
                     contractConfig.governanceChain,
-                    axelar.governanceAddress,
+                    contractConfig.governanceAddress,
                     contractConfig.minimumTimeDelay,
                 ],
                 verifyOptions,
@@ -128,7 +128,7 @@ async function processCommand(axelar, chain, chains, options) {
                     contractConfig.governanceChain,
                     contractConfig.governanceAddress,
                     contractConfig.minimumTimeDelay,
-                    contractConfig.multisig,
+                    contractConfig.operator,
                 ],
                 verifyOptions,
             );
@@ -183,19 +183,6 @@ async function processCommand(axelar, chain, chains, options) {
             const implementation = await gasService.implementation();
 
             await verifyContract(env, chain.axelarId, implementation, [contractConfig.collector], verifyOptions);
-            await verifyContract(env, chain.axelarId, contractAddress, [], verifyOptions);
-            break;
-        }
-
-        case 'AxelarDepositService': {
-            const depositService = contractFactory.attach(contractAddress);
-            const implementation = await depositService.implementation();
-
-            await verifyContract(env, chain.axelarId, implementation, [
-                chain.contracts.AxelarGateway.address,
-                contractConfig.wrappedSymbol,
-                contractConfig.refundIssuer,
-            ]);
             await verifyContract(env, chain.axelarId, contractAddress, [], verifyOptions);
             break;
         }

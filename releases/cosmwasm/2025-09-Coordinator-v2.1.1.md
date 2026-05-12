@@ -71,30 +71,33 @@ This update was applied only on the devnet-amplifier in order to allow migration
     | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
       -c Router \
       -t "Upload Router contract v1.3.0" \
       -d "Upload Router contract v1.3.0" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 1.3.0
+      --version 1.3.0 \
+      --governance
     ```
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
       -c Multisig \
       -t "Upload Multisig contract v2.3.1" \
       -d "Upload Multisig contract v2.3.1" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.3.1
+      --version 2.3.1 \
+      --governance
     ```
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
       -c Coordinator \
       -t "Upload Coordinator contract v2.1.1" \
       -d "Upload Coordinator contract v2.1.1" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.1.1
+      --version 2.1.1 \
+      --governance
     ```
 
 1. Upgrade the router and multisig before upgrading the coordinator
@@ -102,12 +105,13 @@ This update was applied only on the devnet-amplifier in order to allow migration
     Provide coordinator address to the router.
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js migrate \
+    ts-node cosmwasm/contract.ts migrate \
       -c Router \
       -t "Migrate Router to v1.3.0" \
       -d "Router to v1.3.0" \
       --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
-      --fetchCodeId
+      --fetchCodeId \
+      --governance
     ```
 
     Provide coordinator address to the multisig, and migrate using the contract deployment scripts.
@@ -141,7 +145,7 @@ This update was applied only on the devnet-amplifier in order to allow migration
     We have provided a script that submits a proposal to append the coordinator's address to the list of allowed addresses for a given code id. A proposal will not be created if the coordinator is already allowed to instantiate that contract. To execute that script, run:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js coordinator-instantiate-permissions --contractName <Gateway|VotingVerifier|MultisigProver> -e $ENV -t $TITLE -d $DESCRIPTION -m $MNEMONIC
+    ts-node cosmwasm/contract.ts coordinator-instantiate-permissions --contractName <Gateway|VotingVerifier|MultisigProver> -e $ENV -t $TITLE -d $DESCRIPTION -m $MNEMONIC --governance
     ```
 
 ## Checklist

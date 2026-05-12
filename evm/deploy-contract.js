@@ -68,20 +68,20 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
     switch (contractName) {
         case 'AxelarServiceGovernance': {
             const gateway = contracts.AxelarGateway?.address;
-            const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            const governanceChain = contractConfig.governanceChain || 'axelar';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = axelar.governanceAddress;
+            const governanceAddress = contractConfig.governanceAddress ? contractConfig.governanceAddress : axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-            const multisig = contractConfig.multisig;
+            const operator = contractConfig.operator;
 
             validateParameters({
-                isAddress: { gateway, multisig },
+                isAddress: { gateway, operator },
                 isNonEmptyString: { governanceChain, governanceAddress },
                 isNumber: { minimumTimeDelay },
             });
 
-            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
+            return [gateway, governanceChain, governanceAddress, minimumTimeDelay, operator];
         }
 
         case 'InterchainProposalSender': {
@@ -97,9 +97,9 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
 
         case 'InterchainGovernance': {
             const gateway = contracts.AxelarGateway?.address;
-            const governanceChain = contractConfig.governanceChain || 'Axelarnet';
+            const governanceChain = contractConfig.governanceChain || 'axelar';
             contractConfig.governanceChain = governanceChain;
-            const governanceAddress = axelar.governanceAddress;
+            const governanceAddress = contractConfig.governanceAddress ? contractConfig.governanceAddress : axelar.governanceAddress;
             contractConfig.governanceAddress = governanceAddress;
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
@@ -206,6 +206,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
             break;
         }
 
+        case 'AxelarServiceGovernance':
         case 'InterchainGovernance': {
             const governanceChain = await contract.governanceChain();
 
@@ -237,6 +238,14 @@ async function checkContract(contractName, contract, contractConfig, options) {
 
             if (!minimumTimeDelay.eq(contractConfig.minimumTimeDelay)) {
                 printError(`Expected minimumTimeDelay ${contractConfig.minimumTimeDelay} but got ${minimumTimeDelay}.`);
+            }
+
+            if (contractName === 'AxelarServiceGovernance') {
+                const operator = await contract.operator();
+
+                if (operator !== contractConfig.operator) {
+                    printError(`Expected operator ${contractConfig.operator} but got ${operator}.`);
+                }
             }
 
             break;

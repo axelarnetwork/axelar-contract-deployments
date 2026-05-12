@@ -1,4 +1,5 @@
 use eyre::eyre;
+use std::fmt;
 use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -12,6 +13,7 @@ pub(crate) struct Config {
     pub(crate) url: String,
     pub(crate) output_dir: PathBuf,
     pub(crate) network_type: NetworkType,
+    pub(crate) axelar_network: AxelarNetwork,
     pub(crate) chains_info_file: PathBuf,
     pub(crate) chain: String,
 }
@@ -45,8 +47,20 @@ impl Config {
             url,
             output_dir,
             network_type,
+            axelar_network,
             chains_info_file,
             chain,
         })
+    }
+}
+
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Configuration:")?;
+        writeln!(f, "  Chain: {}", self.chain)?;
+        writeln!(f, "  Network: {:?}", self.network_type)?;
+        writeln!(f, "  RPC URL: {}", self.url)?;
+        writeln!(f, "  Chains info file: {}", self.chains_info_file.display())?;
+        write!(f, "  Output directory: {}", self.output_dir.display())
     }
 }

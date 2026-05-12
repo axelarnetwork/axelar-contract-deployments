@@ -15,6 +15,7 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 pub(crate) enum NetworkType {
     Local,
     Devnet,
+    Testnet,
     Mainnet,
 }
 
@@ -25,6 +26,18 @@ pub(crate) enum AxelarNetwork {
     Testnet,
     Mainnet,
     None,
+}
+
+impl AxelarNetwork {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            AxelarNetwork::DevnetAmplifier => "devnet-amplifier",
+            AxelarNetwork::Stagenet => "stagenet",
+            AxelarNetwork::Testnet => "testnet",
+            AxelarNetwork::Mainnet => "mainnet",
+            AxelarNetwork::None => "local",
+        }
+    }
 }
 
 impl FromStr for AxelarNetwork {
@@ -47,6 +60,7 @@ impl FromStr for NetworkType {
         s.contains("local")
             .then_some(NetworkType::Local)
             .or_else(|| s.contains("devnet").then_some(NetworkType::Devnet))
+            .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
             .or_else(|| s.contains("mainnet").then_some(NetworkType::Mainnet))
             .ok_or_else(|| eyre!("Invalid network type: {s}"))
     }
@@ -325,4 +339,6 @@ pub(crate) enum Programs {
     Governance,
     Its,
     Multicall,
+    Operators,
+    Memo,
 }

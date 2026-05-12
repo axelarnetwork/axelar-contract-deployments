@@ -156,8 +156,9 @@ fn init(
     config: &Config,
     config_pda: &Pubkey,
 ) -> eyre::Result<Vec<Instruction>> {
-    let chain_hash = solana_sdk::keccak::hashv(&[init_args.governance_chain.as_bytes()]).0;
-    let address_hash = solana_sdk::keccak::hashv(&[init_args.governance_address.as_bytes()]).0;
+    let chain_hash = solana_sdk::keccak::hashv(&[init_args.governance_chain.as_bytes()]).to_bytes();
+    let address_hash =
+        solana_sdk::keccak::hashv(&[init_args.governance_address.as_bytes()]).to_bytes();
 
     let params = solana_axelar_governance::GovernanceConfigInit {
         chain_hash,
@@ -179,9 +180,8 @@ fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    let program_data = solana_sdk::bpf_loader_upgradeable::get_program_data_address(
-        &solana_axelar_governance::id(),
-    );
+    let program_data =
+        solana_loader_v3_interface::get_program_data_address(&solana_axelar_governance::id());
 
     let ix_data = solana_axelar_governance::instruction::InitializeConfig { params }.data();
 
@@ -192,7 +192,7 @@ fn init(
             AccountMeta::new_readonly(*fee_payer, true),
             AccountMeta::new_readonly(program_data, false),
             AccountMeta::new(*config_pda, false),
-            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         ],
         data: ix_data,
     }])
@@ -250,7 +250,7 @@ fn execute_proposal(
     .data();
 
     let mut accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(*config_pda, false),
         AccountMeta::new(proposal_pda, false),
     ];
@@ -332,7 +332,7 @@ fn execute_operator_proposal(
     .data();
 
     let mut accounts = vec![
-        AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
         AccountMeta::new(*config_pda, false),
         AccountMeta::new(proposal_pda, false),
         AccountMeta::new_readonly(args.operator, true),

@@ -5,16 +5,12 @@
 | **Created By** | @nbayindirli |
 | **Deployment** | @nbayindirli |
 
-| **Axelar Env**       | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-12-04 |
-| **Stagenet**         | Pending               | TBD        |
-| **Testnet**          | Pending               | TBD        |
-| **Mainnet**          | Pending               | TBD        |
-
-- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier)
-- Contract Checksums:
-    - SolanaMultisigProver: `8c05edae1b6c6d7f4dc8eb36966aca2c41879691e4b35c5bf6eb9ab66cf2a068`
+| **Axelar Env**       | **Deployment Status** | **Date**   | **Deployed By** |
+| -------------------- | --------------------- | ---------- | --------------- |
+| **Devnet Amplifier** | Completed             | 2025-12-04 | @nbayindirli    |
+| **Stagenet**         | Completed             | 2026-02-23 | @rista404       |
+| **Testnet**          | Completed             | 2026-03-25 | @rista404       |
+| **Mainnet**          | Pending               | TBD        |                 |
 
 ## Background
 
@@ -31,8 +27,8 @@ Ensure that the Solana gateway is deployed on Solana devnet/testnet/mainnet, as 
 1. Clone and checkout the correct branch:
 
     ```bash
-    git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git axelar-amplifier-eiger
-    cd axelar-amplifier-eiger
+    git clone --recurse-submodules https://github.com/axelar-amplifier/axelar-amplifier.git
+    cd axelar-amplifier
     git checkout main
     ```
 
@@ -57,7 +53,6 @@ Create an .env config:
 MNEMONIC=xyz
 ENV=xyz
 CHAIN=<solana-custom|solana>
-EIGER_ARTIFACT_PATH=../solana/axelar-amplifier-eiger/artifacts/
 NODE=[Axelar RPC URL]
 ```
 
@@ -77,40 +72,79 @@ INIT_ADDRESSES=[INIT_ADDRESSES]
 1. Store VotingVerifier:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -c VotingVerifier \
         -t "Upload VotingVerifier contract for Solana" \
         -d "Upload VotingVerifier contract for Solana integration" \
         -v "2.0.0" \
         --chainName $CHAIN \
         -m $MNEMONIC \
-        --instantiateAddresses $INIT_ADDRESSES
+        --instantiateAddresses $INIT_ADDRESSES \
+        --governance
     ```
 
-1. Store Gateway:
+2. Store Gateway:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
+    ts-node cosmwasm/contract.ts store-code \
         -c Gateway \
         -t "Upload Gateway contract for Solana" \
         -d "Upload Gateway contract for Solana integration" \
         -v "1.1.1" \
         --chainName $CHAIN \
         -m $MNEMONIC \
-        --instantiateAddresses $INIT_ADDRESSES
+        --instantiateAddresses $INIT_ADDRESSES \
+        --governance
     ```
 
-1. Store SolanaMultisigProver:
+3. Store MultisigProver:
 
     ```bash
-    ts-node cosmwasm/submit-proposal.js store \
-        -c SolanaMultisigProver \
-        -t "Upload SolanaMultisigProver contract for Solana" \
-        -d "Upload SolanaMultisigProver contract for Solana integration" \
+    ts-node cosmwasm/contract.ts store-code \
+        -c MultisigProver \
+        -t "Upload MultisigProver contract for Solana" \
+        -d "Upload MultisigProver contract for Solana integration" \
         -a $EIGER_ARTIFACT_PATH \
         --chainName $CHAIN \
         -m $MNEMONIC \
-        --instantiateAddresses $INIT_ADDRESSES
+        --instantiateAddresses $INIT_ADDRESSES \
+        --governance
+    ```
+
+4. Store ItsSolanaTranslator:
+
+    ```bash
+    ts-node cosmwasm/contract.ts store-code \
+        -c ItsSolanaTranslator \
+        -t "Upload ItsSolanaTranslator contract v1.0.0" \
+        -d "Upload ItsSolanaTranslator contract v1.0.0" \
+        -a ../axelar-amplifier/artifacts \
+        -m $MNEMONIC \
+        --instantiateAddresses $INIT_ADDRESSES \
+        --version 1.0.0 \
+        --governance
+    ```
+
+5. Instantiate ItsSolanaTranslator:
+
+    ```bash
+    ts-node cosmwasm/contract.ts instantiate \
+        -c ItsSolanaTranslator \
+        -m $MNEMONIC \
+        --fetchCodeId \
+        --governance
+    ```
+
+6. After proposal passes, find the ItsSolanaTranslator contract address and update config if not auto-filled:
+
+    ```bash
+    # Get the code ID from the config
+    CODE_ID=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.ItsSolanaTranslator.codeId")
+
+    # List contracts instantiated from that code ID
+    axelard q wasm list-contract-by-code $CODE_ID --node $NODE --output json | jq .
+
+    # Update axelar.contracts.ItsSolanaTranslator.address in $ENV.json if not auto-filled
     ```
 
 ## Deployment
@@ -186,6 +220,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         -s $SALT \
         --fetchCodeId \
         --admin $CONTRACT_ADMIN \
+        -m $MNEMONIC \
         --governance # omit on devnet-amplifier
     ```
 
@@ -201,6 +236,7 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 
     ```bash
     ts-node cosmwasm/contract.ts register-deployment $CHAIN \
+        -m $MNEMONIC \
         --governance # omit on devnet-amplifier
     ```
 
@@ -305,10 +341,12 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
         chain_name: $CHAIN
         cosmwasm_contract: $VOTING_VERIFIER
         rpc_url: [rpc_url]
+        gateway_address: $GATEWAY
       - type: SolanaVerifierSetVerifier
         chain_name: $CHAIN
         cosmwasm_contract: $VOTING_VERIFIER
         rpc_url: [rpc_url]
+        gateway_address: $GATEWAY
     ```
 
 1. Update ampd with the Solana chain configuration.

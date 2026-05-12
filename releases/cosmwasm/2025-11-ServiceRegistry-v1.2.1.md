@@ -1,17 +1,16 @@
 # Cosmwasm Service Registry v1.2.1
 
-|                | **Owner**                                                               |
-|----------------|-------------------------------------------------------------------------|
-| **Created By** | @sdavidson1177 <solomon@interoplabs.io>                                           |
+|                | **Owner**                               |
+| -------------- | --------------------------------------- |
+| **Created By** | @sdavidson1177 <solomon@interoplabs.io> |
 | **Deployment** | @sdavidson1177 <solomon@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
-|----------------------|-----------------------|------------|
+| -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-12-01 |
 | **Stagenet**         | --                    | --         |
 | **Testnet**          | --                    | --         |
 | **Mainnet**          | --                    | --         |
-
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/service-registry-v1.2.1)
 
@@ -30,30 +29,31 @@ This rollout upgrades the amplifier service registry contract from `v1.2.0` to `
 1. Upload new Service Registry contract
 
 ```bash
-ts-node cosmwasm/submit-proposal.js store -c ServiceRegistry -t "Upload Service Registry contract v1.2.1" -d "Upload Service Registry contract v1.2.1" --version 1.2.1
+ts-node cosmwasm/contract.ts store-code -c ServiceRegistry -t "Upload Service Registry contract v1.2.1" -d "Upload Service Registry contract v1.2.1" --version 1.2.1 --governance
 ```
 
 2. Upgrade Service Registry contract
 
 ```bash
-ts-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/contract.ts migrate \
   -c ServiceRegistry \
   -t "Migrate Service Registry to v1.2.1" \
   -d "Service Registry to v1.2.1" \
   --msg '{}' \
-  --fetchCodeId
+  --fetchCodeId \
+  --governance
 ```
 
 ## Checklist
 
 Verify the authorized verifier count for the following services:
 
-| **Network**          | **Service**           | **Query**   |
-|----------------------|-----------------------|------------|
-| **Devnet Amplifier** | validators            | 0019617574686F72697A65645F76657269666965725F636F756E7476616C696461746F7273 |
-| **Stagenet**         | amplifier             | 0019617574686f72697a65645f76657269666965725f636f756e74616d706c6966696572   |
-| **Testnet**          | amplifier             | 0019617574686f72697a65645f76657269666965725f636f756e74616d706c6966696572   |
-| **Mainnet**          | amplifier             | 0019617574686f72697a65645f76657269666965725f636f756e74616d706c6966696572   |
+| **Network**          | **Service** | **Query**                                                                  |
+| -------------------- | ----------- | -------------------------------------------------------------------------- |
+| **Devnet Amplifier** | validators  | 0019617574686F72697A65645F76657269666965725F636F756E7476616C696461746F7273 |
+| **Stagenet**         | amplifier   | 0019617574686f72697a65645f76657269666965725f636f756e74616d706c6966696572   |
+| **Testnet**          | amplifier   | 0019617574686f72697a65645f76657269666965725f636f756e74616d706c6966696572   |
+| **Mainnet**          | amplifier   | 0019617574686f72697a65645f76657269666965725f636f756e74616d706c6966696572   |
 
 For reference, the query is constructed as follows:
 
@@ -66,6 +66,7 @@ Perform the query as follows:
 ```bash
 axelard query wasm contract-state raw $SERVICE_REGISTRY_ADDRESS $QUERY -o json | jq -r '.data'
 ```
+
 The expected output should not be null. You can decode this output using
 
 ```bash

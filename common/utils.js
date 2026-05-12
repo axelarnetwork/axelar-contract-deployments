@@ -30,11 +30,13 @@ const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 const SVM_BASE58_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 function loadConfig(env) {
-    return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
+    const projectRoot = findProjectRoot(__dirname);
+    return require(path.join(projectRoot, 'axelar-chains-config', 'info', `${env}.json`));
 }
 
 function saveConfig(config, env) {
-    writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
+    const projectRoot = findProjectRoot(__dirname);
+    writeJSON(config, path.join(projectRoot, 'axelar-chains-config', 'info', `${env}.json`));
 }
 
 const writeJSON = (data, name) => {
@@ -349,11 +351,6 @@ function isValidTimeFormat(timeString) {
 
     const trimmedInput = String(timeString).trim();
 
-    if (/^\d+$/.test(trimmedInput)) {
-        const seconds = parseInt(trimmedInput, 10);
-        return !isNaN(seconds) && seconds >= 0;
-    }
-
     const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
     return regex.test(trimmedInput);
 }
@@ -519,20 +516,13 @@ const dateToEta = (input) => {
     }
 
     if (/^\d+$/.test(trimmedInput)) {
-        const seconds = parseInt(trimmedInput, 10);
-        if (isNaN(seconds) || seconds < 0) {
-            throw new Error(`Invalid relative time in seconds: ${input}`);
-        }
-        const currentTime = getCurrentTimeInSeconds();
-        return currentTime + seconds;
+        throw new Error(`Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss)`);
     }
 
     const date = new Date(trimmedInput + 'Z');
 
     if (isNaN(date.getTime())) {
-        throw new Error(
-            `Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss) or relative seconds (numeric)`,
-        );
+        throw new Error(`Invalid date format provided: ${input}. Expected UTC date string (YYYY-MM-DDTHH:mm:ss)`);
     }
 
     return Math.floor(date.getTime() / 1000);
