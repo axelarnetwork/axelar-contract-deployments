@@ -617,15 +617,9 @@ const routerFreezeChain = async (
 ): Promise<void> => {
     const [chainName] = args;
     const chainConfig = getChainConfig(config.chains, chainName);
-    const msg = [{ freeze_chain: { chain: chainConfig.axelarId } }];
-
-    if (options.governance) {
-        throw new Error('Router freeze_chain can only be executed by Admin EOA, not via governance');
-    }
-
-    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
-    printDirectExecutionInfo(msg, contractAddress);
-    return executeDirectly(client, contractAddress, msg, fee);
+    const msg = [{ freeze_chains: { chains: { [chainConfig.axelarId]: 'Bidirectional' } } }];
+    const defaultTitle = `Freeze chain ${chainName} on Router`;
+    return executeContractMessage(client, config, options, 'Router', msg, fee, defaultTitle);
 };
 
 const routerUnfreezeChain = async (
@@ -637,15 +631,9 @@ const routerUnfreezeChain = async (
 ): Promise<void> => {
     const [chainName] = args;
     const chainConfig = getChainConfig(config.chains, chainName);
-    const msg = [{ unfreeze_chain: { chain: chainConfig.axelarId } }];
-
-    if (options.governance) {
-        throw new Error('Router unfreeze_chain can only be executed by Admin EOA, not via governance');
-    }
-
-    const contractAddress = config.validateRequired(config.getContractConfig('Router').address, 'Router.address');
-    printDirectExecutionInfo(msg, contractAddress);
-    return executeDirectly(client, contractAddress, msg, fee);
+    const msg = [{ unfreeze_chains: { chains: { [chainConfig.axelarId]: 'Bidirectional' } } }];
+    const defaultTitle = `Unfreeze chain ${chainName} on Router`;
+    return executeContractMessage(client, config, options, 'Router', msg, fee, defaultTitle);
 };
 
 const routerDisableRouting = async (
