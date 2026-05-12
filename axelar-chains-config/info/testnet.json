@@ -122,6 +122,18 @@
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
           "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x3d6CB9D16FD5ff33511d630FC1E98a8F5f93dD85"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "explorer": {
@@ -244,6 +256,18 @@
           "codehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x989947b1646890093db39a46aad056df049d599345771681e66f7ececbe9f4db"
         }
       },
       "explorer": {
@@ -485,6 +509,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x486c91290d369662d6b62a2148003df09b6b2540725034002c69be9ccec2b6f8"
         }
       },
       "explorer": {
@@ -616,6 +652,18 @@
           "wstETH token": "0x0B15635FCF5316EdFD2a9A0b0dC3700aeA4D09E6",
           "NttManager": "0x66Cb5a992570EF01b522Bc59A056a64A84Bd0aAa",
           "wormholeChainId": 4
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x16770a41dc7919d951bbb055e2140eb5edce10d1ecaa47194681b8daf9a65dda"
         }
       },
       "explorer": {
@@ -731,6 +779,18 @@
           "implementation": "0xBBE9a6b47464617Dc6FA44F31896e38DC68b4ab2",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x77e86f75c0b5a37cd17705700d78c77456653b604f45247f8ea9f8ebfbf6b029"
         }
       },
       "explorer": {
@@ -844,6 +904,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x1f05ceab48052e86c780500ca6f2e84786ebd71537fcb6b8a6236d0c6ba6174e"
         }
       },
       "explorer": {
@@ -960,6 +1032,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "explorer": {
@@ -1079,6 +1163,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "gasOptions": {
@@ -1194,6 +1290,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xf8bcaec89c550bc2eac4d275ddc9dcbefa4f62e29374439fea644d6ce4483827"
         }
       },
       "explorer": {
@@ -1285,6 +1393,18 @@
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
           "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "gasOptions": {
@@ -1410,6 +1530,18 @@
           "implementation": "0xBBE9a6b47464617Dc6FA44F31896e38DC68b4ab2",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "finality": "finalized",
@@ -1528,6 +1660,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "finality": "finalized",
@@ -1761,6 +1905,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x77e86f75c0b5a37cd17705700d78c77456653b604f45247f8ea9f8ebfbf6b029"
         }
       },
       "finality": "finalized",
@@ -1866,6 +2022,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "explorer": {
@@ -1978,6 +2146,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "explorer": {
