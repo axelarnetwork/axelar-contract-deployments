@@ -3606,8 +3606,7 @@
             "deploymentName": "solana-24-78-77",
             "salt": "solana"
           }
-        },
-        "axelar": {}
+        }
       },
       "Multisig": {
         "blockExpiry": 50,
