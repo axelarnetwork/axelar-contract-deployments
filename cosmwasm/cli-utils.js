@@ -75,6 +75,10 @@ const addAmplifierOptions = (program, options = {}) => {
         addProposalOptions(program);
     }
 
+    if (options.optionalProposalOptions) {
+        addOptionalProposalOptions(program);
+    }
+
     if (options.codeId) {
         program.addOption(
             new Option('--codeId <codeId>', 'the code id of the contract previously uploaded').argParser((value) => {
@@ -227,6 +231,12 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
+};
+
+const addOptionalProposalOptions = (program) => {
+    program.addOption(new Option('-t, --title <title>', 'proposal title (optional, auto-generated if not provided)'));
+    program.addOption(new Option('-d, --description <description>', 'proposal description (optional, defaults to title)'));
     program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 

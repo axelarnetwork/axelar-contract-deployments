@@ -607,7 +607,16 @@ const migrate = async (
 
 // ==================== Emergency Operations ====================
 
-// Router operations (Admin EOA only - cannot use governance)
+// Router operations (Admin EOA or Governance)
+const buildRouterChainsMap = (config: ConfigManager, chainNames: string[]) => {
+    const chains: Record<string, string> = {};
+    for (const chainName of chainNames) {
+        const chainConfig = getChainConfig(config.chains, chainName);
+        chains[chainConfig.axelarId] = 'Bidirectional';
+    }
+    return chains;
+};
+
 const routerFreezeChain = async (
     client: ClientManager,
     config: ConfigManager,
@@ -615,10 +624,12 @@ const routerFreezeChain = async (
     args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const [chainName] = args;
-    const chainConfig = getChainConfig(config.chains, chainName);
-    const msg = [{ freeze_chains: { chains: { [chainConfig.axelarId]: 'Bidirectional' } } }];
-    const defaultTitle = `Freeze chain ${chainName} on Router`;
+    if (args.length === 0) {
+        throw new Error('At least one chain name is required');
+    }
+    const chains = buildRouterChainsMap(config, args);
+    const msg = [{ freeze_chains: { chains } }];
+    const defaultTitle = `Freeze ${args.length > 1 ? 'chains' : 'chain'} ${args.join(', ')} on Router`;
     return executeContractMessage(client, config, options, 'Router', msg, fee, defaultTitle);
 };
 
@@ -629,10 +640,12 @@ const routerUnfreezeChain = async (
     args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const [chainName] = args;
-    const chainConfig = getChainConfig(config.chains, chainName);
-    const msg = [{ unfreeze_chains: { chains: { [chainConfig.axelarId]: 'Bidirectional' } } }];
-    const defaultTitle = `Unfreeze chain ${chainName} on Router`;
+    if (args.length === 0) {
+        throw new Error('At least one chain name is required');
+    }
+    const chains = buildRouterChainsMap(config, args);
+    const msg = [{ unfreeze_chains: { chains } }];
+    const defaultTitle = `Unfreeze ${args.length > 1 ? 'chains' : 'chain'} ${args.join(', ')} on Router`;
     return executeContractMessage(client, config, options, 'Router', msg, fee, defaultTitle);
 };
 
@@ -729,10 +742,14 @@ const itsFreezeChain = async (
     args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const [chainName] = args;
-    const chainConfig = getChainConfig(config.chains, chainName);
-    const msg = [{ freeze_chain: { chain: chainConfig.axelarId } }];
-    const defaultTitle = `Freeze chain ${chainName} on ITS Hub`;
+    if (args.length === 0) {
+        throw new Error('At least one chain name is required');
+    }
+    const msg = args.map((chainName) => {
+        const chainConfig = getChainConfig(config.chains, chainName);
+        return { freeze_chain: { chain: chainConfig.axelarId } };
+    });
+    const defaultTitle = `Freeze ${args.length > 1 ? 'chains' : 'chain'} ${args.join(', ')} on ITS Hub`;
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };
 
@@ -743,10 +760,14 @@ const itsUnfreezeChain = async (
     args: string[],
     fee?: string | StdFee,
 ): Promise<void> => {
-    const [chainName] = args;
-    const chainConfig = getChainConfig(config.chains, chainName);
-    const msg = [{ unfreeze_chain: { chain: chainConfig.axelarId } }];
-    const defaultTitle = `Unfreeze chain ${chainName} on ITS Hub`;
+    if (args.length === 0) {
+        throw new Error('At least one chain name is required');
+    }
+    const msg = args.map((chainName) => {
+        const chainConfig = getChainConfig(config.chains, chainName);
+        return { unfreeze_chain: { chain: chainConfig.axelarId } };
+    });
+    const defaultTitle = `Unfreeze ${args.length > 1 ? 'chains' : 'chain'} ${args.join(', ')} on ITS Hub`;
     return executeContractMessage(client, config, options, 'InterchainTokenService', msg, fee, defaultTitle);
 };
 
@@ -879,17 +900,17 @@ const programHandler = () => {
 
     const routerFreezeChainCmd = program
         .command('router-freeze-chain')
-        .description('[EMERGENCY] Freeze a chain on Router (Admin EOA only, cannot use governance)')
-        .argument('<chainName>', 'chain name to freeze')
-        .action((chainName, options) => mainProcessor(routerFreezeChain, options, [chainName]));
-    addAmplifierOptions(routerFreezeChainCmd);
+        .description('[EMERGENCY] Freeze one or more chains on Router in a single message (Admin EOA or --governance)')
+        .argument('<chains...>', 'one or more chain names to freeze (bundled into a single freeze_chains message)')
+        .action((chains, options) => mainProcessor(routerFreezeChain, options, chains));
+    addAmplifierOptions(routerFreezeChainCmd, { optionalProposalOptions: true });
 
     const routerUnfreezeChainCmd = program
         .command('router-unfreeze-chain')
-        .description('[EMERGENCY] Unfreeze a chain on Router (Admin EOA only, cannot use governance)')
-        .argument('<chainName>', 'chain name to unfreeze')
-        .action((chainName, options) => mainProcessor(routerUnfreezeChain, options, [chainName]));
-    addAmplifierOptions(routerUnfreezeChainCmd);
+        .description('[EMERGENCY] Unfreeze one or more chains on Router in a single message (Admin EOA or --governance)')
+        .argument('<chains...>', 'one or more chain names to unfreeze (bundled into a single unfreeze_chains message)')
+        .action((chains, options) => mainProcessor(routerUnfreezeChain, options, chains));
+    addAmplifierOptions(routerUnfreezeChainCmd, { optionalProposalOptions: true });
 
     const routerDisableRoutingCmd = program
         .command('router-disable-routing')
@@ -929,17 +950,17 @@ const programHandler = () => {
 
     const itsFreezeChainCmd = program
         .command('its-freeze-chain')
-        .description('[EMERGENCY] Freeze a chain on ITS Hub (Admin EOA or --governance)')
-        .argument('<chainName>', 'chain name to freeze')
-        .action((chainName, options) => mainProcessor(itsFreezeChain, options, [chainName]));
-    addAmplifierOptions(itsFreezeChainCmd);
+        .description('[EMERGENCY] Freeze one or more chains on ITS Hub in a single proposal (Admin EOA or --governance)')
+        .argument('<chains...>', 'one or more chain names to freeze (one freeze_chain message per chain, bundled in one proposal)')
+        .action((chains, options) => mainProcessor(itsFreezeChain, options, chains));
+    addAmplifierOptions(itsFreezeChainCmd, { optionalProposalOptions: true });
 
     const itsUnfreezeChainCmd = program
         .command('its-unfreeze-chain')
-        .description('[EMERGENCY] Unfreeze a chain on ITS Hub (Admin EOA or --governance)')
-        .argument('<chainName>', 'chain name to unfreeze')
-        .action((chainName, options) => mainProcessor(itsUnfreezeChain, options, [chainName]));
-    addAmplifierOptions(itsUnfreezeChainCmd);
+        .description('[EMERGENCY] Unfreeze one or more chains on ITS Hub in a single proposal (Admin EOA or --governance)')
+        .argument('<chains...>', 'one or more chain names to unfreeze (one unfreeze_chain message per chain, bundled in one proposal)')
+        .action((chains, options) => mainProcessor(itsUnfreezeChain, options, chains));
+    addAmplifierOptions(itsUnfreezeChainCmd, { optionalProposalOptions: true });
 
     // ==================== End Emergency Operations Commands ====================
 
