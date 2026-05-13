@@ -1393,18 +1393,6 @@
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
           "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
-        },
-        "AxelarServiceGovernance": {
-          "governanceChain": "axelar",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 300,
-          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
-          "deploymentMethod": "create3",
-          "salt": "v6.0.4-axelar",
-          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
-          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         }
       },
       "gasOptions": {
