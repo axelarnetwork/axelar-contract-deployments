@@ -317,7 +317,7 @@ async function routerIsChainFrozen(client, config, _options, args) {
             chain_info: chainConfig.axelarId,
         });
         const status = result?.frozen_status;
-        const label = typeof status === 'number' ? ROUTER_FROZEN_STATUS[status] ?? `Unknown(${status})` : 'Unknown';
+        const label = typeof status === 'number' ? (ROUTER_FROZEN_STATUS[status] ?? `Unknown(${status})`) : 'Unknown';
         printInfo(`Router: Chain ${chainName} frozen_status`, `${label} (${status})`);
         printInfo(`Router: chain_info raw response for ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
