@@ -75,7 +75,7 @@ get_op_vault() {
         devnet-amplifier) echo "Devnet - Axelar Externally Owned Accounts" ;;
         stagenet)         echo "Stagenet - Axelar Externally Owned Accounts" ;;
         testnet)          echo "Testnet - Axelar Externally Owned Accounts" ;;
-        mainnet)          log_error "1Password vault for mainnet not configured yet"; exit 1 ;;
+        mainnet)          echo "Mainnet - Axelar Externally Owned Accounts" ;;
     esac
 }
 
@@ -115,7 +115,8 @@ get_epoch_duration() {
     case "$ENV" in
         devnet-amplifier) echo "100" ;;
         stagenet)         echo "600" ;;
-        testnet|mainnet)  echo "14845" ;;
+        testnet)          echo "14845" ;;
+        mainnet)          echo "47250" ;;
     esac
 }
 
@@ -127,7 +128,10 @@ get_participation_threshold() {
 }
 
 get_rewards_per_epoch() {
-    echo "100"
+    case "$ENV" in
+        mainnet) echo "5553500000" ;;
+        *)       echo "100" ;;
+    esac
 }
 
 get_reward_amount() {
@@ -318,6 +322,18 @@ resolve_prover_admin() {
     fi
 }
 
+resolve_mp_admin_mnemonic() {
+    local mnemonic
+    if mnemonic=$(fetch_op_field "[${ENV_DISPLAY}] Key Rotation EOA: Axelar" "Mnemonic"); then
+        MP_ADMIN_MNEMONIC="$mnemonic"
+        log_info "MP admin mnemonic loaded from 1Password"
+        return
+    fi
+    log_error "Failed to fetch MP admin mnemonic from 1Password"
+    log_info "1Password item: [${ENV_DISPLAY}] Key Rotation EOA: Axelar (field: Mnemonic)"
+    exit 1
+}
+
 # =============================================================================
 # Config helpers
 # =============================================================================
@@ -411,7 +427,21 @@ load_deployed_addresses() {
 # =============================================================================
 
 run_ts_node() {
-    log_info "Running: ts-node $*"
+    # Redact values of secret-bearing flags before logging
+    local redacted_args=()
+    local redact_next=false
+    for arg in "$@"; do
+        if [[ "$redact_next" == "true" ]]; then
+            redacted_args+=("<redacted>")
+            redact_next=false
+        elif [[ "$arg" == "-m" || "$arg" == "--mnemonic" ]]; then
+            redacted_args+=("$arg")
+            redact_next=true
+        else
+            redacted_args+=("$arg")
+        fi
+    done
+    log_info "Running: ts-node ${redacted_args[*]}"
     (cd "$DEPLOYMENTS_DIR" && ts-node "$@")
 }
 
@@ -1076,16 +1106,14 @@ step_ampd_update_pause() {
     local service_name
     service_name=$(get_service_name)
 
-    local rpc_url domain_separator gateway_address
+    local rpc_url domain_separator
     rpc_url=$(jq_config ".chains[\"${CHAIN}\"].rpc // empty")
-    gateway_address=$(jq_config ".chains[\"${CHAIN}\"].contracts.AxelarGateway.address // empty")
     domain_separator=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].domainSeparator // empty" | sed 's/^0x//')
 
     echo ""
     echo "    Verifiers should update their Solana ampd handler with the following params:"
     echo ""
     echo "    rpc_url           = \"${rpc_url}\""
-    echo "    gateway_address   = \"${gateway_address}\""
     echo "    domain_separator  = \"${domain_separator}\""
     echo ""
     echo "    voting_verifier   = \"${VOTING_VERIFIER}\""
@@ -1224,27 +1252,22 @@ step_create_genesis_verifier_set() {
         exit 1
     fi
 
-    local mp_admin mp_governance
+    local mp_admin
     mp_admin=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].adminAddress // empty")
-    mp_governance=$(jq_config ".axelar.contracts.MultisigProver[\"${CHAIN}\"].governanceAddress // empty")
 
     log_warn "This step can only run once sufficient verifiers have registered."
-    echo ""
-    echo "    This step requires the MultisigProver admin or governance address:"
-    echo "      admin:      ${mp_admin:-<not set>}"
-    echo "      governance:  ${mp_governance:-<not set>}"
-    echo ""
-    echo "    Run the following command (replace <FROM> and <KEYRING_BACKEND>):"
-    echo ""
-    echo "    axelard tx wasm execute $MULTISIG_PROVER '\"update_verifier_set\"' \\"
-    echo "      --from <FROM> --keyring-backend <KEYRING_BACKEND> \\"
-    echo "      --chain-id $CHAIN_ID --gas auto --gas-adjustment 1.5 --node $NODE -y"
-    echo ""
+    log_info "MultisigProver:  $MULTISIG_PROVER"
+    log_info "Admin:           ${mp_admin:-<not set>}"
 
-    if ! confirm "Has the genesis verifier set been created?"; then
+    if ! confirm "Run update_verifier_set as MultisigProver admin?"; then
         log_warn "Script paused. Re-run to resume."
         exit 0
     fi
+
+    resolve_mp_admin_mnemonic
+
+    run_ts_node cosmwasm/rotate-signers.js update-verifier-set "$CHAIN" \
+        -m "$MP_ADMIN_MNEMONIC"
 
     log_info "Querying current verifier set..."
     axelard q wasm contract-state smart "$MULTISIG_PROVER" \

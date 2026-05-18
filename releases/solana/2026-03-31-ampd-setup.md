@@ -19,14 +19,12 @@ multisig = "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5"
 
 ### Mainnet
 
-<!-- TODO: fill in mainnet addresses -->
-
 ```toml
 [[grpc.blockchain_service.chains]]
 chain_name = "solana"
-voting_verifier = "TBD"
-multisig_prover = "TBD"
-multisig = "TBD"
+voting_verifier = "axelar19gut3kvqf57gnu5ylq474qfgk4gg5ly89cs5kk4mde688lc5adsq6qyz4h"
+multisig_prover = "axelar1xdtjwhenmy80wckuntd2npd3zeqayy0q0l5dfy48g6wmu3p48pgqknnc9g"
+multisig = "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5"
 ```
 
 ## Step 2: Create Handler Config
@@ -47,17 +45,15 @@ chain_name = "solana"
 #### Testnet
 
 ```toml
-rpc_url = "your-rpc-url"
+rpc_url = "your-solana-devnet-rpc-url"
 domain_separator = "2ba3d447b55ebd352d941bad2be996868560897c257f063c9c3bcee72f82234f"
 ```
 
 #### Mainnet
 
-<!-- TODO: fill in mainnet values -->
-
 ```toml
-rpc_url = "TBD"
-domain_separator = "TBD"
+rpc_url = "your-solana-mainnet-rpc-url"
+domain_separator = "1b9a227b534dd9345b548a26811b4ff8cee835ee8cf3cf6d093a512e0dd0128c"
 ```
 
 ## Step 3: Run the Solana Handler
