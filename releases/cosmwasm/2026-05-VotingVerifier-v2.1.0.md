@@ -1,9 +1,9 @@
 # VotingVerifier v2.1.0
 
-|                | **Owner**                                            |
-| -------------- | ---------------------------------------------------- |
-| **Created By** | @MakisChristou <makis@commonprefix.com>              |
-| **Deployment** | @MakisChristou <makis@commonprefix.com>              |
+|                | **Owner**                               |
+| -------------- | --------------------------------------- |
+| **Created By** | @MakisChristou <makis@commonprefix.com> |
+| **Deployment** | @MakisChristou <makis@commonprefix.com> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
