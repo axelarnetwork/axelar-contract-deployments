@@ -1,4 +1,4 @@
-# VotingVerifier v2.1.0
+# VotingVerifier v2.0.2
 
 |                | **Owner**                               |
 | -------------- | --------------------------------------- |
@@ -12,11 +12,11 @@
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
-[Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v2.1.0)
+[Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v2.0.2)
 
 ## Background
 
-Upgrade all `VotingVerifier` contracts from `v2.0.1` → `v2.1.0`. Changes in this release:
+Upgrade all `VotingVerifier` contracts from `v2.0.1` → `v2.0.2`. Changes in this release:
 
 - `fix(voting-verifier): cap verify_messages batch at 1000` ([#1167](https://github.com/axelarnetwork/axelar-amplifier/pull/1167)) — caps poll size to bound message-handler gas usage (addresses oversized-poll DoS surfaced in AMPD audit #310).
 - `feat: poll by message` ([#1129](https://github.com/axelarnetwork/axelar-amplifier/pull/1129)).
@@ -27,7 +27,7 @@ There is no state migration; the migrate step just updates the stored code.
 
 ## Deployment
 
-This rollout upgrades all `VotingVerifier` contracts from `v2.0.1` to `v2.1.0`. The release uses the multi-chain helper `cosmwasm/migrate/sdk50.ts migrate-voting-verifiers`, which submits one migrate proposal per amplifier chain (skipping any chain whose verifier is already on the new code or whose admin rejects).
+This rollout upgrades all `VotingVerifier` contracts from `v2.0.1` to `v2.0.2`. The release uses the multi-chain helper `cosmwasm/migrate/sdk50.ts migrate-voting-verifiers`, which submits one migrate proposal per amplifier chain (skipping any chain whose verifier is already on the new code or whose admin rejects).
 
 > **Note:** This procedure does not cover `XRPLVotingVerifier`. If a new XRPL voting verifier release is required, follow the dedicated XRPL release doc.
 
@@ -50,10 +50,10 @@ This rollout upgrades all `VotingVerifier` contracts from `v2.0.1` to `v2.1.0`. 
     ```bash
     ts-node cosmwasm/contract.ts store-code \
       -c VotingVerifier \
-      -t "Store VotingVerifier contract v2.1.0" \
-      -d "Store VotingVerifier contract v2.1.0" \
+      -t "Store VotingVerifier contract v2.0.2" \
+      -d "Store VotingVerifier contract v2.0.2" \
       --instantiateAddresses $INIT_ADDRESSES \
-      --version 2.1.0 \
+      --version 2.0.2 \
       --governance
     ```
 
@@ -75,7 +75,7 @@ This rollout upgrades all `VotingVerifier` contracts from `v2.0.1` to `v2.1.0`. 
     ts-node cosmwasm/query.ts contract-versions
     ```
 
-    All `VotingVerifier[<chain>]` entries should now report `v2.1.0`.
+    All `VotingVerifier[<chain>]` entries should now report `v2.0.2`.
 
 ## Rollback
 
