@@ -105,7 +105,19 @@ async function migrateAllVotingVerifiersBatched(
     const chains = getAmplifierChains(config.chains);
     const targets: Array<{ chainName: string; address: string; contractName: string; chainCodecAddress: string }> = [];
 
-    const resolvedCodeId: number | undefined = typeof options.codeId === 'number' ? options.codeId : undefined;
+    if (typeof options.codeId !== 'number' && !options.fetchCodeId) {
+        throw new Error(
+            'migrate-voting-verifiers-batch requires either --codeId <N> or --fetchCodeId so the target code id is unambiguous',
+        );
+    }
+    // Resolve the target code id ONCE up-front. With --fetchCodeId this also
+    // populates VotingVerifier.lastUploadedCodeId as a side effect.
+    const resolvedCodeId: number = await getCodeId(client, config, {
+        contractName: 'VotingVerifier',
+        codeId: options.codeId,
+        fetchCodeId: options.fetchCodeId,
+    });
+    printInfo(`Target code id resolved`, String(resolvedCodeId));
 
     for (const { name: chainName, config: chainConfig } of chains) {
         let votingVerifierConfig;
@@ -132,18 +144,16 @@ async function migrateAllVotingVerifiersBatched(
             continue;
         }
 
-        if (resolvedCodeId !== undefined) {
-            try {
-                const { codeId: currentCodeId } = await client.getContract(votingVerifierConfig.address);
-                if (currentCodeId === resolvedCodeId) {
-                    printWarn(`Skipping ${chainName}: already on code id ${resolvedCodeId}`);
-                    continue;
-                }
-            } catch (error) {
-                printWarn(
-                    `Could not query current code id for ${chainName} (${error instanceof Error ? error.message : error}), including in batch anyway`,
-                );
+        try {
+            const { codeId: currentCodeId } = await client.getContract(votingVerifierConfig.address);
+            if (currentCodeId === resolvedCodeId) {
+                printWarn(`Skipping ${chainName}: already on code id ${resolvedCodeId}`);
+                continue;
             }
+        } catch (error) {
+            printWarn(
+                `Could not query current code id for ${chainName} (${error instanceof Error ? error.message : error}), including in batch anyway`,
+            );
         }
 
         targets.push({
@@ -176,29 +186,24 @@ async function migrateAllVotingVerifiersBatched(
 
     printInfo(`Bundling ${targets.length} VotingVerifier migration(s) into a single proposal`);
 
-    const messages = await Promise.all(
-        targets.map(async ({ address, contractName, chainCodecAddress }) => {
-            const migrateOptions = {
-                ...options,
-                contractName,
-                address,
-                msg: JSON.stringify({ chain_codec_address: chainCodecAddress }),
-            };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const codeId = await getCodeId(client, config, migrateOptions as any);
-            return encodeMigrate(config, { ...migrateOptions, codeId });
+    const messages = targets.map(({ address, contractName, chainCodecAddress }) =>
+        encodeMigrate(config, {
+            ...options,
+            contractName,
+            address,
+            codeId: resolvedCodeId,
+            msg: JSON.stringify({ chain_codec_address: chainCodecAddress }),
         }),
     );
 
-    const title =
-        options.title || `Migrate VotingVerifier to code id ${resolvedCodeId ?? 'fetched per-contract'} on ${targets.length} chains`;
+    const title = options.title || `Migrate VotingVerifier to code id ${resolvedCodeId} on ${targets.length} chains`;
     const description =
         options.description ||
         `Bundled MsgMigrateContract for ${targets.length} amplifier chains: ${targets.map((t) => t.chainName).join(', ')}`;
 
     const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
 
-    if (proposalId && resolvedCodeId !== undefined) {
+    if (proposalId) {
         for (const { chainName } of targets) {
             const vv = config.getVotingVerifierContract(chainName);
             vv.codeId = resolvedCodeId;
