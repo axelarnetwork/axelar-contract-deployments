@@ -27,11 +27,12 @@ async function migrateAllVotingVerifiers(
     fee: string | StdFee,
 ): Promise<void> {
     const chains = getAmplifierChains(config.chains);
-    const votingVerifiers: Array<{ chainName: string; address: string; contractName: string }> = [];
+    const votingVerifiers: Array<{ chainName: string; address: string; contractName: string; chainCodecAddress: string }> = [];
 
     for (const { name: chainName, config: chainConfig } of chains) {
         let votingVerifierConfig;
         let contractName;
+        let chainCodecAddress;
         try {
             votingVerifierConfig = config.getVotingVerifierContract(chainName);
             contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
@@ -46,17 +47,27 @@ async function migrateAllVotingVerifiers(
             continue;
         }
 
+        try {
+            chainCodecAddress = config.getChainCodecAddress(chainConfig.chainType);
+        } catch (error) {
+            printWarn(`Skipping ${chainName}: ${error instanceof Error ? error.message : error}`);
+            continue;
+        }
+
         votingVerifiers.push({
             chainName,
             address: votingVerifierConfig.address,
             contractName,
+            chainCodecAddress,
         });
-        printInfo(`Added ${chainName} voting verifier (address: ${votingVerifierConfig.address})`);
+        printInfo(
+            `Added ${chainName} voting verifier (address: ${votingVerifierConfig.address}, chain_codec_address: ${chainCodecAddress})`,
+        );
     }
 
     printInfo(`Found ${votingVerifiers.length} voting verifier(s) to migrate`);
 
-    for (const { chainName, address, contractName } of votingVerifiers) {
+    for (const { chainName, address, contractName, chainCodecAddress } of votingVerifiers) {
         try {
             printInfo(`Proceeding with migration of voting verifier for chain ${chainName}...`);
             await migrate(
@@ -64,11 +75,11 @@ async function migrateAllVotingVerifiers(
                 config,
                 {
                     ...options,
-                    title: `Migrate Voting Verifier to v2.0.0 for chain ${chainName}`,
-                    description: `Migrate Voting Verifier to v2.0.0 for chain ${chainName}`,
+                    title: `Migrate Voting Verifier to v2.0.2 for chain ${chainName}`,
+                    description: `Migrate Voting Verifier to v2.0.2 for chain ${chainName}`,
                     contractName,
                     address,
-                    msg: JSON.stringify({}),
+                    msg: JSON.stringify({ chain_codec_address: chainCodecAddress }),
                 },
                 undefined,
                 fee,
