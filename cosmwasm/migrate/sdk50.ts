@@ -30,9 +30,21 @@ async function migrateAllVotingVerifiers(
     const votingVerifiers: Array<{ chainName: string; address: string; contractName: string }> = [];
 
     for (const { name: chainName, config: chainConfig } of chains) {
-        const votingVerifierConfig = config.getVotingVerifierContract(chainName);
-        const contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
-        config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
+        let votingVerifierConfig;
+        let contractName;
+        try {
+            votingVerifierConfig = config.getVotingVerifierContract(chainName);
+            contractName = config.getVotingVerifierContractForChainType(chainConfig.chainType);
+            config.validateRequired(votingVerifierConfig.address, 'votingVerifierConfig.address');
+        } catch (error) {
+            printWarn(`Skipping ${chainName}: ${error instanceof Error ? error.message : error}`);
+            continue;
+        }
+
+        if (contractName !== 'VotingVerifier') {
+            printWarn(`Skipping ${chainName}: uses ${contractName}, which requires a dedicated migration flow`);
+            continue;
+        }
 
         votingVerifiers.push({
             chainName,
