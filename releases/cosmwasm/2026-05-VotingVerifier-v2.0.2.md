@@ -8,7 +8,7 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
-| **Stagenet**         | -                     | TBD        |
+| **Stagenet**         | Deployed              | 2026-05-20 |
 | **Testnet**          | Deployed              | 2026-05-20 |
 | **Mainnet**          | -                     | TBD        |
 
@@ -139,6 +139,16 @@ for chain in <list-of-chains>; do
   printf "%-22s %s\n" "$chain" "$codeId"
 done
 ```
+
+## Stagenet rollout (2026-05-20)
+
+Proposal 476 — Store VotingVerifier v2.0.2 (code id `98`, hash `F0139170...20310AEF`).
+
+Proposal 477 — Bundled migrate of 10 VotingVerifiers via `migrate-voting-verifiers-batch`: `flow`, `hedera`, `sui`, `xrpl-evm`, `plume`, `hyperliquid`, `monad`, `berachain`, `celo-sepolia`, `solana-stagenet-3`.
+
+Auto-skipped:
+
+- `xrpl` — uses `XrplVotingVerifier`.
 
 ## Testnet rollout (2026-05-20)
 
