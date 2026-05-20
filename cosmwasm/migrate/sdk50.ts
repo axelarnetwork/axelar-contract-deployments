@@ -103,7 +103,7 @@ async function migrateAllVotingVerifiersBatched(
     const chains = getAmplifierChains(config.chains);
     const targets: Array<{ chainName: string; address: string; contractName: string; chainCodecAddress: string }> = [];
 
-    let resolvedCodeId: number | undefined = typeof options.codeId === 'number' ? options.codeId : undefined;
+    const resolvedCodeId: number | undefined = typeof options.codeId === 'number' ? options.codeId : undefined;
 
     for (const { name: chainName, config: chainConfig } of chains) {
         let votingVerifierConfig;
