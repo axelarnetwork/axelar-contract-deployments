@@ -323,7 +323,6 @@ const programHandler = () => {
     addAmplifierOptions(migrateVotingVerifiersBatchedCmd, {
         codeId: true,
         fetchCodeId: true,
-        proposalOptions: true,
     });
 
     program
