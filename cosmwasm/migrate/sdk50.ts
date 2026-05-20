@@ -169,7 +169,7 @@ async function migrateAllVotingVerifiersBatched(
         });
         const versionNote = options.newVersion ? `, version -> "${options.newVersion}"` : '';
         printInfo(
-            `[DRY-RUN] On successful submission, would mutate testnet config: codeId -> ${resolvedCodeId}${versionNote} for those ${targets.length} chains`,
+            `[DRY-RUN] On successful submission, would mutate the chains config: per-chain codeId -> ${resolvedCodeId}${versionNote} for those ${targets.length} chains, and VotingVerifier.lastUploadedCodeId -> ${resolvedCodeId}`,
         );
         return;
     }
@@ -206,8 +206,10 @@ async function migrateAllVotingVerifiersBatched(
                 vv.version = options.newVersion;
             }
         }
+        const baseVv = config.getContractConfig('VotingVerifier');
+        baseVv.lastUploadedCodeId = resolvedCodeId;
         printInfo(
-            `Updated in-memory config for ${targets.length} chains (codeId -> ${resolvedCodeId}${options.newVersion ? `, version -> "${options.newVersion}"` : ''}); saveConfig will persist on exit. NOTE: this is optimistic — if the proposal fails at execution, revert manually.`,
+            `Updated in-memory config for ${targets.length} chains (codeId -> ${resolvedCodeId}${options.newVersion ? `, version -> "${options.newVersion}"` : ''}) and VotingVerifier.lastUploadedCodeId -> ${resolvedCodeId}; saveConfig will persist on exit. NOTE: this is optimistic — if the proposal fails at execution, revert manually.`,
         );
     }
 }
