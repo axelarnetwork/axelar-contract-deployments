@@ -355,7 +355,10 @@ const programHandler = () => {
     });
     migrateVotingVerifiersBatchedCmd.addOption(new Option('--dryRun', 'preview the bundled proposal without submitting').env('DRY_RUN'));
     migrateVotingVerifiersBatchedCmd.addOption(
-        new Option('--newVersion <ver>', 'optional version string to write into testnet.json for each migrated chain'),
+        new Option(
+            '--newVersion <ver>',
+            'version string to write into the chains config for each migrated chain (e.g. "2.0.2")',
+        ).makeOptionMandatory(true),
     );
 
     program
