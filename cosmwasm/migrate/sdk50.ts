@@ -1,7 +1,7 @@
 'use strict';
 
 import { StdFee } from '@cosmjs/stargate';
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 
 import { addOptionsToCommands, getAmplifierChains, printInfo, printWarn, prompt } from '../../common';
 import { ConfigManager } from '../../common/config';
@@ -19,6 +19,8 @@ interface MigrationOptions extends Options {
     yes?: boolean;
     fetchCodeId?: boolean;
     codeId?: number;
+    dryRun?: boolean;
+    newVersion?: string;
     [key: string]: unknown;
 }
 
@@ -160,6 +162,18 @@ async function migrateAllVotingVerifiersBatched(
         return;
     }
 
+    if (options.dryRun) {
+        printInfo(`[DRY-RUN] Would submit ONE bundled proposal with ${targets.length} migration(s):`);
+        targets.forEach((t, i) => {
+            printInfo(`  ${i + 1}. ${t.chainName}: ${t.address} -> code ${resolvedCodeId} (codec ${t.chainCodecAddress})`);
+        });
+        const versionNote = options.newVersion ? `, version -> "${options.newVersion}"` : '';
+        printInfo(
+            `[DRY-RUN] On successful submission, would mutate testnet config: codeId -> ${resolvedCodeId}${versionNote} for those ${targets.length} chains`,
+        );
+        return;
+    }
+
     printInfo(`Bundling ${targets.length} VotingVerifier migration(s) into a single proposal`);
 
     const messages = await Promise.all(
@@ -182,7 +196,20 @@ async function migrateAllVotingVerifiersBatched(
         options.description ||
         `Bundled MsgMigrateContract for ${targets.length} amplifier chains: ${targets.map((t) => t.chainName).join(', ')}`;
 
-    await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
+    const proposalId = await submitMessagesAsProposal(client, config, { ...options, title, description }, messages, fee);
+
+    if (proposalId && resolvedCodeId !== undefined) {
+        for (const { chainName } of targets) {
+            const vv = config.getVotingVerifierContract(chainName);
+            vv.codeId = resolvedCodeId;
+            if (options.newVersion) {
+                vv.version = options.newVersion;
+            }
+        }
+        printInfo(
+            `Updated in-memory config for ${targets.length} chains (codeId -> ${resolvedCodeId}${options.newVersion ? `, version -> "${options.newVersion}"` : ''}); saveConfig will persist on exit. NOTE: this is optimistic — if the proposal fails at execution, revert manually.`,
+        );
+    }
 }
 
 async function updateBlockTimeRelatedParameters(
@@ -324,6 +351,10 @@ const programHandler = () => {
         codeId: true,
         fetchCodeId: true,
     });
+    migrateVotingVerifiersBatchedCmd.addOption(new Option('--dryRun', 'preview the bundled proposal without submitting').env('DRY_RUN'));
+    migrateVotingVerifiersBatchedCmd.addOption(
+        new Option('--newVersion <ver>', 'optional version string to write into testnet.json for each migrated chain'),
+    );
 
     program
         .command('update-voting-verifiers')
