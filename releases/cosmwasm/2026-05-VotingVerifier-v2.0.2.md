@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | Deployed              | 2026-05-20 |
 | **Testnet**          | Deployed              | 2026-05-20 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Deployed              | 2026-05-22 |
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v2.0.2)
 
@@ -139,6 +139,16 @@ for chain in <list-of-chains>; do
   printf "%-22s %s\n" "$chain" "$codeId"
 done
 ```
+
+## Mainnet rollout (2026-05-22)
+
+Proposal 471 — Store VotingVerifier v2.0.2 (code id `64`, hash `F0139170...20310AEF`).
+
+Proposal 472 — Bundled migrate of 10 VotingVerifiers via `migrate-voting-verifiers-batch`: `flow`, `sui`, `stellar`, `xrpl-evm`, `plume`, `hedera`, `berachain`, `hyperliquid`, `monad`, `solana`.
+
+Auto-skipped:
+
+- `xrpl` — uses `XrplVotingVerifier`.
 
 ## Stagenet rollout (2026-05-20)
 
