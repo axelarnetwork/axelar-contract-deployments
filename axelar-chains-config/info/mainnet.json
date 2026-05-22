@@ -2842,7 +2842,7 @@
         "AXE": {
           "address": "0x2e894c867a1a81aaae7a3498ecbe55c78e1e1a8345202e36e20df8bcf6e19b5d",
           "typeArgument": "0x2e894c867a1a81aaae7a3498ecbe55c78e1e1a8345202e36e20df8bcf6e19b5d::axe::AXE",
-          "decimals": "9",
+          "decimals": 9,
           "objects": {
             "TokenId": "0xdb55ccc3ccf0c5c03226602a6131007393079c59a0de0c97dd8bb97328b37d10",
             "TreasuryCap": "0xcab750c6f1a294674f8ea0752e0e59c1fa987c0fb2aa026c9d1add0aca8f0e84",
