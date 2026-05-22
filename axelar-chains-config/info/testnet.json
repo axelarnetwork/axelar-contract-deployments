@@ -3079,8 +3079,8 @@
           "version": "2.2.0"
         },
         "AXE": {
+          "address": "0x7AC528458e73A11F0149c9234EC5f49cb1718a6e",
           "tokenId": "0xa9d0d0d3063287083ec0f14c015cd786b3ae96c681105913d27c2954a1c54546",
-          "tokenAddress": "0x7AC528458e73A11F0149c9234EC5f49cb1718a6e",
           "decimals": 18,
           "notes": "AXE ITS test token deployed by axe load-test; remote registered on stellar-2026-q1-2. Skip re-deploy via chains.hyperliquid.contracts.AXE.tokenId."
         }
@@ -3466,8 +3466,8 @@
           "initializeArgs": {}
         },
         "AXE": {
+          "address": "CD4E76AHF7UUBDMEUXCUXGRZENJMSKSFDCIVMBLJMQNJFCT3NQF4X4JT",
           "tokenId": "0x1600ee6a7b3810f8a277226b0f3a54cc9f92eb2e0456fc64578a78762ab7f838",
-          "tokenAddress": "CD4E76AHF7UUBDMEUXCUXGRZENJMSKSFDCIVMBLJMQNJFCT3NQF4X4JT",
           "decimals": 7,
           "notes": "AXE ITS test token deployed by axe load-test; remote registered on hyperliquid. Skip re-deploy via chains.stellar-2026-q1-2.contracts.AXE.tokenId."
         }
