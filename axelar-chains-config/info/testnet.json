@@ -2481,6 +2481,16 @@
             "ItsSingleton": "0x9926aca1bc1fcaf38db6b5570dd16e7ad265c1d7f621dbb0efdc49d61b6471dd",
             "ItsChannelId": "0xeadff6a48792bdb8ca1216bab78c502244152fc3632abac5f67e150da5e09315"
           }
+        },
+        "AXE": {
+          "address": "0x57975b22832d94a45f21a156b033a70fc44e7917b99303298abd426c4c393b7f",
+          "typeArgument": "0x57975b22832d94a45f21a156b033a70fc44e7917b99303298abd426c4c393b7f::axe::AXE",
+          "decimals": 9,
+          "objects": {
+            "TokenId": "0xf6bf5d313802acf0d26313c5245a2ed9d873846240c8d835690573ee148df078",
+            "TreasuryCap": "0x9a621ad4ce8094eed0870facdb58759969920e69b4d5828a067f323c879c3339",
+            "Metadata": "0x3215dd06147b36cd4874afbe981950975558fd980b3b0ce82b7f4e260cf2ba7d"
+          }
         }
       }
     },
@@ -3095,6 +3105,12 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "implementation": "0x6977477Bd4C053E1BfD0B6F287060c2A4E5E1aA1",
           "version": "2.2.0"
+        },
+        "AXE": {
+          "address": "0x7AC528458e73A11F0149c9234EC5f49cb1718a6e",
+          "tokenId": "0xa9d0d0d3063287083ec0f14c015cd786b3ae96c681105913d27c2954a1c54546",
+          "decimals": 18,
+          "notes": "AXE ITS test token deployed by axe load-test; remote registered on stellar-2026-q1-2. Skip re-deploy via chains.hyperliquid.contracts.AXE.tokenId."
         }
       }
     },
@@ -3476,6 +3492,12 @@
           "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
           "version": "1.0.0",
           "initializeArgs": {}
+        },
+        "AXE": {
+          "address": "CD4E76AHF7UUBDMEUXCUXGRZENJMSKSFDCIVMBLJMQNJFCT3NQF4X4JT",
+          "tokenId": "0x1600ee6a7b3810f8a277226b0f3a54cc9f92eb2e0456fc64578a78762ab7f838",
+          "decimals": 7,
+          "notes": "AXE ITS test token deployed by axe load-test; remote registered on hyperliquid. Skip re-deploy via chains.stellar-2026-q1-2.contracts.AXE.tokenId."
         }
       }
     },
