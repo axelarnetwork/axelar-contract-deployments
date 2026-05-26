@@ -2726,8 +2726,7 @@
             "deploymentName": "solana-stagenet-3-22-85-84-solana-stagenet-3",
             "salt": "solana-stagenet-3"
           }
-        },
-        "axelar": {}
+        }
       },
       "Multisig": {
         "blockExpiry": 50,
