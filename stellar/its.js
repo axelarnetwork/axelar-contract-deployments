@@ -267,7 +267,19 @@ async function flowLimit(wallet, _config, chain, contract, args, options) {
     const response = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
     const flowLimit = response.value();
 
-    printInfo('Flow Limit', flowLimit || 'No limit set');
+    let display;
+    if (flowLimit === undefined || flowLimit === null) {
+        display = 'No limit set';
+    } else if (flowLimit._attributes) {
+        // i128 returned as XDR Int128Parts { hi, lo }; recombine as BigInt
+        const hi = BigInt(flowLimit._attributes.hi._value);
+        const lo = BigInt(flowLimit._attributes.lo._value);
+        display = ((hi << 64n) | lo).toString();
+    } else {
+        display = String(flowLimit);
+    }
+
+    printInfo('Flow Limit', display);
 }
 
 async function setFlowLimit(wallet, _config, chain, contract, args, options) {
@@ -352,7 +364,7 @@ async function isFlowLimiter(wallet, _config, chain, contract, args, options) {
     const operation = contract.call('is_flow_limiter', hexToScVal(tokenId), addressToScVal(flowLimiter));
     const response = await broadcast(operation, wallet, chain, 'Is Flow Limiter', options);
 
-    printInfo('Is Flow Limiter', response.value());
+    printInfo('Is Flow Limiter', String(response.value()));
 }
 
 async function interchainTokenAddress(wallet, _config, chain, contract, args, options) {
