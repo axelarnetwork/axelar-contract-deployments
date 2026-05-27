@@ -336,12 +336,7 @@ async function transferFlowLimiter(wallet, _config, chain, contract, args, optio
         isNonEmptyString: { tokenId, from, to },
     });
 
-    const operation = contract.call(
-        'transfer_flow_limiter',
-        hexToScVal(tokenId),
-        addressToScVal(from),
-        addressToScVal(to),
-    );
+    const operation = contract.call('transfer_flow_limiter', hexToScVal(tokenId), addressToScVal(from), addressToScVal(to));
 
     await broadcast(operation, wallet, chain, 'Transfer Flow Limiter', options);
     printInfo('Successfully transferred flow limiter', `${from} -> ${to}`);
