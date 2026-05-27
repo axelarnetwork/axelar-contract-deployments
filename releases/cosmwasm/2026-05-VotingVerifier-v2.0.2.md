@@ -7,7 +7,7 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
+| **Devnet Amplifier** | Deployed              | 2026-05-27 |
 | **Stagenet**         | Deployed              | 2026-05-20 |
 | **Testnet**          | Deployed              | 2026-05-20 |
 | **Mainnet**          | Deployed              | 2026-05-22 |
@@ -33,6 +33,8 @@ This rollout upgrades all `VotingVerifier` contracts from `v2.0.1` to `v2.0.2` i
 2. **Batched migrate** — bundles `MsgMigrateContract` for every applicable amplifier chain into a single proposal. One vote ratifies them all atomically.
 
 > **Note:** This procedure does not cover `XRPLVotingVerifier`. The helper auto-skips chains whose chain type maps to `XrplVotingVerifier`. If a new XRPL voting verifier release is required, follow the dedicated XRPL release doc.
+
+> **Devnet Amplifier note:** Devnet uses the **direct admin** path, not governance. Set `MNEMONIC` to the wasm contract admin EOA (`axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`, the `adminAddress`), then run `store-code` and per-chain `migrate` **without** `--governance` (the batched helper only emits a gov proposal, so it is not used here). Store-code produced code id `1650`. Each `migrate` must pass the per-chain-type `chain_codec_address` via `--msg`. Six chains migrated directly (avalanche-fuji, eth-sepolia, optimism-sepolia, plume-2, berachain, arc-2) plus sui-2 and solana-18. **Two chains were skipped** because their VotingVerifier has a different on-chain admin: `flow` (admin is the governance module `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` → needs the `--governance` proposal path) and `xrpl-evm-devnet` (admin is a third-party EOA `axelar1hxcz4z263uxvlsmrj2pzfhmy8ggwwqjwu58w4t` → needs that key). Both remain on the old code id.
 
 ### 1. Configure environment
 
