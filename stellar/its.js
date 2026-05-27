@@ -267,7 +267,19 @@ async function flowLimit(wallet, _config, chain, contract, args, options) {
     const response = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
     const flowLimit = response.value();
 
-    printInfo('Flow Limit', flowLimit || 'No limit set');
+    let display;
+    if (flowLimit === undefined || flowLimit === null) {
+        display = 'No limit set';
+    } else if (flowLimit._attributes) {
+        // i128 returned as XDR Int128Parts { hi, lo }; recombine as BigInt
+        const hi = BigInt(flowLimit._attributes.hi._value);
+        const lo = BigInt(flowLimit._attributes.lo._value);
+        display = ((hi << 64n) | lo).toString();
+    } else {
+        display = String(flowLimit);
+    }
+
+    printInfo('Flow Limit', display);
 }
 
 async function setFlowLimit(wallet, _config, chain, contract, args, options) {
@@ -278,9 +290,10 @@ async function setFlowLimit(wallet, _config, chain, contract, args, options) {
         isValidNumber: { flowLimit },
     });
 
+    const caller = addressToScVal(wallet.publicKey());
     const flowLimitScVal = nativeToScVal(flowLimit, { type: 'i128' });
 
-    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+    const operation = contract.call('set_flow_limit', caller, hexToScVal(tokenId), flowLimitScVal);
 
     await broadcast(operation, wallet, chain, 'Set Flow Limit', options);
     printInfo('Successfully set flow limit', flowLimit);
@@ -293,12 +306,65 @@ async function removeFlowLimit(wallet, _config, chain, contract, args, options) 
         isNonEmptyString: { tokenId },
     });
 
+    const caller = addressToScVal(wallet.publicKey());
     const flowLimitScVal = nativeToScVal(null, { type: 'void' });
 
-    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+    const operation = contract.call('set_flow_limit', caller, hexToScVal(tokenId), flowLimitScVal);
 
     await broadcast(operation, wallet, chain, 'Remove Flow Limit', options);
     printInfo('Successfully removed flow limit');
+}
+
+async function addFlowLimiter(wallet, _config, chain, contract, args, options) {
+    const [tokenId, flowLimiter] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId, flowLimiter },
+    });
+
+    const operation = contract.call('add_flow_limiter', hexToScVal(tokenId), addressToScVal(flowLimiter));
+
+    await broadcast(operation, wallet, chain, 'Add Flow Limiter', options);
+    printInfo('Successfully added flow limiter', flowLimiter);
+}
+
+async function removeFlowLimiter(wallet, _config, chain, contract, args, options) {
+    const [tokenId, flowLimiter] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId, flowLimiter },
+    });
+
+    const operation = contract.call('remove_flow_limiter', hexToScVal(tokenId), addressToScVal(flowLimiter));
+
+    await broadcast(operation, wallet, chain, 'Remove Flow Limiter', options);
+    printInfo('Successfully removed flow limiter', flowLimiter);
+}
+
+async function transferFlowLimiter(wallet, _config, chain, contract, args, options) {
+    const [tokenId, from, to] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId, from, to },
+    });
+
+    const operation = contract.call('transfer_flow_limiter', hexToScVal(tokenId), addressToScVal(from), addressToScVal(to));
+
+    await broadcast(operation, wallet, chain, 'Transfer Flow Limiter', options);
+    printInfo('Successfully transferred flow limiter', `${from} -> ${to}`);
+}
+
+async function isFlowLimiter(wallet, _config, chain, contract, args, options) {
+    const [tokenId, flowLimiter] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId, flowLimiter },
+    });
+
+    const operation = contract.call('is_flow_limiter', hexToScVal(tokenId), addressToScVal(flowLimiter));
+    const response = await broadcast(operation, wallet, chain, 'Is Flow Limiter', options);
+
+    printInfo('Is Flow Limiter', String(response.value()));
 }
 
 async function interchainTokenAddress(wallet, _config, chain, contract, args, options) {
@@ -640,6 +706,34 @@ if (require.main === module) {
         .description('Remove the flow limit for a token')
         .action((tokenId, options) => {
             return mainProcessor(removeFlowLimit, [tokenId], options);
+        });
+
+    program
+        .command('add-flow-limiter <tokenId> <flowLimiter>')
+        .description('Approve an address as a flow limiter for a token')
+        .action((tokenId, flowLimiter, options) => {
+            return mainProcessor(addFlowLimiter, [tokenId, flowLimiter], options);
+        });
+
+    program
+        .command('remove-flow-limiter <tokenId> <flowLimiter>')
+        .description('Revoke an address as a flow limiter for a token')
+        .action((tokenId, flowLimiter, options) => {
+            return mainProcessor(removeFlowLimiter, [tokenId, flowLimiter], options);
+        });
+
+    program
+        .command('transfer-flow-limiter <tokenId> <from> <to>')
+        .description('Transfer the flow limiter role for a token from one address to another')
+        .action((tokenId, from, to, options) => {
+            return mainProcessor(transferFlowLimiter, [tokenId, from, to], options);
+        });
+
+    program
+        .command('is-flow-limiter <tokenId> <flowLimiter>')
+        .description('Check if an address is an approved flow limiter for a token')
+        .action((tokenId, flowLimiter, options) => {
+            return mainProcessor(isFlowLimiter, [tokenId, flowLimiter], options);
         });
 
     program
