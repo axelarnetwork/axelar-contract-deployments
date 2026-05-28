@@ -3983,8 +3983,8 @@
           "confirmationHeight": 10000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04",
-          "version": "2.0.1",
-          "codeId": 56
+          "version": "2.0.2",
+          "codeId": 64
         },
         "sui": {
           "sourceGatewayAddress": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373",
@@ -3996,9 +3996,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "base58_tx_digest_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "stellar": {
           "serviceName": "amplifier",
@@ -4010,9 +4010,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1dalnx2yvmu3g3aau8m7fj426fk9u8dnzlr5azvqmr4x82rtclats8lhjmu",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "xrpl-evm": {
           "serviceName": "amplifier",
@@ -4024,9 +4024,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1q8kn9t39ddpce42atk0d6wpdudr6djqxmz689m3nxy92ck0nnftqxfsuyk",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "plume": {
           "serviceName": "amplifier",
@@ -4038,9 +4038,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1nrdqke6tcxjuymg5gyd9x3yg35n3wrgarnj3sqskp98z2xnvlx9q82f63t",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "hedera": {
           "serviceName": "amplifier",
@@ -4052,9 +4052,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1q8q8qq59yv9wmhcreu5ykt4azsk83ttve4e7jyavt32k6jq862xsqexnfh",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "berachain": {
           "serviceName": "amplifier",
@@ -4066,9 +4066,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "hyperliquid": {
           "serviceName": "amplifier",
@@ -4080,9 +4080,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1n64vk7l3zagh2eadkuhl7602lxluu86dn9smfxyp7c2e4v8pqj5sv4ypjr",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "monad": {
           "serviceName": "amplifier",
@@ -4094,16 +4094,16 @@
           "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 56,
+          "codeId": 64,
           "address": "axelar1u080xgqqu9zhl4e9hf2ktdny4pq6kc2pmh6u6mlv8nw5zjvcetvqqjzeu0",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
-        "storeCodeProposalId": "434",
-        "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
+        "storeCodeProposalId": "471",
+        "storeCodeProposalCodeHash": "f0139170fd2f6a8b3616e1e2a637eae4bceffd8b0f4e3cba83364e6d20310aef",
         "codeId": 56,
-        "lastUploadedCodeId": 56,
+        "lastUploadedCodeId": 64,
         "solana": {
-          "codeId": 56,
+          "codeId": 64,
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "gtwqvLL93XK7pC2eMvfGamqokvs19AytzaVhrL2iKiz",
@@ -4116,7 +4116,7 @@
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
           "contractAdmin": "axelar1krxdv5avagv6nd82fdvfs4w38t6meydrp8yu8m",
           "address": "axelar19gut3kvqf57gnu5ylq474qfgk4gg5ly89cs5kk4mde688lc5adsq6qyz4h",
-          "version": "2.0.1"
+          "version": "2.0.2"
         }
       },
       "InterchainTokenService": {

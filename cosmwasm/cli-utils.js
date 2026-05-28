@@ -21,7 +21,7 @@ const addAmplifierOptions = (program, options = {}) => {
     }
 
     if (options.contractOptions) {
-        addContractOptions(program);
+        addContractOptions(program, { skipChainScopeCheck: options.skipChainScopeCheck });
     }
 
     if (options.storeOptions) {
@@ -128,7 +128,7 @@ const addAmplifierQueryContractOptions = (program) => {
     addContractOptions(program);
 };
 
-const validateContract = (contractName, chainName) => {
+const validateContract = (contractName, chainName, { skipChainScopeCheck = false } = {}) => {
     if (!CONTRACTS[contractName]) {
         throw new Error(`contract ${contractName} is not supported`);
     }
@@ -138,6 +138,9 @@ const validateContract = (contractName, chainName) => {
     const scope = CONTRACTS[contractName].scope;
     if (!scope) {
         throw new Error(`scope of contract ${contractName} is not defined`);
+    }
+    if (skipChainScopeCheck) {
+        return;
     }
     if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
         throw new Error(`${contractName} requires chainName option`);
@@ -157,7 +160,7 @@ const addSingleContractOption = (program) => {
     });
 };
 
-const addContractOptions = (program) => {
+const addContractOptions = (program, { skipChainScopeCheck = false } = {}) => {
     program.addOption(new Option('-c, --contractName <contractName...>', 'contract name(s)').makeOptionMandatory(true));
     addChainNameOption(program);
     program.hook('preAction', (command) => {
@@ -165,7 +168,7 @@ const addContractOptions = (program) => {
         const contractName = command.opts().contractName;
         const contractNames = contractName;
 
-        contractNames.forEach((name) => validateContract(name, chainName));
+        contractNames.forEach((name) => validateContract(name, chainName, { skipChainScopeCheck }));
     });
 };
 
