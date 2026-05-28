@@ -4137,7 +4137,7 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
-        "version": "1.3.0",
+        "version": "1.3.2",
         "solana": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6,
