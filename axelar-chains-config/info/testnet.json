@@ -4130,10 +4130,10 @@
         }
       },
       "InterchainTokenService": {
-        "storeCodeProposalId": "341",
-        "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
-        "lastUploadedCodeId": 59,
-        "codeId": 59,
+        "storeCodeProposalId": "570",
+        "storeCodeProposalCodeHash": "92904bc37ca2bca0dd909684ac3ddaa00e429b4c5ce8e47b755c3073fff03772",
+        "lastUploadedCodeId": 86,
+        "codeId": 86,
         "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
         "sui": {
           "maxUintBits": 64,
@@ -4151,7 +4151,7 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
         },
-        "version": "1.3.0",
+        "version": "1.3.2",
         "solana": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6,
