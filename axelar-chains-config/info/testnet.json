@@ -2066,7 +2066,7 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259",
           "minimumRotationDelay": 3600,
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB",
           "connectionType": "amplifier",
           "salt": "v6.0.4"
         },
@@ -2176,7 +2176,7 @@
           "domainSeparator": "0xc66bfbc93dab13dda342d32a5b3f8025e07a8d0ee0b900cdc1d5e634e88ffb6a",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB",
           "salt": "v6.0.4"
         },
         "Operators": {
@@ -2592,7 +2592,7 @@
           "domainSeparator": "0xeb44c1eb3bd40a2edf0460706f78432da381d227c5d4e480234d19c864c8e00c",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2678,14 +2678,14 @@
           ],
           "initialVerifierSetId": "43df6f363aabca5b666e8a5888e845e47a0513f14c0912e1721303bab71be87a",
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
-          "implementationCodehash": "0x91f090fcebc0bfc3c8bc4627888f753de8f7f3a840a584f5eb1e5539c1f3d2d6",
+          "implementation": "0xDA3Ad995f58990114FC49d45c01bfEB58Aadb370",
+          "implementationCodehash": "0xb76722724d0a27bf9837c90a460a6315b0df9b02a907baff853640aa52c27db7",
           "deploymentMethod": "create",
           "previousSignersRetention": 15,
           "domainSeparator": "0xecb35aaefd4f374fa1ea62bc6280f4150361977ad6ecad5f2ef878a89feb214e",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0xbaAE411062cA0b3AD627874995603c42E1741d0c"
         },
         "Operators": {
           "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
@@ -2724,6 +2724,18 @@
           "implementation": "0xBBE9a6b47464617Dc6FA44F31896e38DC68b4ab2",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "minimumTimeDelay": 60,
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "address": "0xbaAE411062cA0b3AD627874995603c42E1741d0c",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB",
+          "deploymentMethod": "create2",
+          "codehash": "0x2313904b96b0b1048b29be58403829d9a47c8d39cbc2e17ab72b2b7377af5255",
+          "salt": "AxelarServiceGovernance"
         }
       }
     },
@@ -3079,7 +3091,7 @@
           "domainSeparator": "0x1183f643911317021c7eaf7bb31bcdff020529e8a79c4ba1d7a1912f98fd2196",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
