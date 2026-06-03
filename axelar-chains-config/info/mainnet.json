@@ -114,6 +114,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -266,6 +278,18 @@
           "address": "0x50beAbe4883981624aEa01F737B040d1e3Fe83FB",
           "pauser": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "owner": "0x308287fe52966daf1b36d3eA1FEcF8A110bC3aF1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x297f8236f2b5cb952a7dbc1fa87a54b573159e455055d67c6c1a362e2b2c2fab"
         }
       },
       "explorer": {
@@ -395,6 +419,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x7ae5bcb4ec7e41574c0f2f44dda624a45ea15ced386ab507551e55e8613c8d9d"
         }
       },
       "explorer": {
@@ -543,7 +579,7 @@
       "name": "Polygon",
       "axelarId": "Polygon",
       "chainId": 137,
-      "rpc": "https://polygon-rpc.com",
+      "rpc": "https://polygon.drpc.org",
       "tokenSymbol": "MATIC",
       "decimals": 18,
       "chainType": "evm",
@@ -651,6 +687,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x33780d536e3b7a7699be0f241c7c4627f6dcedb52126fdd3b619e9e41acf5f85"
         }
       },
       "explorer": {
@@ -780,6 +828,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0x297f8236f2b5cb952a7dbc1fa87a54b573159e455055d67c6c1a362e2b2c2fab"
         }
       },
       "explorer": {
@@ -798,7 +858,7 @@
       "name": "Binance",
       "axelarId": "binance",
       "chainId": 56,
-      "rpc": "https://public-bsc.nownodes.io",
+      "rpc": "https://bsc-dataseed.bnbchain.org",
       "tokenSymbol": "BNB",
       "decimals": 18,
       "wrappedSymbol": "WBNB",
@@ -917,6 +977,18 @@
           "wstETH token": "0x26c5e01524d2E6280A48F2c50fF6De7e52E9611C",
           "NttManager": "0x6981F5621691CBfE3DdD524dE71076b79F0A0278",
           "wormholeChainId": 4
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "codehash": "0x970071662bc3afd04e7bed09c7fdfe27d410f0eab14314a39e4803427479265f",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
       },
       "explorer": {
@@ -1047,6 +1119,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -1070,7 +1154,7 @@
       "name": "Kava",
       "axelarId": "kava",
       "chainId": 2222,
-      "rpc": "https://evm.kava.io",
+      "rpc": "https://kava-evm-rpc.publicnode.com",
       "tokenSymbol": "KAVA",
       "decimals": 18,
       "chainType": "evm",
@@ -1178,6 +1262,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -1304,6 +1400,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "confirmations": 3,
@@ -1435,6 +1543,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -1570,6 +1690,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -1700,6 +1832,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "confirmations": 2,
@@ -1832,6 +1976,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "confirmations": 2,
@@ -1962,6 +2118,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -2181,6 +2349,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "gasOptions": {
@@ -2311,6 +2491,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "staticGasOptions": {
@@ -2422,6 +2614,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "gasOptions": {
