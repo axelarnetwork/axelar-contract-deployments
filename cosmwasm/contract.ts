@@ -854,6 +854,7 @@ const programHandler = () => {
         .action((options) => mainProcessor(storeCode, options));
     addAmplifierOptions(storeCodeCmd, {
         contractOptions: true,
+        skipChainScopeCheck: true,
         storeOptions: true,
         storeProposalOptions: true,
         instantiate2Options: true,
