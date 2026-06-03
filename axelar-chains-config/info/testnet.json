@@ -4,7 +4,7 @@
       "name": "Ethereum-Sepolia",
       "axelarId": "ethereum-sepolia",
       "chainId": 11155111,
-      "rpc": "https://sepolia.drpc.org",
+      "rpc": "https://eth-sepolia.g.alchemy.com/v2/C2OBopeH2bmUw8ltd14ss35K8V0DE_ye",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "confirmations": 2,
@@ -132,7 +132,7 @@
         "api": "https://api-sepolia.etherscan.io/api"
       },
       "gasOptions": {
-        "gasLimit": 8000000
+        "gasLimit": 2500000
       },
       "onchainGasEstimate": {
         "chainName": "ethereum",
@@ -2760,7 +2760,7 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
           "operator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "proxyDeploymentArgs": [
             "0x05823c334150a48ACD5D325fBA16147c21bA3653",
@@ -2769,14 +2769,14 @@
           ],
           "initialVerifierSetId": "35387c40132fa705b25bb15eaf13ab558acec79d241498480ff848429b521ff1",
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
-          "implementationCodehash": "0x963ee682e979bb5cefaac64874946da05cc79621877d58f4b7e5e9b19a0b4cfb",
+          "implementation": "0x39fD42c43D27464b64B120E981CfEe68351D9F49",
+          "implementationCodehash": "0x44cb5c87a9bb178f5488688be1670e20e2e03271da73f3b5ff5285a1b8d36b2b",
           "deploymentMethod": "create",
-          "previousSignersRetention": 15,
+          "previousSignersRetention": "15",
           "domainSeparator": "0xa0179f51986dc9adc4f4b5ca9aadc5125cbdb84449bf68509e09da0306c951f8",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x848aEc64903f3356e922240e54C6CF5F71254b0D"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2815,6 +2815,18 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "minimumTimeDelay": 60,
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "address": "0x848aEc64903f3356e922240e54C6CF5F71254b0D",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
+          "deploymentMethod": "create2",
+          "codehash": "0x2313904b96b0b1048b29be58403829d9a47c8d39cbc2e17ab72b2b7377af5255",
+          "salt": "AxelarServiceGovernance"
         }
       }
     },
