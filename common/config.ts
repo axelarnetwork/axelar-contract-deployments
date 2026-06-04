@@ -91,6 +91,7 @@ export interface VotingVerifierChainConfig {
     codeId?: number;
     contractAdmin?: string;
     address?: string;
+    version?: string;
 }
 
 export interface MultisigProverChainConfig {

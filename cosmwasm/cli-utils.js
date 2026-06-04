@@ -21,7 +21,7 @@ const addAmplifierOptions = (program, options = {}) => {
     }
 
     if (options.contractOptions) {
-        addContractOptions(program);
+        addContractOptions(program, { skipChainScopeCheck: options.skipChainScopeCheck });
     }
 
     if (options.storeOptions) {
@@ -73,6 +73,10 @@ const addAmplifierOptions = (program, options = {}) => {
 
     if (options.proposalOptions) {
         addProposalOptions(program);
+    }
+
+    if (options.optionalProposalOptions) {
+        addOptionalProposalOptions(program);
     }
 
     if (options.codeId) {
@@ -128,7 +132,7 @@ const addAmplifierQueryContractOptions = (program) => {
     addContractOptions(program);
 };
 
-const validateContract = (contractName, chainName) => {
+const validateContract = (contractName, chainName, { skipChainScopeCheck = false } = {}) => {
     if (!CONTRACTS[contractName]) {
         throw new Error(`contract ${contractName} is not supported`);
     }
@@ -138,6 +142,9 @@ const validateContract = (contractName, chainName) => {
     const scope = CONTRACTS[contractName].scope;
     if (!scope) {
         throw new Error(`scope of contract ${contractName} is not defined`);
+    }
+    if (skipChainScopeCheck) {
+        return;
     }
     if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
         throw new Error(`${contractName} requires chainName option`);
@@ -157,7 +164,7 @@ const addSingleContractOption = (program) => {
     });
 };
 
-const addContractOptions = (program) => {
+const addContractOptions = (program, { skipChainScopeCheck = false } = {}) => {
     program.addOption(new Option('-c, --contractName <contractName...>', 'contract name(s)').makeOptionMandatory(true));
     addChainNameOption(program);
     program.hook('preAction', (command) => {
@@ -165,7 +172,7 @@ const addContractOptions = (program) => {
         const contractName = command.opts().contractName;
         const contractNames = contractName;
 
-        contractNames.forEach((name) => validateContract(name, chainName));
+        contractNames.forEach((name) => validateContract(name, chainName, { skipChainScopeCheck }));
     });
 };
 
@@ -227,6 +234,12 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
+    program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
+};
+
+const addOptionalProposalOptions = (program) => {
+    program.addOption(new Option('-t, --title <title>', 'proposal title (optional, auto-generated if not provided)'));
+    program.addOption(new Option('-d, --description <description>', 'proposal description (optional, defaults to title)'));
     program.addOption(new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)'));
 };
 
