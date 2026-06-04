@@ -84,7 +84,9 @@ async function signUserSignedAction(wallet, action, types, primaryType) {
         verifyingContract: '0x0000000000000000000000000000000000000000',
     };
     const signature = await wallet._signTypedData(domain, { [primaryType]: types }, action);
-    return ethers.utils.splitSignature(signature);
+    const sig = ethers.utils.splitSignature(signature);
+    // Hyperliquid expects exactly { r, s, v } (same as signL1Action) — not the full splitSignature object.
+    return { r: sig.r, s: sig.s, v: sig.v };
 }
 
 async function usdSend(wallet, chain, args, options) {
