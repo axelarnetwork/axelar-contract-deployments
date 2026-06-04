@@ -37,15 +37,6 @@ Commit only `implementation` / `implementationCodehash` / `owner` (=ASG) + the `
 The deploy scripts also overwrite `deployer` and stringify `previousSignersRetention` (`"15"`) — revert those.
 Never commit RPC URLs with API keys or `gasLimit`.
 
-## Gotchas
-- celo-sepolia (forno) / hedera (hashio) RPCs are eventually-consistent: the deploy can throw
-  `Contract bytecode is empty` after a successful deploy. Verify on-chain, set impl+codehash in config by hand,
-  then `--upgrade`.
-- hyperliquid: deploys need big blocks — `evm/hyperliquid.js update-block-size big` per deployer, which needs a
-  HyperCore account. Activate with `evm/hyperliquid.js usd-send <addr> <amt>` from `0xba76…` (or the faucet).
-  Owner `--upgrade`/`transferOwnership` are small calls — no big blocks needed.
-- monad-3 has no canonical Create3Deployer → ASG at `0x58d170fe3f97813B13442B1a924F9a8CCa2bB22f`, not `0xb55A09…`.
-
 ## Status
 | Chain | pausable | ASG (owner) | gov tested | impl |
 |---|---|---|---|---|
@@ -58,15 +49,8 @@ Never commit RPC URLs with API keys or `gasLimit`.
 | celo-sepolia | ✅ | `0xb55A09…` | ✅ 606 | `0xDA3Ad9…` |
 | hyperliquid | ✅ | `0xb55A09…` | ✅ 608 | `0x253Fd90c…` |
 | hedera | ✅ | `0xb55A09…` | ✅ 609 | `0xD66F74B2…` |
-| test-sepolia | ✅ | `0xb55A09…` | ⏸ verifiers down | `0xC4Cd8FCa…` (gw `0x14213B104d…`, owner key `0xba76…`) |
-| test-avalanche | ✅ | `0xb55A09…` | ⏸ verifiers down | `0x435dE0d2…` (gw `0x14213B104d…`, owner key `0xba76…`) |
-
-> test-sepolia / test-avalanche: config (EVM + cosmos amplifier entries) restored from `2e420e49~1` and
-> verified live; gateways upgraded + ASG-owned. Their no-op gov relay can't complete yet — the chains' ampd
-> verifiers are dormant (multisig session got 0/threshold sigs). Re-run `axe propose … --op unpause --relay`
-> once the verifiers are spun up. (Caveat: until then, governance is the only owner of these gateways and
-> can't relay, so no pause/upgrade is possible on them meanwhile.)
+| test-sepolia | ✅ | `0xb55A09…` | pending | `0xC4Cd8FCa…` |
+| test-avalanche | ✅ | `0xb55A09…` | pending | `0x435dE0d2…` |
 
 ### Out of scope
 - sui / stellar / solana / xrpl — non-EVM amplifier chains; this rollout is EVM-only.
-- memento-demo — EVM amplifier but no RPC in config.
