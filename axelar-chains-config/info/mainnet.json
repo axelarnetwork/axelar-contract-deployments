@@ -2965,10 +2965,16 @@
           "decimals": 18
         },
         "AXE": {
-          "address": "CB2NGT4E4G4OAJJV2MPQPP52WGRJBCSVQZLQ2DFBRY5IJ4Z5YJPLJNJH",
-          "tokenId": "0x5b7e73124ba00a2628e5a092aea0b52e000f0be26990fc683ee1c45ff0054038",
-          "decimals": 7,
-          "notes": "AXE ITS test token deployed by axe load-test; remote registered on hyperliquid. Skip re-deploy via chains.stellar.contracts.AXE.tokenId."
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenAddress": "CCE2Q5EFPFACGX3LCQ7MCFVEJZYXDCDQ2EFFBT5D2QI47N6TRGA2EC6N",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "xrpl-evm",
+          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
+          "saltKey": "axe_AXE_mainnet_v2",
+          "deployedViaTx": "0x24329a92c58cc0cf6d8eff90df0a60aa83f3401905c41225e394058e312631f7",
+          "notes": "Canonical single AXE v2 (home xrpl-evm), 18 decimals on Stellar. Reused by load tests via chains.stellar.contracts.AXE.tokenId."
         }
       },
       "approxFinalityWaitTime": 1,
@@ -3072,6 +3078,18 @@
           "tokenManagerAddress": "0xdb0a778c57Bd31E401D52ba6cf936D06E1324aE8",
           "tokenManagerType": "mint_burn",
           "decimals": 18
+        },
+        "AXE": {
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenAddress": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "xrpl-evm",
+          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
+          "saltKey": "axe_AXE_mainnet_v2",
+          "deployTransactionHash": "0x5990e957d8e7dd362b6406c66ed9dfeff3a06ca410b0241794479fb65fe3bddd",
+          "notes": "Canonical single AXE v2, home chain. Deployed via interchainTokenFactory deploy-interchain-token (salt axe_AXE_mainnet_v2), 1e9 initial supply to deployer. Reused by load tests via chains.xrpl-evm.contracts.AXE.tokenId."
         }
       }
     },
@@ -3526,10 +3544,15 @@
           "decimals": 18
         },
         "AXE": {
-          "address": "0xeF4f74566E58cB7ddf483e52d130Bd87b8EA1a38",
-          "tokenId": "0x2cbebbff605dfbef70dc73805124fdcbeb0c809f24f183fad78f5006fda4598f",
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenAddress": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
+          "name": "AXE",
+          "symbol": "AXE",
           "decimals": 18,
-          "notes": "AXE ITS test token deployed by axe load-test; remote registered on stellar. Skip re-deploy via chains.hyperliquid.contracts.AXE.tokenId."
+          "originChain": "xrpl-evm",
+          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
+          "saltKey": "axe_AXE_mainnet_v2",
+          "notes": "Canonical single AXE v2 (home xrpl-evm), remote-registered via deployRemoteInterchainToken. Reused by load tests via chains.hyperliquid.contracts.AXE.tokenId."
         }
       }
     },
@@ -3704,17 +3727,17 @@
           "version": "1.1.0"
         },
         "AXE": {
-          "tokenId": "0xd902254936e709777eda727385e43d9082916e0932034ed876b99d9f80f9a826",
-          "tokenAddress": "9tvofHTgnDTZ98WZq5Qw6CtRKPsBJmTDcuABuRyKzxNv",
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenAddress": "BmdKnsEhFC2oQ8KqL2XumXm2Xqjngbt8bgzkvBzXMSQ7",
           "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-          "mintAuthority": "9ddVJTcCGQ9bZkdwkvUi9hmixeAN6XJHJUG8iosL6xgJ",
           "name": "AXE",
           "symbol": "AXE",
-          "decimals": 18,
-          "originChain": "hedera",
-          "originSalt": "0x6178655f4158455f6d61696e6e65745f76310000000000000000000000000000",
-          "deployedViaTx": "0x9b3027fd3786fb6813ad4bdaae942f3f5fb809989a15baeda518c28cb011c356",
-          "executeTx": "4mBAzHxvr29su2yFXCdFMMoUZuzG52RzCF5awPKLii5YcEgKWVG6MEWTg4vPL4BLcX7SiyTFLP6u4Lg3unoNGreX"
+          "decimals": 6,
+          "originChain": "xrpl-evm",
+          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
+          "saltKey": "axe_AXE_mainnet_v2",
+          "deployedViaTx": "0x33f71a8cb101c9662326e24f4739a5eac36e24bc766a15732989f57666dac642",
+          "notes": "Canonical single AXE v2 (home xrpl-evm). Solana mint is 6 decimals (ITS-assigned). Reused by load tests via chains.solana.contracts.AXE.tokenId."
         }
       }
     }
