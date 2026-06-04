@@ -2066,7 +2066,7 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259",
           "minimumRotationDelay": 3600,
-          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
           "connectionType": "amplifier",
           "salt": "v6.0.4"
         },
@@ -2108,6 +2108,18 @@
           "implementation": "0xBBE9a6b47464617Dc6FA44F31896e38DC68b4ab2",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.1"
+        },
+        "AxelarServiceGovernance": {
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "address": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
+          "deploymentMethod": "create3",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823",
+          "salt": "v6.1.0"
         }
       },
       "explorer": {
