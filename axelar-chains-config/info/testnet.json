@@ -2219,12 +2219,12 @@
           "salt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
-          "tokenAddress": "0x00000000000000000000000000000000008B6eBd",
           "minter": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 18,
-          "deployTransactionHash": "0x493e6e3340eee70f50455224e68990148ca445bde6d1380339491d85620eba84"
+          "deployTransactionHash": "0x493e6e3340eee70f50455224e68990148ca445bde6d1380339491d85620eba84",
+          "address": "0x00000000000000000000000000000000008B6eBd"
         }
       }
     },
@@ -3020,13 +3020,13 @@
         },
         "AXE": {
           "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
-          "tokenAddress": "0xf73d4d8a56a5478ed9b357115dc674d6ec4356bb",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 18,
           "originChain": "hedera",
           "originSalt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
-          "deployedViaTx": "0x929717c3127cae130355167092a2ce39529383ed96e5b247af70570f8cc1061e"
+          "deployedViaTx": "0x929717c3127cae130355167092a2ce39529383ed96e5b247af70570f8cc1061e",
+          "address": "0xf73d4d8a56a5478ed9b357115dc674d6ec4356bb"
         }
       }
     },
@@ -3574,16 +3574,16 @@
         },
         "AXE": {
           "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
-          "tokenAddress": "AswjwVEcBXX6FxktUvnYwktM5eaXUg9WLya4d9ttQKhW",
           "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
           "mintAuthority": "CiPBNL4HkNLn46w7NkkFnRsqgHkY6KGsbtrTR7A24wWQ",
           "name": "AXE",
           "symbol": "AXE",
-          "decimals": 18,
+          "decimals": 6,
           "originChain": "hedera",
           "originSalt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
           "deployedViaTx": "0x4d254e34b46b53896094b913fca8f47ea87c92d06205687ea4666e0387e59e2a",
-          "executeTx": "3nskpZgNZFHYCPknwf4juQvzDSvfhZ8dpqwyMXL3S84ZvEAXzAmG23pimveJWkTBbuCQHBEb8sLf6tN3E5qprXHP"
+          "executeTx": "3nskpZgNZFHYCPknwf4juQvzDSvfhZ8dpqwyMXL3S84ZvEAXzAmG23pimveJWkTBbuCQHBEb8sLf6tN3E5qprXHP",
+          "address": "AswjwVEcBXX6FxktUvnYwktM5eaXUg9WLya4d9ttQKhW"
         }
       }
     }
