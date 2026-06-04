@@ -28,9 +28,9 @@ const ASSET_TYPE_NATIVE = 'native';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
-const TRANSACTION_TIMEOUT = 300;
-const RETRY_WAIT = 1000; // 1 sec
-const MAX_RETRIES = 30;
+const TRANSACTION_TIMEOUT = 600;
+const RETRY_WAIT = 2000; // 2 sec
+const MAX_RETRIES = 240;
 
 // Ledger extension for authorization operations
 const LEDGER_EXTENSION_FOR_AUTH = 20;
