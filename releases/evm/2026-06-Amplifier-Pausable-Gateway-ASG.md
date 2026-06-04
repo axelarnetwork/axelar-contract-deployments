@@ -58,10 +58,16 @@ Never commit RPC URLs with API keys or `gasLimit`.
 | celo-sepolia | ✅ | `0xb55A09…` | ✅ 606 | `0xDA3Ad9…` |
 | hyperliquid | ✅ | `0xb55A09…` | ✅ 608 | `0x253Fd90c…` |
 | hedera | ✅ | `0xb55A09…` | ✅ 609 | `0xD66F74B2…` |
+| test-sepolia | ✅ | `0xb55A09…` | ⏸ verifiers down | `0xC4Cd8FCa…` (gw `0x14213B104d…`, owner key `0xba76…`) |
+| test-avalanche | ✅ | `0xb55A09…` | ⏸ verifiers down | `0x435dE0d2…` (gw `0x14213B104d…`, owner key `0xba76…`) |
+
+> test-sepolia / test-avalanche: config (EVM + cosmos amplifier entries) restored from `2e420e49~1` and
+> verified live; gateways upgraded + ASG-owned. Their no-op gov relay can't complete yet — the chains' ampd
+> verifiers are dormant (multisig session got 0/threshold sigs). Re-run `axe propose … --op unpause --relay`
+> once the verifiers are spun up. (Caveat: until then, governance is the only owner of these gateways and
+> can't relay, so no pause/upgrade is possible on them meanwhile.)
 
 ### Deferred
-- test-sepolia / test-avalanche: amplifier (gw `0x14213B104d…`, owner `0xba76…` — ours) but not in main config.
-  Bootstrap from `2e420e49~1` (before PR #476 removed them), verify on-chain, separate PR.
 - memento-demo: no RPC in config.
 - monad (canonical `0xe432150c…`): no code there — use monad-3.
 - sui / stellar / solana / xrpl: non-EVM, out of scope.
