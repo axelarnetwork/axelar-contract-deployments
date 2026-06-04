@@ -3402,8 +3402,8 @@
         "AxelarGateway": {
           "address": "CB2JYOOZPHO43R57TC5PXV22QICKIDC5NKRF62BZG2J6JYFUIQPIAYY3",
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
-          "wasmHash": "715eb94b616c7271bc1aeaf131f92f3ace830d93c3975e871db9a66951c5de92",
-          "version": "1.1.2",
+          "wasmHash": "22be1e7c20c894994eca80496eee819d9a459c275410ffa8c75c645b50ceb4f5",
+          "version": "2.0.1",
           "connectionType": "amplifier",
           "initializeArgs": {
             "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
@@ -3428,8 +3428,8 @@
         "AxelarOperators": {
           "address": "CBFT33DV6VHT5QQYZWMCIYD6WBCGVN27HAXJ64VWWFXK2MDUSZN4MJPO",
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
-          "wasmHash": "bb0b653d32134aa5f68607f33d38e4f173a3fe5f10d3227f7bf655ee02ad7ca8",
-          "version": "1.1.2",
+          "wasmHash": "b5e3c6f27c7ca8c2f3f7d4a7606b28cf879a0c85dc3bbfb8627f63a17e0b3171",
+          "version": "1.1.4",
           "initializeArgs": {
             "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L"
           }
@@ -3437,8 +3437,8 @@
         "AxelarGasService": {
           "address": "CCLZOCGHHC6F6JCZHEUP53LDQHRBPPCNRYXOVFZFS3O63OGRC47CKCGV",
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
-          "wasmHash": "99f9a082d1ac65e4499cb462f7f92912a4715c84fc4e488802126d6c684c7f34",
-          "version": "1.1.2",
+          "wasmHash": "5427cbb79c858066cd715769e2f0025784aeaedfc0331feae74c82668caf4e78",
+          "version": "2.0.1",
           "initializeArgs": {
             "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
             "operator": "CBFT33DV6VHT5QQYZWMCIYD6WBCGVN27HAXJ64VWWFXK2MDUSZN4MJPO"
@@ -3465,8 +3465,8 @@
         "InterchainTokenService": {
           "address": "CC7LAC4S7KAPIM26WKWFSOXWLNLSG7EXTC2EVY2H2UPKSTX3Z2A7M5YP",
           "deployer": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
-          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
-          "version": "1.4.1",
+          "wasmHash": "99a5c6748fc650f81236d05516dfe7ca6b396726851a40107cfef6c691269736",
+          "version": "2.1.0",
           "initializeArgs": {
             "owner": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
             "operator": "GAFUP3J3M2QNUQZA4ZO744IGCHFKMOCYXR2JQ2UQW65IKWG5OCVTXR3L",
