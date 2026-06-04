@@ -49,9 +49,9 @@ Never commit RPC URLs with API keys or `gasLimit`.
 ## Status
 | Chain | pausable | ASG (owner) | gov tested | impl |
 |---|---|---|---|---|
-| berachain | ✅ | `0xb55A09…` | — | |
+| berachain | ✅ | `0xb55A09…` | ✅ | |
 | plume | ✅ | `0xb55A09…` | ✅ | |
-| flow | ✅ | `0xb55A09…` | — | |
+| flow | ✅ | `0xb55A09…` | ✅ | |
 | xrpl-evm | ✅ (via gov) | `0xb55A09…` | ✅ 604 | `0x278291…` |
 | monad-3 | ✅ | `0x58d170fe…` | ✅ 607 | `0x3cfc5f38…` |
 | arc-8 | ✅ | `0xb55A09…` | ✅ 605 | `0xc3Fd691d…` |
@@ -67,7 +67,6 @@ Never commit RPC URLs with API keys or `gasLimit`.
 > once the verifiers are spun up. (Caveat: until then, governance is the only owner of these gateways and
 > can't relay, so no pause/upgrade is possible on them meanwhile.)
 
-### Deferred
-- memento-demo: no RPC in config.
-- monad (canonical `0xe432150c…`): no code there — use monad-3.
-- sui / stellar / solana / xrpl: non-EVM, out of scope.
+### Out of scope
+- sui / stellar / solana / xrpl — non-EVM amplifier chains; this rollout is EVM-only.
+- memento-demo — EVM amplifier but no RPC in config.
