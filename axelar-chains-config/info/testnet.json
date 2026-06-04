@@ -2181,14 +2181,14 @@
           ],
           "initialVerifierSetId": "3057ad91fc8e1de634e33ad33080d479b0614d0152b73b353e4dd676b3a66498",
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xC9F7eC2963ea23fA292a801a2a6cea922eA69AF3",
-          "implementationCodehash": "0x7befef78f4e069df5bd4c60418fff9ad09349e943f0738b16a161651e96ed18c",
+          "implementation": "0xD66F74B20d2706ac36327457b8b1dA0924D076E5",
+          "implementationCodehash": "0x9b8a343c54a5fe6fa28d0b68b362ee50ef59987250e2f255414c3dbc95f11a94",
           "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0xc66bfbc93dab13dda342d32a5b3f8025e07a8d0ee0b900cdc1d5e634e88ffb6a",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
           "salt": "v6.0.4"
         },
         "Operators": {
@@ -2226,6 +2226,18 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.0",
           "implementation": "0x18e160AA6740bfa78091a6Aee08270d48CAf9944"
+        },
+        "AxelarServiceGovernance": {
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "address": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
+          "deploymentMethod": "create3",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823",
+          "salt": "v6.1.0"
         }
       }
     },

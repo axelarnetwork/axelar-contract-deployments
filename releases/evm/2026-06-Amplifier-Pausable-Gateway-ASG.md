@@ -57,7 +57,7 @@ Never commit RPC URLs with API keys or `gasLimit`.
 | arc-8 | ✅ | `0xb55A09…` | ✅ 605 | `0xc3Fd691d…` |
 | celo-sepolia | ✅ | `0xb55A09…` | ✅ 606 | `0xDA3Ad9…` |
 | hyperliquid | ✅ | `0xb55A09…` | ✅ 608 | `0x253Fd90c…` |
-| hedera | in progress | — | — | |
+| hedera | ✅ | `0xb55A09…` | ✅ 609 | `0xD66F74B2…` |
 
 ### Deferred
 - test-sepolia / test-avalanche: amplifier (gw `0x14213B104d…`, owner `0xba76…` — ours) but not in main config.
