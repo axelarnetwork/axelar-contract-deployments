@@ -73,6 +73,62 @@ async function updateBlockSize(wallet, chain, useBigBlocks) {
     return result;
 }
 
+// Sign a "user-signed action" (usdSend/spotSend/withdraw) — distinct from signL1Action.
+// Matches the official Hyperliquid SDK: EIP-712 domain HyperliquidSignTransaction / chainId 421614,
+// signatureChainId 0x66eee, hyperliquidChain "Mainnet"|"Testnet".
+async function signUserSignedAction(wallet, action, types, primaryType) {
+    const domain = {
+        name: 'HyperliquidSignTransaction',
+        version: '1',
+        chainId: 421614,
+        verifyingContract: '0x0000000000000000000000000000000000000000',
+    };
+    const signature = await wallet._signTypedData(domain, { [primaryType]: types }, action);
+    return ethers.utils.splitSignature(signature);
+}
+
+async function usdSend(wallet, chain, args, options) {
+    const [destination, amount] = args;
+
+    validateParameters({
+        isValidAddress: { destination },
+        isNonEmptyString: { amount },
+    });
+
+    if (!chain.hypercore?.url) {
+        throw new Error('chain.hypercore.url missing in config');
+    }
+
+    const hyperliquidChain = options.env === 'mainnet' ? 'Mainnet' : 'Testnet';
+    const signatureChainId = '0x66eee';
+    const time = Date.now();
+    const dest = destination.toLowerCase();
+
+    // The signed message (field order matters for EIP-712).
+    const message = { hyperliquidChain, destination: dest, amount, time };
+    const types = [
+        { name: 'hyperliquidChain', type: 'string' },
+        { name: 'destination', type: 'string' },
+        { name: 'amount', type: 'string' },
+        { name: 'time', type: 'uint64' },
+    ];
+
+    const sig = await signUserSignedAction(wallet, message, types, 'HyperliquidTransaction:UsdSend');
+
+    const action = { type: 'usdSend', hyperliquidChain, signatureChainId, destination: dest, amount, time };
+
+    printInfo('usdSend', `${amount} USDC -> ${dest} on ${hyperliquidChain}`);
+
+    const result = await httpPost(`${chain.hypercore.url}/exchange`, { action, nonce: time, signature: sig });
+
+    if (!result || result.status !== 'ok') {
+        throw new Error(`usdSend failed: ${JSON.stringify(result)}`);
+    }
+
+    printInfo('usdSend result', JSON.stringify(result));
+    return result;
+}
+
 async function deployer(wallet, chain, args, _options) {
     const [tokenId] = args;
     validateParameters({
@@ -183,6 +239,13 @@ if (require.main === module) {
         });
 
     program
+        .command('usd-send <destination> <amount>')
+        .description('Send USDC to an address on HyperCore (creates/activates the recipient account)')
+        .action((destination, amount, options) => {
+            main(usdSend, [destination, amount], options);
+        });
+
+    program
         .command('deployer <token-id>')
         .description('Get deployer address for a Hyperliquid interchain token')
         .action((tokenId, options) => {
@@ -201,4 +264,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { updateBlockSize };
+module.exports = { updateBlockSize, usdSend };

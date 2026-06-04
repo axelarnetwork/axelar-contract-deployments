@@ -3120,14 +3120,14 @@
           ],
           "initialVerifierSetId": "5191897117c35dc8b91e257d730a331c0a11c1180a43957288462acb448200a5",
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
-          "implementationCodehash": "0x5f145e3275a37e9f53f0bb780282a4cd3530ed325738d40a2ddb6149d4be9aeb",
+          "implementation": "0x253Fd90c42D21cD311bda38EC3f4B148A14D1Fd6",
+          "implementationCodehash": "0xbf8b3eadcf3a6cf394905c4f18472d0ea3eeebb4b04c6959e8cd7d64a0df2185",
           "deploymentMethod": "create",
           "previousSignersRetention": 15,
           "domainSeparator": "0x1183f643911317021c7eaf7bb31bcdff020529e8a79c4ba1d7a1912f98fd2196",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB"
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -3171,6 +3171,18 @@
           "tokenId": "0xa9d0d0d3063287083ec0f14c015cd786b3ae96c681105913d27c2954a1c54546",
           "decimals": 18,
           "notes": "AXE ITS test token deployed by axe load-test; remote registered on stellar-2026-q1-2. Skip re-deploy via chains.hyperliquid.contracts.AXE.tokenId."
+        },
+        "AxelarServiceGovernance": {
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "address": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
+          "deploymentMethod": "create3",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823",
+          "salt": "v6.1.0"
         }
       }
     },
