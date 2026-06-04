@@ -3,8 +3,6 @@
 Upgrade each EVM amplifier gateway to the pausable `AxelarAmplifierGateway`, deploy
 `AxelarServiceGovernance` (ASG), and transfer gateway ownership to the ASG.
 
-SDK: `@axelar-network/axelar-gmp-sdk-solidity@6.2.0` (pausable; 6.1.0 is not). package.json pinned to it.
-
 ## Keys
 - ASG deployer: `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` — must deploy the ASG (create3, salt `v6.1.0`,
   canonical Create3Deployer `0x6513Aedb…` → shared `0xb55A09E9fde39755c39EF9A7911431Ba0c96332A`).
@@ -30,12 +28,6 @@ ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -e testnet 
 # 4. transfer ownership (owner key)
 ts-node evm/ownership.js -c AxelarGateway -e testnet -n <chain> --action transferOwnership --newOwner 0xb55A09…
 ```
-Verify: `implementation()` = new impl, `owner()` = ASG, `paused()` = false, `epoch()` unchanged.
-Optional gov-path check: `axe propose testnet <chain> --op unpause --relay` (no-op).
-
-Commit only `implementation` / `implementationCodehash` / `owner` (=ASG) + the `AxelarServiceGovernance` block.
-The deploy scripts also overwrite `deployer` and stringify `previousSignersRetention` (`"15"`) — revert those.
-Never commit RPC URLs that carry API keys. (Chain-level `gasOptions.gasLimit` is legitimate config — leave it.)
 
 ## Status
 Upgraded to pausable 6.2.0, each owned by its ASG (at the shared `0xb55A09…`; monad-3's ASG is `0x58d170fe…`):
