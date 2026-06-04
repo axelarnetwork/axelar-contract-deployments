@@ -3307,6 +3307,18 @@
           "tokenManagerAddress": "0x9F0b6857009E73746DcBb4A0DBf0e0a46219e3c4",
           "tokenManagerType": "mint_burn",
           "decimals": 8
+        },
+        "AXE": {
+          "salt": "0x6178655f4158455f6d61696e6e65745f76310000000000000000000000000000",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "tokenId": "0xd902254936e709777eda727385e43d9082916e0932034ed876b99d9f80f9a826",
+          "tokenAddress": "0x0000000000000000000000000000000000a081dD",
+          "minter": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "deployTransactionHash": "0xc04eb6c852d0cd295345074f18c0a759baf8203a4b2c1185b6a921cfb52eddbe",
+          "remoteDeployTransactionHash": "0x9b3027fd3786fb6813ad4bdaae942f3f5fb809989a15baeda518c28cb011c356"
         }
       }
     },
@@ -3627,6 +3639,17 @@
           "tokenManagerAddress": "0xfdA07e1b359e18484211aF722Dc81c3edb0Ec54C",
           "tokenManagerType": "mint_burn",
           "decimals": 18
+        },
+        "AXE": {
+          "tokenId": "0xd902254936e709777eda727385e43d9082916e0932034ed876b99d9f80f9a826",
+          "tokenAddress": "0xe9fd422eb644281854241a860361de833fc28b7a",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "hedera",
+          "originSalt": "0x6178655f4158455f6d61696e6e65745f76310000000000000000000000000000",
+          "deployedViaTx": "0x416f1fae1fff84dd4d70e5454d56b9885c401ee91f3bdfea43af2be32935222c",
+          "executeTx": "0xa5c77f7067e68e7b4abd28a55f683c64afac3cc36c6590b84c7285fa7f8cba32"
         }
       }
     },
@@ -3679,6 +3702,19 @@
           "operator": "gopXXoSxFC2DXi5fhQ9ojxwHj37t6AJwj9NfY2P4GBa",
           "upgradeAuthority": "upasKKwjeYapRCgP98S4zmUJmPRi9qcmRyr6ji8xHQd",
           "version": "1.1.0"
+        },
+        "AXE": {
+          "tokenId": "0xd902254936e709777eda727385e43d9082916e0932034ed876b99d9f80f9a826",
+          "tokenAddress": "9tvofHTgnDTZ98WZq5Qw6CtRKPsBJmTDcuABuRyKzxNv",
+          "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "mintAuthority": "9ddVJTcCGQ9bZkdwkvUi9hmixeAN6XJHJUG8iosL6xgJ",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "hedera",
+          "originSalt": "0x6178655f4158455f6d61696e6e65745f76310000000000000000000000000000",
+          "deployedViaTx": "0x9b3027fd3786fb6813ad4bdaae942f3f5fb809989a15baeda518c28cb011c356",
+          "executeTx": "4mBAzHxvr29su2yFXCdFMMoUZuzG52RzCF5awPKLii5YcEgKWVG6MEWTg4vPL4BLcX7SiyTFLP6u4Lg3unoNGreX"
         }
       }
     }
