@@ -2099,7 +2099,7 @@
           "implementation": "0xD5A13a2C8787C44065F2102802036854402F1785",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
           "version": "2.1.1"
         },
         "InterchainTokenFactory": {
@@ -2218,7 +2218,8 @@
           "tokenManager": "0xF0C255159c56DADC2559295e2427240484172Aba",
           "tokenHandler": "0x563ee90271512e7a83D0cF31c46395F27a3f489f",
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2647,7 +2648,7 @@
           "implementation": "0xD5A13a2C8787C44065F2102802036854402F1785",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
           "version": "2.1.1"
         },
         "InterchainTokenFactory": {
@@ -2752,7 +2753,8 @@
           "implementation": "0xD5A13a2C8787C44065F2102802036854402F1785",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "version": "2.1.1"
+          "version": "2.1.1",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2867,7 +2869,8 @@
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "version": "2.1.1"
+          "version": "2.1.1",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -3058,7 +3061,8 @@
           "tokenManager": "0xFB710b9588f3aDafD91BBae25BFEd9c269ebFb76",
           "tokenHandler": "0x3F8a341205fc7875D3f1578BDe60915D29B39331",
           "implementation": "0x853e58182e1a5F83Ac820fb10f55eA879376e825",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "owner": "0x58d170fe3f97813B13442B1a924F9a8CCa2bB22f"
         },
         "InterchainTokenFactory": {
           "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
@@ -3169,7 +3173,8 @@
           "tokenHandler": "0x79aE65Ea16E88D3a7303A7FF019353140B06F39B",
           "implementation": "0x4Aca663c242D31F85b77bf27d5D7dA4cF69fa7bd",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "version": "2.2.0"
+          "version": "2.2.0",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -3276,7 +3281,8 @@
           "tokenManager": "0x2be6F57fb0E69D26F8c8FbbebD8403d88fbAc09c",
           "tokenHandler": "0x79aE65Ea16E88D3a7303A7FF019353140B06F39B",
           "implementation": "0x4Aca663c242D31F85b77bf27d5D7dA4cF69fa7bd",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -3467,7 +3473,8 @@
           "tokenManager": "0xaD3E6d1ab86Fa367aFE8eeA2ccf79aFD99e2d76C",
           "tokenHandler": "0xaEA95D881E794691Af0bC007812f08A633D95c55",
           "implementation": "0xD501c52c9f7AB65023Dd7590C13cEe57903CB917",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "InterchainTokenFactory": {
           "deployer": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
