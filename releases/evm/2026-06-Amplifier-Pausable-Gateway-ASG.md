@@ -35,7 +35,7 @@ Optional gov-path check: `axe propose testnet <chain> --op unpause --relay` (no-
 
 Commit only `implementation` / `implementationCodehash` / `owner` (=ASG) + the `AxelarServiceGovernance` block.
 The deploy scripts also overwrite `deployer` and stringify `previousSignersRetention` (`"15"`) — revert those.
-Never commit RPC URLs with API keys or `gasLimit`.
+Never commit RPC URLs that carry API keys. (Chain-level `gasOptions.gasLimit` is legitimate config — leave it.)
 
 ## Status
 Upgraded to pausable 6.2.0, each owned by its ASG (at the shared `0xb55A09…`; monad-3's ASG is `0x58d170fe…`):
