@@ -2788,19 +2788,19 @@
           "domainSeparator": "0xa0179f51986dc9adc4f4b5ca9aadc5125cbdb84449bf68509e09da0306c951f8",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x848aEc64903f3356e922240e54C6CF5F71254b0D"
+          "owner": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A"
         },
         "AxelarServiceGovernance": {
-          "minimumTimeDelay": 60,
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
           "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "address": "0x848aEc64903f3356e922240e54C6CF5F71254b0D",
+          "address": "0xb55A09E9fde39755c39EF9A7911431Ba0c96332A",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
-          "deploymentMethod": "create2",
-          "codehash": "0x2313904b96b0b1048b29be58403829d9a47c8d39cbc2e17ab72b2b7377af5255",
-          "salt": "AxelarServiceGovernance"
+          "deploymentMethod": "create3",
+          "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823",
+          "salt": "v6.1.0"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
