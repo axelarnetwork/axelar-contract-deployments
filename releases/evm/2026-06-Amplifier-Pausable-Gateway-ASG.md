@@ -38,7 +38,7 @@ The deploy scripts also overwrite `deployer` and stringify `previousSignersReten
 Never commit RPC URLs with API keys or `gasLimit`.
 
 ## Status
-Upgraded to pausable 6.2.0 + ASG-owned (`0xb55A09…`, except monad-3 `0x58d170fe…`):
+Upgraded to pausable 6.2.0, each owned by its ASG (at the shared `0xb55A09…`; monad-3's ASG is `0x58d170fe…`):
 berachain, plume, flow, xrpl-evm, monad-3, arc-8, celo-sepolia, hyperliquid, hedera, test-sepolia, test-avalanche.
 
 ### Out of scope
