@@ -41,5 +41,10 @@ Never commit RPC URLs with API keys or `gasLimit`.
 Upgraded to pausable 6.2.0, each owned by its ASG (at the shared `0xb55A09…`; monad-3's ASG is `0x58d170fe…`):
 berachain, plume, flow, xrpl-evm, monad-3, arc-8, celo-sepolia, hyperliquid, hedera, test-sepolia, test-avalanche.
 
+> Note (arc-8): its ASG was deployed through the canonical Create3Deployer `0x6513Aedb…` (so it lands on the
+> shared `0xb55A09…`), whereas arc-8's config-recorded `Create3Deployer` is its native `0xedc69F7…` (used by
+> its gateway/ITS). A create3 prediction from the recorded deployer therefore won't match the ASG address —
+> expected; the ASG is correct on-chain and owns the gateway + ITS.
+
 ### Out of scope
 - sui / stellar / solana / xrpl — non-EVM amplifier chains; this rollout is EVM-only.
