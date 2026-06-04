@@ -38,19 +38,8 @@ The deploy scripts also overwrite `deployer` and stringify `previousSignersReten
 Never commit RPC URLs with API keys or `gasLimit`.
 
 ## Status
-| Chain | pausable | ASG (owner) | gov tested | impl |
-|---|---|---|---|---|
-| berachain | ✅ | `0xb55A09…` | ✅ | |
-| plume | ✅ | `0xb55A09…` | ✅ | |
-| flow | ✅ | `0xb55A09…` | ✅ | |
-| xrpl-evm | ✅ (via gov) | `0xb55A09…` | ✅ 604 | `0x278291…` |
-| monad-3 | ✅ | `0x58d170fe…` | ✅ 607 | `0x3cfc5f38…` |
-| arc-8 | ✅ | `0xb55A09…` | ✅ 605 | `0xc3Fd691d…` |
-| celo-sepolia | ✅ | `0xb55A09…` | ✅ 606 | `0xDA3Ad9…` |
-| hyperliquid | ✅ | `0xb55A09…` | ✅ 608 | `0x253Fd90c…` |
-| hedera | ✅ | `0xb55A09…` | ✅ 609 | `0xD66F74B2…` |
-| test-sepolia | ✅ | `0xb55A09…` | pending | `0xC4Cd8FCa…` |
-| test-avalanche | ✅ | `0xb55A09…` | pending | `0x435dE0d2…` |
+Upgraded to pausable 6.2.0 + ASG-owned (`0xb55A09…`, except monad-3 `0x58d170fe…`):
+berachain, plume, flow, xrpl-evm, monad-3, arc-8, celo-sepolia, hyperliquid, hedera, test-sepolia, test-avalanche.
 
 ### Out of scope
 - sui / stellar / solana / xrpl — non-EVM amplifier chains; this rollout is EVM-only.
