@@ -3757,7 +3757,8 @@
         "gasLimit": 8000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "decimals": 18
     },
     "test-avalanche": {
       "name": "test-avalanche",
@@ -3794,7 +3795,6 @@
           "implementation": "0x1384583EFFE9eaDB758D02e7440B9c393B0250c4",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
-        "AxelarDepositService": {},
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
         },
@@ -3848,7 +3848,8 @@
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "decimals": 18
     }
   },
   "axelar": {
