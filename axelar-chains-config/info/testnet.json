@@ -2214,6 +2214,17 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
           "version": "2.1.0",
           "implementation": "0x18e160AA6740bfa78091a6Aee08270d48CAf9944"
+        },
+        "AXE": {
+          "salt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
+          "minter": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "deployTransactionHash": "0x493e6e3340eee70f50455224e68990148ca445bde6d1380339491d85620eba84",
+          "address": "0x00000000000000000000000000000000008B6eBd"
         }
       }
     },
@@ -3006,6 +3017,16 @@
           "address": "0x578d62784cd79de8cdEC994DF8f8844fC4cf90D8",
           "version": "2.2.0",
           "implementation": "0xFCd9E5C814A7A8F1681bEc38817A91A4DC452c2e"
+        },
+        "AXE": {
+          "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "hedera",
+          "originSalt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
+          "deployedViaTx": "0x929717c3127cae130355167092a2ce39529383ed96e5b247af70570f8cc1061e",
+          "address": "0xf73d4d8a56a5478ed9b357115dc674d6ec4356bb"
         }
       }
     },
@@ -3550,6 +3571,19 @@
           "operator": "gopdSWQFLKvxPz1SiP2W8CumFBtd2FF1ddDgNVkLmdG",
           "upgradeAuthority": "upaHiTygNXvZZzAb9ZZxn63LhJoma35BKgt6rxH5XdS",
           "version": "1.1.0"
+        },
+        "AXE": {
+          "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
+          "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "mintAuthority": "CiPBNL4HkNLn46w7NkkFnRsqgHkY6KGsbtrTR7A24wWQ",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 6,
+          "originChain": "hedera",
+          "originSalt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
+          "deployedViaTx": "0x4d254e34b46b53896094b913fca8f47ea87c92d06205687ea4666e0387e59e2a",
+          "executeTx": "3nskpZgNZFHYCPknwf4juQvzDSvfhZ8dpqwyMXL3S84ZvEAXzAmG23pimveJWkTBbuCQHBEb8sLf6tN3E5qprXHP",
+          "address": "AswjwVEcBXX6FxktUvnYwktM5eaXUg9WLya4d9ttQKhW"
         }
       }
     }
