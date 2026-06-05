@@ -2840,13 +2840,19 @@
           "tokenManagerType": "mint_burn"
         },
         "AXE": {
-          "address": "0x2e894c867a1a81aaae7a3498ecbe55c78e1e1a8345202e36e20df8bcf6e19b5d",
-          "typeArgument": "0x2e894c867a1a81aaae7a3498ecbe55c78e1e1a8345202e36e20df8bcf6e19b5d::axe::AXE",
-          "decimals": 9,
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 6,
+          "originChain": "xrpl-evm",
+          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
+          "saltKey": "axe_AXE_mainnet_v2",
+          "address": "0xa024a51095c47b129d525084b4337830b02a6bcd5aa9279908c3883369e10ff6",
+          "typeArgument": "0xa024a51095c47b129d525084b4337830b02a6bcd5aa9279908c3883369e10ff6::axe::AXE",
+          "notes": "Canonical AXE v2 (home xrpl-evm), auto-deployed on Sui by ITS during receive_deploy_interchain_token. TreasuryCap held by ITS. Decimals are Hub-canonical (6); ITS scales between chains. axe reads objects.TokenId as the 32-byte Axelar tokenId (NOT a Sui object id) per resolve_sui_axe_token.",
           "objects": {
-            "TokenId": "0xdb55ccc3ccf0c5c03226602a6131007393079c59a0de0c97dd8bb97328b37d10",
-            "TreasuryCap": "0xcab750c6f1a294674f8ea0752e0e59c1fa987c0fb2aa026c9d1add0aca8f0e84",
-            "Metadata": "0x41f1a7e83668d89b467e7ffcda46431acb20cd9af4b0b6a884c87799c8141f94"
+            "TokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+            "Metadata": "0xac2ef6d719d90015887c40ae29f4bfa02c60b66f2cafc895d7fe853f098a3078"
           }
         }
       }
@@ -3335,7 +3341,7 @@
           "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
           "saltKey": "axe_AXE_mainnet_v2",
           "remoteDeployTransactionHash": "0xffa3f14416a514a9ed1fd55f049e1774c87e54ca93f5bfc45e75fb945f8c1cc2",
-          "notes": "Canonical AXE v2 (home xrpl-evm), remote-registered to Hedera HTS via deployRemoteInterchainToken. Supply seeded by interchainTransfer from xrpl-evm. Hedera uses 6 decimals (HTS native) \u2014 ITS-side decimal coercion handles the delta vs xrpl-evm's 18.",
+          "notes": "Canonical AXE v2 (home xrpl-evm), remote-registered to Hedera HTS via deployRemoteInterchainToken. Supply seeded by interchainTransfer from xrpl-evm. Hedera uses 6 decimals (HTS native) — ITS-side decimal coercion handles the delta vs xrpl-evm's 18.",
           "address": "0x0000000000000000000000000000000000a09b89"
         }
       }
