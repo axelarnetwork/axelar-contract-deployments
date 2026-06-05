@@ -2239,6 +2239,7 @@
           "deploymentMethod": "create3",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823",
           "salt": "v6.1.0"
+        },
         "AXE": {
           "salt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
@@ -3092,6 +3093,7 @@
           "deploymentMethod": "create3",
           "codehash": "0x6098c4cc25ec33d7d261af4edfd954fec47f1ec5fcca02a0b85fa78cac21a656",
           "salt": "v6.1.0"
+        },
         "AXE": {
           "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
           "name": "AXE",
