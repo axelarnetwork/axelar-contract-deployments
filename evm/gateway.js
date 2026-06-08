@@ -71,7 +71,7 @@ async function processCommand(axelar, chain, _chains, options) {
     const { privateKey, address, action, yes, symbols, limits } = options;
 
     if (options.governance) {
-        const governanceSupportedActions = ['transferGovernance', 'transferOperatorship'];
+        const governanceSupportedActions = ['transferGovernance', 'transferOperatorship', 'setPauseStatus'];
 
         if (!governanceSupportedActions.includes(action)) {
             throw new Error(`'${action}' does not support governance proposals.`);
@@ -580,6 +580,70 @@ async function processCommand(axelar, chain, _chains, options) {
             break;
         }
 
+        case 'setPauseStatus': {
+            if (contracts.AxelarGateway?.connectionType !== 'amplifier') {
+                throw new Error('setPauseStatus is only available for Amplifier Gateway');
+            }
+
+            if (options.pause !== 'true' && options.pause !== 'false') {
+                throw new Error(`Invalid --pause value '${options.pause}', expected 'true' or 'false'`);
+            }
+
+            const isPaused = options.pause === 'true';
+
+            const currentlyPaused = await gateway.paused();
+            printInfo('Current pause status', currentlyPaused);
+
+            if (currentlyPaused === isPaused) {
+                printWarn(`Gateway is already ${isPaused ? 'paused' : 'unpaused'}, nothing to do`);
+                return;
+            }
+
+            const operator = await gateway.operator();
+            const owner = await gateway.owner();
+            const isOperator = operator.toLowerCase() === walletAddress.toLowerCase();
+            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+
+            if (options.governance) {
+                const { data: calldata } = await gateway.populateTransaction.setPauseStatus(isPaused, gasOptions);
+
+                return createGovernanceProposal({
+                    chain,
+                    options,
+                    targetAddress: gatewayAddress,
+                    calldata,
+                    ProposalType,
+                    encodeGovernanceProposal,
+                    createGMPProposalJSON,
+                    dateToEta,
+                });
+            }
+
+            if (!isOperator && !isOwner) {
+                throw new Error(`Caller ${walletAddress} is neither the operator (${operator}) nor the owner (${owner})`);
+            }
+
+            if (prompt(`Proceed with setting pause status to ${chalk.cyan(isPaused)}`, yes)) {
+                return;
+            }
+
+            const tx = await gateway.setPauseStatus(isPaused, gasOptions);
+            printInfo('setPauseStatus tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            const eventEmitted = wasEventEmitted(receipt, gateway, isPaused ? 'Paused' : 'Unpaused');
+
+            if (!eventEmitted) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            const updatedPauseStatus = await gateway.paused();
+            printInfo('New pause status', updatedPauseStatus);
+
+            break;
+        }
+
         case 'rotateSigners': {
             // TODO: use args for new signers
             const gateway = new Contract(gatewayAddress, getContractJSON('AxelarAmplifierGateway').abi, wallet);
@@ -716,6 +780,7 @@ if (require.main === module) {
                 'rotateSigners',
                 'submitProof',
                 'transferOperatorship',
+                'setPauseStatus',
             ])
             .makeOptionMandatory(true),
     );
@@ -734,6 +799,7 @@ if (require.main === module) {
     program.addOption(new Option('--limits <limits>', 'EVM token mint limits (JSON array)'));
     program.addOption(new Option('--multisigSessionId <multisigSessionId>', 'Amplifier multisig proof session ID'));
     program.addOption(new Option('--newOperator <newOperator>', 'new operator address for transferOperatorship action'));
+    program.addOption(new Option('--pause <pause>', 'pause status (true/false) for setPauseStatus action'));
 
     program.action((options) => {
         main(options);
