@@ -567,7 +567,11 @@ const getEVMBatch = async (axelar, chain, batchID = '') => {
 };
 
 const getAmplifierVerifiers = async (axelar, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(axelar, chain);
+    const currentVerifierSet = await getCurrentVerifierSet(axelar, chain);
+    if (!currentVerifierSet) {
+        throw new Error(`No verifier set found for chain '${chain}'. Has the genesis verifier set been created?`);
+    }
+    const { verifierSetId, verifierSet, signers } = currentVerifierSet;
 
     const weightedAddresses = signers
         .map((signer) => ({

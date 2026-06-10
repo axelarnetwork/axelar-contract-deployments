@@ -187,19 +187,6 @@ async function processCommand(axelar, chain, chains, options) {
             break;
         }
 
-        case 'AxelarDepositService': {
-            const depositService = contractFactory.attach(contractAddress);
-            const implementation = await depositService.implementation();
-
-            await verifyContract(env, chain.axelarId, implementation, [
-                chain.contracts.AxelarGateway.address,
-                contractConfig.wrappedSymbol,
-                contractConfig.refundIssuer,
-            ]);
-            await verifyContract(env, chain.axelarId, contractAddress, [], verifyOptions);
-            break;
-        }
-
         case 'BurnableMintableCappedERC20': {
             const symbol = options.args;
 

@@ -64,7 +64,7 @@ Actions that require governance proposal submission, voting period, and timelock
 
 **Upgrade**
 
-- **Before upgrading**: Deploy new implementation with `--reuseProxy` flag. See [AxelarGasService and AxelarDepositService](../README.md#axelargasservice-and-axelardepositservice).
+- **Before upgrading**: Deploy new implementation with `--reuseProxy` flag. See [AxelarGasService](../README.md#axelargasservice).
 - Replace `schedule` with `schedule-operator` to skip timelock.
 - Documentation: [Upgrade Workflow](./governance-workflows.md#upgrade-workflow)
 

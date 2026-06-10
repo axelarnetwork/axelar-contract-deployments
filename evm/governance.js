@@ -648,10 +648,12 @@ async function main(action, args, options) {
             // Legacy consensus-gateway governance path. Deprecated in favor of the
             // amplifier-only path (AxelarnetGateway.call_contract). Envs migrated so far:
             // - devnet-amplifier (2026-04-23)
+            // - stagenet (2026-05-06)
+            // - testnet (2026-05-13)
             // Still using the legacy path:
-            // - stagenet, testnet, mainnet
+            // - mainnet
             // TODO: remove this branch once all envs have migrated.
-            const useLegacyConsensusPath = isConsensusChain(chain) && !['devnet-amplifier'].includes(options.env);
+            const useLegacyConsensusPath = isConsensusChain(chain) && !['devnet-amplifier', 'stagenet', 'testnet'].includes(options.env);
 
             if (useLegacyConsensusPath) {
                 consensusProposals.push(proposal);

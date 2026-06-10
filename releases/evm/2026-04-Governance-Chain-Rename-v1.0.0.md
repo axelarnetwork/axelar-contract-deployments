@@ -10,33 +10,31 @@
 | **Devnet Amplifier** | `core-avalanche`    | Completed             | 23/04/2026 |
 |                      | `core-ethereum`     | Completed             | 23/04/2026 |
 |                      | `core-optimism`     | Completed             | 23/04/2026 |
-| **Stagenet**         | `avalanche`         | -                     | TBD      |
-|                      | `fantom`            | -                     | TBD      |
-|                      | `kava`              | -                     | TBD      |
-|                      | `ethereum-sepolia`  | -                     | TBD      |
-|                      | `arbitrum-sepolia`  | -                     | TBD      |
-|                      | `linea-sepolia`     | -                     | TBD      |
-|                      | `polygon-sepolia`   | -                     | TBD      |
-|                      | `base-sepolia`      | -                     | TBD      |
-|                      | `mantle-sepolia`    | -                     | TBD      |
-|                      | `optimism-sepolia`  | -                     | TBD      |
-| **Testnet**          | `ethereum-sepolia`  | -                     | TBD      |
-|                      | `avalanche`         | -                     | TBD      |
-|                      | `fantom`            | -                     | TBD      |
-|                      | `moonbeam`          | -                     | TBD      |
-|                      | `binance`           | -                     | TBD      |
-|                      | `kava`              | -                     | TBD      |
-|                      | `filecoin-2`        | -                     | TBD      |
-|                      | `scroll`            | -                     | TBD      |
-|                      | `immutable`         | -                     | TBD      |
-|                      | `arbitrum-sepolia`  | -                     | TBD      |
-|                      | `centrifuge-2`      | -                     | TBD      |
-|                      | `optimism-sepolia`  | -                     | TBD      |
-|                      | `base-sepolia`      | -                     | TBD      |
-|                      | `blast-sepolia`     | -                     | TBD      |
-|                      | `mantle-sepolia`    | -                     | TBD      |
-|                      | `polygon-sepolia`   | -                     | TBD      |
-|                      | `linea-sepolia`     | -                     | TBD      |
+| **Stagenet**         | `avalanche`         | Completed             | 04/05/2026 |
+|                      | `fantom`            | Skipped               | 04/05/2026 |
+|                      | `kava`              | Completed             | 04/05/2026 |
+|                      | `ethereum-sepolia`  | Completed             | 04/05/2026 |
+|                      | `arbitrum-sepolia`  | Completed             | 04/05/2026 |
+|                      | `linea-sepolia`     | Completed             | 06/05/2026 |
+|                      | `polygon-sepolia`   | Completed             | 06/05/2026 |
+|                      | `base-sepolia`      | Completed             | 06/05/2026 |
+|                      | `mantle-sepolia`    | Completed             | 06/05/2026 |
+|                      | `optimism-sepolia`  | Completed             | 06/05/2026 |
+| **Testnet**          | `ethereum-sepolia`  | Completed             | 13/05/2026 |
+|                      | `avalanche`         | Completed             | 13/05/2026 |
+|                      | `moonbeam`          | Completed             | 13/05/2026 |
+|                      | `binance`           | Completed             | 13/05/2026 |
+|                      | `kava`              | Completed             | 13/05/2026 |
+|                      | `filecoin-2`        | Completed             | 13/05/2026 |
+|                      | `scroll`            | Completed             | 13/05/2026 |
+|                      | `immutable`         | Completed             | 13/05/2026 |
+|                      | `arbitrum-sepolia`  | Completed             | 13/05/2026 |
+|                      | `optimism-sepolia`  | Completed             | 13/05/2026 |
+|                      | `base-sepolia`      | Completed             | 13/05/2026 |
+|                      | `blast-sepolia`     | Skipped               | 13/05/2026 |
+|                      | `mantle-sepolia`    | Completed             | 13/05/2026 |
+|                      | `polygon-sepolia`   | Completed             | 13/05/2026 |
+|                      | `linea-sepolia`     | Completed             | 13/05/2026 |
 | **Mainnet**          | `celo`              | -                     | TBD      |
 |                      | `ethereum`          | -                     | TBD      |
 |                      | `avalanche`         | -                     | TBD      |
@@ -78,8 +76,8 @@ Per-chain scope is conditional: a role is migrated only when on-chain `governanc
 | Network              | Chains                                                                                                                                                                            |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Devnet Amplifier** | `core-avalanche,core-ethereum,core-optimism`                                                                                                                                      |
-| **Stagenet**         | `avalanche,fantom,kava,ethereum-sepolia,arbitrum-sepolia,linea-sepolia,polygon-sepolia,base-sepolia,mantle-sepolia,optimism-sepolia`                                              |
-| **Testnet**          | `ethereum-sepolia,avalanche,fantom,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,centrifuge-2,optimism-sepolia,base-sepolia,blast-sepolia,mantle-sepolia,polygon-sepolia,linea-sepolia` |
+| **Stagenet**         | `avalanche,kava,ethereum-sepolia,arbitrum-sepolia,linea-sepolia,polygon-sepolia,base-sepolia,mantle-sepolia,optimism-sepolia` (fantom skipped — see notes) |
+| **Testnet**          | `ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,optimism-sepolia,base-sepolia,mantle-sepolia,polygon-sepolia,linea-sepolia` (blast-sepolia skipped — see notes) |
 | **Mainnet**          | `celo,ethereum,avalanche,fantom,polygon,moonbeam,binance,arbitrum,kava,filecoin,optimism,linea,base,mantle,scroll,centrifuge,immutable,fraxtal,blast`                             |
 
 1. Update npm dependencies:
@@ -124,6 +122,47 @@ ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create2 --parallel
 
 Salt used: `v6.0.4-axelar devnet-amplifier` (CREATE2).
 
+#### Stagenet (completed 2026-05-06)
+
+| Chain               | New AxelarServiceGovernance                  | Completed   |
+| ------------------- | -------------------------------------------- | ----------- |
+| `avalanche`         | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
+| `kava`              | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
+| `ethereum-sepolia`  | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
+| `arbitrum-sepolia`  | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-04  |
+| `linea-sepolia`     | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `polygon-sepolia`   | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `base-sepolia`      | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `mantle-sepolia`    | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+| `optimism-sepolia`  | `0x3239fAe62FDF4A2E14779a335A19598d58b16B9B` | 2026-05-06  |
+
+Salt used: `v6.0.4-axelar` (CREATE2). Same deployer + salt + bytecode across all chains, hence the same deployed address. Roles transferred (gateway governance, gas service owner, ITS owner) all verified on-chain per chain.
+
+#### Testnet (completed 2026-05-13)
+
+| Chain               | New AxelarServiceGovernance                  | Completed   |
+| ------------------- | -------------------------------------------- | ----------- |
+| `ethereum-sepolia`  | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `avalanche`         | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `moonbeam`          | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `binance`           | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `kava`              | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `filecoin-2`        | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `scroll`            | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `immutable`         | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `arbitrum-sepolia`  | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `optimism-sepolia`  | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `base-sepolia`      | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `mantle-sepolia`    | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `polygon-sepolia`   | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+| `linea-sepolia`     | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` | 2026-05-13  |
+
+Salt used: `v6.0.4-axelar` (CREATE3). Same deployer + salt across all chains → identical address everywhere. Operator EOA: `0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e`. All gateway governance transfers verified on-chain.
+
+The Step 2 transfers were submitted as a single batched Axelar proposal (id `568`) carrying 14 `contract_calls[]` entries, one deposit of 1M AXL (refunded on pass) covering the per-call min-deposit gate on the `axelarnet` module.
+
+**`blast-sepolia` skipped**: both the RPC endpoint (`sepolia.blast.io`, load-balanced) and the underlying chain were unstable during the migration window — the deploy tx repeatedly failed on a "nonce too low" mismatch between the RPC's view and the chain's accepted nonce, and block production was intermittent. Revisit when the network stabilizes.
+
 ### Step 2: Transfer roles held by the legacy governance contract
 
 For each row in the per-env tables below, submit an Axelar governance proposal that routes through the **legacy governance contract** (column `Legacy governance`) and calls `transferGovernance` / `transferOwnership` on the target contract, handing the role to the new `AxelarServiceGovernance` (from Step 1).
@@ -148,7 +187,7 @@ ts-node evm/governance.js schedule raw <activationTime> \
   -n <chain>
 ```
 
-Then, once the timelock elapses (`minimumTimeDelay` per env), anyone can finalize with the same args but `execute-proposal` in place of `schedule`.
+Then, once the timelock elapses (`minimumTimeDelay` per env), anyone can finalize by running `evm/governance.js execute` with the same `--address`, `--target`, `--calldata`, `-n` arguments.
 
 `--address` pins the legacy governance contract explicitly and bypasses the JSON lookup (which we've overwritten with the new address in Step 1). `--target` is the contract being reconfigured (gateway / gas service / ITS). `--calldata` is the `transferGovernance(newGov)` or `transferOwnership(newGov)` payload.
 
@@ -166,9 +205,11 @@ Use `activationTime = 0` (devnet `minimumTimeDelay = 0`).
 
 #### Stagenet
 
-All 10 chains share the legacy governance contract `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550`. For each chain, submit 3 proposals: gateway `transferGovernance`, gas service `transferOwnership`, ITS `transferOwnership`. All point to the same new governance per-chain (from Step 1).
+All chains share the legacy governance contract `0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550`. For each chain, submit 3 proposals: gateway `transferGovernance`, gas service `transferOwnership`, ITS `transferOwnership`. All point to the same new governance per-chain (from Step 1).
 
-Chains: `avalanche, fantom, kava, ethereum-sepolia, arbitrum-sepolia, linea-sepolia, polygon-sepolia, base-sepolia, mantle-sepolia, optimism-sepolia`.
+Chains: `avalanche, kava, ethereum-sepolia, arbitrum-sepolia, linea-sepolia, polygon-sepolia, base-sepolia, mantle-sepolia, optimism-sepolia`.
+
+`fantom` is **skipped** on stagenet: Fantom testnet (chain 4002) was abandoned in the Sonic rebrand and the RPC is unreachable. The contracts can no longer be migrated. Note: Fantom **mainnet** (chain 250) is still operational and remains in scope for the mainnet rollout.
 
 Use `activationTime = 0` (stagenet `minimumTimeDelay = 300s`; proposal becomes executable 300s after scheduling).
 
@@ -180,9 +221,11 @@ Targets per chain (queryable post-Step-1):
 
 #### Testnet
 
-All 17 chains share the legacy governance contract `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`. Only the gateway is migrated; gas service / operators / ITS are EOA-owned on testnet.
+All chains share the legacy governance contract `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`. Only the gateway is migrated; gas service / operators / ITS are EOA-owned on testnet.
 
-Chains: `ethereum-sepolia, avalanche, fantom, moonbeam, binance, kava, filecoin-2, scroll, immutable, arbitrum-sepolia, centrifuge-2, optimism-sepolia, base-sepolia, blast-sepolia, mantle-sepolia, polygon-sepolia, linea-sepolia`.
+Chains: `ethereum-sepolia, avalanche, moonbeam, binance, kava, filecoin-2, scroll, immutable, arbitrum-sepolia, optimism-sepolia, base-sepolia, mantle-sepolia, polygon-sepolia, linea-sepolia`.
+
+`blast-sepolia` skipped — RPC and chain were unstable during the migration window. See note under Step 1.
 
 Use `activationTime = 0` (testnet `minimumTimeDelay = 300s`).
 

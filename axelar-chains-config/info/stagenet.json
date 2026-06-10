@@ -62,16 +62,16 @@
           "salt": "Operators"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -449,16 +449,16 @@
           "salt": "Operators"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -543,16 +543,16 @@
           "governance": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -661,16 +661,16 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -771,16 +771,16 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -888,16 +888,16 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -1016,16 +1016,16 @@
           "governance": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -1216,16 +1216,16 @@
       },
       "contracts": {
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -1310,10 +1310,6 @@
         }
       },
       "finality": "finalized",
-      "gasOptions": {
-        "gasPrice": 25000000,
-        "gasLimit": 100000000000
-      },
       "approxFinalityWaitTime": 60
     },
     "optimism-sepolia": {
@@ -1367,16 +1363,16 @@
           "governance": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550"
         },
         "AxelarServiceGovernance": {
-          "governanceChain": "Axelarnet",
+          "governanceChain": "axelar",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "minimumTimeDelay": 300,
           "operator": "0x466548FaD128a4A7e1B4D51322061F270bb756DF",
           "deploymentMethod": "create2",
-          "salt": "v6.0.4",
-          "address": "0x7B1cfbC6F267494f1A187C134E14A2B34CC3C550",
+          "salt": "v6.0.4-axelar",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x3239fAe62FDF4A2E14779a335A19598d58b16B9B",
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "codehash": "0x1f496a83d20e49358dcf2d94af9e15dcd2ecd9bc7b8a2e84f22454b4d38cd878"
+          "codehash": "0xa036b4d6f7ddb73375d358c6e4d0fef86d29440aea28640c56de73b220ddce1f"
         },
         "Multisig": {
           "threshold": 2,
@@ -2968,9 +2964,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1adz8u3q5mdfp73weg3f65e8ce5jvq4dwlqqm3lxqyy4pjf77nwtql8gjwr",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "hedera": {
           "serviceName": "amplifier",
@@ -2982,9 +2978,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1h8gx392pzlj6ff5lv3kc9jwegu0wwqjrur7ht93frus5czape9ns3j3d0a",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "sui": {
           "serviceName": "amplifier",
@@ -2996,9 +2992,9 @@
           ],
           "blockExpiry": 50,
           "confirmationHeight": 1,
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1x8rqw5l5gzye7d063zupr5zlelfvjxq5z6rr7wy643ufuflhl6xqhgr5wt",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "xrpl-evm": {
           "serviceName": "amplifier",
@@ -3010,9 +3006,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1hmdnsrs8c8v8mr7vxg3rzdzxasxdpfj09muxakhth73sywg929qsczjscj",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "plume": {
           "serviceName": "amplifier",
@@ -3024,9 +3020,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1t49krzwl0sc6z8qwdst5d7kmgn3xutjtp4ku8u2c06quy7w8hp4q5zsqn2",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "hyperliquid": {
           "serviceName": "amplifier",
@@ -3038,9 +3034,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1n72sdsdclpffc0jw5mf7vc97zpy6czqw9glmcqhm8sp73nczu57sn3kplc",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "monad": {
           "serviceName": "amplifier",
@@ -3052,9 +3048,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1v72l84ar9nhl7xt44hn374xm60a7huhfnulh65aagtk55x8uzpsqfdr6tq",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "berachain": {
           "serviceName": "amplifier",
@@ -3066,9 +3062,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar18xzlzgjcypassfs3sglfn7u8re3kuafxf233c2e8fyu7muxe8xmskeyg92",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "stellar-2025-q3": {
           "serviceName": "amplifier",
@@ -3095,15 +3091,15 @@
           "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 85,
+          "codeId": 98,
           "address": "axelar1pexeladrveekp689w67j94ftcvxhcqwy2ly6w4ntn8caz26r3waqxy54kz",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
-        "storeCodeProposalId": "396",
-        "storeCodeProposalCodeHash": "d8a38e71c635c28bec1106f0cc5274d6d130c23e0b7ded88364d41aee17328e1",
-        "lastUploadedCodeId": 85,
+        "storeCodeProposalId": "476",
+        "storeCodeProposalCodeHash": "f0139170fd2f6a8b3616e1e2a637eae4bceffd8b0f4e3cba83364e6d20310aef",
+        "lastUploadedCodeId": 98,
         "solana-stagenet-3": {
-          "codeId": 85,
+          "codeId": 98,
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "gtwYHfHHipAoj8Hfp3cGr3vhZ8f3UtptGCQLqjBkaSZ",
@@ -3116,7 +3112,7 @@
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
           "contractAdmin": "axelar12qndugv2dnu2pklygpwjx9vza0u4t86r3y9qym",
           "address": "axelar10hnv3yfzn5fxrefqa0rmw6n37n3vpgfceh0z24y2yzdqumvrch6qhvwfyq",
-          "version": "2.0.1"
+          "version": "2.0.2"
         }
       },
       "InterchainTokenService": {

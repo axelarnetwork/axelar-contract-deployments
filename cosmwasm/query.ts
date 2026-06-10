@@ -293,6 +293,10 @@ export async function multisigProof(client: CosmWasmClient, config: ConfigManage
 
 // ==================== Emergency Query Functions ====================
 
+// Router uses an integer enum for frozen_status (see router-api FrozenStatus):
+//   0 = None, 1 = Incoming, 2 = Outgoing, 3 = Bidirectional
+const ROUTER_FROZEN_STATUS = ['None', 'Incoming', 'Outgoing', 'Bidirectional'];
+
 async function routerIsChainFrozen(client, config, _options, args) {
     const [chainName] = args;
     const routerAddress = config.getContractConfig('Router').address;
@@ -310,11 +314,14 @@ async function routerIsChainFrozen(client, config, _options, args) {
 
     try {
         const result = await client.queryContractSmart(routerAddress, {
-            is_chain_frozen: { chain: chainConfig.axelarId },
+            chain_info: chainConfig.axelarId,
         });
-        printInfo(`Router: Is chain ${chainName} frozen?`, JSON.stringify(result, null, 2));
+        const status = result?.frozen_status;
+        const label = typeof status === 'number' ? (ROUTER_FROZEN_STATUS[status] ?? `Unknown(${status})`) : 'Unknown';
+        printInfo(`Router: Chain ${chainName} frozen_status`, `${label} (${status})`);
+        printInfo(`Router: chain_info raw response for ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
-        printWarn(`Failed to query is_chain_frozen for ${chainName}`, error?.message || String(error));
+        printWarn(`Failed to query chain_info for ${chainName}`, error?.message || String(error));
     }
 }
 
@@ -396,11 +403,12 @@ async function itsIsChainFrozen(client, config, _options, args) {
 
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
-            is_chain_frozen: { chain: chainConfig.axelarId },
+            its_chain: { chain: chainConfig.axelarId },
         });
-        printInfo(`ITS Hub: Is chain ${chainName} frozen?`, JSON.stringify(result, null, 2));
+        printInfo(`ITS Hub: Is chain ${chainName} frozen?`, String(result?.frozen));
+        printInfo(`ITS Hub: its_chain raw response for ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
-        printWarn(`Failed to query is_chain_frozen for ${chainName}`, error?.message || String(error));
+        printWarn(`Failed to query its_chain for ${chainName}`, error?.message || String(error));
     }
 }
 
