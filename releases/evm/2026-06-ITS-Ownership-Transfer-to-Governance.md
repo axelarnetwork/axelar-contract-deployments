@@ -7,8 +7,7 @@
 
 | **Environment** | **Chain**     | **Deployment Status**        | **Date**   |
 | --------------- | ------------- | ---------------------------- | ---------- |
-| **Mainnet**     | `flow`        | Step 1 Completed             | 12/06/2026 |
-|                 | `xrpl-evm`    | Step 1 Completed             | 12/06/2026 |
+| **Mainnet**     | `xrpl-evm`    | Step 1 Completed             | 12/06/2026 |
 |                 | `hedera`      | Step 1 Completed             | 12/06/2026 |
 |                 | `hyperliquid` | Step 1 Completed             | 12/06/2026 |
 |                 | `monad`       | Step 1 Completed             | 12/06/2026 |
@@ -39,11 +38,11 @@ ownership to the ASG.
 
 `AxelarServiceGovernance` is already deployed at the same CREATE3 address
 (`0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525`) on most mainnet chains. A handful of chains
-(`flow`, `xrpl-evm`, `hedera`, `hyperliquid`, `monad`) were brought up without any on-chain
+(`xrpl-evm`, `hedera`, `hyperliquid`, `monad`) were brought up without any on-chain
 governance contract, so there is nothing to transfer ITS ownership *to* there yet. The rollout
 is therefore two stages:
 
-- **Step 1 — deploy ASG where it is missing.** Only the 5 chains above need this; every other
+- **Step 1 — deploy ASG where it is missing.** Only the 4 chains above need this; every other
   chain already has the ASG and **skips Step 1**.
 - **Step 2 — transfer the ITS owner to the ASG.** Runs on all in-scope chains.
 
@@ -71,7 +70,7 @@ not a version number.
 
 | Network     | Chains (Step 1 — deploy ASG)             |
 | ----------- | ---------------------------------------- |
-| **Mainnet** | `flow,xrpl-evm,hedera,hyperliquid,monad` |
+| **Mainnet** | `xrpl-evm,hedera,hyperliquid,monad` |
 
 1. Update npm dependencies:
 
@@ -91,7 +90,7 @@ ENV=mainnet
 
 ### Step 1: Deploy `AxelarServiceGovernance` where missing (Completed 2026-06-12)
 
-> Applies only to `flow,xrpl-evm,hedera,hyperliquid,monad`. **Skip for every other chain** —
+> Applies only to `xrpl-evm,hedera,hyperliquid,monad`. **Skip for every other chain** —
 > the ASG is already deployed there at `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525`.
 
 The config for each chain (`axelar-chains-config/info/mainnet.json`) carries:
@@ -106,24 +105,23 @@ Predict first (every chain must print `0x7Acbae6CBa67d78AAf69e47000884aE00F9B252
 
 ```bash
 ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 \
-  -n flow,xrpl-evm,hedera,hyperliquid,monad --predictOnly
+  -n xrpl-evm,hedera,hyperliquid,monad --predictOnly
 ```
 
 Deploy:
 
 ```bash
 ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 \
-  -n flow,xrpl-evm,hedera,hyperliquid,monad --parallel
+  -n xrpl-evm,hedera,hyperliquid,monad --parallel
 ```
 
 `deploy-contract.js` verifies `governanceChain`, `governanceChainHash`, `governanceAddress`,
 `governanceAddressHash`, `minimumTimeDelay`, and `operator` on-chain against the config after deploy.
 
-New `AxelarServiceGovernance` deployed via CREATE3 at the same address on all 5 chains:
+New `AxelarServiceGovernance` deployed via CREATE3 at the same address on all 4 chains:
 
 | Chain         | AxelarServiceGovernance                      |
 | ------------- | -------------------------------------------- |
-| `flow`        | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` |
 | `xrpl-evm`    | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` |
 | `hedera`      | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` |
 | `hyperliquid` | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` |
@@ -152,7 +150,6 @@ cast calldata "transferOwnership(address)" 0x7Acbae6CBa67d78AAf69e47000884aE00F9
 
 | Chain         | Current ITS owner                            | Step 1 (ASG)   |
 | ------------- | -------------------------------------------- | -------------- |
-| `flow`        | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | deployed       |
 | `xrpl-evm`    | `0x3DEbBA1a03799EE1e30aA82C2cd90CF395643978` | deployed       |
 | `hedera`      | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | deployed       |
 | `hyperliquid` | `0x5f939a751eAeE302C85bf8BeBB83483aDeCC0C10` | deployed       |
