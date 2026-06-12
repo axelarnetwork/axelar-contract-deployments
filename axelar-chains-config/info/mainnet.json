@@ -2571,6 +2571,18 @@
           "tokenManagerAddress": "0x998FDc5adBbB27F48905712Ca6A55F69aD3E6Cc8",
           "tokenManagerType": "mint_burn",
           "decimals": 18
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
@@ -3131,6 +3143,18 @@
           "deployTransactionHash": "0x5990e957d8e7dd362b6406c66ed9dfeff3a06ca410b0241794479fb65fe3bddd",
           "notes": "Canonical single AXE v2, home chain. Deployed via interchainTokenFactory deploy-interchain-token (salt axe_AXE_mainnet_v2), 1e9 initial supply to deployer. Reused by load tests via chains.xrpl-evm.contracts.AXE.tokenId.",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       }
     },
@@ -3378,6 +3402,18 @@
           "remoteDeployTransactionHash": "0xffa3f14416a514a9ed1fd55f049e1774c87e54ca93f5bfc45e75fb945f8c1cc2",
           "notes": "Canonical AXE v2 (home xrpl-evm), remote-registered to Hedera HTS via deployRemoteInterchainToken. Supply seeded by interchainTransfer from xrpl-evm. Hedera uses 6 decimals (HTS native) — ITS-side decimal coercion handles the delta vs xrpl-evm's 18.",
           "address": "0x0000000000000000000000000000000000a09b89"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       }
     },
@@ -3594,6 +3630,18 @@
           "saltKey": "axe_AXE_mainnet_v2",
           "notes": "Canonical single AXE v2 (home xrpl-evm), remote-registered via deployRemoteInterchainToken. Reused by load tests via chains.hyperliquid.contracts.AXE.tokenId.",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       }
     },
@@ -3715,6 +3763,18 @@
           "remoteDeployTransactionHash": "0xe0f430048f0374ee62345e8b3108864edf26a65b234e3c758f378c65ffa3c5dc",
           "notes": "Canonical AXE v2 (home xrpl-evm), remote-registered via deployRemoteInterchainToken. Supply seeded by interchainTransfer from xrpl-evm.",
           "address": "0x54bedcf8fc56faf4fbfff88dbb3efb9bda0c655f"
+        },
+        "AxelarServiceGovernance": {
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 259200,
+          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
+          "deploymentMethod": "create3",
+          "salt": "v6.0.4-axelar",
+          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       }
     },
