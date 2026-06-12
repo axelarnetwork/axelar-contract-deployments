@@ -2740,18 +2740,6 @@
           "tokenManagerAddress": "0x998FDc5adBbB27F48905712Ca6A55F69aD3E6Cc8",
           "tokenManagerType": "mint_burn",
           "decimals": 18
-        },
-        "AxelarServiceGovernance": {
-          "governanceChain": "axelar",
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "minimumTimeDelay": 259200,
-          "operator": "0xc8a8399c3D1207f4e109673be7047604737c1D56",
-          "deploymentMethod": "create3",
-          "salt": "v6.0.4-axelar",
-          "address": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
-          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "codehash": "0xfc011a5cbbd9aa747ec8a2fea646ef09b15eb8859dac153984e1df481a8f2df0"
         }
       },
       "explorer": {
