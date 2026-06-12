@@ -3202,10 +3202,13 @@
           "version": "2.2.0"
         },
         "AXE": {
-          "address": "0x7AC528458e73A11F0149c9234EC5f49cb1718a6e",
-          "tokenId": "0xa9d0d0d3063287083ec0f14c015cd786b3ae96c681105913d27c2954a1c54546",
-          "decimals": 18,
-          "notes": "AXE ITS test token deployed by axe load-test; remote registered on stellar-2026-q1-2. Skip re-deploy via chains.hyperliquid.contracts.AXE.tokenId."
+          "tokenId": "0x63e3c40efbdcd1f1c3643df19b0682e5d5772f4b673cc65c9fcfda814ebd9108",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 9,
+          "originChain": "solana",
+          "address": "0xb26a4f524824e3cb428e49cfbb2c1ed5d5279c14",
+          "notes": "Testnet AXE family (home solana) remote-registered on hyperliquid. Supply seeded by solana->hyperliquid interchainTransfer. Hyperliquid<->Solana cron pair."
         },
         "AxelarServiceGovernance": {
           "minimumTimeDelay": 300,
@@ -3685,17 +3688,15 @@
           "version": "1.1.0"
         },
         "AXE": {
-          "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
+          "tokenId": "0x63e3c40efbdcd1f1c3643df19b0682e5d5772f4b673cc65c9fcfda814ebd9108",
           "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-          "mintAuthority": "CiPBNL4HkNLn46w7NkkFnRsqgHkY6KGsbtrTR7A24wWQ",
+          "mintAuthority": "81v2PCCR4tFrCC7x6mzJjMmLmGhvS5kjwCZAUQRSeMfJ",
           "name": "AXE",
           "symbol": "AXE",
-          "decimals": 6,
-          "originChain": "hedera",
-          "originSalt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
-          "deployedViaTx": "0x4d254e34b46b53896094b913fca8f47ea87c92d06205687ea4666e0387e59e2a",
-          "executeTx": "3nskpZgNZFHYCPknwf4juQvzDSvfhZ8dpqwyMXL3S84ZvEAXzAmG23pimveJWkTBbuCQHBEb8sLf6tN3E5qprXHP",
-          "address": "AswjwVEcBXX6FxktUvnYwktM5eaXUg9WLya4d9ttQKhW"
+          "decimals": 9,
+          "originChain": "solana",
+          "address": "9RdSWTNrfAEnZ679CBFCBMhB33Qm7unjd9DkY4WNZArv",
+          "notes": "Testnet AXE family (home solana), Token-2022 mint. Reused for Hyperliquid<->Solana cron pair."
         }
       }
     },
