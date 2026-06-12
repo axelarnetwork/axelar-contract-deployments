@@ -2241,15 +2241,13 @@
           "salt": "v6.1.0"
         },
         "AXE": {
-          "salt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
-          "minter": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
           "name": "AXE",
           "symbol": "AXE",
-          "decimals": 18,
-          "deployTransactionHash": "0x493e6e3340eee70f50455224e68990148ca445bde6d1380339491d85620eba84",
-          "address": "0x00000000000000000000000000000000008B6eBd"
+          "decimals": 6,
+          "originChain": "monad-3",
+          "address": "0x00000000000000000000000000000000008c8e9c",
+          "notes": "Testnet AXE family (home monad-3, HTS-fork on hedera, 6 decimals). Supply seeded by monad-3->hedera interchainTransfer. Monad-3<->Hedera cron pair."
         }
       }
     },
@@ -3095,14 +3093,13 @@
           "salt": "v6.1.0"
         },
         "AXE": {
-          "tokenId": "0xd6311e67bdb5fb90d722d71fde9e7c33aa703a0b6c66518cebff80f63bc64a4a",
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 18,
-          "originChain": "hedera",
-          "originSalt": "0x6178655f4158455f7465737470a16574f7631000000000000000000000000000",
-          "deployedViaTx": "0x929717c3127cae130355167092a2ce39529383ed96e5b247af70570f8cc1061e",
-          "address": "0xf73d4d8a56a5478ed9b357115dc674d6ec4356bb"
+          "originChain": "monad-3",
+          "address": "0x18C8085e46Dc09DFBFc1acb1D544c0058C84e293",
+          "notes": "Testnet AXE family (home monad-3) auto-deployed + remote-registered on hedera by axe load-test; reused via this tokenId. Monad-3<->Hedera cron pair."
         }
       }
     },
