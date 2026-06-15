@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | Completed             | 2026-06-11 |
 | **Stagenet**         | Completed             | 2026-06-11 |
 | **Testnet**          | Completed             | 2026-06-11 |
-| **Mainnet**          | --                    | --         |
+| **Mainnet**          | Completed             | 2026-06-15 |
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/service-registry-v1.2.2)
 
