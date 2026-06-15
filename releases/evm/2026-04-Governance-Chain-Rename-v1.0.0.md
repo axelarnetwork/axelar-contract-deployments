@@ -35,25 +35,23 @@
 |                      | `mantle-sepolia`    | Completed             | 13/05/2026 |
 |                      | `polygon-sepolia`   | Completed             | 13/05/2026 |
 |                      | `linea-sepolia`     | Completed             | 13/05/2026 |
-| **Mainnet**          | `celo`              | -                     | TBD      |
-|                      | `ethereum`          | -                     | TBD      |
-|                      | `avalanche`         | -                     | TBD      |
-|                      | `fantom`            | -                     | TBD      |
-|                      | `polygon`           | -                     | TBD      |
-|                      | `moonbeam`          | -                     | TBD      |
-|                      | `binance`           | -                     | TBD      |
-|                      | `arbitrum`          | -                     | TBD      |
-|                      | `kava`              | -                     | TBD      |
-|                      | `filecoin`          | -                     | TBD      |
-|                      | `optimism`          | -                     | TBD      |
-|                      | `linea`             | -                     | TBD      |
-|                      | `base`              | -                     | TBD      |
-|                      | `mantle`            | -                     | TBD      |
-|                      | `scroll`            | -                     | TBD      |
-|                      | `centrifuge`        | -                     | TBD      |
-|                      | `immutable`         | -                     | TBD      |
-|                      | `fraxtal`           | -                     | TBD      |
-|                      | `blast`             | -                     | TBD      |
+| **Mainnet**          | `celo`              | Completed             | 15/06/2026 |
+|                      | `ethereum`          | Completed             | 15/06/2026 |
+|                      | `avalanche`         | Completed             | 15/06/2026 |
+|                      | `polygon`           | Completed             | 15/06/2026 |
+|                      | `moonbeam`          | Completed             | 15/06/2026 |
+|                      | `binance`           | Completed             | 15/06/2026 |
+|                      | `arbitrum`          | Completed             | 15/06/2026 |
+|                      | `kava`              | Completed             | 15/06/2026 |
+|                      | `filecoin`          | Completed             | 15/06/2026 |
+|                      | `optimism`          | Completed             | 15/06/2026 |
+|                      | `linea`             | Completed             | 15/06/2026 |
+|                      | `base`              | Completed             | 15/06/2026 |
+|                      | `mantle`            | Completed             | 15/06/2026 |
+|                      | `scroll`            | Completed             | 15/06/2026 |
+|                      | `immutable`         | Completed             | 15/06/2026 |
+|                      | `fraxtal`           | Completed             | 15/06/2026 |
+|                      | `blast`             | Completed             | 15/06/2026 |
 
 ## Background
 
@@ -78,7 +76,7 @@ Per-chain scope is conditional: a role is migrated only when on-chain `governanc
 | **Devnet Amplifier** | `core-avalanche,core-ethereum,core-optimism`                                                                                                                                      |
 | **Stagenet**         | `avalanche,kava,ethereum-sepolia,arbitrum-sepolia,linea-sepolia,polygon-sepolia,base-sepolia,mantle-sepolia,optimism-sepolia` (fantom skipped — see notes) |
 | **Testnet**          | `ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,optimism-sepolia,base-sepolia,mantle-sepolia,polygon-sepolia,linea-sepolia` (blast-sepolia skipped — see notes) |
-| **Mainnet**          | `celo,ethereum,avalanche,fantom,polygon,moonbeam,binance,arbitrum,kava,filecoin,optimism,linea,base,mantle,scroll,centrifuge,immutable,fraxtal,blast`                             |
+| **Mainnet**          | `celo,ethereum,avalanche,polygon,moonbeam,binance,arbitrum,kava,filecoin,optimism,linea,base,mantle,scroll,immutable,fraxtal,blast` (fantom + centrifuge skipped — see notes) |
 
 1. Update npm dependencies:
 
@@ -231,12 +229,27 @@ Use `activationTime = 0` (testnet `minimumTimeDelay = 300s`).
 
 #### Mainnet
 
-18 chains share `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`. `immutable` has its own legacy governance `0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD`. Only the gateway is migrated; other roles are EOA-owned.
+16 chains share `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`. `immutable` has its own legacy governance `0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD`. Only the gateway is migrated; other roles are EOA-owned.
 
-Chains (shared gov): `celo, ethereum, avalanche, fantom, polygon, moonbeam, binance, arbitrum, kava, filecoin, optimism, linea, base, mantle, scroll, centrifuge, fraxtal, blast`.
+Chains (shared gov): `celo, ethereum, avalanche, polygon, moonbeam, binance, arbitrum, kava, filecoin, optimism, linea, base, mantle, scroll, fraxtal, blast`.
 Separate gov: `immutable`.
 
-Use `activationTime = 0` (mainnet `minimumTimeDelay = 259200s / 72h`).
+`fantom` and `centrifuge` skipped — out of scope, both are being deprecated.
+
+Use `activationTime = 0`. The on-chain `minimumTimeLockDelay` on each legacy `InterchainGovernance` is `604800s / 7 days` — that's the actual wait gating Step 2 execute. (The new `AxelarServiceGovernance` we deploy in Step 1 has its own `minimumTimeDelay = 259200s / 72h`, which applies to *future* proposals routed through the new contract, not to this migration.)
+
+#### Mainnet (completed 2026-06-15)
+
+New `AxelarServiceGovernance` deployed via CREATE3 at the same address across all 17 chains:
+
+- **Address**: `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525`
+- **Salt**: `v6.0.4-axelar`
+- **Deployer**: `0xba76c6980428A0b10CFC5d8ccb61949677A61233`
+- **Operator**: `0xc8a8399c3D1207f4e109673be7047604737c1D56`
+- **minimumTimeDelay**: 259200 (72h)
+- **governanceChain**: `axelar`
+
+Step 2 was submitted as one batched Axelar `CallContractsProposal` (proposal id `474`) carrying 17 `contract_calls[]` entries (16 routed to `0xfDF36A30070ea0241d69052ea85ff44Ad0476a66`, one to `0x35dFacdE7B4b80e156e69b1291D12EA51ce123BD` for `immutable`), signed by the `cpi-multisig` (3/6, `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m`) with a 1,000,000 AXL deposit. Voting ran the standard ~3 day period; the 7-day per-chain `InterchainGovernance` timelock followed; execute was permissionless, run via `helpers/mainnet-migrate.sh`. All 17 gateways verified post-execute: `gateway.governance() == 0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525`.
 
 ### Step 3: Update config JSON
 
