@@ -25,7 +25,6 @@ const {
     prompt,
     writeJSON,
     validateParameters,
-    isConsensusChain,
     isEvmChain,
     isValidAddress,
 } = require('./utils.js');
@@ -639,53 +638,25 @@ async function submitProposalToAxelar(proposal, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    const consensusProposals = [];
     const amplifierAxelarnetMsgs = [];
 
     await mainProcessor(options, async (axelar, chain, chains, options) => {
         const proposal = await processCommand(axelar, chain, chains, action, options);
         if (proposal) {
-            // Legacy consensus-gateway governance path. Deprecated in favor of the
-            // amplifier-only path (AxelarnetGateway.call_contract). Envs migrated so far:
-            // - devnet-amplifier (2026-04-23)
-            // - stagenet (2026-05-06)
-            // - testnet (2026-05-13)
-            // Still using the legacy path:
-            // - mainnet
-            // TODO: remove this branch once all envs have migrated.
-            const useLegacyConsensusPath = isConsensusChain(chain) && !['devnet-amplifier', 'stagenet', 'testnet'].includes(options.env);
-
-            if (useLegacyConsensusPath) {
-                consensusProposals.push(proposal);
-            } else {
-                amplifierAxelarnetMsgs.push({
-                    call_contract: {
-                        destination_chain: proposal.chain,
-                        destination_address: proposal.contract_address,
-                        payload: payloadToHexBinary(proposal.payload),
-                    },
-                });
-            }
+            amplifierAxelarnetMsgs.push({
+                call_contract: {
+                    destination_chain: proposal.chain,
+                    destination_address: proposal.contract_address,
+                    payload: payloadToHexBinary(proposal.payload),
+                },
+            });
         }
     });
 
     const title = 'Interchain Governance Proposal';
     const description = 'Interchain Governance Proposal';
 
-    const hasConsensus = consensusProposals.length > 0;
     const hasAmplifier = amplifierAxelarnetMsgs.length > 0;
-
-    if (hasConsensus) {
-        const proposal = { title, description, contract_calls: consensusProposals };
-        printInfo('Consensus-chain proposal (CallContractsProposal)', JSON.stringify(proposal, null, 2));
-
-        if (options.generateOnly) {
-            writeJSON(proposal, options.generateOnly);
-            printInfo('Consensus proposal written to file', options.generateOnly);
-        } else if (!prompt('Proceed with submitting this consensus-chain proposal to Axelar?', options.yes)) {
-            await submitProposalToAxelar(proposal, options);
-        }
-    }
 
     if (hasAmplifier) {
         const amplifierPreview = {
