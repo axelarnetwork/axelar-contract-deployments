@@ -3898,10 +3898,10 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "437",
-        "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
-        "codeId": 72,
-        "lastUploadedCodeId": 72,
+        "storeCodeProposalId": "613",
+        "storeCodeProposalCodeHash": "9f861ce450a4b0ba07d7ea9d198351355ea0ca57d2af0bf4f7e51504fdfe779e",
+        "codeId": 88,
+        "lastUploadedCodeId": 88,
         "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
         "executeProposalId": "112",
         "flow": {
