@@ -53,7 +53,7 @@ ts-node xrpl/rotate-signers.js -e testnet -n xrpl --signerPublicKeys 028E425D6F7
 
 ### Token Deployments
 
-Refer to the XRPL ITS [Local Token Deployment](./docs/deploy-local-token.md), [Remote Token Deployment](./docs/deploy-remote-token.md),  and [Link Token](./docs/link-token.md) guides to enable transferring new tokens between XRPL and remote chains.
+Refer to the XRPL ITS [Local Token Deployment](./docs/deploy-local-token.md), [Remote Token Deployment](./docs/deploy-remote-token.md), [EVM-Origin Link Token](./docs/link-token.md), [XRPL Local Token Link](./docs/link-local-token.md), and [XRPL Local Token Interchain Transfer](./docs/interchain-transfer-local-token.md) guides to enable transferring tokens between XRPL and remote chains.
 
 ## Contract Interactions
 

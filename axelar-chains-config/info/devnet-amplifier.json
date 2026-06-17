@@ -1524,11 +1524,11 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-        "codeId": 1595,
-        "lastUploadedCodeId": 1595,
+        "codeId": 1651,
+        "lastUploadedCodeId": 1651,
         "address": "axelar1c9fkszt5lq34vvvlat3fxj6yv7ejtqapz04e97vtc9m5z9cwnamq8zjlhz",
-        "storeCodeProposalId": "1460",
-        "storeCodeProposalCodeHash": "934bca95d4c9729f93a7dcc8241a4ffb33905eab8da3020298e44beed3b37b23",
+        "storeCodeProposalId": "1603",
+        "storeCodeProposalCodeHash": "9f861ce450a4b0ba07d7ea9d198351355ea0ca57d2af0bf4f7e51504fdfe779e",
         "version": "1.2.0"
       },
       "Router": {
@@ -1637,11 +1637,11 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1619,
+          "codeId": 1650,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
-        "lastUploadedCodeId": 1619,
+        "lastUploadedCodeId": 1650,
         "eth-sepolia": {
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
@@ -1652,9 +1652,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1619,
+          "codeId": 1650,
           "address": "axelar16swl5eh3vspnyzddwltuf93hc65nwju7498u0zyq33u4cj8rxy4sgxx30m",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "optimism-sepolia": {
           "serviceName": "validators",
@@ -1666,9 +1666,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1619,
+          "codeId": 1650,
           "address": "axelar1qtg2es55w6zp539a2xh9mnajxqq2rsqghf604muyw85vrn0ky97qyu795s",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "flow": {
           "serviceName": "validators",
@@ -1694,9 +1694,9 @@
           ],
           "blockExpiry": 50,
           "confirmationHeight": 1,
-          "codeId": 1619,
+          "codeId": 1650,
           "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "xrpl-evm-devnet": {
           "serviceName": "validators",
@@ -1722,9 +1722,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1619,
+          "codeId": 1650,
           "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "berachain": {
           "serviceName": "validators",
@@ -1736,9 +1736,9 @@
           "blockExpiry": 50,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1619,
+          "codeId": 1650,
           "address": "axelar1uypvvkd820cs4t6y47hqszawegwyrxaxr9ehpla74e98g0rezr5sw9lj4z",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "arc-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1751,10 +1751,10 @@
           "blockExpiry": 50,
           "confirmationHeight": 1000000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "codeId": 1619,
+          "codeId": 1650,
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "address": "axelar1z53yqsw8arzecjqvvzdjs54h5tvsk4n78qdj0v9jsctvfymvhkpqdatwt3",
-          "version": "2.0.1"
+          "version": "2.0.2"
         },
         "storeCodeProposalId": "1543",
         "storeCodeProposalCodeHash": "a4592d2e8aee74527c854b5752ac6a345c258156fa0c63b7374fb01b1b2afd5e",
@@ -1771,9 +1771,10 @@
           "confirmationHeight": 1000000,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
           "addressFormat": "solana",
-          "codeId": 1619,
+          "codeId": 1650,
           "contractAdmin": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "address": "axelar1kvc52ststqy0fr5thuuvqlwhjcrt78ccl8ts6e9vzue6xu6wgqjsklrd4k"
+          "address": "axelar1kvc52ststqy0fr5thuuvqlwhjcrt78ccl8ts6e9vzue6xu6wgqjsklrd4k",
+          "version": "2.0.2"
         }
       },
       "Gateway": {
