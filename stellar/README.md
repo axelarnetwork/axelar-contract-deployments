@@ -490,3 +490,55 @@ ts-node stellar/token-utils.js create-stellar-asset-contract [asset-code] [issue
 ```bash
 ts-node stellar/token-utils.js create-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
 ```
+
+## Multicall Contract Functionality
+
+The Multicall contract allows executing multiple function calls in a single transaction, which can be useful for batch operations.
+
+#### Usage
+
+```bash
+node stellar/multicall.js multicall <functionCallsJson>
+```
+
+Where `<functionCallsJson>` is a JSON array of function calls, each containing:
+- `contract`: The contract address
+- `approver`: The approver address
+- `function`: The function name to call
+- `args`: Array of arguments to pass to the function
+
+#### Example Usage
+
+Multicall to add multiple trusted chains
+
+```bash
+node stellar/multicall.js multicall '[{
+  "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+  "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+  "function": "set_trusted_chain",
+  "args": ["avalanche"]
+},
+{
+  "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+  "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+  "function": "set_trusted_chain",
+  "args": ["sui"]
+},
+{
+  "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+  "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+  "function": "set_trusted_chain",
+  "args": ["binance"]
+}]' --chain-name stellar
+```
+
+Multicall to get flow limit
+
+```bash
+node stellar/multicall.js multicall '[{
+    "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+    "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+    "function": "flow_limit",
+    "args": ["0x96efc3f5494b452964196fa62dd5a3a3b6b895d317f8f0172ce55c8286ef9fe7"]
+}]' --chain-name stellar
+```
