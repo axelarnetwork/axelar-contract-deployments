@@ -85,7 +85,9 @@ Interchain token transfers from XRPL are initiated via a `Payment` transaction t
         {
             Memo: {
                 MemoType: "64657374696e6174696f6e5f61646472657373", // hex("destination_address")
-                // recipient's address, without the 0x prefix (in the EVM case), hex-encoded - hex("0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E"), in this case:
+                // recipient's address, double-encoded: first to its canonical raw-bytes hex per destination chain
+                // (EVM/Sui: the address itself without 0x; Stellar/XRPL: hex of the ASCII address string; Solana: hex of the base58-decoded bytes),
+                // then hex-encoded for the memo - hex("0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E") for this EVM case:
                 MemoData: "30413930633041663142303766364143333466333532303334384462666165373342446133353845"
             },
         },
@@ -154,8 +156,9 @@ GMP contract calls from XRPL are initiated via a `Payment` transaction that resp
         {
             Memo: {
                 MemoType: "64657374696e6174696f6e5f61646472657373", // hex("destination_address")
-                // // destination smart contract address, without the 0x prefix (in the EVM case), hex-encoded -
-                // hex("0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E"), in this case:
+                // destination smart contract address, double-encoded: first to its canonical raw-bytes hex per destination chain
+                // (EVM/Sui: the address itself without 0x; Stellar/XRPL: hex of the ASCII address string; Solana: hex of the base58-decoded bytes),
+                // then hex-encoded for the memo - hex("0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E") for this EVM case:
                 MemoData: "30413930633041663142303766364143333466333532303334384462666165373342446133353845"
             },
         },
