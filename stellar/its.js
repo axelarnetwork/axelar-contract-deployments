@@ -208,7 +208,7 @@ async function deployRemoteCanonicalToken(wallet, config, chain, contract, args,
 async function interchainTransfer(wallet, config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
-    const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
+    const data = options.data === '' ? nativeToScVal(null) : hexToScVal(options.data);
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
 
     validateParameters({

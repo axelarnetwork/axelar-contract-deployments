@@ -1,23 +1,22 @@
 'use strict';
 
-import {
-    Address,
-    BASE_FEE,
-    Horizon,
-    Keypair,
-    Networks,
-    TransactionBuilder,
-    authorizeInvocation,
-    nativeToScVal,
-    rpc,
-    xdr,
-} from '@stellar/stellar-sdk';
+// @stellar/stellar-sdk v16 is a dual package published as "type":"module" but ships
+// only ESM type declarations. Under this project's node16 resolution (required for
+// @mysten/sui's exports subpaths) tsc refuses to `require` an ESM-typed module from a
+// CommonJS file (TS1479). The package's "require" export condition provides a working
+// CJS build at runtime, so import the types only (erased, no diagnostic) and pull the
+// runtime values via require(), casting to the module type to keep full type-safety.
+import type * as StellarSdk from '@stellar/stellar-sdk' with { 'resolution-mode': 'import' };
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 
 import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
 import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
 import { itsCustomMigrationDataToScValV112 } from './type-utils';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- see note above; require() hits the CJS build
+const stellarSdk: typeof StellarSdk = require('@stellar/stellar-sdk');
+const { Address, BASE_FEE, Horizon, Keypair, Networks, TransactionBuilder, authorizeInvocation, nativeToScVal, rpc, xdr } = stellarSdk;
 
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
@@ -226,7 +225,7 @@ function parseSimulatedResponse(response) {
     return response.result.retval._value;
 }
 
-function isReadOnly(response: rpc.Api.SimulateTransactionResponse, action?: string): boolean {
+function isReadOnly(response: StellarSdk.rpc.Api.SimulateTransactionResponse, action?: string): boolean {
     if (
         !rpc.Api.isSimulationSuccess(response) ||
         response.transactionData.getReadWrite().length > 0 ||
@@ -519,7 +518,7 @@ function hexToScVal(hexString) {
 
 function tokenToScVal(tokenAddress, tokenAmount) {
     return tokenAmount === 0
-        ? nativeToScVal(null, { type: 'null' })
+        ? nativeToScVal(null)
         : nativeToScVal(
               {
                   address: Address.fromString(tokenAddress),
