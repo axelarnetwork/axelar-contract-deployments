@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # Hardcoded to ensure consistency.
+          node-version: '22' # Hardcoded to ensure consistency.
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
