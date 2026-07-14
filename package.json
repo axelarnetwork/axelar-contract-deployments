@@ -88,7 +88,7 @@
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "overrides": {
     "@scure/base": "^1.2.0",
