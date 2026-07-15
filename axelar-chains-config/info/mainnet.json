@@ -808,7 +808,7 @@
       "name": "Taifoon",
       "axelarId": "Taifoon",
       "chainId": 36927,
-      "rpc": "https://rpc.taifoon.dev",
+      "rpc": "https://<taifoon-parachain-evm-rpc>",
       "tokenSymbol": "FOON",
       "decimals": 18,
       "chainType": "evm",
@@ -836,7 +836,7 @@
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
-          "wrappedSymbol": "WGLMR",
+          "wrappedSymbol": "WFOON",
           "refundIssuer": "0x4f671f34d2d23fec3eE3087E3A0221f8D314D9dF",
           "address": "0x0000000000000000000000000000000000000000",
           "implementation": "0x0000000000000000000000000000000000000000",
