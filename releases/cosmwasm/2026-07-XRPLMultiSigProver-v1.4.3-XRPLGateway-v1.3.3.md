@@ -10,7 +10,7 @@
 | -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | Deployed              | 2026-07-13 |
 | **Stagenet**         | Deployed              | 2026-07-13 |
-| **Testnet**          | Pending               | TBD      |
+| **Testnet**          | Deployed              | 2026-07-15 |
 | **Mainnet**          | Deployed              | 2026-06-29 |
 
 Releases:
@@ -407,7 +407,7 @@ ARTIFACT_PATH=wasm
 3. Upload new contracts
 
 ```
-tsx ts-node cosmwasm/contract.ts store-code -c XrplMultisigProver -e $ENV -n $CHAIN -a "$ARTIFACT_PATH" \
+npx tsx ts-node cosmwasm/contract.ts store-code -c XrplMultisigProver -e $ENV -n $CHAIN -a "$ARTIFACT_PATH" \
   --governance -t "Store XRPLMultisigProver v1.4.3" -d "Store XRPLMultisigProver v1.4.3"
  
 #Encoded /cosmwasm.wasm.v1.MsgStoreCode: {
@@ -431,7 +431,7 @@ tsx ts-node cosmwasm/contract.ts store-code -c XrplMultisigProver -e $ENV -n $CH
 ```
 
 ```
-ts-node cosmwasm/contract.ts store-code -c XrplGateway        -e $ENV -n $CHAIN -a "$ARTIFACT_PATH" \
+npx ts-node cosmwasm/contract.ts store-code -c XrplGateway        -e $ENV -n $CHAIN -a "$ARTIFACT_PATH" \
   --governance -t "Store XRPLGateway v1.3.3" -d "Store XRPLGateway v1.3.3"
 
 #Encoded /cosmwasm.wasm.v1.MsgStoreCode: {
@@ -457,7 +457,7 @@ ts-node cosmwasm/contract.ts store-code -c XrplGateway        -e $ENV -n $CHAIN 
 4. upgrade contracts
 
 ```
-ts-node cosmwasm/contract.ts migrate -c XrplGateway        -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}'
+npx ts-node cosmwasm/contract.ts migrate -c XrplGateway        -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}'
 
 #Fetched code id 101 from the network
 #
@@ -476,7 +476,7 @@ ts-node cosmwasm/contract.ts migrate -c XrplGateway        -e $ENV -n $CHAIN --g
 ```
 
 ```
-ts-node cosmwasm/contract.ts migrate -c XrplMultisigProver -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}'
+npx ts-node cosmwasm/contract.ts migrate -c XrplMultisigProver -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}'
 
 #Fetched code id 100 from the network
 #
@@ -492,4 +492,130 @@ ts-node cosmwasm/contract.ts migrate -c XrplMultisigProver -e $ENV -n $CHAIN --g
 #Proposer address: axelar1antyf0ypw656xssjtv25r95g88yq5xrx0cpq5c
 #
 #Proposal submitted: 508
+```
+
+# testnet deployment details
+
+1. Create wallet
+
+```
+node -e 'const {DirectSecp256k1HdWallet}=require("@cosmjs/proto-signing");(async()=>{const w=await DirectSecp256k1HdWallet.generate(24,{prefix:"axelar"});console.log(w.mnemonic);console.log((await w.getAccounts())[0].address)})()'
+```
+
+2. Create .env file
+
+```
+MNEMONIC="..."
+ADDR="axelar1antyf0ypw656xssjtv25r95g88yq5xrx0cpq5c" // from step 1
+ENV=testnet
+CHAIN=xrpl
+RELEASES_BASE_URL=https://pub-7233af746dc8432f8d9547af0133309d.r2.dev
+ARTIFACT_PATH=wasm
+```
+
+2. Fund wallet from faucet
+
+3. Upload new contracts
+
+```
+npx ts-node cosmwasm/contract.ts store-code -c XrplMultisigProver -e $ENV -n $CHAIN -a "$ARTIFACT_PATH" \
+  --governance -t "Store XRPLMultisigProver v1.4.3" -d "Store XRPLMultisigProver v1.4.3" -u http://localhost:26657
+
+#Encoded /cosmwasm.wasm.v1.MsgStoreCode: {
+#  "sender": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+#  "wasmByteCode": "<785984 bytes>",
+#  "instantiatePermission": {
+#    "permission": 4,
+#    "addresses": [
+#      "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
+#      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+#      "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7"
+#    ]
+#  }
+#}
+#
+#Proceed with proposal submission? (y/n) y
+#
+#Proposer address: axelar1antyf0ypw656xssjtv25r95g88yq5xrx0cpq5c
+#
+#Proposal submitted: 625
+```
+
+```
+npx ts-node cosmwasm/contract.ts store-code -c XrplGateway        -e $ENV -n $CHAIN -a "$ARTIFACT_PATH" \
+  --governance -t "Store XRPLGateway v1.3.3" -d "Store XRPLGateway v1.3.3" -u http://localhost:26657
+  
+#Encoded /cosmwasm.wasm.v1.MsgStoreCode: {
+#  "sender": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+#  "wasmByteCode": "<612127 bytes>",
+#  "instantiatePermission": {
+#    "permission": 4,
+#    "addresses": [
+#      "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
+#      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+#      "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7"
+#    ]
+#  }
+#}
+#
+#Proceed with proposal submission? (y/n) y
+#
+#Proposer address: axelar1antyf0ypw656xssjtv25r95g88yq5xrx0cpq5c
+#
+#Proposal submitted: 626
+```
+
+4. vote the contracts in 
+
+```
+aws-vault exec commonprefix
+bash vote.sh testnet 625
+bash vote.sh testnet 626
+```
+
+5. upgrade contracts
+
+```
+npx ts-node cosmwasm/contract.ts migrate -c XrplGateway        -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}' -u http://localhost:26657
+
+#Fetched code id 100 from the network
+#
+#Encoded /cosmwasm.wasm.v1.MsgMigrateContract: {
+#  "sender": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+#  "contract": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh",
+#  "codeId": "100",
+#  "msg": {}
+#}
+#
+#Proceed with proposal submission? (y/n) y
+#
+#Proposer address: axelar1antyf0ypw656xssjtv25r95g88yq5xrx0cpq5c
+#
+#Proposal submitted: 627
+```
+
+```
+npx ts-node cosmwasm/contract.ts migrate -c XrplMultisigProver -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}' -u http://localhost:26657
+
+#Fetched code id 99 from the network
+#
+#Encoded /cosmwasm.wasm.v1.MsgMigrateContract: {
+#  "sender": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+#  "contract": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470",
+#  "codeId": "99",
+#  "msg": {}
+#}
+#
+#Proceed with proposal submission? (y/n) y
+#
+#Proposer address: axelar1antyf0ypw656xssjtv25r95g88yq5xrx0cpq5c
+#
+#Proposal submitted: 628
+```
+6. vote the upgrade in
+
+```
+aws-vault exec commonprefix
+bash vote.sh testnet 627
+bash vote.sh testnet 628
 ```
