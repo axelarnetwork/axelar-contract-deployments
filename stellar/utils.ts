@@ -519,7 +519,7 @@ function hexToScVal(hexString) {
 
 function tokenToScVal(tokenAddress, tokenAmount) {
     return tokenAmount === 0
-        ? nativeToScVal(null, { type: 'null' })
+        ? nativeToScVal(null)
         : nativeToScVal(
               {
                   address: Address.fromString(tokenAddress),
