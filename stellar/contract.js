@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
+const { Contract, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
@@ -45,7 +45,7 @@ async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
 
 async function getLedgerEntry(chain, contract) {
     const instance = contract.getFootprint();
-    const server = new SorobanRpc.Server(chain.rpc);
+    const server = new rpc.Server(chain.rpc);
     return server.getLedgerEntries(...[instance]);
 }
 
