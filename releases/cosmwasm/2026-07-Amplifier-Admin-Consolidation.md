@@ -17,6 +17,10 @@ Amplifier CosmWasm contract deployed on `mainnet` and `testnet`. It records the
 current holders of those roles so they can be migrated to a single controller — the
 intended target being Axelar governance, `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`.
 
+The Owner (upgrade authority) is moved in two steps: first rotated to the operations
+multisig `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m`, then handed from the multisig
+to governance.
+
 Two roles are in scope for the consolidation, recorded per contract below:
 
 1. **Owner (upgrade authority)** — the wasmd contract-level `admin`, i.e. the address
