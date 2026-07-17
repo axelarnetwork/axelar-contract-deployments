@@ -15,6 +15,10 @@ import {
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 
+import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
+import { createHmac } from 'crypto';
+
 import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
 import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
 import { itsCustomMigrationDataToScValV112 } from './type-utils';
@@ -64,6 +68,8 @@ interface Options {
     // tx XDR instead of broadcasting, so co-signers can add their signatures.
     sourceAccount?: string;
     offline?: string;
+    // SEP-5 account index when the signing key is provided as a BIP-39 mnemonic.
+    hdAccount?: string;
 }
 
 const CustomMigrationDataTypeToScValV112 = {
@@ -120,7 +126,14 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
     );
 
     if (options && !options.ignorePrivateKey) {
-        command.addOption(new Option('-p, --private-key <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+        command.addOption(
+            new Option('-p, --private-key <privateKey>', 'Stellar secret seed (S...) or a BIP-39 mnemonic')
+                .makeOptionMandatory(true)
+                .env('PRIVATE_KEY'),
+        );
+        command.addOption(
+            new Option('--hd-account <index>', "SEP-5 account index for a mnemonic-derived key (m/44'/148'/<index>')").default('0'),
+        );
     }
 
     if (options && options.address) {
@@ -386,8 +399,45 @@ async function prepareAccount(provider, horizonServer, address, chain) {
     }
 }
 
+// SLIP-0010 ed25519 hardened key derivation (all path segments are hardened for ed25519).
+function deriveEd25519Slip10(seed: Buffer, path: number[]): Buffer {
+    let digest = createHmac('sha512', Buffer.from('ed25519 seed')).update(seed).digest();
+    let key = digest.subarray(0, 32);
+    let chainCode = digest.subarray(32);
+
+    for (const index of path) {
+        const hardened = (index | 0x80000000) >>> 0;
+        const indexBytes = Buffer.from([(hardened >>> 24) & 0xff, (hardened >>> 16) & 0xff, (hardened >>> 8) & 0xff, hardened & 0xff]);
+        digest = createHmac('sha512', chainCode)
+            .update(Buffer.concat([Buffer.from([0]), key, indexBytes]))
+            .digest();
+        key = digest.subarray(0, 32);
+        chainCode = digest.subarray(32);
+    }
+
+    return Buffer.from(key);
+}
+
+// Accept either a Stellar secret seed (S...) or a BIP-39 mnemonic. A mnemonic is derived per
+// SEP-5 at m/44'/148'/<accountIndex>'. Always confirm the printed wallet address matches the
+// expected signer before trusting a mnemonic-derived key.
+function keypairFromSecretOrMnemonic(secret: string, accountIndex = 0): Keypair {
+    const value = (secret || '').trim();
+
+    if (value.includes(' ')) {
+        if (!validateMnemonic(value, wordlist)) {
+            throw new Error('PRIVATE_KEY looks like a mnemonic but failed BIP-39 validation');
+        }
+
+        const seed = Buffer.from(mnemonicToSeedSync(value));
+        return Keypair.fromRawEd25519Seed(deriveEd25519Slip10(seed, [44, 148, accountIndex]));
+    }
+
+    return Keypair.fromSecret(value);
+}
+
 async function getWallet(chain, options) {
-    const keypair = Keypair.fromSecret(options.privateKey);
+    const keypair = keypairFromSecretOrMnemonic(options.privateKey, Number(options.hdAccount ?? 0));
     const address = keypair.publicKey();
     const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
