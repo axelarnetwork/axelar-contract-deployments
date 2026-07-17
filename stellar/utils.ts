@@ -59,6 +59,11 @@ interface Options {
     simulateTransaction?: boolean;
     ignorePrivateKey?: boolean;
     address?: string;
+    // Multisig support: source account to authorize as (e.g. a 2-of-3 native multisig),
+    // when it differs from the signing key; and offline mode to emit a (partially) signed
+    // tx XDR instead of broadcasting, so co-signers can add their signatures.
+    sourceAccount?: string;
+    offline?: string;
 }
 
 const CustomMigrationDataTypeToScValV112 = {
@@ -101,6 +106,18 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
     command.addOption(new Option('--chain-name <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
     command.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     command.addOption(new Option('--estimate-cost', 'estimate on-chain resources').default(false));
+    command.addOption(
+        new Option(
+            '--source-account <sourceAccount>',
+            'tx source account to authorize as (e.g. a 2-of-3 native multisig) when it differs from the signing key',
+        ),
+    );
+    command.addOption(
+        new Option(
+            '--offline <outputFile>',
+            'do not broadcast; write the (partially) signed tx XDR to this file for multisig co-signing',
+        ),
+    );
 
     if (options && !options.ignorePrivateKey) {
         command.addOption(new Option('-p, --private-key <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
@@ -114,7 +131,10 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
 };
 
 async function buildTransaction(operation, server, wallet, networkType, options: Options = {}) {
-    const account = await server.getAccount(wallet.publicKey());
+    // For a native multisig, the tx source must be the multisig account (authorizing via
+    // its signers' threshold), while the signing key is one member. Fall back to the
+    // signing key's own account when no explicit source is given.
+    const account = await server.getAccount(options.sourceAccount || wallet.publicKey());
     const networkPassphrase = getNetworkPassphrase(networkType);
     const builtTransaction = new TransactionBuilder(account, {
         fee: BASE_FEE,
@@ -274,6 +294,19 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
     }
 
     const preparedTx = await prepareTransaction(tx, server, wallet, options);
+
+    // Offline / multisig mode: emit the (partially) signed tx XDR instead of broadcasting,
+    // so remaining signers can co-sign (e.g. `stellar tx sign`) before submission.
+    if (options && options.offline) {
+        const { writeFileSync } = require('fs');
+        const signedXdr = preparedTx.toEnvelope().toXDR('base64');
+        writeFileSync(options.offline, signedXdr);
+        printInfo('Partially-signed tx XDR written (not broadcast)', options.offline);
+        printInfo('Co-sign', `stellar tx sign --network-passphrase "${getNetworkPassphrase(chain.networkType)}" --sign-with-key <KEY> < ${options.offline} > fully_signed.xdr`);
+        printInfo('Submit', `stellar tx send --rpc-url ${chain.rpc} --network-passphrase "${getNetworkPassphrase(chain.networkType)}" < fully_signed.xdr`);
+        return;
+    }
+
     return sendTransaction(preparedTx, server, action, options);
 }
 
