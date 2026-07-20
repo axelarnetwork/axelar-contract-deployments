@@ -44,6 +44,29 @@ function generateWallet(options) {
 }
 
 function getWallet(options) {
+    // BIP39 mnemonic (e.g. exported from Bifrost). Default path m/44'/144'/0'/0/0 over secp256k1.
+    if (options.mnemonic) {
+        // Normalize whitespace/case so stray newlines, double spaces, or quotes don't break bip39 validation.
+        const mnemonic = options.mnemonic.trim().replace(/\s+/g, ' ').toLowerCase();
+        const wordCount = mnemonic.split(' ').filter(Boolean).length;
+
+        if (![12, 15, 18, 21, 24].includes(wordCount)) {
+            throw new Error(
+                `Mnemonic has ${wordCount} word(s); expected 12/15/18/21/24. ` +
+                    'If passing --mnemonic on the command line, wrap the whole phrase in quotes (or set the MNEMONIC env var).',
+            );
+        }
+
+        return xrpl.Wallet.fromMnemonic(mnemonic, {
+            mnemonicEncoding: 'bip39',
+            derivationPath: options.derivationPath || "m/44'/144'/0'/0/0",
+        });
+    }
+
+    if (!options.privateKey) {
+        throw new Error('Either --privateKey (XRPL family seed) or --mnemonic must be provided');
+    }
+
     return xrpl.Wallet.fromSeed(options.privateKey, {
         algorithm: options.walletKeyType,
     });
