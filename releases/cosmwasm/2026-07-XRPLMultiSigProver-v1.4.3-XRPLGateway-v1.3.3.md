@@ -242,7 +242,7 @@ axelard keys delete $ADMIN_KEY_NAME --keyring-backend os
 
 # devnet-amplifier deployment details
 
-For devnet we will use to upgrade with the admin key instead of governance. As that is the default for previous upgrades.
+For devnet, we will use the admin key for the upgrade, instead of governance.
 
 Create .env file
 
