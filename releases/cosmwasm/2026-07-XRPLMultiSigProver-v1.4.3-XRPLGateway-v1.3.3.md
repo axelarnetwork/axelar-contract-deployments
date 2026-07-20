@@ -612,10 +612,4 @@ npx ts-node cosmwasm/contract.ts migrate -c XrplMultisigProver -e $ENV -n $CHAIN
 #
 #Proposal submitted: 628
 ```
-6. vote the upgrade in
-
-```
-aws-vault exec commonprefix
-bash vote.sh testnet 627
-bash vote.sh testnet 628
-```
+6. Vote on the upgrade proposal
