@@ -328,7 +328,9 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
             'Submit',
             `stellar tx send --rpc-url ${chain.rpc} --network-passphrase "${getNetworkPassphrase(chain.networkType)}" < fully_signed.xdr`,
         );
-        return;
+        // Nothing was broadcast; return the same shape as the read-only path so callers
+        // that inspect `.value()` don't crash after the XDR is written.
+        return { value: () => undefined };
     }
 
     return sendTransaction(preparedTx, server, action, options);
