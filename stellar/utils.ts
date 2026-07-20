@@ -320,6 +320,7 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
         const signedXdr = preparedTx.toEnvelope().toXDR('base64');
         writeFileSync(options.offline, signedXdr);
         printInfo('Partially-signed tx XDR written (not broadcast)', options.offline);
+        printInfo('Decode / verify', `stellar xdr decode --type TransactionEnvelope --output json < ${options.offline} | jq`);
         printInfo(
             'Co-sign',
             `stellar tx sign --network-passphrase "${getNetworkPassphrase(chain.networkType)}" --sign-with-key <KEY> < ${options.offline} > fully_signed.xdr`,
