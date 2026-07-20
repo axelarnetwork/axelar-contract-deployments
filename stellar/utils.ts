@@ -462,15 +462,21 @@ async function getWallet(chain, options) {
         return keypair;
     }
 
-    const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
-    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+    // Best-effort balance / auto-fund info — never fatal. A multisig co-signer key isn't a funded
+    // standalone account, and read-only queries (paused/owner/operator) don't need the wallet funded.
+    try {
+        const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
+        const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
-    await prepareAccount(provider, horizonServer, address, chain);
+        await prepareAccount(provider, horizonServer, address, chain);
 
-    const balances = await getBalances(horizonServer, address);
+        const balances = await getBalances(horizonServer, address);
 
-    printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
-    printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
+        printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
+        printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
+    } catch (error) {
+        printWarn('Skipping wallet balance/funding info (multisig signer or read-only op)', error.message);
+    }
 
     return keypair;
 }
