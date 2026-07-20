@@ -450,6 +450,15 @@ function keypairFromSecretOrMnemonic(secret: string, accountIndex = 0): Keypair 
 async function getWallet(chain, options) {
     const keypair = keypairFromSecretOrMnemonic(options.privateKey, Number(options.hdAccount ?? 0));
     const address = keypair.publicKey();
+    printInfo('Wallet address', address);
+
+    // Offline / multisig co-sign: we don't broadcast, and the signing key is only a co-signer —
+    // the --source-account multisig is the tx source and fee payer. Skip the Horizon balance /
+    // auto-fund checks (the signer needn't be funded, and some networks have no horizonRpc).
+    if (options.offline || options.sourceAccount) {
+        return keypair;
+    }
+
     const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
@@ -457,7 +466,6 @@ async function getWallet(chain, options) {
 
     const balances = await getBalances(horizonServer, address);
 
-    printInfo('Wallet address', address);
     printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
     printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
 
