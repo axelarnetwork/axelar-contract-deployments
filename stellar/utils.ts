@@ -33,6 +33,9 @@ const ASSET_TYPE_NATIVE = 'native';
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
 const TRANSACTION_TIMEOUT = 30;
+// Offline (multisig co-sign) txs need a long validity window — a co-signer may take
+// hours/days. Default to 2 days when --offline is set and no explicit --timeout is given.
+const OFFLINE_TRANSACTION_TIMEOUT = 172800;
 const RETRY_WAIT = 1000; // 1 sec
 const MAX_RETRIES = 30;
 
@@ -121,6 +124,12 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
     command.addOption(
         new Option('--offline <outputFile>', 'do not broadcast; write the (partially) signed tx XDR to this file for multisig co-signing'),
     );
+    command.addOption(
+        new Option(
+            '--timeout <seconds>',
+            'tx validity window in seconds; multisig co-signing needs a long one, so --offline defaults to 2 days',
+        ).argParser(Number),
+    );
 
     if (options && !options.ignorePrivateKey) {
         command.addOption(
@@ -151,7 +160,7 @@ async function buildTransaction(operation, server, wallet, networkType, options:
         networkPassphrase,
     })
         .addOperation(operation)
-        .setTimeout(options.timeout || TRANSACTION_TIMEOUT)
+        .setTimeout(options.timeout || (options.offline ? OFFLINE_TRANSACTION_TIMEOUT : TRANSACTION_TIMEOUT))
         .build();
 
     if (options && options.verbose) {
