@@ -32,7 +32,7 @@ Changes in this release:
 
 | Network              | XRPLMultisigProver                                                  | XRPLGateway                                                         |
 | -------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| **Devnet Amplifier** | `axelar1ys83sedjffmqh70aksejmx3fy3q2d7twm3msurk7wn3l6nkwxp0sfelzhl`                                                            | ` axelar1fqy77ptzsspmewy547dappss2j7scy9asju8qqjts67r2tl4k5cqg6zfxa`                                                            |
+| **Devnet Amplifier** | `axelar1ys83sedjffmqh70aksejmx3fy3q2d7twm3msurk7wn3l6nkwxp0sfelzhl`                                                            | `axelar1fqy77ptzsspmewy547dappss2j7scy9asju8qqjts67r2tl4k5cqg6zfxa`                                                            |
 | **Stagenet**         | `axelar17mnfwue8mw5t2q9gmndz3m50070fmm0ffa0tunh2dujmuy398rtsrjyw2k`                                                            | `axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57`                                                            |
 | **Testnet**          | `axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470`                                                            | `axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh`                                                            |
 | **Mainnet**          | `axelar15mhhuf887t6nfx2t0vuc6kx9w2uk65h939awmz6n7r6ggzyf659st25hff` | `axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd` |
