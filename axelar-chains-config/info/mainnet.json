@@ -270,6 +270,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x297f8236f2b5cb952a7dbc1fa87a54b573159e455055d67c6c1a362e2b2c2fab"
+        },
+        "AXE": {
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "xrpl-evm",
+          "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) deployed on Ethereum legacy (consensus) ITS edge via deployRemoteInterchainToken. Same address as xrpl-evm/avalanche: all three share ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Used as destination in daily cron Avalanche->Ethereum legacy-legacy ITS route."
         }
       },
       "explorer": {
@@ -401,6 +410,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x7ae5bcb4ec7e41574c0f2f44dda624a45ea15ced386ab507551e55e8613c8d9d"
+        },
+        "AXE": {
+          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "xrpl-evm",
+          "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) deployed on Avalanche legacy (consensus) ITS edge via deployRemoteInterchainToken. Address is deterministic: same ITS proxy 0xB5FB4BE0… as xrpl-evm yields same Create3 address for the same tokenId. Reused by daily cron legacy ITS routes (Avalanche↔Monad). Wallet supply seeded from xrpl-evm."
         }
       },
       "explorer": {
