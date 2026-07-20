@@ -124,6 +124,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3) registered on ethereum-sepolia legacy (consensus) ITS edge. Destination of the daily cron Avalanche->Ethereum legacy->legacy ITS route. Same tokenId/address as the Avalanche legacy edge."
         }
       },
       "explorer": {
@@ -248,6 +257,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x989947b1646890093db39a46aad056df049d599345771681e66f7ececbe9f4db"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3) registered on Avalanche legacy (consensus) ITS edge. Reused by daily cron legacy ITS routes (Avalanche<->Monad legacy source, Avalanche->Ethereum legacy->legacy). Same 32-byte tokenId as monad-3/hedera; on-chain interchain-token address differs from monad-3 because Avalanche legacy ITS derives its own Create3 address. Wallet supply seeded from monad-3."
         }
       },
       "explorer": {
