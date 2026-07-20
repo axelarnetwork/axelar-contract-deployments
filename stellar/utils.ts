@@ -18,6 +18,7 @@ import { ethers } from 'ethers';
 import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { createHmac } from 'crypto';
+import { writeFileSync } from 'fs';
 
 import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
 import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
@@ -311,7 +312,6 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
     // Offline / multisig mode: emit the (partially) signed tx XDR instead of broadcasting,
     // so remaining signers can co-sign (e.g. `stellar tx sign`) before submission.
     if (options && options.offline) {
-        const { writeFileSync } = require('fs');
         const signedXdr = preparedTx.toEnvelope().toXDR('base64');
         writeFileSync(options.offline, signedXdr);
         printInfo('Partially-signed tx XDR written (not broadcast)', options.offline);
