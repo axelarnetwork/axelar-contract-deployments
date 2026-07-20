@@ -1,5 +1,7 @@
 'use strict';
 
+import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
 import {
     Address,
     BASE_FEE,
@@ -13,11 +15,8 @@ import {
     xdr,
 } from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
-import { ethers } from 'ethers';
-
-import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
-import { wordlist } from '@scure/bip39/wordlists/english';
 import { createHmac } from 'crypto';
+import { ethers } from 'ethers';
 import { writeFileSync } from 'fs';
 
 import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
@@ -120,10 +119,7 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
         ),
     );
     command.addOption(
-        new Option(
-            '--offline <outputFile>',
-            'do not broadcast; write the (partially) signed tx XDR to this file for multisig co-signing',
-        ),
+        new Option('--offline <outputFile>', 'do not broadcast; write the (partially) signed tx XDR to this file for multisig co-signing'),
     );
 
     if (options && !options.ignorePrivateKey) {
@@ -315,8 +311,14 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
         const signedXdr = preparedTx.toEnvelope().toXDR('base64');
         writeFileSync(options.offline, signedXdr);
         printInfo('Partially-signed tx XDR written (not broadcast)', options.offline);
-        printInfo('Co-sign', `stellar tx sign --network-passphrase "${getNetworkPassphrase(chain.networkType)}" --sign-with-key <KEY> < ${options.offline} > fully_signed.xdr`);
-        printInfo('Submit', `stellar tx send --rpc-url ${chain.rpc} --network-passphrase "${getNetworkPassphrase(chain.networkType)}" < fully_signed.xdr`);
+        printInfo(
+            'Co-sign',
+            `stellar tx sign --network-passphrase "${getNetworkPassphrase(chain.networkType)}" --sign-with-key <KEY> < ${options.offline} > fully_signed.xdr`,
+        );
+        printInfo(
+            'Submit',
+            `stellar tx send --rpc-url ${chain.rpc} --network-passphrase "${getNetworkPassphrase(chain.networkType)}" < fully_signed.xdr`,
+        );
         return;
     }
 
