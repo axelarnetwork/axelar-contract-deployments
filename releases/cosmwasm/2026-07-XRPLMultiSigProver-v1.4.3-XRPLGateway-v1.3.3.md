@@ -567,7 +567,7 @@ npx ts-node cosmwasm/contract.ts store-code -c XrplGateway        -e $ENV -n $CH
 
 4. Vote on the proposal 
 
-5. upgrade contracts
+5. Upgrade contracts
 
 ```
 npx ts-node cosmwasm/contract.ts migrate -c XrplGateway        -e $ENV -n $CHAIN --governance --fetchCodeId --msg '{}' -u http://localhost:26657
