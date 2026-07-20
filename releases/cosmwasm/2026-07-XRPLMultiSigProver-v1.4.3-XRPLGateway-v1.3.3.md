@@ -565,13 +565,7 @@ npx ts-node cosmwasm/contract.ts store-code -c XrplGateway        -e $ENV -n $CH
 #Proposal submitted: 626
 ```
 
-4. vote the contracts in 
-
-```
-aws-vault exec commonprefix
-bash vote.sh testnet 625
-bash vote.sh testnet 626
-```
+4. Vote on the proposal 
 
 5. upgrade contracts
 
