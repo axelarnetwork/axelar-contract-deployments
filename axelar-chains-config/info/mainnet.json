@@ -278,7 +278,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) deployed on Ethereum legacy (consensus) ITS edge via deployRemoteInterchainToken. Same address as xrpl-evm/avalanche: all three share ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Used as destination in daily cron Avalanche->Ethereum legacy-legacy ITS route."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -418,7 +418,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) deployed on Avalanche legacy (consensus) ITS edge via deployRemoteInterchainToken. Address is deterministic: same ITS proxy 0xB5FB4BE0… as xrpl-evm yields same Create3 address for the same tokenId. Reused by daily cron legacy ITS routes (Avalanche↔Monad). Wallet supply seeded from xrpl-evm."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -685,7 +685,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on polygon legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: polygon shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -825,7 +825,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on moonbeam legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: moonbeam shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -973,7 +973,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on binance legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: binance shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -1114,7 +1114,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on arbitrum legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: arbitrum shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -1256,7 +1256,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on kava legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: kava shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -1393,7 +1393,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on filecoin legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: filecoin shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "confirmations": 3,
@@ -1535,7 +1535,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on optimism legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: optimism shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -1681,7 +1681,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on linea legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: linea shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -1822,7 +1822,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on base legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: base shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "confirmations": 2,
@@ -1965,7 +1965,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on mantle legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: mantle shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "confirmations": 2,
@@ -2106,7 +2106,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on scroll legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: scroll shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "explorer": {
@@ -2337,7 +2337,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on immutable legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: immutable shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "gasOptions": {
@@ -2591,7 +2591,7 @@
           "decimals": 18,
           "originChain": "xrpl-evm",
           "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2) registered on blast legacy (consensus) ITS edge via deployRemoteInterchainToken (MOU-108). Deterministic address: blast shares ITS proxy 0xB5FB4BE0… with xrpl-evm so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from xrpl-evm for use as an ITS source."
+          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
         }
       },
       "gasOptions": {

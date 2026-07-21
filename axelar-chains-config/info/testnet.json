@@ -132,7 +132,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on ethereum-sepolia legacy (consensus) ITS edge. Destination of the daily cron Avalanche->Ethereum legacy->legacy ITS route. Same tokenId/address as the Avalanche legacy edge."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -265,7 +265,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on Avalanche legacy (consensus) ITS edge. Reused by daily cron legacy ITS routes (Avalanche<->Monad legacy source, Avalanche->Ethereum legacy->legacy). Same 32-byte tokenId as monad-3/hedera; on-chain interchain-token address differs from monad-3 because Avalanche legacy ITS derives its own Create3 address. Wallet supply seeded from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -517,7 +517,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on moonbeam legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: moonbeam shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -776,7 +776,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on kava legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: kava shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -900,7 +900,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on filecoin-2 legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: filecoin-2 shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -1148,7 +1148,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on immutable legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: immutable shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "gasOptions": {
@@ -1274,7 +1274,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on arbitrum-sepolia legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: arbitrum-sepolia shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -1501,7 +1501,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on optimism-sepolia legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: optimism-sepolia shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "finality": "finalized",
@@ -1630,7 +1630,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on base-sepolia legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: base-sepolia shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "finality": "finalized",
@@ -1874,7 +1874,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on mantle-sepolia legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: mantle-sepolia shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "finality": "finalized",
@@ -1990,7 +1990,7 @@
           "decimals": 18,
           "originChain": "monad-3",
           "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3) registered on polygon-sepolia legacy (consensus) ITS edge via deployRemoteInterchainToken from monad-3 (MOU-108). Deterministic address: polygon-sepolia shares ITS proxy 0xB5FB4BE0… so Create3 yields the same address for the same tokenId. Cron wallet 0xba76… seeded 200 AXE from monad-3."
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
