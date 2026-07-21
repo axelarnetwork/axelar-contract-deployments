@@ -66,6 +66,7 @@ function getWallet(options) {
         return xrpl.Wallet.fromMnemonic(mnemonic, {
             mnemonicEncoding: 'bip39',
             derivationPath: options.derivationPath || "m/44'/144'/0'/0/0",
+            algorithm: xrpl.ECDSA.secp256k1, // only secp256k1 is supported by the xrpl.js library
         });
     }
 
