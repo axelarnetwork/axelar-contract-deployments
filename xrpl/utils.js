@@ -44,6 +44,12 @@ function generateWallet(options) {
 }
 
 function getWallet(options) {
+    // Refuse to guess which key signs: --privateKey (PRIVATE_KEY) and --mnemonic (XRPL_MNEMONIC) are
+    // mutually exclusive, so a stray env var can never silently override the intended signing key.
+    if (options.mnemonic && options.privateKey) {
+        throw new Error('Provide exactly one of --privateKey (PRIVATE_KEY) or --mnemonic (XRPL_MNEMONIC), not both.');
+    }
+
     // BIP39 mnemonic (e.g. exported from Bifrost). Default path m/44'/144'/0'/0/0 over secp256k1.
     if (options.mnemonic) {
         // Normalize whitespace/case so stray newlines, double spaces, or quotes don't break bip39 validation.
@@ -53,7 +59,7 @@ function getWallet(options) {
         if (![12, 15, 18, 21, 24].includes(wordCount)) {
             throw new Error(
                 `Mnemonic has ${wordCount} word(s); expected 12/15/18/21/24. ` +
-                    'If passing --mnemonic on the command line, wrap the whole phrase in quotes (or set the MNEMONIC env var).',
+                    'If passing --mnemonic on the command line, wrap the whole phrase in quotes (or set the XRPL_MNEMONIC env var).',
             );
         }
 

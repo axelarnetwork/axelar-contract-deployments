@@ -40,7 +40,9 @@ const addBaseOptions = (program, _options = {}) => {
             .env('PRIVATE_KEY_TYPE'),
     );
 
-    program.addOption(new Option('--mnemonic <mnemonic>', 'BIP39 mnemonic (alternative to --privateKey)').env('MNEMONIC'));
+    // Bind to XRPL_MNEMONIC, NOT the shared MNEMONIC env var (which this repo uses for the
+    // Axelar/Cosmos admin mnemonic) so a shared .env can't silently override an XRPL --privateKey.
+    program.addOption(new Option('--mnemonic <mnemonic>', 'BIP39 mnemonic (alternative to --privateKey)').env('XRPL_MNEMONIC'));
 
     program.addOption(
         new Option('--derivationPath <derivationPath>', 'BIP44 derivation path for --mnemonic')
