@@ -28,9 +28,12 @@ const ASSET_TYPE_NATIVE = 'native';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
-const TRANSACTION_TIMEOUT = 30;
-const RETRY_WAIT = 1000; // 1 sec
-const MAX_RETRIES = 30;
+const TRANSACTION_TIMEOUT = 600; // seconds — tx envelope timebound
+const RETRY_WAIT = 2000; // ms
+// Poll until ~30s past timebound expiry; after that the tx can never land, so it's safe to give up.
+// Tying these together avoids the failure mode where the script reports "Transaction failed" on a
+// tx that eventually succeeds on-chain because polling stopped before the timebound elapsed.
+const MAX_RETRIES = Math.ceil((TRANSACTION_TIMEOUT * 1000) / RETRY_WAIT) + 15;
 
 // Ledger extension for authorization operations
 const LEDGER_EXTENSION_FOR_AUTH = 20;
