@@ -51,7 +51,7 @@ const addBaseOptions = (program, _options = {}) => {
     program.addOption(
         new Option('--derivationPath <derivationPath>', 'BIP44 derivation path for --mnemonic')
             .default("m/44'/144'/0'/0/0")
-            .env('DERIVATION_PATH'),
+            .env('XRPL_DERIVATION_PATH'),
     );
 
     return program;
