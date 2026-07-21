@@ -1845,8 +1845,10 @@
           "address": "axelar1ys83sedjffmqh70aksejmx3fy3q2d7twm3msurk7wn3l6nkwxp0sfelzhl",
           "xrplTransactionFee": 300,
           "ticketCountThreshold": 5,
-          "version": "1.4.1"
-        }
+          "version": "1.4.3",
+          "codeId": 1653
+        },
+        "lastUploadedCodeId": 1653
       },
       "MultisigProver": {
         "avalanche-fuji": {
@@ -2012,8 +2014,10 @@
         "xrpl-dev": {
           "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "address": "axelar1fqy77ptzsspmewy547dappss2j7scy9asju8qqjts67r2tl4k5cqg6zfxa",
-          "version": "1.3.2"
-        }
+          "version": "1.3.3",
+          "codeId": 1654
+        },
+        "lastUploadedCodeId": 1654
       },
       "ItsAbiTranslator": {
         "storeCodeProposalId": "990",
