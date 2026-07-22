@@ -337,6 +337,12 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
     return sendTransaction(preparedTx, server, action, options);
 }
 
+// NOTE: single-key path. Unlike the Soroban `broadcast` above, this does NOT honor the multisig
+// flags (`--source-account` / `--offline` / `--timeout`): it uses the signer's own account as the
+// tx source, signs with that one key, and submits immediately (30s timeout). Its only caller is
+// `change-trust` — a per-account trustline op run by a single deployer key, never an owner/operator
+// 2-of-3. If a multisig ever needs a classic (Horizon) op, mirror `broadcast`'s offline branch here
+// (source = options.sourceAccount, write partial XDR when options.offline, timeout from options.timeout).
 async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
     const server = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
