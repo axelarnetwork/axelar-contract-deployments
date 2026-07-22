@@ -96,6 +96,17 @@ const unauthorizeVerifier = async (client, config, options, [serviceName, verifi
     executeByGovernance(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
 };
 
+const jailVerifier = async (client, config, options, [serviceName, verifiers], fee) => {
+    const message = {
+        jail_verifiers: {
+            service_name: serviceName,
+            verifiers,
+        },
+    };
+
+    executeByGovernance(client, config, { ...options, contractName: 'ServiceRegistry', msg: JSON.stringify(message) }, undefined, fee);
+};
+
 const rotateSigners = async (client, config, options, [sessionId], _fee) => {
     const { privateKey, chainName } = options;
 
@@ -175,6 +186,16 @@ const programHandler = () => {
             mainProcessor(unauthorizeVerifier, options, [serviceName, verifiers]);
         });
     addAmplifierOptions(unauthorizeVerifiersCmd, {
+        proposalOptions: true,
+    });
+
+    const jailVerifiersCmd = program
+        .command('jail-verifiers <serviceName> <verifiers...>')
+        .description('Jail verifiers')
+        .action((serviceName, verifiers, options) => {
+            mainProcessor(jailVerifier, options, [serviceName, verifiers]);
+        });
+    addAmplifierOptions(jailVerifiersCmd, {
         proposalOptions: true,
     });
 
