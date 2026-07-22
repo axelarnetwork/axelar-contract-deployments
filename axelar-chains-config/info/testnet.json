@@ -124,6 +124,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -248,6 +257,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x989947b1646890093db39a46aad056df049d599345771681e66f7ececbe9f4db"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -491,6 +509,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x486c91290d369662d6b62a2148003df09b6b2540725034002c69be9ccec2b6f8"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -741,6 +768,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x77e86f75c0b5a37cd17705700d78c77456653b604f45247f8ea9f8ebfbf6b029"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -856,6 +892,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x1f05ceab48052e86c780500ca6f2e84786ebd71537fcb6b8a6236d0c6ba6174e"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -1095,6 +1140,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "gasOptions": {
@@ -1212,6 +1266,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0xf8bcaec89c550bc2eac4d275ddc9dcbefa4f62e29374439fea644d6ce4483827"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
@@ -1430,6 +1493,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "finality": "finalized",
@@ -1550,6 +1622,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "finality": "finalized",
@@ -1785,6 +1866,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x77e86f75c0b5a37cd17705700d78c77456653b604f45247f8ea9f8ebfbf6b029"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "finality": "finalized",
@@ -1892,6 +1982,15 @@
           "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
+        },
+        "AXE": {
+          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "name": "AXE",
+          "symbol": "AXE",
+          "decimals": 18,
+          "originChain": "monad-3",
+          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
+          "notes": "Canonical testnet AXE (home monad-3)"
         }
       },
       "explorer": {
