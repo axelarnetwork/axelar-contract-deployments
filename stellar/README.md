@@ -40,12 +40,6 @@ Testnet funds can be obtained via [this link](https://ftl.ai/) or using the `fau
 ts-node stellar/faucet.js --recipient <address>
 ```
 
-Send tokens (if needed)
-
-```bash
-ts-node stellar/send-tokens.js --amount <amount> --recipients <recipients>
-```
-
 ## Deployments
 
 Setup
