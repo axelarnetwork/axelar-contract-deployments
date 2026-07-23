@@ -6,6 +6,18 @@ const { addBaseOptions, broadcast, getWallet, getNativeBalance } = require('./ut
 const { loadConfig, printInfo, printError, getChainConfig, prompt, validateParameters } = require('../common/utils');
 
 async function processCommand(chain, options) {
+    // send-tokens is single-key only: the nativePayment path signs with one key and submits, so it
+    // can't co-sign a multisig. (A multisig source would also make the balance check below read the
+    // wrong account.) For a multisig / offline native payment, use the stellar CLI instead.
+    if (options.sourceAccount || options.offline) {
+        printError(
+            'send-tokens is single-key only. For a multisig / offline XLM payment use the stellar CLI: ' +
+                'stellar tx new payment --source-account <MS> --destination <dst> --asset native --amount <n> --build-only, ' +
+                'then stellar tx sign / stellar tx send.',
+        );
+        return;
+    }
+
     const wallet = await getWallet(chain, options);
     let { amount, recipients, yes } = options;
     recipients = options.recipients.split(',').map((str) => str.trim());
