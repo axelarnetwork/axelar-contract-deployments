@@ -22,7 +22,11 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
     const result = response.value();
 
     if (result !== undefined) {
-        printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
+        // Coerce booleans/numbers to strings so falsy values (e.g. paused=false, 0) still print —
+        // printInfo drops a falsy data arg, which would otherwise show a blank after "returned".
+        const serialized = serializeValue(result);
+        const printable = typeof serialized === 'boolean' || typeof serialized === 'number' ? String(serialized) : serialized;
+        printInfo(`${_contractName}:${operation} returned`, printable);
     } else {
         printInfo(`${_contractName}:${operation} succeeded`);
     }

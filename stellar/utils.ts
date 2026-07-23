@@ -1,5 +1,7 @@
 'use strict';
 
+import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
 import {
     Address,
     BASE_FEE,
@@ -13,7 +15,9 @@ import {
     xdr,
 } from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
+import { createHmac } from 'crypto';
 import { ethers } from 'ethers';
+import { writeFileSync } from 'fs';
 
 import { addEnvOption, getCurrentVerifierSet, printError, printInfo, printWarn, sleep } from '../common';
 import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
@@ -29,6 +33,9 @@ const ASSET_TYPE_NATIVE = 'native';
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
 const TRANSACTION_TIMEOUT = 30;
+// Offline (multisig co-sign) txs need a long validity window — a co-signer may take
+// hours/days. Default to 2 days when --offline is set and no explicit --timeout is given.
+const OFFLINE_TRANSACTION_TIMEOUT = 172800;
 const RETRY_WAIT = 1000; // 1 sec
 const MAX_RETRIES = 30;
 
@@ -59,6 +66,13 @@ interface Options {
     simulateTransaction?: boolean;
     ignorePrivateKey?: boolean;
     address?: string;
+    // Multisig support: source account to authorize as (e.g. a 2-of-3 native multisig),
+    // when it differs from the signing key; and offline mode to emit a (partially) signed
+    // tx XDR instead of broadcasting, so co-signers can add their signatures.
+    sourceAccount?: string;
+    offline?: string;
+    // SEP-5 account index when the signing key is provided as a BIP-39 mnemonic.
+    hdAccount?: string;
 }
 
 const CustomMigrationDataTypeToScValV112 = {
@@ -101,9 +115,31 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
     command.addOption(new Option('--chain-name <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
     command.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     command.addOption(new Option('--estimate-cost', 'estimate on-chain resources').default(false));
+    command.addOption(
+        new Option(
+            '--source-account <sourceAccount>',
+            'tx source account to authorize as (e.g. a 2-of-3 native multisig) when it differs from the signing key',
+        ),
+    );
+    command.addOption(
+        new Option('--offline <outputFile>', 'do not broadcast; write the (partially) signed tx XDR to this file for multisig co-signing'),
+    );
+    command.addOption(
+        new Option(
+            '--timeout <seconds>',
+            'tx validity window in seconds; multisig co-signing needs a long one, so --offline defaults to 2 days',
+        ).argParser(Number),
+    );
 
     if (options && !options.ignorePrivateKey) {
-        command.addOption(new Option('-p, --private-key <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+        command.addOption(
+            new Option('-p, --private-key <privateKey>', 'Stellar secret seed (S...) or a BIP-39 mnemonic')
+                .makeOptionMandatory(true)
+                .env('PRIVATE_KEY'),
+        );
+        command.addOption(
+            new Option('--hd-account <index>', "SEP-5 account index for a mnemonic-derived key (m/44'/148'/<index>')").default('0'),
+        );
     }
 
     if (options && options.address) {
@@ -114,14 +150,17 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
 };
 
 async function buildTransaction(operation, server, wallet, networkType, options: Options = {}) {
-    const account = await server.getAccount(wallet.publicKey());
+    // For a native multisig, the tx source must be the multisig account (authorizing via
+    // its signers' threshold), while the signing key is one member. Fall back to the
+    // signing key's own account when no explicit source is given.
+    const account = await server.getAccount(options.sourceAccount || wallet.publicKey());
     const networkPassphrase = getNetworkPassphrase(networkType);
     const builtTransaction = new TransactionBuilder(account, {
         fee: BASE_FEE,
         networkPassphrase,
     })
         .addOperation(operation)
-        .setTimeout(options.timeout || TRANSACTION_TIMEOUT)
+        .setTimeout(options.timeout || (options.offline ? OFFLINE_TRANSACTION_TIMEOUT : TRANSACTION_TIMEOUT))
         .build();
 
     if (options && options.verbose) {
@@ -274,9 +313,36 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
     }
 
     const preparedTx = await prepareTransaction(tx, server, wallet, options);
+
+    // Offline / multisig mode: emit the (partially) signed tx XDR instead of broadcasting,
+    // so remaining signers can co-sign (e.g. `stellar tx sign`) before submission.
+    if (options && options.offline) {
+        const signedXdr = preparedTx.toEnvelope().toXDR('base64');
+        writeFileSync(options.offline, signedXdr);
+        printInfo('Partially-signed tx XDR written (not broadcast)', options.offline);
+        printInfo('Decode / verify', `stellar xdr decode --type TransactionEnvelope --output json < ${options.offline} | jq`);
+        printInfo(
+            'Co-sign',
+            `stellar tx sign --network-passphrase "${getNetworkPassphrase(chain.networkType)}" --sign-with-key <KEY> < ${options.offline} > fully_signed.xdr`,
+        );
+        printInfo(
+            'Submit',
+            `stellar tx send --rpc-url ${chain.rpc} --network-passphrase "${getNetworkPassphrase(chain.networkType)}" < fully_signed.xdr`,
+        );
+        // Nothing was broadcast; return the same shape as the read-only path so callers
+        // that inspect `.value()` don't crash after the XDR is written.
+        return { value: () => undefined };
+    }
+
     return sendTransaction(preparedTx, server, action, options);
 }
 
+// NOTE: single-key path. Unlike the Soroban `broadcast` above, this does NOT honor the multisig
+// flags (`--source-account` / `--offline` / `--timeout`): it uses the signer's own account as the
+// tx source, signs with that one key, and submits immediately (30s timeout). Its only caller is
+// `change-trust` — a per-account trustline op run by a single deployer key, never an owner/operator
+// 2-of-3. If a multisig ever needs a classic (Horizon) op, mirror `broadcast`'s offline branch here
+// (source = options.sourceAccount, write partial XDR when options.offline, timeout from options.timeout).
 async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
     const server = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
@@ -353,19 +419,79 @@ async function prepareAccount(provider, horizonServer, address, chain) {
     }
 }
 
+// SLIP-0010 ed25519 hardened key derivation (all path segments are hardened for ed25519).
+function deriveEd25519Slip10(seed: Buffer, path: number[]): Buffer {
+    let digest = createHmac('sha512', Buffer.from('ed25519 seed')).update(seed).digest();
+    let key = digest.subarray(0, 32);
+    let chainCode = digest.subarray(32);
+
+    for (const index of path) {
+        const hardened = (index | 0x80000000) >>> 0;
+        const indexBytes = Buffer.from([(hardened >>> 24) & 0xff, (hardened >>> 16) & 0xff, (hardened >>> 8) & 0xff, hardened & 0xff]);
+        digest = createHmac('sha512', chainCode)
+            .update(Buffer.concat([Buffer.from([0]), key, indexBytes]))
+            .digest();
+        key = digest.subarray(0, 32);
+        chainCode = digest.subarray(32);
+    }
+
+    return Buffer.from(key);
+}
+
+// Accept either a Stellar secret seed (S...) or a BIP-39 mnemonic. A mnemonic is derived per
+// SEP-5 at m/44'/148'/<accountIndex>'. Always confirm the printed wallet address matches the
+// expected signer before trusting a mnemonic-derived key.
+function keypairFromSecretOrMnemonic(secret: string, accountIndex = 0): Keypair {
+    const value = (secret || '').trim();
+
+    if (value.includes(' ')) {
+        if (!validateMnemonic(value, wordlist)) {
+            throw new Error('PRIVATE_KEY looks like a mnemonic but failed BIP-39 validation');
+        }
+
+        const seed = Buffer.from(mnemonicToSeedSync(value));
+        return Keypair.fromRawEd25519Seed(deriveEd25519Slip10(seed, [44, 148, accountIndex]));
+    }
+
+    return Keypair.fromSecret(value);
+}
+
 async function getWallet(chain, options) {
-    const keypair = Keypair.fromSecret(options.privateKey);
+    const keypair = keypairFromSecretOrMnemonic(options.privateKey, Number(options.hdAccount ?? 0));
     const address = keypair.publicKey();
+    printInfo('Wallet address', address);
+
+    // Offline / multisig co-sign: we don't broadcast, and the signing key is only a co-signer —
+    // the --source-account multisig is the tx source and fee payer. Skip the Horizon balance /
+    // auto-fund checks (the signer needn't be funded, and some networks have no horizonRpc).
+    if (options.offline || options.sourceAccount) {
+        return keypair;
+    }
+
+    // Reaching here means it's a single-key path (multisig co-sign / read-only ops pass
+    // --source-account or --offline and returned above), so this key IS the tx source + fee payer
+    // and must exist / be funded. Fail fast with an actionable message rather than continuing to a
+    // murky submit-time error.
     const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
     const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
-    await prepareAccount(provider, horizonServer, address, chain);
+    try {
+        await prepareAccount(provider, horizonServer, address, chain);
+    } catch (error) {
+        throw new Error(
+            `Wallet ${address} is not funded/usable on ${chain.networkType} (${error.message}). ` +
+                `Fund it, or pass --source-account <multisig> for a multisig, or --offline to co-sign.`,
+        );
+    }
 
-    const balances = await getBalances(horizonServer, address);
-
-    printInfo('Wallet address', address);
-    printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
-    printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
+    // Balances + sequence are informational only — a Horizon hiccup shouldn't abort an otherwise valid op.
+    try {
+        const balances = await getBalances(horizonServer, address);
+        printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
+        printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
+    } catch (error) {
+        printWarn('Could not fetch wallet balance/sequence (informational)', error.message);
+    }
 
     return keypair;
 }
