@@ -468,20 +468,29 @@ async function getWallet(chain, options) {
         return keypair;
     }
 
-    // Best-effort balance / auto-fund info — never fatal. A multisig co-signer key isn't a funded
-    // standalone account, and read-only queries (paused/owner/operator) don't need the wallet funded.
+    // Reaching here means it's a single-key path (multisig co-sign / read-only ops pass
+    // --source-account or --offline and returned above), so this key IS the tx source + fee payer
+    // and must exist / be funded. Fail fast with an actionable message rather than continuing to a
+    // murky submit-time error.
+    const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+
     try {
-        const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
-        const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
-
         await prepareAccount(provider, horizonServer, address, chain);
+    } catch (error) {
+        throw new Error(
+            `Wallet ${address} is not funded/usable on ${chain.networkType} (${error.message}). ` +
+                `Fund it, or pass --source-account <multisig> for a multisig, or --offline to co-sign.`,
+        );
+    }
 
+    // Balances + sequence are informational only — a Horizon hiccup shouldn't abort an otherwise valid op.
+    try {
         const balances = await getBalances(horizonServer, address);
-
         printInfo('Wallet balances', balances.map((balance) => `${balance.balance} ${getAssetCode(balance, chain)}`).join('  '));
         printInfo('Wallet sequence', (await provider.getAccount(address)).sequenceNumber());
     } catch (error) {
-        printWarn('Skipping wallet balance/funding info (multisig signer or read-only op)', error.message);
+        printWarn('Could not fetch wallet balance/sequence (informational)', error.message);
     }
 
     return keypair;
