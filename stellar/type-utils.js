@@ -1,6 +1,10 @@
 'use strict';
 
 const { Address, nativeToScVal } = require('@stellar/stellar-sdk');
+const { ethers } = require('hardhat');
+const {
+    utils: { isHexString },
+} = ethers;
 
 function weightedSignersToScVal(signers) {
     return nativeToScVal(
@@ -111,10 +115,38 @@ function itsCustomMigrationDataToScValV112(migrationData) {
     );
 }
 
+function functionCallsToScVal(functionCalls) {
+    if (!functionCalls.length) return nativeToScVal([]);
+
+    return nativeToScVal(functionCalls.map(({ contract, approver, function: fn, args = [] }) =>
+        nativeToScVal(
+            {
+                contract: Address.fromString(contract),
+                approver: Address.fromString(approver),
+                function: nativeToScVal(fn, { type: 'symbol' }),
+                args: args.map(arg =>
+                    isHexString(arg)
+                        ? Buffer.from(arg.slice(2), 'hex')
+                        : arg
+                )
+            },
+            {
+                type: {
+                    contract: ['symbol'],
+                    approver: ['symbol'],
+                    function: ['symbol'],
+                    args: ['symbol'],
+                },
+            }
+        )
+    ));
+}
+
 module.exports = {
     commandTypeToScVal,
     messagesToScVal,
     weightedSignersToScVal,
     proofToScVal,
     itsCustomMigrationDataToScValV112,
+    functionCallsToScVal,
 };
