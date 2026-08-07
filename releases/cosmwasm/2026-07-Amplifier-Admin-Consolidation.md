@@ -7,19 +7,19 @@
 
 | **Network** | **Status**            | **Date**   |
 | ----------- | --------------------- | ---------- |
-| **Mainnet** | Snapshot (planning)   | 2026-07-09 |
-| **Testnet** | Snapshot (planning)   | 2026-07-09 |
+| **Testnet** | Completed             | 2026-08-07 |
+| **Mainnet** | Completed             | 2026-08-07 |
 
 ## Background
 
 This document is the basis for consolidating the privileged roles on every Axelar
 Amplifier CosmWasm contract deployed on `mainnet` and `testnet`. It records the
-current holders of those roles so they can be migrated to a single controller — the
-intended target being Axelar governance, `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`.
+pre-transfer holders of those roles and their migration to a single controller — Axelar
+governance, `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`.
 
-The Owner (upgrade authority) is moved in two steps: first rotated to the operations
+The Owner (upgrade authority) was moved in two steps: first rotated to the operations
 multisig `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m`, then handed from the multisig
-to governance.
+to governance. **Both networks are complete** (see Execution).
 
 Two roles are in scope for the consolidation, recorded per contract below:
 
@@ -47,6 +47,32 @@ networks (verified for all contracts), so it is not repeated per row.
   (`.axelar.contracts`).
 
 **(gov)** marks a cell that is already the governance module (no transfer needed).
+
+---
+
+## Execution
+
+Completed as a two-step rotation of the Owner (wasmd upgrade admin) per network:
+
+| Network | Step 1 — governance → multisig | Step 2 — multisig → governance | Contracts → gov |
+| --- | --- | --- | --- |
+| Testnet | governance proposal 629 | `cpi-multisig` 3-of-6 transaction | 55 |
+| Mainnet | governance proposal 492 | `cpi-multisig` 3-of-6 transaction | 38 |
+
+Operations multisig: `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m` (3-of-6). The mainnet
+step-2 count is 38 = the 35 rotated by proposal 492 plus the 3 XRPL contracts already on the
+multisig.
+
+After execution the Owner of every in-scope contract is the governance module
+`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`, verified on-chain (testnet 55/55,
+mainnet 38/38). Already-governance and immutable contracts were untouched.
+
+Only the **Owner** was rotated in this round. The internal `permission_control` **Admin**
+roles (Internal Admin column below) are unchanged.
+
+> The **Owner (upgrade authority)** columns in the tables below are the **pre-transfer
+> snapshot** (2026-07-09), kept as the historical starting state. The current owner of every
+> non-immutable, non-already-gov contract is now governance.
 
 ---
 
