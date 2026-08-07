@@ -44,6 +44,36 @@ function generateWallet(options) {
 }
 
 function getWallet(options) {
+    // Refuse to guess which key signs: --privateKey (PRIVATE_KEY) and --mnemonic (XRPL_MNEMONIC) are
+    // mutually exclusive, so a stray env var can never silently override the intended signing key.
+    if (options.mnemonic && options.privateKey) {
+        throw new Error('Provide exactly one of --privateKey (PRIVATE_KEY) or --mnemonic (XRPL_MNEMONIC), not both.');
+    }
+
+    // BIP39 mnemonic (e.g. exported from Bifrost). Default path m/44'/144'/0'/0/0 over secp256k1.
+    if (options.mnemonic) {
+        // Normalize whitespace/case so stray newlines, double spaces, or quotes don't break bip39 validation.
+        const mnemonic = options.mnemonic.trim().replace(/\s+/g, ' ').toLowerCase();
+        const wordCount = mnemonic.split(' ').filter(Boolean).length;
+
+        if (![12, 15, 18, 21, 24].includes(wordCount)) {
+            throw new Error(
+                `Mnemonic has ${wordCount} word(s); expected 12/15/18/21/24. ` +
+                    'If passing --mnemonic on the command line, wrap the whole phrase in quotes (or set the XRPL_MNEMONIC env var).',
+            );
+        }
+
+        return xrpl.Wallet.fromMnemonic(mnemonic, {
+            mnemonicEncoding: 'bip39',
+            derivationPath: options.derivationPath || "m/44'/144'/0'/0/0",
+            algorithm: xrpl.ECDSA.secp256k1, // only secp256k1 is supported by the xrpl.js library
+        });
+    }
+
+    if (!options.privateKey) {
+        throw new Error('Either --privateKey (XRPL family seed) or --mnemonic must be provided');
+    }
+
     return xrpl.Wallet.fromSeed(options.privateKey, {
         algorithm: options.walletKeyType,
     });
