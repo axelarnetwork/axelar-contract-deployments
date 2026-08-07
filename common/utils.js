@@ -13,7 +13,6 @@ const {
     BigNumber,
 } = ethers;
 const { bech32 } = require('bech32');
-const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
@@ -738,7 +737,7 @@ const downloadContractCode = async (url, contractName, version) => {
         throw new Error(`Failed to download WASM file: ${response.statusText}`);
     }
 
-    const buffer = await response.buffer();
+    const buffer = Buffer.from(await response.arrayBuffer());
     writeFileSync(outputPath, buffer);
 
     return outputPath;

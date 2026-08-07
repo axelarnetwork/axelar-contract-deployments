@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
+const { Contract, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
@@ -22,7 +22,11 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
     const result = response.value();
 
     if (result !== undefined) {
-        printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
+        // Coerce booleans/numbers to strings so falsy values (e.g. paused=false, 0) still print —
+        // printInfo drops a falsy data arg, which would otherwise show a blank after "returned".
+        const serialized = serializeValue(result);
+        const printable = typeof serialized === 'boolean' || typeof serialized === 'number' ? String(serialized) : serialized;
+        printInfo(`${_contractName}:${operation} returned`, printable);
     } else {
         printInfo(`${_contractName}:${operation} succeeded`);
     }
@@ -45,7 +49,7 @@ async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
 
 async function getLedgerEntry(chain, contract) {
     const instance = contract.getFootprint();
-    const server = new SorobanRpc.Server(chain.rpc);
+    const server = new rpc.Server(chain.rpc);
     return server.getLedgerEntries(...[instance]);
 }
 
