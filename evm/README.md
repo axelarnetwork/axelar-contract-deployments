@@ -47,17 +47,17 @@ ts-node evm/gateway.js --action submitProof --multisigSessionId [session id]
 
 Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
 
-`ts-node evm/deploy-gateway-v6.2.x.js`
+`ts-node evm/deploy-consensus-gateway.js`
 
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
 2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
-3. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy` OR
-4. `ts-node evm/deploy-gateway-v6.2.x.js --reuseProxy --reuseHelpers`
+3. `ts-node evm/deploy-consensus-gateway.js --reuseProxy` OR
+4. `ts-node evm/deploy-consensus-gateway.js --reuseProxy --reuseHelpers`
 5. This sets the new `implementation` in the chain config.
 6. Upgrade to the new implementation contract
-   `ts-node evm/deploy-gateway-v6.2.x.js --upgrade`
+   `ts-node evm/deploy-consensus-gateway.js --upgrade`
 
 ## AxelarGasService
 

@@ -121,7 +121,7 @@ jobs:
         run: ts-node evm/deploy-amplifier-gateway.js --deployMethod create3 -s "AxelarAmplifierGateway v5.8" --owner 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --domainSeparator 0x361b9fa2ae14de79d4b32164841b42ebc840b9d3ddb98cba1a45dc79a13214fc -y
 
       - name: Deploy AxelarGateway
-        run: ts-node evm/deploy-gateway-v6.2.x.js --deployMethod create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+        run: ts-node evm/deploy-consensus-gateway.js --deployMethod create3 --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Call Method on Gateway
         run: ts-node evm/gateway.js --action callContract --destinationChain test2 -y
@@ -156,9 +156,9 @@ jobs:
       - name: Deploy AxelarGasService using create2
         run: ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
 
-      # same implementation address as the one deployed, since it's derivation must always be the same
+      # read the implementation deployed by the previous step
       - name: Generate AxelarGasService upgrade proposal via AxelarServiceGovernance
-        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGasService --implementation 0x61678eED43cd62094BcEE9c725260F0b0ECfaE7c --contractName AxelarServiceGovernance --generate-only ./service-governance-axelargasservice-upgrade.json -y
+        run: ts-node evm/governance.js schedule upgrade 2100-01-01T12:00:00 --targetContractName AxelarGasService --implementation $(jq -r '.chains.test.contracts.AxelarGasService.implementation' ./axelar-chains-config/info/local.json) --contractName AxelarServiceGovernance --generate-only ./service-governance-axelargasservice-upgrade.json -y
 
       - name: Deploy ITS using create2
         run: ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y
@@ -215,7 +215,7 @@ jobs:
           jq '.chains.test += {"gasOptions": {"gasLimit": 8000000}} | .chains.test.contracts.AxelarGateway += {"gasOptions": {"gasLimit": 8000000}}' ./axelar-chains-config/info/local.json > temp.json && mv temp.json ./axelar-chains-config/info/local.json
 
       - name: Redeploy AxelarGateway with gasOptions
-        run: ts-node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+        run: ts-node evm/deploy-consensus-gateway.js -m create3 --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Redeploy ITS with gasOptions in Chain Config
         run: ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y

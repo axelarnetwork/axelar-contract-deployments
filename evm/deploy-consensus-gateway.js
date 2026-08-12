@@ -228,7 +228,7 @@ async function deploy(axelar, chain, chains, options) {
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
 
-    const salt = 'AxelarGateway v6.2' + (options.salt || '');
+    const salt = options.salt || 'AxelarGateway';
 
     let implementation;
 
@@ -501,7 +501,7 @@ async function main(options) {
 async function programHandler() {
     const program = new Command();
 
-    program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
+    program.name('deploy-consensus-gateway').description('Deploy the consensus (legacy) AxelarGateway');
 
     addEvmOptions(program, { salt: true, deployMethod: 'create', skipExisting: true, upgrade: true, predictOnly: true });
 
