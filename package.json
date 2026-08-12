@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/axelarnetwork/axelar-contract-deployments#readme",
   "dependencies": {
-    "@axelar-network/axelar-cgp-solidity": "6.4.0",
+    "@axelar-network/axelar-cgp-solidity": "6.5.0",
     "@axelar-network/axelar-cgp-sui": "1.2.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.2.0",
     "@axelar-network/interchain-token-service": "2.2.0",
@@ -57,11 +57,11 @@
   },
   "devDependencies": {
     "@aikidosec/safe-chain": "1.0.18",
-    "@sentry/node": "9.47.1",
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/defender-relay-client": "^1.54.1",
+    "@sentry/node": "9.47.1",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@typechain/ethers-v5": "^10.2.1",
     "@typechain/hardhat": "^6.1.6",
