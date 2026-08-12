@@ -59,6 +59,8 @@ Deploy the original Axelar gateway contract for legacy consensus-based connectio
 6. Upgrade to the new implementation contract
    `ts-node evm/deploy-consensus-gateway.js --upgrade`
 
+*Note: pass `--salt` for a versioned deployment, e.g. `-s "AxelarGateway v6.5.0"`. The default salt is the unversioned `AxelarGateway`, so omitting it derives a different implementation address than a release intends.*
+
 ## AxelarGasService
 
 1. Run the following to deploy the gas service,
@@ -256,6 +258,27 @@ Full docs can be found [here](./docs/contract-ownership.md).
 `ts-node evm/gateway.js --action transferOperatorship --destination <gatewayAddress> --payload <calldata> --yes`
 
 Other gateway actions remain in `evm/gateway.js`; use `--action` accordingly.
+
+### Gateway pause commands (evm/gateway.js)
+
+Read the current state:
+
+`ts-node evm/gateway.js --action paused -n <chain>`
+`ts-node evm/gateway.js --action pauser -n <chain>`
+
+Pause or unpause. On a consensus gateway the caller must be the `pauser` or the `governance` address; on an amplifier gateway it must be the `operator` or the `owner`:
+
+`ts-node evm/gateway.js --action setPauseStatus --pause <true|false> -n <chain> --yes`
+
+Hand the pauser role to another address (consensus only). The caller must be the current `pauser` or `governance`:
+
+`ts-node evm/gateway.js --action transferPauser --destination <addr> -n <chain> --yes`
+
+A freshly upgraded gateway has `pauser() == address(0)`, so the first assignment has to come from governance. Since `governance` is a contract on every environment, route it through `governance.js` rather than this script:
+
+`ts-node evm/governance.js schedule raw <activationTime> --target <gatewayAddress> --calldata <transferPauser calldata> -n <chain>`
+
+Pausing a gateway blocks `callContract` and `callContractWithToken`, and blocks consumers from calling `validateContractCall` / `validateContractCallAndMint`, with a bypass so governance can still consume approvals. It does not block `execute`, so signed batches still land. This halts all GMP and ITS traffic on that chain, not just token flows.
 
 ### Operators script (evm/operators.js)
 
