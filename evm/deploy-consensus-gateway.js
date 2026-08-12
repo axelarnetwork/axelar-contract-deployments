@@ -83,6 +83,16 @@ async function deploy(axelar, chain, chains, options) {
 
     const contractName = 'AxelarGateway';
 
+    if (options.authModule) {
+        if (!reuseProxy) {
+            throw new Error('--authModule requires --reuseProxy');
+        }
+
+        if (reuseAuth) {
+            throw new Error('--authModule cannot be combined with --reuseAuth');
+        }
+    }
+
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
 
@@ -179,7 +189,14 @@ async function deploy(axelar, chain, chains, options) {
 
     contractConfig.deployer = wallet.address;
 
-    if (options.skipExisting && contractConfig.authModule) {
+    if (options.authModule) {
+        // the gateway constructor reverts InvalidAuthModule on a codeless address
+        if (!(await isContract(options.authModule, wallet.provider))) {
+            throw new Error(`Auth module ${options.authModule} has no code; deploy it before the implementation`);
+        }
+
+        auth = authFactory.attach(options.authModule);
+    } else if (options.skipExisting && contractConfig.authModule) {
         auth = authFactory.attach(contractConfig.authModule);
     } else if (reuseProxy && (reuseHelpers || reuseAuth)) {
         auth = authFactory.attach(await gateway.authModule());
@@ -514,6 +531,12 @@ async function programHandler() {
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
     program.addOption(new Option('--reuseAuth', 'reuse auth module contract for new implementation deployment'));
+    program.addOption(
+        new Option(
+            '--authModule <authModule>',
+            'bind the implementation to this already deployed auth module instead of the live one (requires --reuseProxy)',
+        ),
+    );
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));
