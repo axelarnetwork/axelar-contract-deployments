@@ -581,9 +581,7 @@ async function processCommand(axelar, chain, _chains, options) {
         }
 
         case 'setPauseStatus': {
-            if (contracts.AxelarGateway?.connectionType !== 'amplifier') {
-                throw new Error('setPauseStatus is only available for Amplifier Gateway');
-            }
+            const isAmplifierGateway = contracts.AxelarGateway?.connectionType === 'amplifier';
 
             if (options.pause !== 'true' && options.pause !== 'false') {
                 throw new Error(`Invalid --pause value '${options.pause}', expected 'true' or 'false'`);
@@ -599,28 +597,51 @@ async function processCommand(axelar, chain, _chains, options) {
                 return;
             }
 
-            const operator = await gateway.operator();
-            const owner = await gateway.owner();
-            const isOperator = operator.toLowerCase() === walletAddress.toLowerCase();
-            const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+            if (isAmplifierGateway) {
+                const operator = await gateway.operator();
+                const owner = await gateway.owner();
+                const isOperator = operator.toLowerCase() === walletAddress.toLowerCase();
+                const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-            if (options.governance) {
-                const { data: calldata } = await gateway.populateTransaction.setPauseStatus(isPaused, gasOptions);
+                if (options.governance) {
+                    const { data: calldata } = await gateway.populateTransaction.setPauseStatus(isPaused, gasOptions);
 
-                return createGovernanceProposal({
-                    chain,
-                    options,
-                    targetAddress: gatewayAddress,
-                    calldata,
-                    ProposalType,
-                    encodeGovernanceProposal,
-                    createGMPProposalJSON,
-                    dateToEta,
-                });
-            }
+                    return createGovernanceProposal({
+                        chain,
+                        options,
+                        targetAddress: gatewayAddress,
+                        calldata,
+                        ProposalType,
+                        encodeGovernanceProposal,
+                        createGMPProposalJSON,
+                        dateToEta,
+                    });
+                }
 
-            if (!isOperator && !isOwner) {
-                throw new Error(`Caller ${walletAddress} is neither the operator (${operator}) nor the owner (${owner})`);
+                if (!isOperator && !isOwner) {
+                    throw new Error(`Caller ${walletAddress} is neither the operator (${operator}) nor the owner (${owner})`);
+                }
+            } else {
+                // Consensus gateway authorizes via onlyPauserOrGovernance. The pauser is an
+                // emergency role that bypasses the governance timelock, so this is a direct tx.
+                if (options.governance) {
+                    throw new Error(
+                        'The --governance flow submits a legacy CallContractsProposal that axelar-core no longer routes. Use: governance.js schedule raw <activationTime> --target <gateway> --calldata <calldata>',
+                    );
+                }
+
+                const pauserAddress = await gateway.pauser();
+                const governanceAddress = await gateway.governance();
+                printInfo('Gateway pauser', pauserAddress);
+
+                const isPauser = pauserAddress.toLowerCase() === walletAddress.toLowerCase();
+                const isGovernance = governanceAddress.toLowerCase() === walletAddress.toLowerCase();
+
+                if (!isPauser && !isGovernance) {
+                    throw new Error(
+                        `Caller ${walletAddress} is neither the pauser (${pauserAddress}) nor the governance (${governanceAddress})`,
+                    );
+                }
             }
 
             if (prompt(`Proceed with setting pause status to ${chalk.cyan(isPaused)}`, yes)) {
@@ -640,6 +661,62 @@ async function processCommand(axelar, chain, _chains, options) {
 
             const updatedPauseStatus = await gateway.paused();
             printInfo('New pause status', updatedPauseStatus);
+
+            break;
+        }
+
+        case 'paused': {
+            printInfo('Gateway paused', await gateway.paused());
+            break;
+        }
+
+        case 'pauser': {
+            if (contracts.AxelarGateway?.connectionType === 'amplifier') {
+                throw new Error('pauser is only available for consensus gateways');
+            }
+
+            printInfo('Gateway pauser', await gateway.pauser());
+            break;
+        }
+
+        case 'transferPauser': {
+            if (contracts.AxelarGateway?.connectionType === 'amplifier') {
+                throw new Error('transferPauser is only available for consensus gateways');
+            }
+
+            const newPauser = options.destination;
+
+            if (!isValidAddress(newPauser)) {
+                throw new Error('Invalid new pauser address');
+            }
+
+            const currPauser = await gateway.pauser();
+            const governanceAddress = await gateway.governance();
+            printInfo('Current pauser', currPauser);
+
+            const isPauser = currPauser.toLowerCase() === walletAddress.toLowerCase();
+            const isGovernance = governanceAddress.toLowerCase() === walletAddress.toLowerCase();
+
+            if (!isPauser && !isGovernance) {
+                throw new Error(
+                    `Caller ${walletAddress} is neither the pauser (${currPauser}) nor the governance (${governanceAddress}). If governance is a contract, route this through governance.js schedule raw instead.`,
+                );
+            }
+
+            if (prompt(`Proceed with pauser transfer to ${chalk.cyan(newPauser)}`, yes)) {
+                return;
+            }
+
+            const tx = await gateway.transferPauser(newPauser, gasOptions);
+            printInfo('Transfer pauser tx', tx.hash);
+
+            const receipt = await tx.wait(chain.confirmations);
+
+            if (!wasEventEmitted(receipt, gateway, 'PauserTransferred')) {
+                throw new Error('Event not emitted in receipt.');
+            }
+
+            printInfo('New pauser', await gateway.pauser());
 
             break;
         }
@@ -781,6 +858,9 @@ if (require.main === module) {
                 'submitProof',
                 'transferOperatorship',
                 'setPauseStatus',
+                'paused',
+                'pauser',
+                'transferPauser',
             ])
             .makeOptionMandatory(true),
     );

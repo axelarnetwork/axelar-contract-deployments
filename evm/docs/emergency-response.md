@@ -8,7 +8,7 @@ Actions that require governance proposal submission, voting period, and timelock
 **Upgrade**
 
 - **Before upgrading**: Deploy new implementation with `--reuseProxy` flag:
-  - **Legacy connection**: Use `deploy-gateway-v6.2.x.js` with `--reuseProxy`. See [Gateway Upgrade](../README.md#gateway-upgrade).
+  - **Legacy connection**: Use `deploy-consensus-gateway.js` with `--reuseProxy`. See [Gateway Upgrade](../README.md#gateway-upgrade).
   - **Amplifier connection**: Use `deploy-amplifier-gateway.js` with `--reuseProxy`. See [Axelar Amplifier Gateway](../README.md#axelar-amplifier-gateway).
 - Replace `schedule` with `schedule-operator` to skip timelock.
 - Documentation: [Upgrade Workflow](./governance-workflows.md#upgrade-workflow)
