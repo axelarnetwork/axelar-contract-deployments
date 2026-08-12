@@ -46,7 +46,7 @@ async function checkKeyRotation(axelar, chain) {
         return;
     }
 
-    throw new Error(`Key rotation is in progress for ${chain.name}: ${resp}`);
+    throw new Error(`Key rotation is in progress for ${chain}: ${JSON.stringify(resp)}`);
 }
 
 async function getAuthParams(axelar, chain, options) {
@@ -534,4 +534,5 @@ if (require.main === module) {
 
 module.exports = {
     deployLegacyGateway: deploy,
+    getAuthParams,
 };
