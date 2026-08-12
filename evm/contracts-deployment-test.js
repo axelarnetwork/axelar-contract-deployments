@@ -25,7 +25,7 @@ async function processCommand(_axelar, chain, _chains, options) {
     const cmds = [
         `ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,
         `ts-node evm/deploy-contract.js -c Create3Deployer -m create2`,
-        `ts-node evm/deploy-gateway-v6.2.x.js -m create3 --keyID ${wallet.address} --mintLimiter ${wallet.address} --governance ${wallet.address}`,
+        `ts-node evm/deploy-consensus-gateway.js -m create3 --keyID ${wallet.address} --mintLimiter ${wallet.address} --governance ${wallet.address}`,
         `ts-node evm/gateway.js --action params`,
         `ts-node evm/deploy-contract.js -c Operators -m create2`,
         `ts-node evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args '${argsAxelarGasService}'`,
