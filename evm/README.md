@@ -536,6 +536,21 @@ ts-node evm/verify-contract.js --help
 
 ## Interchain Token Service
 
+### Interchain Transfer
+
+Transfers a token that is already deployed or linked on the destination chain under the same token ID. The script estimates cross-chain gas and encodes the destination address automatically. The amount is human-readable and is converted using the token's decimals.
+
+```bash
+ts-node evm/its.js interchain-transfer \
+  --destinationChain <destination-chain> \
+  --tokenId <token-id> \
+  --destinationAddress <destination-address> \
+  --amount <amount> \
+  --gasValue auto \
+  --chainNames <source-chain> \
+  --env <env>
+```
+
 ### Link Token
 
 #### Legacy custom ITS tokens
