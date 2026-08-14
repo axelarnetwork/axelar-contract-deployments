@@ -132,7 +132,8 @@ async function deploy(axelar, chain, chains, options) {
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
     const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
-    const { deployerContract } = getDeployOptions(options.deployMethod, options.salt || 'AxelarGateway v6.2', chain);
+    const salt = options.salt || 'AxelarGateway';
+    const { deployerContract } = getDeployOptions(options.deployMethod, salt, chain);
 
     let gateway;
     let auth;
@@ -204,14 +205,14 @@ async function deploy(axelar, chain, chains, options) {
     } else {
         printInfo(`Deploying token deployer contract`);
 
-        const salt = 'TokenDeployer' + (options.salt || '');
+        const tokenDeployerSalt = 'TokenDeployer' + (options.salt || '');
 
         tokenDeployer = await deployContract(
             options.deployMethod !== 'create' ? 'create2' : 'create',
             wallet,
             TokenDeployer,
             [],
-            { salt, deployerContract },
+            { salt: tokenDeployerSalt, deployerContract },
             gasOptions,
             {},
             chain,
@@ -227,8 +228,6 @@ async function deploy(axelar, chain, chains, options) {
 
     printInfo(`Deploying gateway implementation contract`);
     printInfo('Gateway Implementation args', `${auth.address},${tokenDeployer.address}`);
-
-    const salt = options.salt || 'AxelarGateway';
 
     let implementation;
 
