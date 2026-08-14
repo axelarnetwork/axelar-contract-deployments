@@ -132,6 +132,10 @@ async function deploy(axelar, chain, chains, options) {
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
     const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
+    if (options.salt && options.deployMethod === 'create') {
+        throw new Error('--salt has no effect with --deployMethod create; use create2 or create3');
+    }
+
     const salt = options.salt || 'AxelarGateway';
     const { deployerContract } = getDeployOptions(options.deployMethod, salt, chain);
 
