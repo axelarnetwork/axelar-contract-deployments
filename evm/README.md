@@ -59,7 +59,7 @@ Deploy the original Axelar gateway contract for legacy consensus-based connectio
 6. Upgrade to the new implementation contract
    `ts-node evm/deploy-consensus-gateway.js --upgrade`
 
-*Note: pass `--salt` for a versioned deployment, e.g. `-s "AxelarGateway v6.5.0"`. The default salt is the unversioned `AxelarGateway`, so omitting it derives a different implementation address than a release intends.*
+*Note: a versioned deployment needs both a deterministic deploy method and a salt, e.g. `-m create3 -s "AxelarGateway v6.5.0"`. The salt only applies to `create2` and `create3`; the default `create` is nonce based and ignores it, so passing `-s` without `-m` is rejected. The default salt is the unversioned `AxelarGateway`, so omitting it derives a different implementation address than a release intends.*
 
 ## AxelarGasService
 
