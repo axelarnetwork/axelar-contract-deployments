@@ -360,8 +360,13 @@ async function deploy(axelar, chain, chains, options) {
     const authOwner = await auth.owner();
 
     if (authOwner !== gateway.address) {
-        printError(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
-        error = true;
+        // an --authModule retrofit hands ownership over later, when the auth is seeded
+        if (options.authModule) {
+            printWarn(`Auth module owner is ${authOwner}, not the proxy yet. Run \`consensus-auth seed\` to hand ownership over.`);
+        } else {
+            printError(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
+            error = true;
+        }
     }
 
     const gatewayImplementation = await gateway.implementation();
