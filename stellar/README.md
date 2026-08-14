@@ -300,8 +300,17 @@ ts-node stellar/its.js link-token [salt] [destination-chain] [destination-token-
 
 #### Interchain Transfer
 
+Transfers a token that is already deployed or linked on the destination chain under the same token ID. The script estimates cross-chain gas and encodes the destination address automatically. The amount is in the Stellar token's base units.
+
 ```bash
-ts-node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-amount [amount]
+ts-node stellar/its.js interchain-transfer \
+  <token-id> \
+  <destination-chain> \
+  <destination-address> \
+  <amount> \
+  --gas-amount auto \
+  --chain-name <source-chain> \
+  --env <env>
 ```
 
 #### Execute
