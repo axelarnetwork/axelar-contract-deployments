@@ -32,7 +32,25 @@ Actions that require governance proposal submission, voting period, and timelock
 - Add `--operatorProposal` flag to skip timelock.
 - Documentation: [Transfer Gateway Operatorship via Governance](./governance-workflows.md#transfer-gateway-operatorship-via-governance-amplifier)
 
+**Transfer Pauser** (consensus)
+
+- A freshly upgraded gateway has `pauser() == address(0)`, so the first assignment must come from governance: `evm/governance.js schedule raw <activationTime> --target <gatewayAddress> --calldata <transferPauser calldata>`.
+- Replace `schedule` with `schedule-operator` to skip timelock.
+- Documentation: [Gateway pause commands](../README.md#gateway-pause-commands-evmgatewayjs)
+
 **Note:** To skip timelock, replace `schedule` with `schedule-operator` for `governance.js` actions or add `--operatorProposal` flag for contract-specific scripts. Operator proposals use `AxelarServiceGovernance` and bypass timelock via operator approval. See [AxelarServiceGovernance Commands](./governance.md#axelarservicegovernance-commands) for details.
+
+### Pauser Actions
+
+Actions that can be executed directly from the pauser wallet on a consensus gateway, or the operator wallet on an amplifier gateway. Immediate execution, no timelock.
+
+- **Pause**: `evm/gateway.js --action setPauseStatus --pause true` - [Gateway pause commands](../README.md#gateway-pause-commands-evmgatewayjs)
+- **Unpause**: `evm/gateway.js --action setPauseStatus --pause false` - [Gateway pause commands](../README.md#gateway-pause-commands-evmgatewayjs)
+- **Check state**: `evm/gateway.js --action paused` and `evm/gateway.js --action pauser`
+
+Pausing blocks `callContract` and `callContractWithToken`, and blocks consumers from calling `validateContractCall` / `validateContractCallAndMint`, with a governance bypass. `execute` still works, so signed batches continue to land. This halts all GMP and ITS traffic on the chain.
+
+Governance can also pause without the pauser role, since `setPauseStatus` is `onlyPauserOrGovernance`. On a chain where no pauser is set, that is the only route, and it needs `schedule-operator` to avoid waiting out the timelock.
 
 ### Operator Actions
 
