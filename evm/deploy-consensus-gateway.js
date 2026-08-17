@@ -91,6 +91,11 @@ async function deploy(axelar, chain, chains, options) {
         if (reuseAuth) {
             throw new Error('--authModule cannot be combined with --reuseAuth');
         }
+
+        // skipExisting would reuse the recorded implementation, which is bound to the old auth
+        if (options.skipExisting) {
+            throw new Error('--authModule cannot be combined with --skipExisting');
+        }
     }
 
     const rpc = options.rpc || chain.rpc;
@@ -193,6 +198,13 @@ async function deploy(axelar, chain, chains, options) {
         // the gateway constructor reverts InvalidAuthModule on a codeless address
         if (!(await isContract(options.authModule, wallet.provider))) {
             throw new Error(`Auth module ${options.authModule} has no code; deploy it before the implementation`);
+        }
+
+        const deployedHash = await getBytecodeHash(options.authModule, chain.axelarId, provider);
+        const expectedHash = await getBytecodeHash(AxelarAuthWeighted, chain.axelarId);
+
+        if (deployedHash !== expectedHash) {
+            throw new Error(`Auth module ${options.authModule} codehash is ${deployedHash}, expected ${expectedHash}`);
         }
 
         auth = authFactory.attach(options.authModule);
@@ -299,7 +311,10 @@ async function deploy(axelar, chain, chains, options) {
         });
     }
 
-    if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
+    if (options.authModule) {
+        // handing ownership over now would make the auth unseedable; `consensus-auth handoff` does it later
+        printInfo('Skipping auth ownership transfer', 'run `consensus-auth seed` then `consensus-auth handoff` before the upgrade');
+    } else if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
         printInfo('Transferring auth ownership');
         await auth.transferOwnership(gateway.address, { gasLimit: 5e6, ...gasOptions }).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
@@ -362,7 +377,7 @@ async function deploy(axelar, chain, chains, options) {
     if (authOwner !== gateway.address) {
         // an --authModule retrofit hands ownership over later, when the auth is seeded
         if (options.authModule) {
-            printWarn(`Auth module owner is ${authOwner}, not the proxy yet. Run \`consensus-auth seed\` to hand ownership over.`);
+            printWarn(`Auth module owner is ${authOwner}, not the proxy yet. Run \`consensus-auth handoff\` to hand ownership over.`);
         } else {
             printError(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
             error = true;
@@ -414,6 +429,11 @@ async function deploy(axelar, chain, chains, options) {
 async function upgrade(_, chain, options) {
     const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
+
+    // this path calls gateway.upgrade() from the wallet; the auth binding is fixed in the implementation
+    if (options.authModule) {
+        throw new Error('--authModule applies to the implementation deployment, not --upgrade');
+    }
 
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
