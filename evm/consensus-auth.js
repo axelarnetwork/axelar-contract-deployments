@@ -5,7 +5,7 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { keccak256 },
+    utils: { defaultAbiCoder, keccak256 },
 } = ethers;
 
 const {
@@ -25,11 +25,15 @@ const { addEvmOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 const { getAuthParams } = require('./deploy-consensus-gateway');
 
+const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 
 // deploying with no seed keeps the init code, and therefore the CREATE2 address, independent of the operator sets
 const EMPTY_SEED = [[]];
+
+// AxelarAuthWeighted rejects a proof whose operator set is this many epochs behind the current one
+const OLD_KEY_RETENTION = 16;
 
 function authFactory(wallet) {
     return new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
@@ -47,6 +51,36 @@ async function predictAddress(wallet, chain, salt) {
     });
 
     return { address, deployerContract };
+}
+
+async function resolveAuthAddress(wallet, chain, options) {
+    if (Boolean(options.salt) === Boolean(options.authModule)) {
+        throw new Error('Provide exactly one of --salt or --authModule');
+    }
+
+    if (options.authModule) {
+        return options.authModule;
+    }
+
+    return (await predictAddress(wallet, chain, options.salt)).address;
+}
+
+// candidates are oldest first, so epochs land in the same order the live auth saw them
+async function selectSetsToSeed(auth, candidates) {
+    const seeds = [];
+
+    for (const set of candidates) {
+        // skip anything already registered: transferOperatorship reverts DuplicateOperators
+        if (!seeds.includes(set) && (await auth.epochForHash(operatorsHash(set))).eq(0)) {
+            seeds.push(set);
+        }
+    }
+
+    return seeds;
+}
+
+function encodeOperatorSet(operators, weights, threshold) {
+    return defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [operators, weights, threshold]);
 }
 
 function gatewayAddress(chain) {
@@ -70,6 +104,7 @@ function operatorsHash(params) {
 }
 
 async function reportState(auth, expectedOwner) {
+    const allowedOwners = [].concat(expectedOwner || []);
     const owner = await auth.owner();
     const currentEpoch = await auth.currentEpoch();
 
@@ -80,8 +115,8 @@ async function reportState(auth, expectedOwner) {
         printInfo('Auth newest epoch hash', await auth.hashForEpoch(currentEpoch));
     }
 
-    if (expectedOwner && owner.toLowerCase() !== expectedOwner.toLowerCase()) {
-        printError(`Owner is ${owner}, expected ${expectedOwner}`);
+    if (allowedOwners.length > 0 && !allowedOwners.some((allowed) => allowed.toLowerCase() === owner.toLowerCase())) {
+        printError(`Owner is ${owner}, expected ${allowedOwners.join(' or ')}`);
         return false;
     }
 
@@ -136,13 +171,59 @@ async function deploy(axelar, chain, chains, options) {
     printInfo('Auth deployed unseeded; run `seed` shortly before executing the gateway upgrade', address);
 }
 
+// AxelarAuthWeighted keeps a proof valid for OLD_KEY_RETENTION epochs, so a batch signed just before a rotation still
+// validates against the live auth. Copy the tail of its history so the replacement accepts those batches too.
+async function recentOperatorSets(provider, chain, options) {
+    const count = Number(options.copyEpochs);
+
+    if (!Number.isInteger(count) || count < 0 || count >= OLD_KEY_RETENTION) {
+        throw new Error(`--copyEpochs must be an integer between 0 and ${OLD_KEY_RETENTION - 1}`);
+    }
+
+    if (count === 0) {
+        return [];
+    }
+
+    const liveAuth = await new Contract(gatewayAddress(chain), AxelarGateway.abi, provider).authModule();
+    const auth = new Contract(liveAuth, AxelarAuthWeighted.abi, provider);
+    const filter = auth.filters.OperatorshipTransferred();
+
+    const chunk = Number(options.logChunkSize);
+    const lookback = Number(options.lookbackBlocks);
+    const latest = await provider.getBlockNumber();
+    const floor = Math.max(0, latest - lookback + 1);
+
+    const events = [];
+    let to = latest;
+
+    while (events.length < count && to >= floor) {
+        const from = Math.max(floor, to - chunk + 1);
+        events.unshift(...(await auth.queryFilter(filter, from, to)));
+        to = from - 1;
+    }
+
+    printInfo('Live auth module', liveAuth);
+
+    if (events.length < count) {
+        printWarn(
+            `Found ${events.length} of ${count} requested operator set(s) in the last ${lookback} blocks of ${liveAuth}`,
+            'raise --lookbackBlocks to copy more history',
+        );
+    }
+
+    const sets = events.slice(-count).map(({ args }) => encodeOperatorSet(args.newOperators, args.newWeights, args.newThreshold));
+    printInfo('Historical operator sets to copy', sets.length);
+
+    return sets;
+}
+
 async function seed(axelar, chain, chains, options) {
     const provider = ethers.getDefaultProvider(chain.rpc);
     const wallet = await getWallet(options.privateKey, provider, options);
     const gasOptions = await getGasOptions(chain, options, 'AxelarAuthWeighted');
 
     const proxy = gatewayAddress(chain);
-    const address = options.authModule || (await predictAddress(wallet, chain, options.salt)).address;
+    const address = await resolveAuthAddress(wallet, chain, options);
 
     printInfo('Gateway proxy', proxy);
     printInfo('Auth module', address);
@@ -157,15 +238,9 @@ async function seed(axelar, chain, chains, options) {
         throw new Error(`Auth at ${address} is not owned by ${wallet.address}; it cannot be seeded`);
     }
 
+    const history = await recentOperatorSets(provider, chain, options);
     const { params } = await getAuthParams(axelar, chain.axelarId, options);
-    const seeds = [];
-
-    for (const set of params) {
-        // skip anything already registered: transferOperatorship reverts DuplicateOperators
-        if (!seeds.includes(set) && (await auth.epochForHash(operatorsHash(set))).eq(0)) {
-            seeds.push(set);
-        }
-    }
+    const seeds = await selectSetsToSeed(auth, [...history, ...params]);
 
     if (!seeds.length) {
         printInfo('Auth already holds every current operator set; nothing to seed', address);
@@ -208,7 +283,7 @@ async function handoff(axelar, chain, chains, options) {
     const gasOptions = await getGasOptions(chain, options, 'AxelarAuthWeighted');
 
     const proxy = gatewayAddress(chain);
-    const address = options.authModule || (await predictAddress(wallet, chain, options.salt)).address;
+    const address = await resolveAuthAddress(wallet, chain, options);
 
     printInfo('Gateway proxy', proxy);
     printInfo('Auth module', address);
@@ -254,7 +329,7 @@ async function verify(axelar, chain, chains, options) {
     const wallet = await getWallet(options.privateKey, provider, options);
 
     const proxy = gatewayAddress(chain);
-    const address = options.authModule || (await predictAddress(wallet, chain, options.salt)).address;
+    const address = await resolveAuthAddress(wallet, chain, options);
 
     printInfo('Auth module', address);
 
@@ -263,7 +338,11 @@ async function verify(axelar, chain, chains, options) {
     }
 
     const auth = authFactory(wallet).attach(address);
-    let ok = await reportState(auth, proxy);
+    let ok = await reportState(auth, [proxy, wallet.address]);
+
+    if (ok && (await auth.owner()).toLowerCase() === wallet.address.toLowerCase()) {
+        printWarn('Auth is still owned by the seeding wallet', 'run `handoff` before rotations resume flowing through the gateway');
+    }
 
     const { params } = await getAuthParams(axelar, chain.axelarId, options);
     const liveHash = operatorsHash(params[params.length - 1]);
@@ -294,41 +373,60 @@ if (require.main === module) {
 
     program.name('consensus-auth').description('Deploy and verify a replacement AxelarAuthWeighted for a consensus gateway');
 
-    const addOptions = (cmd, { salt = true } = {}) => {
+    // predict and deploy derive the address from the salt, so they cannot accept an address instead
+    const addDerivingOptions = (cmd) => {
         addEvmOptions(cmd);
-
-        if (salt) {
-            cmd.addOption(new Option('-s, --salt <salt>', 'CREATE2 salt for the auth module').makeOptionMandatory(true));
-        }
-
-        cmd.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'comma separated older key IDs to seed alongside the current one'));
+        cmd.addOption(new Option('-s, --salt <salt>', 'CREATE2 salt for the auth module').makeOptionMandatory(true));
 
         return cmd;
     };
 
-    addOptions(program.command('predict').description('Print the predicted auth module address')).action((options) =>
+    // the rest act on an auth that already exists, addressed either by its salt or by its address
+    const addExistingOptions = (cmd, verb) => {
+        addEvmOptions(cmd);
+        cmd.addOption(new Option('-s, --salt <salt>', 'CREATE2 salt the auth module was deployed with'));
+        cmd.addOption(new Option('--authModule <authModule>', `${verb} this address instead of deriving it from --salt`));
+
+        return cmd;
+    };
+
+    addDerivingOptions(program.command('predict').description('Print the predicted auth module address')).action((options) =>
         mainProcessor(options, predict),
     );
 
-    addOptions(program.command('deploy').description('Deploy an unseeded auth module owned by the deployer wallet')).action((options) =>
-        mainProcessor(options, deploy),
+    addDerivingOptions(program.command('deploy').description('Deploy an unseeded auth module owned by the deployer wallet')).action(
+        (options) => mainProcessor(options, deploy),
     );
 
-    addOptions(program.command('seed').description('Seed the auth module with the current operator sets; repeatable, keeps ownership'))
-        .addOption(new Option('--authModule <authModule>', 'seed this address instead of the predicted one'))
+    addExistingOptions(
+        program.command('seed').description('Seed the auth module with the current operator sets; repeatable, keeps ownership'),
+        'seed',
+    )
+        .addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'comma separated older key IDs to seed alongside the current one'))
+        .addOption(new Option('--copyEpochs <copyEpochs>', 'how many recent operator sets to copy from the live auth module').default('3'))
+        .addOption(new Option('--lookbackBlocks <lookbackBlocks>', 'how far back to scan for those sets').default('250000'))
+        .addOption(new Option('--logChunkSize <logChunkSize>', 'block range per getLogs request').default('10000'))
         .action((options) => mainProcessor(options, seed));
 
-    addOptions(program.command('handoff').description('Hand auth ownership to the gateway proxy; refuses a stale seed'))
-        .addOption(new Option('--authModule <authModule>', 'hand off this address instead of the predicted one'))
-        .action((options) => mainProcessor(options, handoff));
+    addExistingOptions(
+        program.command('handoff').description('Hand auth ownership to the gateway proxy; refuses a stale seed'),
+        'hand off',
+    ).action((options) => mainProcessor(options, handoff));
 
-    addOptions(program.command('verify').description('Check the auth module is seeded with the live operator set and owned by the gateway'))
-        .addOption(new Option('--authModule <authModule>', 'verify this address instead of the predicted one'))
-        .action((options) => mainProcessor(options, verify));
+    addExistingOptions(
+        program.command('verify').description('Check the auth module is seeded with the live operator set and owned by the gateway'),
+        'verify',
+    ).action((options) => mainProcessor(options, verify));
 
     program.parse();
 }
 
 module.exports = {
     predictAuthAddress: predictAddress,
+    resolveAuthAddress,
+    selectSetsToSeed,
+    recentOperatorSets,
+    encodeOperatorSet,
+    operatorsHash,
+    OLD_KEY_RETENTION,
 };
