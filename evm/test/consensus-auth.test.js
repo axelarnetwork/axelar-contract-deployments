@@ -9,6 +9,7 @@ const {
 
 const {
     resolveAuthAddress,
+    blocksPerDay,
     selectSetsToSeed,
     recentOperatorSets,
     encodeOperatorSet,
@@ -111,5 +112,30 @@ describe('recentOperatorSets', () => {
 
     it('rejects a non integer count', async () => {
         await expectRejection(recentOperatorSets(null, null, { copyEpochs: 'two' }), '--copyEpochs must be');
+    });
+});
+
+describe('blocksPerDay', () => {
+    // block n is mined at n * seconds, so the sampled average is exactly `seconds`
+    const providerWithBlockTime = (seconds) => ({ getBlock: async (number) => ({ timestamp: number * seconds }) });
+
+    it('derives a day of 12 second blocks', async () => {
+        expect(await blocksPerDay(providerWithBlockTime(12), 20000)).to.equal(7200);
+    });
+
+    it('derives a day of 2 second blocks', async () => {
+        expect(await blocksPerDay(providerWithBlockTime(2), 20000)).to.equal(43200);
+    });
+
+    it('samples a short chain without reading a negative block number', async () => {
+        expect(await blocksPerDay(providerWithBlockTime(12), 500)).to.equal(7200);
+    });
+
+    it('rejects a chain with no history', async () => {
+        await expectRejection(blocksPerDay(providerWithBlockTime(12), 0), 'no history');
+    });
+
+    it('rejects a non advancing timestamp rather than guessing', async () => {
+        await expectRejection(blocksPerDay({ getBlock: async () => ({ timestamp: 1 }) }, 20000), 'non positive block time');
     });
 });

@@ -171,7 +171,26 @@ async function deploy(axelar, chain, chains, options) {
     printInfo('Auth deployed unseeded; run `seed` shortly before executing the gateway upgrade', address);
 }
 
-// AxelarAuthWeighted keeps a proof valid for OLD_KEY_RETENTION epochs, so a batch signed just before a rotation still
+// block times differ by two orders of magnitude across the fleet, so a fixed block count is not a usable window.
+// Sample the recent average and convert the requested number of days into blocks.
+async function blocksPerDay(provider, latest) {
+    const span = Math.min(latest, 10000);
+
+    if (span === 0) {
+        throw new Error('Chain has no history to sample a block time from');
+    }
+
+    const [head, earlier] = await Promise.all([provider.getBlock(latest), provider.getBlock(latest - span)]);
+    const seconds = (head.timestamp - earlier.timestamp) / span;
+
+    if (!(seconds > 0)) {
+        throw new Error(`Sampled a non positive block time of ${seconds}s; pass --lookbackBlocks instead`);
+    }
+
+    return Math.ceil(86400 / seconds);
+}
+
+// AxelarAuthWeighted keeps a proof valid for OLD_KEY_RETENTION epochs, so a batch signed before a rotation still
 // validates against the live auth. Copy the tail of its history so the replacement accepts those batches too.
 async function recentOperatorSets(provider, chain, options) {
     const count = Number(options.copyEpochs);
@@ -189,25 +208,29 @@ async function recentOperatorSets(provider, chain, options) {
     const filter = auth.filters.OperatorshipTransferred();
 
     const chunk = Number(options.logChunkSize);
-    const lookback = Number(options.lookbackBlocks);
     const latest = await provider.getBlockNumber();
+    const lookback = options.lookbackBlocks
+        ? Number(options.lookbackBlocks)
+        : Number(options.lookbackDays) * (await blocksPerDay(provider, latest));
     const floor = Math.max(0, latest - lookback + 1);
+
+    printInfo('Live auth module', liveAuth);
+    printInfo('Scanning back', `${lookback} blocks in ${chunk} block requests`);
 
     const events = [];
     let to = latest;
 
+    // walk backwards and stop as soon as enough rotations are in hand, so the window only costs what it needs to
     while (events.length < count && to >= floor) {
         const from = Math.max(floor, to - chunk + 1);
         events.unshift(...(await auth.queryFilter(filter, from, to)));
         to = from - 1;
     }
 
-    printInfo('Live auth module', liveAuth);
-
     if (events.length < count) {
         printWarn(
             `Found ${events.length} of ${count} requested operator set(s) in the last ${lookback} blocks of ${liveAuth}`,
-            'raise --lookbackBlocks to copy more history',
+            'raise --lookbackDays to copy more history',
         );
     }
 
@@ -403,8 +426,13 @@ if (require.main === module) {
         'seed',
     )
         .addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'comma separated older key IDs to seed alongside the current one'))
-        .addOption(new Option('--copyEpochs <copyEpochs>', 'how many recent operator sets to copy from the live auth module').default('3'))
-        .addOption(new Option('--lookbackBlocks <lookbackBlocks>', 'how far back to scan for those sets').default('250000'))
+        .addOption(
+            new Option('--copyEpochs <copyEpochs>', 'how many recent operator sets to copy from the live auth module').default(
+                String(OLD_KEY_RETENTION - 1),
+            ),
+        )
+        .addOption(new Option('--lookbackDays <lookbackDays>', 'how far back to scan for those sets').default('30'))
+        .addOption(new Option('--lookbackBlocks <lookbackBlocks>', 'scan this many blocks instead of deriving it from --lookbackDays'))
         .addOption(new Option('--logChunkSize <logChunkSize>', 'block range per getLogs request').default('10000'))
         .action((options) => mainProcessor(options, seed));
 
@@ -424,6 +452,7 @@ if (require.main === module) {
 module.exports = {
     predictAuthAddress: predictAddress,
     resolveAuthAddress,
+    blocksPerDay,
     selectSetsToSeed,
     recentOperatorSets,
     encodeOperatorSet,
