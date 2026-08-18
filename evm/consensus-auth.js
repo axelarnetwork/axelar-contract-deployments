@@ -227,6 +227,15 @@ async function recentOperatorSets(provider, chain, options) {
         to = from - 1;
     }
 
+    // a live auth has hundreds of epochs, so finding nothing means the RPC did not serve the logs, not that
+    // there is no history. Several providers gate getLogs beyond a few recent blocks behind an archive tier.
+    if (events.length === 0) {
+        throw new Error(
+            `No OperatorshipTransferred logs from ${liveAuth} in the last ${lookback} blocks. ` +
+                'Use an RPC that serves historical getLogs, or pass --copyEpochs 0 to skip copying history.',
+        );
+    }
+
     if (events.length < count) {
         printWarn(
             `Found ${events.length} of ${count} requested operator set(s) in the last ${lookback} blocks of ${liveAuth}`,
