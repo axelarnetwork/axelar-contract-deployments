@@ -250,6 +250,11 @@ async function recentOperatorSets(provider, chain, options) {
 }
 
 async function seed(axelar, chain, chains, options) {
+    // both flags add older sets, from different sources; mixing them makes the resulting epoch order unpredictable
+    if (options.prevKeyIDs && Number(options.copyEpochs) !== 0) {
+        throw new Error('Pass either --prevKeyIDs or --copyEpochs; combine --prevKeyIDs with --copyEpochs 0');
+    }
+
     const provider = ethers.getDefaultProvider(chain.rpc);
     const wallet = await getWallet(options.privateKey, provider, options);
     const gasOptions = await getGasOptions(chain, options, 'AxelarAuthWeighted');
@@ -272,11 +277,22 @@ async function seed(axelar, chain, chains, options) {
 
     const history = await recentOperatorSets(provider, chain, options);
     const { params } = await getAuthParams(axelar, chain.axelarId, options);
+    const liveSet = params[params.length - 1];
     const seeds = await selectSetsToSeed(auth, [...history, ...params]);
 
     if (!seeds.length) {
         printInfo('Auth already holds every current operator set; nothing to seed', address);
         return;
+    }
+
+    // seeds land in order, so the live set has to be last or the newest epoch ends up holding a retired set.
+    // that happens when a rerun widens --copyEpochs: the recent sets are already registered and only the older
+    // ones are left to add. epochs cannot be rewritten, so the auth is spent; deploy a fresh one with a new salt.
+    if (seeds[seeds.length - 1] !== liveSet) {
+        throw new Error(
+            `Seeding would leave a retired operator set in the newest epoch of ${address}. ` +
+                'This auth module cannot be repaired; deploy a replacement with a different --salt and seed it once.',
+        );
     }
 
     printInfo('Operator sets to seed', seeds.length);
@@ -434,7 +450,12 @@ if (require.main === module) {
         program.command('seed').description('Seed the auth module with the current operator sets; repeatable, keeps ownership'),
         'seed',
     )
-        .addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'comma separated older key IDs to seed alongside the current one'))
+        .addOption(
+            new Option(
+                '--prevKeyIDs <prevKeyIDs>',
+                'comma separated older key IDs to seed alongside the current one; requires --copyEpochs 0',
+            ),
+        )
         .addOption(
             new Option('--copyEpochs <copyEpochs>', 'how many recent operator sets to copy from the live auth module').default(
                 String(OLD_KEY_RETENTION - 1),
