@@ -23,7 +23,7 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
-const { getAuthParams } = require('./deploy-consensus-gateway');
+const { getAuthParams, OLD_KEY_RETENTION } = require('./deploy-consensus-gateway');
 
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
@@ -31,9 +31,6 @@ const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/ID
 
 // deploying with no seed keeps the init code, and therefore the CREATE2 address, independent of the operator sets
 const EMPTY_SEED = [[]];
-
-// AxelarAuthWeighted rejects a proof whose operator set is this many epochs behind the current one
-const OLD_KEY_RETENTION = 16;
 
 function authFactory(wallet) {
     return new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
