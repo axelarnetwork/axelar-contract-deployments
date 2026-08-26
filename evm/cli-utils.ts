@@ -80,6 +80,8 @@ interface GovernanceOptions {
     contractName?: string;
     governanceContract?: 'InterchainGovernance' | 'AxelarServiceGovernance';
     mnemonic?: string;
+    deposit?: string;
+    standardProposal?: boolean;
 }
 
 const addGovernanceOptions = (program: Command): Command => {
@@ -101,6 +103,10 @@ const addGovernanceOptions = (program: Command): Command => {
     );
     program.addOption(new Option('--generate-only <file>', 'Generate Axelar proposal JSON to the given file instead of submitting'));
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
+    program.addOption(new Option('--deposit <deposit>', 'governance proposal deposit amount in uaxl'));
+    program.addOption(
+        new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
+    );
 
     return program;
 };

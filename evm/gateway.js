@@ -597,39 +597,31 @@ async function processCommand(axelar, chain, _chains, options) {
                 return;
             }
 
+            if (options.governance) {
+                const { data: calldata } = await gateway.populateTransaction.setPauseStatus(isPaused, gasOptions);
+
+                return createGovernanceProposal({
+                    chain,
+                    options,
+                    targetAddress: gatewayAddress,
+                    calldata,
+                    ProposalType,
+                    encodeGovernanceProposal,
+                    createGMPProposalJSON,
+                    dateToEta,
+                });
+            }
+
             if (isAmplifierGateway) {
                 const operator = await gateway.operator();
                 const owner = await gateway.owner();
                 const isOperator = operator.toLowerCase() === walletAddress.toLowerCase();
                 const isOwner = owner.toLowerCase() === walletAddress.toLowerCase();
 
-                if (options.governance) {
-                    const { data: calldata } = await gateway.populateTransaction.setPauseStatus(isPaused, gasOptions);
-
-                    return createGovernanceProposal({
-                        chain,
-                        options,
-                        targetAddress: gatewayAddress,
-                        calldata,
-                        ProposalType,
-                        encodeGovernanceProposal,
-                        createGMPProposalJSON,
-                        dateToEta,
-                    });
-                }
-
                 if (!isOperator && !isOwner) {
                     throw new Error(`Caller ${walletAddress} is neither the operator (${operator}) nor the owner (${owner})`);
                 }
             } else {
-                // Consensus gateway authorizes via onlyPauserOrGovernance. The pauser is an
-                // emergency role that bypasses the governance timelock, so this is a direct tx.
-                if (options.governance) {
-                    throw new Error(
-                        'The --governance flow submits a legacy CallContractsProposal that axelar-core no longer routes. Use: governance.js schedule raw <activationTime> --target <gateway> --calldata <calldata>',
-                    );
-                }
-
                 const pauserAddress = await gateway.pauser();
                 const governanceAddress = await gateway.governance();
                 printInfo('Gateway pauser', pauserAddress);

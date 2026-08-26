@@ -4,7 +4,6 @@ const zlib = require('zlib');
 const path = require('path');
 const fs = require('fs');
 const protobuf = require('protobufjs');
-const { MsgSubmitProposal } = require('cosmjs-types/cosmos/gov/v1beta1/tx');
 const { QueryCodeRequest, QueryCodeResponse } = require('cosmjs-types/cosmwasm/wasm/v1/query');
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const { MsgSubmitProposal: MsgSubmitProposalV1 } = require('cosmjs-types/cosmos/gov/v1/tx');
@@ -1279,52 +1278,10 @@ const encodeChainStatusRequest = (chains, requestType) => {
     };
 };
 
-const submitCallContracts = async (client, config, options, proposalData, fee) => {
-    if (!proposalData.title || !proposalData.description || !proposalData.contract_calls) {
-        throw new Error('Invalid proposal data: must have title, description, and contract_calls');
-    }
-
-    const content = encodeCallContracts(proposalData);
-
-    const { deposit, title, description } = options;
-
-    const initialDeposit = [{ denom: getUnitDenom(config), amount: deposit }];
-
-    const accounts = client.accounts || (await client.signer.getAccounts());
-    const [account] = accounts;
-
-    if (!account || !account.address) {
-        throw new Error('Failed to determine proposer account from client');
-    }
-
-    // Always submit CallContractsProposal via legacy MsgSubmitProposal (v1beta1) regardless of SDK version
-    const submitProposalMsg = {
-        typeUrl: '/cosmos.gov.v1beta1.MsgSubmitProposal',
-        value: MsgSubmitProposal.fromPartial({
-            content,
-            initialDeposit,
-            proposer: account.address,
-        }),
-    };
-
-    printInfo('Proposer address', account.address);
-    printInfo('Proposal title', title);
-    printInfo('Proposal description', description);
-
-    const result = await signAndBroadcastWithRetry(client, account.address, [submitProposalMsg], fee, '');
-    const { events } = result;
-
-    const proposalEvent = events.find(({ type }) => type === 'proposal_submitted' || type === 'submit_proposal');
-    if (!proposalEvent) {
-        throw new Error('Proposal submission event not found');
-    }
-
-    const proposalId = proposalEvent.attributes.find(({ key }) => key === 'proposal_id')?.value;
-    if (!proposalId) {
-        throw new Error('Proposal ID not found in events');
-    }
-
-    return proposalId;
+const submitCallContracts = async () => {
+    throw new Error(
+        'CallContractsProposal is no longer supported by axelar-core. Submit gov-v1 MsgExecuteContract messages to AxelarnetGateway.call_contract instead.',
+    );
 };
 
 const getContractR2Url = (contractName, contractVersion) => {

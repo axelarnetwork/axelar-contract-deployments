@@ -30,7 +30,7 @@ const {
 } = require('./utils.js');
 const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
-const { submitCallContracts, payloadToHexBinary, GOVERNANCE_MODULE_ADDRESS } = require('../cosmwasm/utils');
+const { payloadToHexBinary, GOVERNANCE_MODULE_ADDRESS } = require('../cosmwasm/utils');
 const { mainProcessor: cosmwasmMainProcessor } = require('../cosmwasm/processor');
 const { executeByGovernance } = require('../cosmwasm/proposal-utils');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
@@ -47,6 +47,7 @@ function addGovernanceOptions(program) {
     program.addOption(new Option('--nativeValue <nativeValue>', 'native value').default('0'));
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
     program.addOption(new Option('--generate-only <file>', 'generate Axelar proposal JSON to the given file instead of submitting'));
+    program.addOption(new Option('--deposit <deposit>', 'governance proposal deposit amount in uaxl'));
     program.addOption(
         new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
     );
@@ -605,21 +606,44 @@ async function processCommand(_axelar, chain, _chains, action, options) {
     }
 }
 
+function createAxelarnetGatewayMessages(proposal) {
+    if (!proposal.title || !proposal.description || !Array.isArray(proposal.contract_calls) || proposal.contract_calls.length === 0) {
+        throw new Error('Invalid proposal data: must have title, description, and at least one contract call');
+    }
+
+    return proposal.contract_calls.map(({ chain, contract_address: contractAddress, payload }) => ({
+        call_contract: {
+            destination_chain: chain,
+            destination_address: contractAddress,
+            payload: payloadToHexBinary(payload),
+        },
+    }));
+}
+
 async function submitProposalToAxelar(proposal, options) {
+    const axelarnetGatewayMessages = createAxelarnetGatewayMessages(proposal);
+
     const submitFn = async (client, config, submitOptions, _args, fee) => {
-        if (!submitOptions.deposit) {
-            submitOptions.deposit = options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount();
-        }
         printInfo('Proposal details:');
         printInfo('Proposal title', proposal.title);
         printInfo('Proposal description', proposal.description);
         printInfo('Number of contract calls', proposal.contract_calls.length);
         printInfo('Contract calls', JSON.stringify(proposal.contract_calls, null, 2));
 
-        printInfo('Submitting proposal to Axelar...');
-        const proposalId = await submitCallContracts(client, config, submitOptions, proposal, fee);
-        printInfo('Proposal submitted successfully! Proposal ID', proposalId);
-        return proposalId;
+        const msgs = axelarnetGatewayMessages.map((msg) => JSON.stringify(msg));
+        return executeByGovernance(
+            client,
+            config,
+            {
+                ...submitOptions,
+                contractName: 'AxelarnetGateway',
+                msg: msgs,
+                title: proposal.title,
+                description: proposal.description,
+            },
+            undefined,
+            fee,
+        );
     };
 
     const submitOptions = {
@@ -629,7 +653,10 @@ async function submitProposalToAxelar(proposal, options) {
         chainName: 'axelar',
         title: proposal.title,
         description: proposal.description,
-        yes: options.yes,
+        // submitProposalToAxelar callers have already confirmed the proposal.
+        yes: true,
+        rpc: options.rpc,
+        deposit: options.deposit,
         standardProposal: options.standardProposal,
     };
 
@@ -690,6 +717,7 @@ async function main(action, args, options) {
                 description,
                 yes: options.yes,
                 rpc: options.rpc,
+                deposit: options.deposit,
                 standardProposal: options.standardProposal,
             };
 
@@ -912,5 +940,6 @@ module.exports = {
     getSetupParams,
     ProposalType,
     submitProposalToAxelar,
+    createAxelarnetGatewayMessages,
     decodeProposalPayload,
 };
