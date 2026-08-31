@@ -36,6 +36,7 @@ const { executeByGovernance } = require('../cosmwasm/proposal-utils');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
+const { assertAuthReady } = require('./deploy-consensus-gateway');
 const ProposalType = {
     ScheduleTimelock: 0,
     CancelTimelock: 1,
@@ -217,7 +218,54 @@ function ensureNonZeroActivationTime(commandName, activationTime) {
     }
 }
 
-async function processCommand(_axelar, chain, _chains, action, options) {
+// A consensus gateway upgrade can swap the immutable auth module. If the new one does not hold the operator set that
+// is signing by the time the upgrade lands, every inbound batch reverts and no batch can repair it, because
+// transferOperatorship itself arrives inside a batch. So refuse to execute rather than find out afterwards.
+async function assertGatewayUpgradeAuthReady(axelar, chain, options, target, calldata, wallet) {
+    const gatewayConfig = chain.contracts?.AxelarGateway;
+
+    if (!gatewayConfig?.address || gatewayConfig.connectionType !== 'consensus') {
+        return undefined;
+    }
+
+    if (target.toLowerCase() !== gatewayConfig.address.toLowerCase()) {
+        return undefined;
+    }
+
+    const upgradable = new ethers.utils.Interface(IUpgradable.abi);
+
+    if (calldata.slice(0, 10) !== upgradable.getSighash('upgrade')) {
+        return undefined;
+    }
+
+    const [newImplementation] = upgradable.decodeFunctionData('upgrade', calldata);
+    const provider = wallet.provider;
+
+    const [newAuth, liveAuth] = await Promise.all([
+        new Contract(newImplementation, AxelarGateway.abi, provider).authModule(),
+        new Contract(gatewayConfig.address, AxelarGateway.abi, provider).authModule(),
+    ]);
+
+    printInfo('Live auth module', liveAuth);
+    printInfo('Implementation auth module', newAuth);
+
+    if (newAuth.toLowerCase() === liveAuth.toLowerCase()) {
+        return undefined;
+    }
+
+    printWarn('This upgrade replaces the gateway auth module', `${liveAuth} -> ${newAuth}`);
+
+    await assertAuthReady(axelar, chain, options, {
+        auth: newAuth,
+        proxy: gatewayConfig.address,
+        seeder: options.authSeeder || wallet.address,
+        provider,
+    });
+
+    return newAuth;
+}
+
+async function processCommand(axelar, chain, _chains, action, options) {
     if (!isEvmChain(chain)) {
         throw new Error(`Chain "${chain?.name}" is not an EVM chain (chainType must be "evm")`);
     }
@@ -527,6 +575,8 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error(`TimeLock proposal is not yet eligible for execution. ETA: ${etaToDate(eta)}`);
             }
 
+            const swappedAuth = await assertGatewayUpgradeAuthReady(axelar, chain, options, target, calldata, wallet);
+
             if (prompt('Proceed with executing this proposal?', options.yes)) {
                 throw new Error('Proposal execution cancelled.');
             }
@@ -536,6 +586,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const tx = await governance.executeProposal(target, calldata, nativeValue, { value: nativeValue, ...gasOptions });
             await handleTransactionWithEvent(tx, chain, governance, 'Proposal execution', 'ProposalExecuted');
             printInfo('Proposal executed.');
+
+            if (swappedAuth) {
+                chain.contracts.AxelarGateway.authModule = swappedAuth;
+                delete chain.contracts.AxelarGateway.pendingAuthModule;
+                printInfo('Recorded new gateway auth module', swappedAuth);
+            }
+
             return null;
         }
 
@@ -563,6 +620,9 @@ async function processCommand(_axelar, chain, _chains, action, options) {
                 throw new Error('Operator proposal is not approved. Submit (or wait for) approval before executing.');
             }
 
+            // the operator path skips the timelock, so guard the auth swap here too
+            const swappedAuth = await assertGatewayUpgradeAuthReady(axelar, chain, options, target, calldata, wallet);
+
             if (prompt('Proceed with executing this operator proposal?', options.yes)) {
                 throw new Error('Operator proposal execution cancelled.');
             }
@@ -572,6 +632,13 @@ async function processCommand(_axelar, chain, _chains, action, options) {
             const tx = await governance.executeOperatorProposal(target, calldata, nativeValue, { value: nativeValue, ...gasOptions });
             await handleTransactionWithEvent(tx, chain, governance, 'Operator proposal execution', 'OperatorProposalExecuted');
             printInfo('Operator proposal executed.');
+
+            if (swappedAuth) {
+                chain.contracts.AxelarGateway.authModule = swappedAuth;
+                delete chain.contracts.AxelarGateway.pendingAuthModule;
+                printInfo('Recorded new gateway auth module', swappedAuth);
+            }
+
             return null;
         }
 
@@ -792,6 +859,12 @@ if (require.main === module) {
     program
         .command('execute')
         .description('Execute a scheduled proposal')
+        .addOption(
+            new Option(
+                '--authSeeder <authSeeder>',
+                'wallet expected to hold a replacement gateway auth module until the handoff (defaults to the signer)',
+            ),
+        )
         .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
         .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
         .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
@@ -873,6 +946,12 @@ if (require.main === module) {
     program
         .command('execute-operator-proposal')
         .description('Execute an approved operator proposal (AxelarServiceGovernance only)')
+        .addOption(
+            new Option(
+                '--authSeeder <authSeeder>',
+                'wallet expected to hold a replacement gateway auth module until the handoff (defaults to the signer)',
+            ),
+        )
         .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
         .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
         .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))

@@ -7,7 +7,7 @@ const {
     ContractFactory,
     Contract,
     Wallet,
-    utils: { defaultAbiCoder, getContractAddress, AddressZero },
+    utils: { defaultAbiCoder, getContractAddress, keccak256, AddressZero },
     getDefaultProvider,
 } = ethers;
 
@@ -35,6 +35,9 @@ const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifact
 const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
 const TokenDeployer = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json');
+
+// AxelarAuthWeighted rejects a proof whose operator set is this many epochs behind the current one
+const OLD_KEY_RETENTION = 16;
 
 async function checkKeyRotation(axelar, chain) {
     let resp;
@@ -78,10 +81,130 @@ function getProxyParams(governance, mintLimiter) {
     return defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
 }
 
+function validateAuthModuleOptions({ authModule, reuseProxy, reuseAuth, skipExisting }) {
+    if (!authModule) {
+        return;
+    }
+
+    if (!reuseProxy) {
+        throw new Error('--authModule requires --reuseProxy');
+    }
+
+    if (reuseAuth) {
+        throw new Error('--authModule cannot be combined with --reuseAuth');
+    }
+
+    // skipExisting would reuse the recorded implementation, which is bound to the old auth
+    if (skipExisting) {
+        throw new Error('--authModule cannot be combined with --skipExisting');
+    }
+}
+
+function authReadinessProblems({ auth, codehash, expectedCodehash, owner, proxy, seeder, currentEpoch, liveOperatorsEpoch }) {
+    const problems = [];
+    const isSame = (a, b) => Boolean(a) && Boolean(b) && a.toLowerCase() === b.toLowerCase();
+
+    if (codehash !== expectedCodehash) {
+        problems.push(`codehash is ${codehash}, expected ${expectedCodehash}`);
+    }
+
+    // only the owner can register operator sets, and the proxy can only do so inside a batch that already validated
+    if (!isSame(owner, proxy) && !isSame(owner, seeder)) {
+        problems.push(`owner ${owner} is neither the gateway proxy ${proxy} nor the seeding wallet ${seeder}`);
+    }
+
+    if (currentEpoch === 0) {
+        problems.push('it is unseeded; run `consensus-auth seed`');
+    } else if (liveOperatorsEpoch === 0) {
+        problems.push('the live operator set is not registered; run `consensus-auth seed` again');
+    } else if (currentEpoch - liveOperatorsEpoch >= OLD_KEY_RETENTION) {
+        problems.push(
+            `the live operator set is ${currentEpoch - liveOperatorsEpoch} epochs behind, past OLD_KEY_RETENTION of ${OLD_KEY_RETENTION}`,
+        );
+    }
+
+    return problems;
+}
+
+// An implementation's authModule is immutable, so an upgrade routes every inbound batch through it the moment it lands.
+// A batch that fails validateProof cannot be repaired by another batch, so this has to be checked before the upgrade.
+async function assertAuthReady(axelar, chain, options, { auth, proxy, seeder, provider }) {
+    if (!(await isContract(auth, provider))) {
+        throw new Error(`Auth module ${auth} has no code`);
+    }
+
+    const contract = new Contract(auth, AxelarAuthWeighted.abi, provider);
+
+    const { params } = await getAuthParams(axelar, chain.axelarId, options);
+    const liveOperatorsHash = keccak256(params[params.length - 1]);
+
+    const [codehash, expectedCodehash, owner, currentEpoch, liveOperatorsEpoch] = await Promise.all([
+        getBytecodeHash(auth, chain.axelarId, provider),
+        getBytecodeHash(AxelarAuthWeighted, chain.axelarId),
+        contract.owner(),
+        contract.currentEpoch(),
+        contract.epochForHash(liveOperatorsHash),
+    ]);
+
+    printInfo('Auth module', auth);
+    printInfo('Auth owner', owner);
+    printInfo('Auth currentEpoch', currentEpoch.toString());
+    printInfo('Live operator set hash', liveOperatorsHash);
+    printInfo('Live operator set epoch', liveOperatorsEpoch.toString());
+
+    const problems = authReadinessProblems({
+        auth,
+        codehash,
+        expectedCodehash,
+        owner,
+        proxy,
+        seeder,
+        currentEpoch: currentEpoch.toNumber(),
+        liveOperatorsEpoch: liveOperatorsEpoch.toNumber(),
+    });
+
+    if (problems.length > 0) {
+        problems.forEach((problem) => printError(`Auth module ${auth}`, problem));
+        throw new Error(`Auth module ${auth} is not ready; do not upgrade the gateway`);
+    }
+
+    printInfo('Auth module ready', auth);
+}
+
+// `upgrade()` is onlyGovernance, so a direct call only lands where the wallet itself is governance.
+async function assertCanUpgradeDirectly(chain, gateway, wallet) {
+    let governance;
+
+    try {
+        governance = await gateway.governance();
+    } catch (e) {
+        // pre-governance implementations do not expose it, and those are owned by the wallet
+        printWarn('Gateway does not expose governance()', 'assuming a direct upgrade is allowed');
+        return;
+    }
+
+    if (governance.toLowerCase() === wallet.address.toLowerCase()) {
+        return;
+    }
+
+    if (await isContract(governance, wallet.provider)) {
+        throw new Error(
+            `Gateway governance is the contract ${governance}, so upgrade() cannot be called from ${wallet.address}. ` +
+                `Route it through governance instead:\n` +
+                `  node evm/governance.js schedule upgrade <activationTime> -n ${chain.axelarId} --targetContractName AxelarGateway\n` +
+                `  node evm/governance.js execute -n ${chain.axelarId} --target ${gateway.address} --calldata <upgrade calldata>`,
+        );
+    }
+
+    throw new Error(`Gateway governance is ${governance}, not the wallet ${wallet.address}; upgrade() would revert NotGovernance`);
+}
+
 async function deploy(axelar, chain, chains, options) {
     const { privateKey, reuseProxy, reuseHelpers, reuseAuth, verify, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
+
+    validateAuthModuleOptions(options);
 
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -179,7 +302,21 @@ async function deploy(axelar, chain, chains, options) {
 
     contractConfig.deployer = wallet.address;
 
-    if (options.skipExisting && contractConfig.authModule) {
+    if (options.authModule) {
+        // the gateway constructor reverts InvalidAuthModule on a codeless address
+        if (!(await isContract(options.authModule, wallet.provider))) {
+            throw new Error(`Auth module ${options.authModule} has no code; deploy it before the implementation`);
+        }
+
+        const deployedHash = await getBytecodeHash(options.authModule, chain.axelarId, provider);
+        const expectedHash = await getBytecodeHash(AxelarAuthWeighted, chain.axelarId);
+
+        if (deployedHash !== expectedHash) {
+            throw new Error(`Auth module ${options.authModule} codehash is ${deployedHash}, expected ${expectedHash}`);
+        }
+
+        auth = authFactory.attach(options.authModule);
+    } else if (options.skipExisting && contractConfig.authModule) {
         auth = authFactory.attach(contractConfig.authModule);
     } else if (reuseProxy && (reuseHelpers || reuseAuth)) {
         auth = authFactory.attach(await gateway.authModule());
@@ -282,7 +419,10 @@ async function deploy(axelar, chain, chains, options) {
         });
     }
 
-    if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
+    if (options.authModule) {
+        // handing ownership over now would make the auth unseedable; `consensus-auth handoff` does it later
+        printInfo('Skipping auth ownership transfer', 'run `consensus-auth seed` then `consensus-auth handoff` before the upgrade');
+    } else if (!(reuseProxy && (reuseHelpers || reuseAuth))) {
         printInfo('Transferring auth ownership');
         await auth.transferOwnership(gateway.address, { gasLimit: 5e6, ...gasOptions }).then((tx) => tx.wait(chain.confirmations));
         printInfo('Transferred auth ownership. All done!');
@@ -343,8 +483,13 @@ async function deploy(axelar, chain, chains, options) {
     const authOwner = await auth.owner();
 
     if (authOwner !== gateway.address) {
-        printError(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
-        error = true;
+        // an --authModule retrofit hands ownership over later, when the auth is seeded
+        if (options.authModule) {
+            printWarn(`Auth module owner is ${authOwner}, not the proxy yet. Run \`consensus-auth handoff\` to hand ownership over.`);
+        } else {
+            printError(`ERROR: Auth module owner is set to ${authOwner} instead of proxy address ${gateway.address}`);
+            error = true;
+        }
     }
 
     const gatewayImplementation = await gateway.implementation();
@@ -364,7 +509,13 @@ async function deploy(axelar, chain, chains, options) {
     contractConfig.address = gateway.address;
     contractConfig.implementation = implementation.address;
     contractConfig.implementationCodehash = implementationCodehash;
-    contractConfig.authModule = auth.address;
+    if (options.authModule) {
+        // the proxy keeps using the live auth until the upgrade executes, so do not record this one as current yet
+        contractConfig.pendingAuthModule = auth.address;
+    } else {
+        contractConfig.authModule = auth.address;
+    }
+
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
@@ -389,7 +540,39 @@ async function deploy(axelar, chain, chains, options) {
     }
 }
 
-async function upgrade(_, chain, options) {
+// The auth binding lives in the implementation, so --authModule is a cross-check here rather than an override.
+async function assertUpgradeAuthReady(axelar, chain, options, gateway, implementation, wallet) {
+    const provider = wallet.provider;
+
+    const [newAuth, liveAuth] = await Promise.all([
+        new Contract(implementation, AxelarGateway.abi, provider).authModule(),
+        gateway.authModule(),
+    ]);
+
+    printInfo('Live auth module', liveAuth);
+    printInfo('Implementation auth module', newAuth);
+
+    if (options.authModule && options.authModule.toLowerCase() !== newAuth.toLowerCase()) {
+        throw new Error(`Implementation ${implementation} is bound to auth ${newAuth}, not the --authModule ${options.authModule}`);
+    }
+
+    if (newAuth.toLowerCase() === liveAuth.toLowerCase()) {
+        return undefined;
+    }
+
+    printWarn('This upgrade replaces the auth module', `${liveAuth} -> ${newAuth}`);
+
+    await assertAuthReady(axelar, chain, options, {
+        auth: newAuth,
+        proxy: gateway.address,
+        seeder: options.authSeeder || wallet.address,
+        provider,
+    });
+
+    return newAuth;
+}
+
+async function upgrade(axelar, chain, options) {
     const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
 
@@ -407,10 +590,14 @@ async function upgrade(_, chain, options) {
     let governance = options.governance || chain.contracts.InterchainGovernance?.address;
     let mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address;
     let setupParams = '0x';
+    let swappedAuth;
     contractConfig.governance = governance;
     contractConfig.mintLimiter = mintLimiter;
 
     if (!offline) {
+        await assertCanUpgradeDirectly(chain, gateway, wallet);
+        swappedAuth = await assertUpgradeAuthReady(axelar, chain, options, gateway, contractConfig.implementation, wallet);
+
         if (governance && !(await isContract(governance, provider))) {
             throw new Error('governance address is not a contract');
         }
@@ -486,6 +673,12 @@ async function upgrade(_, chain, options) {
         }
 
         printInfo('Upgraded!');
+
+        if (swappedAuth) {
+            contractConfig.authModule = swappedAuth;
+            delete contractConfig.pendingAuthModule;
+            printInfo('Recorded new auth module', swappedAuth);
+        }
     }
 }
 
@@ -514,6 +707,18 @@ async function programHandler() {
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
     program.addOption(new Option('--reuseAuth', 'reuse auth module contract for new implementation deployment'));
+    program.addOption(
+        new Option(
+            '--authModule <authModule>',
+            'bind the implementation to this already deployed auth module instead of the live one (requires --reuseProxy)',
+        ),
+    );
+    program.addOption(
+        new Option(
+            '--authSeeder <authSeeder>',
+            'wallet expected to hold a retrofit auth module until the handoff (defaults to the signer)',
+        ),
+    );
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
     program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));
@@ -535,4 +740,8 @@ if (require.main === module) {
 module.exports = {
     deployLegacyGateway: deploy,
     getAuthParams,
+    validateAuthModuleOptions,
+    authReadinessProblems,
+    assertAuthReady,
+    OLD_KEY_RETENTION,
 };
