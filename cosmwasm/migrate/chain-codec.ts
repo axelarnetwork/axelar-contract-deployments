@@ -172,7 +172,9 @@ async function migrate(client: ClientManager, config: ConfigManager, options: Mi
             }
 
             const proposalId = await submitProposal(client, config, options, migrateMsgs, fee);
-            printInfo('Migration proposal successfully submitted', proposalId);
+            if (proposalId) {
+                printInfo('Migration proposal successfully submitted', proposalId);
+            }
         }
     } catch (error) {
         console.error(error);

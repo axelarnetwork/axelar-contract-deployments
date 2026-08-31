@@ -65,7 +65,11 @@ jobs:
                 "chainId": 31337,
                 "rpc": "http://127.0.0.1:8545",
                 "tokenSymbol": "TEST",
+                "decimals": 18,
                 "chainType": "evm",
+                "explorer": {},
+                "finality": "finalized",
+                "approxFinalityWaitTime": 0,
                 "contracts": {
                   "AxelarGasService": {
                     "collector": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
@@ -93,11 +97,22 @@ jobs:
               "adminAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
               "multisigProverAdminAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
               "contracts": {
+                "AxelarnetGateway": {
+                  "address": "axelar18vsne7lns36uvm8gv2cv5jl2lghts0xm7dvzpqzn70dl56gk9hvsgu9sqg"
+                },
                 "InterchainTokenService": {
                   "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
                 }
               },
-              "axelarId": "axelar"
+              "axelarId": "axelar",
+              "rpc": "http://127.0.0.1:26657",
+              "gasPrice": "0.007uaxl",
+              "gasLimit": "400000",
+              "govProposalInstantiateAddresses": [],
+              "govProposalDepositAmount": "100000000",
+              "govProposalExpeditedDepositAmount": "100000000",
+              "chainId": "axelar-local",
+              "unitDenom": "uaxl"
             }
           }' > ./axelar-chains-config/info/local.json
 
