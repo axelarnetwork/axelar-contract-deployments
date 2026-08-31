@@ -946,6 +946,12 @@ if (require.main === module) {
     program
         .command('execute-operator-proposal')
         .description('Execute an approved operator proposal (AxelarServiceGovernance only)')
+        .addOption(
+            new Option(
+                '--authSeeder <authSeeder>',
+                'wallet expected to hold a replacement gateway auth module until the handoff (defaults to the signer)',
+            ),
+        )
         .addOption(new Option('--target <target>', 'target address (required if --proposal not provided)'))
         .addOption(new Option('--calldata <calldata>', 'call data (required if --proposal not provided)'))
         .addOption(new Option('--proposal <proposal>', 'governance proposal payload (alternative to target/calldata)'))
