@@ -620,6 +620,9 @@ async function processCommand(axelar, chain, _chains, action, options) {
                 throw new Error('Operator proposal is not approved. Submit (or wait for) approval before executing.');
             }
 
+            // the operator path skips the timelock, so guard the auth swap here too
+            const swappedAuth = await assertGatewayUpgradeAuthReady(axelar, chain, options, target, calldata, wallet);
+
             if (prompt('Proceed with executing this operator proposal?', options.yes)) {
                 throw new Error('Operator proposal execution cancelled.');
             }
@@ -629,6 +632,13 @@ async function processCommand(axelar, chain, _chains, action, options) {
             const tx = await governance.executeOperatorProposal(target, calldata, nativeValue, { value: nativeValue, ...gasOptions });
             await handleTransactionWithEvent(tx, chain, governance, 'Operator proposal execution', 'OperatorProposalExecuted');
             printInfo('Operator proposal executed.');
+
+            if (swappedAuth) {
+                chain.contracts.AxelarGateway.authModule = swappedAuth;
+                delete chain.contracts.AxelarGateway.pendingAuthModule;
+                printInfo('Recorded new gateway auth module', swappedAuth);
+            }
+
             return null;
         }
 

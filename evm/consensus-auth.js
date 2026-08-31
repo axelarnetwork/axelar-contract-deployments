@@ -364,7 +364,9 @@ async function handoff(axelar, chain, chains, options) {
     printInfo('Transfer ownership tx', tx.hash);
     await tx.wait(chain.confirmations);
 
-    await reportState(auth, proxy);
+    if (!(await reportState(auth, proxy))) {
+        throw new Error(`Ownership did not transfer to ${proxy}; auth is not ready, run \`verify\``);
+    }
 
     printInfo('Auth module ready', address);
 }
