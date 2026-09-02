@@ -236,6 +236,7 @@ async function coordinatorToVersion2_1_1(
         codeId: codeId,
         deposit: options.deposit,
         standardProposal: options.standardProposal,
+        generateOnly: options.generateOnly,
         fetchCodeId: false,
         address: coordinatorAddress,
     };
@@ -249,8 +250,10 @@ async function coordinatorToVersion2_1_1(
                 await client.migrate(senderAddress, coordinatorAddress, Number(codeId), migrationMsg, fee);
                 printInfo('Migration succeeded');
             } else {
-                await submitProposal(client, config, migrateOptions, proposal, fee);
-                printInfo('Migration proposal successfully submitted');
+                const proposalId = await submitProposal(client, config, migrateOptions, proposal, fee);
+                if (proposalId) {
+                    printInfo('Migration proposal successfully submitted', proposalId);
+                }
             }
         } catch (e) {
             printError(`Error: ${e}`);

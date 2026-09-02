@@ -19,7 +19,7 @@ async function migrate(
     _args?: string[],
     fee?: string | StdFee,
 ): Promise<void> {
-    const senderAddress = client.accounts[0].address;
+    const senderAddress = options.direct ? client.accounts[0].address : '';
     const contractAddress = options.address ?? config.axelar.contracts[options.contractName]?.address;
 
     const contractInfo = await getContractInfo(client, contractAddress);
