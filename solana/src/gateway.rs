@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use anchor_lang::InstructionData;
+use anchor_lang::{AnchorDeserialize, InstructionData};
 use base64::Engine as _;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
@@ -10,6 +10,7 @@ use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde_json::json;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
+use solana_axelar_its::encoding::{HubMessage, Message as ItsMessage};
 use solana_axelar_std::PayloadType;
 use solana_axelar_std::U256;
 use solana_axelar_std::execute_data::{
@@ -977,7 +978,7 @@ async fn submit_proof(
 }
 
 fn execute(
-    _fee_payer: &Pubkey,
+    fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1011,7 +1012,7 @@ fn execute(
     })?;
 
     if destination_address == solana_axelar_its::id() {
-        return its_gmp_execute(_fee_payer, message, payload);
+        its_gmp_execute(fee_payer, message, payload)
     } else if destination_address == solana_axelar_governance::id() {
         eyre::bail!(
             "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
@@ -1335,24 +1336,12 @@ fn its_gmp_execute(
     message: Message,
     payload: Vec<u8>,
 ) -> eyre::Result<Vec<Instruction>> {
-    use anchor_lang::AnchorDeserialize;
-    use solana_axelar_its::encoding::{HubMessage, Message as ItsMessage};
-
     let hub_message = HubMessage::try_from_slice(&payload)
         .map_err(|e| eyre!("payload is not a borsh-encoded ITS HubMessage: {e}"))?;
-    let inner = match hub_message {
-        HubMessage::ReceiveFromHub { message, .. } => message,
-        _ => eyre::bail!("an inbound ITS payload must be HubMessage::ReceiveFromHub"),
+    let HubMessage::ReceiveFromHub { message: inner, .. } = hub_message else {
+        eyre::bail!("an inbound ITS payload must be HubMessage::ReceiveFromHub");
     };
-    // Both variants share the ITS account block below and differ only in the
-    // trailing accounts their handler pops off `remaining_accounts`.
-    let token_id = match &inner {
-        ItsMessage::DeployInterchainToken(deploy) => deploy.token_id,
-        ItsMessage::InterchainTransfer(transfer) => transfer.token_id,
-        ItsMessage::LinkToken(_) => {
-            eyre::bail!("LinkToken GMP execution is not implemented")
-        }
-    };
+    let token_id = its_message_token_id(&inner)?;
 
     let token_2022 = Pubkey::from_str(TOKEN_2022_ID)?;
     let mpl_metadata = Pubkey::from_str(MPL_TOKEN_METADATA_ID)?;
@@ -1363,10 +1352,6 @@ fn its_gmp_execute(
     let (token_mint, _) = crate::its::find_interchain_token_pda(&its_root_pda, &token_id);
     let token_manager_ata =
         crate::its::get_associated_token_address(&token_manager_pda, &token_mint, &token_2022);
-    let (metadata_account, _) = Pubkey::find_program_address(
-        &[b"metadata", mpl_metadata.as_ref(), token_mint.as_ref()],
-        &mpl_metadata,
-    );
 
     let cmd_id = command_id(&message.cc_id.chain, &message.cc_id.id);
     let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&cmd_id);
@@ -1404,22 +1389,55 @@ fn its_gmp_execute(
         AccountMeta::new_readonly(its_event_authority, false),
         AccountMeta::new_readonly(solana_axelar_its::id(), false),
     ];
+    accounts.extend(its_handler_extra_accounts(
+        inner,
+        &token_mint,
+        &token_2022,
+        &mpl_metadata,
+    )?);
 
-    // Trailing accounts, popped off `remaining_accounts` by the specific handler.
+    Ok(vec![Instruction {
+        program_id: solana_axelar_its::id(),
+        accounts,
+        data: solana_axelar_its::instruction::Execute { message, payload }.data(),
+    }])
+}
+
+/// The token every supported ITS handler resolves its accounts from.
+fn its_message_token_id(inner: &ItsMessage) -> eyre::Result<[u8; 32]> {
+    match inner {
+        ItsMessage::DeployInterchainToken(deploy) => Ok(deploy.token_id),
+        ItsMessage::InterchainTransfer(transfer) => Ok(transfer.token_id),
+        ItsMessage::LinkToken(_) => eyre::bail!("LinkToken GMP execution is not implemented"),
+    }
+}
+
+/// Trailing accounts the specific ITS handler pops off `remaining_accounts`.
+/// The shared ITS account block is the same for every variant.
+fn its_handler_extra_accounts(
+    inner: ItsMessage,
+    token_mint: &Pubkey,
+    token_2022: &Pubkey,
+    mpl_metadata: &Pubkey,
+) -> eyre::Result<Vec<AccountMeta>> {
     match inner {
         ItsMessage::DeployInterchainToken(deploy) => {
             if deploy.minter.is_some() {
                 eyre::bail!("DeployInterchainToken with a minter is not implemented");
             }
-            accounts.extend(
+            let (metadata_account, _) = Pubkey::find_program_address(
+                &[b"metadata", mpl_metadata.as_ref(), token_mint.as_ref()],
+                mpl_metadata,
+            );
+            Ok(
                 solana_axelar_its::instructions::gmp::execute_deploy_interchain_token_extra_accounts(
                     solana_sdk::sysvar::instructions::id(),
-                    mpl_metadata,
+                    *mpl_metadata,
                     metadata_account,
                     None,
                     None,
                 ),
-            );
+            )
         }
         ItsMessage::InterchainTransfer(transfer) => {
             if transfer.data.is_some() {
@@ -1433,22 +1451,16 @@ fn its_gmp_execute(
             let destination = Pubkey::new_from_array(destination);
             // A plain wallet recipient is its own ATA authority.
             let destination_ata =
-                crate::its::get_associated_token_address(&destination, &token_mint, &token_2022);
-            accounts.extend(
+                crate::its::get_associated_token_address(&destination, token_mint, token_2022);
+            Ok(
                 solana_axelar_its::instructions::gmp::execute_interchain_transfer_extra_accounts(
                     destination,
                     destination,
                     destination_ata,
                     None,
                 ),
-            );
+            )
         }
-        ItsMessage::LinkToken(_) => unreachable!("rejected above"),
+        ItsMessage::LinkToken(_) => eyre::bail!("LinkToken GMP execution is not implemented"),
     }
-
-    Ok(vec![Instruction {
-        program_id: solana_axelar_its::id(),
-        accounts,
-        data: solana_axelar_its::instruction::Execute { message, payload }.data(),
-    }])
 }

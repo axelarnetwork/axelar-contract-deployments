@@ -919,8 +919,7 @@ async function estimateITSFee(chain, destinationChain, env, eventType, gasValue,
     // A JSON number past 2^53 has already lost precision, and calling .toString() on it yields
     // scientific notation ("8.5e+23") which BigNumber.from rejects. Route it through BigInt so the
     // value is at least a valid integer string rather than crashing the caller.
-    const estimate =
-        typeof rawEstimate === 'number' && !Number.isSafeInteger(rawEstimate) ? BigInt(rawEstimate).toString() : rawEstimate;
+    const estimate = typeof rawEstimate === 'number' && !Number.isSafeInteger(rawEstimate) ? BigInt(rawEstimate).toString() : rawEstimate;
 
     const ethValue = scaleGasValue(chain, estimate, false);
     return { gasValue: ethValue, gasFeeValue: estimate };
