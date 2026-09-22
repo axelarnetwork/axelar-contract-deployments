@@ -396,6 +396,7 @@ if (require.main === module) {
         .description('Deploy remote interchain token')
         .argument('<destinationChain>', 'Destination chain')
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default('auto'))
+        .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .action((destinationChain, options, cmd) => {
             main(cmd.name(), [destinationChain], options);
         });

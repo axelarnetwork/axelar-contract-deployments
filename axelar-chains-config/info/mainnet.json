@@ -272,13 +272,15 @@
           "codehash": "0x297f8236f2b5cb952a7dbc1fa87a54b573159e455055d67c6c1a362e2b2c2fab"
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 18,
-          "originChain": "xrpl-evm",
-          "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
+          "address": "0x2CD018Af7bA29bce4B707DE1e00e28d55b2B2936",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843. Destination-only in the fleet; unfunded by design."
         }
       },
       "explorer": {
@@ -412,13 +414,15 @@
           "codehash": "0x7ae5bcb4ec7e41574c0f2f44dda624a45ea15ced386ab507551e55e8613c8d9d"
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 18,
-          "originChain": "xrpl-evm",
-          "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f",
-          "notes": "Canonical mainnet AXE (home xrpl-evm, salt axe_AXE_mainnet_v2)"
+          "address": "0x2CD018Af7bA29bce4B707DE1e00e28d55b2B2936",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843. Home chain; 1B minted here."
         }
       },
       "explorer": {
@@ -3010,20 +3014,19 @@
           "tokenManagerType": "mint_burn"
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 6,
-          "originChain": "xrpl-evm",
-          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
-          "saltKey": "axe_AXE_mainnet_v2",
-          "address": "0xa024a51095c47b129d525084b4337830b02a6bcd5aa9279908c3883369e10ff6",
-          "typeArgument": "0xa024a51095c47b129d525084b4337830b02a6bcd5aa9279908c3883369e10ff6::axe::AXE",
-          "notes": "Canonical AXE v2 (home xrpl-evm), auto-deployed on Sui by ITS during receive_deploy_interchain_token. TreasuryCap held by ITS. Decimals are Hub-canonical (6); ITS scales between chains. axe reads objects.TokenId as the 32-byte Axelar tokenId (NOT a Sui object id) per resolve_sui_axe_token.",
+          "address": "0x65a4c9cb7aaa01b6909b21fc6570c384e5cc82a9b75e0ed0badab700d7f1ed6c",
+          "typeArgument": "0x65a4c9cb7aaa01b6909b21fc6570c384e5cc82a9b75e0ed0badab700d7f1ed6c::axe::AXE",
           "objects": {
-            "TokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
-            "Metadata": "0xac2ef6d719d90015887c40ae29f4bfa02c60b66f2cafc895d7fe853f098a3078"
-          }
+            "TokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810"
+          },
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843. Registered by manually executing receive_deploy_interchain_token<T>, which consumed the pre-published zero-supply unregistered (AXE,6) coin - the relayer PTB tried give_unregistered_coin first and hit EFieldAlreadyExists. axe reads objects.TokenId as the 32-byte Axelar tokenId."
         }
       }
     },
@@ -3141,16 +3144,16 @@
           "decimals": 18
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 18,
-          "originChain": "xrpl-evm",
-          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
-          "saltKey": "axe_AXE_mainnet_v2",
-          "deployedViaTx": "0x24329a92c58cc0cf6d8eff90df0a60aa83f3401905c41225e394058e312631f7",
-          "notes": "Canonical single AXE v2 (home xrpl-evm), 18 decimals on Stellar. Reused by load tests via chains.stellar.contracts.AXE.tokenId.",
-          "address": "CCE2Q5EFPFACGX3LCQ7MCFVEJZYXDCDQ2EFFBT5D2QI47N6TRGA2EC6N"
+          "address": "CCIPXIXFEUM6QKFOLO57JH4MOFMWRBI2FPTD3QFAVXJJ2DUPG2MZ5KAW",
+          "tokenManager": "CBWHE2IRB5KPOI23O443QMK3SVV2C46LR3UEAXIPGAKMZXHSZA3GIC36",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843."
         }
       },
       "approxFinalityWaitTime": 1,
@@ -3503,16 +3506,15 @@
           "decimals": 8
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 6,
-          "originChain": "xrpl-evm",
-          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
-          "saltKey": "axe_AXE_mainnet_v2",
-          "remoteDeployTransactionHash": "0xffa3f14416a514a9ed1fd55f049e1774c87e54ca93f5bfc45e75fb945f8c1cc2",
-          "notes": "Canonical AXE v2 (home xrpl-evm), remote-registered to Hedera HTS via deployRemoteInterchainToken. Supply seeded by interchainTransfer from xrpl-evm. Hedera uses 6 decimals (HTS native) — ITS-side decimal coercion handles the delta vs xrpl-evm's 18.",
-          "address": "0x0000000000000000000000000000000000a09b89"
+          "address": "0x0000000000000000000000000000000000A60D5E",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843. HTS token 0.0.10882398; deploy+transfer legs were relayer EstimationReverted and replayed by hand via gateway.js execute."
         }
       }
     },
@@ -3720,15 +3722,15 @@
           "decimals": 18
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 18,
-          "originChain": "xrpl-evm",
-          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
-          "saltKey": "axe_AXE_mainnet_v2",
-          "notes": "Canonical single AXE v2 (home xrpl-evm), remote-registered via deployRemoteInterchainToken. Reused by load tests via chains.hyperliquid.contracts.AXE.tokenId.",
-          "address": "0x54BEdCF8fc56faf4FbffF88DBb3efb9BDa0c655f"
+          "address": "0x2CD018Af7bA29bce4B707DE1e00e28d55b2B2936",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843."
         }
       }
     },
@@ -3840,16 +3842,15 @@
           "decimals": 18
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 18,
-          "originChain": "xrpl-evm",
-          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
-          "saltKey": "axe_AXE_mainnet_v2",
-          "remoteDeployTransactionHash": "0xe0f430048f0374ee62345e8b3108864edf26a65b234e3c758f378c65ffa3c5dc",
-          "notes": "Canonical AXE v2 (home xrpl-evm), remote-registered via deployRemoteInterchainToken. Supply seeded by interchainTransfer from xrpl-evm.",
-          "address": "0x54bedcf8fc56faf4fbfff88dbb3efb9bda0c655f"
+          "address": "0x2CD018Af7bA29bce4B707DE1e00e28d55b2B2936",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843."
         }
       }
     },
@@ -3904,17 +3905,17 @@
           "version": "1.1.0"
         },
         "AXE": {
-          "tokenId": "0xbe1d7843a1110e56b4e14d8b6c78becf8fc328e44144266c148fffcf2a9f140e",
-          "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "tokenId": "0xb2d19ee93c217a03305d7286ca896a7132c2e23a36cae0b63539e308b7987810",
           "name": "AXE",
           "symbol": "AXE",
+          "originChain": "avalanche",
+          "salt": "0x0c198226f1a20dc54d3378c6483543377e23ec0a9e5ff35507f5dfe77f91dd39",
+          "saltKey": "axe_AXE_mainnet_v3",
           "decimals": 6,
-          "originChain": "xrpl-evm",
-          "salt": "0x460e1d30e3ac65916d1044e75c5f78f8db9a6ccd2719b6163db9fe53e805d3ed",
-          "saltKey": "axe_AXE_mainnet_v2",
-          "deployedViaTx": "0x33f71a8cb101c9662326e24f4739a5eac36e24bc766a15732989f57666dac642",
-          "notes": "Canonical single AXE v2 (home xrpl-evm). Solana mint is 6 decimals (ITS-assigned). Reused by load tests via chains.solana.contracts.AXE.tokenId.",
-          "address": "BmdKnsEhFC2oQ8KqL2XumXm2Xqjngbt8bgzkvBzXMSQ7"
+          "address": "J2Ft2syQabJK4ngmemNr1FPbUpf61CWz3KMbM55pR649",
+          "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "mintAuthority": "FCFhkvCUtfUFNpVztnqNKpjCsoKmWWL5efoGEBcBTwM5",
+          "notes": "Canonical AXE v3 (home avalanche, deployer+minter 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe mainnet ITS route fleet; replaces v2 0xbe1d7843. Token-2022 mint; mintAuthority is the ITS TokenManager PDA."
         }
       }
     }
