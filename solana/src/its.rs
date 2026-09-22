@@ -51,18 +51,18 @@ struct FlowSlot {
     _epoch: u64,
 }
 
-fn find_its_root_pda() -> (Pubkey, u8) {
+pub(crate) fn find_its_root_pda() -> (Pubkey, u8) {
     Pubkey::find_program_address(&[ITS_SEED], &solana_axelar_its::id())
 }
 
-fn find_token_manager_pda(its_root_pda: &Pubkey, token_id: &[u8; 32]) -> (Pubkey, u8) {
+pub(crate) fn find_token_manager_pda(its_root_pda: &Pubkey, token_id: &[u8; 32]) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[TOKEN_MANAGER_SEED, its_root_pda.as_ref(), token_id],
         &solana_axelar_its::id(),
     )
 }
 
-fn find_interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pubkey, u8) {
+pub(crate) fn find_interchain_token_pda(its_root_pda: &Pubkey, token_id: &[u8]) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[INTERCHAIN_TOKEN_SEED, its_root_pda.as_ref(), token_id],
         &solana_axelar_its::id(),
@@ -121,7 +121,7 @@ fn linked_token_id(sender: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
     interchain_token_id_internal(&deploy_salt)
 }
 
-fn get_associated_token_address(
+pub(crate) fn get_associated_token_address(
     wallet_address: &Pubkey,
     token_mint_address: &Pubkey,
     token_program_id: &Pubkey,
