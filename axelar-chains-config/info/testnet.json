@@ -126,13 +126,13 @@
           "codehash": "0x0afcb3c43205f100e66dfb328cde7c518026acf060e1b2d287c9b412f9546823"
         },
         "AXE": {
-          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "tokenId": "0x7ad51200f49ebfc24aeaf79490ed545f1d803e1cf4ba8fb09db88640b9781cb0",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 18,
-          "originChain": "monad-3",
-          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3)"
+          "originChain": "avalanche",
+          "address": "0x085A31253FbD07B93711acc24922ACaBa7982f1b",
+          "notes": "Canonical testnet AXE v3 (home avalanche, salt keccak256('axe_AXE_testnet_v3'), deployer 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe testnet ITS route fleet. Supply seeded from avalanche by interchainTransfer."
         }
       },
       "explorer": {
@@ -259,13 +259,13 @@
           "codehash": "0x989947b1646890093db39a46aad056df049d599345771681e66f7ececbe9f4db"
         },
         "AXE": {
-          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "tokenId": "0x7ad51200f49ebfc24aeaf79490ed545f1d803e1cf4ba8fb09db88640b9781cb0",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 18,
-          "originChain": "monad-3",
-          "address": "0xdd648c3D2558167d919389E1b844509035bA90e8",
-          "notes": "Canonical testnet AXE (home monad-3)"
+          "originChain": "avalanche",
+          "address": "0x085A31253FbD07B93711acc24922ACaBa7982f1b",
+          "notes": "Canonical testnet AXE v3 (home avalanche, salt keccak256('axe_AXE_testnet_v3'), deployer 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe testnet ITS route fleet. Supply seeded from avalanche by interchainTransfer."
         }
       },
       "explorer": {
@@ -2340,13 +2340,13 @@
           "salt": "v6.1.0"
         },
         "AXE": {
-          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "tokenId": "0x7ad51200f49ebfc24aeaf79490ed545f1d803e1cf4ba8fb09db88640b9781cb0",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 6,
-          "originChain": "monad-3",
-          "address": "0x00000000000000000000000000000000008c8e9c",
-          "notes": "Testnet AXE family (home monad-3, HTS-fork on hedera, 6 decimals). Supply seeded by monad-3->hedera interchainTransfer. Monad-3<->Hedera cron pair."
+          "originChain": "avalanche",
+          "address": "0x0000000000000000000000000000000000a28208",
+          "notes": "Canonical testnet AXE v3 (home avalanche, salt keccak256('axe_AXE_testnet_v3'), deployer 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe testnet ITS route fleet. Supply seeded from avalanche by interchainTransfer."
         }
       }
     },
@@ -3192,13 +3192,13 @@
           "salt": "v6.1.0"
         },
         "AXE": {
-          "tokenId": "0xbcbec67efab1cf2e7a6d301d4374d0da5a05330d6936314d2a707841596ace92",
+          "tokenId": "0x7ad51200f49ebfc24aeaf79490ed545f1d803e1cf4ba8fb09db88640b9781cb0",
           "name": "AXE",
           "symbol": "AXE",
           "decimals": 18,
-          "originChain": "monad-3",
-          "address": "0x18C8085e46Dc09DFBFc1acb1D544c0058C84e293",
-          "notes": "Testnet AXE family (home monad-3) auto-deployed + remote-registered on hedera by axe load-test; reused via this tokenId. Monad-3<->Hedera cron pair."
+          "originChain": "avalanche",
+          "address": "0x55f6758D918387a6FE7E6CdD5efEEF35D611b745",
+          "notes": "Canonical testnet AXE v3 (home avalanche, salt keccak256('axe_AXE_testnet_v3'), deployer 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe testnet ITS route fleet. Supply seeded from avalanche by interchainTransfer."
         }
       }
     },
@@ -3301,13 +3301,13 @@
           "version": "2.2.0"
         },
         "AXE": {
-          "tokenId": "0x63e3c40efbdcd1f1c3643df19b0682e5d5772f4b673cc65c9fcfda814ebd9108",
+          "tokenId": "0x7ad51200f49ebfc24aeaf79490ed545f1d803e1cf4ba8fb09db88640b9781cb0",
           "name": "AXE",
           "symbol": "AXE",
-          "decimals": 9,
-          "originChain": "solana",
-          "address": "0xb26a4f524824e3cb428e49cfbb2c1ed5d5279c14",
-          "notes": "Testnet AXE family (home solana) remote-registered on hyperliquid. Supply seeded by solana->hyperliquid interchainTransfer. Hyperliquid<->Solana cron pair."
+          "decimals": 18,
+          "originChain": "avalanche",
+          "address": "0x085A31253FbD07B93711acc24922ACaBa7982f1b",
+          "notes": "Canonical testnet AXE v3 (home avalanche, salt keccak256('axe_AXE_testnet_v3'), deployer 0x16A4E49030E2D07D1D58590533651b761841f316). One tokenId across the whole axe testnet ITS route fleet. Supply seeded from avalanche by interchainTransfer."
         },
         "AxelarServiceGovernance": {
           "minimumTimeDelay": 300,
@@ -3787,15 +3787,15 @@
           "version": "1.1.0"
         },
         "AXE": {
-          "tokenId": "0x63e3c40efbdcd1f1c3643df19b0682e5d5772f4b673cc65c9fcfda814ebd9108",
+          "tokenId": "0x7ad51200f49ebfc24aeaf79490ed545f1d803e1cf4ba8fb09db88640b9781cb0",
           "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-          "mintAuthority": "81v2PCCR4tFrCC7x6mzJjMmLmGhvS5kjwCZAUQRSeMfJ",
+          "mintAuthority": "GACZJcrL5Xmx1ahBXUj2dDkQD2ARAkHg1hTmnKGBTEey",
           "name": "AXE",
           "symbol": "AXE",
-          "decimals": 9,
-          "originChain": "solana",
-          "address": "9RdSWTNrfAEnZ679CBFCBMhB33Qm7unjd9DkY4WNZArv",
-          "notes": "Testnet AXE family (home solana), Token-2022 mint. Reused for Hyperliquid<->Solana cron pair."
+          "decimals": 6,
+          "originChain": "avalanche",
+          "address": "BSPjWMruLJeaToLKFEibPgUzLP1CsuaUK6ieudeUUZ3b",
+          "notes": "Canonical testnet AXE v3 (home avalanche), Token-2022 mint created by the ITS deploy. mintAuthority is the ITS TokenManager PDA. Shares one tokenId with the whole axe testnet ITS route fleet."
         }
       }
     },
