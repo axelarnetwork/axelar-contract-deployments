@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use anchor_lang::InstructionData;
+use anchor_lang::{AnchorDeserialize, InstructionData};
 use base64::Engine as _;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
@@ -10,6 +10,7 @@ use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde_json::json;
 use solana_axelar_gateway::state::config::{InitialVerifierSet, InitializeConfigParams};
+use solana_axelar_its::encoding::{HubMessage, Message as ItsMessage};
 use solana_axelar_std::PayloadType;
 use solana_axelar_std::U256;
 use solana_axelar_std::execute_data::{
@@ -977,7 +978,7 @@ async fn submit_proof(
 }
 
 fn execute(
-    _fee_payer: &Pubkey,
+    fee_payer: &Pubkey,
     execute_args: ExecuteArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1011,7 +1012,7 @@ fn execute(
     })?;
 
     if destination_address == solana_axelar_its::id() {
-        eyre::bail!("ITS GMP execution not yet implemented.");
+        its_gmp_execute(fee_payer, message, payload)
     } else if destination_address == solana_axelar_governance::id() {
         eyre::bail!(
             "Governance GMP execution not yet implemented for new Anchor program. Use governance-specific commands instead."
@@ -1315,4 +1316,151 @@ fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> 
     println!("Message status: {status}");
 
     Ok(())
+}
+
+/// Programs pinned by the ITS deploy handler's account constraints.
+const MPL_TOKEN_METADATA_ID: &str = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
+const TOKEN_2022_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+const ASSOCIATED_TOKEN_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+
+/// Build the ITS `execute` instruction for an inbound GMP message the gateway has
+/// already approved.
+///
+/// The relayer normally does this. When it declines -- typically because its gas
+/// budget for the Solana side fell short -- the message stays approved and anyone
+/// can drive it through by paying the Solana fees directly, which is what this
+/// builds. The payload is passed as an instruction argument, so no separate
+/// message-payload account is needed.
+fn its_gmp_execute(
+    fee_payer: &Pubkey,
+    message: Message,
+    payload: Vec<u8>,
+) -> eyre::Result<Vec<Instruction>> {
+    let hub_message = HubMessage::try_from_slice(&payload)
+        .map_err(|e| eyre!("payload is not a borsh-encoded ITS HubMessage: {e}"))?;
+    let HubMessage::ReceiveFromHub { message: inner, .. } = hub_message else {
+        eyre::bail!("an inbound ITS payload must be HubMessage::ReceiveFromHub");
+    };
+    let token_id = its_message_token_id(&inner)?;
+
+    let token_2022 = Pubkey::from_str(TOKEN_2022_ID)?;
+    let mpl_metadata = Pubkey::from_str(MPL_TOKEN_METADATA_ID)?;
+    let associated_token = Pubkey::from_str(ASSOCIATED_TOKEN_ID)?;
+
+    let (its_root_pda, _) = crate::its::find_its_root_pda();
+    let (token_manager_pda, _) = crate::its::find_token_manager_pda(&its_root_pda, &token_id);
+    let (token_mint, _) = crate::its::find_interchain_token_pda(&its_root_pda, &token_id);
+    let token_manager_ata =
+        crate::its::get_associated_token_address(&token_manager_pda, &token_mint, &token_2022);
+
+    let cmd_id = command_id(&message.cc_id.chain, &message.cc_id.id);
+    let (incoming_message_pda, _) = solana_axelar_gateway::IncomingMessage::find_pda(&cmd_id);
+    let (signing_pda, _) = Pubkey::find_program_address(
+        &[
+            solana_axelar_gateway::ValidateMessageSigner::SEED_PREFIX,
+            cmd_id.as_ref(),
+        ],
+        &solana_axelar_its::id(),
+    );
+    let (gateway_root_pda, _) = Pubkey::find_program_address(
+        &[solana_axelar_gateway::state::GatewayConfig::SEED_PREFIX],
+        &solana_axelar_gateway::id(),
+    );
+    let (its_event_authority, _) =
+        Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
+
+    let mut accounts = vec![
+        // AxelarExecuteAccounts, in declaration order
+        AccountMeta::new(incoming_message_pda, false),
+        AccountMeta::new_readonly(signing_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(solana_axelar_gateway::EVENT_AUTHORITY_AND_BUMP.0, false),
+        AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
+        // ITS accounts
+        AccountMeta::new(*fee_payer, true),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new(token_manager_pda, false),
+        AccountMeta::new(token_mint, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(token_2022, false),
+        AccountMeta::new_readonly(associated_token, false),
+        AccountMeta::new_readonly(anchor_lang::system_program::ID, false),
+        // #[event_cpi]
+        AccountMeta::new_readonly(its_event_authority, false),
+        AccountMeta::new_readonly(solana_axelar_its::id(), false),
+    ];
+    accounts.extend(its_handler_extra_accounts(
+        inner,
+        &token_mint,
+        &token_2022,
+        &mpl_metadata,
+    )?);
+
+    Ok(vec![Instruction {
+        program_id: solana_axelar_its::id(),
+        accounts,
+        data: solana_axelar_its::instruction::Execute { message, payload }.data(),
+    }])
+}
+
+/// The token every supported ITS handler resolves its accounts from.
+fn its_message_token_id(inner: &ItsMessage) -> eyre::Result<[u8; 32]> {
+    match inner {
+        ItsMessage::DeployInterchainToken(deploy) => Ok(deploy.token_id),
+        ItsMessage::InterchainTransfer(transfer) => Ok(transfer.token_id),
+        ItsMessage::LinkToken(_) => eyre::bail!("LinkToken GMP execution is not implemented"),
+    }
+}
+
+/// Trailing accounts the specific ITS handler pops off `remaining_accounts`.
+/// The shared ITS account block is the same for every variant.
+fn its_handler_extra_accounts(
+    inner: ItsMessage,
+    token_mint: &Pubkey,
+    token_2022: &Pubkey,
+    mpl_metadata: &Pubkey,
+) -> eyre::Result<Vec<AccountMeta>> {
+    match inner {
+        ItsMessage::DeployInterchainToken(deploy) => {
+            if deploy.minter.is_some() {
+                eyre::bail!("DeployInterchainToken with a minter is not implemented");
+            }
+            let (metadata_account, _) = Pubkey::find_program_address(
+                &[b"metadata", mpl_metadata.as_ref(), token_mint.as_ref()],
+                mpl_metadata,
+            );
+            Ok(
+                solana_axelar_its::instructions::gmp::execute_deploy_interchain_token_extra_accounts(
+                    solana_sdk::sysvar::instructions::id(),
+                    *mpl_metadata,
+                    metadata_account,
+                    None,
+                    None,
+                ),
+            )
+        }
+        ItsMessage::InterchainTransfer(transfer) => {
+            if transfer.data.is_some() {
+                eyre::bail!("InterchainTransfer carrying data is not implemented");
+            }
+            let destination: [u8; 32] = transfer
+                .destination_address
+                .as_slice()
+                .try_into()
+                .map_err(|_| eyre!("destination_address is not a 32-byte Solana pubkey"))?;
+            let destination = Pubkey::new_from_array(destination);
+            // A plain wallet recipient is its own ATA authority.
+            let destination_ata =
+                crate::its::get_associated_token_address(&destination, token_mint, token_2022);
+            Ok(
+                solana_axelar_its::instructions::gmp::execute_interchain_transfer_extra_accounts(
+                    destination,
+                    destination,
+                    destination_ata,
+                    None,
+                ),
+            )
+        }
+        ItsMessage::LinkToken(_) => eyre::bail!("LinkToken GMP execution is not implemented"),
+    }
 }
