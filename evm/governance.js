@@ -23,7 +23,6 @@ const {
     getGovernanceAddress,
     mainProcessor,
     prompt,
-    writeJSON,
     validateParameters,
     isEvmChain,
     isValidAddress,
@@ -734,10 +733,7 @@ async function main(action, args, options) {
         };
         printInfo('Amplifier-chain proposal (AxelarnetGateway.call_contract)', JSON.stringify(amplifierPreview, null, 2));
 
-        if (options.generateOnly) {
-            writeJSON(amplifierPreview, options.generateOnly);
-            printInfo('Amplifier proposal written to file', options.generateOnly);
-        } else if (!prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
+        const generateOrSubmitProposal = async () => {
             const submitFn = async (client, config, submitOptions, _args, fee) => {
                 const msgs = amplifierAxelarnetMsgs.map((msg) => JSON.stringify(msg));
                 await executeByGovernance(
@@ -758,10 +754,17 @@ async function main(action, args, options) {
                 yes: options.yes,
                 rpc: options.rpc,
                 standardProposal: options.standardProposal,
+                generateOnly: options.generateOnly,
             };
 
             await cosmwasmMainProcessor(submitFn, submitOptions);
+        };
+
+        if (!options.generateOnly && prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
+            return;
         }
+
+        await generateOrSubmitProposal();
     }
 }
 

@@ -9,7 +9,7 @@ import {
     MsgUpdateInstantiateConfig,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 
-import { printInfo, prompt } from '../common';
+import { printInfo, prompt, writeJSON } from '../common';
 import { ConfigManager } from '../common/config';
 import { ClientManager } from './processor';
 import {
@@ -19,6 +19,7 @@ import {
     getAmplifierContractConfig,
     getCodeId,
     getNexusProtoType,
+    getUnitDenom,
     signAndBroadcastWithRetry,
     toArray,
 } from './utils';
@@ -31,8 +32,83 @@ interface ProposalOptions {
     msg?: string | string[];
     title?: string;
     description?: string;
+    deposit?: string;
+    standardProposal?: boolean;
+    generateOnly?: string;
     [key: string]: unknown;
 }
+
+interface EncodedMessage {
+    typeUrl: string;
+    value: Uint8Array;
+}
+
+interface ProtoCodec {
+    decode: (value: Uint8Array) => unknown;
+    toJSON: (value: never) => Record<string, unknown>;
+}
+
+const messageTypeMap: Record<string, ProtoCodec> = {
+    '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
+    '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
+    '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
+    '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
+    '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
+    '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
+    '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
+};
+
+const rawContractMessageTypes = new Set([
+    '/cosmwasm.wasm.v1.MsgExecuteContract',
+    '/cosmwasm.wasm.v1.MsgInstantiateContract',
+    '/cosmwasm.wasm.v1.MsgInstantiateContract2',
+    '/cosmwasm.wasm.v1.MsgMigrateContract',
+    '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract',
+]);
+
+const messageToProtoJson = (message: EncodedMessage): Record<string, unknown> => {
+    const MessageType = messageTypeMap[message.typeUrl];
+    if (MessageType) {
+        const decoded = MessageType.decode(message.value) as Record<string, unknown>;
+        const json = MessageType.toJSON(decoded as never);
+
+        // wasmd's RawContractMessage JSON representation is the embedded JSON
+        // object, not the protobuf bytes encoded as a base64 string.
+        if (rawContractMessageTypes.has(message.typeUrl) && decoded.msg) {
+            json.msg = JSON.parse(Buffer.from(decoded.msg as Uint8Array).toString());
+        }
+
+        return { '@type': message.typeUrl, ...json };
+    }
+
+    if (
+        message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
+        message.typeUrl === '/axelar.nexus.v1beta1.DeactivateChainRequest'
+    ) {
+        const typeName = message.typeUrl.includes('Deactivate') ? 'DeactivateChainRequest' : 'ActivateChainRequest';
+        const MessageType = getNexusProtoType(typeName);
+        const decoded = MessageType.decode(message.value);
+        const json = MessageType.toObject(decoded, { longs: String, enums: String, bytes: String });
+        return { '@type': message.typeUrl, ...json };
+    }
+
+    throw new Error(`Cannot generate axelard proposal JSON for unsupported message type ${message.typeUrl}`);
+};
+
+const createProposalJson = (messages: EncodedMessage[], config: ConfigManager, options: ProposalOptions): Record<string, unknown> => {
+    const deposit =
+        options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
+    const unitDenom = getUnitDenom(config);
+
+    return {
+        messages: messages.map(messageToProtoJson),
+        metadata: '',
+        deposit: `${deposit}${unitDenom}`,
+        title: options.title,
+        summary: options.description,
+        expedited: !options.standardProposal,
+    };
+};
 
 const getSingleContractName = (contractName: string | string[] | undefined, operation: string): string => {
     if (Array.isArray(contractName)) {
@@ -47,17 +123,7 @@ const getSingleContractName = (contractName: string | string[] | undefined, oper
 const printProposal = (proposalData: object[]): void => {
     proposalData.forEach((msg: unknown) => {
         const message = msg as { typeUrl: string; value: Uint8Array };
-        const typeMap: Record<string, unknown> = {
-            '/cosmwasm.wasm.v1.MsgStoreCode': MsgStoreCode,
-            '/cosmwasm.wasm.v1.MsgExecuteContract': MsgExecuteContract,
-            '/cosmwasm.wasm.v1.MsgInstantiateContract': MsgInstantiateContract,
-            '/cosmwasm.wasm.v1.MsgInstantiateContract2': MsgInstantiateContract2,
-            '/cosmwasm.wasm.v1.MsgMigrateContract': MsgMigrateContract,
-            '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract': MsgStoreAndInstantiateContract,
-            '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig': MsgUpdateInstantiateConfig,
-        };
-
-        const MessageType = typeMap[message.typeUrl];
+        const MessageType = messageTypeMap[message.typeUrl];
 
         if (
             message.typeUrl === '/axelar.nexus.v1beta1.ActivateChainRequest' ||
@@ -72,14 +138,7 @@ const printProposal = (proposalData: object[]): void => {
             if (decoded.codeId) {
                 decoded.codeId = decoded.codeId.toString();
             }
-            if (
-                (message.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgInstantiateContract2' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgMigrateContract' ||
-                    message.typeUrl === '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract') &&
-                decoded.msg
-            ) {
+            if (rawContractMessageTypes.has(message.typeUrl) && decoded.msg) {
                 decoded.msg = JSON.parse(Buffer.from(decoded.msg as Uint8Array).toString());
             }
             if (decoded.wasmByteCode) {
@@ -94,6 +153,9 @@ const printProposal = (proposalData: object[]): void => {
 
 const confirmProposalSubmission = (options: ProposalOptions, proposalData: object[]): boolean => {
     printProposal(proposalData);
+    if (options.generateOnly) {
+        return true;
+    }
     if (prompt(`Proceed with proposal submission?`, options.yes)) {
         return false;
     }
@@ -106,16 +168,22 @@ const submitProposal = async (
     options: ProposalOptions,
     proposal: object | object[],
     fee?: string | StdFee,
-): Promise<string> => {
+): Promise<string | undefined> => {
     const deposit =
         options.deposit ?? (options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount());
     const proposalOptions = { ...options, deposit };
 
+    const messages = toArray(proposal) as EncodedMessage[];
+
+    if (options.generateOnly) {
+        const proposalJson = createProposalJson(messages, config, proposalOptions);
+        writeJSON(proposalJson, options.generateOnly);
+        printInfo('Axelard proposal JSON written to file', options.generateOnly);
+        return;
+    }
+
     const [account] = client.accounts;
-
     printInfo('Proposer address', account.address);
-
-    const messages = toArray(proposal);
 
     const submitProposalMsg = encodeSubmitProposal(messages, config, proposalOptions, account.address);
 
@@ -149,7 +217,9 @@ const submitMessagesAsProposal = async (
     }
 
     const proposalId = await submitProposal(client, config, options, messagesArray, fee);
-    printInfo('Proposal submitted', proposalId);
+    if (proposalId) {
+        printInfo('Proposal submitted', proposalId);
+    }
     return proposalId;
 };
 
@@ -181,7 +251,9 @@ const executeByGovernance = async (
     }
 
     const proposalId = await submitProposal(client, config, options, messages, fee);
-    printInfo('Proposal submitted', proposalId);
+    if (proposalId) {
+        printInfo('Proposal submitted', proposalId);
+    }
     return proposalId;
 };
 
@@ -205,8 +277,19 @@ const migrate = async (
     }
 
     const proposalId = await submitProposal(client, config, options, proposal, fee);
-    printInfo('Proposal submitted', proposalId);
+    if (proposalId) {
+        printInfo('Proposal submitted', proposalId);
+    }
     return proposalId;
 };
 
-export { printProposal, confirmProposalSubmission, submitProposal, submitMessagesAsProposal, executeByGovernance, migrate };
+export {
+    createProposalJson,
+    messageToProtoJson,
+    printProposal,
+    confirmProposalSubmission,
+    submitProposal,
+    submitMessagesAsProposal,
+    executeByGovernance,
+    migrate,
+};

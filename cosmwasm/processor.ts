@@ -13,6 +13,7 @@ export type Options = {
     standardProposal?: boolean;
     instantiateAddresses?: string[];
     rpc?: string;
+    generateOnly?: string;
 };
 
 type ProcessorFn = (
@@ -39,10 +40,10 @@ function prepareQueryProcessor(options: Options): { configManager: ConfigManager
     return { configManager };
 }
 
-function prepareProcessor(options: Options): { configManager: ConfigManager; fee: string | StdFee } {
+function prepareProcessor(options: Options): { configManager: ConfigManager; fee?: string | StdFee } {
     const { instantiateAddresses, env } = options;
     const configManager = new ConfigManager(env);
-    const fee = configManager.getFee();
+    const fee = options.generateOnly ? undefined : configManager.getFee();
 
     options.instantiateAddresses = instantiateAddresses || configManager.proposalInstantiateAddresses();
 
@@ -61,11 +62,15 @@ export async function mainProcessor(processorFn: ProcessorFn, options: Options, 
         configManager.axelar.rpc = axelarNode;
     }
 
-    if (!options.mnemonic) {
-        throw new Error('Mnemonic is required');
+    let client: ClientManager;
+    if (options.mnemonic) {
+        client = await prepareClient(options.mnemonic, configManager.axelar.rpc, GasPrice.fromString(configManager.axelar.gasPrice));
+    } else if (options.generateOnly) {
+        // Proposal generation only encodes messages and never calls client methods.
+        client = { accounts: [] } as unknown as ClientManager;
+    } else {
+        throw new Error('Mnemonic is required unless --generate-only is used');
     }
-
-    const client = await prepareClient(options.mnemonic, configManager.axelar.rpc, GasPrice.fromString(configManager.axelar.gasPrice));
 
     await processorFn(client, configManager, options, args, fee);
 
