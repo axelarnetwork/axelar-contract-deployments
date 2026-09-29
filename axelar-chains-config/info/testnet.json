@@ -4068,7 +4068,7 @@
           "implementation": "0x4D2D80406E62279bfA7C25e77533c4AAea8f1259",
           "address": "0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "owner": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
           "version": "2.2.0"
         },
         "InterchainTokenFactory": {
@@ -4076,6 +4076,7 @@
           "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
           "implementation": "0x384ec8f93a633f14f210fE3290E6BEF24a2804e9",
           "address": "0xDe94329DB2D8C283E2fe6D4e090508D82cd06097",
+          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
           "version": "2.2.0"
         }
       }
