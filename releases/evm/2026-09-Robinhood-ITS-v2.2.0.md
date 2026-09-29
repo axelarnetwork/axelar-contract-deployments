@@ -1,39 +1,98 @@
 # Robinhood ITS v2.2.0
 
-| Network | Deployment status                                                                                                                | Date           |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| Testnet | Contracts deployed; configuration recorded in [PR #1418](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1418) | September 2026 |
-| Mainnet | TBD                                                                                                                              | TBD            |
+|                | **Owner**                               |
+| -------------- | --------------------------------------- |
+| **Created By** | @makischristou <makis@commonprefix.com> |
+| **Deployment** | @makischristou <makis@commonprefix.com> |
 
-[ITS v2.2.0 release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
+| **Network**          | **Deployment Status** | **Date**       |
+| -------------------- | --------------------- | -------------- |
+| **Devnet Amplifier** | -                     | TBD            |
+| **Stagenet**         | -                     | TBD            |
+| **Testnet**          | Complete              | September 2026 |
+| **Mainnet**          | -                     | TBD            |
+
+[Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.2.0)
 
 ## Background
 
-This release records InterchainTokenService and InterchainTokenFactory v2.2.0 on Robinhood Chain Testnet. It depends on [Robinhood EVM GMP](2026-09-Robinhood-GMP.md) and [Robinhood CosmWasm GMP](../cosmwasm/2026-09-Robinhood-GMP.md).
+- This is the Robinhood ITS release.
 
-## Testnet deployment
+## Deployment
 
-The deployed addresses are recorded in [testnet.json](../../axelar-chains-config/info/testnet.json) under `chains.robinhood.contracts`.
+Ensure that [Robinhood GMP](../evm/2026-09-Robinhood-GMP.md) is deployed first.
 
-| Contract               | Version | Proxy                                        | Implementation                               |
-| ---------------------- | ------- | -------------------------------------------- | -------------------------------------------- |
-| InterchainTokenService | `2.2.0` | `0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42` | `0x4D2D80406E62279bfA7C25e77533c4AAea8f1259` |
-| InterchainTokenFactory | `2.2.0` | `0xDe94329DB2D8C283E2fe6D4e090508D82cd06097` | `0x384ec8f93a633f14f210fE3290E6BEF24a2804e9` |
+```bash
+# Clone latest main and update deps
+npm ci
+```
 
-| Parameter                     | Value                                        |
-| ----------------------------- | -------------------------------------------- |
-| Chain name                    | `robinhood`                                  |
-| Deployer / recorded ITS owner | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
-| ITS implementation salt       | `ITS v2.2.0`                                 |
-| ITS proxy salt                | `ITS v1.0.0`                                 |
-| Factory salt                  | `ITS Factory v1.0.0`                         |
+Create an `.env` config. Set `CHAIN=robinhood` in your shell for the commands below.
 
-## Deployment sequence and validation
+```yaml
+PRIVATE_KEY=<deployer private key>
+ENV=testnet
+CHAIN=robinhood
+CHAINS=robinhood
+```
 
-Follow the [Arc ITS v2.2.0 runbook](2025-11-Arc-ITS-v2.2.0.md) for the shared deployment, contract verification, ITS Hub registration and trusted-chain configuration workflow, substituting `robinhood` and the addresses above. The salt values in the table are the values persisted in config; use the CLI salt conventions documented in that runbook.
+| Network     | `deployer address`                           |
+| ----------- | -------------------------------------------- |
+| **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
 
-Register the Robinhood ITS address with ITS Hub in coordination with the CosmWasm release, and configure the required remote ITS contracts to trust Robinhood through the hub. Validate token deployment to a remote chain and transfers in both directions using the runbook's checklist. This document records deployed contracts; it does not claim that Hub registration, trusted-chain configuration or transfer checks have been independently verified.
+### Testnet
 
-## Mainnet
+```bash
+ts-node evm/deploy-its.js -s "v2.2.0" -m create2 --proxySalt 'v1.0.0'
+```
 
-Mainnet timing is TBD. Before deployment, record the mainnet addresses, contract versions, ownership, Hub registration proposal and trusted-chain changes here. Record bidirectional token-transfer results before marking the release complete.
+### Verify ITS Contracts
+
+Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
+
+## Register Robinhood ITS on ITS Hub
+
+Note: this step should be performed during the [Cosmwasm GMP deployment](../cosmwasm/2026-09-Robinhood-GMP.md). If it was **not**, register Robinhood ITS on ITS Hub now:
+
+```bash
+ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
+    --governance
+```
+
+If contracts are not deployed yet add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
+
+| Network     | `ITS_EDGE_CONTRACT`                          |
+| ----------- | -------------------------------------------- |
+| **Testnet** | `0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42` |
+
+```json
+{
+    "InterchainTokenService": {
+        "address": "$ITS_EDGE_CONTRACT"
+    }
+}
+```
+
+## Set Robinhood as trusted chain on remote ITS contracts
+
+Set Robinhood as trusted chain on remote ITS contracts for EVM and non-EVM chains.
+
+```bash
+ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
+```
+
+## Checklist
+
+```bash
+# Create a token on Robinhood
+ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial-supply] --minter [minter] --salt "salt1234" -n $CHAIN
+
+# Deploy token to a remote chain
+ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination-chain] --salt "salt1234" -n $CHAIN
+
+# Transfer token to remote chain
+ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
+
+# Transfer token back from remote chain
+ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
+```

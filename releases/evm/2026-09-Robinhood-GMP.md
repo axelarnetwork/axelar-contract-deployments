@@ -1,52 +1,227 @@
 # Robinhood GMP
 
-| Network | Deployment status                                                                                                                | Date           |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| Testnet | Contracts deployed; configuration recorded in [PR #1418](https://github.com/axelarnetwork/axelar-contract-deployments/pull/1418) | September 2026 |
-| Mainnet | TBD                                                                                                                              | TBD            |
+|                | **Owner**                               |
+| -------------- | --------------------------------------- |
+| **Created By** | @makischristou <makis@commonprefix.com> |
+| **Deployment** | @makischristou <makis@commonprefix.com> |
+
+| **Network**          | **Deployment Status** | **Date**       |
+| -------------------- | --------------------- | -------------- |
+| **Devnet Amplifier** | -                     | TBD            |
+| **Stagenet**         | -                     | TBD            |
+| **Testnet**          | Complete              | September 2026 |
+| **Mainnet**          | -                     | TBD            |
+
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases)
 
 ## Background
 
-This release records the Robinhood Chain Testnet EVM deployment. The chain uses Axelar's Amplifier connection. The deployed addresses and parameters are recorded under `chains.robinhood` in [testnet.json](../../axelar-chains-config/info/testnet.json).
+This is the deployment of EVM compatible Amplifier Gateway contracts for Robinhood Chain Testnet.
 
-Related releases:
+## Deployment
 
-- [Robinhood CosmWasm GMP](../cosmwasm/2026-09-Robinhood-GMP.md)
-- [Robinhood ITS v2.2.0](2026-09-Robinhood-ITS-v2.2.0.md)
+Ensure that [CosmWasm Robinhood GMP](../cosmwasm/2026-09-Robinhood-GMP.md) is deployed first.
 
-## Testnet deployment
+Create an `.env` config. Set `CHAIN=robinhood` in your shell for the commands below.
 
-| Parameter                                         | Value                                          |
-| ------------------------------------------------- | ---------------------------------------------- |
-| Axelar chain name                                 | `robinhood`                                    |
-| EVM chain ID                                      | `46630`                                        |
-| RPC                                               | `https://rpc.testnet.chain.robinhood.com`      |
-| Explorer                                          | `https://explorer.testnet.chain.robinhood.com` |
-| Native token                                      | ETH, 18 decimals                               |
-| Finality                                          | `finalized`                                    |
-| Gateway deployment method                         | `create`                                       |
-| Previous signer sets retained                     | `15`                                           |
-| Minimum rotation delay                            | `3600` seconds                                 |
-| Deployer / gateway operator                       | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC`   |
-| Recorded gateway, Operators and gas service owner | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE`   |
+```yaml
+PRIVATE_KEY=<deployer private key>
+ENV=testnet
+CHAIN=robinhood
+CHAINS=robinhood
+```
 
-| Contract                     | Address                                      |
-| ---------------------------- | -------------------------------------------- |
-| ConstAddressDeployer         | `0x39fD42c43D27464b64B120E981CfEe68351D9F49` |
-| Create3Deployer              | `0x4A0fc57047cc99Cb28152730A42F5a432Aece667` |
-| AxelarGateway proxy          | `0x2a949565682ad89ca4Ad325499C36d3865a3ee02` |
-| AxelarGateway implementation | `0x8E60A250B6E5778B2342a3Fa1d11C145E8128d1f` |
-| Operators                    | `0xaC6E171c9A8eF95c943F512e54712B8006c33E3C` |
-| AxelarGasService proxy       | `0xef2e20AE1095C6bDb888e91E3c1a2443CBb76DB9` |
+Add the initial chain config under `chains.robinhood` in `axelar-chains-config/info/testnet.json`.
 
-The gateway proxy was deployed on September 18, 2026 in [transaction 0x0b7e…b7d0](https://explorer.testnet.chain.robinhood.com/tx/0x0b7e154fb3ea660cf879953700b96731bcae95a8fd8c0860ac951ef5f2adb7d0). Its `proxyDeploymentArgs` are the original constructor arguments recovered from that transaction: implementation, initial owner, and encoded operator/signer setup. The initial owner was the deployer, so it differs from the recorded current owner.
+Update npm dependencies (including contracts)
 
-## Deployment sequence and validation
+```bash
+npm ci && npm run build
+```
 
-Use the [Arc EVM GMP runbook](2025-11-Arc-GMP-v6.0.6.md#steps) as the workflow reference: deploy the address deployers, coordinate the predicted EVM gateway address with the CosmWasm deployment, deploy the gateway, deploy Operators and the gas service, configure operators, and transfer ownership. Use Robinhood's recorded parameters above; Arc's addresses, salts and package versions are specific to its release.
+### Testnet
 
-For deployment verification, follow [EVM contract verification](../../evm/README.md#contract-verification). Validate GMP in both directions using the source/destination checks in the Arc runbook with Robinhood's chain name and addresses. This deployment record does not attest to completion of end-to-end GMP tests.
+```json
+{
+    "robinhood": {
+        "name": "Robinhood Chain Testnet",
+        "axelarId": "robinhood",
+        "chainId": 46630,
+        "rpc": "https://rpc.testnet.chain.robinhood.com",
+        "explorer": {
+            "name": "Blockscout",
+            "url": "https://explorer.testnet.chain.robinhood.com"
+        },
+        "tokenSymbol": "ETH",
+        "confirmations": 1,
+        "finality": "finalized",
+        "decimals": 18,
+        "approxFinalityWaitTime": 25,
+        "chainType": "evm",
+        "contracts": {}
+    }
+}
+```
 
-## Mainnet
+### Live network testing
 
-Mainnet timing and deployment parameters are TBD. Before a mainnet deployment, update this release and the linked CosmWasm/ITS releases with the approved chain configuration, contract versions, deployers, owners, verifier thresholds, governance proposals and validation results.
+Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solidity?tab=readme-ov-file#live-network-testing) in order to verify that the RPC endpoint is EVM-compatible and the Axelar gateway can be deployed on the external network. It is recommended to run the `RpcCompatibility` and `AxelarGateway` test groups.
+
+### Mainnet
+
+Deployment parameters and date are TBD.
+
+### Steps
+
+1. Fund the following addresses with native tokens on chain:
+
+    | Network     | Addresses                                    |
+    | ----------- | -------------------------------------------- |
+    | **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
+
+1. Deploy `ConstAddressDeployer`:
+
+    | Network     | `deployer address`                           |
+    | ----------- | -------------------------------------------- |
+    | **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
+
+    ```bash
+    ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath evm/legacy/ConstAddressDeployer.json
+    ```
+
+1. Deploy `Create3Deployer`:
+
+    | Network     | `deployer address`                           |
+    | ----------- | -------------------------------------------- |
+    | **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
+
+    ```bash
+    ts-node evm/deploy-contract.js -c Create3Deployer -m create2 -s "v1.0.13"
+    ```
+
+1. Deploy Gateway contract
+    - **Note:** Switch to the Gateway deployer private key before this step.
+
+    | Network     | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
+    | ----------- | ---------------------- | ---------------- | -------------------------------------------- |
+    | **Testnet** | `3600`                 | `create`         | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
+
+    ```bash
+    ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay]
+    ```
+
+1. Deploy `Operators`
+    - **Note:** Use the same deployer as the Gateway (should already have the correct private key set).
+
+    | Network     | `deployer address`                           |
+    | ----------- | -------------------------------------------- |
+    | **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
+
+    ```bash
+    ts-node evm/deploy-contract.js -c Operators -m create2 -s "v1.0.13"
+    ```
+
+1. After deploying the Operators contract, register the testnet relayer operator addresses. Replace `[operator-addresses]` with the addresses supplied by the relayer operators.
+
+    | Network     | `operatorAddresses`    |
+    | ----------- | ---------------------- |
+    | **Testnet** | `[operator-addresses]` |
+
+    ```bash
+    ts-node evm/operators.js --action addOperator --args [operatorAddresses]
+    ```
+
+1. Deploy GasService (set the `AxelarGasService.collector` to `Operators` contract address in config, from the Operators deployment above)
+    - **Note:** Switch to the GasService deployer private key before this step.
+
+    | Network     | `deployer address`                           | `deployMethod` |
+    | ----------- | -------------------------------------------- | -------------- |
+    | **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` | `create`       |
+
+    ```bash
+    OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
+
+    ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
+    ```
+
+1. Transfer ownership for contracts
+    - **Note:** Switch back to the Gateway deployer private key (the one that deployed Gateway and Operators) before this step.
+    1. Transfer Operators ownership
+
+        | Network     | `OPERATORS_OWNER_ADDRESS`                    |
+        | ----------- | -------------------------------------------- |
+        | **Testnet** | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
+
+        ```bash
+        ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
+        ```
+
+    1. Transfer AxelarGateway ownership
+
+        | Network     | New Owner Address                            |
+        | ----------- | -------------------------------------------- |
+        | **Testnet** | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
+
+        ```bash
+        ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner [NEW_OWNER_ADDRESS]
+        ```
+
+    1. Transfer AxelarGasService ownership
+
+        | Network     | New Owner Address                            |
+        | ----------- | -------------------------------------------- |
+        | **Testnet** | `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE` |
+
+        ```bash
+        ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner [NEW_OWNER_ADDRESS]
+        ```
+
+## Checklist
+
+The following checks should be performed after the rollout
+
+### Robinhood -> EVM GMP call with Robinhood as source
+
+1. Send a GMP call
+
+    ```bash
+    ts-node evm/gateway.js -n $CHAIN --action callContract --destinationChain [destination-chain] --destination [destination-address] --payload 0x1234
+    ```
+
+1. Route GMP call via Amplifier
+    - <https://docs.axelar.dev/dev/amplifier/chain-integration/relay-messages>
+
+1. Submit proof with multisig session id
+
+    ```bash
+    ts-node evm/gateway.js -n [destination-chain] --action submitProof --multisigSessionId [multisig session id]
+    ```
+
+1. Confirm whether the message is approved
+
+    ```bash
+    ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
+    ```
+
+### EVM -> Robinhood GMP call with Robinhood as destination
+
+1. Send a GMP call
+
+    ```bash
+    ts-node evm/gateway.js -n [source-chain] --action callContract --destinationChain $CHAIN --destination [destination-address] --payload 0x1234
+    ```
+
+1. Route GMP call via Amplifier
+    - <https://docs.axelar.dev/dev/amplifier/chain-integration/relay-messages>
+
+1. Submit proof with multisig session id
+
+    ```bash
+    ts-node evm/gateway.js -n $CHAIN --action submitProof --multisigSessionId [multisig session id]
+    ```
+
+1. Confirm whether the message is approved
+
+    ```bash
+    ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [source-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
+    ```
