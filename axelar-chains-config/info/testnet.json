@@ -4069,6 +4069,7 @@
           "address": "0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "operator": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
           "version": "2.2.0"
         },
         "InterchainTokenFactory": {
