@@ -67,44 +67,28 @@ CHAIN=robinhood
 | ----------- | ------------- | ----------------- | ------------------ |
 | **Testnet** | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
 
-Add the following entries under `axelar.contracts`:
+```bash
+# Add under `config.axelar.contracts.VotingVerifier` based on Network
+"$CHAIN" : {
+    "governanceAddress": "[governance address]",
+    "serviceName": "[service name]",
+    "sourceGatewayAddress": "[external gateway address]",
+    "votingThreshold": "[voting threshold]",
+    "blockExpiry": 50,
+    "confirmationHeight": 1,
+    "msgIdFormat": "hex_tx_hash_and_event_index",
+    "addressFormat": "eip55"
+}
 
-```json
-{
-    "VotingVerifier": {
-        "robinhood": {
-            "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-            "serviceName": "amplifier",
-            "sourceGatewayAddress": "0x2a949565682ad89ca4Ad325499C36d3865a3ee02",
-            "votingThreshold": ["51", "100"],
-            "blockExpiry": 50,
-            "confirmationHeight": 1,
-            "msgIdFormat": "hex_tx_hash_and_event_index",
-            "addressFormat": "eip55",
-            "codeId": 87,
-            "version": "2.0.2"
-        }
-    },
-    "Gateway": {
-        "robinhood": {
-            "codeId": 24,
-            "version": "1.1.1"
-        }
-    },
-    "MultisigProver": {
-        "robinhood": {
-            "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-            "adminAddress": "axelar1w7y7v26rtnrj4vrx6q3qq4hfsmc68hhsxnadlf",
-            "signingThreshold": ["51", "100"],
-            "serviceName": "amplifier",
-            "verifierSetDiffThreshold": 0,
-            "encoder": "abi",
-            "keyType": "ecdsa",
-            "codeId": 85,
-            "domainSeparator": "0x790b531d918bad40a2fac786b46518feaea4fec71b1d7f2a43cce0bb70e0a1fc",
-            "version": "1.2.1"
-        }
-    }
+# Add under `config.axelar.contracts.MultisigProver` based on Network
+"$CHAIN" : {
+    "governanceAddress": "[governance address]",
+    "adminAddress": "[admin address]",
+    "signingThreshold": "[signing threshold]",
+    "serviceName": "[service name]",
+    "verifierSetDiffThreshold": 0,
+    "encoder": "abi",
+    "keyType": "ecdsa"
 }
 ```
 
@@ -114,7 +98,7 @@ Add the following entries under `axelar.contracts`:
 | ----------- | ----------------------------------------------- | ------------------------------- |
 | **Testnet** | `axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp` | `Coordinator:robinhood:v1.0.13` |
 
-`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades. Use the code IDs configured above; the Coordinator deployment name is `robinhood-24-87-85`.
+`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades. Set `Gateway[$CHAIN].codeId` to `24`, `VotingVerifier[$CHAIN].codeId` to `87`, and `MultisigProver[$CHAIN].codeId` to `85` under `axelar.contracts` before instantiation. The Coordinator deployment name is `robinhood-24-87-85`.
 
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 

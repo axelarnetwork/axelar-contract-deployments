@@ -41,26 +41,24 @@ npm ci && npm run build
 
 ### Testnet
 
-```json
-{
-    "robinhood": {
-        "name": "Robinhood Chain Testnet",
-        "axelarId": "robinhood",
-        "chainId": 46630,
-        "rpc": "https://rpc.testnet.chain.robinhood.com",
-        "explorer": {
-            "name": "Blockscout",
-            "url": "https://explorer.testnet.chain.robinhood.com"
-        },
-        "tokenSymbol": "ETH",
-        "confirmations": 1,
-        "finality": "finalized",
-        "decimals": 18,
-        "approxFinalityWaitTime": 25,
-        "chainType": "evm",
-        "contracts": {}
-    }
-}
+```bash
+"$CHAIN": {
+    "name": "Robinhood Chain Testnet",
+    "axelarId": "robinhood",
+    "chainId": 46630,
+    "rpc": "https://rpc.testnet.chain.robinhood.com",
+    "tokenSymbol": "ETH",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 25,
+    "chainType": "evm",
+    "explorer": {
+        "name": "Blockscout",
+        "url": "https://explorer.testnet.chain.robinhood.com"
+    },
+    "contracts": {}
+  }
 ```
 
 ### Live network testing
