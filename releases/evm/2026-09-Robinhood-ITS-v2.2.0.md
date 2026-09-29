@@ -16,83 +16,28 @@
 
 ## Background
 
-- This is the Robinhood ITS release.
+Deployment was completed with `axe`.
 
-## Deployment
+Completed ITS v2.2.0 deployment on Robinhood Chain Testnet (`robinhood`). Addresses and parameters are recorded in [testnet.json](../../axelar-chains-config/info/testnet.json).
 
-Ensure that [Robinhood GMP](../evm/2026-09-Robinhood-GMP.md) is deployed first.
+## Contracts
 
-```bash
-# Clone latest main and update deps
-npm ci
-```
+| Contract               | Version | Address                                      |
+| ---------------------- | ------- | -------------------------------------------- |
+| InterchainTokenService | `2.2.0` | `0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42` |
+| InterchainTokenFactory | `2.2.0` | `0xDe94329DB2D8C283E2fe6D4e090508D82cd06097` |
 
-Create an `.env` config. Set `CHAIN=robinhood` in your shell for the commands below.
+Both contracts are owned by `0x49845e5d9985d8dc941462293ed38EEfF18B0eAE`, which is also the ITS operator. The deployer `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` no longer has the ITS operator role.
 
-```yaml
-PRIVATE_KEY=<deployer private key>
-ENV=testnet
-CHAIN=robinhood
-CHAINS=robinhood
-```
+## Trusted chains
 
-| Network     | `deployer address`                           |
-| ----------- | -------------------------------------------- |
-| **Testnet** | `0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC` |
+Verified reciprocal trust with Robinhood on September 29, 2026:
 
-### Testnet
+solana, flow, ethereum-sepolia, Avalanche, polygon-sepolia, base-sepolia, arbitrum-sepolia, optimism-sepolia.
 
-```bash
-ts-node evm/deploy-its.js -s "v2.2.0" -m create2 --proxySalt 'v1.0.0'
-```
+## Validation
 
-### Verify ITS Contracts
+- Flow to Robinhood and Robinhood to Flow ITS transfers completed with manual relay assistance.
+- [Solana to Robinhood](https://testnet.axelarscan.io/gmp/4bs4KrqTuGrMtrdATVAp4pvDzvzQWzYMfgCtCuTRXyHTxufWJMrD91TD42mzm2EfAzaJjAzZumPoNnoMPig9s8hD-1.7) delivered 0.01 test AXE through the automatic relayer in approximately 36 seconds. The receiver balance was verified on Robinhood.
 
-Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
-
-## Register Robinhood ITS on ITS Hub
-
-Note: this step should be performed during the [Cosmwasm GMP deployment](../cosmwasm/2026-09-Robinhood-GMP.md). If it was **not**, register Robinhood ITS on ITS Hub now:
-
-```bash
-ts-node cosmwasm/contract.ts its-hub-register-chains $CHAIN \
-    --governance
-```
-
-If contracts are not deployed yet add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
-
-| Network     | `ITS_EDGE_CONTRACT`                          |
-| ----------- | -------------------------------------------- |
-| **Testnet** | `0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42` |
-
-```json
-{
-    "InterchainTokenService": {
-        "address": "$ITS_EDGE_CONTRACT"
-    }
-}
-```
-
-## Set Robinhood as trusted chain on remote ITS contracts
-
-Set Robinhood as trusted chain on remote ITS contracts for EVM and non-EVM chains.
-
-```bash
-ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
-```
-
-## Checklist
-
-```bash
-# Create a token on Robinhood
-ts-node evm/interchainTokenFactory.js deploy-interchain-token --name [name] --symbol [symbol] --decimals [decimals] --initialSupply [initial-supply] --minter [minter] --salt "salt1234" -n $CHAIN
-
-# Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js deploy-remote-interchain-token [destination-chain] --salt "salt1234" -n $CHAIN
-
-# Transfer token to remote chain
-ts-node evm/its.js interchain-transfer --destinationChain [destination-chain] --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
-
-# Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer --destinationChain $CHAIN --tokenId [token-id] --destinationAddress [destination-address] --amount 1 --gasValue [gas-value] -n [destination-chain]
-```
+Related releases: [EVM GMP](2026-09-Robinhood-GMP.md), [CosmWasm GMP](../cosmwasm/2026-09-Robinhood-GMP.md).
