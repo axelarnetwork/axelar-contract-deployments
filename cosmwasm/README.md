@@ -182,7 +182,65 @@ ts-node submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal
 **Common options:**
 
 - `-u, --rpc <axelarNode>`: Override the Axelar RPC URL from the config. Can also be set via the `AXELAR_RPC` environment variable.
+- `--generate-only <file>`: Write an `axelard tx gov submit-proposal` JSON file instead of signing or broadcasting. A mnemonic is not required, and this option implies governance mode.
 - `--standardProposal`: Submit as a standard proposal instead of expedited (default is expedited). Use this flag if you want to use the standard proposal deposit amount and voting period.
+
+### Submitting a proposal from an axelard multisig
+
+The generated proposal file deliberately contains no proposer. This lets `axelard` set the actual multisig account as the proposer when it builds the unsigned transaction; member keys are only used for partial signatures.
+
+First, construct the proposal with the deployment script:
+
+```bash
+ts-node cosmwasm/core.ts activate-chain <chain> \
+  -e testnet \
+  --generate-only proposal.json
+```
+
+Then build the unsigned transaction from the multisig account:
+
+```bash
+axelard tx gov submit-proposal proposal.json \
+  --from <multisig-name-or-address> \
+  --keyring-backend test \
+  --chain-id <chain-id> \
+  --node <rpc-url> \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --gas-prices 0.007uaxl \
+  --generate-only > unsigned_tx.json
+```
+
+Each member signs the same unsigned transaction. The `--from` value is the member key, while `--multisig` is the multisig account:
+
+```bash
+axelard tx sign unsigned_tx.json \
+  --from <member-key> \
+  --multisig <multisig-name-or-address> \
+  --keyring-backend test \
+  --chain-id <chain-id> \
+  --node <rpc-url> \
+  --sign-mode amino-json \
+  --output-document member-signature.json
+```
+
+Combine the threshold number of member signatures and broadcast:
+
+```bash
+axelard tx multi-sign unsigned_tx.json <multisig-name> \
+  member-1-signature.json member-2-signature.json member-3-signature.json \
+  --keyring-backend test \
+  --chain-id <chain-id> \
+  --node <rpc-url> \
+  --output-document signed_tx.json
+
+axelard tx validate-signatures signed_tx.json \
+  --chain-id <chain-id> \
+  --node <rpc-url>
+axelard tx broadcast signed_tx.json --node <rpc-url>
+```
+
+Use the same `axelard` version for keyring, signing, signature combination, validation, and broadcast operations.
 
 **Expedited Proposals:**
 
