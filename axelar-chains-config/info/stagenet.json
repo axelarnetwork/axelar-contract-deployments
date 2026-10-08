@@ -610,6 +610,7 @@
         }
       },
       "explorer": {
+        "name": "Sepoliascan",
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       },
