@@ -109,7 +109,7 @@
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
-        "explorer": "Sepoliascan",
+        "name": "Sepoliascan",
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       },
@@ -417,7 +417,7 @@
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
-        "explorer": "Sepoliascan",
+        "name": "Sepoliascan",
         "url": "https://sepolia.etherscan.io",
         "api": "https://api-sepolia.etherscan.io/api"
       },
