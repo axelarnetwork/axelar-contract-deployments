@@ -1,5 +1,6 @@
 const { expect } = require('chai');
-const { MsgExecuteContract, MsgMigrateContract } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const { MsgExecuteContract, MsgMigrateContract, MsgStoreCode, MsgUpdateInstantiateConfig } = require('cosmjs-types/cosmwasm/wasm/v1/tx');
+const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 
 const { ConfigManager } = require('../../common/config');
 const { createProposalJson, messageToProtoJson } = require('../../cosmwasm/proposal-utils');
@@ -40,6 +41,35 @@ describe('axelard proposal JSON', () => {
             '@type': '/cosmwasm.wasm.v1.MsgMigrateContract',
             codeId: '42',
             msg: {},
+        });
+    });
+
+    it('writes AccessType with the names wasmd parses', () => {
+        const addresses = [
+            'axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2',
+            'axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx',
+        ];
+        const update = MsgUpdateInstantiateConfig.fromPartial({
+            sender: 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+            codeId: 64n,
+            newInstantiatePermission: { permission: AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, addresses },
+        });
+
+        expect(messageToProtoJson(encodeMessage(MsgUpdateInstantiateConfig.typeUrl, MsgUpdateInstantiateConfig, update))).to.deep.equal({
+            '@type': '/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig',
+            sender: 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+            codeId: '64',
+            newInstantiatePermission: { permission: 'AnyOfAddresses', addresses },
+        });
+
+        const store = MsgStoreCode.fromPartial({
+            sender: 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj',
+            wasmByteCode: new Uint8Array([0, 97, 115, 109]),
+            instantiatePermission: { permission: AccessType.ACCESS_TYPE_EVERYBODY, addresses: [] },
+        });
+
+        expect(messageToProtoJson(encodeMessage(MsgStoreCode.typeUrl, MsgStoreCode, store))).to.deep.include({
+            instantiatePermission: { permission: 'Everybody', addresses: [] },
         });
     });
 

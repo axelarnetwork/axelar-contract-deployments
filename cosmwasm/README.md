@@ -197,6 +197,16 @@ ts-node cosmwasm/core.ts activate-chain <chain> \
   --generate-only proposal.json
 ```
 
+Review `proposal.json` before wrapping it. For messages that carry an
+instantiate permission (`store-code`, `coordinator-instantiate-permissions`),
+`permission` must be one of `Nobody`, `Everybody` or `AnyOfAddresses`.
+`axelard` silently turns any other value into `Unspecified`, which fails at
+execution after the vote. Check the wrapped transaction too:
+
+```bash
+grep -q Unspecified unsigned_tx.json && echo "invalid permission, do not sign"
+```
+
 Then build the unsigned transaction from the multisig account:
 
 ```bash

@@ -66,6 +66,32 @@ const rawContractMessageTypes = new Set([
     '/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract',
 ]);
 
+// wasmd overrides the JSON codec for AccessType with its own names and its
+// UnmarshalText silently maps any other string to Unspecified, so the proto
+// enum names emitted by cosmjs-types must be translated.
+const accessTypeNames: Record<string, string> = {
+    ACCESS_TYPE_UNSPECIFIED: 'Unspecified',
+    ACCESS_TYPE_NOBODY: 'Nobody',
+    ACCESS_TYPE_EVERYBODY: 'Everybody',
+    ACCESS_TYPE_ANY_OF_ADDRESSES: 'AnyOfAddresses',
+};
+
+const accessConfigFields = ['instantiatePermission', 'newInstantiatePermission'];
+
+const normalizeAccessConfigs = (json: Record<string, unknown>): void => {
+    for (const field of accessConfigFields) {
+        const config = json[field] as { permission?: string } | undefined;
+        if (!config?.permission) {
+            continue;
+        }
+        const name = accessTypeNames[config.permission];
+        if (!name) {
+            throw new Error(`Unknown AccessType ${config.permission} in ${field}`);
+        }
+        config.permission = name;
+    }
+};
+
 const messageToProtoJson = (message: EncodedMessage): Record<string, unknown> => {
     const MessageType = messageTypeMap[message.typeUrl];
     if (MessageType) {
@@ -77,6 +103,8 @@ const messageToProtoJson = (message: EncodedMessage): Record<string, unknown> =>
         if (rawContractMessageTypes.has(message.typeUrl) && decoded.msg) {
             json.msg = JSON.parse(Buffer.from(decoded.msg as Uint8Array).toString());
         }
+
+        normalizeAccessConfigs(json);
 
         return { '@type': message.typeUrl, ...json };
     }
