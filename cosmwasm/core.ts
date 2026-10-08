@@ -42,7 +42,9 @@ const executeCoreOperation = async (
     }
 
     const proposalId = await submitProposal(client, config, { ...options, title, description }, messages, fee);
-    printInfo('Proposal submitted', proposalId);
+    if (proposalId) {
+        printInfo('Proposal submitted', proposalId);
+    }
 };
 
 const nexusChainState = async (

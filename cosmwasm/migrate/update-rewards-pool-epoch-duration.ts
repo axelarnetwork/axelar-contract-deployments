@@ -149,12 +149,16 @@ async function submitAsGovernanceProposal(
     client: ClientManager,
     config: ConfigManager,
     messages: UpdatePoolParamsMessage[],
-    options: { title: string; description: string; deposit?: string; standardProposal?: boolean; yes?: boolean },
+    options: {
+        title: string;
+        description: string;
+        deposit?: string;
+        standardProposal?: boolean;
+        generateOnly?: string;
+        yes?: boolean;
+    },
     fee: string | StdFee,
-): Promise<string> {
-    const [account] = client.accounts;
-    printInfo('Proposer address', account.address);
-
+): Promise<string | undefined> {
     const encodedMessages = messages.map((msg) => {
         const msgOptions = {
             contractName: 'Rewards',
@@ -168,6 +172,7 @@ async function submitAsGovernanceProposal(
         description: options.description,
         deposit: options.deposit,
         standardProposal: options.standardProposal,
+        generateOnly: options.generateOnly,
     };
 
     if (!confirmProposalSubmission(options, encodedMessages)) {
@@ -175,7 +180,9 @@ async function submitAsGovernanceProposal(
     }
 
     const proposalId = await submitProposal(client, config, proposalOptions, encodedMessages, fee);
-    printInfo('Proposal submitted', proposalId);
+    if (proposalId) {
+        printInfo('Proposal submitted', proposalId);
+    }
     return proposalId;
 }
 
@@ -271,6 +278,8 @@ async function updateRewardsPoolEpochDuration(
                 title,
                 description,
                 deposit: options.deposit,
+                standardProposal: options.standardProposal,
+                generateOnly: options.generateOnly,
                 yes: options.yes,
             },
             fee,
