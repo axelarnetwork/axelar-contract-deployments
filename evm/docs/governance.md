@@ -91,6 +91,14 @@ ts-node evm/governance.js schedule upgrade <activationTime> \
   --targetContractName AxelarGateway
 ```
 
+The Axelar proposal is titled `Interchain Governance Proposal` by default. Pass `--title` and `--description` to describe what it does (the description defaults to the title):
+
+```bash
+ts-node evm/governance.js schedule raw <activationTime> \
+  --target <gateway> --calldata <calldata> \
+  --title "Pause the avalanche gateway" --description "Schedules setPauseStatus(true) on the avalanche AxelarGateway"
+```
+
 **Method 2: File + Cosmos CLI**
 
 ```bash
