@@ -73,6 +73,7 @@ The config `governance` field is stale for `moonbeam` and `scroll`.
 | ASG operator            | `0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e`                                         |
 | Deployer / auth seeder  | `0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668` ([Testnet] Deployer EOA: EVM)           |
 | Pauser (new role)       | `0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB` ([Testnet] Emergency Operator EOA: EVM) |
+| Governance proposer     | `axelar1wz8vvty9g56g43yrzgapv6ue5gsm4ggrxvhww3` ([Testnet] Deployer EOA: Axelar)     |
 | Explorer                | https://sepolia.lineascan.build/                                                     |
 
 The salts below give an auth and an implementation address that the rest of the testnet batch can share
@@ -100,9 +101,10 @@ address even though each one binds a different auth. The deployer decides the ad
 npm ci && npm run build
 ```
 
-2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xBF6d…`, and `MNEMONIC` is the Axelar wallet that
-   submits the governance proposals. The scripts read both from the environment. An exported variable takes precedence
-   over `.env`, but if you forget to export it, a `PRIVATE_KEY` left in `.env` is used silently.
+2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xBF6d…`, and `MNEMONIC` is the governance proposer
+   `axelar1wz8vvty9g56g43yrzgapv6ue5gsm4ggrxvhww3` ([Testnet] Deployer EOA: Axelar). The scripts read both from the
+   environment. An exported variable takes precedence over `.env`, but if you forget to export it, a `PRIVATE_KEY` left
+   in `.env` is used silently.
 
 ```fish
 read -sx PRIVATE_KEY
@@ -119,11 +121,16 @@ set PAUSER 0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB
 set PAUSER_CALLDATA 0x4421ea21000000000000000000000000f140b31cbe9f6a3b1d52491b84babedaa2962fab # transferPauser($PAUSER)
 ```
 
-3. Check that the deployer is funded on `$CHAIN` and that the gateway is governed by the ASG:
+3. Check that the deployer is funded on `$CHAIN`, that the proposer holds at least 3,000 AXL plus fees, and that the
+   gateway is governed by the ASG:
 
 ```fish
 cast call $GATEWAY "governance()(address)" --rpc-url https://rpc.sepolia.linea.build
+curl -s https://axelar-testnet-lcd.qubelabs.io/cosmos/bank/v1beta1/balances/axelar1wz8vvty9g56g43yrzgapv6ue5gsm4ggrxvhww3/by_denom?denom=uaxl
 ```
+
+The proposer only holds enough for one expedited deposit at a time, so the upgrade (Step 3) and the pauser transfer
+(Step 7) are separate proposals that never run at the same time. The deposit of each passed proposal is refunded.
 
 ## Deployment Steps
 
@@ -151,7 +158,7 @@ ts-node evm/deploy-consensus-gateway.js -e $ENV -n $CHAIN \
 ### Step 3: Schedule the upgrade through governance
 
 Submit as an **expedited** proposal, which is the `governance.js` default. On testnet that means a 300s voting period,
-a 66.7% threshold and a 3,000 AXL deposit per proposal (6,000 AXL for Steps 3 and 3b, refunded unless vetoed).
+a 66.7% threshold and a 3,000 AXL deposit, refunded unless vetoed.
 The activation time must cover the vote, the relay and the 300s ASG `minimumTimeDelay`, so about 30 minutes ahead is a
 safe choice. It is a UTC timestamp (`YYYY-MM-DDTHH:mm:ss`).
 
@@ -173,19 +180,7 @@ set UPGRADE_CALLDATA <printed calldata>
 
 - With `MNEMONIC` set, the proposal is submitted directly. To review it first, use `--generate-only proposal.json`.
 
-### Step 3b: Schedule the pauser transfer through governance
-
-Submit this right after Step 3 so both proposals go through voting together. `transferPauser` only exists on the
-new implementation, so it must be **executed after** the upgrade (Step 5b).
-
-```fish
-ts-node evm/governance.js schedule raw $ACTIVATION_TIME -e $ENV -n $CHAIN \
-  --target $GATEWAY --calldata $PAUSER_CALLDATA \
-  --title "Set $CHAIN consensus gateway pauser" \
-  --description "Calls transferPauser($PAUSER) on the $CHAIN AxelarGateway"
-```
-
-Wait for both proposals to pass and for both timelocks to be scheduled on the ASG.
+Wait for the proposal to pass and for the timelock to be scheduled on the ASG.
 
 ### Step 4: Seed the auth and verify
 
@@ -210,15 +205,6 @@ ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata
 `execute` first runs the auth-readiness guard and aborts if the auth is not ready. Do not bypass it.
 On success, config sets `AxelarGateway.authModule = $AUTH` and removes `pendingAuthModule`.
 
-### Step 5b: Execute the pauser transfer (after Step 5)
-
-```fish
-ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
-ts-node evm/gateway.js -e $ENV -n $CHAIN --action pauser
-```
-
-Until this runs, `pauser()` is `0x0`. During that window, only governance can pause the gateway.
-
 ### Step 6: Hand auth ownership to the proxy (right after Step 5)
 
 ```fish
@@ -229,14 +215,36 @@ ts-node evm/consensus-auth.js verify  -e $ENV -n $CHAIN --authModule $AUTH
 `handoff` refuses a stale seed and asserts that ownership landed on the proxy. The final `verify` must pass
 (owned by the proxy, seeded, live set within retention).
 
-### Step 7: Commit the config
+### Step 7: Set the pauser
+
+Run this only after Step 5 has executed and the deposit of the Step 3 proposal has been refunded. `transferPauser`
+only exists on the new implementation. Until this step completes, `pauser()` is `0x0`, so only governance can pause
+the gateway.
+
+```fish
+set PAUSER_ACTIVATION_TIME (date -u -d '+30 min' +%Y-%m-%dT%H:%M:%S)
+
+ts-node evm/governance.js schedule raw $PAUSER_ACTIVATION_TIME -e $ENV -n $CHAIN \
+  --target $GATEWAY --calldata $PAUSER_CALLDATA \
+  --title "Set $CHAIN consensus gateway pauser" \
+  --description "Calls transferPauser($PAUSER) on the $CHAIN AxelarGateway"
+```
+
+Wait for the proposal to pass and for the timelock to be scheduled on the ASG, then execute after the ETA:
+
+```fish
+ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
+ts-node evm/gateway.js -e $ENV -n $CHAIN --action pauser
+```
+
+### Step 8: Commit the config
 
 Commit the updated `axelar-chains-config/info/testnet.json`. It should change `implementation`,
 `implementationCodehash` and `authModule`, and have no `pendingAuthModule` left.
 
 ## Rest of testnet
 
-Once the pilot passes the checklist, repeat Steps 1–7 for the remaining chains. Pass a comma-separated list to `-n` so
+Once the pilot passes the checklist, repeat Steps 1–8 for the remaining chains. Pass a comma-separated list to `-n` so
 that Step 3 builds a single proposal. Run Step 5 per chain, using each chain's target and calldata.
 
 ```fish
@@ -246,20 +254,20 @@ set -x CHAIN ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,
 - All batch chains use the same `ConstAddressDeployer` (`0x98B2920D…`) and `Create3Deployer` (`0x6513Aedb…`), so with
   deployer `0xBF6d…` every chain gets the same `$AUTH` and `$IMPL` as the pilot. Fund `0xBF6d…` on every chain first.
 - `$GATEWAY` is not shared: `avalanche`, `moonbeam`, `binance`, `kava`, `filecoin-2` and `scroll` use a different gateway
-  proxy from the other chains. In Step 3b pass each chain's gateway, and in Steps 5 and 5b take each chain's target and
-  calldata from the Step 3 output.
+  proxy from the other chains. In Step 5 take each chain's target and calldata from the Step 3 output, and in Step 7
+  pass each chain's gateway.
 
 ## Failure handling
 
-| Situation                                    | Action                                                                                               |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Proposal rejected or not relayed             | Re-schedule (Step 3). `AUTH` and `IMPL` can be reused.                                               |
-| `execute` run before ETA                     | It aborts and prints the ETA. Wait, then retry.                                                      |
-| `verify` fails before execute                | Re-run `seed`, then `verify`. Do not execute until it passes.                                        |
-| `execute` aborts on the readiness guard      | Re-seed and retry. Do not bypass the guard.                                                          |
-| ETA slipped and the seed aged out            | Re-run `seed` (repeatable), then `verify`.                                                           |
-| `transferPauser` executed before the upgrade | It reverts on the old implementation and the timelock stays scheduled. Run Step 5 first, then retry. |
-| `handoff` fails                              | The gateway keeps working on the seeded sets. Re-run `handoff` within 16 rotations.                  |
+| Situation                               | Action                                                                              |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| Proposal rejected or not relayed        | Re-schedule (Step 3). `AUTH` and `IMPL` can be reused.                              |
+| `execute` run before ETA                | It aborts and prints the ETA. Wait, then retry.                                     |
+| `verify` fails before execute           | Re-run `seed`, then `verify`. Do not execute until it passes.                       |
+| `execute` aborts on the readiness guard | Re-seed and retry. Do not bypass the guard.                                         |
+| ETA slipped and the seed aged out       | Re-run `seed` (repeatable), then `verify`.                                          |
+| Proposer lacks the 3,000 AXL deposit    | Wait for the previous proposal's deposit to be refunded, or top up the proposer.    |
+| `handoff` fails                         | The gateway keeps working on the seeded sets. Re-run `handoff` within 16 rotations. |
 
 ## Checklist
 
