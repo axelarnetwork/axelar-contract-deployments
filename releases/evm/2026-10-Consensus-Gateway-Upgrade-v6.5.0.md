@@ -7,8 +7,8 @@
 
 | **Environment**      | **Chain**                           | **Deployment Status** | **Date**   |
 | -------------------- | ----------------------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed             | 2026-09-01 |
-| **Stagenet**         | all 9 active consensus chains       | Completed             | 2026-09-02 |
+| **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed (Jakov)             | 2026-09-01 |
+| **Stagenet**         | all 9 active consensus chains       | Completed (Jakov)            | 2026-09-02 |
 | **Testnet**          | `linea-sepolia` (pilot)             | -                     | TBD        |
 |                      | `ethereum-sepolia`                  | -                     | TBD        |
 |                      | `avalanche`                         | -                     | TBD        |
@@ -137,8 +137,8 @@ The proposer only holds enough for one expedited deposit at a time, so the upgra
 ### Step 1: Deploy the unseeded auth module
 
 ```fish
-ts-node evm/consensus-auth.js predict -e $ENV -n $CHAIN -s $AUTH_SALT
-ts-node evm/consensus-auth.js deploy  -e $ENV -n $CHAIN -s $AUTH_SALT
+npx ts-node evm/consensus-auth.js predict -e $ENV -n $CHAIN -s $AUTH_SALT
+npx ts-node evm/consensus-auth.js deploy  -e $ENV -n $CHAIN -s $AUTH_SALT
 ```
 
 Check that the printed auth address equals `$AUTH`. It stays unseeded and owned by the deployer until Steps 4 and 6.
@@ -146,11 +146,14 @@ Check that the printed auth address equals `$AUTH`. It stays unseeded and owned 
 ### Step 2: Deploy the implementation bound to `$AUTH`
 
 ```fish
-ts-node evm/deploy-consensus-gateway.js -e $ENV -n $CHAIN \
+npx ts-node evm/deploy-consensus-gateway.js -e $ENV -n $CHAIN \
   --authModule $AUTH --reuseProxy --reuseHelpers \
   --deployMethod create3 --salt $IMPL_SALT
 ```
 
+- The script prints `Contract already deployed at predicted address "$GATEWAY"!` before the confirmation prompt. This
+  is expected with `--reuseProxy` and can be ignored: it only checks that the proxy exists. Check that the address is
+  `$GATEWAY` and answer `y`.
 - Ownership transfer to the proxy is skipped, and config records `$AUTH` as `AxelarGateway.pendingAuthModule`.
 - Check that the printed implementation address equals `$IMPL`.
 - Do **not** pass `--upgrade`. The gateway is ASG-governed, so the upgrade has to go through governance.
@@ -159,36 +162,77 @@ ts-node evm/deploy-consensus-gateway.js -e $ENV -n $CHAIN \
 
 Submit as an **expedited** proposal, which is the `governance.js` default. On testnet that means a 300s voting period,
 a 66.7% threshold and a 3,000 AXL deposit, refunded unless vetoed.
-The activation time must cover the vote, the relay and the 300s ASG `minimumTimeDelay`, so about 30 minutes ahead is a
-safe choice. It is a UTC timestamp (`YYYY-MM-DDTHH:mm:ss`).
+The exact activation time doesn't matter much. The ASG sets the ETA to max(relay time + 300s `minimumTimeDelay`,
+activation time), so a time that has already passed by the relay only means the ETA is 5 minutes after the relay.
+10 minutes ahead is fine. It is a UTC timestamp (`YYYY-MM-DDTHH:mm:ss`).
 
 ```fish
-set ACTIVATION_TIME (date -u -d '+30 min' +%Y-%m-%dT%H:%M:%S)
+set ACTIVATION_TIME (date -u -d '+10 min' +%Y-%m-%dT%H:%M:%S)
 
-ts-node evm/governance.js schedule upgrade $ACTIVATION_TIME -e $ENV -n $CHAIN \
+npx ts-node evm/governance.js schedule upgrade $ACTIVATION_TIME -e $ENV -n $CHAIN \
   --targetContractName AxelarGateway --implementation $IMPL \
   --title "Upgrade $CHAIN consensus gateway to v6.5.0" \
   --description "Upgrades the $CHAIN AxelarGateway to $IMPL, bound to the new AxelarAuthWeighted $AUTH"
 ```
 
-- `setupParams` is `0x`. Do not pass `--newGovernance` / `--newMintLimiter`.
-- The printed target must equal `$GATEWAY`. Save the printed calldata for Step 5:
+- Check that the output shows `Setup Params for upgrading: 0x`. A non-empty value means the upgrade would also change
+  the gateway's governance or mint limiter. In that case, stop. Do not pass `--newGovernance` / `--newMintLimiter`.
+- `Governance target (for eta/execute)` must equal `$GATEWAY`.
+- Save the value of `Governance calldata (for eta/execute)` for Step 5. It starts with `0xa3499c73` (`upgrade`).
 
 ```fish
-set UPGRADE_CALLDATA <printed calldata>
+set UPGRADE_CALLDATA <value of 'Governance calldata (for eta/execute)'>
 ```
 
 - With `MNEMONIC` set, the proposal is submitted directly. To review it first, use `--generate-only proposal.json`.
 
-Wait for the proposal to pass and for the timelock to be scheduled on the ASG.
+Wait for the proposal to pass. That approves the call on `$GATEWAY`, but nothing calls the ASG automatically (for
+the pilot, proposal #656 stayed approved on the gateway without reaching the ASG), so relay it yourself:
+
+1. Look up the command id. Take the proposal id from the `schedule` output, or from
+   `https://axelar-testnet-lcd.qubelabs.io/cosmos/gov/v1/proposals?pagination.reverse=true&pagination.limit=1`.
+   This prints one command id per chain in `$CHAIN`.
+
+```fish
+set -x PROPOSAL_ID <proposal id>
+node -e '
+const { ENV, CHAIN, PROPOSAL_ID } = process.env;
+const rpc = require(`./axelar-chains-config/info/${ENV}.json`).axelar.rpc;
+(async () => {
+  const search = await (await fetch(`${rpc}/block_search?query=%22active_proposal.proposal_id=${PROPOSAL_ID}%22`)).json();
+  const height = search.result.blocks[0].block.header.height;
+  const results = await (await fetch(`${rpc}/block_results?height=${height}`)).json();
+  for (const e of results.result.finalize_block_events) {
+    if (e.type !== "axelar.evm.v1beta1.ContractCallApproved") continue;
+    const a = Object.fromEntries(e.attributes.map((x) => [x.key, x.value]));
+    const chain = JSON.parse(a.destination_chain);
+    if (CHAIN.toLowerCase().split(",").includes(chain.toLowerCase())) console.log(chain, "0x" + Buffer.from(JSON.parse(a.command_id)).toString("hex"));
+  }
+})();'
+```
+
+2. Relay it to the ASG. Pass the **same** `$ACTIVATION_TIME` as in `schedule`: the activation time is part of the payload,
+   so any other value does not match the approval. Anyone can send this; it costs about 75k gas.
+
+```fish
+set COMMAND_ID <printed command id>
+npx ts-node evm/governance.js submit schedule upgrade $COMMAND_ID $ACTIVATION_TIME -e $ENV -n $CHAIN \
+  --targetContractName AxelarGateway --implementation $IMPL
+```
+
+3. The real ETA can be later than `$ACTIVATION_TIME`, so read it with:
+
+```fish
+npx ts-node evm/governance.js eta -e $ENV -n $CHAIN --target $GATEWAY --calldata $UPGRADE_CALLDATA
+```
 
 ### Step 4: Seed the auth and verify
 
 Run this right before execution, once the proposal has relayed. If the ETA slips by more than a few rotations, re-run `seed`.
 
 ```fish
-ts-node evm/consensus-auth.js seed   -e $ENV -n $CHAIN --authModule $AUTH
-ts-node evm/consensus-auth.js verify -e $ENV -n $CHAIN --authModule $AUTH
+npx ts-node evm/consensus-auth.js seed   -e $ENV -n $CHAIN --authModule $AUTH
+npx ts-node evm/consensus-auth.js verify -e $ENV -n $CHAIN --authModule $AUTH
 ```
 
 - `seed` copies the last 15 operator sets from the live auth (`--copyEpochs 15`, `--lookbackDays 30`).
@@ -199,7 +243,7 @@ ts-node evm/consensus-auth.js verify -e $ENV -n $CHAIN --authModule $AUTH
 ### Step 5: Execute the upgrade (after ETA)
 
 ```fish
-ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $UPGRADE_CALLDATA
+npx ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $UPGRADE_CALLDATA
 ```
 
 `execute` first runs the auth-readiness guard and aborts if the auth is not ready. Do not bypass it.
@@ -208,8 +252,8 @@ On success, config sets `AxelarGateway.authModule = $AUTH` and removes `pendingA
 ### Step 6: Hand auth ownership to the proxy (right after Step 5)
 
 ```fish
-ts-node evm/consensus-auth.js handoff -e $ENV -n $CHAIN --authModule $AUTH
-ts-node evm/consensus-auth.js verify  -e $ENV -n $CHAIN --authModule $AUTH
+npx ts-node evm/consensus-auth.js handoff -e $ENV -n $CHAIN --authModule $AUTH
+npx ts-node evm/consensus-auth.js verify  -e $ENV -n $CHAIN --authModule $AUTH
 ```
 
 `handoff` refuses a stale seed and asserts that ownership landed on the proxy. The final `verify` must pass
@@ -222,19 +266,51 @@ only exists on the new implementation. Until this step completes, `pauser()` is 
 the gateway.
 
 ```fish
-set PAUSER_ACTIVATION_TIME (date -u -d '+30 min' +%Y-%m-%dT%H:%M:%S)
+set PAUSER_ACTIVATION_TIME (date -u -d '+10 min' +%Y-%m-%dT%H:%M:%S)
 
-ts-node evm/governance.js schedule raw $PAUSER_ACTIVATION_TIME -e $ENV -n $CHAIN \
+npx ts-node evm/governance.js schedule raw $PAUSER_ACTIVATION_TIME -e $ENV -n $CHAIN \
   --target $GATEWAY --calldata $PAUSER_CALLDATA \
   --title "Set $CHAIN consensus gateway pauser" \
   --description "Calls transferPauser($PAUSER) on the $CHAIN AxelarGateway"
 ```
 
-Wait for the proposal to pass and for the timelock to be scheduled on the ASG, then execute after the ETA:
+As in Step 3, wait for the proposal to pass, then relay it yourself.
+
+1. Look up the command id of the pauser proposal:
 
 ```fish
-ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
-ts-node evm/gateway.js -e $ENV -n $CHAIN --action pauser
+set -x PROPOSAL_ID <pauser proposal id>
+node -e '
+const { ENV, CHAIN, PROPOSAL_ID } = process.env;
+const rpc = require(`./axelar-chains-config/info/${ENV}.json`).axelar.rpc;
+(async () => {
+  const search = await (await fetch(`${rpc}/block_search?query=%22active_proposal.proposal_id=${PROPOSAL_ID}%22`)).json();
+  const height = search.result.blocks[0].block.header.height;
+  const results = await (await fetch(`${rpc}/block_results?height=${height}`)).json();
+  for (const e of results.result.finalize_block_events) {
+    if (e.type !== "axelar.evm.v1beta1.ContractCallApproved") continue;
+    const a = Object.fromEntries(e.attributes.map((x) => [x.key, x.value]));
+    const chain = JSON.parse(a.destination_chain);
+    if (CHAIN.toLowerCase().split(",").includes(chain.toLowerCase())) console.log(chain, "0x" + Buffer.from(JSON.parse(a.command_id)).toString("hex"));
+  }
+})();'
+```
+
+2. Relay it with the **same** `$PAUSER_ACTIVATION_TIME` as in `schedule`. The ETA is max(relay time + 300s,
+   `$PAUSER_ACTIVATION_TIME`).
+
+```fish
+set COMMAND_ID <printed command id>
+npx ts-node evm/governance.js submit schedule raw $COMMAND_ID $PAUSER_ACTIVATION_TIME -e $ENV -n $CHAIN \
+  --target $GATEWAY --calldata $PAUSER_CALLDATA
+```
+
+Execute after the ETA:
+
+```fish
+npx ts-node evm/governance.js eta -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
+npx ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
+npx ts-node evm/gateway.js -e $ENV -n $CHAIN --action pauser
 ```
 
 ### Step 8: Commit the config
@@ -245,7 +321,8 @@ Commit the updated `axelar-chains-config/info/testnet.json`. It should change `i
 ## Rest of testnet
 
 Once the pilot passes the checklist, repeat Steps 1–8 for the remaining chains. Pass a comma-separated list to `-n` so
-that Step 3 builds a single proposal. Run Step 5 per chain, using each chain's target and calldata.
+that Step 3 builds a single proposal. The command id lookup then prints one id per chain: relay each with `submit`
+and `-n <chain>`. Run Step 5 per chain, using each chain's target and calldata.
 
 ```fish
 set -x CHAIN ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,optimism-sepolia,base-sepolia,mantle-sepolia,polygon-sepolia
