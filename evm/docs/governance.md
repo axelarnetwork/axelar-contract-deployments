@@ -181,9 +181,26 @@ ts-node evm/governance.js eta --proposal <encoded-payload>
 
 - Use the same `target` and `calldata` (or `--proposal`) as when scheduling the proposal.
 
+### Relay Proposal (if relayers fail to submit)
+
+Relay a passed Axelar governance proposal to the governance contract when relayers haven't executed the GMP call
+automatically.
+
+```bash
+ts-node evm/governance.js relay <proposalId> -n <chain>
+```
+
+- **`proposalId`**: the Axelar governance proposal id, printed when the proposal is submitted.
+- Reads the command id and payload from the events of the Axelar block that executed the proposal, so the action,
+  target, calldata and activation time don't need to be repeated.
+- Checks that the call is approved on the chain's gateway first. If the command batch hasn't reached the gateway yet,
+  or the call was already relayed, it says so and sends nothing.
+- With several chains in `-n`, each chain's call is relayed separately.
+
 ### Submit Proposal (if relayers fail to submit)
 
-Manually submit a proposal when relayers haven't executed the GMP call automatically.
+Manually submit a proposal when relayers haven't executed the GMP call automatically. `relay` does the same from just
+the proposal id.
 
 ```bash
 ts-node evm/governance.js submit <proposaltype> <action> <commandId> <activationTime> [options]

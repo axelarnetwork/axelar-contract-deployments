@@ -27,6 +27,7 @@ const {
     validateParameters,
     isEvmChain,
     isValidAddress,
+    httpGet,
 } = require('./utils.js');
 const { addBaseOptions, addOptionsToCommands } = require('./cli-utils');
 const { getWallet } = require('./sign-utils.js');
@@ -210,6 +211,64 @@ function decodeProposalPayload(proposal) {
         nativeValue: decoded[3].toString(),
         eta: decoded[4],
     };
+}
+
+const ProposalEvents = {
+    [ProposalType.ScheduleTimelock]: 'ProposalScheduled',
+    [ProposalType.CancelTimelock]: 'ProposalCancelled',
+    [ProposalType.ApproveOperator]: 'OperatorProposalApproved',
+    [ProposalType.CancelOperator]: 'OperatorProposalCancelled',
+};
+
+// Finds the calls a passed Axelar governance proposal sent to this chain's governance contract, read from the events
+// of the block that executed the proposal: the command id from ContractCallApproved and the payload from the
+// AxelarnetGateway's contract_called event with the same payload hash.
+async function getGovernanceCallsFromProposal(axelar, chain, governanceAddress, proposalId) {
+    const search = await httpGet(`${axelar.rpc}/block_search?query=%22active_proposal.proposal_id=${proposalId}%22`);
+    const height = search.result.blocks[0]?.block.header.height;
+
+    if (!height) {
+        throw new Error(`Proposal ${proposalId} has not been executed on Axelar yet`);
+    }
+
+    const results = await httpGet(`${axelar.rpc}/block_results?height=${height}`);
+    const events = (results.result.finalize_block_events || results.result.end_block_events || []).map(({ type, attributes }) => ({
+        type,
+        attributes: Object.fromEntries(attributes.map(({ key, value }) => [key, value])),
+    }));
+
+    const proposal = events.find(({ type, attributes }) => type === 'active_proposal' && attributes.proposal_id === String(proposalId));
+
+    if (proposal?.attributes.proposal_result !== 'proposal_passed') {
+        throw new Error(`Proposal ${proposalId} did not pass: ${proposal?.attributes.proposal_result}`);
+    }
+
+    const payloads = new Map(
+        events
+            .filter(({ type }) => type === 'wasm-contract_called')
+            .map(({ attributes }) => [`0x${attributes.payload_hash}`.toLowerCase(), `0x${attributes.payload}`]),
+    );
+
+    return events
+        .filter(({ type }) => type === 'axelar.evm.v1beta1.ContractCallApproved')
+        .map(({ attributes }) => ({
+            destinationChain: JSON.parse(attributes.destination_chain),
+            contractAddress: JSON.parse(attributes.contract_address),
+            commandId: `0x${Buffer.from(JSON.parse(attributes.command_id)).toString('hex')}`,
+            payloadHash: `0x${Buffer.from(JSON.parse(attributes.payload_hash)).toString('hex')}`,
+        }))
+        .filter(
+            ({ destinationChain, contractAddress }) =>
+                destinationChain.toLowerCase() === chain.axelarId.toLowerCase() &&
+                contractAddress.toLowerCase() === governanceAddress.toLowerCase(),
+        )
+        .map(({ commandId, payloadHash }) => {
+            if (!payloads.has(payloadHash)) {
+                throw new Error(`No payload found for payload hash ${payloadHash} in proposal ${proposalId}`);
+            }
+
+            return { commandId, payload: payloads.get(payloadHash) };
+        });
 }
 
 function ensureNonZeroActivationTime(commandName, activationTime) {
@@ -494,6 +553,66 @@ async function processCommand(axelar, chain, _chains, action, options) {
                 proposaltype == 'schedule' ? 'ProposalScheduled' : 'ProposalCancelled',
             );
             printInfo('Proposal submitted.');
+            return null;
+        }
+
+        case 'relay': {
+            const [proposalId] = args;
+
+            if (!/^\d+$/.test(proposalId)) {
+                throw new Error(`Invalid proposal id: ${proposalId}`);
+            }
+
+            const calls = await getGovernanceCallsFromProposal(axelar, chain, governanceAddress, proposalId);
+
+            if (calls.length === 0) {
+                throw new Error(`Proposal ${proposalId} has no call to ${governanceAddress} on ${chain.axelarId}`);
+            }
+
+            const gateway = new Contract(chain.contracts.AxelarGateway.address, AxelarGateway.abi, provider);
+
+            for (const { commandId, payload } of calls) {
+                const { commandType, target, calldata, nativeValue: value, eta } = decodeProposalPayload(payload);
+                const proposalType = commandType.toNumber();
+
+                printInfo('Command ID', commandId);
+                printInfo(
+                    'Proposal type',
+                    Object.keys(ProposalType).find((key) => ProposalType[key] === proposalType),
+                );
+                printInfo('Governance target', target);
+                printInfo('Governance calldata', calldata);
+                printInfo('Governance native value', value);
+                printInfo('Proposal eta', etaToDate(eta));
+
+                const isApproved = await gateway.isContractCallApproved(
+                    commandId,
+                    'axelar',
+                    GOVERNANCE_MODULE_ADDRESS,
+                    governanceAddress,
+                    keccak256(payload),
+                );
+
+                if (!isApproved) {
+                    if (await gateway.isCommandExecuted(commandId)) {
+                        printWarn('Already relayed: the approval on the gateway has been consumed.');
+                    } else {
+                        printWarn('Not approved on the gateway yet: wait for the command batch to be relayed, then retry.');
+                    }
+
+                    continue;
+                }
+
+                if (prompt('Proceed with relaying this proposal to the governance contract?', options.yes)) {
+                    throw new Error('Proposal relay cancelled.');
+                }
+
+                const tx = await governance.execute(commandId, 'axelar', GOVERNANCE_MODULE_ADDRESS, payload, gasOptions);
+
+                await handleTransactionWithEvent(tx, chain, governance, 'Proposal relay', ProposalEvents[proposalType]);
+                printInfo('Proposal relayed.');
+            }
+
             return null;
         }
 
@@ -854,6 +973,19 @@ if (require.main === module) {
         .addOption(new Option('--amount <amount>', 'withdraw amount'))
         .action((proposaltype, governanceAction, commandId, activationTime, options, cmd) => {
             main(cmd.name(), [proposaltype, governanceAction, commandId, activationTime], options);
+        });
+
+    program
+        .command('relay')
+        .description('Relay a passed Axelar governance proposal to the governance contract, when relayers have not')
+        .argument('<proposalId>', 'Axelar governance proposal id')
+        .addOption(
+            new Option('-c, --contractName <contractName>', 'contract name')
+                .choices(['InterchainGovernance', 'AxelarServiceGovernance'])
+                .default('AxelarServiceGovernance'),
+        )
+        .action((proposalId, options, cmd) => {
+            main(cmd.name(), [proposalId], options);
         });
 
     program
