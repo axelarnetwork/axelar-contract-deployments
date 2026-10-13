@@ -520,8 +520,8 @@ async function deploy(axelar, chain, chains, options) {
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
     contractConfig.connectionType = 'consensus';
-    contractConfig.governance = governance;
-    contractConfig.mintLimiter = mintLimiter;
+    contractConfig.governance = reuseProxy ? governanceModule : governance;
+    contractConfig.mintLimiter = reuseProxy ? mintLimiterModule : mintLimiter;
     chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
