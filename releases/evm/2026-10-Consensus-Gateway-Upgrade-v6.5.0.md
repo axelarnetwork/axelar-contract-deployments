@@ -5,25 +5,25 @@
 | **Created By** | @jakovmitrovski, @h4writer, @dolfje |
 | **Deployment** | @h4writer <hannes@commonprefix.com> |
 
-| **Environment**      | **Chain**                           | **Deployment Status** | **Date**   |
-| -------------------- | ----------------------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed (Jakov)             | 2026-09-01 |
-| **Stagenet**         | all 9 active consensus chains       | Completed (Jakov)            | 2026-09-02 |
-| **Testnet**          | `linea-sepolia` (pilot)             | -                     | TBD        |
-|                      | `ethereum-sepolia`                  | -                     | TBD        |
-|                      | `avalanche`                         | -                     | TBD        |
-|                      | `moonbeam`                          | -                     | TBD        |
-|                      | `binance`                           | -                     | TBD        |
-|                      | `kava`                              | -                     | TBD        |
-|                      | `filecoin-2`                        | -                     | TBD        |
-|                      | `scroll`                            | -                     | TBD        |
-|                      | `immutable`                         | -                     | TBD        |
-|                      | `arbitrum-sepolia`                  | -                     | TBD        |
-|                      | `optimism-sepolia`                  | -                     | TBD        |
-|                      | `base-sepolia`                      | -                     | TBD        |
-|                      | `mantle-sepolia`                    | -                     | TBD        |
-|                      | `polygon-sepolia`                   | -                     | TBD        |
-| **Mainnet**          | -                                   | -                     | TBD        |
+| **Environment**      | **Chain**                           | **Deployment Status**                          | **Date**   |
+| -------------------- | ----------------------------------- | ---------------------------------------------- | ---------- |
+| **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed (Jakov)                              | 2026-09-01 |
+| **Stagenet**         | all 9 active consensus chains       | Completed (Jakov)                              | 2026-09-02 |
+| **Testnet**          | `linea-sepolia` (pilot)             | Completed (#656, #657); rotation check pending | 2026-10-13 |
+|                      | `ethereum-sepolia`                  | -                                              | TBD        |
+|                      | `avalanche`                         | -                                              | TBD        |
+|                      | `moonbeam`                          | -                                              | TBD        |
+|                      | `binance`                           | -                                              | TBD        |
+|                      | `kava`                              | -                                              | TBD        |
+|                      | `filecoin-2`                        | -                                              | TBD        |
+|                      | `scroll`                            | -                                              | TBD        |
+|                      | `immutable`                         | -                                              | TBD        |
+|                      | `arbitrum-sepolia`                  | -                                              | TBD        |
+|                      | `optimism-sepolia`                  | -                                              | TBD        |
+|                      | `base-sepolia`                      | -                                              | TBD        |
+|                      | `mantle-sepolia`                    | -                                              | TBD        |
+|                      | `polygon-sepolia`                   | -                                              | TBD        |
+| **Mainnet**          | -                                   | -                                              | TBD        |
 
 - [Runbook](https://app.notion.com/p/commonprefix/Consensus-Gateway-Upgrade-3cdbf672de8281529199d4cf4f065d4a)
 - [axelar-cgp-solidity v6.5.0](https://github.com/axelarnetwork/axelar-cgp-solidity/releases/tag/v6.5.0)
@@ -187,40 +187,22 @@ set UPGRADE_CALLDATA <value of 'Governance calldata (for eta/execute)'>
 - With `MNEMONIC` set, the proposal is submitted directly. To review it first, use `--generate-only proposal.json`.
 
 Wait for the proposal to pass. That approves the call on `$GATEWAY`, but nothing calls the ASG automatically (for
-the pilot, proposal #656 stayed approved on the gateway without reaching the ASG), so relay it yourself:
-
-1. Look up the command id. Take the proposal id from the `schedule` output, or from
-   `https://axelar-testnet-lcd.qubelabs.io/cosmos/gov/v1/proposals?pagination.reverse=true&pagination.limit=1`.
-   This prints one command id per chain in `$CHAIN`.
+the pilot, proposal #656 stayed approved on the gateway without reaching the ASG), so relay it yourself. Take the
+proposal id from the `schedule` output, or from
+`https://axelar-testnet-lcd.qubelabs.io/cosmos/gov/v1/proposals?pagination.reverse=true&pagination.limit=1`.
 
 ```fish
-set -x PROPOSAL_ID <proposal id>
-node -e '
-const { ENV, CHAIN, PROPOSAL_ID } = process.env;
-const rpc = require(`./axelar-chains-config/info/${ENV}.json`).axelar.rpc;
-(async () => {
-  const search = await (await fetch(`${rpc}/block_search?query=%22active_proposal.proposal_id=${PROPOSAL_ID}%22`)).json();
-  const height = search.result.blocks[0].block.header.height;
-  const results = await (await fetch(`${rpc}/block_results?height=${height}`)).json();
-  for (const e of results.result.finalize_block_events) {
-    if (e.type !== "axelar.evm.v1beta1.ContractCallApproved") continue;
-    const a = Object.fromEntries(e.attributes.map((x) => [x.key, x.value]));
-    const chain = JSON.parse(a.destination_chain);
-    if (CHAIN.toLowerCase().split(",").includes(chain.toLowerCase())) console.log(chain, "0x" + Buffer.from(JSON.parse(a.command_id)).toString("hex"));
-  }
-})();'
+set PROPOSAL_ID <proposal id>
+npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAIN
 ```
 
-2. Relay it to the ASG. Pass the **same** `$ACTIVATION_TIME` as in `schedule`: the activation time is part of the payload,
-   so any other value does not match the approval. Anyone can send this; it costs about 75k gas.
+- `relay` reads the command id and payload from the Axelar block that executed the proposal. Check that the printed
+  target is `$GATEWAY` and the calldata is `$UPGRADE_CALLDATA` before confirming. Anyone can send it; it costs about
+  75k gas.
+- If it reports that the call is not approved on the gateway yet, the command batch hasn't reached `$GATEWAY`. Wait a
+  few minutes and retry.
 
-```fish
-set COMMAND_ID <printed command id>
-npx ts-node evm/governance.js submit schedule upgrade $COMMAND_ID $ACTIVATION_TIME -e $ENV -n $CHAIN \
-  --targetContractName AxelarGateway --implementation $IMPL
-```
-
-3. The real ETA can be later than `$ACTIVATION_TIME`, so read it with:
+The real ETA can be later than `$ACTIVATION_TIME`, so read it with:
 
 ```fish
 npx ts-node evm/governance.js eta -e $ENV -n $CHAIN --target $GATEWAY --calldata $UPGRADE_CALLDATA
@@ -274,35 +256,12 @@ npx ts-node evm/governance.js schedule raw $PAUSER_ACTIVATION_TIME -e $ENV -n $C
   --description "Calls transferPauser($PAUSER) on the $CHAIN AxelarGateway"
 ```
 
-As in Step 3, wait for the proposal to pass, then relay it yourself.
-
-1. Look up the command id of the pauser proposal:
-
-```fish
-set -x PROPOSAL_ID <pauser proposal id>
-node -e '
-const { ENV, CHAIN, PROPOSAL_ID } = process.env;
-const rpc = require(`./axelar-chains-config/info/${ENV}.json`).axelar.rpc;
-(async () => {
-  const search = await (await fetch(`${rpc}/block_search?query=%22active_proposal.proposal_id=${PROPOSAL_ID}%22`)).json();
-  const height = search.result.blocks[0].block.header.height;
-  const results = await (await fetch(`${rpc}/block_results?height=${height}`)).json();
-  for (const e of results.result.finalize_block_events) {
-    if (e.type !== "axelar.evm.v1beta1.ContractCallApproved") continue;
-    const a = Object.fromEntries(e.attributes.map((x) => [x.key, x.value]));
-    const chain = JSON.parse(a.destination_chain);
-    if (CHAIN.toLowerCase().split(",").includes(chain.toLowerCase())) console.log(chain, "0x" + Buffer.from(JSON.parse(a.command_id)).toString("hex"));
-  }
-})();'
-```
-
-2. Relay it with the **same** `$PAUSER_ACTIVATION_TIME` as in `schedule`. The ETA is max(relay time + 300s,
-   `$PAUSER_ACTIVATION_TIME`).
+As in Step 3, wait for the proposal to pass, then relay it with the pauser proposal's id. Check that the printed target
+is `$GATEWAY` and the calldata is `$PAUSER_CALLDATA`. The ETA is max(relay time + 300s, `$PAUSER_ACTIVATION_TIME`).
 
 ```fish
-set COMMAND_ID <printed command id>
-npx ts-node evm/governance.js submit schedule raw $COMMAND_ID $PAUSER_ACTIVATION_TIME -e $ENV -n $CHAIN \
-  --target $GATEWAY --calldata $PAUSER_CALLDATA
+set PROPOSAL_ID <pauser proposal id>
+npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAIN
 ```
 
 Execute after the ETA:
@@ -321,8 +280,8 @@ Commit the updated `axelar-chains-config/info/testnet.json`. It should change `i
 ## Rest of testnet
 
 Once the pilot passes the checklist, repeat Steps 1–8 for the remaining chains. Pass a comma-separated list to `-n` so
-that Step 3 builds a single proposal. The command id lookup then prints one id per chain: relay each with `submit`
-and `-n <chain>`. Run Step 5 per chain, using each chain's target and calldata.
+that Step 3 builds a single proposal. `relay` with the same `-n` list relays each chain's call. Run Step 5 per chain,
+using each chain's target and calldata.
 
 ```fish
 set -x CHAIN ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,immutable,arbitrum-sepolia,optimism-sepolia,base-sepolia,mantle-sepolia,polygon-sepolia
@@ -347,6 +306,9 @@ set -x CHAIN ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,
 | `handoff` fails                         | The gateway keeps working on the seeded sets. Re-run `handoff` within 16 rotations. |
 
 ## Checklist
+
+Run this for each chain after Step 7. Record the result in the status table at the top, and note any item that is
+still pending there.
 
 - [ ] Gateway `implementation()` returns `$IMPL`.
 - [ ] Gateway `authModule()` returns `$AUTH`.
