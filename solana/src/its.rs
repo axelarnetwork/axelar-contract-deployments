@@ -856,7 +856,7 @@ fn set_trusted_chain(
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let chain_names = set_trusted_chain_args.chain_names;
-    if chain_names.iter().any(|c| c.is_empty()) {
+    if chain_names.iter().any(std::string::String::is_empty) {
         eyre::bail!("Chain name cannot be empty");
     }
     if chain_names.iter().any(|c| c == "all") && chain_names.len() > 1 {
@@ -1023,7 +1023,7 @@ fn remove_trusted_chain(
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
     let chain_names = remove_trusted_chain_args.chain_names;
-    if chain_names.iter().any(|c| c.is_empty()) {
+    if chain_names.iter().any(std::string::String::is_empty) {
         eyre::bail!("Chain name cannot be empty");
     }
 
