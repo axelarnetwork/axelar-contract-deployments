@@ -1002,36 +1002,55 @@ fn remove_trusted_chain(
         &solana_axelar_its::id(),
     );
 
-    let user_roles_account = if rpc_client.get_account(&user_roles_pda).is_ok() {
-        user_roles_pda
+    // The program requires exactly one authorization path: either the operator's user-roles
+    // PDA, or the program data account (whose upgrade authority must equal the payer). Passing
+    // the real program data account alongside the user-roles PDA makes the on-chain constraint
+    // fail for operators, so mirror `set_trusted_chain` and only pass one of them.
+    let has_operator_role = rpc_client.get_account(&user_roles_pda).is_ok();
+
+    let (user_roles_account, program_data) = if has_operator_role {
+        println!("Using operator user roles authorization.");
+        (user_roles_pda, solana_axelar_its::id())
     } else {
-        solana_axelar_its::id()
+        println!("Using upgrade_authority authorization.");
+        (
+            solana_axelar_its::id(),
+            solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id()),
+        )
     };
-
-    let ix_data = solana_axelar_its::instruction::RemoveTrustedChain {
-        chain_name: remove_trusted_chain_args.chain_name,
-    }
-    .data();
-
-    let program_data =
-        solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id());
 
     let (event_authority, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
-    Ok(vec![Instruction {
-        program_id: solana_axelar_its::id(),
-        accounts: vec![
-            AccountMeta::new(authority, true),
-            AccountMeta::new_readonly(user_roles_account, false),
-            AccountMeta::new_readonly(program_data, false),
-            AccountMeta::new(its_root_pda, false),
-            AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
-            AccountMeta::new_readonly(event_authority, false),
-            AccountMeta::new_readonly(solana_axelar_its::id(), false),
-        ],
-        data: ix_data,
-    }])
+    let chain_names = remove_trusted_chain_args.chain_names;
+    if chain_names.iter().any(|c| c.is_empty()) {
+        eyre::bail!("Chain name cannot be empty");
+    }
+
+    let mut instructions = Vec::with_capacity(chain_names.len());
+    for chain_name in chain_names {
+        println!(
+            "\u{2713} Creating instruction to remove {chain_name} from trusted chains on Solana ITS"
+        );
+
+        let ix_data = solana_axelar_its::instruction::RemoveTrustedChain { chain_name }.data();
+
+        instructions.push(Instruction {
+            program_id: solana_axelar_its::id(),
+            accounts: vec![
+                AccountMeta::new(authority, true),
+                AccountMeta::new_readonly(user_roles_account, false),
+                AccountMeta::new_readonly(program_data, false),
+                AccountMeta::new(its_root_pda, false),
+                AccountMeta::new_readonly(solana_sdk_ids::system_program::ID, false),
+                AccountMeta::new_readonly(event_authority, false),
+                AccountMeta::new_readonly(solana_axelar_its::id(), false),
+            ],
+            data: ix_data,
+        });
+    }
+
+    Ok(instructions)
 }
 
 fn register_canonical_interchain_token(
