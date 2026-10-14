@@ -9,7 +9,7 @@
 | -------------------- | ----------------------------------- | ---------------------------------------------- | ---------- |
 | **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed (Jakov)                              | 2026-09-01 |
 | **Stagenet**         | all 9 active consensus chains       | Completed (Jakov)                              | 2026-09-02 |
-| **Testnet**          | `linea-sepolia` (pilot)             | Completed (#656, #657); rotation check pending | 2026-10-13 |
+| **Testnet**          | `linea-sepolia` (pilot)             | Completed (#656, #657)                         | 2026-10-13 |
 |                      | `ethereum-sepolia`                  | -                                              | TBD        |
 |                      | `avalanche`                         | -                                              | TBD        |
 |                      | `moonbeam`                          | -                                              | TBD        |
@@ -36,9 +36,9 @@ replacement auth module. The retrofit works like this:
 
 1. Deploy the auth **unseeded** at a CREATE2 address, owned by the deployer.
 2. Deploy the implementation bound to that auth.
-3. Schedule the upgrade through `AxelarServiceGovernance` (ASG) and get it through Axelar governance.
+3. Get an operator proposal for the upgrade through Axelar governance and relay it to `AxelarServiceGovernance` (ASG).
 4. Seed the auth with the recent operator sets **just before** execution.
-5. Execute the upgrade.
+5. Execute the upgrade with the ASG operator key.
 6. Hand auth ownership to the gateway proxy **right after**.
 7. Set the pauser. 6.5.0 adds a `pauser` role that can pause the gateway without the timelock. `setup()` does not set
    it, so after the upgrade `pauser()` is `0x0` until governance calls `transferPauser`.
@@ -104,7 +104,8 @@ npm ci && npm run build
 2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xBF6d…`, and `MNEMONIC` is the governance proposer
    `axelar1wz8vvty9g56g43yrzgapv6ue5gsm4ggrxvhww3` ([Testnet] Deployer EOA: Axelar). The scripts read both from the
    environment. An exported variable takes precedence over `.env`, but if you forget to export it, a `PRIVATE_KEY` left
-   in `.env` is used silently.
+   in `.env` is used silently. Steps 5 and 7 execute with the ASG operator key instead: switch `PRIVATE_KEY` for those
+   commands only.
 
 ```fish
 read -sx PRIVATE_KEY
@@ -113,6 +114,8 @@ set -x ENV testnet
 set -x CHAIN linea-sepolia
 
 set GATEWAY 0xe432150cce91c13a887f7D836923d5597adD8E31
+set ASG 0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525
+set DEPLOYER 0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668
 set AUTH_SALT "AxelarAuthWeighted v6.5.0 testnet"
 set IMPL_SALT "AxelarGateway v6.5"
 set AUTH 0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6 # predicted, confirmed in Step 1
@@ -162,14 +165,9 @@ npx ts-node evm/deploy-consensus-gateway.js -e $ENV -n $CHAIN \
 
 Submit as an **expedited** proposal, which is the `governance.js` default. On testnet that means a 300s voting period,
 a 66.7% threshold and a 3,000 AXL deposit, refunded unless vetoed.
-The exact activation time doesn't matter much. The ASG sets the ETA to max(relay time + 300s `minimumTimeDelay`,
-activation time), so a time that has already passed by the relay only means the ETA is 5 minutes after the relay.
-10 minutes ahead is fine. It is a UTC timestamp (`YYYY-MM-DDTHH:mm:ss`).
 
 ```fish
-set ACTIVATION_TIME (date -u -d '+10 min' +%Y-%m-%dT%H:%M:%S)
-
-npx ts-node evm/governance.js schedule upgrade $ACTIVATION_TIME -e $ENV -n $CHAIN \
+npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAIN \
   --targetContractName AxelarGateway --implementation $IMPL \
   --title "Upgrade $CHAIN consensus gateway to v6.5.0" \
   --description "Upgrades the $CHAIN AxelarGateway to $IMPL, bound to the new AxelarAuthWeighted $AUTH"
@@ -177,11 +175,12 @@ npx ts-node evm/governance.js schedule upgrade $ACTIVATION_TIME -e $ENV -n $CHAI
 
 - Check that the output shows `Setup Params for upgrading: 0x`. A non-empty value means the upgrade would also change
   the gateway's governance or mint limiter. In that case, stop. Do not pass `--newGovernance` / `--newMintLimiter`.
-- `Governance target (for eta/execute)` must equal `$GATEWAY`.
-- Save the value of `Governance calldata (for eta/execute)` for Step 5. It starts with `0xa3499c73` (`upgrade`).
+- `Governance target (for execute-operator-proposal)` must equal `$GATEWAY`.
+- Save the value of `Governance calldata (for execute-operator-proposal)` for Step 5. It starts with `0xa3499c73`
+  (`upgrade`).
 
 ```fish
-set UPGRADE_CALLDATA <value of 'Governance calldata (for eta/execute)'>
+set UPGRADE_CALLDATA <value of 'Governance calldata (for execute-operator-proposal)'>
 ```
 
 - With `MNEMONIC` set, the proposal is submitted directly. To review it first, use `--generate-only proposal.json`.
@@ -197,20 +196,23 @@ npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAIN
 ```
 
 - `relay` reads the command id and payload from the Axelar block that executed the proposal. Check that the printed
-  target is `$GATEWAY` and the calldata is `$UPGRADE_CALLDATA` before confirming. Anyone can send it; it costs about
+  type is `ApproveOperator`, the target is `$GATEWAY` and the calldata is `$UPGRADE_CALLDATA` before confirming. The
+  relay should emit `OperatorProposalApproved`. Anyone can send it; it costs about
   75k gas.
 - If it reports that the call is not approved on the gateway yet, the command batch hasn't reached `$GATEWAY`. Wait a
   few minutes and retry.
 
-The real ETA can be later than `$ACTIVATION_TIME`, so read it with:
+Check that the upgrade is approved:
 
 ```fish
-npx ts-node evm/governance.js eta -e $ENV -n $CHAIN --target $GATEWAY --calldata $UPGRADE_CALLDATA
+cast call $ASG "isOperatorProposalApproved(address,bytes,uint256)(bool)" $GATEWAY $UPGRADE_CALLDATA 0 \
+  --rpc-url https://rpc.sepolia.linea.build
 ```
 
 ### Step 4: Seed the auth and verify
 
-Run this right before execution, once the proposal has relayed. If the ETA slips by more than a few rotations, re-run `seed`.
+Run this right before execution, once the proposal has relayed. If execution slips by more than a few rotations,
+re-run `seed`.
 
 ```fish
 npx ts-node evm/consensus-auth.js seed   -e $ENV -n $CHAIN --authModule $AUTH
@@ -222,16 +224,23 @@ npx ts-node evm/consensus-auth.js verify -e $ENV -n $CHAIN --authModule $AUTH
 - `verify` warns that the deployer still owns the auth. That is expected at this point.
 - If `verify` fails, do not continue. Re-seed and verify again.
 
-### Step 5: Execute the upgrade (after ETA)
+### Step 5: Execute the upgrade with the operator key
+
+Run this with the ASG operator key (`0x6e079CD1…` on testnet) as `PRIVATE_KEY`. With any other key the transaction
+reverts (`NotAuthorized`; the script only shows `CALL_EXCEPTION`). The auth seeder is still the deployer `0xBF6d…`, so
+pass it with `--authSeeder`.
 
 ```fish
-npx ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $UPGRADE_CALLDATA
+npx ts-node evm/governance.js execute-operator-proposal -e $ENV -n $CHAIN \
+  --target $GATEWAY --calldata $UPGRADE_CALLDATA --authSeeder $DEPLOYER
 ```
 
-`execute` first runs the auth-readiness guard and aborts if the auth is not ready. Do not bypass it.
+`execute-operator-proposal` first runs the auth-readiness guard and aborts if the auth is not ready. Do not bypass it.
 On success, config sets `AxelarGateway.authModule = $AUTH` and removes `pendingAuthModule`.
 
 ### Step 6: Hand auth ownership to the proxy (right after Step 5)
+
+Switch `PRIVATE_KEY` back to the deployer: it owns `$AUTH` until the handoff.
 
 ```fish
 npx ts-node evm/consensus-auth.js handoff -e $ENV -n $CHAIN --authModule $AUTH
@@ -247,28 +256,28 @@ Run this only after Step 5 has executed and the deposit of the Step 3 proposal h
 only exists on the new implementation. Until this step completes, `pauser()` is `0x0`, so only governance can pause
 the gateway.
 
-```fish
-set PAUSER_ACTIVATION_TIME (date -u -d '+10 min' +%Y-%m-%dT%H:%M:%S)
+As in Step 3, use an operator proposal with activation time `0`.
 
-npx ts-node evm/governance.js schedule raw $PAUSER_ACTIVATION_TIME -e $ENV -n $CHAIN \
+```fish
+npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAIN \
   --target $GATEWAY --calldata $PAUSER_CALLDATA \
   --title "Set $CHAIN consensus gateway pauser" \
   --description "Calls transferPauser($PAUSER) on the $CHAIN AxelarGateway"
 ```
 
-As in Step 3, wait for the proposal to pass, then relay it with the pauser proposal's id. Check that the printed target
-is `$GATEWAY` and the calldata is `$PAUSER_CALLDATA`. The ETA is max(relay time + 300s, `$PAUSER_ACTIVATION_TIME`).
+As in Step 3, wait for the proposal to pass, then relay it with the pauser proposal's id. Check that the printed type is
+`ApproveOperator`, the target is `$GATEWAY` and the calldata is `$PAUSER_CALLDATA`. The relay should emit
+`OperatorProposalApproved`.
 
 ```fish
 set PROPOSAL_ID <pauser proposal id>
 npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAIN
 ```
 
-Execute after the ETA:
+Execute with the ASG operator key, as in Step 5.
 
 ```fish
-npx ts-node evm/governance.js eta -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
-npx ts-node evm/governance.js execute -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
+npx ts-node evm/governance.js execute-operator-proposal -e $ENV -n $CHAIN --target $GATEWAY --calldata $PAUSER_CALLDATA
 npx ts-node evm/gateway.js -e $ENV -n $CHAIN --action pauser
 ```
 
@@ -297,13 +306,16 @@ set -x CHAIN ethereum-sepolia,avalanche,moonbeam,binance,kava,filecoin-2,scroll,
 
 | Situation                               | Action                                                                              |
 | --------------------------------------- | ----------------------------------------------------------------------------------- |
-| Proposal rejected or not relayed        | Re-schedule (Step 3). `AUTH` and `IMPL` can be reused.                              |
-| `execute` run before ETA                | It aborts and prints the ETA. Wait, then retry.                                     |
+| Proposal rejected                       | Re-schedule (Step 3). `AUTH` and `IMPL` can be reused.                              |
+| Proposal not relayed                    | Manually relay                                                                      |
+| Proposal approved but wrong             | Do not execute. **!important: Cancel the approval**, then fix and re-schedule.              |
+| `execute-operator-proposal` reverts     | Check that `PRIVATE_KEY` is the ASG operator key and that the proposal is relayed.  |
 | `verify` fails before execute           | Re-run `seed`, then `verify`. Do not execute until it passes.                       |
-| `execute` aborts on the readiness guard | Re-seed and retry. Do not bypass the guard.                                         |
-| ETA slipped and the seed aged out       | Re-run `seed` (repeatable), then `verify`.                                          |
+| Readiness guard aborts execution        | Re-seed and retry. Do not bypass the guard.                                         |
+| Execution slipped and the seed aged out | Re-run `seed` (repeatable), then `verify`.                                          |
 | Proposer lacks the 3,000 AXL deposit    | Wait for the previous proposal's deposit to be refunded, or top up the proposer.    |
 | `handoff` fails                         | The gateway keeps working on the seeded sets. Re-run `handoff` within 16 rotations. |
+
 
 ## Checklist
 
