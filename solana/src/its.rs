@@ -342,8 +342,11 @@ pub(crate) struct SetPauseStatusArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct TrustedChainArgs {
-    /// The name of the chain to set as trusted
-    chain_name: String,
+    /// One or more chain names (exact case as registered on the ITS Hub). All of them are
+    /// batched into a single transaction. For set-trusted-chain, "all" (on its own) adds every
+    /// chain from the chains config.
+    #[clap(required = true)]
+    chain_names: Vec<String>,
 
     /// The authority account (ITS operator or upgrade authority)
     #[clap(long)]
@@ -712,21 +715,35 @@ pub(crate) fn build_transaction(
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
+    // Trusted-chain updates are whitelist edits that must land together or not at all, so all
+    // of their instructions go into one transaction. Every other command keeps the default of
+    // one transaction per instruction.
+    let single_transaction = matches!(
+        command,
+        Commands::SetTrustedChain(_) | Commands::RemoveTrustedChain(_)
+    );
+
     let instructions = build_instruction(fee_payer, command, config)?;
 
     // Get blockhash
     let blockhash = fetch_latest_blockhash(&config.url)?;
 
-    // Create a transaction for each individual instruction
-    let mut serializable_transactions = Vec::with_capacity(instructions.len());
+    let instruction_groups: Vec<Vec<Instruction>> = if single_transaction {
+        vec![instructions]
+    } else {
+        instructions.into_iter().map(|ix| vec![ix]).collect()
+    };
 
-    for instruction in instructions {
-        // Build message and transaction with blockhash for a single instruction
-        let message = solana_sdk::message::Message::new_with_blockhash(
-            &[instruction],
-            Some(fee_payer),
-            &blockhash,
-        );
+    let mut serializable_transactions = Vec::with_capacity(instruction_groups.len());
+
+    for group in instruction_groups {
+        if group.is_empty() {
+            continue;
+        }
+
+        // Build message and transaction with blockhash for this group of instructions
+        let message =
+            solana_sdk::message::Message::new_with_blockhash(&group, Some(fee_payer), &blockhash);
         let transaction = SolanaTransaction::new_unsigned(message);
 
         // Create the transaction parameters
@@ -838,8 +855,12 @@ fn set_trusted_chain(
     set_trusted_chain_args: TrustedChainArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    if set_trusted_chain_args.chain_name.is_empty() {
+    let chain_names = set_trusted_chain_args.chain_names;
+    if chain_names.iter().any(|c| c.is_empty()) {
         eyre::bail!("Chain name cannot be empty");
+    }
+    if chain_names.iter().any(|c| c == "all") && chain_names.len() > 1 {
+        eyre::bail!("\"all\" cannot be combined with other chain names");
     }
 
     let authority = set_trusted_chain_args.authority.unwrap_or(*fee_payer);
@@ -865,7 +886,7 @@ fn set_trusted_chain(
         println!("Using upgrade_authority authorization.");
     }
 
-    if set_trusted_chain_args.chain_name == "all" {
+    if chain_names.len() == 1 && chain_names[0] == "all" {
         use borsh::BorshDeserialize;
 
         let its_account = rpc_client.get_account(&its_root_pda)?;
@@ -934,11 +955,6 @@ fn set_trusted_chain(
             eyre::bail!("Failed to load all chains from chains info JSON file");
         }
     } else {
-        let ix_data = solana_axelar_its::instruction::SetTrustedChain {
-            chain_name: set_trusted_chain_args.chain_name,
-        }
-        .data();
-
         let program_data = user_roles.is_none().then(|| {
             solana_loader_v3_interface::get_program_data_address(&solana_axelar_its::id())
         });
@@ -946,21 +962,27 @@ fn set_trusted_chain(
         let (event_authority, _) =
             Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_its::id());
 
-        let accounts = solana_axelar_its::accounts::SetTrustedChain {
-            payer: authority,
-            user_roles,
-            program_data,
-            its_root_pda,
-            system_program: solana_sdk_ids::system_program::ID,
-            event_authority,
-            program: solana_axelar_its::id(),
-        };
+        for chain_name in chain_names {
+            println!("\u{2713} Creating instruction to set {chain_name} as trusted on Solana ITS");
 
-        instructions.push(Instruction {
-            program_id: solana_axelar_its::id(),
-            accounts: accounts.to_account_metas(None),
-            data: ix_data,
-        });
+            let ix_data = solana_axelar_its::instruction::SetTrustedChain { chain_name }.data();
+
+            let accounts = solana_axelar_its::accounts::SetTrustedChain {
+                payer: authority,
+                user_roles,
+                program_data,
+                its_root_pda,
+                system_program: solana_sdk_ids::system_program::ID,
+                event_authority,
+                program: solana_axelar_its::id(),
+            };
+
+            instructions.push(Instruction {
+                program_id: solana_axelar_its::id(),
+                accounts: accounts.to_account_metas(None),
+                data: ix_data,
+            });
+        }
     }
 
     Ok(instructions)
