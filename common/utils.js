@@ -81,7 +81,7 @@ const stringifyObject = (obj) => {
 };
 
 const printInfo = (msg, dataObj = '', colour = chalk.green) => {
-    if (dataObj) {
+    if (dataObj !== '') {
         printMsg(`${msg}: ${colour(stringifyObject(dataObj))}`);
     } else {
         printMsg(`${msg}`);
@@ -89,7 +89,7 @@ const printInfo = (msg, dataObj = '', colour = chalk.green) => {
 };
 
 const printWarn = (msg, dataObj = '') => {
-    if (dataObj) {
+    if (dataObj !== '') {
         msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
@@ -97,7 +97,7 @@ const printWarn = (msg, dataObj = '') => {
 };
 
 const printError = (msg, dataObj = '') => {
-    if (dataObj) {
+    if (dataObj !== '') {
         msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
@@ -105,7 +105,7 @@ const printError = (msg, dataObj = '') => {
 };
 
 const printHighlight = (msg, dataObj = '', colour = chalk.bgBlue) => {
-    if (dataObj) {
+    if (dataObj !== '') {
         msg = `${msg}: ${stringifyObject(dataObj)}`;
     }
 
