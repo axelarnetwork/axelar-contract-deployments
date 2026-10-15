@@ -22,7 +22,8 @@ runs:
     - name: Start Stellar local network
       shell: bash
       run: |
-        stellar container start local --protocol-version 27 --limits unlimited
+        # v672-b1475.1-latest is the last tag on v28.
+        stellar container start local --protocol-version 27 --limits unlimited --image-tag-override v672-b1475.1-latest
 
     - name: Wait for Stellar network
       shell: bash
