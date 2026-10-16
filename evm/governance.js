@@ -51,8 +51,8 @@ function addGovernanceOptions(program) {
     program.addOption(
         new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
     );
-    program.addOption(new Option('--title <title>', 'Axelar proposal title').default('Interchain Governance Proposal'));
-    program.addOption(new Option('--description <description>', 'Axelar proposal description (defaults to the title)'));
+    program.addOption(new Option('-t, --title <title>', 'Axelar proposal title').default('Interchain Governance Proposal'));
+    program.addOption(new Option('-d, --description <description>', 'Axelar proposal description (defaults to the title)'));
 
     return program;
 }
@@ -723,7 +723,7 @@ async function main(action, args, options) {
     });
 
     const title = options.title;
-    const description = options.description ?? title;
+    const description = options.description || title;
 
     const hasAmplifier = amplifierAxelarnetMsgs.length > 0;
 
