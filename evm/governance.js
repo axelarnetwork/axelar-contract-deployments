@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { defaultAbiCoder, keccak256, parseEther },
+    utils: { concat, defaultAbiCoder, hexlify, keccak256, parseEther, toUtf8Bytes },
     Contract,
     BigNumber,
     constants: { AddressZero },
@@ -220,9 +220,11 @@ const ProposalEvents = {
     [ProposalType.CancelOperator]: 'OperatorProposalCancelled',
 };
 
-// Finds the calls a passed Axelar governance proposal sent to this chain's governance contract, read from the events
-// of the block that executed the proposal: the command id from ContractCallApproved and the payload from the
-// AxelarnetGateway's contract_called event with the same payload hash.
+// Finds the calls a passed Axelar governance proposal sent to this chain's governance contract, read from the
+// AxelarnetGateway contract_called events the proposal emitted when it executed. These come right before the proposal's
+// own active_proposal event, so only the ones after the previous proposal's event belong to it. The command id is
+// derived from the message id the same way axelar-core does, since the approval itself can land in a later block when
+// the EVM module is backlogged.
 async function getGovernanceCallsFromProposal(axelar, chain, governanceAddress, proposalId) {
     const search = await httpGet(`${axelar.rpc}/block_search?query=%22active_proposal.proposal_id=${proposalId}%22`);
     const height = search.result.blocks[0]?.block.header.height;
@@ -237,38 +239,31 @@ async function getGovernanceCallsFromProposal(axelar, chain, governanceAddress, 
         attributes: Object.fromEntries(attributes.map(({ key, value }) => [key, value])),
     }));
 
-    const proposal = events.find(({ type, attributes }) => type === 'active_proposal' && attributes.proposal_id === String(proposalId));
+    const proposalIndex = events.findIndex(
+        ({ type, attributes }) => type === 'active_proposal' && attributes.proposal_id === String(proposalId),
+    );
+    const proposal = events[proposalIndex];
 
     if (proposal?.attributes.proposal_result !== 'proposal_passed') {
         throw new Error(`Proposal ${proposalId} did not pass: ${proposal?.attributes.proposal_result}`);
     }
 
-    const payloads = new Map(
-        events
-            .filter(({ type }) => type === 'wasm-contract_called')
-            .map(({ attributes }) => [`0x${attributes.payload_hash}`.toLowerCase(), `0x${attributes.payload}`]),
-    );
+    const previousProposalIndex = events.slice(0, proposalIndex).findLastIndex(({ type }) => type === 'active_proposal');
 
     return events
-        .filter(({ type }) => type === 'axelar.evm.v1beta1.ContractCallApproved')
-        .map(({ attributes }) => ({
-            destinationChain: JSON.parse(attributes.destination_chain),
-            contractAddress: JSON.parse(attributes.contract_address),
-            commandId: `0x${Buffer.from(JSON.parse(attributes.command_id)).toString('hex')}`,
-            payloadHash: `0x${Buffer.from(JSON.parse(attributes.payload_hash)).toString('hex')}`,
-        }))
+        .slice(previousProposalIndex + 1, proposalIndex)
         .filter(
-            ({ destinationChain, contractAddress }) =>
-                destinationChain.toLowerCase() === chain.axelarId.toLowerCase() &&
-                contractAddress.toLowerCase() === governanceAddress.toLowerCase(),
+            ({ type, attributes }) =>
+                type === 'wasm-contract_called' &&
+                attributes.source_chain === 'axelar' &&
+                attributes.source_address === GOVERNANCE_MODULE_ADDRESS &&
+                attributes.destination_chain.toLowerCase() === chain.axelarId.toLowerCase() &&
+                attributes.destination_address.toLowerCase() === governanceAddress.toLowerCase(),
         )
-        .map(({ commandId, payloadHash }) => {
-            if (!payloads.has(payloadHash)) {
-                throw new Error(`No payload found for payload hash ${payloadHash} in proposal ${proposalId}`);
-            }
-
-            return { commandId, payload: payloads.get(payloadHash) };
-        });
+        .map(({ attributes }) => ({
+            commandId: keccak256(concat([toUtf8Bytes(`axelar-${attributes.message_id}`), hexlify(chain.chainId)])),
+            payload: `0x${attributes.payload}`,
+        }));
 }
 
 function ensureNonZeroActivationTime(commandName, activationTime) {
@@ -561,6 +556,10 @@ async function processCommand(axelar, chain, _chains, action, options) {
 
             if (!/^\d+$/.test(proposalId)) {
                 throw new Error(`Invalid proposal id: ${proposalId}`);
+            }
+
+            if (chain.contracts.AxelarGateway?.connectionType === 'amplifier') {
+                throw new Error(`relay only supports consensus chains; ${chain.axelarId} is an amplifier chain`);
             }
 
             const calls = await getGovernanceCallsFromProposal(axelar, chain, governanceAddress, proposalId);

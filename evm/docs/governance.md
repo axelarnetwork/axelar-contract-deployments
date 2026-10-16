@@ -191,8 +191,10 @@ ts-node evm/governance.js relay <proposalId> -n <chain>
 ```
 
 - **`proposalId`**: the Axelar governance proposal id, printed when the proposal is submitted.
-- Reads the command id and payload from the events of the Axelar block that executed the proposal, so the action,
-  target, calldata and activation time don't need to be repeated.
+- Consensus chains only. Amplifier chains are rejected.
+- Reads the payload from the events of the Axelar block that executed the proposal and derives the command id from it,
+  so the action, target, calldata and activation time don't need to be repeated. Only calls sent by the governance
+  module to this chain's governance contract are relayed.
 - Checks that the call is approved on the chain's gateway first. If the command batch hasn't reached the gateway yet,
   or the call was already relayed, it says so and sends nothing.
 - With several chains in `-n`, each chain's call is relayed separately.
