@@ -69,7 +69,7 @@ The config `governance` field is stale for `moonbeam` and `scroll`.
 | Gateway proxy           | `0xe432150cce91c13a887f7D836923d5597adD8E31`                                         |
 | Current implementation  | `0xc1712652326E87D193Ac11910934085FF45C2F48`                                         |
 | Current auth module     | `0x1a920B29eBD437074225cAeE44f78FC700B27a5d`                                         |
-| AxelarServiceGovernance | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` (`minimumTimeDelay` 300)                |
+| AxelarServiceGovernance | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525`                                         |
 | ASG operator            | `0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e`                                         |
 | Deployer / auth seeder  | `0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668` ([Testnet] Deployer EOA: EVM)           |
 | Pauser (new role)       | `0xF140b31cBe9F6a3b1d52491b84bABEDAa2962faB` ([Testnet] Emergency Operator EOA: EVM) |
@@ -173,6 +173,8 @@ npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAIN \
   --description "Upgrades the $CHAIN AxelarGateway to $IMPL, bound to the new AxelarAuthWeighted $AUTH"
 ```
 
+- The output warns that `0 is less than the minimum eta`. That is expected: the ASG ignores the activation time of an
+  operator proposal.
 - Check that the output shows `Setup Params for upgrading: 0x`. A non-empty value means the upgrade would also change
   the gateway's governance or mint limiter. In that case, stop. Do not pass `--newGovernance` / `--newMintLimiter`.
 - `Governance target (for execute-operator-proposal)` must equal `$GATEWAY`.
@@ -187,7 +189,7 @@ set UPGRADE_CALLDATA <value of 'Governance calldata (for execute-operator-propos
 
 Wait for the proposal to pass. That approves the call on `$GATEWAY`, but nothing calls the ASG automatically (for
 the pilot, proposal #656 stayed approved on the gateway without reaching the ASG), so relay it yourself. Take the
-proposal id from the `schedule` output, or from
+proposal id from the `schedule-operator` output, or from
 `https://axelar-testnet-lcd.qubelabs.io/cosmos/gov/v1/proposals?pagination.reverse=true&pagination.limit=1`.
 
 ```fish
@@ -197,8 +199,8 @@ npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAIN
 
 - `relay` reads the command id and payload from the Axelar block that executed the proposal. Check that the printed
   type is `ApproveOperator`, the target is `$GATEWAY` and the calldata is `$UPGRADE_CALLDATA` before confirming. The
-  relay should emit `OperatorProposalApproved`. Anyone can send it; it costs about
-  75k gas.
+  relay should emit `OperatorProposalApproved`. Anyone can send it; it costs about 75k gas.
+- `relay` prints `Proposal eta: 1970-01-01T00:00:00`. That is expected: it is the `0` activation time from the payload.
 - If it reports that the call is not approved on the gateway yet, the command batch hasn't reached `$GATEWAY`. Wait a
   few minutes and retry.
 
@@ -256,7 +258,8 @@ Run this only after Step 5 has executed and the deposit of the Step 3 proposal h
 only exists on the new implementation. Until this step completes, `pauser()` is `0x0`, so only governance can pause
 the gateway.
 
-As in Step 3, use an operator proposal with activation time `0`.
+As in Step 3, use an operator proposal with activation time `0`. The "less than the minimum eta" warning and the
+`1970-01-01` ETA printed by `relay` are expected.
 
 ```fish
 npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAIN \
