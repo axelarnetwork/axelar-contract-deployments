@@ -12,9 +12,17 @@ const addAmplifierOptions = (program, options = {}) => {
     addEnvOption(program);
     addAxelarNodeOption(program);
 
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic (not required with --generate-only)').env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
     program.addOption(new Option('--governance', 'submit a governance proposal instead of executing directly'));
+    program.addOption(new Option('--generate-only <file>', 'write axelard proposal JSON to a file instead of signing and broadcasting'));
+    program.hook('preAction', (thisCommand) => {
+        const opts = thisCommand.opts();
+        if (opts.generateOnly) {
+            opts.governance = true;
+            opts.direct = false;
+        }
+    });
 
     if (options.singleContractOption) {
         addSingleContractOption(program);
@@ -115,8 +123,15 @@ const addAxelarNodeOption = (program) => {
 const addCoreOptions = (program) => {
     addEnvOption(program);
     addAxelarNodeOption(program);
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic (not required with --generate-only)').env('MNEMONIC'));
     program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    program.addOption(new Option('--generate-only <file>', 'write axelard proposal JSON to a file instead of signing and broadcasting'));
+    program.hook('preAction', (thisCommand) => {
+        const opts = thisCommand.opts();
+        if (opts.generateOnly) {
+            opts.direct = false;
+        }
+    });
     program.addOption(
         new Option('--direct', 'execute directly instead of submitting a governance proposal (default: governance proposal)'),
     );
