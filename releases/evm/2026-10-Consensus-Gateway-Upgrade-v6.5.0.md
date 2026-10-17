@@ -10,17 +10,17 @@
 | **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed (Jakov)                        | 2026-09-01 |
 | **Stagenet**         | all 9 active consensus chains       | Completed (Jakov)                        | 2026-09-02 |
 | **Testnet**          | `linea-sepolia` (pilot)             | Completed (#656, #657)                   | 2026-10-13 |
-|                      | `ethereum-sepolia`                  | TODO: Stuck at Step 3 (see below)              | TBD        |
-|                      | `avalanche`                         | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `binance`                           | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `kava`                              | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `filecoin-2`                        | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `immutable`                         | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `arbitrum-sepolia`                  | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `optimism-sepolia`                  | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `base-sepolia`                      | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `mantle-sepolia`                    | Completed (#658, #659); rotation pending | 2026-10-16 |
-|                      | `polygon-sepolia`                   | Completed (#658, #659); rotation pending | 2026-10-16 |
+|                      | `ethereum-sepolia`                  | Completed (#660, #661); rotation pending | 2026-10-17 |
+|                      | `avalanche`                         | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `binance`                           | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `kava`                              | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `filecoin-2`                        | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `immutable`                         | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `arbitrum-sepolia`                  | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `optimism-sepolia`                  | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `base-sepolia`                      | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `mantle-sepolia`                    | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `polygon-sepolia`                   | Completed (#658, #659)                   | 2026-10-16 |
 |                      | `scroll`                            | Skipped (deactivated, #634)              | -          |
 |                      | `moonbeam`                          | Skipped (deactivated, #635)              | -          |
 | **Mainnet**          | -                                   | -                                        | TBD        |
@@ -296,11 +296,8 @@ expected warnings are the same as in the pilot step of the same number; this sec
 
 - All batch chains use the same `ConstAddressDeployer` (`0x98B2920D…`) and `Create3Deployer` (`0x6513Aedb…`), so with
   deployer `0xBF6d…` every chain gets the same `$AUTH` and `$IMPL` as the pilot.
-- `ethereum-sepolia` is not in `$CHAINS`: it is stuck at Step 3. Its auth is deployed, but the implementation
-  deploy reverts (tx `0x0b5094c6afc86b7f16f0569c3c288cc7310dee9f1f7a013eb05d54490dc0cbfd`). Sepolia charges about 1,542
-  gas per byte of deployed code (about 200 elsewhere, including Ethereum mainnet), so the 18.7 KB implementation needs
-  about 30.8M gas, more than the 16,777,216 per-transaction cap (EIP-7825). Don't include it in the proposal: its
-  `upgrade` would revert on the missing implementation and the approval would stay open.
+- `ethereum-sepolia` is not in `$CHAINS`: its implementation deploy failed. See
+  [Fix ethereum-sepolia](#fix-ethereum-sepolia).
 - The gateway proxy is not shared. `avalanche`, `binance`, `filecoin-2` and `arbitrum-sepolia` each have their own,
   `kava` and `mantle-sepolia` share one, and the other chains use `0xe432150c…`. The commands below take each chain's
   gateway and RPC from the config.
@@ -567,6 +564,96 @@ npx ts-node evm/gateway.js -e $ENV -n $CHAINS,filecoin-2 --action pauser
 ### Step 8: Commit the config
 
 As in the pilot, for every chain.
+
+## Fix ethereum-sepolia
+
+The batch deploy (Steps 1–2 of the rest of testnet) deployed the auth on `ethereum-sepolia`, but the implementation
+deploy reverted (tx `0x0b5094c6afc86b7f16f0569c3c288cc7310dee9f1f7a013eb05d54490dc0cbfd`, 6.8M gas used). Since the
+Sepolia fork of 2026-10-06, deploying code costs about 1,542 gas per byte instead of about 200, so the 18.7 KB
+implementation needs about 30.8M gas, and the config's `gasLimit` for ethereum-sepolia is 8,000,000. The revert left
+`$IMPL` free, the gateway on its old implementation, and the config unchanged. `deploy-consensus-gateway.js` did not
+stop on the revert, so check the result on-chain.
+
+Sepolia includes transactions above the 16,777,216 per-transaction cap (EIP-7825) when the extra gas pays for state
+such as deployed code, so a higher gas limit is enough. Ethereum mainnet still charges about 200 gas per byte.
+
+The batch proposals (#658, #659) went out without ethereum-sepolia, so it gets its own. Use the variables from the
+rest of testnet, with:
+
+```fish
+set -x CHAINS ethereum-sepolia
+```
+
+### Step 2: Deploy the implementation with a higher gas limit
+
+`eth_estimateGas` gives 30,770,139; 34,000,000 leaves about 10% margin.
+
+```fish
+npx ts-node evm/deploy-consensus-gateway.js -e $ENV -n $CHAINS \
+  --authModule $AUTH --reuseProxy --reuseHelpers \
+  --deployMethod create3 --salt $IMPL_SALT \
+  --gasOptions '{"gasLimit":34000000}'
+```
+
+Check that it landed, and that the config now records it:
+
+```fish
+set rpc (cfg ethereum-sepolia .rpc)
+cast codesize $IMPL --rpc-url $rpc                                  # 18717
+cast keccak (cast code $IMPL --rpc-url $rpc)                        # = cfg ethereum-sepolia .contracts.AxelarGateway.implementationCodehash
+cast call $IMPL "authModule()(address)" --rpc-url $rpc              # = $AUTH
+cfg ethereum-sepolia .contracts.AxelarGateway.pendingAuthModule     # = $AUTH
+```
+
+### Steps 3–8
+
+The same commands as the rest of testnet, with `$CHAINS` set to `ethereum-sepolia` and without the filecoin-2 lines.
+The other ethereum-sepolia transactions store little state, so the config's 8M `gasLimit` is enough for them.
+
+Ethereum-sepolia has the same mint limiter as immutable (`0xB8Cd93C8…`, not the shared `Multisig`), so Step 3 would
+also change it (see Step 3 of the rest of testnet). With a single chain in `-n`, pass the live mint limiter with
+`--newMintLimiter` instead of editing the config: a value equal to the live one is dropped. Check that the output
+shows `Setup Params for upgrading: 0x`.
+
+```fish
+# Step 3 (deployer key, MNEMONIC set)
+npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAINS \
+  --targetContractName AxelarGateway --implementation $IMPL \
+  --newMintLimiter 0xB8Cd93C83A974649D76B1c19f311f639e62272BC \
+  --title "Upgrade ethereum-sepolia consensus gateway to v6.5.0" \
+  --description "Upgrades the AxelarGateway on ethereum-sepolia to $IMPL, bound to the new AxelarAuthWeighted $AUTH"
+set PROPOSAL_ID <proposal id>
+npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAINS
+
+# Step 4 (deployer key)
+npx ts-node evm/consensus-auth.js seed   -e $ENV -n $CHAINS --authModule $AUTH
+npx ts-node evm/consensus-auth.js verify -e $ENV -n $CHAINS --authModule $AUTH
+
+# Step 5 (operator key)
+read -sx PRIVATE_KEY    # the ASG operator key, 0x6e079CD1…
+set calldata (cast calldata "upgrade(address,bytes32,bytes)" (cfg ethereum-sepolia .contracts.AxelarGateway.implementation) (cfg ethereum-sepolia .contracts.AxelarGateway.implementationCodehash) 0x)
+npx ts-node evm/governance.js execute-operator-proposal -e $ENV -n $CHAINS \
+  --target (cfg ethereum-sepolia .contracts.AxelarGateway.address) --calldata $calldata --authSeeder $DEPLOYER
+
+# Step 6 (deployer key)
+read -sx PRIVATE_KEY    # the deployer, 0xBF6d…
+npx ts-node evm/consensus-auth.js handoff -e $ENV -n $CHAINS --authModule $AUTH
+npx ts-node evm/consensus-auth.js verify  -e $ENV -n $CHAINS --authModule $AUTH
+
+# Step 7 (deployer key and MNEMONIC to schedule and relay, operator key to execute)
+npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAINS \
+  --targetContractName AxelarGateway --calldata $PAUSER_CALLDATA \
+  --title "Set ethereum-sepolia consensus gateway pauser" \
+  --description "Calls transferPauser($PAUSER) on the AxelarGateway on ethereum-sepolia"
+set PROPOSAL_ID <pauser proposal id>
+npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAINS
+read -sx PRIVATE_KEY    # the ASG operator key, 0x6e079CD1…
+npx ts-node evm/governance.js execute-operator-proposal -e $ENV -n $CHAINS \
+  --target (cfg ethereum-sepolia .contracts.AxelarGateway.address) --calldata $PAUSER_CALLDATA
+npx ts-node evm/gateway.js -e $ENV -n $CHAINS --action pauser
+```
+
+Step 8: commit the ethereum-sepolia config change.
 
 ## Failure handling
 

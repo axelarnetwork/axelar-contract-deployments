@@ -26,18 +26,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-ethereum-sepolia-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
         },
         "Multisig": {
           "threshold": 2,
