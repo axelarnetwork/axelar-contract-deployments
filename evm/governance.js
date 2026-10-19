@@ -63,6 +63,22 @@ function ensureAxelarServiceGovernance(contractName, action) {
     }
 }
 
+// e.g. 595 -> "9m 55s", 259500 -> "3d 0h 5m 0s"
+function formatDuration(seconds) {
+    const parts = [
+        [Math.floor(seconds / 86400), 'd'],
+        [Math.floor((seconds % 86400) / 3600), 'h'],
+        [Math.floor((seconds % 3600) / 60), 'm'],
+        [seconds % 60, 's'],
+    ];
+    const first = parts.findIndex(([value]) => value > 0);
+
+    return parts
+        .slice(first === -1 ? parts.length - 1 : first)
+        .map(([value, unit]) => `${value}${unit}`)
+        .join(' ');
+}
+
 async function getSetupParams(governance, targetContractName, target, contracts, wallet, options) {
     let setupParams = '0x';
 
@@ -336,7 +352,7 @@ async function processCommand(axelar, chain, _chains, action, options) {
             if (eta < minEta) {
                 printWarn(`${activationTime} is less than the minimum eta.`);
             } else {
-                printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
+                printInfo('Time until eta', formatDuration(eta - currTime));
             }
 
             const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
@@ -417,7 +433,7 @@ async function processCommand(axelar, chain, _chains, action, options) {
             if (eta < minEta) {
                 printWarn(`${activationTime} is less than the minimum eta.`);
             } else {
-                printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
+                printInfo('Time until eta', formatDuration(eta - currTime));
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
