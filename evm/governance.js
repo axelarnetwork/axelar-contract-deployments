@@ -721,6 +721,40 @@ async function submitProposalToAxelar(proposal, options) {
     await cosmwasmMainProcessor(submitFn, submitOptions);
 }
 
+async function submitGatewayProposalToAxelar(proposal, options) {
+    const { title, description } = proposal;
+    const submitFn = async (client, config, submitOptions, _args, fee) => {
+        printInfo('Proposer address', client.accounts[0].address);
+        printInfo('Axelar chain', config.axelar.chainId);
+        printInfo('AxelarnetGateway address', config.axelar.contracts.AxelarnetGateway.address);
+        printInfo(
+            'Proposal deposit (uaxl)',
+            options.standardProposal ? config.proposalDepositAmount() : config.proposalExpeditedDepositAmount(),
+        );
+        const msgs = proposal.msgs.map((msg) => JSON.stringify(msg));
+        await executeByGovernance(
+            client,
+            config,
+            { ...submitOptions, contractName: 'AxelarnetGateway', msg: msgs, title, description },
+            undefined,
+            fee,
+        );
+    };
+
+    const submitOptions = {
+        env: options.env,
+        mnemonic: options.mnemonic,
+        contractName: 'AxelarnetGateway',
+        title,
+        description,
+        yes: options.yes,
+        rpc: options.rpc,
+        standardProposal: options.standardProposal,
+    };
+
+    await cosmwasmMainProcessor(submitFn, submitOptions);
+}
+
 async function main(action, args, options) {
     options.args = args;
     const amplifierAxelarnetMsgs = [];
@@ -756,29 +790,7 @@ async function main(action, args, options) {
             writeJSON(amplifierPreview, options.generateOnly);
             printInfo('Amplifier proposal written to file', options.generateOnly);
         } else if (!prompt('Proceed with submitting this amplifier-chain proposal to Axelar?', options.yes)) {
-            const submitFn = async (client, config, submitOptions, _args, fee) => {
-                const msgs = amplifierAxelarnetMsgs.map((msg) => JSON.stringify(msg));
-                await executeByGovernance(
-                    client,
-                    config,
-                    { ...submitOptions, contractName: 'AxelarnetGateway', msg: msgs, title, description },
-                    undefined,
-                    fee,
-                );
-            };
-
-            const submitOptions = {
-                env: options.env,
-                mnemonic: options.mnemonic,
-                contractName: 'AxelarnetGateway',
-                title,
-                description,
-                yes: options.yes,
-                rpc: options.rpc,
-                standardProposal: options.standardProposal,
-            };
-
-            await cosmwasmMainProcessor(submitFn, submitOptions);
+            await submitGatewayProposalToAxelar(amplifierPreview, options);
         }
     }
 }
@@ -1009,5 +1021,6 @@ module.exports = {
     getSetupParams,
     ProposalType,
     submitProposalToAxelar,
+    submitGatewayProposalToAxelar,
     decodeProposalPayload,
 };
