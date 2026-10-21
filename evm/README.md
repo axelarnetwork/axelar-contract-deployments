@@ -249,6 +249,11 @@ Full docs can be found [here](./docs/contract-ownership.md).
 
 *Note: add the following flags for operating via governance: `--governance --activationTime 2025-12-31T12:00:00 [--generate-only proposal.json]` and then submit the proposal
 
+#### Batch migrate interchain tokens
+`ts-node evm/its.js migrate-interchain-tokens <tokenId1> <tokenId2> --yes`
+
+Simulates one atomic batch of at most 300 tokens. Add `--governance` to preview and confirm an Axelar proposal through `AxelarnetGateway`, and `--operatorProposal` for operator approval. See [migration instructions](../docs/its/migrate-token.md).
+
 ### Gateway operator commands (evm/gateway.js)
 
 #### Rotate signers (emergency)

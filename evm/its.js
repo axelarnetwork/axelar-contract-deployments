@@ -38,7 +38,8 @@ const {
     dateToEta,
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
-const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar } = require('./governance');
+const { ProposalType, encodeGovernanceProposal, submitProposalToAxelar, submitGatewayProposalToAxelar } = require('./governance');
+const { payloadToHexBinary } = require('../cosmwasm/utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
@@ -180,7 +181,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
     printInfo('Action', action);
 
-    if (prompt(`Proceed with action ${action}`, yes)) {
+    if (action !== 'migrate-interchain-tokens' && prompt(`Proceed with action ${action}`, yes)) {
         return;
     }
 
@@ -770,6 +771,64 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        case 'migrate-interchain-tokens': {
+            if (args.length === 0 || args.length > 300) {
+                throw new Error('Provide between 1 and 300 token IDs.');
+            }
+
+            for (const tokenId of args) {
+                validateParameters({ isKeccak256Hash: { tokenId } });
+            }
+
+            if (new Set(args.map((id) => id.toLowerCase())).size !== args.length) {
+                throw new Error('Provide unique token IDs.');
+            }
+
+            const calls = args.map((tokenId) => interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [tokenId]));
+            const calldata = interchainTokenService.interface.encodeFunctionData('multicall', [calls]);
+            if (!options.governance) {
+                printInfo(
+                    'Batch migration payload',
+                    JSON.stringify({ target: interchainTokenServiceAddress, tokenIds: args, calldata }, null, 2),
+                );
+
+                if (prompt(`Proceed with action ${action}`, yes)) {
+                    return;
+                }
+            }
+
+            const { gasLimit: _gasLimit, ...batchGasOptions } = gasOptions;
+            const simulationOptions = options.governance
+                ? { from: getGovernanceContract(chain, options).governanceAddress }
+                : { ...batchGasOptions, from: walletAddress };
+            const simulationContract = interchainTokenService.connect(provider);
+
+            await simulationContract.callStatic.multicall(calls, simulationOptions);
+            const estimatedGas = await simulationContract.estimateGas.multicall(calls, simulationOptions);
+
+            printInfo('Batch simulation succeeded; estimated ITS gas', estimatedGas.toString());
+
+            if (options.governance) {
+                const { governanceAddress } = getGovernanceContract(chain, options);
+                const proposalType = options.operatorProposal ? ProposalType.ApproveOperator : ProposalType.ScheduleTimelock;
+                const payload = encodeGovernanceProposal(
+                    proposalType,
+                    interchainTokenServiceAddress,
+                    calldata,
+                    '0',
+                    dateToEta(options.activationTime || '0'),
+                );
+                return createGMPProposalJSON(chain, governanceAddress, payload);
+            }
+
+            const gasLimit = estimatedGas.mul(120).add(99).div(100);
+            printInfo('Batch gas limit (estimate + 20%)', gasLimit.toString());
+            const tx = await interchainTokenService.multicall(calls, { ...batchGasOptions, gasLimit });
+            await handleTx(tx, chain, interchainTokenService, action);
+
+            break;
+        }
+
         case 'mint-token': {
             const [tokenId, to, amount] = args;
             validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { to }, isValidNumber: { amount } });
@@ -909,6 +968,31 @@ async function main(action, args, options) {
         );
 
         if (proposals.length > 0) {
+            if (action === 'migrate-interchain-tokens') {
+                const proposal = {
+                    title: 'Interchain Token Service Batch Migration',
+                    description: 'Migrate native interchain token mintership to the token managers.',
+                    contractName: 'AxelarnetGateway',
+                    msgs: proposals.map((call) => ({
+                        call_contract: {
+                            destination_chain: call.chain,
+                            destination_address: call.contract_address,
+                            payload: payloadToHexBinary(call.payload),
+                        },
+                    })),
+                };
+
+                if (options.generateOnly) {
+                    printInfo('Proposal', JSON.stringify(proposal, null, 2));
+                    writeJSON(proposal, options.generateOnly);
+                    printInfo('Proposal written to file', options.generateOnly);
+                } else {
+                    await submitGatewayProposalToAxelar(proposal, options);
+                }
+
+                return;
+            }
+
             const proposal = {
                 title: 'Interchain Token Service Governance Proposal',
                 description: 'Interchain Token Service Governance Proposal',
@@ -1147,6 +1231,15 @@ if (require.main === module) {
             return main(cmd.name(), [tokenId], options);
         });
     addGovernanceOptions(migrateInterchainTokenCommand);
+
+    const migrateInterchainTokensCommand = program
+        .command('migrate-interchain-tokens')
+        .description('Simulate and migrate up to 300 interchain tokens in one atomic batch')
+        .argument('<token-ids...>', 'Token IDs')
+        .action((tokenIds, options, cmd) => {
+            return main(cmd.name(), tokenIds, options);
+        });
+    addGovernanceOptions(migrateInterchainTokensCommand);
 
     program
         .command('mint-token')
