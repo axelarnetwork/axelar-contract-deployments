@@ -26,18 +26,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-ethereum-sepolia-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
         },
         "Multisig": {
           "threshold": 2,
@@ -161,14 +163,16 @@
       "contracts": {
         "AxelarGateway": {
           "address": "0xC249632c2D40b9001FE907806902f63038B737Ab",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
-          "implementationCodehash": "0xb17ab564df4137d57dc47255a1890c32f98e02529d234d89cb6a8e2e71b2c6a0",
-          "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xbcc18fe1ccd51cb93a75d2166e8cb7bdd5ba8ef62d4c27d64f3ed35ee3e62222",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -545,14 +549,16 @@
       "contracts": {
         "AxelarGateway": {
           "address": "0x4D147dCb984e6affEEC47e44293DA442580A3Ec0",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
-          "implementationCodehash": "0xb17ab564df4137d57dc47255a1890c32f98e02529d234d89cb6a8e2e71b2c6a0",
-          "authModule": "0xE39d7d526DFd7B6D10972708C77ED19c3f2f5625",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xbcc18fe1ccd51cb93a75d2166e8cb7bdd5ba8ef62d4c27d64f3ed35ee3e62222",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -672,14 +678,16 @@
       "contracts": {
         "AxelarGateway": {
           "address": "0xC8D18F85cB0Cee5C95eC29c69DeaF6cea972349c",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
-          "implementationCodehash": "0xa610f7e830fcfbe1a2b6b0f79152e6e5d6a3644590b9222a62d1b21b69721115",
-          "authModule": "0x7A599c9bB4D88F648701B653739688edEfd830E8",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xbcc18fe1ccd51cb93a75d2166e8cb7bdd5ba8ef62d4c27d64f3ed35ee3e62222",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
           "salt": "AxelarGasService",
@@ -800,14 +808,16 @@
         },
         "AxelarGateway": {
           "address": "0x999117D44220F33e0441fbAb2A5aDB8FF485c54D",
-          "implementation": "0x99B5FA03a5ea4315725c43346e55a6A6fbd94098",
-          "authModule": "0xaDa0F9d5698459a57c2c8b9c380398E71C69D6fA",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "implementationCodehash": "0xc3516b0df24004564d42ebd7c4e4d3814655ea19ec2535627ebcdced0970cccd",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
+          "implementationCodehash": "0xbcc18fe1ccd51cb93a75d2166e8cb7bdd5ba8ef62d4c27d64f3ed35ee3e62222",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
@@ -1064,18 +1074,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-immutable-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
         },
         "Multisig": {
           "threshold": 2,
@@ -1190,18 +1202,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-arbitrum-sepolia-genesis"
           ],
           "address": "0xe1cE95479C84e9809269227C7F8524aE051Ae77a",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xb9902bc55605b8b80c8347c46fda6b3831ab006e33907a17f8aa67ab451deca6",
-          "authModule": "0x24C2b56128fF8E7bFaD578ABefB0fc7Dfa9ba358",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "Multisig": {
           "threshold": 2,
@@ -1417,18 +1431,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-optimism-sepolia-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "Multisig": {
           "threshold": 2,
@@ -1546,18 +1562,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-base-sepolia-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "Multisig": {
           "threshold": 2,
@@ -1804,18 +1822,20 @@
           "salt": "Create3Deployer"
         },
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-mantle-sepolia-genesis"
           ],
           "address": "0xC8D18F85cB0Cee5C95eC29c69DeaF6cea972349c",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0x262d347314eb56d4331930c08d038205062766c5783f6e34809b1da803d01bf9",
-          "authModule": "0xC4FBd54fF3876377dE2B2F9471e581B44eaD1Ea9",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1891,18 +1911,20 @@
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-polygon-sepolia-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2014,18 +2036,20 @@
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deployer": "0xBF6d81aDCfCa1D7Bea60E23C1da5483F84E4A668",
           "startingKeyIDs": [
             "evm-linea-sepolia-genesis"
           ],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
-          "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
-          "authModule": "0x1a920B29eBD437074225cAeE44f78FC700B27a5d",
+          "implementation": "0x53A68B407392F8A39cc6418c939f4d9cb75350D7",
+          "implementationCodehash": "0xaafd4d842b2e3f8008d9dfc1a6ab6f99ac19460e86b05daaf1f54ca1391e9f3e",
+          "authModule": "0x96e4D329fd6099b40446d660b3A72CA9aCC94EC6",
           "tokenDeployer": "0xD2aDceFd0496449E3FDE873A2332B18A0F0FCADf",
           "deploymentMethod": "create3",
-          "salt": "AxelarGateway v6.2",
-          "connectionType": "consensus"
+          "salt": "AxelarGateway v6.5",
+          "connectionType": "consensus",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
+          "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
