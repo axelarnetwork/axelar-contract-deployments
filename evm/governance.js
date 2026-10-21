@@ -51,6 +51,8 @@ function addGovernanceOptions(program) {
     program.addOption(
         new Option('--standardProposal', 'submit as a standard proposal instead of expedited (default is expedited)').default(false),
     );
+    program.addOption(new Option('-t, --title <title>', 'Axelar proposal title').default('Interchain Governance Proposal'));
+    program.addOption(new Option('-d, --description <description>', 'Axelar proposal description (defaults to the title)'));
 
     return program;
 }
@@ -59,6 +61,22 @@ function ensureAxelarServiceGovernance(contractName, action) {
     if (contractName === 'InterchainGovernance') {
         throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
     }
+}
+
+// e.g. 595 -> "9m 55s", 259500 -> "3d 0h 5m 0s"
+function formatDuration(seconds) {
+    const parts = [
+        [Math.floor(seconds / 86400), 'd'],
+        [Math.floor((seconds % 86400) / 3600), 'h'],
+        [Math.floor((seconds % 3600) / 60), 'm'],
+        [seconds % 60, 's'],
+    ];
+    const first = parts.findIndex(([value]) => value > 0);
+
+    return parts
+        .slice(first === -1 ? parts.length - 1 : first)
+        .map(([value, unit]) => `${value}${unit}`)
+        .join(' ');
 }
 
 async function getSetupParams(governance, targetContractName, target, contracts, wallet, options) {
@@ -334,7 +352,7 @@ async function processCommand(axelar, chain, _chains, action, options) {
             if (eta < minEta) {
                 printWarn(`${activationTime} is less than the minimum eta.`);
             } else {
-                printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
+                printInfo('Time until eta', formatDuration(eta - currTime));
             }
 
             const { target, calldata } = await getProposalCalldata(governance, chain, wallet, action, options);
@@ -415,7 +433,7 @@ async function processCommand(axelar, chain, _chains, action, options) {
             if (eta < minEta) {
                 printWarn(`${activationTime} is less than the minimum eta.`);
             } else {
-                printInfo('Time difference between current time and eta', etaToDate(eta - currTime));
+                printInfo('Time until eta', formatDuration(eta - currTime));
             }
 
             const gmpPayload = encodeGovernanceProposal(ProposalType.ApproveOperator, target, calldata, nativeValue, eta);
@@ -720,8 +738,8 @@ async function main(action, args, options) {
         }
     });
 
-    const title = 'Interchain Governance Proposal';
-    const description = 'Interchain Governance Proposal';
+    const title = options.title;
+    const description = options.description || title;
 
     const hasAmplifier = amplifierAxelarnetMsgs.length > 0;
 
