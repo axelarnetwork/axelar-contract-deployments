@@ -62,7 +62,7 @@ Use `migrate-interchain-tokens <token-ids...>` to migrate multiple tokens on eac
 ts-node evm/its.js migrate-interchain-tokens <tokenId1> <tokenId2> --yes
 ```
 
-Accepts 1–300 unique token IDs and executes one atomic ITS multicall per selected chain. More than 300 IDs are rejected. A failed migration reverts the entire multicall.
+Accepts 1–400 unique token IDs and executes one atomic ITS multicall per selected chain. More than 400 IDs are rejected. A failed migration reverts the entire multicall.
 
 The command simulates the multicall and estimates gas before sending or generating a proposal. Direct execution uses the estimate plus 20% as its gas limit, replacing any configured gas limit while preserving fee settings. The same governance flags as single-token migration are supported; governance simulation uses the configured governance contract as the caller. It does not test proposal approval, delivery, or governance execution overhead. Simulation reflects current state and does not guarantee later execution.
 
@@ -73,3 +73,11 @@ ts-node evm/its.js migrate-interchain-tokens <tokenId1> <tokenId2> --governance 
 ```
 
 The command displays the proposal and proposer, then asks for confirmation before submitting through `AxelarnetGateway`. Omit `--operatorProposal` for a timelock proposal. Add `--generate-only proposal.json` to save a preview without submitting. After passage and delivery, execute the approved call on the destination governance contract separately.
+
+For different token lists on different chains, use a local JSON object mapping chain config keys to token ID arrays, for example `{ "chain-a": ["<tokenId1>", "<tokenId2>"], "chain-b": ["<tokenId3>"] }`:
+
+```bash
+ts-node evm/its.js migrate-interchain-token-batches batches.json -e mainnet --operatorProposal --generate-only proposal.json
+```
+
+All chains must validate and simulate successfully before a single proposal is generated or submitted. The 400-token limit applies per chain. Omit `--generate-only` to preview and confirm submission. Each destination's batch is approved and executed separately; execution is not atomic across chains. Keep deployment-specific manifests outside the repository.

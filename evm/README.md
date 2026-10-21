@@ -252,7 +252,9 @@ Full docs can be found [here](./docs/contract-ownership.md).
 #### Batch migrate interchain tokens
 `ts-node evm/its.js migrate-interchain-tokens <tokenId1> <tokenId2> --yes`
 
-Simulates one atomic batch of at most 300 tokens. Add `--governance` to preview and confirm an Axelar proposal through `AxelarnetGateway`, and `--operatorProposal` for operator approval. See [migration instructions](../docs/its/migrate-token.md).
+Simulates one atomic batch of at most 400 tokens. Add `--governance` to preview and confirm an Axelar proposal through `AxelarnetGateway`, and `--operatorProposal` for operator approval. See [migration instructions](../docs/its/migrate-token.md).
+
+For different lists per chain, use `ts-node evm/its.js migrate-interchain-token-batches batches.json --operatorProposal`. The local JSON maps chain config keys to token ID arrays; all batches are simulated before one governance proposal is submitted.
 
 ### Gateway operator commands (evm/gateway.js)
 

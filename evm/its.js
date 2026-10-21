@@ -1,5 +1,6 @@
 'use strict';
 
+const { readFileSync } = require('fs');
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
@@ -772,17 +773,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
         }
 
         case 'migrate-interchain-tokens': {
-            if (args.length === 0 || args.length > 300) {
-                throw new Error('Provide between 1 and 300 token IDs.');
-            }
-
-            for (const tokenId of args) {
-                validateParameters({ isKeccak256Hash: { tokenId } });
-            }
-
-            if (new Set(args.map((id) => id.toLowerCase())).size !== args.length) {
-                throw new Error('Provide unique token IDs.');
-            }
+            validateMigrationBatch(args);
 
             const calls = args.map((tokenId) => interchainTokenService.interface.encodeFunctionData('migrateInterchainToken', [tokenId]));
             const calldata = interchainTokenService.interface.encodeFunctionData('multicall', [calls]);
@@ -953,19 +944,74 @@ async function processCommand(_axelar, chain, chains, action, options) {
     }
 }
 
+function validateMigrationBatch(tokenIds) {
+    if (!Array.isArray(tokenIds) || tokenIds.length === 0 || tokenIds.length > 400) {
+        throw new Error('Provide between 1 and 400 token IDs.');
+    }
+
+    for (const tokenId of tokenIds) {
+        validateParameters({ isKeccak256Hash: { tokenId } });
+    }
+
+    if (new Set(tokenIds.map((id) => id.toLowerCase())).size !== tokenIds.length) {
+        throw new Error('Provide unique token IDs.');
+    }
+}
+
+async function migrateInterchainTokenBatches(file, options) {
+    const batches = JSON.parse(readFileSync(file, 'utf8'));
+    if (!batches || Array.isArray(batches) || typeof batches !== 'object' || Object.keys(batches).length === 0) {
+        throw new Error('Expected a non-empty JSON object mapping chain config keys to token ID arrays.');
+    }
+
+    const config = loadConfig(options.env);
+    const tokenBatches = {};
+    for (const [name, tokenIds] of Object.entries(batches)) {
+        const chain = Object.hasOwn(config.chains, name) && config.chains[name];
+        if (!chain || chain.chainType !== 'evm' || !chain.axelarId) {
+            throw new Error(`Unknown EVM chain config key: ${name}`);
+        }
+        if (Object.hasOwn(tokenBatches, chain.axelarId)) {
+            throw new Error(`Duplicate destination chain: ${chain.axelarId}`);
+        }
+        validateMigrationBatch(tokenIds);
+        tokenBatches[chain.axelarId] = tokenIds;
+    }
+
+    return main('migrate-interchain-tokens', [], {
+        ...options,
+        governance: true,
+        chainNames: Object.keys(batches).join(','),
+        tokenBatches,
+    });
+}
+
 async function main(action, args, options) {
     options.args = args;
 
     if (options.governance) {
         const proposals = [];
 
-        await mainProcessor(options, (axelar, chain, chains, options) =>
-            processCommand(axelar, chain, chains, action, options).then((proposal) => {
-                if (proposal) {
-                    proposals.push(proposal);
-                }
-            }),
+        await mainProcessor(
+            options,
+            (axelar, chain, chains, options) =>
+                processCommand(
+                    axelar,
+                    chain,
+                    chains,
+                    action,
+                    options.tokenBatches ? { ...options, args: options.tokenBatches[chain.axelarId] } : options,
+                ).then((proposal) => {
+                    if (proposal) {
+                        proposals.push(proposal);
+                    }
+                }),
+            !options.tokenBatches,
         );
+
+        if (options.tokenBatches && proposals.length !== Object.keys(options.tokenBatches).length) {
+            throw new Error('Every chain must produce a simulated batch before generating or submitting the proposal.');
+        }
 
         if (proposals.length > 0) {
             if (action === 'migrate-interchain-tokens') {
@@ -1234,12 +1280,19 @@ if (require.main === module) {
 
     const migrateInterchainTokensCommand = program
         .command('migrate-interchain-tokens')
-        .description('Simulate and migrate up to 300 interchain tokens in one atomic batch')
+        .description('Simulate and migrate up to 400 interchain tokens in one atomic batch')
         .argument('<token-ids...>', 'Token IDs')
         .action((tokenIds, options, cmd) => {
             return main(cmd.name(), tokenIds, options);
         });
     addGovernanceOptions(migrateInterchainTokensCommand);
+
+    const migrateInterchainTokenBatchesCommand = program
+        .command('migrate-interchain-token-batches')
+        .description('Simulate per-chain token batches from a JSON file and submit one governance proposal')
+        .argument('<file>', 'JSON object mapping chain config keys to token ID arrays')
+        .action(migrateInterchainTokenBatches);
+    addGovernanceOptions(migrateInterchainTokenBatchesCommand);
 
     program
         .command('mint-token')
@@ -1284,9 +1337,15 @@ if (require.main === module) {
             return main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });
 
-    addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
+    addOptionsToCommands(program, (command) =>
+        addEvmOptions(command, {
+            address: command.name() !== 'migrate-interchain-token-batches',
+            salt: true,
+            ignoreChainNames: command.name() === 'migrate-interchain-token-batches',
+        }),
+    );
 
     program.parseAsync().then(() => process.exit(0));
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, processCommand };
+module.exports = { its: main, migrateInterchainTokenBatches, getDeploymentSalt, handleTx, getTrustedChains, processCommand };
