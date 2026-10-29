@@ -3955,8 +3955,8 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0xc9f57ed4a0f94f9d5c70b501ee2443fd9f3f4f0b1c976c00c59a696773567de7",
           "minimumRotationDelay": 86400,
-          "operator": "0x49845e5d9985d8dc941462293ed38eeff18b0eae",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "operator": "0x72164D4448fe6cfA472946feDC71e83b4628B1aF",
+          "owner": "0x72164D4448fe6cfA472946feDC71e83b4628B1aF",
           "connectionType": "amplifier",
           "initialVerifierSetId": "9647ed976585c3a90e497f25ab8674e09cb281438ead5f49d6dc08a4c86e6d3d"
         },
@@ -3967,7 +3967,7 @@
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "salt": "Operators",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+          "owner": "0x72164D4448fe6cfA472946feDC71e83b4628B1aF"
         },
         "AxelarGasService": {
           "address": "0x4A86ab8c9b0b5C17587F6a243a8f2E5DE3067BD8",
@@ -3976,7 +3976,7 @@
           "deploymentMethod": "create2",
           "salt": "AxelarGasService",
           "collector": "0x147BA6406c76C087dd6c62208b14d96898986b49",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+          "owner": "0x72164D4448fe6cfA472946feDC71e83b4628B1aF"
         },
         "InterchainTokenService": {
           "salt": "ITS v2.2.0",
@@ -3990,14 +3990,14 @@
           "implementation": "0x7a644B5C56036EE10B39c7b2580b8F7faa18793F",
           "address": "0x48d39Cc5F03f572E4cc2813E846cd0D3a63c0a4a",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+          "owner": "0x72164D4448fe6cfA472946feDC71e83b4628B1aF"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0xB1209B087e544785138784A50933d163A9087a7D",
           "implementation": "0xBE114c602e897b349CF2945C0A1A42351929Cab2",
           "address": "0x1Dd54AC94e2CF2050527cA167D70Cec803aC81C7",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE"
+          "owner": "0x72164D4448fe6cfA472946feDC71e83b4628B1aF"
         }
       },
       "explorer": {
