@@ -895,6 +895,7 @@ const programHandler = () => {
         migrateOptions: true,
         codeId: true,
         fetchCodeId: true,
+        optionalProposalOptions: true,
     });
 
     // ==================== Emergency Operations Commands ====================
