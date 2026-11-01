@@ -4190,15 +4190,16 @@
       "Multisig": {
         "blockExpiry": 50,
         "storeCodeProposalId": "386",
-        "storeCodeProposalCodeHash": "013e921027228c60021704392ec7cd8896750744e9c7251411d8a91887b2bc6e",
-        "codeId": 69,
-        "lastUploadedCodeId": 69,
+        "storeCodeProposalCodeHash": "a6967e15b598fc609675014b94d26db4005e452b2d2caece51fb2ac91d12cab7",
+        "codeId": 101,
+        "lastUploadedCodeId": 101,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
+        "adminAddress": "axelar1wxej3l9aczsns3harrtdzk7rct29jl47tvu8mp",
         "executeProposalId": "115",
         "flow": {
           "executeProposalId": "146"
         },
-        "version": "2.4.0"
+        "version": "2.4.4"
       },
       "MultisigProver": {
         "flow": {
