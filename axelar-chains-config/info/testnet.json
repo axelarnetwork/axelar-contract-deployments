@@ -4054,7 +4054,7 @@
           "domainSeparator": "0x790b531d918bad40a2fac786b46518feaea4fec71b1d7f2a43cce0bb70e0a1fc",
           "minimumRotationDelay": 3600,
           "operator": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "owner": "0x87b9A22fC2d6b6dEaB3FfacCe3b5c6D252CEF9B8",
           "connectionType": "amplifier",
           "initialVerifierSetId": "38953b1d985ad4e8d9ff7822eff12ec1cb69bdb8690bd3edf83fbb35a30c807b",
           "proxyDeploymentArgs": [
@@ -4092,7 +4092,7 @@
           "implementation": "0x4D2D80406E62279bfA7C25e77533c4AAea8f1259",
           "address": "0x3270540e5d2857E69BEC34c6EcFa02cD813aCb42",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
+          "owner": "0x87b9A22fC2d6b6dEaB3FfacCe3b5c6D252CEF9B8",
           "operator": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
           "version": "2.2.0"
         },
@@ -4103,6 +4103,21 @@
           "address": "0xDe94329DB2D8C283E2fe6D4e090508D82cd06097",
           "owner": "0x49845e5d9985d8dc941462293ed38EEfF18B0eAE",
           "version": "2.2.0"
+        },
+        "AxelarServiceGovernance": {
+          "address": "0x87b9A22fC2d6b6dEaB3FfacCe3b5c6D252CEF9B8",
+          "gateway": "0x2a949565682ad89ca4Ad325499C36d3865a3ee02",
+          "governanceChain": "axelar",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "minimumTimeDelay": 300,
+          "operator": "0x6e079CD1c6bBb72680DeDF2687d711AE9427eE8e",
+          "deployer": "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC",
+          "deploymentMethod": "create3",
+          "salt": "v6.1.0",
+          "create3Deployer": "0x4A0fc57047cc99Cb28152730A42F5a432Aece667",
+          "predeployCodehash": "0x4fc776e1bb827206e031bd9e0ea8afccda553c870451ef4f5bfe33cae022be13",
+          "codehash": "0xb4a1359398fb82d08d87bfa04820fba4121be725a76eee9eb68303f92e733b3e",
+          "deploymentTx": "0x673921a8620007066de1d6c6a0acc70e22c624844798bd2dfa45dea68c181045"
         }
       }
     }
