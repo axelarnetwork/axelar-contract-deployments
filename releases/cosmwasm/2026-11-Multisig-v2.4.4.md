@@ -128,7 +128,7 @@ cosmwasm-check --wasm-limits limits.json multisig.wasm
 | ---------------- | --------- |
 | Store tx         | `DCBC3B124BE13216A8078067FCA8CFE503F671E04A46D7E376C40B86E6BDDC4A` (height 37129358) |
 | Code id          | 69 (`data_hash` `a6967e15…`)                                                        |
-| Migrate proposal | 505 (passed)                                                                        |
+| Migrate proposal | 505 (passed), executed at height 37178860                                           |
 
 ## Checklist
 
