@@ -4189,7 +4189,6 @@
       },
       "Multisig": {
         "blockExpiry": 50,
-        "storeCodeProposalId": "386",
         "storeCodeProposalCodeHash": "a6967e15b598fc609675014b94d26db4005e452b2d2caece51fb2ac91d12cab7",
         "codeId": 101,
         "lastUploadedCodeId": 101,
