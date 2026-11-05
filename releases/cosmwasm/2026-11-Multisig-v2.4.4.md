@@ -7,8 +7,8 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
-| **Stagenet**         | -                     | TBD        |
+| **Devnet Amplifier** | Complete              | 2026-11-05 |
+| **Stagenet**         | N/A (phased out)      | -          |
 | **Testnet**          | Complete              | 2026-11-02 |
 | **Mainnet**          | Complete              | 2026-11-02 |
 
@@ -45,13 +45,53 @@ cosmwasm-check --wasm-limits limits.json multisig.wasm
 
 - This rollout upgrades the amplifier multisig contract from `v2.4.2` to `v2.4.4`
 - There is no state migration involved
-- The multisig's wasm admin is the governance module on both networks, so the migration is always a governance
-  proposal. Only the code upload differs per network.
+- Stagenet is phased out, so this release is not deployed there
+- On testnet and mainnet the multisig's wasm admin is the governance module, so the migration is a governance
+  proposal there. Only the code upload differs between those two networks.
+- On devnet-amplifier the wasm admin is an EOA, so both the upload and the migration are direct transactions.
 
-| Network | Multisig contract                                                  | Current code    | Upload key                                                             |
-| ------- | ------------------------------------------------------------------ | --------------- | ---------------------------------------------------------------------- |
-| testnet | `axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5` | code 80 (2.4.2) | `axelar1wz8vvty9g56g43yrzgapv6ue5gsm4ggrxvhww3` (EOA)                   |
-| mainnet | `axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5` | code 58 (2.4.2) | `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m` (cpi-multisig 3-of-6)   |
+| Network          | Multisig contract                                                   | Current code      | Upload key                                                             |
+| ---------------- | ------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------- |
+| devnet-amplifier | `axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r` | code 1645 (2.4.2) | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` (EOA, also wasm admin) |
+| testnet          | `axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5` | code 80 (2.4.2)   | `axelar1wz8vvty9g56g43yrzgapv6ue5gsm4ggrxvhww3` (EOA)                  |
+| mainnet          | `axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5` | code 58 (2.4.2)   | `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m` (cpi-multisig 3-of-6)  |
+
+### Devnet Amplifier
+
+The `MNEMONIC` must be the wasm admin `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`.
+
+1. Upload new Multisig contract (direct upload, no proposal):
+
+   ```bash
+   ts-node cosmwasm/contract.ts store-code -c Multisig -v 2.4.4 -e devnet-amplifier \
+     -t "Upload Multisig contract v2.4.4" -d "Upload Multisig contract v2.4.4"
+   ```
+
+   Confirm the code hash on chain matches the artifact:
+
+   ```bash
+   axelard q wasm code-info $CODE_ID --node $NODE -o json | jq -r '.data_hash // .code_info.data_hash'
+   # A6967E15B598FC609675014B94D26DB4005E452B2D2CAECE51FB2AC91D12CAB7
+   ```
+
+2. Migrate the Multisig contract directly from the wasm admin:
+
+   ```bash
+   ts-node cosmwasm/contract.ts migrate -c Multisig --codeId $CODE_ID --msg '{}' -e devnet-amplifier
+   ```
+
+3. Update `devnet-amplifier.json`: `Multisig.codeId`, `Multisig.lastUploadedCodeId`, `Multisig.version` (`2.4.4`),
+   `Multisig.storeCodeProposalCodeHash` (`a6967e15…`), and remove the stale `Multisig.storeCodeProposalId`.
+   Note the entry was stale before this release (it still described code 1586 / 2.4.0 while code 1645 / 2.4.2 was
+   live).
+
+#### Devnet Amplifier record
+
+| Step       | Reference                                                                            |
+| ---------- | ------------------------------------------------------------------------------------ |
+| Store tx   | `2C8132A9CF0B5007AAEF847905599CDFC892F186CC82E8EB1A4EBBD7255BEEF9` (height 31854732) |
+| Code id    | 1686 (`data_hash` `a6967e15…`)                                                       |
+| Migrate tx | `22EBF8E9263C9918AB809E4D3216FAC53DCD3D445451A8571D05E184A25F58BB` (height 31854902) |
 
 ### Testnet
 
