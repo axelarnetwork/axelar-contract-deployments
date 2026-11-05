@@ -117,12 +117,17 @@ The `MNEMONIC` must be the wasm admin `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7
    ts-node cosmwasm/contract.ts migrate -c Multisig --codeId $CODE_ID --msg '{}' --governance -e testnet
    ```
 
+3. After the proposal passes, verify (Checklist below) and update `testnet.json`: `Multisig.codeId`,
+   `Multisig.lastUploadedCodeId`, `Multisig.version` (`2.4.4`), `Multisig.storeCodeProposalCodeHash` (`a6967e15…`).
+   Note the entry was stale before this release (it still described code 69 / 2.4.0 while code 80 / 2.4.2 was live).
+
 #### Testnet record
 
-| Step             | Reference                                                     |
-| ---------------- | ------------------------------------------------------------- |
-| Code id          | 101 (direct upload, `data_hash` `a6967e15…`)                 |
-| Migrate proposal | 670 (passed), executed at height 39167153                     |
+| Step             | Reference                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| Store tx         | `70246ECF6BC611BBAD9C38DEA9D62B13815274EF1FA554533FE843424EBA9E5A` (height 39166901) |
+| Code id          | 101 (direct upload, `data_hash` `a6967e15…`)                                         |
+| Migrate proposal | 670 (passed), executed at height 39167153                                            |
 
 ### Mainnet
 
