@@ -19,10 +19,10 @@ The testnet copy of the [mainnet release](./2026-10-Blast-Deactivate-Chain.md):
 **`blast-sepolia` is already deactivated on testnet** (`activated: false`, checked 2026-10-28). The deactivate handler
 then only logs `chain blast-sepolia already deactivated` and returns without an error, so this transaction succeeds
 and changes nothing. That makes it a safe rehearsal of the mainnet signing flow (`keys add --multisig --nosort`,
-`tx sign --multisig`, `multisign`, `validate-signatures`, `broadcast`), which has not been run end to end yet.
+`tx sign --multisig`, `multisign`, `validate-signatures`, `broadcast`), run here end to end before mainnet.
 
 A simulation against testnet on 2026-10-28 (dummy signature, not broadcast) passed the role check and executed the
-message with 54,685 gas, without a `chain` event. The real transaction used 58,194 gas. The same simulation for an active chain emits
+message with 54,685 gas, without a `chain` event. The same simulation for an active chain emits
 `chain action=deactivated`.
 
 Differences from mainnet:
@@ -54,8 +54,8 @@ Governance key member:
 ### 1. Coordinator: check the key and generate the unsigned transaction
 
 ```bash
-LCD=https://axelar-testnet-lcd.qubelabs.io
-NODE=https://axelar-testnet-rpc.qubelabs.io:443
+LCD=$(jq -r .axelar.lcd axelar-chains-config/info/testnet.json)
+NODE=$(jq -r .axelar.rpc axelar-chains-config/info/testnet.json)
 GOV=axelar1vzs6rll05ecdymtmr48n9a89q5v2sph268feng
 
 curl -s $LCD/axelar/permission/v1beta1/governance_key | jq -r '.governance_key.public_keys[].key'   # the key above
@@ -140,6 +140,9 @@ curl -s $LCD/cosmos/auth/v1beta1/accounts/$GOV | jq .account.sequence           
 
 Code 0 and the sequence moving to 6 show the multisig flow works. Note anything that differed from the commands above
 in the [mainnet release](./2026-10-Blast-Deactivate-Chain.md) before running it there.
+
+Result: broadcast on 2026-10-28 at height `38958947`, code 0, 58,194 gas, no `chain` event. The governance key's
+sequence is now `6`.
 
 ## Failure handling
 

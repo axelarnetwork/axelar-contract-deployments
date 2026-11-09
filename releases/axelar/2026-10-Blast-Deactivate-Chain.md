@@ -74,8 +74,8 @@ message is never relayed. So:
 Check that the key still holds the role, and read the current sequence:
 
 ```bash
-LCD=https://axelar-lcd.qubelabs.io
-NODE=https://axelar-rpc.qubelabs.io:443
+LCD=$(jq -r .axelar.lcd axelar-chains-config/info/mainnet.json)
+NODE=$(jq -r .axelar.rpc axelar-chains-config/info/mainnet.json)
 GOV=axelar1vhn68vmxtkcfmqfcnrfwhfjkm3uj5v09lqpvdx
 
 curl -s $LCD/axelar/permission/v1beta1/governance_key | jq -r '.governance_key.public_keys[].key'   # the 6 keys above, same order
@@ -173,8 +173,11 @@ axelard q tx <txhash> --node $NODE -o json | jq '.code, [.events[] | select(.typ
 curl -s $LCD/axelar/nexus/v1beta1/chain_state/blast | jq .state.activated                   # false
 ```
 
-Update the status table at the top, and the Blast row in the
-[mainnet release](../evm/2026-10-Consensus-Gateway-Upgrade-v6.5.0-Mainnet.md).
+Update the status table at the top.
+
+Result: broadcast on 2026-10-28 at height `36929474`, code 0, 109,336 gas. Signed by members 2, 3, 4 and 6. The
+transaction emitted `chain action=deactivated chain=blast`, `chain_state/blast` returns `activated: false`, and the
+governance key's sequence is now `6`.
 
 ## Message to the key holders
 
