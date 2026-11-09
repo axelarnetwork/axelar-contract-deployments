@@ -3,7 +3,7 @@
 |                | **Owner**                           |
 | -------------- | ----------------------------------- |
 | **Created By** | @h4writer <hannes@commonprefix.com> |
-| **Deployment** | @h4writer <hannes@commonprefix.com> |
+| **Deployment** | @themicp <themis@commonprefix.com>  |
 
 | **Network** | **Deployment Status**                                                                                           | **Date**   |
 | ----------- | --------------------------------------------------------------------------------------------------------------- | ---------- |
