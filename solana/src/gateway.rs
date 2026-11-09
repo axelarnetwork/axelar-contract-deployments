@@ -523,8 +523,8 @@ fn append_verification_flow_instructions(
             program_id: solana_axelar_gateway::id(),
             accounts: vec![
                 AccountMeta::new_readonly(*gateway_config_pda, false),
-                AccountMeta::new_readonly(verifier_set_tracker_pda, false),
                 AccountMeta::new(verification_session_pda, false),
+                AccountMeta::new_readonly(verifier_set_tracker_pda, false),
             ],
             data: verify_sig_ix_data,
         });
@@ -861,7 +861,7 @@ async fn submit_proof(
         axelar_grpc_endpoint,
         multisig_prover_address,
         serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::Proof {
-            multisig_session_id: submit_proof_args.multisig_session_id,
+            multisig_session_id: submit_proof_args.multisig_session_id.into(),
         })?,
     )
     .await?;
