@@ -50,19 +50,20 @@ What differs from testnet:
   mainnet RPCs also refuse 30-day log ranges.
 - **Every chain's mint limiter is its config `Multisig`**, so `Setup Params` is `0x` without the immutable workaround
   used on testnet.
-- **Proposals are standard, not expedited** (`--standardProposal`): a **150,000 AXL** deposit (refunded unless vetoed),
-  a 3-day voting period and a 50% threshold.
+- **Proposals are expedited** (the `governance.js` default, no `--standardProposal`): a **400,000 AXL** deposit
+  (refunded unless vetoed), a 1-day voting period and a 66.7% threshold. An expedited proposal that misses the 66.7%
+  threshold is not rejected but converted to a standard one (3-day voting period from submission, 50% threshold).
 - The ASG operator `0xc8a8399c…` is in use: it executed operator proposal #499 on optimism.
 
 ## Scope
 
-| Item                    | Value                                                                                           |
-| ----------------------- | ----------------------------------------------------------------------------------------------- |
-| AxelarServiceGovernance | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` (`minimumTimeDelay` 259200), on every chain        |
-| ASG operator            | `0xc8a8399c3D1207f4e109673be7047604737c1D56`                                                    |
-| Deployer / auth seeder  | `0xB1209B087e544785138784A50933d163A9087a7D`                                                    |
-| Pauser (new role)       | `0x72164D4448fe6cfA472946feDC71e83b4628B1aF` ([Mainnet] Emergency Operator EOA)                 |
-| Governance proposer     | `axelar1ykl3n6xjh00nyynknr4yzxvhtwwkd5vhcwrxye` (EOA, submitted #499), needs 150,000 AXL + fees |
+| Item                    | Value                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| AxelarServiceGovernance | `0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525` (`minimumTimeDelay` 259200), on every chain       |
+| ASG operator            | `0xc8a8399c3D1207f4e109673be7047604737c1D56`                                                   |
+| Deployer / auth seeder  | `0xB1209B087e544785138784A50933d163A9087a7D`                                                   |
+| Pauser (new role)       | `0x72164D4448fe6cfA472946feDC71e83b4628B1aF` ([Mainnet] Emergency Operator EOA)                |
+| Governance proposer     | `cpi-multisig` `axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m`, needs 400,000 AXL per proposal |
 
 | Chain       | Gateway proxy                                | Current implementation                       | Current auth module                          |
 | ----------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- |
@@ -111,16 +112,17 @@ chains. The implementation codehash differs per chain because of its `tokenDeplo
 npm ci && npm run build
 ```
 
-The proposals take their deposit from the config. It must be the current 150,000 AXL (#1428); older branches still
-have 2,000 AXL, and a proposal with too low a deposit stays in the deposit period instead of going to a vote:
+The proposals take their deposit from the config. Expedited proposals use `govProposalExpeditedDepositAmount`, which
+must match the chain's `expedited_min_deposit` of 400,000 AXL; a proposal with too low a deposit stays in the deposit
+period instead of going to a vote:
 
 ```fish
-jq -r .axelar.govProposalDepositAmount axelar-chains-config/info/mainnet.json    # 150000000000
+jq -r .axelar.govProposalExpeditedDepositAmount axelar-chains-config/info/mainnet.json    # 400000000000
 ```
 
-2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xB1209B08…`, and `MNEMONIC` is the governance proposer.
-   Steps 5 and 7 execute with the ASG operator key instead. Don't name the chain list `CHAIN`: `cast` reads an exported
-   `CHAIN` as its `--chain` option.
+2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xB1209B08…`, and `MNEMONIC` is the governance
+   proposer (`cpi-multisig`). Steps 5 and 7 execute with the ASG operator key instead. Don't name the chain list
+   `CHAIN`: `cast` reads an exported `CHAIN` as its `--chain` option.
 
     `filecoin` is not in `$CHAINS`: its config sets `gasLimit` 500,000,000 without fees, so ethers' default 1.5 gwei
     priority fee makes every filecoin transaction reserve about 0.75 FIL up front. Its transactions run separately with
@@ -130,7 +132,7 @@ jq -r .axelar.govProposalDepositAmount axelar-chains-config/info/mainnet.json   
 ```fish
 set -e CHAIN
 read -sx PRIVATE_KEY    # the deployer, 0xB1209B08…
-read -sx MNEMONIC       # the governance proposer
+read -sx MNEMONIC       # the governance proposer, cpi-multisig
 set -x ENV mainnet
 set -x CHAINS celo,ethereum,avalanche,polygon,binance,arbitrum,kava,optimism,linea,base,mantle,scroll,immutable,fraxtal
 
@@ -155,7 +157,7 @@ end
 
 ```fish
 set -l f axelar-chains-config/info/$ENV.json
-jq '.chains.base.rpc = "https://base-rpc.publicnode.com"' $f >$f.tmp; and mv $f.tmp $f
+jq '.chains.base.rpc = "https://mainnet.base.org"' $f >$f.tmp; and mv $f.tmp $f
 ```
 
 4. Fund the deployer and the operator, then check the balances, that every gateway is governed by the ASG, and that its
@@ -167,38 +169,43 @@ for c in (string split , $CHAINS,filecoin)
     set gw (cfg $c .contracts.AxelarGateway.address)
     echo "$c deployer="(cast balance $DEPLOYER -e --rpc-url $rpc)" operator="(cast balance $OPERATOR -e --rpc-url $rpc)" governance="(cast call $gw "governance()(address)" --rpc-url $rpc)" mintLimiter="(cast call $gw "mintLimiter()(address)" --rpc-url $rpc)" multisig="(cfg $c .contracts.Multisig.address)
 end
-curl -s https://axelar-lcd.qubelabs.io/cosmos/bank/v1beta1/balances/axelar1ykl3n6xjh00nyynknr4yzxvhtwwkd5vhcwrxye/by_denom?denom=uaxl
+curl -s https://axelar-lcd.qubelabs.io/cosmos/bank/v1beta1/balances/axelar14vps3ev03zyp2wmj89etx8rrxdxyltfy4rzl5m/by_denom?denom=uaxl
 ```
 
-Neither key is funded yet (checked 2026-10-18): the deployer holds nothing on any chain, and the operator only holds
-funds on polygon (0.068 POL) and optimism (0.009 ETH). The deployer sends about 20 transactions per chain (auth and
-implementation deploys, 15 seeds, a handoff and two relays, roughly 12.5M gas in total); the operator sends two (about
-65k and 165k gas). Chains with a fixed `gasLimit` in the config also reserve gas limit × max fee up front for every
-transaction. Suggested amounts (estimates with margin; the old deployer `0x6f24A47F…` still holds funds on every
-chain):
+On 2026-11-09 the deployer held nothing on any chain. The operator was funded everywhere, but too little on base,
+optimism, linea and scroll (see below). The deployer sends about 20 transactions per chain: the auth deploy (about 1.08M
+gas), the implementation deploy (about 4.41M), 15 seeds (about 165k each with mainnet's 35 signers), a handoff and two
+relays, about 8.3M gas in total. The operator sends two (about 65k and 165k gas).
 
-| Chain                                             | Deployer    | Operator    |
-| ------------------------------------------------- | ----------- | ----------- |
-| `ethereum`                                        | 0.1 ETH     | 0.02 ETH    |
-| `arbitrum`, `optimism`, `linea`, `base`, `scroll` | 0.02 ETH    | 0.01 ETH    |
-| `fraxtal`                                         | 0.02 frxETH | 0.01 frxETH |
-| `celo`                                            | 10 CELO     | 2 CELO      |
-| `avalanche`                                       | 1 AVAX      | 0.5 AVAX    |
-| `polygon`                                         | 20 POL      | 2 POL       |
-| `binance`                                         | 0.05 BNB    | 0.01 BNB    |
-| `kava`                                            | 2 KAVA      | 1 KAVA      |
-| `filecoin`                                        | 2 FIL       | 1 FIL       |
-| `mantle`                                          | 30 MNT      | 5 MNT       |
-| `immutable`                                       | 10 IMX      | 2 IMX       |
+The scripts use ethers v5, which pays a 1.5 gwei priority fee unless the config sets a gas price. On the OP Stack chains
+and scroll that fee is far above the base fee and is most of the cost. A wallet must also hold gas limit × max fee for
+each transaction up front: optimism, linea, scroll and fraxtal set a fixed 8M `gasLimit`, so every transaction there
+reserves about 0.008-0.012 ETH, even the operator's. Suggested amounts (about twice the cost at 2026-11-09 prices,
+and never below the up-front reservation; linea's gas price is volatile):
 
-The proposer holds the deposit for one proposal at a time, so the upgrade (Step 3) and the pauser transfer
-(Step 7) are separate proposals that never run at the same time.
+| Chain                         | Deployer    | Operator    |
+| ----------------------------- | ----------- | ----------- |
+| `ethereum`                    | 0.1 ETH     | 0.01 ETH    |
+| `optimism`, `linea`, `scroll` | 0.03 ETH    | 0.02 ETH    |
+| `fraxtal`                     | 0.03 frxETH | 0.02 frxETH |
+| `base`                        | 0.03 ETH    | 0.002 ETH   |
+| `arbitrum`                    | 0.01 ETH    | 0.002 ETH   |
+| `celo`                        | 5 CELO      | 1 CELO      |
+| `avalanche`                   | 0.2 AVAX    | 0.05 AVAX   |
+| `polygon`                     | 10 POL      | 2 POL       |
+| `binance`                     | 0.01 BNB    | 0.005 BNB   |
+| `kava`                        | 0.1 KAVA    | 0.1 KAVA    |
+| `filecoin`                    | 0.1 FIL     | 0.1 FIL     |
+| `mantle`                      | 2 MNT       | 0.5 MNT     |
+| `immutable`                   | 1 IMX       | 0.1 IMX     |
+
+The proposer `cpi-multisig` holds about 1,000,995 AXL (2026-11-09), enough for both 400,000 AXL deposits at once.
 
 ## Announcement
 
-Announce the upgrade before submitting the Step 3 proposal, so integrators have the 3-day voting period to react. The
-gateway addresses and the `callContract` / `callContractWithToken` / `execute` interfaces stay the same, and validators
-and relayers don't need to do anything. What changes for integrators:
+Announce the upgrade well before submitting the Step 3 proposal, so integrators have time to react: the expedited vote
+takes only 1 day. The gateway addresses and the `callContract` / `callContractWithToken` / `execute` interfaces stay the
+same, and validators and relayers don't need to do anything. What changes for integrators:
 
 - `sendToken` is removed. After the upgrade, calling it on a consensus gateway reverts, and `TokenSent` is no longer
   emitted. Use `callContractWithToken` or ITS instead. (In a 10,000-block sample on the eight largest chains on
@@ -212,7 +219,7 @@ Draft:
 >
 > Axelar governance will upgrade the `AxelarGateway` on celo, ethereum, avalanche, polygon, binance, arbitrum, kava,
 > filecoin, optimism, linea, base, mantle, scroll, immutable and fraxtal to cgp-solidity v6.5.0. The governance
-> proposal is expected on <date>, followed by a 3-day vote; each chain is upgraded shortly after the vote passes.
+> proposal is expected on <date>, followed by a 1-day vote; each chain is upgraded shortly after the vote passes.
 >
 > - Gateway addresses and the `callContract`, `callContractWithToken` and `execute` interfaces do not change.
 > - **`sendToken` is removed** and will revert after the upgrade. Contracts that still call `sendToken` should switch to
@@ -269,7 +276,7 @@ epoch 0.
 ### Step 3: Schedule the upgrade and relay
 
 ```fish
-npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAINS,filecoin --standardProposal \
+npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAINS,filecoin \
   --targetContractName AxelarGateway --implementation $IMPL \
   --title "Upgrade consensus gateways to v6.5.0 ($CHAINS,filecoin)" \
   --description "Upgrades the AxelarGateway on $CHAINS,filecoin to $IMPL, bound to the new AxelarAuthWeighted $AUTH"
@@ -282,8 +289,8 @@ npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAINS,fil
   `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`, every `destination_address` is `$ASG`, and every payload starts with
   type `2` (`ApproveOperator`).
 
-Once the proposal has passed (3-day voting), relay it. If `relay` reports that a call is not approved on the gateway
-yet, that chain's batch hasn't arrived; wait and retry.
+Once the proposal has passed (1-day expedited voting, or 3 days if it was converted to standard), relay it. If `relay`
+reports that a call is not approved on the gateway yet, that chain's batch hasn't arrived; wait and retry.
 
 ```fish
 set PROPOSAL_ID <proposal id>
@@ -372,11 +379,11 @@ npx ts-node evm/consensus-auth.js verify  -e $ENV -n $CHAINS,filecoin --authModu
 
 ### Step 7: Set the pauser
 
-Run it after the Step 3 deposit has been refunded. `--targetContractName AxelarGateway`
-takes each chain's own gateway as the target.
+Run it after the upgrade has executed: `transferPauser` only exists on the v6.5.0 implementation.
+`--targetContractName AxelarGateway` takes each chain's own gateway as the target.
 
 ```fish
-npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAINS,filecoin --standardProposal \
+npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAINS,filecoin \
   --targetContractName AxelarGateway --calldata $PAUSER_CALLDATA \
   --title "Set consensus gateway pauser ($CHAINS,filecoin)" \
   --description "Calls transferPauser($PAUSER) on the AxelarGateway on $CHAINS,filecoin"
@@ -417,7 +424,7 @@ Commit `axelar-chains-config/info/mainnet.json`. For every chain it should chang
 | `verify` fails before execute           | Re-run `seed`, then `verify`. Do not execute until it passes.                                                                                                |
 | Readiness guard aborts execution        | Re-seed and retry. Do not bypass the guard.                                                                                                                  |
 | Execution slipped and the seed aged out | Re-run `seed` (repeatable), then `verify`.                                                                                                                   |
-| Proposer lacks the 150,000 AXL deposit  | Wait for the previous proposal's deposit to be refunded, or top up the proposer.                                                                             |
+| Proposer lacks the 400,000 AXL deposit  | Wait for the previous proposal's deposit to be refunded, or top up `cpi-multisig`.                                                                           |
 | `handoff` fails                         | The gateway keeps working on the seeded sets. Re-run `handoff` within 16 rotations (~6 weeks).                                                               |
 | A chain's deploy reverted               | Find the cause before retrying, as on [ethereum-sepolia](./2026-10-Consensus-Gateway-Upgrade-v6.5.0.md#fix-ethereum-sepolia). The other chains can continue. |
 
