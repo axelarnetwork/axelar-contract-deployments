@@ -1547,13 +1547,12 @@
       },
       "Multisig": {
         "blockExpiry": 50,
-        "codeId": 1586,
-        "lastUploadedCodeId": 1586,
+        "codeId": 1686,
+        "lastUploadedCodeId": 1686,
         "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
         "executeProposalId": "55",
-        "storeCodeProposalId": "1357",
-        "storeCodeProposalCodeHash": "d3e7bc409d858ba35b294c63039dd4b203947fa263ad529d21a84c3b2559e639",
-        "version": "2.4.0"
+        "storeCodeProposalCodeHash": "a6967e15b598fc609675014b94d26db4005e452b2d2caece51fb2ac91d12cab7",
+        "version": "2.4.4"
       },
       "Coordinator": {
         "codeId": 1620,
