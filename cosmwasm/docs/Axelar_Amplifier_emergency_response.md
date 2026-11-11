@@ -186,5 +186,4 @@ ts-node cosmwasm/submit-proposal.js executeByGovernance -c MultisigProver -n <ch
 |-------------|-------------------|-------------|
 | mainnet | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar-chains-config/info/mainnet.json` |
 | testnet | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar-chains-config/info/testnet.json` |
-| stagenet | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar-chains-config/info/stagenet.json` |
 | devnet-amplifier | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar-chains-config/info/devnet-amplifier.json` |

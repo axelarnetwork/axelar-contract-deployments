@@ -22,7 +22,6 @@ Example: `chore(stellar): deploy stellar-2025-q1 devnet-amplifier v1.0.0`
 | **Network** | **Deployment Status** | **Date** |
 |-------------|----------------------|----------|
 | **Devnet Amplifier** | - | TBD |
-| **Stagenet** | - | TBD |
 | **Testnet** | - | TBD |
 | **Mainnet** | - | TBD |
 

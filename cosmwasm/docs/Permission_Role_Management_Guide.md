@@ -19,7 +19,6 @@ This guide covers how to:
 |---------|---------|
 | **Mainnet** | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 | **Testnet** | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
-| **Stagenet** | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
 | **Devnet** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` ⚠️ EOA, not multisig |
 
 ### Controller/Key Rotation EOA (ROLE_CHAIN_MANAGEMENT)
@@ -28,7 +27,6 @@ This guide covers how to:
 |---------|---------|
 | **Mainnet** | `axelar1s952p4ye4hs24hqtnwjpggl0akzpcd5uany5rw` |
 | **Testnet** | `axelar1tf298zq9fn0rjlj23dmw04jfpu2whyrqsch5qn` |
-| **Stagenet** | `axelar1z5fkx8jt4qthpg5dm0vwgluehuf295jgay6fs5` |
 | **Devnet** | `axelar10dwjv6xj0flfj5m3ce4t5v7xpjmrt5du7h6zs6` |
 
 ---
@@ -36,7 +34,7 @@ This guide covers how to:
 ## Prerequisites
 
 ```bash
-# Set environment (mainnet, testnet, stagenet, devnet-amplifier, etc.)
+# Set environment (mainnet, testnet, devnet-amplifier, etc.)
 ENV=${1:-mainnet}
 CONFIG_FILE="./axelar-chains-config/info/$ENV.json"
 
@@ -61,9 +59,6 @@ case $ENV in
     ;;
   testnet)
     MULTISIG_ADDR="axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7"
-    ;;
-  stagenet)
-    MULTISIG_ADDR="axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky"
     ;;
   devnet-amplifier)
     MULTISIG_ADDR="axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"

@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Get the chain config for a given environment (Currently only supports 'mainnet', 'testnet' and 'stagenet'). The returned value will be an array of chains instead of key-value pairs.
- * @param {*} env - The environment to get the chain config for (e.g. 'mainnet', 'testnet', 'stagenet')
+ * Get the chain config for a given environment (Currently only supports 'mainnet' and 'testnet'). The returned value will be an array of chains instead of key-value pairs.
+ * @param {*} env - The environment to get the chain config for (e.g. 'mainnet', 'testnet')
  * @returns {Array} - An array of chain configs
  */
 function getChainArray(env) {

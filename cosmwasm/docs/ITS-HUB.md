@@ -11,7 +11,7 @@ Scripts for managing Interchain Token Service (ITS) hub operations on consensus 
 ```bash
 # Store ITS operator mnemonic in .env
 MNEMONIC="[ITS operator mnemonic]"
-ENV="[mainnet | testnet | stagenet | devnet-amplifier]"
+ENV="[mainnet | testnet | devnet-amplifier]"
 ```
 
 ---

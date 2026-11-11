@@ -11,7 +11,6 @@ on:
         options:
           - testnet
           - mainnet
-          - stagenet
 
 jobs:
   update-gas:
@@ -38,9 +37,6 @@ jobs:
               ;;
             mainnet)
               PRIVATE_KEY="${{ secrets.MAINNET_PRIVATE_KEY }}"
-              ;;
-            stagenet)
-              PRIVATE_KEY="${{ secrets.STAGENET_PRIVATE_KEY }}"
               ;;
           esac
 

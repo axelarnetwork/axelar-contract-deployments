@@ -185,6 +185,5 @@ See [Stellar Role Transfers Release Doc](../../releases/stellar/2025-11-Stellar-
 |-------------|------------|-------------|
 | mainnet | `stellar` | `axelar-chains-config/info/mainnet.json` |
 | testnet | `stellar-2025-q3` | `axelar-chains-config/info/testnet.json` |
-| stagenet | `stellar-2025-q3` | `axelar-chains-config/info/stagenet.json` |
 
 **Note**: Stellar testnet resets every quarter. Chain names may change accordingly.

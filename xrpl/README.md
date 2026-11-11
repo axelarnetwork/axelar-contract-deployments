@@ -21,7 +21,7 @@ npm ci && npm run build
 
 4. Claim devnet and testnet funds via the [`faucet.js` script](#claim-funds-from-faucet), if applicable.
 
-5. Set `ENV` and `CHAIN` in `.env` to the environment ("devnet-amplifier", "stagenet", "testnet", or "mainnet") and chain name (`xrpl`), respectively, to avoid having to specify these on every command.
+5. Set `ENV` and `CHAIN` in `.env` to the environment ("devnet-amplifier", "testnet", or "mainnet") and chain name (`xrpl`), respectively, to avoid having to specify these on every command.
 
 ## Deployment
 

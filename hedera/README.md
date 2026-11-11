@@ -100,7 +100,7 @@ node hedera/fund-whbar.js <receiverAddress> --amount <amount> -e <env> -n <chain
 
 **Options:**
 - `--chainName <chainName>` - Chain name to get WHBAR address from (can use CHAIN env var)
-- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--env <env>` - Environment configuration to use: mainnet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
 - `--amount <amount>` - Amount of HBAR to deposit and convert to WHBAR (can use WHBAR_AMOUNT env var)
 - `--privateKey <key>` - Private key for funding account (optional)
 - `--yes` - Skip confirmation prompt
@@ -120,7 +120,7 @@ node hedera/approve-factory-whbar.js --amount <amount> --chainName <chainName> -
 
 **Options:**
 - `--chainName <chainName>` - Chain name to get WHBAR and InterchainTokenFactory addresses from (can use CHAIN env var)
-- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--env <env>` - Environment configuration to use: mainnet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
 - `--amount <amount>` - Amount to approve (use "max" for maximum uint256, defaults to "max")
 - `--privateKey <key>` - Private key for the account (optional)
 - `--yes` - Skip confirmation prompt
@@ -168,7 +168,7 @@ node hedera/token-creation-price.js price --chainName <chainName> --env <env>
 
 **Options:**
 - `--chainName <chainName>` - Chain name to get InterchainTokenService address from (can use CHAIN env var)
-- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--env <env>` - Environment configuration to use: mainnet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
 
 **Example:**
 ```bash
@@ -188,7 +188,7 @@ node hedera/token-creation-price.js set-price <price> --chainName <chainName> --
 
 **Options:**
 - `--chainName <chainName>` - Chain name to get InterchainTokenService address from (can use CHAIN env var)
-- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--env <env>` - Environment configuration to use: mainnet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
 - `--privateKey <key>` - Private key for the account (optional)
 - `--yes` - Skip confirmation prompt
 

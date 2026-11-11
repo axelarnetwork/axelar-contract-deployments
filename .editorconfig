@@ -8,7 +8,7 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 
-[{devnet-amplifier,stagenet,testnet,mainnet}.json]
+[{devnet-amplifier,testnet,mainnet}.json]
 indent_size = 2
 
 [package.json]

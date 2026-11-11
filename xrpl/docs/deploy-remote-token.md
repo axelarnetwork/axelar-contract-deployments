@@ -48,7 +48,7 @@ Register and deploy a canonical interchain token:
 ```bash
 TOKEN_ADDRESS=  # Token contract address on the native source chain
 TOKEN_DECIMALS= # Decimals of the token contract on the native source chain
-ENV= #mainnet || testnet || stagenet || devnet-amplifier
+ENV= #mainnet || testnet || devnet-amplifier
 
 ts-node evm/interchainTokenFactory.js register-canonical-interchain-token $TOKEN_ADDRESS --chainNames $SOURCE_CHAIN --env $ENV
 

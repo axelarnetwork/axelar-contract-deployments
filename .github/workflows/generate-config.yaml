@@ -15,8 +15,6 @@ jobs:
             files: axelar-chains-config/info/mainnet.json
           - network: testnet
             files: axelar-chains-config/info/testnet.json
-          - network: stagenet
-            files: axelar-chains-config/info/stagenet.json
           - network: devnet-amplifier
             files: axelar-chains-config/info/devnet-amplifier.json
     uses: ./.github/workflows/reusable-update-config.yaml

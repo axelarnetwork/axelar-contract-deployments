@@ -62,7 +62,7 @@ GAS_FEE=  # Estimate using GMP API
 SOURCE_CHAIN= # EVM source chain name
 DESTINATION_CHAIN= # XRPL destination chain name
 
-ENV= #mainnet || testnet || stagenet || devnet-amplifier
+ENV= #mainnet || testnet || devnet-amplifier
 ```
 
 **API Reference**: Estimate using GMP [API](https://docs.axelarscan.io/gmp#estimateITSFee).
