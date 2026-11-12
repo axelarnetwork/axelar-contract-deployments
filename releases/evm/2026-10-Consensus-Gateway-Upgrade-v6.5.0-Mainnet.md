@@ -5,27 +5,27 @@
 | **Created By** | @jakovmitrovski, @h4writer, @dolfje |
 | **Deployment** | @h4writer <hannes@commonprefix.com> |
 
-| **Chain**    | **Deployment Status**                                                              | **Date** |
-| ------------ | ---------------------------------------------------------------------------------- | -------- |
-| `celo`       | -                                                                                  | TBD      |
-| `ethereum`   | -                                                                                  | TBD      |
-| `avalanche`  | -                                                                                  | TBD      |
-| `polygon`    | -                                                                                  | TBD      |
-| `binance`    | -                                                                                  | TBD      |
-| `arbitrum`   | -                                                                                  | TBD      |
-| `kava`       | -                                                                                  | TBD      |
-| `filecoin`   | -                                                                                  | TBD      |
-| `optimism`   | -                                                                                  | TBD      |
-| `linea`      | -                                                                                  | TBD      |
-| `base`       | -                                                                                  | TBD      |
-| `mantle`     | -                                                                                  | TBD      |
-| `scroll`     | -                                                                                  | TBD      |
-| `immutable`  | -                                                                                  | TBD      |
-| `fraxtal`    | -                                                                                  | TBD      |
-| `blast`      | Out of scope: [deactivated on Axelar](../axelar/2026-10-Blast-Deactivate-Chain.md) | -        |
-| `fantom`     | Out of scope: pre-rename `InterchainGovernance`, not ASG                           | -        |
-| `moonbeam`   | Out of scope: deactivated on Axelar                                                | -        |
-| `centrifuge` | Out of scope: deactivated on Axelar                                                | -        |
+| **Chain**    | **Deployment Status**                                                              | **Date**   |
+| ------------ | ---------------------------------------------------------------------------------- | ---------- |
+| `celo`       | Completed (proposal 512); GMP checks passed; rotated to epoch 17                   | 2026-11-11 |
+| `ethereum`   | Completed (proposal 512); GMP checks passed; rotated to epoch 16                   | 2026-11-12 |
+| `avalanche`  | Completed (proposal 512); GMP checks passed; rotated to epoch 16                   | 2026-11-11 |
+| `polygon`    | Completed (proposal 512); GMP checks passed; rotated to epoch 16                   | 2026-11-12 |
+| `binance`    | Completed (proposal 512); GMP checks passed. Pending: next rotation                | 2026-11-12 |
+| `arbitrum`   | Completed (proposal 512); GMP checks passed. Pending: next rotation                | 2026-11-12 |
+| `kava`       | Completed (proposal 512); GMP checks passed; rotated to epoch 16                   | 2026-11-11 |
+| `filecoin`   | Completed (proposal 512); GMP checks passed. Pending: next rotation                | 2026-11-12 |
+| `optimism`   | Completed (proposal 512); GMP checks passed. Pending: next rotation                | 2026-11-12 |
+| `linea`      | Completed (proposal 512); GMP checks passed. Pending: next rotation                | 2026-11-12 |
+| `base`       | Completed (proposal 512); GMP checks passed (live traffic). Pending: next rotation | 2026-11-12 |
+| `mantle`     | Completed (proposal 512); GMP checks passed; rotated to epoch 16                   | 2026-11-12 |
+| `scroll`     | Completed (proposal 512); inbound GMP passed. Pending: outbound GMP, next rotation | 2026-11-12 |
+| `immutable`  | Completed (proposal 512); GMP checks passed; rotated to epoch 16                   | 2026-11-12 |
+| `fraxtal`    | Completed (proposal 512). Pending: GMP checks, next rotation                       | 2026-11-12 |
+| `blast`      | Out of scope: [deactivated on Axelar](../axelar/2026-10-Blast-Deactivate-Chain.md) | -          |
+| `fantom`     | Out of scope: pre-rename `InterchainGovernance`, not ASG                           | -          |
+| `moonbeam`   | Out of scope: deactivated on Axelar                                                | -          |
+| `centrifuge` | Out of scope: deactivated on Axelar                                                | -          |
 
 - [Testnet release](./2026-10-Consensus-Gateway-Upgrade-v6.5.0.md): background, the pilot, and what went wrong on testnet
 - [Runbook](https://app.notion.com/p/commonprefix/Consensus-Gateway-Upgrade-3cdbf672de8281529199d4cf4f065d4a)
@@ -38,9 +38,10 @@ The same upgrade as on testnet: a new `AxelarGateway` implementation (cgp-solidi
 gateway proxy right after. See the [testnet release](./2026-10-Consensus-Gateway-Upgrade-v6.5.0.md#background) for why
 the timing matters.
 
-Like testnet, both proposals are **operator proposals** (`schedule-operator` → `execute-operator-proposal`). Once relayed,
-the ASG operator executes right away instead of waiting for the 72h `minimumTimeDelay`, so the seed (Step 4) can run
-just before execution. The operator can still wait; nothing executes without the operator key.
+Like testnet, the upgrade and the pauser transfer are **operator proposals** (`schedule-operator` →
+`execute-operator-proposal`). Once relayed, the ASG operator executes right away instead of waiting for the 72h
+`minimumTimeDelay`, so the seed (Step 4) can run just before execution. The operator can still wait; nothing executes
+without the operator key.
 
 What differs from testnet:
 
@@ -53,6 +54,10 @@ What differs from testnet:
 - **Proposals are expedited** (the `governance.js` default, no `--standardProposal`): a **400,000 AXL** deposit
   (refunded unless vetoed), a 1-day voting period and a 66.7% threshold. An expedited proposal that misses the 66.7%
   threshold is not rejected but converted to a standard one (3-day voting period from submission, 50% threshold).
+- **One Axelar proposal approves both the upgrade and the pauser transfer** (30 messages, two per chain). Testnet
+  used two proposals only because its proposer could hold one deposit at a time. An approval only lets the operator
+  execute, so the order is still the operator's: upgrade (Step 5), handoff (Step 6), then pauser (Step 7).
+  `transferPauser` does not exist on the old implementation, so executing it early reverts and keeps the approval.
 - The ASG operator `0xc8a8399c…` is in use: it executed operator proposal #499 on optimism.
 
 ## Scope
@@ -104,9 +109,8 @@ chains. The implementation codehash differs per chain because of its `tokenDeplo
 
 ## Pre-requisites
 
-1. Update npm dependencies. The commands below need `governance.js relay` and `--title`/`--description`
-   (feat/governance-relay-proposal, feat/governance-proposal-title) and the reuse-proxy config fix
-   (fix/consensus-gateway-reuse-proxy-config).
+1. Update npm dependencies. The commands below need `governance.js relay` (#1425) and `--title`/`--description`
+   (#1421), both in main.
 
 ```bash
 npm ci && npm run build
@@ -120,8 +124,9 @@ period instead of going to a vote:
 jq -r .axelar.govProposalExpeditedDepositAmount axelar-chains-config/info/mainnet.json    # 400000000000
 ```
 
-2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xB1209B08…`, and `MNEMONIC` is the governance
-   proposer (`cpi-multisig`). Steps 5 and 7 execute with the ASG operator key instead. Don't name the chain list
+2. Set the shell variables (fish). `PRIVATE_KEY` is the deployer `0xB1209B08…`. The proposals are only generated
+   here and submitted separately by `cpi-multisig`, so no `MNEMONIC` is needed. Steps 5 and 7 execute with the ASG
+   operator key instead. Don't name the chain list
    `CHAIN`: `cast` reads an exported `CHAIN` as its `--chain` option.
 
     `filecoin` is not in `$CHAINS`: its config sets `gasLimit` 500,000,000 without fees, so ethers' default 1.5 gwei
@@ -132,7 +137,6 @@ jq -r .axelar.govProposalExpeditedDepositAmount axelar-chains-config/info/mainne
 ```fish
 set -e CHAIN
 read -sx PRIVATE_KEY    # the deployer, 0xB1209B08…
-read -sx MNEMONIC       # the governance proposer, cpi-multisig
 set -x ENV mainnet
 set -x CHAINS celo,ethereum,avalanche,polygon,binance,arbitrum,kava,optimism,linea,base,mantle,scroll,immutable,fraxtal
 
@@ -199,7 +203,7 @@ and never below the up-front reservation; linea's gas price is volatile):
 | `mantle`                      | 2 MNT       | 0.5 MNT     |
 | `immutable`                   | 1 IMX       | 0.1 IMX     |
 
-The proposer `cpi-multisig` holds about 1,000,995 AXL (2026-11-09), enough for both 400,000 AXL deposits at once.
+The proposer `cpi-multisig` holds about 1,000,995 AXL (2026-11-09), enough for the 400,000 AXL deposit.
 
 ## Announcement
 
@@ -273,24 +277,67 @@ end
 Every chain should show size 18717, `codehash=ok`, `impl.auth` and `pending` equal to `$AUTH`, owner `$DEPLOYER` and
 epoch 0.
 
-### Step 3: Schedule the upgrade and relay
+### Step 3: Schedule the upgrade and the pauser, and relay
+
+Generate the proposal messages instead of submitting them (`--generate-only`), once for the upgrade and once for the
+pauser transfer, then combine them into one expedited governance proposal that `cpi-multisig` submits. Each message
+becomes a `MsgExecuteContract` from the governance module to the `AxelarnetGateway`, the same as `governance.js` would
+submit itself.
 
 ```fish
 npx ts-node evm/governance.js schedule-operator upgrade 0 -e $ENV -n $CHAINS,filecoin \
   --targetContractName AxelarGateway --implementation $IMPL \
-  --title "Upgrade consensus gateways to v6.5.0 ($CHAINS,filecoin)" \
-  --description "Upgrades the AxelarGateway on $CHAINS,filecoin to $IMPL, bound to the new AxelarAuthWeighted $AUTH"
+  --title "Upgrade consensus gateways to v6.5.0 and set pauser" \
+  --description "Upgrades the AxelarGateway on $CHAINS,filecoin to $IMPL, bound to the new AxelarAuthWeighted $AUTH, and sets the gateway pauser to $PAUSER" \
+  --generate-only upgrade-msgs.json
+npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAINS,filecoin \
+  --targetContractName AxelarGateway --calldata $PAUSER_CALLDATA \
+  --title unused --generate-only pauser-msgs.json
+
+# to_proposal <msgs.json>...: wrap generated call_contract messages into one expedited gov proposal; the title and
+# description come from the first file
+function to_proposal
+    jq -s --arg gw (jq -r .axelar.contracts.AxelarnetGateway.address axelar-chains-config/info/$ENV.json) \
+        --arg deposit (jq -r .axelar.govProposalExpeditedDepositAmount axelar-chains-config/info/$ENV.json)uaxl '{
+        messages: [.[].msgs[] | {
+            "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+            sender: "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+            contract: $gw,
+            msg: .,
+            funds: []
+        }],
+        metadata: "",
+        deposit: $deposit,
+        title: .[0].title,
+        summary: .[0].description,
+        expedited: true
+    }' $argv
+end
+
+to_proposal upgrade-msgs.json pauser-msgs.json > proposal.json
 ```
 
 - For every chain, `Setup Params for upgrading` must be `0x` and the target must be that chain's gateway. If any chain
   shows something else, answer `n`.
 - The "less than the minimum eta" warning is expected: the ASG ignores the activation time of an operator proposal.
-- Before confirming the submission, check the encoded message: `sender` is the governance module
-  `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`, every `destination_address` is `$ASG`, and every payload starts with
-  type `2` (`ApproveOperator`).
+- Check `proposal.json` before it is submitted: 30 messages (two per chain), every `contract` is the
+  `AxelarnetGateway` `axelar18vsne7…`, every `msg` is a JSON object (a base64 string fails at execution, as proposal
+  #496 did), every `destination_address` is `$ASG`, every payload starts with type `2` (`ApproveOperator`), `deposit`
+  is `400000000000uaxl` and `expedited` is `true`:
 
-Once the proposal has passed (1-day expedited voting, or 3 days if it was converted to standard), relay it. If `relay`
-reports that a call is not approved on the gateway yet, that chain's batch hasn't arrived; wait and retry.
+```fish
+jq '{n: (.messages | length), contracts: ([.messages[].contract] | unique), msg: ([.messages[].msg | type] | unique),
+    dest: ([.messages[].msg.call_contract.destination_address] | unique), deposit, expedited}' proposal.json
+```
+
+- Submit `proposal.json` as `cpi-multisig` and note the proposal ID. Submission uses about 5.5M gas. Afterwards, check
+  that the stored messages are still JSON objects:
+  `curl -s (jq -r .axelar.lcd axelar-chains-config/info/$ENV.json)/cosmos/gov/v1/proposals/$PROPOSAL_ID | jq '[.proposal.messages[].msg | type] | unique'`
+  must print `["object"]`.
+
+Once the proposal has passed (1-day expedited voting, or 3 days if it was converted to standard), relay it. `relay`
+relays both calls for each chain. If it reports that a call is not approved on the gateway yet, that chain's batch
+hasn't arrived; wait and retry.
 
 ```fish
 set PROPOSAL_ID <proposal id>
@@ -299,9 +346,13 @@ npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n filecoin --gasOption
 
 for c in (string split , $CHAINS,filecoin)
     set calldata (cast calldata "upgrade(address,bytes32,bytes)" (cfg $c .contracts.AxelarGateway.implementation) (cfg $c .contracts.AxelarGateway.implementationCodehash) 0x)
-    echo "$c approved="(cast call $ASG "isOperatorProposalApproved(address,bytes,uint256)(bool)" (cfg $c .contracts.AxelarGateway.address) $calldata 0 --rpc-url (cfg $c .rpc))
+    set gw (cfg $c .contracts.AxelarGateway.address)
+    set rpc (cfg $c .rpc)
+    echo "$c upgrade="(cast call $ASG "isOperatorProposalApproved(address,bytes,uint256)(bool)" $gw $calldata 0 --rpc-url $rpc)" pauser="(cast call $ASG "isOperatorProposalApproved(address,bytes,uint256)(bool)" $gw $PAUSER_CALLDATA 0 --rpc-url $rpc)
 end
 ```
+
+Every chain should show `upgrade=true pauser=true`.
 
 ### Step 4: Seed the auth and verify (deployer key)
 
@@ -377,25 +428,13 @@ npx ts-node evm/consensus-auth.js handoff -e $ENV -n filecoin --authModule $AUTH
 npx ts-node evm/consensus-auth.js verify  -e $ENV -n $CHAINS,filecoin --authModule $AUTH
 ```
 
-### Step 7: Set the pauser
+### Step 7: Set the pauser (operator key)
 
-Run it after the upgrade has executed: `transferPauser` only exists on the v6.5.0 implementation.
-`--targetContractName AxelarGateway` takes each chain's own gateway as the target.
-
-```fish
-npx ts-node evm/governance.js schedule-operator raw 0 -e $ENV -n $CHAINS,filecoin \
-  --targetContractName AxelarGateway --calldata $PAUSER_CALLDATA \
-  --title "Set consensus gateway pauser ($CHAINS,filecoin)" \
-  --description "Calls transferPauser($PAUSER) on the AxelarGateway on $CHAINS,filecoin"
-```
-
-Once it has passed, relay it, then execute with the operator key and check the pauser:
+The pauser transfer was approved together with the upgrade in Step 3. Run it after the upgrade has executed:
+`transferPauser` only exists on the v6.5.0 implementation, so an earlier execution reverts (and keeps the approval).
+Execute with the operator key and check the pauser:
 
 ```fish
-set PROPOSAL_ID <pauser proposal id>
-npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n $CHAINS
-npx ts-node evm/governance.js relay $PROPOSAL_ID -e $ENV -n filecoin --gasOptions $FILECOIN_GAS
-
 read -sx PRIVATE_KEY    # the ASG operator key, 0xc8a8399c…
 for c in (string split , $CHAINS)
     npx ts-node evm/governance.js execute-operator-proposal -e $ENV -n $c \
@@ -417,14 +456,14 @@ Commit `axelar-chains-config/info/mainnet.json`. For every chain it should chang
 
 | Situation                               | Action                                                                                                                                                       |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Proposal rejected                       | Re-schedule (Step 3). `AUTH` and `IMPL` can be reused.                                                                                                       |
+| Proposal rejected or fails to execute   | Re-schedule (Step 3). `AUTH` and `IMPL` can be reused. A `msg` submitted as a base64 string fails at execution (#496).                                       |
 | Proposal not relayed                    | `relay` again; it reports when a chain's batch hasn't reached the gateway yet.                                                                               |
 | Proposal approved but wrong             | Do not execute. Cancel the approval with `cancel-operator`, then fix and re-schedule.                                                                        |
 | `execute-operator-proposal` reverts     | Check that `PRIVATE_KEY` is the ASG operator key and that the proposal is relayed.                                                                           |
 | `verify` fails before execute           | Re-run `seed`, then `verify`. Do not execute until it passes.                                                                                                |
 | Readiness guard aborts execution        | Re-seed and retry. Do not bypass the guard.                                                                                                                  |
 | Execution slipped and the seed aged out | Re-run `seed` (repeatable), then `verify`.                                                                                                                   |
-| Proposer lacks the 400,000 AXL deposit  | Wait for the previous proposal's deposit to be refunded, or top up `cpi-multisig`.                                                                           |
+| Proposer lacks the 400,000 AXL deposit  | Top up `cpi-multisig`.                                                                                                                                       |
 | `handoff` fails                         | The gateway keeps working on the seeded sets. Re-run `handoff` within 16 rotations (~6 weeks).                                                               |
 | A chain's deploy reverted               | Find the cause before retrying, as on [ethereum-sepolia](./2026-10-Consensus-Gateway-Upgrade-v6.5.0.md#fix-ethereum-sepolia). The other chains can continue. |
 
