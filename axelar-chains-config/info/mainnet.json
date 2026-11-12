@@ -21,7 +21,7 @@
           "tokenDeployer": "0xb28478319B64f8D47e19A120209A211D902F8b8f",
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68",
           "connectionType": "consensus"
         },
@@ -152,7 +152,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -322,7 +322,7 @@
             "evm-avalanche-9169969"
           ],
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -593,7 +593,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -873,7 +873,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1026,7 +1026,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1170,7 +1170,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1309,7 +1309,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1453,7 +1453,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1601,7 +1601,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1744,7 +1744,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -1889,7 +1889,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -2038,7 +2038,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
@@ -2277,7 +2277,7 @@
           "authModule": "0x3d3C73E91B1b0C243f1437F2d8363b1D5B093BD0",
           "tokenDeployer": "0x8A156bCA562FB75385c4d41ea6903E270A34B727",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE"
         },
         "AxelarGasService": {
@@ -2418,7 +2418,7 @@
           "deploymentMethod": "create3",
           "salt": "AxelarGateway v6.5",
           "connectionType": "consensus",
-          "governance": "0xB1209B087e544785138784A50933d163A9087a7D",
+          "governance": "0x7Acbae6CBa67d78AAf69e47000884aE00F9B2525",
           "mintLimiter": "0xCC940AE49C78F20E3F13F3cF37e996b98Ac3EC68"
         },
         "AxelarGasService": {
