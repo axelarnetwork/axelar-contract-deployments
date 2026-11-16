@@ -2,7 +2,7 @@
 //! This is a simplified version that only contains what we need to compile
 
 use axelar_wasm_std::nonempty::Uint128;
-use cosmwasm_std::HexBinary;
+use cosmwasm_std::{HexBinary, Uint64};
 use serde::{Deserialize, Serialize};
 use solana_axelar_std::pubkey::PublicKey;
 use std::convert::TryFrom;
@@ -24,7 +24,7 @@ impl Uint128Extensions for Uint128 {
 #[serde(rename_all = "snake_case")]
 pub(crate) enum ProofStatus {
     Pending,
-    Completed { execute_data: Vec<u8> },
+    Completed { execute_data: HexBinary },
 }
 
 /// The response from querying a proof
@@ -92,7 +92,7 @@ pub(crate) struct VerifierSetResponse {
 #[serde(rename_all = "snake_case")]
 pub(crate) enum QueryMsg {
     CurrentVerifierSet,
-    Proof { multisig_session_id: u64 },
+    Proof { multisig_session_id: Uint64 },
 }
 
 /// A module to replicate the structure of multisig_prover::msg
