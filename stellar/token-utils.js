@@ -268,10 +268,10 @@ if (require.main === module) {
     });
 
     program
-        .command('change-trust <assetCode> <issuer> <limit>')
+        .command('change-trust <assetCode> <issuer> [limit]')
         .description('Change or create a trustline for a Stellar asset')
         .action((assetCode, issuer, limit, options) => {
-            mainProcessor(changeTrust, [assetCode, issuer, limit], options);
+            mainProcessor(changeTrust, [assetCode, issuer, limit || '1000000000'], options);
         });
 
     program
