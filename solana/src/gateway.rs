@@ -179,6 +179,15 @@ pub(crate) struct CallContractArgs {
     /// The payload as expected by the destination contract as a hex encoded string
     #[clap(long)]
     payload: String,
+
+    /// Gas value in lamports to pay for cross-chain delivery. When set, an add_gas instruction
+    /// is appended to the same transaction so gas is paid atomically with the call.
+    #[clap(long)]
+    gas_value: Option<u64>,
+
+    /// Refund address for unused gas (defaults to the fee payer)
+    #[clap(long)]
+    refund_address: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -292,7 +301,25 @@ pub(crate) async fn build_transaction(
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
     let instructions = match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config).await?,
-        Commands::CallContract(call_contract_args) => call_contract(fee_payer, call_contract_args)?,
+        Commands::CallContract(call_contract_args) => {
+            // call_contract may return multiple instructions (call + gas payment)
+            // that must go in a single transaction, so bundle them here.
+            let ixs = call_contract(fee_payer, call_contract_args)?;
+            let blockhash = fetch_latest_blockhash(&config.url)?;
+            let message = SolanaMessage::new_with_blockhash(&ixs, Some(fee_payer), &blockhash);
+            let transaction = SolanaTransaction::new_unsigned(message);
+            let params = SolanaTransactionParams {
+                fee_payer: fee_payer.to_string(),
+                recent_blockhash: Some(blockhash.to_string()),
+                nonce_account: None,
+                nonce_authority: None,
+                blockhash_for_message: blockhash.to_string(),
+            };
+            return Ok(vec![SerializableSolanaTransaction::new(
+                transaction,
+                params,
+            )]);
+        }
         Commands::TransferOperatorship(transfer_operatorship_args) => {
             transfer_operatorship(transfer_operatorship_args)?
         }
@@ -623,6 +650,9 @@ fn call_contract(
     fee_payer: &Pubkey,
     call_contract_args: CallContractArgs,
 ) -> eyre::Result<Vec<Instruction>> {
+    let gas_value = call_contract_args.gas_value;
+    let refund_address = call_contract_args.refund_address.unwrap_or(*fee_payer);
+
     let payload = hex::decode(
         call_contract_args
             .payload
@@ -634,10 +664,13 @@ fn call_contract(
     let (event_authority_pda, _) =
         Pubkey::find_program_address(&[b"__event_authority"], &solana_axelar_gateway::id());
 
+    let destination_chain = call_contract_args.destination_chain;
+    let destination_address = call_contract_args.destination_address;
+
     let ix_data = solana_axelar_gateway::instruction::CallContract {
-        destination_chain: call_contract_args.destination_chain,
-        destination_contract_address: call_contract_args.destination_address,
-        payload,
+        destination_chain: destination_chain.clone(),
+        destination_contract_address: destination_address.clone(),
+        payload: payload.clone(),
         signing_pda_bump: 0,
     }
     .data();
@@ -650,11 +683,57 @@ fn call_contract(
         AccountMeta::new_readonly(solana_axelar_gateway::id(), false),
     ];
 
-    Ok(vec![Instruction {
+    let call_ix = Instruction {
         program_id: solana_axelar_gateway::id(),
         accounts,
         data: ix_data,
-    }])
+    };
+
+    // Prepend pay_gas instruction if --gas-value is provided.
+    // PayGas uses destination_chain + destination_address + payload_hash to identify the
+    // message, so it doesn't need the tx signature. The relayer matches gas payments
+    // to messages by payload hash.
+    let mut instructions = Vec::new();
+
+    if let Some(amount) = gas_value {
+        use anchor_lang::ToAccountMetas as _;
+
+        let payload_hash: [u8; 32] = solana_sdk::keccak::hashv(&[&payload]).to_bytes();
+        let gas_service_program = solana_axelar_gas_service::id();
+        let (treasury_pda, _) = solana_axelar_gas_service::Treasury::find_pda();
+        let (gas_event_authority, _) =
+            Pubkey::find_program_address(&[b"__event_authority"], &gas_service_program);
+
+        let gas_accounts = solana_axelar_gas_service::accounts::PayGas {
+            sender: *fee_payer,
+            treasury: treasury_pda,
+            system_program: solana_sdk_ids::system_program::ID,
+            program: gas_service_program,
+            event_authority: gas_event_authority,
+        }
+        .to_account_metas(None);
+
+        let gas_ix_data = solana_axelar_gas_service::instruction::PayGas {
+            destination_chain: destination_chain.clone(),
+            destination_address: destination_address.clone(),
+            payload_hash,
+            amount,
+            refund_address,
+        }
+        .data();
+
+        instructions.push(Instruction {
+            program_id: gas_service_program,
+            accounts: gas_accounts,
+            data: gas_ix_data,
+        });
+
+        println!("  Gas: {amount} lamports (paid in same tx)");
+    }
+
+    instructions.push(call_ix);
+
+    Ok(instructions)
 }
 
 fn transfer_operatorship(
