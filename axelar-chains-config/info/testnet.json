@@ -3543,7 +3543,7 @@
       "name": "Arc",
       "axelarId": "arc-8",
       "chainId": 5042002,
-      "rpc": "https://rpc.testnet.arc.network",
+      "rpc": "https://rpc.testnet.arc.io",
       "tokenSymbol": "USDC",
       "confirmations": 1,
       "finality": "finalized",

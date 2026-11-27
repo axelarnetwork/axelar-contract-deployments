@@ -1430,7 +1430,7 @@
       "name": "Arc Testnet",
       "axelarId": "arc-2",
       "chainId": 5042002,
-      "rpc": "https://rpc.testnet.arc.network",
+      "rpc": "https://rpc.testnet.arc.io",
       "tokenSymbol": "USDC",
       "confirmations": 1,
       "finality": "finalized",
