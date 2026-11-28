@@ -5,25 +5,25 @@
 | **Created By** | @jakovmitrovski, @h4writer, @dolfje |
 | **Deployment** | @h4writer <hannes@commonprefix.com> |
 
-| **Environment**      | **Chain**                           | **Deployment Status**                    | **Date**   |
-| -------------------- | ----------------------------------- | ---------------------------------------- | ---------- |
-| **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism` | Completed (Jakov)                        | 2026-09-01 |
-| **Stagenet**         | all 9 active consensus chains       | Completed (Jakov)                        | 2026-09-02 |
-| **Testnet**          | `linea-sepolia` (pilot)             | Completed (#656, #657)                   | 2026-10-13 |
-|                      | `ethereum-sepolia`                  | Completed (#660, #661); rotation pending | 2026-10-17 |
-|                      | `avalanche`                         | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `binance`                           | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `kava`                              | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `filecoin-2`                        | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `immutable`                         | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `arbitrum-sepolia`                  | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `optimism-sepolia`                  | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `base-sepolia`                      | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `mantle-sepolia`                    | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `polygon-sepolia`                   | Completed (#658, #659)                   | 2026-10-16 |
-|                      | `scroll`                            | Skipped (deactivated, #634)              | -          |
-|                      | `moonbeam`                          | Skipped (deactivated, #635)              | -          |
-| **Mainnet**          | -                                   | -                                        | TBD        |
+| **Environment**      | **Chain**                                                                    | **Deployment Status**                    | **Date**   |
+| -------------------- | ---------------------------------------------------------------------------- | ---------------------------------------- | ---------- |
+| **Devnet Amplifier** | `avalanche`, `ethereum`, `optimism`                                          | Completed (Jakov)                        | 2026-09-01 |
+| **Stagenet**         | all 9 active consensus chains                                                | Completed (Jakov)                        | 2026-09-02 |
+| **Testnet**          | `linea-sepolia` (pilot)                                                      | Completed (#656, #657)                   | 2026-10-13 |
+|                      | `ethereum-sepolia`                                                           | Completed (#660, #661); rotation pending | 2026-10-17 |
+|                      | `avalanche`                                                                  | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `binance`                                                                    | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `kava`                                                                       | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `filecoin-2`                                                                 | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `immutable`                                                                  | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `arbitrum-sepolia`                                                           | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `optimism-sepolia`                                                           | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `base-sepolia`                                                               | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `mantle-sepolia`                                                             | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `polygon-sepolia`                                                            | Completed (#658, #659)                   | 2026-10-16 |
+|                      | `scroll`                                                                     | Skipped (deactivated, #634)              | -          |
+|                      | `moonbeam`                                                                   | Skipped (deactivated, #635)              | -          |
+| **Mainnet**          | see [mainnet release](./2026-10-Consensus-Gateway-Upgrade-v6.5.0-Mainnet.md) | -                                        | TBD        |
 
 - [Runbook](https://app.notion.com/p/commonprefix/Consensus-Gateway-Upgrade-3cdbf672de8281529199d4cf4f065d4a)
 - [axelar-cgp-solidity v6.5.0](https://github.com/axelarnetwork/axelar-cgp-solidity/releases/tag/v6.5.0)
